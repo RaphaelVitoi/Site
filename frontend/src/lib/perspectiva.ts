@@ -237,6 +237,24 @@ export function classifyTier(stack: number, stacks: number[]): StackTier {
 	return 'big';
 }
 
+/**
+ * Piso numérico do RP na grandeza (BF-1)/BF: -100%, que corresponde a BF = 0,5 (ganho o dobro da perda).
+ * Limite de engenharia, não dos autos: a grandeza vai a -infinito quando BF tende a 0. O caso canônico do
+ * Teorema 2 (residual 4 BB, pote 36 BB) mede BF 0,812 e RP -23,2%, bem acima do piso.
+ */
+export const RP_PISO_NUMERICO = -100;
+
+/**
+ * RP = 100 x (BF-1)/BF, com sinal. Teorema 2 do tratado canônico (docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md):
+ * RP_River < 0 quando E* < B/(P+2B), o que equivale a BF < 1. Até 2026-09-17 o código devolvia 0 para todo
+ * BF <= 1, e o teorema não tinha como aparecer.
+ */
+export function premioDeRiscoDoBf(bf: number): number {
+	if (!Number.isFinite(bf)) return 0;
+	if (bf <= 0) return RP_PISO_NUMERICO;
+	return Math.max(RP_PISO_NUMERICO, (100 * (bf - 1)) / bf);
+}
+
 // --- HELPERS DE REDUÇÃO DE ENTROPIA COGNITIVA (SOTA v8.0 GOLD FUSED) ---
 
 /**
@@ -343,7 +361,7 @@ function _calculateValuationAndRio(
 	const gainAbs = deltaWinPct;         // Δ equidade ICM em caso de vitória (positivo)
 	const lossAbs = Math.abs(deltaLosePct); // Δ equidade ICM em caso de derrota (magnitude)
 	const heroBf = gainAbs > 0 ? lossAbs / gainAbs : 1;
-	const riskAdvantage = heroBf <= 1 ? 0 : 100 * (heroBf - 1) / heroBf;
+	const riskAdvantage = premioDeRiscoDoBf(heroBf);
 
 	// [v6.2.1] Expoente N^2.0 FIXO — sem feedback loop com noise factor.
 	// Decisão arquitetural: separar física multiway (expoente) da percepção humana (damping).

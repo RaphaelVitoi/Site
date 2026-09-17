@@ -8,7 +8,6 @@ import type { SotaPhysicsState } from './useSotaSync';
 interface UseMasterHandlersParams {
 	scenario: Scenario;
 	scenarios: Scenario[];
-	pkoValue: number;
 	anteSize: number;
 	setScenario: (id: string) => void;
 	resetState: (scenario: Scenario) => void;
@@ -24,7 +23,6 @@ interface UseMasterHandlersParams {
 export function useMasterHandlers({
 	scenario,
 	scenarios,
-	pkoValue,
 	anteSize,
 	setScenario,
 	resetState,
@@ -54,12 +52,14 @@ export function useMasterHandlers({
 				? scenario.prizes
 				: [237.34, 170.96, 135.17, 109.99, 90.28, 73.95, 59.92, 47.56, 36.47];
 		try {
-			const json = generateHRCJson(players, prizes, pkoValue);
+			// A exportação descreve a estrutura do torneio. O peso exploratório do PKO, em desenvolvimento, não é
+			// configuração de bounty por jogador e não entra no arquivo; antes, PKO ligado fazia a exportação lançar erro.
+			const json = generateHRCJson(players, prizes);
 			downloadHRCJson(json, `sota_${scenario.id}_${players.length}p.json`);
 		} catch (error) {
 			globalThis.alert(error instanceof Error ? error.message : 'Não foi possível exportar o cenário HRC.');
 		}
-	}, [scenario, pkoValue]);
+	}, [scenario]);
 
 	const handleHeroPositionChange = useCallback(
 		(e: React.ChangeEvent<HTMLSelectElement>) => {

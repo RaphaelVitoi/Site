@@ -282,14 +282,10 @@ export default function DashboardSOTA({
   const simulatedActivePlayers = spotContext?.activePlayers ?? 2;
   const absoluteHeroPos = spotContext?.heroPosition ?? 'IP';
   const blindsRisingSoon = spotContext?.blindsRisingSoon ?? false;
-  const pkoValue = 0;
   const aggFactor = spotContext?.aggFactor ?? 1;
 
-  const rawGpuEquity = wasmContext?.insolvencyMatrixData?.winRate
-    ? wasmContext.insolvencyMatrixData.winRate * 100
-    : undefined;
-  const equity =
-    rawGpuEquity === undefined ? (wasmContext?.nativeRangeMetric?.equity ?? 50) : Number(rawGpuEquity.toFixed(1));
+  // Fonte única da equity, a mesma da Lente PM (SIM-02, SIM-07).
+  const equity = wasmContext?.nativeRangeMetric?.equity ?? 50;
 
   const isHeroIP = absoluteHeroPos === 'IP';
   const posBaseline = isHeroIP ? 1 : 0.85;
@@ -305,7 +301,6 @@ export default function DashboardSOTA({
     equity,
     realizationFactor,
     deltaHabilidade: 50,
-    pkoValue,
     kappa: 0.5,
     simulatedActivePlayers,
     absoluteHeroPos,

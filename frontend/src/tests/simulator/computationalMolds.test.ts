@@ -1,5 +1,6 @@
 import { maskToBytes, rangeToBitmask } from '../../components/simulator/workers/rangeParser';
 import { processInsolvencyRequest } from '../../components/simulator/workers/insolvencyProcessor';
+import { solveIcmDistortion } from '../../components/simulator/solver/nashSolver';
 import { calculateMalmuthHarville, computeBubbleFactorMatrix } from '../../lib/icmMatrix';
 
 test('all 1326 physical combos survive the existing sparse WASM ABI', () => {
@@ -40,20 +41,14 @@ test('matrix produces the response consumed by the hook and preserves both range
   expect(equity.mock.calls[0]![0]).not.toEqual(equity.mock.calls[0]![1]);
 });
 
-test('distortion returns all three streets in the consumer format', () => {
+test('distortion keeps OOP frequencies summing to 100 on every street', () => {
+  // Desde 2026-09-17 a distorcao roda so na thread principal (SIM-04); a invariante segue coberta no solver.
   const freqs = { ip_check: 40, ip_bet_small: 35, ip_bet_large: 25, oop_call: 50, oop_fold: 40, oop_raise: 10 };
-  const result = processInsolvencyRequest({ type: 'DISTORTION', id: 3,
-    ipRpFlop: 10, oopRpFlop: 20, freqFlop: freqs,
-    ipRpTurn: 10, oopRpTurn: 20, freqTurn: freqs,
-    ipRpRiver: 10, oopRpRiver: 20, freqRiver: freqs,
-    topologicAggression: 1.2, activePlayers: 2, pots: [7.5, 22.5, 40], humanNoiseFactor: 0,
-  }, { equity: jest.fn(), multiway: jest.fn() });
-  expect(result.type).toBe('DISTORTION');
-  if (result.type !== 'DISTORTION') throw new Error('Unexpected response');
-  for (const street of Object.values(result.nashResults!)) {
-    expect(street.oop.call.center + street.oop.fold.center + street.oop.raise.center).toBeCloseTo(100);
-  }
-  expect(Object.keys(result.nashResults!)).toEqual(['flop', 'turn', 'river']);
+  const pots = [7.5, 22.5, 40] as const;
+  pots.forEach((pot, street) => {
+    const result = solveIcmDistortion(10, 20, freqs, 1.2, pot, street, 2);
+    expect(result.oop.call.center + result.oop.fold.center + result.oop.raise.center).toBeCloseTo(100);
+  });
 });
 
 test('multiway is a working model now that the kernel evaluates hands, and rejects malformed memory input', () => {

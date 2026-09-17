@@ -28,7 +28,6 @@ import { useMounted } from '../../hooks/useMounted';
 import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useDeferredValue, useTransition, useState } from 'react';
 import useSWR from 'swr';
-import { useLlamaEngine } from '../../hooks/useLlamaEngine';
 
 import { MasterTableVisualizer } from './ui/MasterTableVisualizer';
 import { ScenarioQuickSelector } from './ui/ScenarioQuickSelector';
@@ -160,7 +159,6 @@ export default function MasterSimulator() {
   ]);
 
   const { handleStreetFreqChange } = useFrequencyPropagation(setStreetFreqs);
-  useLlamaEngine();
 
   const safeCurrentPot =
     currentPot != null && !Number.isNaN(Number(currentPot)) ? Math.max(0.1, Number(currentPot)) : 2.5;
@@ -212,6 +210,7 @@ export default function MasterSimulator() {
     effectiveIpRp,
     effectiveOopRp,
     effectiveSprData,
+    pkoPreview,
     nashFlop,
     nashTurn,
     nashRiver,
@@ -221,7 +220,6 @@ export default function MasterSimulator() {
     isCalculatingInsolvency,
     nashResults,
     dispatchInsolvencyMatrix,
-    dispatchIcmDistortion,
   } = useQuantumEngine(deferredQuantumConfig);
 
   // --- HOOKS ORQUESTRADORES SOTA v6 ---
@@ -232,6 +230,7 @@ export default function MasterSimulator() {
     safeHeroInvested,
     safeCurrentPot,
     quantumPerspectiva,
+    insolvencyMatrixData,
   });
 
   const {
@@ -260,7 +259,6 @@ export default function MasterSimulator() {
     insolvencyMatrixData,
     isCalculatingInsolvency,
     dispatchInsolvencyMatrix,
-    dispatchIcmDistortion,
     nashResults,
     bayesianWinProb,
     predictiveProfile: stablePredictiveProfile,
@@ -273,7 +271,6 @@ export default function MasterSimulator() {
   const { handleScenarioSelect, handleExportHRC, handleHeroPositionChange } = useMasterHandlers({
     scenario,
     scenarios,
-    pkoValue,
     anteSize,
     setScenario,
     resetState,
@@ -367,6 +364,7 @@ export default function MasterSimulator() {
                         streetRps={streetRps}
                         aggressionFactor={aggressionFactor}
                         pkoValue={pkoValue}
+                        pkoPreview={pkoPreview}
                         isNearPayjump={isNearPayjump}
                         blindsRisingSoon={blindsRisingSoon}
                         isBaseline={isBaseline}
@@ -541,7 +539,6 @@ export default function MasterSimulator() {
               heroInvestedBb={safeHeroInvested}
               currentPotBb={safeCurrentPot}
               initialActivePlayers={safeActivePlayers}
-              initialPkoValue={pkoValue}
               initialIsNearPayjump={isNearPayjump}
               initialBlindsRising={blindsRisingSoon}
             />
@@ -601,6 +598,7 @@ export default function MasterSimulator() {
     streetFreqs,
     aggressionFactor,
     pkoValue,
+    pkoPreview,
     isNearPayjump,
     blindsRisingSoon,
     isBaseline,
@@ -775,7 +773,15 @@ export default function MasterSimulator() {
                     <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
                   </div>
                   <Suspense fallback={<LoadingFallback />}>
-                    <PmLensPanel />
+                    <PmLensPanel
+                      initialStacks={scenario.stacks}
+                      initialPrizes={scenario.prizes}
+                      currentPot={safeCurrentPot}
+                      heroInvested={safeHeroInvested}
+                      heroPosition={heroPosition}
+                      activePlayers={safeActivePlayers}
+                      blindsRisingSoon={blindsRisingSoon}
+                    />
                   </Suspense>
                 </section>
               )}

@@ -16,6 +16,9 @@ EPSILON: Final[float] = 1e-12
 DEFAULT_ALPHA: Final[float] = 0.88
 DEFAULT_BETA: Final[float] = 0.88
 DEFAULT_LAMBDA: Final[float] = 2.25
+# Piso numerico do BF: 0.5 equivale a RP -100% na grandeza (BF-1)/BF. Limite de engenharia, nao dos autos --
+# o Teorema 2 exige BF < 1 representavel, e o caso canonico (residual 4 BB, pote 36 BB) mede BF 0.812.
+BF_PISO_NUMERICO: Final[float] = 0.5
 
 type StackVector = list[float]
 type PayoutVector = list[float]
@@ -189,7 +192,9 @@ class ProspectRiskEngine:
 
         if u_win <= EPSILON:
             return 10.0
-        return max(1.0, u_lose / u_win)
+        # Teorema 2 (docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md): BF < 1 e legitimo e produz RP negativo.
+        # Ate 2026-09-17 o piso era 1.0, e o teorema nao tinha como aparecer.
+        return max(BF_PISO_NUMERICO, u_lose / u_win)
 
     def calculate_edge_time_modulator(self) -> float:
         time_factor = min(2.0, self._ctx.time_to_blind_increase / 20.0)
@@ -198,27 +203,28 @@ class ProspectRiskEngine:
         return math.exp(edge_discount + pos_bonus)
 
     def evaluate_required_equilibrium_equity(self, raw_pot_odds: float) -> float:
-        """Equidade requerida sob pressao de bolha.
+        """Equidade requerida sob pressao de bolha, pela formula exata dos autos.
 
-        LIMITE DECLARADO (B06/F07, medido em 2026-09-08). Esta e a grandeza B do
-        par documentado em frontend/src/lib/rpDeriver.ts: `(bf-1)/bf` recomposta
-        por `(a + rp) / (1 + rp)`. Ela nao reproduz a equidade requerida exata,
-        que e `bf*a / (bf*a + 1 - a)`; coincide em bf=2 e diverge ate -11.11
-        pontos percentuais em bf=5 com a=0.5, sempre para MENOS -- ou seja,
-        subestima o preco justamente onde a bolha aperta.
+        Teorema 6 do tratado canonico (docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md), com
+        `a = B / (P + 2B)` as pot odds cruas: `E* = BF*a / (BF*a + 1 - a)`. E a mesma
+        equidade exata medida no LIMITE DECLARADO B06/F07 (frontend/src/lib/rpDeriver.ts).
 
-        Mantida sem alteracao de comportamento: trocar a formula desloca numeros
-        que o produto ja exibe, e a escolha entre as duas grandezas e decisao de
-        dominio do Tier 0. A grandeza A, `(bf-1)/(bf+1)`, vive em
-        engine/icm_matrix.py:124 e e exata no all-in even money.
+        Ate 2026-09-17 esta funcao recompunha `(a + rp) / (1 + rp)` a partir da grandeza
+        B, `(bf-1)/bf`, que os autos mediram como inexata: subestimava o preco em ate
+        11.11 pontos percentuais em BF=5, a=0.5. E o piso `max(a, ...)` apagava o
+        Teorema 2, em que a equidade requerida fica ABAIXO das pot odds (BF < 1).
+
+        O modulador `psi` continua escalando o premio de risco, agora na forma relativa
+        `(E* - a) / (1 - a)`, que com psi = 1 devolve exatamente E* e em a = 0.5 vale a
+        grandeza A, `(bf-1)/(bf+1)`.
         """
+        a = min(max(raw_pot_odds, 0.0), 1.0 - EPSILON)
         bf = self.calculate_dynamic_bubble_factor()
-        raw_risk_premium = (bf - 1.0) / bf
+        exata = (bf * a) / (bf * a + 1.0 - a)
+        premio_relativo = (exata - a) / (1.0 - a)
         psi = self.calculate_edge_time_modulator()
-        rp_dynamic = raw_risk_premium * psi
-
-        req_equity = (raw_pot_odds + rp_dynamic) / (1.0 + rp_dynamic)
-        return min(0.95, max(raw_pot_odds, req_equity))
+        req_equity = a + premio_relativo * psi * (1.0 - a)
+        return min(0.95, max(0.0, req_equity))
 
 
 try:

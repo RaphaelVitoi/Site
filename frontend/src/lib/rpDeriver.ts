@@ -27,14 +27,21 @@
  * A escolha entre nomear as duas grandezas separadamente ou aposentar uma delas
  * e decisao de dominio do Tier 0, e nada aqui foi trocado por conta propria: a
  * medicao existe para que a decisao seja informada, nao para antecipa-la.
+ *
+ * ATUALIZACAO 2026-09-17, por delegacao do Tier 0 ("corrija conforme consta nos autos"):
+ * - A equidade requerida passou a ser a exata do Teorema 6 onde era recomposta a partir
+ *   de B (engine/vitoi_perspective_engine.py). Aqui ela ja era exata (holdemEquities.ts).
+ * - O RP ganhou sinal: BF < 1 produz RP negativo (Teorema 2), com piso numerico de -100%.
+ * - O BF pos-flop de cada lado sai da propria decisao (derivePostFlopRps).
+ * - A grandeza EXIBIDA segue B. Trocar para A mudaria todo RP mostrado e os rotulos dos
+ *   cenarios, e os autos nao escolhem entre as duas: continua decisao do Tier 0.
  * [=] allBfs dual-player preservado (perspectiva core é single-hero; precisamos do delta IP/OOP)
  *
  * @format
  */
 
-import { buildSimulatedStacks, calculateMapaICM, calculatePerspectivaVitoi, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
+import { buildSimulatedStacks, calculateMapaICM, calculatePerspectivaVitoi, premioDeRiscoDoBf, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
 
-const RP_MIN = 0;
 const RP_MAX = 60;
 export const BF_THRESHOLD = 1.01;
 export const RP_CEILING_THRESHOLD = 24;
@@ -71,10 +78,9 @@ function deriveRecommendedSizing(
 	return 'medium';
 }
 
+// RP com sinal (Teorema 2) e teto de exibição RP_MAX. O piso é o de premioDeRiscoDoBf.
 function bfToRp(bf: number): number {
-	if (bf <= 1) return RP_MIN;
-	const rp = (100 * (bf - 1)) / bf;
-	return Math.max(RP_MIN, Math.min(RP_MAX, rp));
+	return Math.min(RP_MAX, premioDeRiscoDoBf(bf));
 }
 
 export function deriveRps(
@@ -269,34 +275,29 @@ export function derivePostFlopRps(
 	// daqui saturava em RP_MAX (60) em 3 de 4 cenarios e o teto de 24 disparava nos
 	// 4, ou seja, era alarme permanentemente ligado, que nao discrimina nada.
 	// Agora chama a funcao unica, cujo contrato de massa esta em massaDeFichas.test.ts.
-	const { stacksWin, stacksLose } = buildSimulatedStacks(
-		stacks,
-		heroIdx,
-		villainIdx,
-		potSize,
-		heroCost,
-		potAcumuladoHero,
-	);
-
-	const stacksIpWin = heroIsIp ? stacksWin : stacksLose;
-	const stacksOopWin = heroIsIp ? stacksLose : stacksWin;
-
-	const perspIpWin = calculateMapaICM(stacksIpWin, prizes);
-	const perspOopWin = calculateMapaICM(stacksOopWin, prizes);
+	// BF de cada lado a partir da PROPRIA decisao: o mesmo pote e o mesmo custo, com os papeis trocados.
+	// Ate 2026-09-17 o BF do nao-heroi saia dos ramos da decisao do heroi. Como a contribuicao dele ja esta no
+	// pote, no ramo em que o heroi vence a stack dele nao muda: perda ~0, BF entre 0,02 e 0,3 em todos os 10
+	// cenarios nao baseline e em todas as streets, trocando de lado junto com o papel de heroi. O piso de RP em 0
+	// escondia o artefato, e o RP pos-flop do adversario saia sempre 0. Para o heroi a formula e identica a anterior.
+	const bfDaPropriaDecisao = (jogador: number, oponente: number): number => {
+		const { stacksWin, stacksLose } = buildSimulatedStacks(
+			stacks,
+			jogador,
+			oponente,
+			potSize,
+			heroCost,
+			potAcumuladoHero,
+		);
+		const base = baseline.equities[jogador] ?? 0;
+		const gain = (calculateMapaICM(stacksWin, prizes).equities[jogador] ?? 0) - base + bountyContrib;
+		const loss = base - (calculateMapaICM(stacksLose, prizes).equities[jogador] ?? 0);
+		return gain > 0 ? loss / gain : 1;
+	};
 
 	const allBfs = stacks.map((_, i) => {
-		if (i === ipIndex) {
-			const gain =
-				(perspIpWin.equities[i] ?? 0) - (baseline.equities[i] ?? 0) + bountyContrib;
-			const loss = (baseline.equities[i] ?? 0) - (perspOopWin.equities[i] ?? 0);
-			return gain > 0 ? loss / gain : 1;
-		}
-		if (i === oopIndex) {
-			const gain =
-				(perspOopWin.equities[i] ?? 0) - (baseline.equities[i] ?? 0) + bountyContrib;
-			const loss = (baseline.equities[i] ?? 0) - (perspIpWin.equities[i] ?? 0);
-			return gain > 0 ? loss / gain : 1;
-		}
+		if (i === ipIndex) return bfDaPropriaDecisao(ipIndex, oopIndex);
+		if (i === oopIndex) return bfDaPropriaDecisao(oopIndex, ipIndex);
 		return 1;
 	});
 

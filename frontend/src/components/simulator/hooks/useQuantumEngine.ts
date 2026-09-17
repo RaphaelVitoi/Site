@@ -1,6 +1,6 @@
-import type { InsolvencyPayload, DistortionPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics, InsolvencyWorkerRequest } from '../workers/insolvencyProtocol';
+import type { InsolvencyPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics, InsolvencyWorkerRequest } from '../workers/insolvencyProtocol';
 import { readCurrentInsolvencyResponse } from '../workers/insolvencyResponse';
-export type { InsolvencyPayload, DistortionPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics } from '../workers/insolvencyProtocol';
+export type { InsolvencyPayload, MultiwayPayload, NashDistortionResults, InsolvencyMetrics } from '../workers/insolvencyProtocol';
 /** @format */
 
 import { calculatePerspectivaVitoi } from '@/lib/perspectiva';
@@ -38,6 +38,19 @@ export interface QuantumEngineParams {
 }
 
 export type QuantumMetricsResult = InsolvencyMetrics;
+
+/**
+ * Leitura exploratória do PKO, em desenvolvimento. Os autos do projeto (biblioteca/estruturas-de-torneio) põem PKO fora
+ * do escopo do template Vanilla: bounties exigem modelo próprio. O peso do bounty não entra em nenhuma saída
+ * estabelecida; ele só produz esta leitura paralela, ao lado do RP vanilla.
+ */
+export interface PkoPreview {
+  pkoValue: number;
+  /** RP base (Malmuth-Harville) sem o peso do bounty. */
+  vanilla: { ipRp: number; oopRp: number };
+  /** RP base com o peso do bounty, exploratório. */
+  comPko: { ipRp: number; oopRp: number };
+}
 export type QuantumMetricsPayload = InsolvencyPayload;
 
 function toInsolvencyMetrics(matrix: number[]): InsolvencyMetrics | null {
@@ -114,16 +127,14 @@ export function useQuantumEngine({
   // SOTA: Estados e Refs do Web Worker de Insolvência
   const [insolvencyMatrixData, setInsolvencyMatrixData] = useState<InsolvencyMetrics | null>(null);
   const [isCalculatingInsolvency, setIsCalculatingInsolvency] = useState(false);
-  const [nashResults, setNashResults] = useState<NashDistortionResults | null>(null);
   const insolvencyWorkerRef = useRef<Worker | null>(null);
 
   // SOTA: Refatoração para Mutabilidade Silenciosa. Elimina VDOM Thrashing e GC Churn.
   const multiwayTensorRef = useRef<Float64Array | null>(null);
   const [isCalculatingMultiway, setIsCalculatingMultiway] = useState(false);
 
-  const lastRequestIdRef = useRef({ MATRIX: 0, DISTORTION: 0, MULTIWAY_MATRIX: 0 });
+  const lastRequestIdRef = useRef({ MATRIX: 0, MULTIWAY_MATRIX: 0 });
   const matrixTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const distortionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const multiwayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Inicialização do Web Worker
@@ -152,9 +163,6 @@ export function useQuantumEngine({
       }
 
       switch (response.type) {
-        case 'DISTORTION':
-          if (response.nashResults) setNashResults(response.nashResults);
-          return;
         case 'MATRIX':
           if (response.matrix) setInsolvencyMatrixData(toInsolvencyMetrics(response.matrix));
           setIsCalculatingInsolvency(false);
@@ -180,10 +188,18 @@ export function useQuantumEngine({
       worker.terminate();
       insolvencyWorkerRef.current = null;
       if (matrixTimeoutRef.current) clearTimeout(matrixTimeoutRef.current);
-      if (distortionTimeoutRef.current) clearTimeout(distortionTimeoutRef.current);
       if (multiwayTimeoutRef.current) clearTimeout(multiwayTimeoutRef.current);
     };
   }, []);
+
+  // Trocar de cenário invalida o pedido de matriz pendente e o resultado anterior: a resposta vira equity de entrada, e
+  // um cálculo do cenário anterior não pode escrever no atual (SIM-02).
+  useEffect(() => {
+    lastRequestIdRef.current.MATRIX += 1;
+    if (matrixTimeoutRef.current) clearTimeout(matrixTimeoutRef.current);
+    setInsolvencyMatrixData(null);
+    setIsCalculatingInsolvency(false);
+  }, [stableStacksStr]);
 
   // SOTA: Fricção Zero no Fator de Credibilidade (Axioma Lipe Piv).
   // O recálculo engatilha somente se a variação for superior a 0.05 para evitar inundação do Event Loop (debouncing quantizado).
@@ -232,24 +248,6 @@ export function useQuantumEngine({
       }, 150);
     },
     [effectiveKappa, humanNoiseFactor],
-  );
-
-  const dispatchIcmDistortion = useCallback(
-    (payload: DistortionPayload) => {
-      if (!insolvencyWorkerRef.current) return;
-      if (distortionTimeoutRef.current) clearTimeout(distortionTimeoutRef.current);
-      setNashResults(null);
-      const id = ++lastRequestIdRef.current.DISTORTION;
-      distortionTimeoutRef.current = setTimeout(() => {
-        insolvencyWorkerRef.current?.postMessage({
-          type: 'DISTORTION',
-          ...payload,
-          humanNoiseFactor,
-          id,
-        } satisfies InsolvencyWorkerRequest);
-      }, 150);
-    },
-    [humanNoiseFactor],
   );
 
   // SOTA: Despachante Quântico Multiway via Transferable Objects
@@ -326,7 +324,6 @@ export function useQuantumEngine({
         winProb: 0.5,
         realizationFactor: realizationFactor,
         edgeBase: 1,
-        bountyValue: pkoValue * 100,
         isNearPayjump,
         blindsRisingSoon,
         heroPosition, // SOTA: Injeção de Antevisão Posicional
@@ -340,7 +337,6 @@ export function useQuantumEngine({
   }, [
     stableStacks,
     resolvedPrizes,
-    pkoValue,
     isNearPayjump,
     blindsRisingSoon,
     preflopDeadMoney,
@@ -357,7 +353,7 @@ export function useQuantumEngine({
 
     const t0 = performance.now();
     try {
-      const res = deriveRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, pkoValue * 100);
+      const res = deriveRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, 0);
       const t1 = performance.now();
       const latency = t1 - t0;
 
@@ -366,14 +362,30 @@ export function useQuantumEngine({
           category: 'performance',
           componentName: `MasterSimulator:${scenario.id}:deriveRps`,
           latency: Math.round(latency),
-          metadata: { stacksCount: stableStacks.length || 0, pko: pkoValue },
+          metadata: { stacksCount: stableStacks.length || 0 },
         });
       }
       return res;
     } catch {
       return null;
     }
-  }, [scenario.id, stableStacks, resolvedPrizes, pkoValue, isBaseline]);
+  }, [scenario.id, stableStacks, resolvedPrizes, isBaseline]);
+
+  // PKO em desenvolvimento: leitura paralela, nunca entra no RP vanilla acima.
+  const pkoPreview = useMemo<PkoPreview | null>(() => {
+    if (isBaseline || !(pkoValue > 0)) return null;
+    try {
+      const res = deriveRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, pkoValue * 100);
+      if (!res || !derivedRp) return null;
+      return {
+        pkoValue,
+        vanilla: { ipRp: derivedRp.ipRp, oopRp: derivedRp.oopRp },
+        comPko: { ipRp: res.ipRp, oopRp: res.oopRp },
+      };
+    } catch {
+      return null;
+    }
+  }, [pkoValue, isBaseline, stableStacks, resolvedPrizes, derivedRp]);
 
   // RP Efetivo Quantum: O RP base é ajustado pela Perspectiva (Piso Dinâmico)
   const rpAdjustment = useMemo(() => {
@@ -438,7 +450,6 @@ export function useQuantumEngine({
       potAcumuladoHero: potRiver / 2,
       potTotal: potRiver,
       heroIsIp,
-      bountyValue: pkoValue * 100,
     });
 
     const turnFutureRpInfluence = heroIsIp ? (river?.ipRp ?? 0) : (river?.oopRp ?? 0);
@@ -447,7 +458,6 @@ export function useQuantumEngine({
       potAcumuladoHero: potTurn / 2,
       potTotal: potTurn,
       heroIsIp,
-      bountyValue: pkoValue * 100,
       futureRpInfluence: turnFutureRpInfluence,
     });
 
@@ -457,12 +467,11 @@ export function useQuantumEngine({
       potAcumuladoHero: potFlop / 2,
       potTotal: potFlop,
       heroIsIp,
-      bountyValue: pkoValue * 100,
       futureRpInfluence: flopFutureRpInfluence,
     });
 
     return { flop, turn, river };
-  }, [stableStacks, resolvedPrizes, pkoValue, heroIsIp, isBaseline, postFlopPots]);
+  }, [stableStacks, resolvedPrizes, heroIsIp, isBaseline, postFlopPots]);
 
   // SOTA: Distribuição Matemática Exponencial da Perspectiva (PMev)
   // O RP é sobre colisão. No flop, sem colisão evidente, ele é dissipado e distribuído condicional e exponencialmente.
@@ -548,39 +557,6 @@ export function useQuantumEngine({
     return stableStreetFreqs;
   }, [stableStreetFreqs, activeNodelock, heroIsIp]);
 
-  // SOTA: Despacho assíncrono para a esteira WASM (Web Worker)
-  useEffect(() => {
-    // SOTA: Payload purificado. Tipagem ChipEvFreqs estrita e validada.
-    if (dispatchIcmDistortion) {
-      dispatchIcmDistortion({
-        ipRpFlop,
-        oopRpFlop,
-        freqFlop: effectiveStreetFreqs.flop,
-        ipRpTurn,
-        oopRpTurn,
-        freqTurn: effectiveStreetFreqs.turn,
-        ipRpRiver,
-        oopRpRiver,
-        freqRiver: effectiveStreetFreqs.river,
-        topologicAggression,
-        activePlayers,
-        pots: postFlopPots,
-      });
-    }
-  }, [
-    dispatchIcmDistortion,
-    ipRpFlop,
-    oopRpFlop,
-    ipRpTurn,
-    oopRpTurn,
-    ipRpRiver,
-    oopRpRiver,
-    effectiveStreetFreqs,
-    topologicAggression,
-    activePlayers,
-    postFlopPots,
-  ]);
-
   // SOTA FIX: Interceptador adaptativo. Protege o primeiro frame do React forçando o
   // contrato antigo do solver síncrono no novo formato estrito IP/OOP antes da resposta do Worker.
   const formatSyncSolverResult = (
@@ -616,10 +592,11 @@ export function useQuantumEngine({
     };
   };
 
+  // Distorção calculada só aqui. Até 2026-09-17 um worker refazia o mesmo solveIcmDistortion com os mesmos argumentos
+  // 150 ms depois, e cada mudança renderizava duas vezes; o solver custa cerca de 10 µs por street (SIM-04).
   const { nashFlop, nashTurn, nashRiver } = useMemo(
     () => ({
       nashFlop:
-        nashResults?.flop ??
         formatSyncSolverResult(
           solveIcmDistortion(ipRpFlop, oopRpFlop, effectiveStreetFreqs.flop, topologicAggression, postFlopPots[0], 0, activePlayers),
           effectiveStreetFreqs.flop,
@@ -627,7 +604,6 @@ export function useQuantumEngine({
           oopRpFlop,
         ),
       nashTurn:
-        nashResults?.turn ??
         formatSyncSolverResult(
           solveIcmDistortion(ipRpTurn, oopRpTurn, effectiveStreetFreqs.turn, topologicAggression, postFlopPots[1], 1, activePlayers),
           effectiveStreetFreqs.turn,
@@ -635,7 +611,6 @@ export function useQuantumEngine({
           oopRpTurn,
         ),
       nashRiver:
-        nashResults?.river ??
         formatSyncSolverResult(
           solveIcmDistortion(ipRpRiver, oopRpRiver, effectiveStreetFreqs.river, topologicAggression, postFlopPots[2], 2, activePlayers),
           effectiveStreetFreqs.river,
@@ -644,7 +619,6 @@ export function useQuantumEngine({
         ),
     }),
     [
-      nashResults,
       ipRpFlop,
       oopRpFlop,
       ipRpTurn,
@@ -656,6 +630,15 @@ export function useQuantumEngine({
       postFlopPots,
       activePlayers,
     ],
+  );
+
+  const nashResults = useMemo<NashDistortionResults>(
+    () => ({
+      ...(nashFlop ? { flop: nashFlop } : {}),
+      ...(nashTurn ? { turn: nashTurn } : {}),
+      ...(nashRiver ? { river: nashRiver } : {}),
+    }),
+    [nashFlop, nashTurn, nashRiver],
   );
 
   // SOTA: Isolamento de referência para evitar GC Churn e quebra de memoização downstream
@@ -677,6 +660,7 @@ export function useQuantumEngine({
   );
 
   return {
+    pkoPreview,
     effectiveIpRp,
     effectiveOopRp,
     rpSource,
@@ -698,7 +682,6 @@ export function useQuantumEngine({
     isCalculatingMultiway,
     nashResults,
     dispatchInsolvencyMatrix,
-    dispatchIcmDistortion,
     dispatchMultiwayMatrix,
   };
 }

@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CfrCanvas, type CfrCanvasRef } from '../ui/CfrCanvas';
+import { useLoopVisibility } from '../hooks/useLoopVisibility';
 import { calculateJandaGeometricSizing, calculateJandaMDF } from '@/lib/canonicalTheoryEngine';
 import {
 	appendCfrRegretSample,
@@ -109,6 +110,8 @@ export default function CfrRegretPanel({
 	const [stack, setStack] = useState<number>(initialStack);
 	const [equity, setEquity] = useState<number>(initialEquity);
 	const workerRef = useRef<Worker | null>(null);
+	// Sem pausa, o laço rAF seguia com a aba oculta ou o painel fora da tela (SIM-06).
+	const [painelRef, lacoAtivo] = useLoopVisibility();
 	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'error'>('starting');
 
 	const canonicalSizing = useMemo(() => {
@@ -213,7 +216,7 @@ export default function CfrRegretPanel({
 		};
 
 		const loop = () => {
-			if (!isWorkerBusy && workerRef.current) {
+			if (!isWorkerBusy && workerRef.current && lacoAtivo.current) {
 				isWorkerBusy = true;
 				// SOTA: Delega o cálculo do Regret Matching Real para o Web Worker
 				workerRef.current.postMessage({
@@ -235,10 +238,10 @@ export default function CfrRegretPanel({
 			workerRef.current?.terminate();
 			workerRef.current = null;
 		};
-	}, []);
+	}, [lacoAtivo]);
 
 	return (
-		<div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+		<div ref={painelRef} className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
 			<div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
 
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-white/5 gap-6">
