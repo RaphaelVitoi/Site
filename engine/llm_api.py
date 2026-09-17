@@ -65,10 +65,13 @@ async def call_gemini(
     response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invoca o provedor Gemini via REST API."""
+    # BK-14 (auditoria 2026-09-16): sem chave, este ramo usava API_SECRET_TOKEN --
+    # a credencial de servico do backend -- como chave Gemini, e a enviava ao
+    # Google na query string. Nenhum chamador atual cai aqui; a armadilha sai.
     if not api_key:
-        api_key = os.environ.get("API_SECRET_TOKEN", "")
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-    headers = {"Content-Type": CONTENT_TYPE_JSON}
+        raise ValueError("call_gemini exige api_key do Gemini; a credencial de servico nunca substitui a chave.")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    headers = {"Content-Type": CONTENT_TYPE_JSON, "x-goog-api-key": api_key}
     mensagens: list[dict[str, Any]] = [{"role": "user", "parts": [{"text": user_prompt}]}]
     data: dict[str, Any]
     if GoogleGenAIAdapter.e_geracao_atual(model):

@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from utils.text import enforce_pure_ascii
 
@@ -24,25 +25,29 @@ class AuditEngine:
         self.active_buffer = []
         self.MAX_BUFFER: int = 50
 
-    async def process_frontend_events(self, events: list[dict]):
+    async def process_frontend_events(self, events: list[Any]):
         """Processa, purifica e descarrega a entropia visual no disco."""
         if not events:
             return
 
         purified_events = []
         for evt in events:
+            # Evento que nao e dict levantava AttributeError e descartava o lote
+            # inteiro (BK-05). Descarta-se so o evento invalido.
+            if not isinstance(evt, dict):
+                continue
             # Purificacao: Remocao de ruido base64, source maps gigantes do webpack
             safe_msg = str(evt.get("message", ""))
             if len(safe_msg) > 1000:
                 safe_msg = safe_msg[:1000] + "... [TRUNCATED_BY_SOTA]"
 
-            level = evt.get("level", "info").upper()
+            level = str(evt.get("level", "info"))[:16].upper()
 
             purified_events.append(
                 {
                     "timestamp": datetime.now(UTC).isoformat(),
-                    "level": level,
-                    "component": evt.get("component", "Unknown"),
+                    "level": enforce_pure_ascii(level),
+                    "component": enforce_pure_ascii(str(evt.get("component", "Unknown"))[:128]),
                     "message": enforce_pure_ascii(safe_msg),
                 }
             )
@@ -63,11 +68,13 @@ class AuditEngine:
 
         target_file = self.log_dir / f"vdom_audit_{datetime.now(UTC).strftime('%Y%m%d')}.jsonl"
 
+        # Troca o buffer ANTES do await. O `clear()` depois da gravacao apagava os
+        # eventos que chegassem enquanto a thread escrevia, sem grava-los.
+        batch, self.active_buffer = self.active_buffer, []
+
         def _write():
             with open(target_file, "a", encoding="ascii", errors="backslashreplace") as f:
-                for evt in self.active_buffer:
-                    f.write(json.dumps(evt, ensure_ascii=True) + "\n")
+                f.writelines(json.dumps(evt, ensure_ascii=True) + "\n" for evt in batch)
 
         await asyncio.to_thread(_write)
-        logger.info(f"[AUDIT ENGINE] {len(self.active_buffer)} anomalias do VDOM purificadas e persistidas.")
-        self.active_buffer.clear()
+        logger.info(f"[AUDIT ENGINE] {len(batch)} anomalias do VDOM purificadas e persistidas.")

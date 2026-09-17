@@ -508,7 +508,7 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
 
         await asyncio.to_thread(_save_task_result_sync, task.id, task.agent, response_text)
 
-        modified_files = await apply_god_mode(response_text, manager)
+        modified_files = await apply_god_mode(response_text, manager, task.agent)
 
         if task.agent == AGENT_DISPATCHER:
             await _process_dispatcher_output(task, manager, response_text)
