@@ -11,7 +11,8 @@ import Header from '@/components/ui/layout/Header';
 import JsonLd from '@/components/seo/JsonLd';
 import { SotaGlobalSyncProvider } from '@/components/simulator/hooks/useSotaSync';
 import SotaBackground from '@/components/ui/layout/SotaBackground';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+// Subconjunto gerado por scripts/fontawesome-subset.py: so os icones citados em src (19 KB de fonte contra 247 KB).
+import '@/styles/fontawesome/fontawesome-subset.css';
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Montserrat, Playfair_Display, EB_Garamond } from 'next/font/google';
 import './globals.css';

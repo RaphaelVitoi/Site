@@ -14,7 +14,6 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true, // SOTA: Native Gzip/Brotli compression in production and edge
   devIndicators: false,
-  transpilePackages: ['@fortawesome/fontawesome-free'],
   // Avatares dos provedores OAuth configurados em src/auth.ts, exibidos via next/image (FE-13).
   // O otimizador serve a imagem pela propria origem, o que tambem a mantem compativel com o COEP.
   images: {

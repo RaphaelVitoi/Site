@@ -58,7 +58,7 @@ export default function PsicologiaHighStakesPage() {
 				title="Psicologia High Stakes"
 				subtitle="A Fenomenologia da Incerteza: Exegese crítica das heurísticas de ICM e controle de tilt."
 				category="Psicologia"
-				icon="fa-brain-circuit"
+				icon="fa-brain"
 			/>
 
 			<div className="sota-container py-12 md:py-24">
