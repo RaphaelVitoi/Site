@@ -1,9 +1,6 @@
 /* @ts-self-types="./vitoi_equity_engine.d.ts" */
 
 /**
- * ========================================================================
- * SOTA MEMORY BRIDGE: ZERO-COPY ALLOCATION
- * ========================================================================
  * Aloca um buffer contíguo no Heap do WASM e devolve o ponteiro bruto ao JS.
  * Garante que o React deposite o array de ranges sem overflow.
  * @param {number} size
