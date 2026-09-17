@@ -373,7 +373,7 @@ export function useQuantumEngine({
 
   // PKO em desenvolvimento: leitura paralela, nunca entra no RP vanilla acima.
   const pkoPreview = useMemo<PkoPreview | null>(() => {
-    if (isBaseline || !(pkoValue > 0)) return null;
+    if (isBaseline || pkoValue <= 0) return null;
     try {
       const res = deriveRps(stableStacks, resolvedPrizes, ipIndex, oopIndex, pkoValue * 100);
       if (!res || !derivedRp) return null;
