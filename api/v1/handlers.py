@@ -91,7 +91,10 @@ from engine.timesfm_engine import (
     TimesFMGovernanceError,
 )
 from engine.vitoi_perspective_engine import VitoiPerspectiveEngine
-from llm.budget import _RATE_LIMITERS  # pyright: ignore[reportPrivateUsage]
+from llm.budget import (
+    _RATE_LIMITERS,  # pyright: ignore[reportPrivateUsage]
+    DAILY_API_BUDGET,
+)
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
 from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
@@ -378,10 +381,16 @@ async def handle_get_db_summary(request: web.Request) -> web.Response:
         # SOTA: Centraliza a leitura de metricas via API para evitar lock de DB
         counts = await manager.get_task_counts()
         budget = await manager.get_daily_budget_usage()
+        agents_manifest = getattr(_te, "AGENTS_MANIFEST", {})
+        # FE-05 (auditoria de frontend 2026-09-17): o dashboard exibia o teto do orcamento e a
+        # contagem de agentes como constantes (5000 e 15; o manifesto tem 19). Os dois saem das
+        # fontes canonicas, e o nome diz o que se conta: agentes REGISTRADOS, nao vivos.
         return web.json_response(
             {
                 "tasks": counts,
                 "budget": budget,
+                "budget_limit": DAILY_API_BUDGET,
+                "agents_registered": len(agents_manifest) if isinstance(agents_manifest, dict) else 0,
             }
         )
     except Exception as e:  # noqa: BLE001

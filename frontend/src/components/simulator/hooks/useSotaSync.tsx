@@ -42,23 +42,42 @@ interface SotaSyncContextType {
 
 const SotaSyncContext = createContext<SotaSyncContextType | null>(null);
 
+const POSICOES: ReadonlyArray<SotaPhysicsState['position']> = ['IP', 'OOP', 'BB', 'SB'];
+const STATUS: ReadonlyArray<SotaPhysicsState['referenceStatus']> = ['baseline', 'tilt', 'protecting', 'bubble'];
+const numeroFinito = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/** Recusa estado salvo com forma de outra versão do schema, em vez de propagá-lo como válido. */
+export function isSotaPhysicsState(valor: unknown): valor is SotaPhysicsState {
+	if (typeof valor !== 'object' || valor === null || Array.isArray(valor)) return false;
+	const v = valor as Record<string, unknown>;
+	return (
+		numeroFinito(v['heroStack']) &&
+		numeroFinito(v['pot']) &&
+		numeroFinito(v['heroInvested']) &&
+		POSICOES.includes(v['position'] as SotaPhysicsState['position']) &&
+		STATUS.includes(v['referenceStatus'] as SotaPhysicsState['referenceStatus']) &&
+		Array.isArray(v['prizes']) &&
+		v['prizes'].every(numeroFinito)
+	);
+}
+
 export function SotaGlobalSyncProvider({ children }: { readonly children: React.ReactNode }) {
-	const [storedPhysics, setStoredPhysics] = useDebouncedLocalStorage<SotaPhysicsState>(
+	const [storedPhysics, setStoredPhysics, isStorageLoaded] = useDebouncedLocalStorage<SotaPhysicsState>(
 		'sota-physics-v1',
 		defaultPhysics,
+		150,
+		isSotaPhysicsState,
 	);
 	const [physics, setPhysics] = useState<SotaPhysicsState>(defaultPhysics);
 	const [isHydrated, setIsHydrated] = useState(false);
 
-	// Hidratação (Client-Side) garantindo sincronia sem flicker
+	// Hidratação: só depois que o hook terminou de ler o localStorage. Hidratar antes disso copiava
+	// o padrão e, na sequência, o efeito de persistência gravava o padrão por cima do salvo (FE-02).
 	useEffect(() => {
-		if (!isHydrated) {
-			if (storedPhysics) {
-				setPhysics(storedPhysics);
-			}
-			setIsHydrated(true);
-		}
-	}, [storedPhysics, isHydrated]);
+		if (isHydrated || !isStorageLoaded) return;
+		setPhysics({ ...defaultPhysics, ...storedPhysics });
+		setIsHydrated(true);
+	}, [storedPhysics, isStorageLoaded, isHydrated]);
 
 	const updatePhysics = React.useCallback((partial: Partial<SotaPhysicsState>) => {
 		setPhysics((prev) => {

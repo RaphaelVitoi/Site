@@ -58,7 +58,7 @@ async function getOrchestratorTelemetry() {
 			activeTasks: 0,
 			dailyBudget: 0,
 			consumedBudget: 0,
-			agentsOnline: 0,
+			agentsRegistered: 0,
 		};
 	}
 
@@ -76,10 +76,11 @@ async function getOrchestratorTelemetry() {
 		return {
 			available: true,
 			activeTasks: (data?.tasks?.running || 0) + (data?.tasks?.pending || 0),
-			dailyBudget: 5000,
-			consumedBudget:
-				typeof data?.budget === 'number' ? data.budget : data?.budget?.call_count || 0,
-			agentsOnline: 15, // Total consolidado de agentes na malha VITOI
+			// Teto e agentes vêm do backend (llm/budget.py e data/agents_manifest.json). Até 2026-09-17
+			// eram constantes aqui — 5000 e 15, com 19 agentes no manifesto (FE-05).
+			dailyBudget: typeof data?.budget_limit === 'number' ? data.budget_limit : 0,
+			consumedBudget: typeof data?.budget === 'number' ? data.budget : 0,
+			agentsRegistered: typeof data?.agents_registered === 'number' ? data.agents_registered : 0,
 		};
 	} catch (error: unknown) {
 		if (isNetworkRefused(error)) {
@@ -95,14 +96,14 @@ async function getOrchestratorTelemetry() {
 			activeTasks: 0,
 			dailyBudget: 0,
 			consumedBudget: 0,
-			agentsOnline: 0,
+			agentsRegistered: 0,
 		};
 	}
 }
 
 async function getPredictiveProfile() {
 	if (!shouldQueryDashboardOrchestrator()) {
-		return { available: false, topVazamento: 'Indisponível', evLoss: 0 };
+		return { available: false, topVazamento: 'Indisponível' };
 	}
 
 	try {
@@ -119,12 +120,11 @@ async function getPredictiveProfile() {
 
 		const profile = parseProfileMap(data);
 		const sortedEntries = Array.from(profile.entries()).sort((a, b) => b[1] - a[1]);
-		const topLeak = sortedEntries[0]?.[0] || 'Risk Premium';
+		const topLeak = sortedEntries[0]?.[0] ?? null;
 
 		return {
 			available: true,
 			topVazamento: topLeak,
-			evLoss: 12,
 		};
 	} catch (error: unknown) {
 		if (isNetworkRefused(error)) {
@@ -135,7 +135,7 @@ async function getPredictiveProfile() {
 			console.error('[Predictive SOTA] Falha na inferência preditiva:', error);
 		}
 		// Fallback silencioso (Fricção Zero) para evitar ruptura em tela caso o modelo preditivo não esteja treinado
-		return { available: false, topVazamento: 'Indisponível', evLoss: 0 };
+		return { available: false, topVazamento: 'Indisponível' };
 	}
 }
 
@@ -161,7 +161,7 @@ export default async function DashboardPage() {
 				) : null}
 
 				{predictive.available ? (
-					<SniperAdvisor topVazamento={predictive.topVazamento} evLoss={predictive.evLoss} />
+					<SniperAdvisor topVazamento={predictive.topVazamento} />
 				) : null}
 
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -176,7 +176,7 @@ export default async function DashboardPage() {
 
 					<GlassPanel className="p-6 border-accent-emerald/20">
 						<div className="text-text-muted text-xs font-black uppercase tracking-widest mb-2">
-							Custo Diário (Tokens)
+							Chamadas de API Hoje
 						</div>
 						<div className="text-3xl font-black text-accent-emerald-light">
 							{telemetry.available ? (
@@ -194,10 +194,10 @@ export default async function DashboardPage() {
 
 					<GlassPanel className="p-6 border-accent-indigo/20">
 						<div className="text-text-muted text-xs font-black uppercase tracking-widest mb-2">
-							Agentes Vivos
+							Agentes Registrados
 						</div>
 						<div className="text-3xl font-black text-white">
-							{telemetry.available ? telemetry.agentsOnline : '—'}
+							{telemetry.available ? telemetry.agentsRegistered : '—'}
 						</div>
 					</GlassPanel>
 
@@ -206,7 +206,7 @@ export default async function DashboardPage() {
 							Vazamento Principal
 						</div>
 						<div className="text-3xl font-black text-rose-400">
-							{predictive.available ? predictive.topVazamento : '—'}
+							{predictive.available ? (predictive.topVazamento ?? '—') : '—'}
 						</div>
 					</GlassPanel>
 				</div>
