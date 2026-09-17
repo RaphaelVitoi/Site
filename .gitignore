@@ -65,6 +65,9 @@ engine/llama_cpp/*.exe
 data/chroma_db/
 queue/tasks.db
 *.lance
+data/hm2/
+**/postgreSQL_data*/
+**/postgreSQL/
 
 # `.cerebro/agent-memory/` era ignorada INTEIRA ate 2026-08-28, e o efeito foi o
 # oposto do pretendido: a arvore guardava 23 arquivos .md de memoria agentica --

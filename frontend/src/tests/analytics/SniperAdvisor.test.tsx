@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { RECOMENDACOES_POR_VETOR, SniperAdvisor } from './SniperAdvisor';
+import { RECOMENDACOES_POR_VETOR, SniperAdvisor } from '@/components/analytics/SniperAdvisor';
 
 // As seis chaves que o perfil preditivo produz (predictive_forest.py -> /api/v1/predictive).
 const VETORES_DO_PERFIL = [

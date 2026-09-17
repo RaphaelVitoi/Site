@@ -24,11 +24,13 @@ import {
 } from '@/lib/timesfm-client';
 
 const TIMESFM_CAPABILITY = getEngineCapability('timesfm-forecast');
-const WORKER_STATUS_LABEL = {
+export const HRC_CONVERGENCE_TARGET_CI = 0.003; // ~0.3% CI (métrica do HRC: distância em relação ao Nash / e-nash)
+const WORKER_STATUS_LABEL: Record<string, string> = {
 	starting: 'iniciando',
 	active: 'ativo',
+	converged: 'convergido (0.3% CI)',
 	error: 'indisponível',
-} as const;
+};
 
 interface CfrWorkerMessage {
 	matrix?: Float32Array;
@@ -112,7 +114,8 @@ export default function CfrRegretPanel({
 	const workerRef = useRef<Worker | null>(null);
 	// Sem pausa, o laço rAF seguia com a aba oculta ou o painel fora da tela (SIM-06).
 	const [painelRef, lacoAtivo] = useLoopVisibility();
-	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'error'>('starting');
+	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'converged' | 'error'>('starting');
+	const isConvergedRef = useRef(false);
 
 	const canonicalSizing = useMemo(() => {
 		return calculateJandaGeometricSizing(pot, stack, 3);
@@ -128,13 +131,13 @@ export default function CfrRegretPanel({
 	>('timesfm-2.5-200m');
 	const [regretSamples, setRegretSamples] = useState<CfrRegretDiagnostic[]>([]);
 	const [cfrConvergence, setCfrConvergence] = useState<CfrConvergenceForecastPayload>(() =>
-		calculateClientCfrConvergence([], 8, 0.001, preferredModel),
+		calculateClientCfrConvergence([], 8, HRC_CONVERGENCE_TARGET_CI, preferredModel),
 	);
 
 	useEffect(() => {
 		let cancelled = false;
 		const measuredHistory = regretSamples.map(({ value }) => value);
-		void forecastCfrConvergence(measuredHistory, 8, 0.001, preferredModel).then((forecast) => {
+		void forecastCfrConvergence(measuredHistory, 8, HRC_CONVERGENCE_TARGET_CI, preferredModel).then((forecast) => {
 			if (!cancelled) setCfrConvergence(forecast);
 		});
 		return () => {
@@ -162,12 +165,16 @@ export default function CfrRegretPanel({
 	});
 	useEffect(() => {
 		paramsRef.current = { kappa, nodes, pot, stack, equity };
+		isConvergedRef.current = false;
+		setWorkerStatus('active');
 	}, [kappa, nodes, pot, stack, equity]);
 
 	useEffect(() => {
 		setPot(initialPot);
 		setStack(initialStack);
 		setEquity(initialEquity);
+		isConvergedRef.current = false;
+		setWorkerStatus('active');
 	}, [initialPot, initialStack, initialEquity]);
 
 	useEffect(() => {
@@ -180,10 +187,18 @@ export default function CfrRegretPanel({
 
 		workerRef.current.onmessage = (e: MessageEvent<CfrWorkerMessage>) => {
 			isWorkerBusy = false;
-			setWorkerStatus('active');
 			const { matrix, diagnostic } = e.data;
 			if (diagnostic) {
 				setRegretSamples((history) => appendCfrRegretSample(history, diagnostic));
+				// SOTA HRC Criterion: Parada automática ao convergir para e-Nash <= 0.3% CI (0.003)
+				if (diagnostic.iteration >= 10 && diagnostic.value <= HRC_CONVERGENCE_TARGET_CI) {
+					isConvergedRef.current = true;
+					setWorkerStatus('converged');
+				} else if (!isConvergedRef.current) {
+					setWorkerStatus('active');
+				}
+			} else if (!isConvergedRef.current) {
+				setWorkerStatus('active');
 			}
 			if (!matrix) return; // SOTA Guard: Ignora pacotes paralelos do worker (ex: cfr_strategy) para evitar null-pointers e asfixia do Error Overlay
 
@@ -216,7 +231,7 @@ export default function CfrRegretPanel({
 		};
 
 		const loop = () => {
-			if (!isWorkerBusy && workerRef.current && lacoAtivo.current) {
+			if (!isWorkerBusy && workerRef.current && lacoAtivo.current && !isConvergedRef.current) {
 				isWorkerBusy = true;
 				// SOTA: Delega o cálculo do Regret Matching Real para o Web Worker
 				workerRef.current.postMessage({
@@ -253,10 +268,36 @@ export default function CfrRegretPanel({
 						Counterfactual Regret Minimization (CFR) & Predictive Pathfinding.
 					</p>
 				</div>
-				<div className="text-[0.6rem] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border border-accent-indigo/20 bg-accent-indigo/5 text-accent-indigo-light shadow-lg flex items-center gap-2">
-					<div className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse" />
-					CFR Worker {WORKER_STATUS_LABEL[workerStatus]} ·{' '}
-					{cfrConvergence.fallback_used ? 'forecast fallback' : 'TimesFM ativo'}
+				<div
+					className={`text-[0.6rem] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border shadow-lg flex items-center gap-2 transition-all ${
+						workerStatus === 'converged'
+							? 'border-accent-emerald/40 bg-accent-emerald/10 text-accent-emerald'
+							: 'border-accent-indigo/20 bg-accent-indigo/5 text-accent-indigo-light'
+					}`}
+				>
+					<div
+						className={`w-1.5 h-1.5 rounded-full ${
+							workerStatus === 'converged'
+								? 'bg-accent-emerald shadow-[0_0_8px_var(--color-accent-emerald,#10b981)]'
+								: 'bg-accent-indigo animate-pulse'
+						}`}
+					/>
+					<span>
+						CFR Worker {WORKER_STATUS_LABEL[workerStatus] ?? workerStatus} ·{' '}
+						{cfrConvergence.fallback_used ? 'forecast fallback' : 'TimesFM ativo'}
+					</span>
+					{workerStatus === 'converged' && (
+						<button
+							type="button"
+							onClick={() => {
+								isConvergedRef.current = false;
+								setWorkerStatus('active');
+							}}
+							className="ml-2 cursor-pointer rounded border border-accent-emerald/40 bg-accent-emerald/20 px-2 py-0.5 text-[0.5rem] font-black text-accent-emerald uppercase hover:bg-accent-emerald/30 transition-colors active:scale-95"
+						>
+							Reiterar
+						</button>
+					)}
 				</div>
 			</div>
 

@@ -15,6 +15,8 @@ import { GravitationalScannerPanel } from '@/components/simulator/ui/Gravitation
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { WasmTelemetryWidget } from './WasmTelemetryWidget';
 import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
+import { ProspectRiskCorridorWidget } from '@/components/simulator/ui/ProspectRiskCorridorWidget';
+import type { CanonicalAnchor } from '@/lib/prospectCorridor';
 import type { PerspectiveWorkerRequest, SimulatorWorkerResponse } from '../workers/insolvencyProtocol';
 
 const DEFAULT_STACKS = [9.4, 52.4, 22.2, 7, 44.3, 24.3, 40, 13.4, 55];
@@ -143,6 +145,16 @@ export default function PerspectivePanel({
   const [blindsRising, setBlindsRising] = useState(initialBlindsRising);
   const [kappa, setKappa] = useState(0.5);
   const [humanNoiseFactor, setHumanNoiseFactor] = useState(0); 
+  const [activeAnchorId, setActiveAnchorId] = useState<string>('custom');
+
+  const handleSelectAnchor = (anchor: CanonicalAnchor) => {
+    setActiveAnchorId(anchor.id);
+    setHumanNoiseFactor(Math.max(0, Math.min(1, anchor.defaults.psiFactor - 0.5)));
+    setRealization(anchor.defaults.realizationFactor);
+    setNumPlayers(anchor.defaults.numPlayers);
+    setIsNearPayjump(anchor.defaults.isNearPayjump);
+    setBlindsRising(anchor.defaults.blindsRising);
+  }; 
 
   // ... (rest of states unchanged)
   const [wasmLogs, setWasmLogs] = useState<string[]>([
@@ -496,6 +508,20 @@ export default function PerspectivePanel({
           />
         </div>
       </div>
+
+      {/* SOTA: MOTOR EXPERIMENTAL · CORREDOR ESTOCÁSTICO & ÂNCORAS CANÔNICAS ATIVÁVEIS */}
+      <ProspectRiskCorridorWidget
+        rawEquity={winProb}
+        realizationFactor={realization}
+        psiFactor={1.0 + humanNoiseFactor * 0.5}
+        potOdds={heroCost / (potSize + heroCost || 1)}
+        spr={stacks[0] ? stacks[0] / (potSize || 1) : 2.0}
+        numPlayers={numPlayers}
+        lossAversionLambda={referenceStatus === 'bubble' ? 3.0 : 2.25}
+        isNearPayjump={isNearPayjump}
+        activeAnchorId={activeAnchorId}
+        onSelectAnchor={handleSelectAnchor}
+      />
 
       {/* PIPELINE DE TRANSMUTAÇÃO QUANTUM */}
       <div className="scrollbar-hide flex flex-col gap-8">

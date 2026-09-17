@@ -175,6 +175,27 @@ class RiskContext:
     loss_aversion_lambda: float = DEFAULT_LAMBDA
 
 
+@dataclass(frozen=True, slots=True)
+class StochasticCorridorResult:
+    """Resultado da modelagem estocastica de realizacao de equidade e perspectiva.
+
+    Combina Fator Psi (modulador psicotemporal), Realizacao de Equidade (R)
+    e a Curva de Utilidade S-Shape (Kahneman & Tversky) em um corredor estocastico
+    de media (tendencia central mu) e desvios-padrao (dispersao sigma).
+    """
+
+    mu: float
+    sigma: float
+    band_1s_lower: float
+    band_1s_upper: float
+    band_2s_lower: float
+    band_2s_upper: float
+    realization_factor: float
+    psi_factor: float
+    solvency_probability: float
+    active_anchor_id: str
+
+
 class ProspectRiskEngine:
     """Motor de calculo de Utilidade S-Shape e Bubble Factor Dinamico."""
 
@@ -225,6 +246,92 @@ class ProspectRiskEngine:
         psi = self.calculate_edge_time_modulator()
         req_equity = a + premio_relativo * psi * (1.0 - a)
         return min(0.95, max(0.0, req_equity))
+
+    def evaluate_stochastic_corridor(
+        self,
+        raw_equity: float,
+        spr: float = 1.0,
+        num_opponents: int = 1,
+        playability: float = 1.0,
+        raw_pot_odds: float = 0.33,
+    ) -> StochasticCorridorResult:
+        """Modela o corredor estocastico de perspectiva (mu +- sigma).
+
+        Integra o Fator Psi com a Realizacao de Equidade (R) e a Curva de Utilidade S-Shape,
+        gerando uma distribuicao com tendencia central (mu) e bandas de dispersao (1s e 2s).
+        """
+        psi = self.calculate_edge_time_modulator()
+
+        # Realizacao posicional e estrutural (R)
+        pos_base = 1.15 if self._ctx.is_in_position else 0.85
+        if spr <= 0.1:
+            r = 1.0
+        else:
+            spr_modifier = math.tanh(0.35 * spr)
+            r = pos_base * (1.0 + (spr_modifier * (playability - 1.0)))
+
+        # Damping multiway na realizacao (Teorema 7)
+        n = max(1, num_opponents)
+        if n > 1:
+            r *= max(0.40, 1.0 - 0.12 * (n - 1))
+        r = max(0.30, min(1.60, r))
+
+        # Equidade realizada efetiva
+        eff_equity = min(0.99, max(0.01, raw_equity * r))
+
+        # Equidade de equilibrio requerida sob pressao de bolha
+        req_eq = self.evaluate_required_equilibrium_equity(raw_pot_odds)
+
+        # Tendencia central mu (margem percentual sobre o equilibrio)
+        mu = round((eff_equity - req_eq) * 100.0, 2)
+
+        # Dispersao / Desvio-padrao sigma
+        # A volatilidade escala com SPR, numero de oponentes e aversao ao risco (lambda)
+        vol_spr = math.sqrt(max(0.2, spr / 2.0))
+        vol_mw = math.sqrt(float(n))
+        vol_lambda = math.sqrt(max(0.5, self._ctx.loss_aversion_lambda / 2.25))
+        vol_scale = vol_spr * vol_mw * vol_lambda * psi
+
+        # Base binomial de desvio de equidade
+        base_std = math.sqrt(max(0.01, raw_equity * (1.0 - raw_equity)))
+        sigma_raw = base_std * 32.0 * vol_scale / math.sqrt(8.0)
+        sigma = round(max(1.5, min(40.0, sigma_raw)), 2)
+
+        band_1s_lower = round(mu - sigma, 2)
+        band_1s_upper = round(mu + sigma, 2)
+        band_2s_lower = round(mu - 2.0 * sigma, 2)
+        band_2s_upper = round(mu + 2.0 * sigma, 2)
+
+        # Probabilidade de solvencia aproximada via Funcao Erro (Gaussiana)
+        z = mu / max(EPSILON, sigma)
+        solvency_prob = round(0.5 * (1.0 + math.erf(z / math.sqrt(2.0))), 4)
+
+        # Deteccao da ancora canonica mais compativel
+        if n >= 3 and not self._ctx.is_in_position:
+            active_anchor = "multiway_hydra"
+        elif self._ctx.loss_aversion_lambda >= 2.8 or self._ctx.delta_lose_dollars >= 2.0 * self._ctx.delta_win_dollars:
+            active_anchor = "ft_bubble"
+        elif spr >= 5.0 and self._ctx.is_in_position and playability >= 1.1:
+            active_anchor = "convex_leverage_ip"
+        elif spr <= 0.25:
+            active_anchor = "river_bluffcatcher"
+        elif self._ctx.time_to_blind_increase <= 4:
+            active_anchor = "orbital_inertia_fold"
+        else:
+            active_anchor = "custom"
+
+        return StochasticCorridorResult(
+            mu=mu,
+            sigma=sigma,
+            band_1s_lower=band_1s_lower,
+            band_1s_upper=band_1s_upper,
+            band_2s_lower=band_2s_lower,
+            band_2s_upper=band_2s_upper,
+            realization_factor=round(r, 3),
+            psi_factor=round(psi, 3),
+            solvency_probability=solvency_prob,
+            active_anchor_id=active_anchor,
+        )
 
 
 try:
