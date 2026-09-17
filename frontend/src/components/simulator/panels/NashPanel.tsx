@@ -11,6 +11,8 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import type { ChipEvFreqs, IcmDistortionResult, StreetChipEvFreqs } from '../solver/types';
 import { ActionRow } from '../ui/ActionRow';
+import { PkoDevControl } from '../ui/PkoDevControl';
+import type { PkoPreview } from '../hooks/useQuantumEngine';
 import { SotaTooltip } from '../ui/SotaTooltip';
 
 interface NashPanelProps {
@@ -25,6 +27,8 @@ interface NashPanelProps {
   };
   aggressionFactor: number;
   pkoValue: number;
+  /** Leitura exploratória do PKO; nula com PKO desligado. */
+  pkoPreview?: PkoPreview | null;
   isNearPayjump: boolean;
   blindsRisingSoon: boolean;
   isBaseline?: boolean;
@@ -251,13 +255,14 @@ export default function NashPanel({
   streetFreqs,
   streetRps,
   aggressionFactor,
-  pkoValue: _pkoValue,
+  pkoValue,
+  pkoPreview = null,
   isNearPayjump,
   blindsRisingSoon,
   isBaseline = false,
   onStreetFreqChange,
   onAggressionChange,
-  onPkoChange: _onPkoChange,
+  onPkoChange,
   onPayjumpToggle,
   onBlindsToggle,
 }: Readonly<NashPanelProps>) {
@@ -397,6 +402,8 @@ export default function NashPanel({
           </button>
         )}
       </div>
+
+      <PkoDevControl pkoValue={pkoValue} onPkoChange={onPkoChange} preview={pkoPreview} isBaseline={isBaseline} />
 
       {/* Street Selector - Estética High-End */}
       <div className="scrollbar-hide relative z-10 flex gap-4 overflow-x-auto rounded-3xl border border-white/5 bg-slate-950/60 p-2 shadow-inner">

@@ -62,11 +62,15 @@ describe('Proxy autenticado das rotas SOTA', () => {
 
 	it('backend inalcançável vira 503 estruturado, não 500', async () => {
 		globalThis.fetch = jest.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+		// O detalhe vai para o log do servidor, não para o corpo: o aviso é esperado e vira asserção.
+		const aviso = jest.spyOn(console, 'warn').mockImplementation(() => {});
 		const res = await encaminharAoNexus(pedido(), '/api/v1/timesfm/forecast', { obterSessao: comSessao, rotulo: 'TimesFM' });
 		expect(res.status).toBe(503);
 		const corpo = await res.json();
 		expect(corpo).toEqual({ status: 'ERROR', error: 'TimesFM: backend inalcançável.' });
 		expect(JSON.stringify(corpo)).not.toContain('ECONNREFUSED');
+		expect(aviso).toHaveBeenCalledWith(expect.stringContaining('backend inalcançável'), expect.any(Error));
+		aviso.mockRestore();
 	});
 
 	it('identifica o visitante ao backend por hash opaco, distinto por usuário (BK-06)', async () => {

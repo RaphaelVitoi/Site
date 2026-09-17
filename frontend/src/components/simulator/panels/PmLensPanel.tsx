@@ -239,12 +239,9 @@ export default function PmLensPanel({
 
   const ecosystem = use(SotaWasmContext);
 
-  // SOTA FIX: O Win Rate triturado pelo Monte Carlo (WebGPU) torna-se a Equity absoluta
-  const rawGpuEquity = ecosystem?.insolvencyMatrixData?.winRate
-    ? ecosystem.insolvencyMatrixData.winRate * 100
-    : undefined;
-  const equity =
-    rawGpuEquity === undefined ? (ecosystem?.nativeRangeMetric?.equity ?? 50) : Number(rawGpuEquity.toFixed(1));
+  // Fonte única da equity: o valor manual e o resultado de "Calcular cenário" escrevem no mesmo estado. Ler winRate
+  // por cima dele travava o slider depois do cálculo e tratava winRate 0 como ausente (SIM-02, SIM-07).
+  const equity = ecosystem?.nativeRangeMetric?.equity ?? 50;
   const isCalculatingEq = ecosystem?.isCalculatingInsolvency ?? false;
 
   useEffect(() => {

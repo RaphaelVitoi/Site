@@ -8,7 +8,6 @@ import type {
 	InsolvencyMetrics,
 	NashDistortionResults,
 	InsolvencyPayload,
-	DistortionPayload,
 } from './useQuantumEngine';
 
 interface UseMasterSpotLogicParams {
@@ -27,7 +26,6 @@ interface UseMasterSpotLogicParams {
 	insolvencyMatrixData: InsolvencyMetrics | null;
 	isCalculatingInsolvency: boolean;
 	dispatchInsolvencyMatrix: (payload: InsolvencyPayload) => void;
-	dispatchIcmDistortion: (payload: DistortionPayload) => void;
 	nashResults: NashDistortionResults | null;
 	bayesianWinProb: number | null;
 	predictiveProfile: Record<string, number> | null;
@@ -62,7 +60,6 @@ export function useMasterSpotLogic({
 	insolvencyMatrixData,
 	isCalculatingInsolvency,
 	dispatchInsolvencyMatrix,
-	dispatchIcmDistortion,
 	nashResults,
 	bayesianWinProb,
 	predictiveProfile,
@@ -262,7 +259,6 @@ export function useMasterSpotLogic({
 			insolvencyMatrixData,
 			isCalculatingInsolvency,
 			dispatchInsolvencyMatrix,
-			dispatchIcmDistortion,
 			nashResults,
 			setManualEquity,
 		}),
@@ -271,7 +267,6 @@ export function useMasterSpotLogic({
 			insolvencyMatrixData,
 			isCalculatingInsolvency,
 			dispatchInsolvencyMatrix,
-			dispatchIcmDistortion,
 			nashResults,
 		],
 	);

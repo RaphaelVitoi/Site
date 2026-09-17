@@ -57,6 +57,8 @@ describe('useDebouncedLocalStorage — robustez (FE-14)', () => {
 
 	it('recusa valor salvo com forma de outra versão e mantém o padrão', async () => {
 		localStorage.setItem(CHAVE, JSON.stringify({ heroStack: 'quarenta', prizes: 'x' }));
+		// O aviso é o comportamento esperado: vira asserção em vez de warning solto na suíte.
+		const aviso = jest.spyOn(console, 'warn').mockImplementation(() => {});
 		const vistos: number[] = [];
 		render(
 			<SotaGlobalSyncProvider>
@@ -67,6 +69,8 @@ describe('useDebouncedLocalStorage — robustez (FE-14)', () => {
 			jest.advanceTimersByTime(1000);
 		});
 		expect(vistos.at(-1)).toBe(40);
+		expect(aviso).toHaveBeenCalledWith(expect.stringContaining('forma incompatível'));
+		aviso.mockRestore();
 	});
 
 	it('quota excedida não derruba a aplicação', async () => {

@@ -1,4 +1,3 @@
-import { solveIcmDistortion } from '../solver/nashSolver';
 import type { SimulatorWorkerRequest, SimulatorWorkerResponse, MultiwayPayload } from './insolvencyProtocol';
 import { calculatePerspectivaVitoi, calculateRioTension } from '../../../lib/perspectiva';
 import { maskToBytes, rangeToBitmask } from './rangeParser';
@@ -34,15 +33,6 @@ export function processInsolvencyRequest(
       const risk = penalty / (request.currentPot + 0.01) * (1 + (1 - request.kappa));
       return { ...base, type: request.type, id: request.id, matrix: [winRate, loseRate, tieRate, ev, risk] };
     }
-    case 'DISTORTION':
-      return { ...base, type: request.type, id: request.id, nashResults: {
-        flop: solveIcmDistortion(request.ipRpFlop, request.oopRpFlop, request.freqFlop,
-          request.topologicAggression, request.pots[0], 0, request.activePlayers),
-        turn: solveIcmDistortion(request.ipRpTurn, request.oopRpTurn, request.freqTurn,
-          request.topologicAggression, request.pots[1], 1, request.activePlayers),
-        river: solveIcmDistortion(request.ipRpRiver, request.oopRpRiver, request.freqRiver,
-          request.topologicAggression, request.pots[2], 2, request.activePlayers),
-      } };
     case 'MULTIWAY_MATRIX':
       if (!Number.isInteger(request.numPlayers) || request.numPlayers < 2 || request.numPlayers > 9 ||
         request.rangesData.length !== request.numPlayers * 1326 ||
@@ -104,7 +94,7 @@ export async function dispatchSimulatorMessage(
     return processInsolvencyRequest(request as SimulatorWorkerRequest, kernels);
   } catch (error: unknown) {
     const detail = error instanceof Error ? error.message : String(error);
-    if (request && (request.type === 'MATRIX' || request.type === 'DISTORTION' || request.type === 'MULTIWAY_MATRIX')) {
+    if (request && (request.type === 'MATRIX' || request.type === 'MULTIWAY_MATRIX')) {
       return { type: request.type, id: request.id, error: detail, outputKind: 'working-model' };
     }
     return { type: 'ERROR', ...(request?.id === undefined ? {} : { id: request.id }), error: detail, outputKind: 'working-model' };
