@@ -370,7 +370,11 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
         encoding="utf-8",
         errors="replace",
         capture_output=True,
-        timeout=45,
+        # Mesmo gate completo dos dois primeiros casos, e o mesmo teto. Medido em
+        # 2026-09-17: 11 s o gate isolado, 30 s este teste isolado, 38 s com quatro
+        # execucoes em paralelo, e tres reprovacoes por TimeoutExpired de 45 s na
+        # suite integral com a maquina carregada. Decisao do Tier 0.
+        timeout=90,
         check=False,
     )
 

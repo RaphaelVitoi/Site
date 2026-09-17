@@ -117,6 +117,15 @@ describe('GtoCfrSimulator sem dado fabricado e sem laço sem fim (SIM-01, SIM-06
 		}
 	});
 
+	it('declara que o perfil de vilao do arquetipo e ilustrativo, nao medido', () => {
+		render(<GtoCfrSimulator />);
+		const aviso = screen.getByText(/Perfil ilustrativo/);
+		expect(aviso.textContent).toMatch(/VPIP 25/);
+		expect(aviso.textContent).toMatch(/PFR 20/);
+		expect(aviso.textContent).toMatch(/AF 3/);
+		expect(aviso.textContent).toMatch(/n[aã]o [eé] dado medido/);
+	});
+
 	it('um pedido por vez ao worker, e nenhum com a aba oculta', () => {
 		render(<GtoCfrSimulator />);
 		const worker = WorkerFalso.instancias.at(-1)!;
