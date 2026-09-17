@@ -434,7 +434,7 @@ export default function DashboardSOTA({
                   : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
               }`}
             >
-              <i className="fa-solid fa-radar text-xs" />
+              <i className="fa-solid fa-satellite-dish text-xs" />
               <span>Insolvência & Mesa</span>
             </button>
 
