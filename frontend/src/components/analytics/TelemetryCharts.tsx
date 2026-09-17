@@ -56,10 +56,15 @@ interface QuadrantMetric {
 	plainTitle: string;
 	subtitle: string;
 	count: number;
-	accuracy: number;
-	meanLoss: number;
+	/** `null` quando o quadrante não tem amostra. */
+	accuracy: number | null;
+	meanLoss: number | null;
 	totalLoss: number;
-	severity: 'OPTIMAL' | 'MODERATE' | 'HIGH' | 'CRITICAL';
+	severity: 'OPTIMAL' | 'MODERATE' | 'HIGH' | 'CRITICAL' | null;
+}
+
+function temStack(d: TelemetryPoint): d is TelemetryPoint & { stackDepthBb: number } {
+	return typeof d.stackDepthBb === 'number' && Number.isFinite(d.stackDepthBb);
 }
 
 interface HistogramTooltipPayload {
@@ -152,29 +157,11 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 	const [posFilter, setPosFilter] = useState<PositionFilter>('ALL_POS');
 	const [copiedFeedback, setCopiedFeedback] = useState<string | null>(null);
 
-	// Atribuição sintética determinística de stack depth e posição para amostras legadas
-	const enrichedData = useMemo(() => {
-		return data.map((d, index) => {
-			let stack = d.stackDepthBb;
-			if (stack === undefined || Number.isNaN(stack)) {
-				const mod = index % 6;
-				if (mod === 0 || mod === 3) stack = 10 + (index % 5);
-				else if (mod === 1 || mod === 4) stack = 20 + (index % 15);
-				else stack = 42 + (index % 30);
-			}
-
-			let pos = d.position;
-			if (!pos) {
-				pos = index % 2 === 0 ? 'IP' : 'OOP';
-			}
-
-			return {
-				...d,
-				stackDepthBb: stack,
-				position: pos,
-			};
-		});
-	}, [data]);
+	// Pontos sem posição ou profundidade de stack ficam SEM esses campos. Até 2026-09-17 eles eram
+	// preenchidos por índice (`index % 6`, `index % 2`) e os filtros e quadrantes operavam sobre valores
+	// inventados -- a telemetria gravada não traz nenhum dos dois (FE-03). Ausente entra na visão geral
+	// e fica fora de qualquer recorte que dependa do campo.
+	const enrichedData = data;
 
 	// Filtra os dados de acordo com a posição e profundidade de stack selecionadas
 	const filteredData = useMemo(() => {
@@ -182,12 +169,12 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 			if (posFilter === 'IP' && d.position !== 'IP') return false;
 			if (posFilter === 'OOP' && d.position !== 'OOP') return false;
 
-			const stack = d.stackDepthBb ?? 20;
-			if (stackFilter === 'SHALLOW' && stack >= 15) return false;
-			if (stackFilter === 'MID' && (stack < 15 || stack > 35)) return false;
-			if (stackFilter === 'DEEP' && stack <= 35) return false;
-
-			return true;
+			if (stackFilter === 'ALL') return true;
+			const stack = temStack(d) ? d.stackDepthBb : undefined;
+			if (stack === undefined) return false;
+			if (stackFilter === 'SHALLOW') return stack < 15;
+			if (stackFilter === 'MID') return stack >= 15 && stack <= 35;
+			return stack > 35;
 		});
 	}, [enrichedData, posFilter, stackFilter]);
 
@@ -196,9 +183,9 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 		const byPos = (p: string) => enrichedData.filter((d) => d.position === p);
 		return {
 			ALL_STACK: enrichedData.length,
-			SHALLOW: enrichedData.filter((d) => (d.stackDepthBb ?? 20) < 15).length,
-			MID: enrichedData.filter((d) => (d.stackDepthBb ?? 20) >= 15 && (d.stackDepthBb ?? 20) <= 35).length,
-			DEEP: enrichedData.filter((d) => (d.stackDepthBb ?? 20) > 35).length,
+			SHALLOW: enrichedData.filter((d) => temStack(d) && d.stackDepthBb < 15).length,
+			MID: enrichedData.filter((d) => temStack(d) && d.stackDepthBb >= 15 && d.stackDepthBb <= 35).length,
+			DEEP: enrichedData.filter((d) => temStack(d) && d.stackDepthBb > 35).length,
 			ALL_POS: enrichedData.length,
 			IP: byPos('IP').length,
 			OOP: byPos('OOP').length,
@@ -267,8 +254,8 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 
 		const quadrants: QuadrantMetric[] = configs.map((cfg) => {
 			const subset = enrichedData.filter((d) => {
-				if (d.position !== cfg.position) return false;
-				const st = d.stackDepthBb ?? 20;
+				if (d.position !== cfg.position || !temStack(d)) return false;
+				const st = d.stackDepthBb;
 				if (cfg.stackRange === 'SHALLOW') return st < 15;
 				if (cfg.stackRange === 'MID') return st >= 15 && st <= 35;
 				return st > 35;
@@ -276,13 +263,14 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 
 			const count = subset.length;
 			if (count === 0) {
+				// Sem amostra não é "100% de acurácia": é ausência de medição.
 				return {
 					...cfg,
 					count: 0,
-					accuracy: 100,
-					meanLoss: 0,
+					accuracy: null,
+					meanLoss: null,
 					totalLoss: 0,
-					severity: 'OPTIMAL',
+					severity: null,
 				};
 			}
 
@@ -306,7 +294,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 			};
 		});
 
-		const worstQuadrant = [...quadrants].sort((a, b) => b.totalLoss - a.totalLoss)[0];
+		const worstQuadrant = quadrants.filter((q) => q.count > 0).sort((a, b) => b.totalLoss - a.totalLoss)[0] ?? null;
 
 		return {
 			quadrants,
@@ -508,7 +496,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 		}));
 	}, [filteredData]);
 
-	const getSeverityBadge = (severity: QuadrantMetric['severity']) => {
+	const getSeverityBadge = (severity: NonNullable<QuadrantMetric['severity']>) => {
 		switch (severity) {
 			case 'OPTIMAL':
 				return {
@@ -541,7 +529,9 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 		const quadRows = quadrantMatrix.quadrants
 			.map(
 				(q) =>
-					`| **${q.plainTitle || q.title}** | ${q.count} | ${q.accuracy}% | -${q.meanLoss} bb | -${q.totalLoss} bb | ${q.severity} |`
+					q.count === 0
+						? `| **${q.plainTitle || q.title}** | 0 | sem amostra | — | — | — |`
+						: `| **${q.plainTitle || q.title}** | ${q.count} | ${q.accuracy}% | -${q.meanLoss} bb | -${q.totalLoss} bb | ${q.severity} |`
 			)
 			.join('\n');
 
@@ -923,14 +913,20 @@ ${zoneRows}
 				<div className="space-y-6">
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 						{quadrantMatrix.quadrants.map((quad) => {
-							const badge = getSeverityBadge(quad.severity);
-							let accuracyClass = 'text-rose-400';
-							if (quad.accuracy >= 75) accuracyClass = 'text-emerald-400';
-							else if (quad.accuracy >= 50) accuracyClass = 'text-amber-400';
-
-							let meanLossClass = 'text-rose-400';
-							if (quad.meanLoss <= 0.3) meanLossClass = 'text-emerald-400';
-							else if (quad.meanLoss <= 1.0) meanLossClass = 'text-amber-400';
+							const semAmostra = quad.count === 0 || quad.accuracy === null || quad.meanLoss === null;
+							const badge = semAmostra
+								? { text: 'SEM AMOSTRA', badgeClass: 'text-text-muted border-white/10 bg-white/5' }
+								: getSeverityBadge(quad.severity ?? 'OPTIMAL');
+							let accuracyClass = 'text-text-muted';
+							let meanLossClass = 'text-text-muted';
+							if (!semAmostra) {
+								accuracyClass = 'text-rose-400';
+								if (quad.accuracy! >= 75) accuracyClass = 'text-emerald-400';
+								else if (quad.accuracy! >= 50) accuracyClass = 'text-amber-400';
+								meanLossClass = 'text-rose-400';
+								if (quad.meanLoss! <= 0.3) meanLossClass = 'text-emerald-400';
+								else if (quad.meanLoss! <= 1.0) meanLossClass = 'text-amber-400';
+							}
 
 							return (
 								<div
@@ -959,7 +955,7 @@ ${zoneRows}
 												Acurácia
 											</span>
 											<span className={`text-sm font-black ${accuracyClass}`}>
-												{quad.accuracy}%
+												{semAmostra ? '—' : `${quad.accuracy}%`}
 											</span>
 										</div>
 										<div>
@@ -967,7 +963,7 @@ ${zoneRows}
 												Média EV Loss
 											</span>
 											<span className={`text-sm font-black ${meanLossClass}`}>
-												-{quad.meanLoss} bb
+												{semAmostra ? '—' : `-${quad.meanLoss} bb`}
 											</span>
 										</div>
 									</div>

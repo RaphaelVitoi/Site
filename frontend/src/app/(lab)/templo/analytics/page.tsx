@@ -1,5 +1,6 @@
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import DashboardSOTADynamic from '@/components/simulator/DashboardSOTADynamic';
+import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import type { Metadata } from 'next';
 
@@ -11,18 +12,22 @@ export const metadata: Metadata = {
 };
 
 export default async function AnalyticsPage() {
+	// FE-03 (auditoria 2026-09-17): a consulta filtrava `userId: 'anonymous'`, que nenhuma escrita
+	// produz -- a gravação exige sessão e usa o id dela. A página sempre caía nos dados sintéticos do
+	// componente. Agora a telemetria é a da sessão; sem sessão, não há histórico a exibir.
+	const session = await auth();
+	const userId = session?.user?.id;
 	let events: Array<{ evLoss: number; isCorrect: boolean; createdAt: Date }> = [];
-	try {
-		if (prisma && typeof prisma.telemetryEvent?.findMany === 'function') {
-			const rawEvents = await prisma.telemetryEvent.findMany({
-				where: { userId: 'anonymous' },
+	if (userId) {
+		try {
+			events = await prisma.telemetryEvent.findMany({
+				where: { userId },
 				orderBy: { createdAt: 'desc' },
 				take: 1000,
 			});
-			events = rawEvents || [];
+		} catch (error) {
+			console.warn('[ANALYTICS] Telemetria indisponivel (banco offline ou sem migracao):', error);
 		}
-	} catch (error) {
-		console.warn('[PANOPTICO] Falha na telemetria remota (DB offline/unmigrated). Injetando baseline sintética:', error);
 	}
 
 	// Prepara os dados para o DashboardSOTA (initialData)

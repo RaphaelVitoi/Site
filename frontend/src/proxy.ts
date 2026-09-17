@@ -2,41 +2,46 @@ import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 import { resolveAuthSecret } from '@/lib/server/auth-secret';
-import { updateSession } from '@/utils/supabase/middleware';
+import { isOperatorEmail } from '@/lib/server/operator';
 
+/**
+ * Até 2026-09-17 este proxy também chamava `updateSession` do Supabase, que faz `getUser()` de rede
+ * em toda requisição protegida. A autenticação do app é NextAuth e nenhuma parte consome sessão
+ * Supabase: era latência sem consumidor (FE-16).
+ */
 export async function proxy(req: NextRequest) {
-	let response = NextResponse.next({
-		request: {
-			headers: req.headers,
-		},
-	});
-
-	// SOTA: Sincroniza sessão do Supabase SSR mantendo cookies e refresh ativo
-	if (process.env['NEXT_PUBLIC_SUPABASE_URL'] && process.env['NEXT_PUBLIC_SUPABASE_ANON_KEY']) {
-		try {
-			response = await updateSession(req);
-		} catch {
-			// Resiliência de borda: continua caso o relay do Supabase esteja indisponível
-		}
-	}
-
 	// SOTA: Extrai o JWT nativamente na Edge Network (Sem latência de banco)
 	const token = await getToken({ req, secret: resolveAuthSecret() });
 	const { pathname } = req.nextUrl;
 
-	// Mapeamento Vetorial de Rotas Protegidas (Isolamento de Domínio)
-	const isProtectedRoute =
-		pathname.startsWith('/dashboard') ||
-		pathname.startsWith('/api/vitoi');
+	const isOperatorRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/api/vitoi');
 
-	if (isProtectedRoute && !token) {
+	if (isOperatorRoute && !token) {
+		// API responde com status, não com redirect: um `fetch` não segue para a página de login.
+		if (pathname.startsWith('/api/')) {
+			return NextResponse.json({ error: 'Sessão exigida.' }, { status: 401 });
+		}
 		const url = req.nextUrl.clone();
 		url.pathname = '/login';
+		url.search = '';
 		url.searchParams.set('callbackUrl', pathname);
 		return NextResponse.redirect(url);
 	}
 
-	return response;
+	// Sessão prova quem a pessoa é, não o que ela pode ver. A área do operador exige a identidade
+	// declarada em NEXUS_OPERATOR_EMAILS, e lista vazia não libera ninguém (FE-04).
+	if (isOperatorRoute && !isOperatorEmail(token?.email)) {
+		if (pathname.startsWith('/api/')) {
+			return NextResponse.json({ error: 'Área restrita ao operador.' }, { status: 403 });
+		}
+		const url = req.nextUrl.clone();
+		url.pathname = '/login';
+		url.search = '';
+		url.searchParams.set('motivo', 'restrito');
+		return NextResponse.redirect(url);
+	}
+
+	return NextResponse.next();
 }
 
 export const config = {

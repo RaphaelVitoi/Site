@@ -9,6 +9,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { useSotaSync } from '@/components/simulator/hooks/useSotaSync';
 import { useGemmaStream, type StreamTelemetry } from '@/components/simulator/useGemmaStream';
@@ -300,12 +301,18 @@ export default function GemmaPortal() {
     }
   }, []);
 
-  // Checar saúde do servidor local
+  // Checar saúde do servidor local. /api/v1/gemma exige sessão: sem ela a sonda só produzia 401 no
+  // console. Mesmo critério do Header (auditoria de frontend 2026-09-17).
+  const { status: sessionStatus } = useSession();
   useEffect(() => {
+    if (sessionStatus !== 'authenticated') {
+      setServerOnline(false);
+      return;
+    }
     fetch('/api/v1/gemma')
       .then((res) => setServerOnline(res.ok))
       .catch(() => setServerOnline(false));
-  }, []);
+  }, [sessionStatus]);
 
   // Auto-scroll durante streaming e novas mensagens
   useEffect(() => {
@@ -407,7 +414,26 @@ export default function GemmaPortal() {
       };
 
       recognitionRef.current = rec;
+
+      // FE-08 (auditoria 2026-09-17): sem cleanup, cada troca de modo deixava a instância anterior
+      // viva, e o `onend` dela reiniciava o microfone enquanto isListeningRef fosse true — inclusive
+      // depois de sair da página numa navegação SPA. Desligar o auto-restart ANTES do stop impede
+      // que o próprio stop dispare um novo start.
+      return () => {
+        rec.onend = () => {};
+        rec.onresult = () => {};
+        rec.onerror = () => {};
+        isListeningRef.current = false;
+        try {
+          rec.stop();
+        } catch {
+          // Instância que nunca iniciou: nada a parar.
+        }
+        if (recognitionRef.current === rec) recognitionRef.current = null;
+        setIsListening(false);
+      };
     }
+    return undefined;
   }, [dictationMode, generateAnalysis]);
 
   const toggleListening = () => {

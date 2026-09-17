@@ -1,10 +1,9 @@
 'use client';
 
 import 'katex/dist/katex.min.css';
-import mermaid from 'mermaid';
 import dynamic from 'next/dynamic';
 import type { ElementType, ReactNode, ReactElement } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
@@ -12,21 +11,30 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import { isEmbeddableMediaUrl, isExternalHttpUrl } from '@/lib/markdown-url-policy';
 
-// SOTA: Configuração global do Mermaid fora do ciclo de render para evitar overhead.
-mermaid.initialize({
-  startOnLoad: false, // Desativado para controle manual via mermaid.run
-  theme: 'dark',
-  // SEGURANCA: 'strict' e nao 'loose'. O modo 'loose' habilita HTML arbitrario
-  // dentro dos rotulos e diretivas `click` que executam JavaScript. O conteudo
-  // deste componente nao e todo estatico: a rota /biblioteca/[slug] renderiza
-  // `content.body` vindo de /api/v1/content/{slug}, que tem caminho de
-  // ingestao no backend. Verificado em 2026-08-21: nenhum diagrama publicado
-  // usa `click` nem HTML em rotulo — os unicos .md com mermaid sao
-  // documentacao interna (.cerebro, .claude), fora do bundle. Ou seja,
-  // 'loose' nao comprava funcionalidade nenhuma e custava superficie de XSS.
-  securityLevel: 'strict',
-  fontFamily: 'var(--font-heading)',
-});
+// FE-09 (auditoria 2026-09-17): o mermaid era importado estaticamente e entrava no bundle das 28
+// páginas que usam este componente. Medido no dev, um artigo sem nenhum diagrama carregava 1.144 KB do
+// core do mermaid. Agora ele só é baixado quando um bloco ```mermaid é de fato renderizado.
+type MermaidApi = typeof import('mermaid').default;
+let mermaidPronto: Promise<MermaidApi> | null = null;
+
+export function carregarMermaid(): Promise<MermaidApi> {
+  mermaidPronto ??= import('mermaid').then(({ default: mermaid }) => {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      // SEGURANCA: 'strict' e nao 'loose'. O modo 'loose' habilita HTML arbitrario
+      // dentro dos rotulos e diretivas `click` que executam JavaScript. O conteudo
+      // deste componente nao e todo estatico: a rota /biblioteca/[slug] renderiza
+      // `content.body` vindo de /api/v1/content/{slug}, que tem caminho de
+      // ingestao no backend. Em 'strict' o mermaid sanitiza o SVG com DOMPurify,
+      // o que torna seguro injetar a saida de `render` abaixo.
+      securityLevel: 'strict',
+      fontFamily: 'var(--font-heading)',
+    });
+    return mermaid;
+  });
+  return mermaidPronto;
+}
 
 // SOTA: Offloading do ReactPlayer para evitar travamento de hidratação (SSR) e reduzir FCP.
 const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
@@ -35,28 +43,45 @@ interface SotaMarkdownProps {
   content: string;
 }
 
+/**
+ * O mermaid gera o SVG numa string e o React o insere. Antes o `mermaid.run` reescrevia os filhos de
+ * um nó que o React gerenciava: marcava o nó como processado e nunca re-renderizava quando `code`
+ * mudava, e a reconciliação podia colidir com o DOM alterado por fora.
+ */
 const MermaidChart = ({ code }: { code: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const id = `mermaid-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const [svg, setSvg] = useState<string | null>(null);
+  const [falhou, setFalhou] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    if (ref.current) {
-      mermaid.run({ nodes: [ref.current] }).catch((err) => {
-        if (isMounted) console.error('Mermaid Render Error:', err);
+    let ativo = true;
+    setSvg(null);
+    setFalhou(false);
+    carregarMermaid()
+      .then((mermaid) => mermaid.render(id, code))
+      .then(({ svg: gerado }) => {
+        if (ativo) setSvg(gerado);
+      })
+      .catch((err: unknown) => {
+        if (!ativo) return;
+        console.error('Mermaid Render Error:', err);
+        setFalhou(true);
       });
-    }
     return () => {
-      isMounted = false;
+      ativo = false;
     };
-  }, [code]);
+  }, [code, id]);
 
+  const classe =
+    'mermaid my-8 flex justify-center overflow-hidden rounded-3xl border border-white/5 bg-black/40 p-6 shadow-inner';
+  if (svg) {
+    // Saída de mermaid.render sob securityLevel 'strict' (sanitizada por DOMPurify).
+    return <div className={classe} dangerouslySetInnerHTML={{ __html: svg }} />;
+  }
   return (
-    <div
-      className="mermaid my-8 flex justify-center overflow-hidden rounded-3xl border border-white/5 bg-black/40 p-6 shadow-inner"
-      ref={ref}
-    >
+    <pre className={`${classe} font-mono text-xs whitespace-pre-wrap text-text-muted`} aria-busy={!falhou}>
       {code}
-    </div>
+    </pre>
   );
 };
 
