@@ -3,6 +3,10 @@
 Permite podar sub-ramos de apostas dominadas antes de disparar simulacoes pesadas
 de Monte Carlo em Rust/WASM, reutilizando avaliacoes passadas como Replay Simulator.
 
+EXPERIMENTAL (2026-09-18): sem consumidor no runtime -- so os testes o alcancam.
+Nao importar de rota, worker ou UI sem antes liga-lo ao fluxo real com teste ponta
+a ponta (CLAUDE.md do Site, secao 6, item 5).
+
 Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 """
 

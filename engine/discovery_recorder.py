@@ -4,6 +4,10 @@ Alimenta de forma continua e assincrona o banco de dados de replay (data/discove
 com resultados de testes, eventos de tarefas do TaskExecutor e simulacoes PMev.
 Opera 100% localmente, sem dependencia de chaves de API externas.
 
+EXPERIMENTAL (2026-09-18): sem consumidor no runtime -- so os testes o alcancam.
+Nao importar de rota, worker ou UI sem antes liga-lo ao fluxo real com teste ponta
+a ponta (CLAUDE.md do Site, secao 6, item 5).
+
 Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 """
 
