@@ -4,7 +4,7 @@
  * ROLE: Motor matemático vetorial para inferência e atualização de crença em ranges de Poker (Prior -> Posterior).
  */
 
-import { PAR_2_IP_APOS_CHECK } from '@/components/simulator/solver/__fixtures__/aula12Pairs';
+import { PAR_2_IP_APOS_CHECK } from '@/components/simulator/solver/evidencia/aula12Pairs';
 import { acoesComProcedencia, type BaseDaLargura } from '@/lib/aula12Evidence';
 
 export type BeliefVector = Record<string, number>;

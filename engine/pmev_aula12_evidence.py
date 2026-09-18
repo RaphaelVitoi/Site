@@ -5,7 +5,7 @@ promover primeiro os 7 pares locais; os 97 nos/figuras do documento continuam
 inventario ate haver reproducao.
 
 FONTE: `data/aula12_pairs.json`, espelho gerado do fixture curado
-`frontend/src/components/simulator/solver/__fixtures__/aula12Pairs.ts`.
+`frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts`.
 `frontend/src/tests/simulator/aula12PairsJson.test.ts` reprova se divergirem.
 Este modulo NAO contem numero de evidencia proprio.
 

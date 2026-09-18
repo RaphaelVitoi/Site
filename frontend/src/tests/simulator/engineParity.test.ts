@@ -14,7 +14,7 @@ import {
 	type TableStreet,
 } from '../../lib/pluribusMultiwayEngine';
 import { calculateMalmuthHarville } from '../../lib/icmMatrix';
-import { AULA_1_2_PAIRS } from '../../components/simulator/solver/__fixtures__/aula12Pairs';
+import { AULA_1_2_PAIRS } from '../../components/simulator/solver/evidencia/aula12Pairs';
 import {
 	assessReproducibility,
 	isRead,

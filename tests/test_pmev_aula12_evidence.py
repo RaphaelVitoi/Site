@@ -61,7 +61,7 @@ def test_cadeia_flop_turn_river_fecha_com_os_valores_carregados():
     assert pote["PAR_3_IP_VS_CBET_TURN"] + 7.8 == pytest.approx(pote["PAR_4_OOP_RIVER"])
 
 
-FIXTURE_TS = RAIZ / "frontend/src/components/simulator/solver/__fixtures__/aula12Pairs.ts"
+FIXTURE_TS = RAIZ / "frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts"
 
 
 def test_numeros_lidos_sao_os_do_fixture_typescript_em_todos_os_pares():

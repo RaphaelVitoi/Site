@@ -354,11 +354,25 @@ configuração `C:\Users\rapha\.observer\config.toml` e o processo residente
 não foram encontrados. Esses hooks não fazem parte do contexto default de
 nenhum agente e não devem ser reativados por inferência.
 
-Enquanto a implementação não for restaurada e validada, o override
-`C:\Users\rapha\.claude\settings.local.json` com `"hooks": {}` é a barreira
-operacional. Qualquer futura reativação exige restaurar o alvo, executar um
-smoke test de cada evento e confirmar ausência de falhas; sem isso, a
-configuração correta permanece sem hooks globais.
+**Estado medido em 2026-09-18, que substitui a barreira antes descrita aqui.**
+Este parágrafo afirmava que um override `"hooks": {}` em
+`~\.claude\settings.local.json` era a barreira operacional. **Ele não existe**
+em nenhum dos dois arquivos de escopo de usuário, e nenhuma configuração
+referencia o `observer`: a malha não está barrada, está **ausente** — não há o
+que reativar por engano. Qualquer futura reativação continua exigindo restaurar
+o alvo, executar um smoke test de cada evento e confirmar ausência de falhas.
+
+**O único hook ativo é deliberado e está no núcleo compartilhado:** o
+interceptador de reincidência (`PreToolUse` sobre `Bash`), registrado em
+`~\.gemini\nucleo\nucleo_compartilhado.json` → `hooks.exclusivos`, com critério,
+motivo e contrato em `~\.gemini\tests\`. A regra desta seção vale para ele
+também, e foi o que o pegou: ativado em 2026-09-17 com caminho de barras
+invertidas, **falhou em silêncio a cada chamada** — o host roda hooks em shell
+POSIX, onde elas são escape — até que uma isca real, na sessão seguinte, o
+revelasse. *Referência declarada não é registro ativo* não é prudência abstrata;
+é a descrição exata desse caso. Todo hook novo passa por isca que atravesse o
+mesmo caminho do evento real, e `test_comando_de_hook_nunca_usa_barra_invertida`
+reprova a classe do defeito.
 
 ### 8.2 Protocolo de coerência causal e não-regressão experimental
 
