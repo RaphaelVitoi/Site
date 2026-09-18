@@ -57,7 +57,7 @@ const ACTION_STREET_MAP: Record<TacticalActionType, number> = {
 
 export function useBayesianRange(options?: UseBayesianRangeOptions) {
 	const initialTexture = options?.initialBoardTexture ?? 'aula1_2';
-	const [boardTexture, setBoardTextureState] = useState<BoardTextureId>(initialTexture);
+	const [boardTexture, setBoardTexture] = useState<BoardTextureId>(initialTexture);
 	const [solverContext, setSolverContext] = useState<SolverContext>(
 		options?.initialSolverContext ?? 'icm',
 	);
@@ -78,8 +78,8 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 	const [baseBelief] = useState<BeliefVector>(generateUniformBelief());
 	const [heroBelief] = useState<BeliefVector>(generateUniformBelief());
 
-	const setBoardTexture = useCallback((texture: BoardTextureId) => {
-		setBoardTextureState(texture);
+	const selectBoardTexture = useCallback((texture: BoardTextureId) => {
+		setBoardTexture(texture);
 		setBoard(CANONICAL_BOARD_PRESETS[texture]?.cards ?? CANONICAL_BOARD_PRESETS.aula1_2.cards);
 	}, []);
 
@@ -191,7 +191,7 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 		setHeroPosition,
 		setVillainPosition,
 		setBoard,
-		setBoardTexture,
+		setBoardTexture: selectBoardTexture,
 		selectTacticalAction,
 		applyTacticalAction,
 		undoAction,

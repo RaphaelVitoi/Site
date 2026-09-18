@@ -66,6 +66,24 @@ function updateSizingDom(
 	if (elRiver) elRiver.textContent = `${Math.max(0, riverJam).toFixed(1)} bb (JAM)`;
 }
 
+function renderPathfindingSvg(
+	pathfindingEl: SVGPathElement | null,
+	path: { x: number; y: number }[],
+) {
+	if (!pathfindingEl || path.length === 0) return;
+	const firstNode = path[0];
+	if (!firstNode) return;
+	const w = 450;
+	const h = 450;
+	let d = `M ${firstNode.x * w} ${firstNode.y * h}`;
+	for (let i = 1; i < path.length; i++) {
+		const node = path.at(i);
+		if (!node) continue;
+		d += ` L ${node.x * w} ${node.y * h}`;
+	}
+	pathfindingEl.setAttribute('d', d);
+}
+
 function extractPathfinding(matrix: Float32Array, nodes: number): { x: number; y: number }[] {
 	const path: { x: number; y: number }[] = [];
 
@@ -209,19 +227,7 @@ export default function CfrRegretPanel({
 			const path = extractPathfinding(matrix, paramsRef.current.nodes);
 
 			// Pathfinding Overlay O(1) (Manipulação Direta do DOM)
-			if (pathfindingRef.current && path.length > 0) {
-				const w = 450;
-				const h = 450; // Dimensões viewBox SVG
-				const firstNode = path[0];
-				if (!firstNode) return;
-				let d = `M ${firstNode.x * w} ${firstNode.y * h}`;
-				for (let i = 1; i < path.length; i++) {
-					const node = path.at(i);
-					if (!node) continue;
-					d += ` L ${node.x * w} ${node.y * h}`;
-				}
-				pathfindingRef.current.setAttribute('d', d);
-			}
+			renderPathfindingSvg(pathfindingRef.current, path);
 
 			updateSizingDom(path, paramsRef.current);
 		};

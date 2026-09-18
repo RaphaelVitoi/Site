@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """Gera o subconjunto do Font Awesome Free que o frontend realmente usa.
 
 Até 2026-09-17 o layout importava `all.min.css`: 2.715 classes e três webfonts
@@ -34,8 +35,9 @@ try:
 except ImportError:  # pragma: no cover - mensagem para quem roda sem o .venv
     sys.exit("fontTools ausente: rode com o .venv do projeto ou instale fonttools e brotli.")
 
-FRONTEND = Path(__file__).resolve().parents[1]
-FA = FRONTEND.parent / "node_modules" / "@fortawesome" / "fontawesome-free"
+ROOT = Path(__file__).resolve().parent.parent.parent
+FRONTEND = ROOT / "frontend"
+FA = ROOT / "node_modules" / "@fortawesome" / "fontawesome-free"
 SAIDA = FRONTEND / "src" / "styles" / "fontawesome"
 
 # Mesma regra de extração da guarda em src/tests/styles/fontawesomeSubset.test.ts.
