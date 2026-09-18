@@ -113,19 +113,15 @@ const ActionStrategies = ({
 }) => (
   <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
     {/* Card IP (Agressor) */}
-    <div className="w-full flex flex-col rounded-3xl border border-accent-indigo/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-indigo-950/20 backdrop-blur-md overflow-hidden">
-      <div className="text-accent-indigo-light border-accent-indigo/20 mb-3 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.2em] uppercase">
+    <div className="w-full flex flex-col rounded-3xl border border-accent-indigo/20 bg-slate-900/50 p-3.5 sm:p-4 shadow-lg shadow-indigo-950/20 backdrop-blur-md">
+      <div className="text-accent-indigo-light border-accent-indigo/20 mb-3 flex items-center justify-between border-b px-1 pb-2.5 text-[0.75rem] font-black tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-indigo h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-indigo)]" />
           <span>IP &middot; Agressor</span>
         </div>
-        <div className="flex items-center gap-2 text-[0.58rem] font-mono text-text-darker tracking-normal">
-          <span className="text-white/60">Ação</span>
-          <span className="opacity-40">&rarr;</span>
-          <span className="text-white/60">GTO</span>
-          <span className="opacity-40">&middot;</span>
-          <span className="text-accent-indigo-light font-bold">&Delta; Desvio</span>
-        </div>
+        <span className="text-[0.58rem] font-mono text-text-darker tracking-wider uppercase font-bold opacity-75">
+          Ações &middot; GTO
+        </span>
       </div>
       <div className="flex flex-col gap-2.5">
         <ActionRow
@@ -159,19 +155,15 @@ const ActionStrategies = ({
     </div>
 
     {/* Card OOP (Defensor) */}
-    <div className="w-full flex flex-col rounded-3xl border border-accent-rose/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-rose-950/20 backdrop-blur-md overflow-hidden">
-      <div className="text-accent-rose border-accent-rose/20 mb-3 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.2em] uppercase">
+    <div className="w-full flex flex-col rounded-3xl border border-accent-rose/20 bg-slate-900/50 p-3.5 sm:p-4 shadow-lg shadow-rose-950/20 backdrop-blur-md">
+      <div className="text-accent-rose border-accent-rose/20 mb-3 flex items-center justify-between border-b px-1 pb-2.5 text-[0.75rem] font-black tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-rose h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-rose)]" />
           <span>OOP &middot; Defensor</span>
         </div>
-        <div className="flex items-center gap-2 text-[0.58rem] font-mono text-text-darker tracking-normal">
-          <span className="text-white/60">Ação</span>
-          <span className="opacity-40">&rarr;</span>
-          <span className="text-white/60">GTO</span>
-          <span className="opacity-40">&middot;</span>
-          <span className="text-accent-rose font-bold">&Delta; Desvio</span>
-        </div>
+        <span className="text-[0.58rem] font-mono text-text-darker tracking-wider uppercase font-bold opacity-75">
+          Ações &middot; GTO
+        </span>
       </div>
       <div className="flex flex-col gap-2.5">
         <ActionRow
@@ -332,7 +324,7 @@ export default function NashPanel({
   const oopRp = isBaseline ? 0 : current.rps.oop;
 
   return (
-    <div className="glass-panel !p-5 sm:!p-6 lg:!p-7 bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-6 sm:gap-8 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
+    <div className="glass-panel !p-4 sm:!p-5 lg:!p-6 bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-5 sm:gap-7 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
       <div className="bg-accent-indigo/10 group-hover/nash:bg-accent-indigo/15 pointer-events-none absolute -top-32 -right-32 h-80 w-80 rounded-full blur-[140px] transition-all duration-1000" />
       <div className="bg-accent-rose/5 pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full blur-[140px]" />
 
