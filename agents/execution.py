@@ -328,6 +328,7 @@ async def _handle_task_failure(
     await manager.update_task_metadata(task.id, fail_metadata, merge=True)
 
     duration = time.monotonic() - start_time
+    await _registrar_desfecho_no_dream_rsi(task, "failed", duration)
     write_economic_log(task, duration, "FAILED")
     send_toast("Entropia Sistemica (CRITICAL)", f"Falha na tarefa do {task.agent}.", "error")
 
@@ -430,6 +431,27 @@ async def _trigger_sync_consciousness(task: Task) -> None:
         logger.warning(f"[SYNC FAIL] Falha ao sincronizar consciencia: {e}")
 
 
+async def _registrar_desfecho_no_dream_rsi(task: Task, status: str, duration_s: float) -> None:
+    """Alimenta o historico do Dream-RSI com o desfecho real da tarefa, fora do laco de eventos.
+
+    E a entrada de dados da fase de Sonho (`nexus agent dream-optimize`). Falha aqui nao
+    afeta a tarefa, mas aparece no log: telemetria calada foi o que a manteve vazia.
+    """
+    try:
+        from engine.discovery_recorder import recorder_do_runtime  # noqa: PLC0415 -- carga sob demanda
+
+        await asyncio.to_thread(
+            recorder_do_runtime().record_task_outcome,
+            task.id,
+            task.agent,
+            task.description,
+            status,
+            duration_s * 1000.0,
+        )
+    except Exception as exc:  # noqa: BLE001 -- telemetria nao pode derrubar a tarefa
+        logger.warning("[DREAM-RSI] desfecho de %s nao gravado: %s", task.id, exc)
+
+
 async def _finish_task_success(
     task: Task,
     manager: QueueManager,
@@ -455,6 +477,7 @@ async def _finish_task_success(
         sync_bg_task.add_done_callback(_BACKGROUND_TASKS.discard)
 
     duration = time.monotonic() - start_time
+    await _registrar_desfecho_no_dream_rsi(task, "completed", duration)
     final_metadata: TaskMetadata = {
         "workflow_duration_ms": int(duration * 1000),
         "workflow_status": "completed",

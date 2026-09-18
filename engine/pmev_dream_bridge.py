@@ -3,20 +3,24 @@
 Permite podar sub-ramos de apostas dominadas antes de disparar simulacoes pesadas
 de Monte Carlo em Rust/WASM, reutilizando avaliacoes passadas como Replay Simulator.
 
-EXPERIMENTAL (2026-09-18): sem consumidor no runtime -- so os testes o alcancam.
-Nao importar de rota, worker ou UI sem antes liga-lo ao fluxo real com teste ponta
-a ponta (CLAUDE.md do Site, secao 6, item 5).
+Consumido por api/v1/handlers.py (handle_simulate_perspective_tree) em modo
+OBSERVACIONAL: grava cada arvore simulada e anexa o diagnostico de poda a resposta,
+sem alterar nenhum valor do PMev -- decidir com a poda e escolha matematica do Tier 0.
 
 Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 import uuid
 
 from core.discovery_tree_schemas import DiscoveryNode, DiscoveryTree
+
+if TYPE_CHECKING:
+    from engine.dream_replay_simulator import DreamReplaySimulator
 
 
 @dataclass(frozen=True, slots=True)
@@ -108,3 +112,39 @@ class PMevDreamBridge:
             runtime_ms=runtime_ms,
             tokens_consumed=0,
         )
+
+    def diagnosticar_arvore_de_perspectiva(
+        self,
+        tree_result: Mapping[str, object],
+        runtime_ms: float,
+        simulator: DreamReplaySimulator,
+    ) -> dict[str, object]:
+        """Registra a arvore do VitoiPerspectiveEngine e devolve o diagnostico de poda.
+
+        Observacional: le pm_fold / pm_call / pm_raise e best_action e nao os altera.
+        """
+        ramos = [
+            PMevActionBranch(action_name=nome, bet_size_bb=0.0, estimated_ev=float(valor), risk_metric=0.0)
+            for nome, chave in (("fold", "pm_fold"), ("call", "pm_call"), ("raise", "pm_raise"))
+            if isinstance(valor := tree_result.get(chave), int | float)
+        ]
+        poda = self.filter_dominated_branches(ramos)
+
+        melhor = str(tree_result.get("best_action", "desconhecida")).lower()
+        pm_best = tree_result.get("pm_best")
+        no = self.record_pmev_run(
+            tree_id="perspectiva",
+            action_name=melhor,
+            metric_score=float(pm_best) if isinstance(pm_best, int | float) else 0.0,
+            runtime_ms=runtime_ms,
+        )
+        simulator.record_tree(
+            DiscoveryTree(tree_id=f"tree_{no.node_id}", root_id=no.node_id, domain="pmev_math", nodes={no.node_id: no})
+        )
+
+        return {
+            "registrado": no.node_id,
+            "ramos_podados": [r.action_name for r in poda.pruned_branches],
+            "ramos_sobreviventes": [r.action_name for r in poda.surviving_branches],
+            "limiar_ev": self.min_ev_threshold,
+        }

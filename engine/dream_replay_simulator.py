@@ -3,9 +3,8 @@
 Permite simular trajetorias de politicas de exploracao sobre arvores de historico
 acumuladas a custo zero de execucao (sem recompilacao, sem chamadas ao LLM ou GPU).
 
-EXPERIMENTAL (2026-09-18): sem consumidor no runtime -- so os testes o alcancam.
-Nao importar de rota, worker ou UI sem antes liga-lo ao fluxo real com teste ponta
-a ponta (CLAUDE.md do Site, secao 6, item 5).
+Consumido por engine/discovery_recorder.py (persistencia) e pelo comando
+`nexus agent dream-optimize` (fase de Sonho com a TimesFMPredictivePolicy).
 
 Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 """
@@ -64,8 +63,12 @@ class DreamReplaySimulator:
 
     def record_tree(self, tree: DiscoveryTree) -> None:
         """Registra uma arvore de descoberta concluida no pool de mundos."""
-        self._memory_trees[tree.tree_id] = copy.deepcopy(tree)
-        if self.db_path != ":memory:":
+        # Copia em memoria so no modo :memory:, o unico que a le. Com banco em arquivo,
+        # load_trees e a telemetria vao ao SQLite -- e reter toda arvore num worker de
+        # longa duracao (uma por tarefa, uma por requisicao PMev) seria vazamento sem teto.
+        if self.db_path == ":memory:":
+            self._memory_trees[tree.tree_id] = copy.deepcopy(tree)
+        else:
             with contextlib.closing(sqlite3.connect(self.db_path)) as conn:
                 cursor = conn.cursor()
                 payload = tree.model_dump_json()

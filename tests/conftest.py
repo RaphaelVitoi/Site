@@ -38,6 +38,15 @@ class SotaTestLogFilter(logging.Filter):
 
 
 @pytest.fixture(autouse=True, scope="session")
+def isolar_historico_dream_rsi(tmp_path_factory: pytest.TempPathFactory):
+    """Nenhum teste grava no data/discovery_tree.db real (um banco por worker do xdist)."""
+    mp = pytest.MonkeyPatch()
+    mp.setenv("NEXUS_DISCOVERY_DB", str(tmp_path_factory.mktemp("dream") / "discovery_tree.db"))
+    yield
+    mp.undo()
+
+
+@pytest.fixture(autouse=True, scope="session")
 def isolate_test_simulation_logs():
     root_logger = logging.getLogger()
     log_filter = SotaTestLogFilter()

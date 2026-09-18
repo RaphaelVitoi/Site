@@ -982,6 +982,25 @@ async def handle_calculate_perspective(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_calculate_perspective")
 
 
+async def _diagnostico_dream_rsi(tree_res: dict[str, Any], runtime_ms: float) -> dict[str, object]:
+    """Grava a arvore no historico Dream-RSI e devolve o diagnostico de poda, fora do laco de eventos.
+
+    Observacional: nenhum valor do PMev muda. Falha aqui nunca derruba a resposta -- aparece
+    no log e no proprio diagnostico, nunca em silencio.
+    """
+    try:
+        from engine.discovery_recorder import recorder_do_runtime  # noqa: PLC0415 -- carga sob demanda
+        from engine.pmev_dream_bridge import PMevDreamBridge  # noqa: PLC0415
+
+        simulator = recorder_do_runtime().simulator
+        return await asyncio.to_thread(
+            PMevDreamBridge().diagnosticar_arvore_de_perspectiva, tree_res, runtime_ms, simulator
+        )
+    except Exception as exc:  # noqa: BLE001 -- telemetria nao pode derrubar o calculo
+        logger.warning("[DREAM-RSI] arvore PMev nao registrada: %s", exc)
+        return {"erro": type(exc).__name__}
+
+
 async def handle_simulate_perspective_tree(request: web.Request) -> web.Response:
     """Executa a simulacao recursiva da arvore de decisao de Perspectiva Matematica."""
     try:
@@ -998,6 +1017,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
             req.stack_eff, req.edge_base, req.aggression_factor
         )
 
+        inicio = time.perf_counter()
         tree_res = VitoiPerspectiveEngine.simulate_decision_tree(
             equity=req.equity,
             pot_size=req.pot_size,
@@ -1016,6 +1036,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
             rp_opp=req.rp_opp,
             fold_equity=req.fold_equity,
         )
+        runtime_ms = (time.perf_counter() - inicio) * 1000.0
 
         resp = PerspectiveTreeResponse(
             status="SUCCESS",
@@ -1024,6 +1045,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
                 "best_action": tree_res.get("best_action"),
                 "pm_best": tree_res.get("pm_best"),
                 "p_best_outcome": tree_res.get("p_best_outcome"),
+                "dream_rsi": await _diagnostico_dream_rsi(tree_res, runtime_ms),
             },
         )
         return web.json_response(resp.model_dump())

@@ -3386,6 +3386,53 @@ def voice_speak(
     speak_text(text, voice=voice, output_file=output, play=not no_play)
 
 
+@agent_app.command("dream-optimize")
+def agent_dream_optimize(
+    domain: str | None = typer.Option(None, "--domain", "-d", help="code_engineering ou pmev_math (padrao: todos)"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+) -> None:
+    """Fase de Sonho do Dream-RSI sobre o historico real, com a politica preditiva TimesFM."""
+    from core.exploration_policy import AdaptiveDreamPolicy, ParallelRefinePolicy, TimesFMPredictivePolicy
+    from engine.discovery_recorder import recorder_do_runtime
+    from engine.dream_timesfm_forecaster import DreamTimesFMForecaster
+
+    simulator = recorder_do_runtime().simulator
+    historico = simulator.load_trees(domain)
+    if not historico:
+        console.print(
+            f"[bold yellow]Historico vazio em {simulator.db_path}[/] -- ele e alimentado pelo desfecho das tarefas "
+            "e pelas simulacoes PMev. Nada a otimizar ainda."
+        )
+        raise typer.Exit(0)
+
+    corrente = ParallelRefinePolicy()
+    candidatas = [corrente, AdaptiveDreamPolicy(), TimesFMPredictivePolicy(forecaster=DreamTimesFMForecaster())]
+    vencedora, avaliacoes = simulator.run_dream_optimization(candidatas, corrente, historico)
+
+    if json_output:
+        payload = {
+            "arvores": len(historico),
+            "vencedora": vencedora.name,
+            "avaliacoes": [
+                {"politica": a.policy_name, "score": a.total_score, "podados": a.pruned_nodes_count} for a in avaliacoes
+            ],
+        }
+        print(json.dumps(payload, indent=2))  # JSON nao passa pelo Rich
+        return
+
+    table = Table(title=f"[bold #50fa7b]FASE DE SONHO DREAM-RSI -- {len(historico)} arvore(s)[/]", box=box.ROUNDED)
+    table.add_column("Politica", style="bold cyan")
+    table.add_column("Score", justify="right")
+    table.add_column("Nos avaliados", justify="right")
+    table.add_column("Podados", justify="right")
+    for a in avaliacoes:
+        marca = " [bold green]<- vencedora[/]" if a.policy_name == vencedora.name else ""
+        table.add_row(
+            f"{a.policy_name}{marca}", f"{a.total_score:.4f}", str(a.nodes_evaluated), str(a.pruned_nodes_count)
+        )
+    console.print(table)
+
+
 # ==========================================
 # COMANDOS DE AUDITORIAS (AUDITS) SOTA v8.0 GOLD
 # ==========================================
