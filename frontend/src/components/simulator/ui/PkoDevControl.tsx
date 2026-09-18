@@ -1,5 +1,6 @@
 'use client';
 
+import { pkoEmDesenvolvimentoHabilitado } from '@/lib/featureFlags';
 import { RP_PISO_NUMERICO } from '@/lib/perspectiva';
 import type { PkoPreview } from '../hooks/useQuantumEngine';
 
@@ -22,6 +23,10 @@ const PESO_PADRAO = 0.25;
 
 export function PkoDevControl({ pkoValue, onPkoChange, preview, isBaseline = false }: Readonly<PkoDevControlProps>) {
 	const ligado = pkoValue > 0;
+
+	// O portao mora aqui, e nao em quem renderiza: assim qualquer ponto de uso futuro herda o isolamento em vez de
+	// precisar lembrar dele. Sem NEXT_PUBLIC_PKO_DEV=true o controle nao existe na arvore, e o peso fica em zero.
+	if (!pkoEmDesenvolvimentoHabilitado()) return null;
 
 	return (
 		<section

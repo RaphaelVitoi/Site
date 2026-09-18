@@ -9,10 +9,16 @@
 
 import React from 'react';
 import { useBayesianRange } from '../hooks/useBayesianRange';
-import { type TacticalActionType } from '@/lib/bayesianRangeEngine';
+import { normalizarLarguras, type TacticalActionType } from '@/lib/bayesianRangeEngine';
 import { BayesianPokerTable } from '../ui/BayesianPokerTable';
 
 const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+/** Street de um no, deduzida do id da acao. Extraida de ternario aninhado (S3358) sem mudar a decisao. */
+function streetDaAcao(actionId: string): 'Flop' | 'Turn' | 'River' {
+	if (actionId.includes('cbet') || actionId.includes('check_raise')) return 'Flop';
+	return actionId.includes('barrel') ? 'Turn' : 'River';
+}
 
 interface BayesianBeliefPanelProps {
 	initialRange?: string;
@@ -111,7 +117,8 @@ export default function BayesianBeliefPanel({
 		},
 	];
 
-	const streetName = streetStep === 0 ? 'Flop' : streetStep === 1 ? 'Turn' : 'River';
+	const NOMES_DE_STREET = ['Flop', 'Turn', 'River'] as const;
+	const streetName = NOMES_DE_STREET[streetStep] ?? 'River';
 
 	return (
 		<div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
@@ -284,6 +291,7 @@ export default function BayesianBeliefPanel({
 							<div>
 								<h5 className="text-[0.68rem] font-black text-white uppercase tracking-[0.2em] m-0 flex items-center gap-2">
 									<i className="fa-solid fa-brain text-accent-indigo" />
+									{' '}
 									Evidência Tática do Vilão
 								</h5>
 								<p className="text-[0.55rem] text-text-dim mt-1 m-0">
@@ -326,17 +334,14 @@ export default function BayesianBeliefPanel({
 														{action.name}
 													</span>
 													<span className="text-[0.45rem] font-mono text-text-dim px-1.5 py-0.2 rounded bg-black/40 border border-white/5 uppercase font-bold">
-														{action.id.includes('cbet') || action.id.includes('check_raise')
-															? 'Flop'
-															: action.id.includes('barrel')
-																? 'Turn'
-																: 'River'}
+														{streetDaAcao(action.id)}
 													</span>
 												</div>
 											</div>
 											{isActive ? (
 												<span className="flex items-center gap-1.5 text-[0.48rem] font-mono font-black px-2.5 py-0.5 rounded-full bg-white/20 text-white border border-white/40 shadow-sm">
 													<span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+													{' '}
 													ATIVO
 												</span>
 											) : (
@@ -364,6 +369,7 @@ export default function BayesianBeliefPanel({
 									className="flex-1 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-[0.6rem] font-mono font-bold text-white uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
 								>
 									<i className="fa-solid fa-rotate-left text-xs text-accent-indigo" />
+									{' '}
 									Desfazer
 								</button>
 							)}
@@ -373,6 +379,7 @@ export default function BayesianBeliefPanel({
 								className="flex-1 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20 text-[0.6rem] font-mono font-bold text-rose-300 uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
 							>
 								<i className="fa-solid fa-trash-can text-xs text-rose-400" />
+								{' '}
 								Resetar Range
 							</button>
 						</div>
@@ -404,7 +411,7 @@ export default function BayesianBeliefPanel({
 									<span className="text-[0.52rem] font-mono font-bold px-2 py-0.5 rounded-full bg-accent-indigo/15 text-accent-indigo-light border border-accent-indigo/30 uppercase">
 										Freq: {tacticalExplanation.frequencyEstimate}
 									</span>
-									<span className="text-[0.52rem] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">
+									<span className="text-[0.52rem] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
 										Pico: {(maxBelief * 100).toFixed(2)}%
 									</span>
 								</div>
@@ -438,22 +445,34 @@ export default function BayesianBeliefPanel({
 									</div>
 								</div>
 
-								{/* Barra Contínua do Range Completo */}
+								{/* Barra Contínua do Range Completo.
+								    A largura vem da evidencia canonica quando o no esta ligado a ela (`act.largura`, derivada dos
+								    combos lidos da captura) e so cai para a normalizacao local nos nos que ainda so tem porcentagem.
+								    O rotulo nunca muda: continua sendo o digito da captura, inclusive quando a soma da 100.1. */}
 								<div className="w-full h-2.5 rounded-full overflow-hidden flex bg-white/5 border border-white/10 shadow-inner">
-									{solverNodeData.globalBar.map((act) => (
-										<div
-											key={`bar-${act.name}`}
-											style={{ width: `${act.pct}%`, backgroundColor: act.color }}
-											className="h-full transition-all duration-300"
-											title={`${act.label}: ${act.pct.toFixed(1)}%`}
-										/>
-									))}
+									{normalizarLarguras(solverNodeData.globalBar).map((larguraLocal, i) => {
+										const act = solverNodeData.globalBar[i];
+										if (!act) return null;
+										const largura = act.largura ?? larguraLocal;
+										const procedencia =
+											act.combos !== undefined
+												? `${act.label}: ${act.pct.toFixed(1)}% · ${act.combos} combos lidos da captura`
+												: `${act.label}: ${act.pct.toFixed(1)}%`;
+										return (
+											<div
+												key={`bar-${act.name}`}
+												style={{ width: `${largura}%`, backgroundColor: act.color }}
+												className="h-full transition-all duration-300"
+												title={procedencia}
+											/>
+										);
+									})}
 								</div>
 							</div>
 						</div>
 
 						{/* GRID 13x13 COM INDIFERENÇA DE NASH E FILTRAGEM CUMULATIVA */}
-						<div className="grid grid-cols-13 gap-px bg-white/5 p-px rounded-2xl overflow-hidden border border-white/10 shadow-3xl bg-slate-950/90 backdrop-blur-md">
+						<div className="grid grid-cols-13 gap-px p-px rounded-2xl overflow-hidden border border-white/10 shadow-3xl bg-slate-950/90 backdrop-blur-md">
 							{RANKS.map((r1, i) => (
 								<React.Fragment key={`row-${r1}`}>
 									{RANKS.map((r2, j) => {
@@ -501,15 +520,18 @@ export default function BayesianBeliefPanel({
 												<span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] z-10">
 													{hand}
 												</span>
-												{localFreq > 0 ? (
+												{/* Os dois ramos sao excludentes por construcao (localFreq > 0 contra <= 0), entao ficam como
+												    condicoes independentes em vez de ternario aninhado (S3358). A decisao exibida e a mesma. */}
+												{localFreq > 0 && (
 													<span className="text-[clamp(0.32rem,1.4cqw,0.52rem)] leading-none font-black text-white/95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] mt-0.5 z-10">
 														{localFreq}%
 													</span>
-												) : actions.length > 0 && actions[0]?.name === 'Check' ? (
+												)}
+												{localFreq <= 0 && actions[0]?.name === 'Check' && (
 													<span className="text-[clamp(0.28rem,1.2cqw,0.48rem)] leading-none font-bold text-emerald-100 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] mt-0.5 z-10">
 														CHK
 													</span>
-												) : null}
+												)}
 
 												{/* Tag indicadora de Indiferença de Nash no canto */}
 												{isIndifferent && (
@@ -530,6 +552,7 @@ export default function BayesianBeliefPanel({
 							<div className="flex items-center justify-between flex-wrap gap-2 text-[0.55rem] font-mono text-text-dim">
 								<span className="font-bold text-white uppercase flex items-center gap-1.5">
 									<i className="fa-solid fa-crosshairs text-accent-indigo" />
+									{' '}
 									Leitura Teórica do Range:
 								</span>
 								<span className="text-text-muted">

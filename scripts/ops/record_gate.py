@@ -54,6 +54,7 @@ from scripts.ops.record_index import (  # noqa: E402
     resolvedores_de_ambiente,
     ttl_vencido,
 )
+from scripts.ops.saude_da_malha import imprimir as imprimir_saude_da_malha  # noqa: E402
 
 CAMPOS_OBRIGATORIOS = ("id", "tipo", "escopo", "autor", "criado_em", "verificado", "nao_verificado")
 
@@ -855,7 +856,31 @@ def main() -> int:
 
 
 def _imprimir_pendencias() -> None:
-    """Exibe as tarefas abertas. Nao decide nada -- so impede que sumam."""
+    """Exibe as tarefas abertas e o que parou de rodar. Nao decide nada -- so impede que sumam.
+
+    A saude da malha entra AQUI, e nao num canal proprio, por medicao de 2026-09-17: a auditoria de calibracao
+    ficou tres dias parada e o portao de suficiencia cinco dias aberto sem ninguem saber, porque o unico lugar
+    que reportaria isso era a plataforma do veiculo que havia caido. Este e o canal que todo condutor ja roda ao
+    comecar -- a SS9.2 diz que a tarefa aberta mora onde um portao ja olha, e o mesmo vale para o instrumento
+    parado. Criar um segundo lugar nasceria com o defeito que ele corrigiria.
+    """
+    _imprimir_saude()
+    _listar_pendencias()
+
+
+def _imprimir_saude() -> None:
+    """Sinais de instrumento parado. Falha do proprio sinal nunca cala o portao de registro."""
+    try:
+        imprimir_saude_da_malha()
+    except Exception as erro:  # noqa: BLE001 -- ver docstring
+        # Deliberadamente amplo: este bloco e um ACESSORIO do portao de registro. Se a leitura da saude
+        # quebrar por qualquer motivo, o portao segue imprimindo pendencias e validando registros. Engolir a
+        # excecao em silencio, porem, seria o mesmo defeito que o modulo combate -- por isso ela aparece.
+        print(f"\n[SAUDE DA MALHA] NAO VERIFICADA -- a leitura falhou: {erro}")
+        print("   Nao verificado nunca e aprovado. Rode `python scripts/ops/saude_da_malha.py` para o erro completo.\n")
+
+
+def _listar_pendencias() -> None:
     abertas, _ = coletar_pendencias()
     if not abertas:
         print("\n[PENDENCIAS] Nenhuma tarefa aberta declarada no corpus.\n")

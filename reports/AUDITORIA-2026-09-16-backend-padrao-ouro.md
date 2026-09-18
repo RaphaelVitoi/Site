@@ -293,7 +293,7 @@ lexicograficamente em `cleanup` e `promote_starved_tasks`.
 
 ### BK-12 — Filtro do modo `partial` aceita quebra de linha
 
-`_validate_command` bloqueia `; | && & $ \` > <`, mas não `\n`, e o comando vai
+`_validate_command` bloqueia ``; | && & $ ` > <``, mas não `\n`, e o comando vai
 inteiro para `powershell -Command`. **Prova:**
 `"echo ok\nRemove-Item -Recurse -Force .\\alvo"` → aceito. Denylist de tokens
 (`"rm -rf /"`) também cai com um espaço a mais.
