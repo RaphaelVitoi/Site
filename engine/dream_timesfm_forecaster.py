@@ -93,7 +93,7 @@ class DreamTimesFMForecaster:
                 )
             return (
                 False,
-                f"[CALIBRATED-MOMENTUM] Trajetoria curta promissora (Teto={short_ceiling:.3f} >= {global_best_score:.3f})",
+                f"[CALIBRATED-MOMENTUM] Trajetoria curta promissora (Teto={short_ceiling:.3f} + margem={margin:.3f} >= {global_best_score:.3f})",
             )
 
         forecast = self.forecast_trajectory(scores, horizon=horizon)

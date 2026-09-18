@@ -24,7 +24,8 @@ class ExplorationPolicy(ABC):
         self.name = name
         self.version = version
 
-    def reset(self) -> None:  # noqa: B027
+    @abstractmethod
+    def reset(self) -> None:
         """Reinicia qualquer estado interno da politica para nova execucao."""
 
     @property
@@ -60,6 +61,9 @@ class ParallelRefinePolicy(ExplorationPolicy):
         self.beam_width = beam_width
         self.max_depth = max_depth
         self.max_rounds = max_rounds
+
+    def reset(self) -> None:
+        """Politica base stateless: nenhum estado interno mutavel a reiniciar."""
 
     def select_candidates(self, tree: DiscoveryTree) -> list[DiscoveryNode]:
         """Seleciona os top-N nos com melhor pontuacao para expansao paralela."""
@@ -186,6 +190,9 @@ class TimesFMPredictivePolicy(ExplorationPolicy):
         self.max_depth = max_depth
         self.min_metric_threshold = min_metric_threshold
         self._forecaster = forecaster
+
+    def reset(self) -> None:
+        """Reinicia estado interno da politica preditiva para nova simulacao."""
 
     def select_candidates(self, tree: DiscoveryTree) -> list[DiscoveryNode]:
         """Seleciona candidatos adaptando a largura do feixe via previsao antecipada de plateau."""

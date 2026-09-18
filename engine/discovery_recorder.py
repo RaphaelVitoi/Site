@@ -316,6 +316,7 @@ class DiscoveryRecorder:
         domain_counts: dict[str, int] = {}
         total_trees = 0
         total_nodes = 0
+        invalid_payloads = 0
 
         if self.db_path == ":memory:":
             total_trees = len(self.simulator._memory_trees)
@@ -336,18 +337,25 @@ class DiscoveryRecorder:
 
                 cursor.execute("SELECT payload_json FROM discovery_trees")
                 for (payload,) in cursor.fetchall():
-                    with contextlib.suppress(json.JSONDecodeError, TypeError, KeyError):
+                    try:
                         data = json.loads(payload)
-                        total_nodes += len(data.get("nodes", {}))
+                        if isinstance(data, dict) and isinstance(data.get("nodes"), dict):
+                            total_nodes += len(data["nodes"])
+                        else:
+                            invalid_payloads += 1
+                    except (json.JSONDecodeError, TypeError):
+                        invalid_payloads += 1
 
         avg_nodes = round(total_nodes / total_trees, 2) if total_trees > 0 else 0.0
         avg_bytes = (size_bytes / total_trees) if total_trees > 0 else 1024.0
         projected_annual_mb = round((avg_bytes * 500 * 12) / (1024.0 * 1024.0), 2)
 
+        is_healthy = integrity.lower() == "ok" and invalid_payloads == 0
         return {
             "db_path": self.db_path,
-            "status": "HEALTHY" if integrity.lower() == "ok" else "DEGRADED",
+            "status": "HEALTHY" if is_healthy else "DEGRADED",
             "integrity_check": integrity,
+            "invalid_payloads": invalid_payloads,
             "size_bytes": size_bytes,
             "size_kb": size_kb,
             "size_mb": size_mb,
