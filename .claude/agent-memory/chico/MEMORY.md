@@ -267,3 +267,21 @@ própria auditoria que o registrou.
   1. *Blindagem Turbopack de Ativos Estáticos:* Adição de `transpilePackages: ['@fortawesome/fontawesome-free']` no `frontend/next.config.js` e espelhamento físico em `frontend/public/webfonts/`, eliminando permanentemente a falha de resolução relativa em modo de desenvolvimento.
   2. *Build de Produção e Qualidade:* `npm --workspace=frontend run build` compilando 62/62 rotas estáticas em 1.46s (sucesso 100%).
   3. *Bateria de Testes Jest:* 63 test suites e 455 testes executados com 0 erros e 0 warnings (100% verde).
+
+---
+
+## 7. Integração SOTA do Google Dream-RSI e TimesFM 2.5/3.0 — 2026-09-17 (Autoaperfeiçoamento Autopoiético)
+
+- **Contexto & Paradigma:** Absorção do paper *Dream-RSI: Recursive Self-Improvement through Evolving Worlds* (Google / DeepMind / UMD / UVa — arXiv:2609.14858, Setembro de 2026).
+- **Princípio Fundamental:** *Semantic guidance is worse than replay.* O autoaperfeiçoamento não polui prompts com resumos textuais de erros; a estratégia de busca é **código executável puro** (`ExplorationPolicy`), e o histórico acumulado é um **Replay Simulator exato** a custo zero.
+- **Teorema da Não-Regressão Monotônica:** A política candidata $\pi_{t+1}$ é avaliada contra a política corrente $\pi_t$ no replay histórico, assegurando que o sistema nunca degrada.
+- **Componentes Ativos no Ecossistema:**
+  1. `core/discovery_tree_schemas.py`: Pydantic v2 schemas (`DiscoveryNode`, `DiscoveryTree`, `ReplayEvaluationResult`).
+  2. `core/exploration_policy.py`: `ParallelRefinePolicy`, `AdaptiveDreamPolicy` e `TimesFMPredictivePolicy`.
+  3. `engine/dream_replay_simulator.py`: Motor offline que avalia trajetórias sobre SQLite com custo 0 de tokens.
+  4. `engine/dream_timesfm_forecaster.py`: Oráculo univariado do TimesFM 2.5 (Apache 2.0) projetando horizontes quantílicos ($Q_{10}, Q_{50}, Q_{90}$) para poda preditiva de ramos e antecipação de platôs.
+  5. `engine/discovery_recorder.py`: Coletor de telemetria contínua. Povoou **264 mundos reais** em `data/discovery_tree.db` a partir de testes e âncoras, eliminando o cold start.
+  6. `conductor/dream_gate.py`: Triagem preditiva contra colisões de âncoras e quebra de Target Lock integrada a `task_executor.py:intelligent_route_task`.
+  7. `engine/pmev_dream_bridge.py`: Poda de sub-ramos dominados em MTTs antes de simulações Monte Carlo em Rust/WASM.
+- **Governança de Licenças:** TimesFM 2.5 (Apache 2.0 comercial) como padrão de produção; TimesFM 3.0 bloqueado com `TimesFMGovernanceError` para pesquisa não-comercial.
+- **Evidências:** 19/19 testes aprovados (0.65s), 0 erros no Ruff, `record_gate.py` aprovado sem pendências impeditivas. Operação 100% local (Zero Chaves / Zero Custo).
