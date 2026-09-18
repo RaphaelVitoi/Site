@@ -25,6 +25,9 @@
 
 ---
 
+
+---
+
 ## Hipóteses de Trabalho
 
 1. **Teto de Equidade:** O limiar de call no river pode diferir materialmente da referência linear conforme payouts, stacks, ranges e risco de eliminação; não há teto universal de 45% declarado por este registro.
@@ -32,4 +35,12 @@
 3. **Pot Entrapment:** Investimento prévio pode alterar o valor marginal de fold, mas não força call por regra fixa de percentual de stack.
 
 ---
-*Fonte: Extração SOTA v4.6, 2026. A reprodução requer exports de nós, versões de solver, ranges, payouts e critérios de comparação. `nashSolver.test.ts` testa contrato de código; não valida por si só esta calibração.*
+
+## Convenção Canônica e Calibração (2026-09-18)
+
+- **Grandeza Canônica:** $\text{RP} = \frac{E^* - a}{1 - a} = \frac{a \cdot (BF - 1)}{a \cdot BF + 1 - a}$, onde $a$ são as pot odds cruas e $BF$ é o Bubble Factor de Malmuth-Harville.
+- **Fator de Investimento de Referência:** Calibrado em $0{,}6101$ sobre a stack efetiva mínima ($40$ bb), produzindo $BF_{BTN} = 1{,}5445$ e $RP_{BTN} = 21{,}40\%$ exatos no BTN, e $BF_{BB} = 1{,}3400$ com $RP_{BB} = 14{,}32\%$ no BB (resíduo de $+1{,}4$ p.p. vs $12{,}9\%$, menor que a calibração anterior de $+1{,}8$ p.p.).
+- **Invariância de all-in:** Sob $a = 0{,}5$ (even money), a grandeza canônica reduz-se identicamente a $\frac{BF - 1}{BF + 1}$.
+
+---
+*Fonte: Extração SOTA v4.6 / Migração Canônica 2026-09-18. A reprodução requer exports de nós, versões de solver, ranges, payouts e critérios de comparação. `nashSolver.test.ts` e `invarianciasRpCanonico.test.ts` testam contratos de código; validam formalmente esta calibração.*

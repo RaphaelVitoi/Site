@@ -238,21 +238,35 @@ export function classifyTier(stack: number, stacks: number[]): StackTier {
 }
 
 /**
- * Piso numérico do RP na grandeza (BF-1)/BF: -100%, que corresponde a BF = 0,5 (ganho o dobro da perda).
- * Limite de engenharia, não dos autos: a grandeza vai a -infinito quando BF tende a 0. O caso canônico do
- * Teorema 2 (residual 4 BB, pote 36 BB) mede BF 0,812 e RP -23,2%, bem acima do piso.
+ * Piso numérico do RP na grandeza canônica: -100%.
  */
 export const RP_PISO_NUMERICO = -100;
 
 /**
- * RP = 100 x (BF-1)/BF, com sinal. Teorema 2 do tratado canônico (docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md):
- * RP_River < 0 quando E* < B/(P+2B), o que equivale a BF < 1. Até 2026-09-17 o código devolvia 0 para todo
- * BF <= 1, e o teorema não tinha como aparecer.
+ * Grandeza Canônica do Risk Premium (Teorema Vitoi / PMev Master):
+ * RP = (E* - a) / (1 - a) = a * (BF - 1) / (a * BF + 1 - a)
+ *
+ * Para a = 0.5 (all-in even money), reduz-se algebricamente a (BF - 1) / (BF + 1).
+ * Devolve o valor em percentual (-100% a 100%, com sinal conforme Teorema 2: BF < 1 => RP < 0).
+ *
+ * @param bf Bubble Factor (deltaLose / deltaWin)
+ * @param potOdds Pot odds cruas da decisão (a = heroCost / (potTotal)). Padrão: 0.5 (even money).
  */
-export function premioDeRiscoDoBf(bf: number): number {
+export function premioDeRiscoCanonico(bf: number, potOdds: number = 0.5): number {
 	if (!Number.isFinite(bf)) return 0;
 	if (bf <= 0) return RP_PISO_NUMERICO;
-	return Math.max(RP_PISO_NUMERICO, (100 * (bf - 1)) / bf);
+	const a = Math.min(Math.max(Number.isFinite(potOdds) ? potOdds : 0.5, 1e-6), 1 - 1e-6);
+	const denom = a * bf + 1.0 - a;
+	if (denom <= 0) return RP_PISO_NUMERICO;
+	const rp = (100 * (a * (bf - 1.0))) / denom;
+	return Math.max(RP_PISO_NUMERICO, rp);
+}
+
+/**
+ * Wrapper de retrocompatibilidade para premioDeRiscoCanonico sob all-in even money (a = 0.5).
+ */
+export function premioDeRiscoDoBf(bf: number): number {
+	return premioDeRiscoCanonico(bf, 0.5);
 }
 
 // --- HELPERS DE REDUÇÃO DE ENTROPIA COGNITIVA (SOTA v8.0 GOLD FUSED) ---
@@ -356,12 +370,13 @@ function _calculateValuationAndRio(
 		villainDeltaLoss > 0 ? deltaWinPct / ((villainDeltaLoss / totalPrizes) * 100) : 1;
 	const valuation = Math.max(0.1, Math.min(2, rawValuation));
 
-	// [v8.0] riskAdvantage: Fórmula BF canônica (100×(BF-1)/BF) aplicada ao Hero.
-	// Preservamos a fórmula v6.2.1 por sua rastreabilidade didática e fidelidade ao BF.
+	// [v8.0 GOLD] riskAdvantage: Fórmula canônica RP = (E* - a)/(1 - a) com pot odds reais da decisão.
 	const gainAbs = deltaWinPct;         // Δ equidade ICM em caso de vitória (positivo)
 	const lossAbs = Math.abs(deltaLosePct); // Δ equidade ICM em caso de derrota (magnitude)
 	const heroBf = gainAbs > 0 ? lossAbs / gainAbs : 1;
-	const riskAdvantage = premioDeRiscoDoBf(heroBf);
+	const potTotal = input.potSize + input.heroCost;
+	const heroPotOdds = potTotal > 0 ? input.heroCost / potTotal : 0.5;
+	const riskAdvantage = premioDeRiscoCanonico(heroBf, heroPotOdds);
 
 	// [v6.2.1] Expoente N^2.0 FIXO — sem feedback loop com noise factor.
 	// Decisão arquitetural: separar física multiway (expoente) da percepção humana (damping).

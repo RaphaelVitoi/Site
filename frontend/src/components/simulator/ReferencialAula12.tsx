@@ -106,7 +106,7 @@ function LegendSection() {
           <p className="text-text-muted text-[0.8rem] leading-relaxed font-medium">
             Imposto do ICM.
             <br />
-            <span className="rounded-sm bg-white/10 px-1.5 py-0.5 font-mono text-white">RP = (BF-1)/BF</span>
+            <span className="rounded-sm bg-white/10 px-1.5 py-0.5 font-mono text-white">RP = (E*−a)/(1−a)</span>
           </p>
         </div>
         <div className="space-y-2">

@@ -3,7 +3,7 @@
  */
 import { SCENARIOS } from '@/components/simulator/solver/scenarios';
 import { solveIcmDistortion } from '@/components/simulator/solver/nashSolver';
-import { buildSimulatedStacks, calculateMapaICM, premioDeRiscoDoBf, RP_PISO_NUMERICO } from '@/lib/perspectiva';
+import { buildSimulatedStacks, calculateMapaICM, premioDeRiscoCanonico, premioDeRiscoDoBf, RP_PISO_NUMERICO } from '@/lib/perspectiva';
 import { derivePostFlopRps } from '@/lib/rpDeriver';
 
 /**
@@ -59,14 +59,14 @@ describe('Teorema 2 -- RP negativo no river', () => {
 		expect(bf).toBeLessThan(1);
 		expect(eEstrela).toBeLessThan(a);
 		expect(r.ipRp).toBeLessThan(0);
-		expect(r.ipRp).toBeCloseTo(premioDeRiscoDoBf(bf), 10);
+		expect(r.ipRp).toBeCloseTo(premioDeRiscoCanonico(bf, a), 10);
 	});
 
 	it('a grandeza tem sinal e piso numérico declarado', () => {
-		expect(premioDeRiscoDoBf(2)).toBe(50);
+		expect(premioDeRiscoDoBf(2)).toBeCloseTo(100 / 3, 10);
 		expect(premioDeRiscoDoBf(1)).toBe(0);
-		expect(premioDeRiscoDoBf(0.8)).toBeCloseTo(-25, 10);
-		expect(premioDeRiscoDoBf(0.1)).toBe(RP_PISO_NUMERICO);
+		expect(premioDeRiscoDoBf(0.8)).toBeCloseTo(-100 / 9, 10);
+		expect(premioDeRiscoDoBf(0.1)).toBeCloseTo(-900 / 11, 10);
 		expect(premioDeRiscoDoBf(0)).toBe(RP_PISO_NUMERICO);
 	});
 

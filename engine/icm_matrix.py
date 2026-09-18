@@ -22,6 +22,8 @@ from __future__ import annotations
 from math import isfinite
 from typing import Any
 
+from engine.vitoi_perspective_engine import premio_de_risco_canonico
+
 
 def calculate_malmuth_harville_icm(
     stacks: list[float],
@@ -120,11 +122,9 @@ def compute_bubble_factor_matrix(
             bf = delta_lose / delta_win
             bf_matrix[i][j] = round(bf, 3)
 
-            # Risk Premium = (BF - 1) / (BF + 1) * 100%
-            # Grandeza A do par B06/F07 (ver frontend/src/lib/rpDeriver.ts).
-            # Exata na convencao `req = a + RP*(1-a)` sob all-in EVEN MONEY
-            # (a=0.5), que e a premissa estrutural desta matriz.
-            rp = ((bf - 1.0) / (bf + 1.0)) * 100.0
+            # Risk Premium via funcao canonica sob all-in EVEN MONEY (a=0.5).
+            # Algebricamente identica a (bf-1)/(bf+1) sob a=0.5 (Invariancia I3).
+            rp = premio_de_risco_canonico(bf, 0.5)
             rp_matrix[i][j] = round(max(0.0, rp), 2)
 
             # Required Equity = BF / (BF + 1) * 100%

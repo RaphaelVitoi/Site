@@ -19,6 +19,28 @@ DEFAULT_LAMBDA: Final[float] = 2.25
 # Piso numerico do BF: 0.5 equivale a RP -100% na grandeza (BF-1)/BF. Limite de engenharia, nao dos autos --
 # o Teorema 2 exige BF < 1 representavel, e o caso canonico (residual 4 BB, pote 36 BB) mede BF 0.812.
 BF_PISO_NUMERICO: Final[float] = 0.5
+RP_PISO_NUMERICO: Final[float] = -100.0
+
+
+def premio_de_risco_canonico(bf: float, pot_odds: float = 0.5) -> float:
+    """Grandeza Canonica do Risk Premium (Teorema Vitoi / PMev Master).
+
+    RP = (E* - a) / (1 - a) = a * (BF - 1) / (a * BF + 1 - a)
+
+    Para a = 0.5 (all-in even money), reduz-se algebricamente a (BF - 1) / (BF + 1).
+    Devolve o valor em percentual (-100.0 a 100.0).
+    """
+    if not math.isfinite(bf):
+        return 0.0
+    if bf <= 0.0:
+        return RP_PISO_NUMERICO
+    a = min(max(pot_odds, 1e-6), 1.0 - 1e-6)
+    denom = a * bf + 1.0 - a
+    if denom <= 0.0:
+        return RP_PISO_NUMERICO
+    rp = (100.0 * (a * (bf - 1.0))) / denom
+    return max(RP_PISO_NUMERICO, rp)
+
 
 type StackVector = list[float]
 type PayoutVector = list[float]
@@ -241,8 +263,7 @@ class ProspectRiskEngine:
         """
         a = min(max(raw_pot_odds, 0.0), 1.0 - EPSILON)
         bf = self.calculate_dynamic_bubble_factor()
-        exata = (bf * a) / (bf * a + 1.0 - a)
-        premio_relativo = (exata - a) / (1.0 - a)
+        premio_relativo = premio_de_risco_canonico(bf, a) / 100.0
         psi = self.calculate_edge_time_modulator()
         req_equity = a + premio_relativo * psi * (1.0 - a)
         return min(0.95, max(0.0, req_equity))
@@ -461,12 +482,13 @@ class VitoiPerspectiveEngine:
         denom = pot_size + bet_size + (bet_size * bf)
         e_pmev = (bet_size * bf) / denom if denom > 0 else 0.0
         mdf_pmev = (pot_size + bet_size) / denom if denom > 0 else 0.0
-        rp_pp = max(0.0, e_pmev - e_chipev)
+        delta_eq_pp = max(0.0, e_pmev - e_chipev)
 
         return {
             "equity_required_pmev": round(e_pmev, 4),
             "equity_required_chipev": round(e_chipev, 4),
-            "risk_premium_pp": round(rp_pp, 4),
+            "delta_equidade_pp": round(delta_eq_pp, 4),
+            "risk_premium_pp": round(delta_eq_pp, 4),
             "mdf_pmev": round(mdf_pmev, 4),
             "mdf_chipev": round(mdf_chipev, 4),
         }
@@ -716,13 +738,14 @@ class VitoiPerspectiveEngine:
             fold_survival_prob = 1e-6
         relative_survival_ratio = fold_survival_prob / max(call_win_survival_prob, 1e-6)
         pmev_required_equity = chipev_equity * relative_survival_ratio
-        risk_premium = pmev_required_equity - chipev_equity
-        is_negative_rp = risk_premium < 0.0 or residual_stack_bb <= 4.0
+        delta_equidade = pmev_required_equity - chipev_equity
+        is_negative_rp = delta_equidade < 0.0 or residual_stack_bb <= 4.0
 
         return {
             "chipev_equity": round(chipev_equity, 4),
             "pmev_required_equity": round(pmev_required_equity, 4),
-            "risk_premium": round(risk_premium, 4),
+            "delta_equidade_pp": round(delta_equidade, 4),
+            "risk_premium": round(delta_equidade, 4),
             "is_negative_rp": 1.0 if is_negative_rp else 0.0,
             "bluffcatcher_call_mandatory": 1.0 if (is_negative_rp or pmev_required_equity <= chipev_equity) else 0.0,
         }
