@@ -41,8 +41,15 @@ from engine.pmev_scenario import (
 RAIZ: Final[Path] = Path(__file__).resolve().parents[1]
 DATA_PATH: Final[Path] = RAIZ / "data" / "aula12_pairs.json"
 
+# SHA-256 da versao DE ONDE OS NUMEROS FORAM LIDOS. Nao e o do arquivo vigente,
+# e a diferenca e deliberada -- ver Reconference e RECONFERENCE_LAYERS abaixo.
 AULA_1_2_SHA256: Final[str] = "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769"
 EXPECTED_PAIR_COUNT: Final[int] = 7
+
+# Camadas da fonte que uma reconferencia pode alcancar. Espelha ReconferenceLayer
+# no contrato TypeScript, e a ordem importa: `figuras` e a unica que autoriza
+# reancorar, porque frequencia, combo e sizing so existem nas capturas.
+RECONFERENCE_LAYERS: Final[frozenset[str]] = frozenset({"metadados", "texto", "figuras"})
 
 # Literal de docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md, linha "Payouts da FT".
 CANONICAL_PAYOUTS: Final[tuple[float, ...]] = (
@@ -71,14 +78,65 @@ _SEM_MOTIVO: Final[str] = "ilegivel no fixture, sem motivo declarado"
 __all__ = [
     "AULA_1_2_SHA256",
     "CANONICAL_PAYOUTS",
+    "RECONFERENCE_LAYERS",
+    "Reconference",
     "DATA_PATH",
     "FREQUENCY_SUM_TOLERANCE_PCT",
     "EvidenceAction",
     "EvidenceSide",
     "TranscribedPair",
     "load_aula12_pairs",
+    "load_reconference",
     "pair_by_key",
 ]
+
+
+@dataclass(frozen=True, slots=True)
+class Reconference:
+    """Conferencia da transcricao contra uma versao POSTERIOR do documento.
+
+    Responde "alguem ja conferiu estes numeros contra a versao vigente, e ate
+    onde chegou?", que NAO e a pergunta que `AULA_1_2_SHA256` responde. Fundir
+    as duas num campo so perde uma delas -- trocar o SHA para "atualizar" a
+    evidencia apaga de onde ela foi lida e inventa uma leitura que nao houve.
+
+    `nao_alcancado` nunca e omitido para o registro parecer completo.
+    """
+
+    document_sha256: str
+    conferido_em: str
+    camadas_alcancadas: tuple[str, ...]
+    substrato: str
+    confere: tuple[str, ...]
+    divergencias: tuple[str, ...]
+    nao_alcancado: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if len(self.document_sha256) != 64 or not all(c in "0123456789abcdef" for c in self.document_sha256):
+            raise ValueError("Reconferencia: SHA-256 deve ser hexadecimal minusculo de 64 caracteres.")
+        if not self.camadas_alcancadas:
+            raise ValueError("Reconferencia sem nenhuma camada alcancada nao conferiu nada.")
+        desconhecidas = set(self.camadas_alcancadas) - RECONFERENCE_LAYERS
+        if desconhecidas:
+            raise ValueError(f"Reconferencia: camada desconhecida {sorted(desconhecidas)}.")
+        if not self.substrato.strip():
+            raise ValueError("Reconferencia sem substrato nao e auditavel.")
+
+    @property
+    def alcancou_figuras(self) -> bool:
+        return "figuras" in self.camadas_alcancadas
+
+    def ancora_sustentada(self, ancora_da_transcricao: str) -> bool:
+        """A ancora em vigor e sustentada pelo que esta reconferencia alcancou?
+
+        Apontar a ancora para a versao reconferida sem ter lido as figuras
+        declara uma leitura que nao aconteceu. E o unico defeito desta familia
+        que nenhuma outra verificacao pega: o dado segue internamente coerente
+        enquanto mente sobre a propria origem.
+        """
+        if self.document_sha256 != ancora_da_transcricao:
+            return True
+        return self.alcancou_figuras
 
 
 @dataclass(frozen=True, slots=True)
@@ -271,6 +329,44 @@ def load_aula12_pairs(path: Path = DATA_PATH) -> tuple[TranscribedPair, ...]:
     if len(set(chaves)) != len(chaves):
         raise ValueError(f"Chaves de par repetidas: {chaves}.")
     return tuple(pares)
+
+
+def load_reconference(path: Path = DATA_PATH) -> Reconference:
+    """Le o bloco `reconferencia` do espelho. Falha fechado se ele faltar.
+
+    Ausencia e erro, nao ausencia benigna: uma transcricao ancorada num SHA que
+    nao resolve mais, e sem nenhuma declaracao de reconferencia, e exatamente o
+    estado que o campo existe para tornar visivel.
+    """
+    try:
+        bruto = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Espelho dos pares ilegivel em {path}: {exc}") from exc
+    rec = bruto.get("reconferencia") if isinstance(bruto, dict) else None
+    if not isinstance(rec, dict):
+        raise ValueError("Espelho sem bloco `reconferencia`.")
+
+    def _lista(nome: str) -> tuple[str, ...]:
+        valor = rec.get(nome)
+        if not isinstance(valor, list) or not all(isinstance(i, str) for i in valor):
+            raise ValueError(f"reconferencia.{nome} deve ser lista de texto.")
+        return tuple(valor)
+
+    reconferencia = Reconference(
+        document_sha256=str(rec.get("documentSha256", "")),
+        conferido_em=str(rec.get("conferidoEm", "")),
+        camadas_alcancadas=_lista("camadasAlcancadas"),
+        substrato=str(rec.get("substrato", "")),
+        confere=_lista("confere"),
+        divergencias=_lista("divergencias"),
+        nao_alcancado=_lista("naoAlcancado"),
+    )
+    if not reconferencia.ancora_sustentada(AULA_1_2_SHA256):
+        raise ValueError(
+            "A ancora aponta a versao reconferida, mas a reconferencia nao alcancou as figuras: "
+            "frequencia, combo e sizing vivem nas capturas, e a ancora afirmaria uma leitura que nao houve."
+        )
+    return reconferencia
 
 
 def pair_by_key(key: str, pairs: tuple[TranscribedPair, ...] | None = None) -> TranscribedPair:

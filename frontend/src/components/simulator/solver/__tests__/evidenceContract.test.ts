@@ -23,11 +23,13 @@ import {
   resolveTolerances,
   unreadable,
   validateEvidencePair,
+  validateReconference,
 } from '../evidenceContract';
 import type {
   EvidenceAction,
   EvidenceContext,
   EvidencePair,
+  EvidenceReconference,
   EvidenceScenario,
   EvidenceSource,
   EvidenceViolation,
@@ -660,5 +662,69 @@ describe( 'Motor efetivo × produto', () => {
     );
     expect( assessReproducibility( mesmoMotorNosDoisLados ).reproducible ).toBe( true );
     expect( hasBlockingViolation( validateEvidencePair( mesmoMotorNosDoisLados ) ) ).toBe( false );
+  } );
+} );
+
+describe( 'reconferência — a âncora contra o que a conferência alcançou', () => {
+  const base = {
+    documentSha256: 'b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930',
+    conferidoEm: '2026-09-18',
+    camadasAlcancadas: [ 'metadados', 'texto' ],
+    substrato: 'extração de texto versionada no repositório',
+    confere: [ '14 de 14 rótulos de nó' ],
+    divergencias: [],
+    naoAlcancado: [ 'as figuras' ],
+  } satisfies EvidenceReconference;
+
+  const ANTIGA = '7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769';
+
+  it( 'âncora na versão antiga sem figuras é o estado honesto: nada a reportar', () => {
+    expect( validateReconference( base, ANTIGA ) ).toEqual( [] );
+  } );
+
+  it( 'âncora na versão nova SEM figuras é erro — afirma leitura que não houve', () => {
+    const vs = validateReconference( base, base.documentSha256 );
+    expect( codes( vs ) ).toEqual( [ 'RECONFERENCE_ANCHOR_UNSUPPORTED' ] );
+    expect( hasBlockingViolation( vs ) ).toBe( true );
+  } );
+
+  it( 'âncora na versão nova COM figuras é legítima', () => {
+    const relido = { ...base, camadasAlcancadas: [ 'texto', 'figuras' ] } satisfies EvidenceReconference;
+    expect( validateReconference( relido, relido.documentSha256 ) ).toEqual( [] );
+  } );
+
+  it( 'figuras relidas sem divergência e âncora velha: reancorar virou devido, e só avisa', () => {
+    const relido = { ...base, camadasAlcancadas: [ 'texto', 'figuras' ] } satisfies EvidenceReconference;
+    const vs = validateReconference( relido, ANTIGA );
+    expect( codes( vs ) ).toEqual( [ 'RECONFERENCE_ANCHOR_STALE' ] );
+    expect( hasBlockingViolation( vs ) ).toBe( false );
+  } );
+
+  it( 'figuras relidas COM divergência não pedem reancoragem', () => {
+    const divergiu = {
+      ...base,
+      camadasAlcancadas: [ 'texto', 'figuras' ],
+      divergencias: [ 'PAR_3: a frequência de call mudou de 74.8 para 73.1' ],
+    } satisfies EvidenceReconference;
+    expect( validateReconference( divergiu, ANTIGA ) ).toEqual( [] );
+  } );
+
+  const malformadas: [ string, Partial<EvidenceReconference> ][] = [
+    [ 'SHA maiúsculo', { documentSha256: base.documentSha256.toUpperCase() } ],
+    [ 'SHA curto', { documentSha256: 'b3fc15ba' } ],
+    [ 'data fora do ISO', { conferidoEm: '18/09/2026' } ],
+    [ 'nenhuma camada', { camadasAlcancadas: [] } ],
+    [ 'substrato em branco', { substrato: '   ' } ],
+  ];
+
+  it.each( malformadas )( 'declaração malformada reprova: %s', ( _nome, troca ) => {
+    const vs = validateReconference( { ...base, ...troca }, ANTIGA );
+    expect( codes( vs ) ).toContain( 'RECONFERENCE_MALFORMED' );
+    expect( hasBlockingViolation( vs ) ).toBe( true );
+  } );
+
+  it( 'âncora fora do formato interrompe a comparação em vez de inventar veredito', () => {
+    const vs = validateReconference( base, 'nao-e-um-sha' );
+    expect( codes( vs ) ).toEqual( [ 'RECONFERENCE_MALFORMED' ] );
   } );
 } );

@@ -27,4 +27,20 @@ describe('espelho JSON dos pares da Aula 1.2', () => {
       ...fixture.ATRIBUICAO_AMBIGUA_NODELOCK.afetaPares,
     ]);
   });
+
+  it('espelha a reconferência, que é o que separa leitura de conferência', () => {
+    expect(espelho.reconferencia).toEqual(
+      JSON.parse(JSON.stringify(fixture.RECONFERENCIA_AULA_1_2)),
+    );
+  });
+
+  it('a âncora dos pares continua sendo a versão LIDA, não a vigente', () => {
+    // O motor Python casa `documentSha256` com AULA_1_2_SHA256 e falha fechado.
+    // Trocá-lo pela versão vigente sem reler as capturas é o defeito que
+    // `validateReconference` reprova; aqui o espelho não pode antecipá-lo.
+    expect(espelho.documentSha256).not.toBe(fixture.AULA_1_2_SHA256_VIGENTE);
+    for (const { par } of espelho.pares) {
+      expect(par.source.documentSha256).toBe(fixture.AULA_1_2_SHA256);
+    }
+  });
 });

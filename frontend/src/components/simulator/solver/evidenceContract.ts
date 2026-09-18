@@ -77,6 +77,56 @@ export interface EvidenceSource {
   nodeLabel: string;
 }
 
+/**
+ * Camada da fonte que uma reconferência alcançou.
+ *
+ * `metadados` — contagens estruturais do arquivo: bytes, parágrafos, número de
+ *               inserções de figura. Detecta que o documento mudou; não diz
+ *               onde.
+ * `texto`     — prosa e legendas. Alcança rótulo de nó, numeração e o contexto
+ *               que o documento declara em palavras. NÃO alcança um único valor
+ *               que viva dentro de uma captura.
+ * `figuras`   — as capturas de solver. É onde moram frequência, combo e sizing,
+ *               e por isso é a ÚNICA camada que autoriza reancorar
+ *               `EvidenceSource.documentSha256` numa versão nova.
+ */
+export type ReconferenceLayer = 'metadados' | 'texto' | 'figuras';
+
+/**
+ * Conferência de uma transcrição contra uma versão POSTERIOR do documento.
+ *
+ * POR QUE NÃO SE FUNDE COM `EvidenceSource.documentSha256`:
+ * aquele campo responde *de qual documento estes números foram lidos*. Este
+ * responde *alguém já os conferiu contra a versão vigente, e até onde chegou*.
+ * São duas perguntas, e um campo só responde uma — trocar o SHA para "atualizar"
+ * a evidência apaga a primeira resposta e inventa a segunda.
+ *
+ * O caso que originou o tipo (Aula 1.2, 2026-09-18): o documento foi editado
+ * depois da transcrição, o SHA antigo deixou de resolver, e a tentação era
+ * trocá-lo. Só a camada de texto estava ao alcance, e texto não contém nenhum
+ * dos valores transcritos. Trocar teria declarado uma conferência que não houve,
+ * e nenhum teste acusaria.
+ *
+ * O resíduo fica visível: a transcrição segue ancorada onde foi lida, e esta
+ * estrutura diz o que se conferiu, quando, até onde e o que ficou de fora.
+ */
+export interface EvidenceReconference {
+  /** SHA-256 da versão contra a qual se conferiu (hex minúsculo, 64 chars). */
+  documentSha256: string;
+  /** Data da conferência, ISO 8601 `YYYY-MM-DD`. */
+  conferidoEm: string;
+  /** Camadas efetivamente alcançadas. Vazio é declaração inválida. */
+  camadasAlcancadas: readonly ReconferenceLayer[];
+  /** De onde a conferência leu a versão vigente — arquivo, extração, export. */
+  substrato: string;
+  /** O que conferiu, item a item, em prosa curta e contável. */
+  confere: readonly string[];
+  /** O que divergiu. Vazio significa nada divergiu, não "não se olhou". */
+  divergencias: readonly string[];
+  /** O que NÃO foi alcançado, com o motivo. Nunca omitir para parecer completo. */
+  naoAlcancado: readonly string[];
+}
+
 // ---------------------------------------------------------------------------
 // 3. Contexto do spot
 // ---------------------------------------------------------------------------
@@ -338,7 +388,36 @@ export type EvidenceViolationCode =
    * numa constante de `solveIcmDistortion`. Reprovar como `error` descartaria
    * sete pares honestos; silenciar deixaria a barreira existir apenas em prosa.
    */
-  | 'PROVENANCE_INCOMPLETE';
+  | 'PROVENANCE_INCOMPLETE'
+  /**
+   * Declaração de reconferência malformada: SHA fora do formato, data fora do
+   * ISO, nenhuma camada alcançada, ou substrato em branco. SEVERIDADE `error`:
+   * uma reconferência que não se consegue ler não conferiu nada, e deixá-la
+   * passar como `warning` seria dar crédito a uma linha de texto.
+   */
+  | 'RECONFERENCE_MALFORMED'
+  /**
+   * A âncora foi reescrita para a versão nova SEM que a reconferência tenha
+   * alcançado as figuras.
+   *
+   * SEVERIDADE `error`, e é o núcleo deste tipo. `documentSha256` afirma de
+   * onde os números foram lidos, e os números vivem nas capturas. Apontá-lo
+   * para uma versão cujas capturas ninguém releu declara uma leitura que não
+   * aconteceu — e é o único defeito desta família que nenhuma outra
+   * verificação do contrato pegaria, porque o dado continua internamente
+   * coerente enquanto mente sobre a própria origem.
+   */
+  | 'RECONFERENCE_ANCHOR_UNSUPPORTED'
+  /**
+   * A reconferência alcançou as figuras e não achou divergência, mas a âncora
+   * continua na versão antiga.
+   *
+   * SEVERIDADE `warning`: nada aqui é falso. As figuras foram relidas contra a
+   * versão vigente e bateram, então reancorar passou a ser legítimo — e
+   * devido. Enquanto não se faz, o par continua evidência boa apontando para um
+   * SHA que não resolve mais.
+   */
+  | 'RECONFERENCE_ANCHOR_STALE';
 
 /**
  * `error`  — o dado viola o contrato e não pode ser usado como evidência.
@@ -959,6 +1038,118 @@ export function validateEvidencePair(
 /** Conveniência: o par tem alguma violação de severidade `error`? */
 export function hasBlockingViolation( violations: EvidenceViolation[] ): boolean {
   return violations.some( v => v.severity === 'error' );
+}
+
+const SHA256_HEX = /^[0-9a-f]{64}$/;
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Valida uma reconferência contra a âncora que a transcrição declara.
+ *
+ * O ARGUMENTO `ancoraDaTranscricao` É O `EvidenceSource.documentSha256` EM VIGOR,
+ * e a relação entre ele e `reconference.documentSha256` é a verificação inteira:
+ *
+ * | âncora | alcançou figuras | veredito |
+ * | :--- | :--- | :--- |
+ * | versão antiga | não | correto — é o estado honesto enquanto as capturas não forem relidas |
+ * | versão antiga | sim, sem divergência | `RECONFERENCE_ANCHOR_STALE` — reancorar é devido |
+ * | versão nova | sim | correto — a releitura sustenta a âncora |
+ * | versão nova | **não** | `RECONFERENCE_ANCHOR_UNSUPPORTED` — a âncora afirma uma leitura que não houve |
+ *
+ * A última linha é a razão de existir da função. Sem ela, trocar um SHA em cinco
+ * arquivos deixa a suíte verde e a procedência falsa.
+ */
+export function validateReconference(
+  reconference: EvidenceReconference,
+  ancoraDaTranscricao: string,
+): EvidenceViolation[] {
+  const violations: EvidenceViolation[] = [];
+  const caminho = 'reconference';
+
+  if ( !SHA256_HEX.test( reconference.documentSha256 ) ) {
+    violations.push(
+      violation(
+        'RECONFERENCE_MALFORMED',
+        'error',
+        `${caminho}.documentSha256`,
+        'SHA-256 deve ser hexadecimal minúsculo de 64 caracteres.',
+        { recebido: reconference.documentSha256 },
+      ),
+    );
+  }
+  if ( !DATA_ISO.test( reconference.conferidoEm ) ) {
+    violations.push(
+      violation(
+        'RECONFERENCE_MALFORMED',
+        'error',
+        `${caminho}.conferidoEm`,
+        'Data da conferência deve estar em ISO 8601 `YYYY-MM-DD`.',
+        { recebido: reconference.conferidoEm },
+      ),
+    );
+  }
+  if ( reconference.camadasAlcancadas.length === 0 ) {
+    violations.push(
+      violation(
+        'RECONFERENCE_MALFORMED',
+        'error',
+        `${caminho}.camadasAlcancadas`,
+        'Reconferência sem nenhuma camada alcançada não conferiu nada.',
+      ),
+    );
+  }
+  if ( reconference.substrato.trim() === '' ) {
+    violations.push(
+      violation(
+        'RECONFERENCE_MALFORMED',
+        'error',
+        `${caminho}.substrato`,
+        'Declare de onde a versão vigente foi lida; sem substrato a conferência não é auditável.',
+      ),
+    );
+  }
+  if ( !SHA256_HEX.test( ancoraDaTranscricao ) ) {
+    violations.push(
+      violation(
+        'RECONFERENCE_MALFORMED',
+        'error',
+        'source.documentSha256',
+        'Âncora da transcrição fora do formato SHA-256: a comparação de versões não é possível.',
+        { ancoraDaTranscricao },
+      ),
+    );
+    return violations;
+  }
+
+  const mesmaVersao = reconference.documentSha256 === ancoraDaTranscricao;
+  const alcancouFiguras = reconference.camadasAlcancadas.includes( 'figuras' );
+
+  if ( mesmaVersao && !alcancouFiguras ) {
+    violations.push(
+      violation(
+        'RECONFERENCE_ANCHOR_UNSUPPORTED',
+        'error',
+        `${caminho}.documentSha256`,
+        'A âncora aponta a versão reconferida, mas a reconferência não alcançou as figuras. ' +
+          'Frequência, combo e sizing vivem nas capturas: a âncora afirma uma leitura que não aconteceu.',
+        { ancoraDaTranscricao, camadasAlcancadas: [ ...reconference.camadasAlcancadas ] },
+      ),
+    );
+  }
+
+  if ( !mesmaVersao && alcancouFiguras && reconference.divergencias.length === 0 ) {
+    violations.push(
+      violation(
+        'RECONFERENCE_ANCHOR_STALE',
+        'warning',
+        `${caminho}.documentSha256`,
+        'As figuras foram relidas contra a versão vigente e não divergiram: reancorar passou a ser devido.',
+        { ancoraDaTranscricao, versaoReconferida: reconference.documentSha256 },
+      ),
+    );
+  }
+
+  return violations;
 }
 
 // ---------------------------------------------------------------------------

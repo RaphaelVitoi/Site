@@ -1,7 +1,34 @@
 {
-  "descricao": "Espelho JSON dos sete pares transcritos da Aula 1.2 para consumo do motor Python. Fonte curada: frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts. frontend/src/tests/simulator/aula12PairsJson.test.ts reprova se divergirem. Nao editar a mao.",
+  "descricao": "Espelho JSON dos sete pares transcritos da Aula 1.2 para consumo do motor Python. Fonte curada: frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts. frontend/src/tests/simulator/aula12PairsJson.test.ts reprova se divergirem. Nao editar a mao. documentSha256 e a versao DE ONDE OS NUMEROS FORAM LIDOS; reconferencia diz contra qual versao vigente se conferiu e ate onde se chegou.",
   "geradoDe": "frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts",
   "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+  "reconferencia": {
+    "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
+    "conferidoEm": "2026-09-18",
+    "camadasAlcancadas": [
+      "metadados",
+      "texto"
+    ],
+    "substrato": "reports/curation/pmev-2026-09-09/text/S08.txt — extração de texto do docx vigente, declarada em sources.json (entrada S08, 31.329.198 bytes); text_sha256 conferido com CRLF",
+    "confere": [
+      "14 de 14 rótulos de nó: os sete pares ancoram ChipEV e ICMev, e os catorze aparecem literalmente na versão vigente, com a mesma redação e o mesmo número",
+      "11 de 11 grandezas de contexto declaradas em texto: pote 5,63bb; stacks pós-flop BTN 38 / BB 53; RP BTN 21,4% e BB 12,9%; BTN RFI 33,6%; e as cinco frequências de defesa do BB (17,1 / 64,4 / 3,7 / 6,5 / 8,4)",
+      "a nota de PAR_1 — prosa \"7% de lead\" contra 5,7% medido na captura — segue no texto",
+      "formato e settings da árvore: MTT Vanilla 11$, field 126, FT de 9; leads de 25% em todas as streets, raise geométrico em SPR 2,5, all-in a partir de SPR 5",
+      "as duas versões declaram as mesmas 97 inserções de figura",
+      "as três marcas de ATRIBUICAO_AMBIGUA_NODELOCK seguem válidas na versão vigente"
+    ],
+    "divergencias": [
+      "PAR_6: a nota de ambiguidade nomeia só o nó 21 como legenda concorrente de image45.png, e a versão vigente traz a MESMA redação também no nó 17 — a ambiguidade é mais larga do que o registrado",
+      "PAR_7: o número de nó 13 aparece duas vezes na versão vigente — na âncora ChipEV do par e de novo entre o nó 92 e as conclusões do ICMev, onde quase certamente é 93 com o dígito perdido. Risco de colisão que a nota não registra"
+    ],
+    "naoAlcancado": [
+      "as figuras: nenhuma frequência, combo ou sizing dos sete pares foi reconferida, porque as 84 imagens não estavam ao alcance da extração de texto",
+      "a ordem real de inserção das figuras — o que há é a regularidade interna `figura ChipEV = nó + 6` e `figura ICMev = nó + 7`, que vale nos sete e é coerência do fixture, não conferência contra a fonte",
+      "os parâmetros de árvore das figuras 01 a 04 (premiação, sizings do HRC por street, stacks por assento, bubble factors), que exigem ler as imagens",
+      "e-Nash, que segue ausente por propriedade da fonte e não por falta de busca"
+    ]
+  },
   "atribuicaoAmbiguaNodelock": [
     "PAR_5_IP_VS_XR_FLOP",
     "PAR_6_BB_TURN_APOS_CALL",
