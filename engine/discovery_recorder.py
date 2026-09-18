@@ -4,15 +4,16 @@ Alimenta de forma continua e assincrona o banco de dados de replay (data/discove
 com resultados de testes, eventos de tarefas do TaskExecutor e simulacoes PMev.
 Opera 100% localmente, sem dependencia de chaves de API externas.
 
-EXPERIMENTAL (2026-09-18): sem consumidor no runtime -- so os testes o alcancam.
-Nao importar de rota, worker ou UI sem antes liga-lo ao fluxo real com teste ponta
-a ponta (CLAUDE.md do Site, secao 6, item 5).
+Consumidores de runtime (2026-09-18): agents/execution.py grava o desfecho de toda
+tarefa; api/v1/handlers.py grava cada arvore PMev simulada; o comando
+`nexus agent dream-optimize` roda a fase de Sonho sobre esse historico.
 
 Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 """
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import time
 from typing import Any
@@ -309,3 +310,21 @@ class DiscoveryRecorder:
     def get_database_health_telemetry(self) -> dict[str, Any]:
         """Calcula telemetria de integridade, tamanho e projecao do banco SQLite."""
         return self.simulator.get_database_health_telemetry()
+
+
+# Banco do runtime ancorado na raiz do repositorio: o DEFAULT_DB_PATH relativo gravaria
+# onde quer que o processo tenha sido lancado (worker, API e CLI partem de lugares distintos).
+RUNTIME_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "discovery_tree.db"
+_recorder_runtime: DiscoveryRecorder | None = None
+
+
+def recorder_do_runtime() -> DiscoveryRecorder:
+    """Gravador unico do processo, criado na primeira gravacao real.
+
+    NEXUS_DISCOVERY_DB redireciona o banco -- a suite a aponta para um diretorio
+    temporario, para que nenhum teste escreva no historico real.
+    """
+    global _recorder_runtime  # noqa: PLW0603 -- singleton preguicoso do processo
+    if _recorder_runtime is None:
+        _recorder_runtime = DiscoveryRecorder(os.environ.get("NEXUS_DISCOVERY_DB") or RUNTIME_DB_PATH)
+    return _recorder_runtime
