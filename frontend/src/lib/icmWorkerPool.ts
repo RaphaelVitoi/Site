@@ -5,7 +5,7 @@
  *       com particionamento de sementes e fallback resiliente Single-Thread.
  */
 
-import { calculateIcmMonteCarlo, type MonteCarloIcmResult } from './montecarlo';
+import { calculateIcmMonteCarlo, deriveSeed, type MonteCarloIcmResult } from './montecarlo';
 
 export interface IcmSimulationOptions {
 	stacks: number[];
@@ -18,27 +18,29 @@ export interface IcmSimulationOptions {
 
 export type IcmParallelismMode = 'WORKER_POOL' | 'SINGLE_THREAD_FALLBACK';
 
+/**
+ * Resultado de uma corrida paralela.
+ *
+ * REPLAY: reproduzir uma corrida do pool exige TRES campos, nao so a semente —
+ * `seed`, `iterations` e `concurrency`. O pool particiona as iteracoes entre os
+ * workers e da a cada um uma semente derivada da base, entao o numero de workers
+ * faz parte do experimento: a mesma `seed` em uma maquina de 4 nucleos e em uma
+ * de 8 produz particoes diferentes e, portanto, numeros diferentes. Por isso
+ * `concurrency` volta no resultado; para replay exato, passe-o de volta em
+ * `maxConcurrency`. O caminho single-thread (`calculateIcmMonteCarlo`) nao tem
+ * essa dependencia: la a semente basta.
+ */
 export interface IcmSimulationResult {
 	equities: number[];
 	stdErrorPerPlayer: number[];
 	iterations: number;
-	seed: number | null;
+	/** Semente efetivamente usada — nunca nula. Ver nota de replay abaixo. */
+	seed: number;
 	latencyMs: number;
 	throughputIps: number;
 	concurrency: number;
 	mode: IcmParallelismMode;
 	simulationId: string;
-}
-
-function getHighEntropyUint32(): number {
-	if (typeof globalThis.crypto?.getRandomValues === 'function') {
-		const buf = new Uint32Array(1);
-		globalThis.crypto.getRandomValues(buf);
-		const val = buf.at(0);
-		if (val !== undefined) return val >>> 0;
-	}
-	const perfTime = typeof performance !== 'undefined' ? performance.now() * 1000 : 0;
-	return ((Date.now() ^ Math.floor(perfTime)) >>> 0) || 0xdeadbeef;
 }
 
 export class IcmWorkerPool {
@@ -104,7 +106,7 @@ export class IcmWorkerPool {
 		} = options;
 
 		const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
-		const simulationId = `icm_${Date.now()}_${getHighEntropyUint32().toString(36).slice(2, 7)}`;
+		const simulationId = `icm_${Date.now()}_${deriveSeed().toString(36).slice(2, 7)}`;
 
 		if (!this.isInitialized) {
 			await this.init();
@@ -118,7 +120,7 @@ export class IcmWorkerPool {
 		}
 
 		const iterationsPerWorker = Math.ceil(iterations / activeWorkers);
-		const baseSeed = seed ?? (getHighEntropyUint32() & 0x7fffffff);
+		const baseSeed = seed ?? (deriveSeed() & 0x7fffffff);
 
 		const promises: Promise<{
 			equities: number[];
