@@ -11,7 +11,7 @@ interface FreqInputProps {
 
 export const FreqInput = ({ value, field, freqs, onChange }: Readonly<FreqInputProps>) => {
 	return (
-		<div className="flex items-center gap-1">
+		<div className="flex items-center gap-1 shrink-0">
 			<input
 				id={`nash-freq-${String(field)}`}
 				name={`nash-freq-${String(field)}`}
@@ -29,9 +29,9 @@ export const FreqInput = ({ value, field, freqs, onChange }: Readonly<FreqInputP
 						[field]: Math.max(0, Math.min(100, Number(e.target.value) || 0)),
 					})
 				}
-				className="w-14 py-1 px-1.5 rounded bg-white/5 border border-white/10 text-text-muted text-[0.7rem] font-bold font-mono tabular-nums text-right outline-none focus:border-accent-indigo/50 transition-colors"
+				className="w-11 sm:w-12 py-0.5 px-1 rounded-lg bg-black/50 border border-white/10 text-white text-[0.72rem] font-bold font-mono tabular-nums text-center outline-none focus:border-accent-indigo/60 focus:bg-black/80 transition-all shadow-inner hover:border-white/20"
 			/>
-			<span className="text-[0.6rem] text-text-darker">%</span>
+			<span className="text-[0.62rem] text-text-darker font-mono font-bold select-none">%</span>
 		</div>
 	);
 };
