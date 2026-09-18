@@ -72,3 +72,11 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+### 2026-09-17 -- Eliminando Nullish Coalescing (?? 0) inútil em leitura estrita de TypedArray
+
+Origem: sessao Jules, 2026-09-17.
+
+- ``#aprendizado`` **Nullish Coalescing (`?? 0`) em acessos internos a limites de `TypedArray` destrói a performance sem oferecer segurança.**
+  Ao contrário de arrays comuns, um acesso bounded (i < length) em um `Float32Array` *sempre* retorna um primitivo `number` (zero, se não houver inicialização prévia), e não `undefined`. A validação condicional injetada pelo operador `??` (que força type checks no JIT ou branches extras no pipeline) adiciona um custo de overhead absurdo no interior de um hot loop de simulação, custando quase 60% do tempo de cpu em simulações (de 217ms para 566ms em 5M ops).
+  **Ação:** Em workers de simulação pesada (como CFR e Monte Carlo), assumir que as posições válidas de TypedArrays são numéricas por definição e varrer o código removendo verificações nullish `?? 0` nesses endereçamentos.
