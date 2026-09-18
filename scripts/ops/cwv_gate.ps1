@@ -21,6 +21,29 @@ param(
 
 $ErrorActionPreference = 'SilentlyContinue'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\\..')).Path
+
+# SHA-256 por .NET, nunca por Get-FileHash (2026-09-18). No 5.1, Get-FileHash e
+# FUNCAO de script do modulo Microsoft.PowerShell.Utility -- e quando o portao e
+# lancado por processo que nao e o pwsh (Python: a suite, git_sota_workflow.py),
+# o PSModulePath herdado do PowerShell 7 poe o Utility 7.0.0.0 a frente do 3.1.
+# O 5.1 nao o carrega e o comando some. Medido: o cache de CVE nunca acertava
+# nem gravava por esse caminho (~20 s de npm audit + pip-audit por execucao, e
+# quatro em paralelo sob pytest -n auto estouravam o teto), e a aprovacao manual
+# de A11y ligada a hash falharia pelo motivo errado. O pwsh limpa o proprio
+# caminho ao lancar o filho; o Python nao -- por isso so um dos dois reproduz.
+# Hex MAIUSCULO, como o Get-FileHash: a chave do cache ja gravado continua valida.
+function Get-Sha256Hex {
+    param([Parameter(Mandatory = $true)][string]$LiteralPath)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $fluxo = [System.IO.File]::OpenRead($LiteralPath)
+    try {
+        return ([System.BitConverter]::ToString($sha.ComputeHash($fluxo))).Replace('-', '')
+    } finally {
+        $fluxo.Dispose()
+        $sha.Dispose()
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($ReportDir)) {
     $ReportDir = Join-Path $RepoRoot 'reports\cwv'
 }
@@ -250,7 +273,7 @@ function Test-AxeManualReviewApproval {
         return New-AxeManualReviewResult -Approved $false -Code 'SOURCE_PATH_INVALID' -Message "origem declarada nao existe dentro do repositorio: $sourceRelativePath" -Review $review
     }
 
-    $observedHash = (Get-FileHash -LiteralPath $sourceFullPath -Algorithm SHA256 -ErrorAction Stop).Hash.ToLowerInvariant()
+    $observedHash = (Get-Sha256Hex -LiteralPath $sourceFullPath).ToLowerInvariant()
     if ($observedHash -cne $expectedHash.ToLowerInvariant()) {
         return New-AxeManualReviewResult -Approved $false -Code 'HASH_MISMATCH' -Message "o hash da origem mudou; a aprovacao humana expirou para $sourceRelativePath" -Review $review -ObservedHash $observedHash
     }
@@ -637,13 +660,14 @@ $cveCacheHit = $false
 $cveCacheIdade = 0
 $cveCache = $null
 $cveCacheChave = $null
+$cveCacheErro = $null
 $cveCachePath = Join-Path $RepoRoot '.git\sota-cve-cache.json'
 if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
     try {
         $insumosCve = @($lockfilesRastreados | Where-Object { $_ }) + @('requirements.txt', 'data/python_cve_acceptances.json')
         $cveCacheChave = (@(foreach ($rel in $insumosCve) {
             $abs = Join-Path $RepoRoot $rel
-            if (Test-Path -LiteralPath $abs -PathType Leaf) { "$rel=" + (Get-FileHash -LiteralPath $abs -Algorithm SHA256).Hash } else { "$rel=ausente" }
+            if (Test-Path -LiteralPath $abs -PathType Leaf) { "$rel=" + (Get-Sha256Hex -LiteralPath $abs) } else { "$rel=ausente" }
         }) -join ';')
         if (Test-Path -LiteralPath $cveCachePath -PathType Leaf) {
             $lido = Get-Content -LiteralPath $cveCachePath -Raw -Encoding utf8 | ConvertFrom-Json
@@ -654,7 +678,10 @@ if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
             }
         }
     } catch {
+        # Nunca mais calado: foi este catch que escondeu a falha acima por dias.
+        # Cache indisponivel nao reprova (a fase mede do zero), mas aparece.
         $cveCacheHit = $false
+        $cveCacheErro = $_.Exception.Message
     }
 }
 
@@ -831,6 +858,9 @@ Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_AUDIT_EXECUTADO', $(if ($
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_MANIFESTOS_AUDITADOS', "$cveManifestos npm", '-', 'INFO') -ForegroundColor DarkGray
 $cveOrigem = if ($cveCacheHit) { 'cache {0:N1}h' -f $cveCacheIdade } else { 'medido agora' }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_ORIGEM', $cveOrigem, "< $($cveCacheTtlHoras)h", 'INFO') -ForegroundColor DarkGray
+if ($cveCacheErro) {
+    Write-Host ("  [CACHE CVE INDISPONIVEL] {0}" -f $cveCacheErro) -ForegroundColor DarkYellow
+}
 $pyStatus = if ($pyCveMedido) { "[PASS]" } else { "[FAIL]" }
 $pyColor  = if ($pyCveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_AUDIT_EXECUTADO', $(if ($pyCveMedido) { 'sim' } else { 'NAO' }), 'sim', $pyStatus) -ForegroundColor $pyColor
