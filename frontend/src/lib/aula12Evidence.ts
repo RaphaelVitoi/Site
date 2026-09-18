@@ -3,7 +3,7 @@
  *
  * POR QUE ELA EXISTE
  * Duas transcrições do mesmo documento coexistiam. A canônica
- * (`solver/__fixtures__/aula12Pairs.ts`) nasceu de dupla leitura cega sobre catorze capturas, com SHA-256 do
+ * (`solver/evidencia/aula12Pairs.ts`, em `__fixtures__/` ate 2026-09-18) nasceu de dupla leitura cega sobre catorze capturas, com SHA-256 do
  * documento, índice de figura e procedência por valor. A segunda vive hardcoded em `bayesianRangeEngine.ts`, e
  * traz o que a primeira não tem: grid 13x13 por mão, classificação, gradiente de indiferença e filtragem por rua.
  * Medido em 2026-09-17: das 35 frequências do motor, **24 já existiam na fixture**. Esta ponte une as duas —

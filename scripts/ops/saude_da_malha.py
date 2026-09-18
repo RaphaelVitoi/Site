@@ -29,7 +29,7 @@ from __future__ import annotations
 import json
 import subprocess
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[2]
@@ -84,6 +84,22 @@ def _ultimo_lastro() -> tuple[date | None, dict | None]:
     return None, None
 
 
+def _ultima_auditoria() -> date | None:
+    """Data da auditoria interpretada mais recente: o `.md` diario que so a auditoria escreve.
+
+    O `.json` do mesmo diretorio e o lastro da tarefa do Windows e existe com ou sem auditoria;
+    confundir os dois foi o defeito corrigido em 2026-09-18.
+    """
+    if not DIARIO.is_dir():
+        return None
+    for arquivo in sorted(DIARIO.glob("????-??-??.md"), reverse=True):
+        try:
+            return date.fromisoformat(arquivo.stem)
+        except ValueError:
+            continue
+    return None
+
+
 def _estado_da_tarefa(nome: str) -> tuple[str, str] | None:
     """(estado, ultimo_resultado) da tarefa agendada, ou None quando nao da para consultar."""
     try:
@@ -120,29 +136,34 @@ def coletar(hoje: date | None = None) -> list[Sinal]:
         return sinais + _sinais_de_tarefas()
 
     # 1. Ha quantos dias a AUDITORIA (que le o lastro) nao produz resultado.
-    bruto = str(lastro.get("ultima_calibracao") or "")
-    if bruto:
-        try:
-            ultima = datetime.fromisoformat(bruto.replace("Z", "+00:00")[:19]).date()
-            dias = (hoje - ultima).days
-            if dias > TOLERANCIA_AUDITORIA_DIAS:
-                sinais.append(
-                    Sinal(
-                        grave=True,
-                        titulo=f"Auditoria de calibracao parada ha {dias} dia(s)",
-                        detalhe=(
-                            f"Ultima calibracao em {ultima}. Ela mora na plataforma do Codex e cai junto com a "
-                            "cota do veiculo, sem aviso. O lastro continua sendo gravado."
-                        ),
-                        acao="Qualquer condutor assume: o instrumento e local (PowerShell 7), nao do fornecedor.",
-                    )
-                )
-        except ValueError:
+    #
+    # A grandeza e a data do `.md` mais recente -- o artefato que SO a auditoria escreve. Ate 2026-09-18
+    # este bloco usava `ultima_calibracao` como proxy, e o proxy mentia nas duas direcoes: a auditoria
+    # pode rodar todo dia e concluir "dados insuficientes" sem calibrar (alarme falso), e uma calibracao
+    # registrada a mao renova a data sem que a auditoria rode (silencio falso). Foi o segundo que
+    # aconteceu: a calibracao de 09-17 limpou este sinal com a auditoria parada desde 09-13.
+    auditoria = _ultima_auditoria()
+    if auditoria is None:
+        sinais.append(
+            Sinal(
+                grave=True,
+                titulo="Nenhuma auditoria de calibracao encontrada",
+                detalhe=f"Nenhum AAAA-MM-DD.md em {_curto(DIARIO)}. O lastro existe e ninguem o le.",
+                acao="Qualquer condutor assume: o instrumento e local (PowerShell 7), nao do fornecedor.",
+            )
+        )
+    else:
+        dias = (hoje - auditoria).days
+        if dias > TOLERANCIA_AUDITORIA_DIAS:
             sinais.append(
                 Sinal(
                     grave=True,
-                    titulo="Data da ultima calibracao ilegivel",
-                    detalhe=f"Valor bruto: {bruto!r}. Data invalida e sinal, nunca 'tudo bem'.",
+                    titulo=f"Auditoria de calibracao parada ha {dias} dia(s)",
+                    detalhe=(
+                        f"Ultima auditoria interpretada em {auditoria}. Ela mora na plataforma do Codex e "
+                        "cai junto com a cota do veiculo, sem aviso. O lastro continua sendo gravado."
+                    ),
+                    acao="Qualquer condutor assume: o instrumento e local (PowerShell 7), nao do fornecedor.",
                 )
             )
 

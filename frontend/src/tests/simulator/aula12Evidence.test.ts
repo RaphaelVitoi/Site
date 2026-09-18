@@ -7,7 +7,7 @@
  */
 
 import { acoesComProcedencia, somaDasFrequencias } from '@/lib/aula12Evidence';
-import { PAR_2_IP_APOS_CHECK } from '@/components/simulator/solver/__fixtures__/aula12Pairs';
+import { PAR_2_IP_APOS_CHECK } from '@/components/simulator/solver/evidencia/aula12Pairs';
 import { read, unreadable, type EvidenceScenario } from '@/components/simulator/solver/evidenceContract';
 
 describe('ponte de evidência da Aula 1.2', () => {

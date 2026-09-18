@@ -22,7 +22,7 @@ import {
 	AULA_1_2_PAIRS,
 	MESA_COMPLETA_NO_OPEN,
 	RISK_PREMIUM_DECLARADO,
-} from '@/components/simulator/solver/__fixtures__/aula12Pairs';
+} from '@/components/simulator/solver/evidencia/aula12Pairs';
 import {
 	classifyActionNoCenario,
 	isRead,
