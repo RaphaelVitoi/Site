@@ -76,10 +76,10 @@ const rootSchema = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
+    default: 'Raphael Vitoi | Nexus - SOTA v8.0 GOLD',
     template: '%s | Raphael Vitoi',
   },
-  description: 'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Fronteira SOTA v7.0 GOLD do Edge no Poker.',
+  description: 'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Fronteira SOTA v8.0 GOLD do Edge no Poker.',
   metadataBase: new URL('https://www.pokerracional.com'),
   icons: {
     icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
@@ -91,12 +91,12 @@ export const metadata: Metadata = {
     locale: 'pt_BR',
     url: 'https://www.pokerracional.com',
     siteName: 'PokerRacional.com',
-    title: 'Raphael Vitoi | Nexus - Inteligência SOTA v7.0 GOLD',
+    title: 'Raphael Vitoi | Nexus - Inteligência SOTA v8.0 GOLD',
     description: 'A Geometria do Risco: ICM Pós-Flop e o Paradigma da Perspectiva Matemática SOTA GOLD.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Raphael Vitoi | Nexus - SOTA v7.0 GOLD',
+    title: 'Raphael Vitoi | Nexus - SOTA v8.0 GOLD',
     description: 'A Nova Fronteira do Edge no Poker: ICM Pós-Flop e Inteligência Quantum GOLD.',
     creator: '@raphaelvitoi',
   },

@@ -107,6 +107,7 @@ const LIBRARY_CATEGORIES: LibraryCategory[] = [
         title: 'Teto Equidade River ICM',
         slug: 'teto-equidade-river-icm',
         desc: 'Limites assintóticos de aposta na última street.',
+        isLab: true,
       },
       { title: 'Estruturas de Torneio', slug: 'estruturas-de-torneio', desc: 'Impacto dos payouts flat vs top-heavy.' },
     ],
@@ -184,9 +185,10 @@ const LIBRARY_CATEGORIES: LibraryCategory[] = [
         isLab: true,
       },
       {
-        title: 'Teoria da Perspectiva',
+        title: 'Teoria da Perspectiva & PMev',
         slug: 'teoria-da-perspectiva',
-        desc: 'Aversão à perda e função utilidade assimétrica.',
+        desc: 'Arcabouço formal de 6 camadas, cadeia compositiva e ledger das 12 hipóteses.',
+        isLab: true,
       },
       {
         title: 'Falácia do Equilíbrio',
@@ -197,6 +199,7 @@ const LIBRARY_CATEGORIES: LibraryCategory[] = [
         title: 'Laboratório ChipEV vs ICMev',
         slug: 'laboratorio-chipev-vs-icmev',
         desc: 'Comparador interativo de equidade de fichas e monetária.',
+        isLab: true,
       },
       {
         title: 'Toy Games (Predator Mode)',
@@ -206,7 +209,7 @@ const LIBRARY_CATEGORIES: LibraryCategory[] = [
       {
         title: 'Nós de Calibração (Aula 1.2)',
         slug: 'nos-de-calibragem',
-        desc: 'Validação empírica dos 93 nós da Aula 1.2 com o referencial visual interativo.',
+        desc: 'Validação empírica dos 97 nós pareados da Aula 1.2 com o referencial visual interativo.',
         isLab: true,
       },
     ],
