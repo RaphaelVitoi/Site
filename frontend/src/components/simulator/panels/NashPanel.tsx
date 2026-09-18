@@ -113,15 +113,21 @@ const ActionStrategies = ({
 }) => (
   <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
     {/* Card IP (Agressor) */}
-    <div className="w-full flex flex-col rounded-3xl border border-accent-indigo/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-indigo-950/20 backdrop-blur-md">
-      <div className="text-accent-indigo-light border-accent-indigo/20 mb-4 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.25em] uppercase">
+    <div className="w-full flex flex-col rounded-3xl border border-accent-indigo/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-indigo-950/20 backdrop-blur-md overflow-hidden">
+      <div className="text-accent-indigo-light border-accent-indigo/20 mb-3 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-indigo h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-indigo)]" />
           <span>IP &middot; Agressor</span>
         </div>
-        <i className="fa-solid fa-crosshairs text-[0.75rem] text-accent-indigo/40" />
+        <div className="flex items-center gap-2 text-[0.58rem] font-mono text-text-darker tracking-normal">
+          <span className="text-white/60">Ação</span>
+          <span className="opacity-40">&rarr;</span>
+          <span className="text-white/60">GTO</span>
+          <span className="opacity-40">&middot;</span>
+          <span className="text-accent-indigo-light font-bold">&Delta; Desvio</span>
+        </div>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <ActionRow
           label="Check"
           chipEv={current.freqs.ip_check}
@@ -153,15 +159,21 @@ const ActionStrategies = ({
     </div>
 
     {/* Card OOP (Defensor) */}
-    <div className="w-full flex flex-col rounded-3xl border border-accent-rose/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-rose-950/20 backdrop-blur-md">
-      <div className="text-accent-rose border-accent-rose/20 mb-4 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.25em] uppercase">
+    <div className="w-full flex flex-col rounded-3xl border border-accent-rose/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-rose-950/20 backdrop-blur-md overflow-hidden">
+      <div className="text-accent-rose border-accent-rose/20 mb-3 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-rose h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-rose)]" />
           <span>OOP &middot; Defensor</span>
         </div>
-        <i className="fa-solid fa-shield text-[0.75rem] text-accent-rose/40" />
+        <div className="flex items-center gap-2 text-[0.58rem] font-mono text-text-darker tracking-normal">
+          <span className="text-white/60">Ação</span>
+          <span className="opacity-40">&rarr;</span>
+          <span className="text-white/60">GTO</span>
+          <span className="opacity-40">&middot;</span>
+          <span className="text-accent-rose font-bold">&Delta; Desvio</span>
+        </div>
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <ActionRow
           label="Call"
           chipEv={current.freqs.oop_call}
