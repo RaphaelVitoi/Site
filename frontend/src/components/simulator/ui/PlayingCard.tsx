@@ -120,7 +120,7 @@ export function PlayingCard({
 	if (isFacedown) {
 		return (
 			<div
-				className={`relative ${sizeCfg.box} border border-indigo-400/30 bg-gradient-to-br from-indigo-950 via-slate-950 to-indigo-900 flex flex-col items-center justify-center shadow-lg overflow-hidden select-none transition-all ${className}`}
+				className={`relative ${sizeCfg.box} border border-indigo-400/30 bg-linear-to-br from-indigo-950 via-slate-950 to-indigo-900 flex flex-col items-center justify-center shadow-lg overflow-hidden select-none transition-all ${className}`}
 				title="Carta oculta (Rua futura)"
 				aria-label="Carta oculta"
 			>
@@ -134,7 +134,7 @@ export function PlayingCard({
 
 	return (
 		<div
-			className={`relative ${sizeCfg.box} bg-gradient-to-b from-white via-white to-slate-100 border border-slate-300 flex flex-col items-center justify-center gap-0 select-none transition-all shadow-md ${
+			className={`relative ${sizeCfg.box} bg-linear-to-b from-white via-white to-slate-100 border border-slate-300 flex flex-col items-center justify-center gap-0 select-none transition-all shadow-md ${
 				highlight ? 'ring-2 ring-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.7)] scale-105' : ''
 			} ${className}`}
 			title={`${rank} de ${suitCfg.name}`}

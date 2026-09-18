@@ -190,7 +190,7 @@ export function ProspectRiskCorridorWidget({
                   {isSelected && (
                     <span className="flex items-center gap-1.5 font-mono text-[0.55rem] font-black tracking-widest text-accent-indigo-light uppercase">
                       <span className="h-1.5 w-1.5 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--accent-indigo)]" />
-                      ATIVA
+                      <span>ATIVA</span>
                     </span>
                   )}
                 </div>

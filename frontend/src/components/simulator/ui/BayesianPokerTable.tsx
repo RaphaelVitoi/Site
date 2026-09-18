@@ -138,17 +138,17 @@ export function BayesianPokerTable({
 			<div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
 				{/* COLUNA ESQUERDA (XL:COL-SPAN-8): MESA DE POKER EM FELTRO */}
 				<div className="xl:col-span-8 flex flex-col justify-center">
-					<div className="relative w-full aspect-16/9 sm:aspect-18/9 rounded-4xl p-3 sm:p-5 bg-gradient-to-b from-slate-900 to-black border border-white/10 shadow-3xl overflow-hidden flex items-center justify-center select-none">
+					<div className="relative w-full aspect-video sm:aspect-18/9 rounded-4xl p-3 sm:p-5 bg-linear-to-b from-slate-900 to-black border border-white/10 shadow-3xl overflow-hidden flex items-center justify-center select-none">
 						{/* Glow ambiente no feltro */}
 						<div className="absolute inset-0 bg-radial-[at_center_center] from-indigo-500/15 via-emerald-500/5 to-transparent pointer-events-none" />
 
 						{/* RAIL ACOLCHOADO EXTERNO */}
-						<div className="relative w-full h-full rounded-[3rem] p-3 sm:p-4 bg-gradient-to-br from-slate-800 via-slate-900 to-black border-2 border-slate-700/60 shadow-2xl flex items-center justify-center">
+						<div className="relative w-full h-full rounded-5xl p-3 sm:p-4 bg-linear-to-br from-slate-800 via-slate-900 to-black border-2 border-slate-700/60 shadow-2xl flex items-center justify-center">
 							{/* Costura sutil do rail */}
 							<div className="absolute inset-1.5 rounded-[2.8rem] border border-dashed border-white/10 pointer-events-none" />
 
 							{/* FELTRO OVAL DA MESA */}
-							<div className="relative w-full h-full rounded-[2.5rem] bg-gradient-to-b from-slate-950 via-[#06201b] to-black border border-emerald-500/20 shadow-inner flex flex-col items-center justify-center p-4 overflow-hidden">
+							<div className="relative w-full h-full rounded-[2.5rem] bg-linear-to-b from-slate-950 via-[#06201b] to-black border border-emerald-500/20 shadow-inner flex flex-col items-center justify-center p-4 overflow-hidden">
 								{/* Marca d'água no feltro */}
 								<div className="absolute top-4 text-center pointer-events-none">
 									<span className="text-[0.55rem] sm:text-[0.65rem] font-black tracking-[0.5em] uppercase text-emerald-500/15 font-mono">
@@ -164,6 +164,10 @@ export function BayesianPokerTable({
 											const isFlopCard = idx < 3;
 											const isTurnCard = idx === 3;
 											const isRiverCard = idx === 4;
+
+											let streetInitial = 'R';
+											if (isFlopCard) streetInitial = 'F';
+											else if (isTurnCard) streetInitial = 'T';
 
 											let isFacedown = false;
 											if (streetStep === 0 && !isFlopCard) isFacedown = true;
@@ -182,7 +186,7 @@ export function BayesianPokerTable({
 														}
 													/>
 													<span className="text-[0.45rem] font-mono text-text-dim uppercase tracking-wider font-bold">
-														{isFlopCard ? 'F' : isTurnCard ? 'T' : 'R'}
+														{streetInitial}
 													</span>
 												</div>
 											);
@@ -297,7 +301,7 @@ export function BayesianPokerTable({
 						<div className="flex items-center justify-between">
 							<h5 className="text-[0.6rem] font-black text-text-muted uppercase tracking-[0.2em] m-0 flex items-center gap-2">
 								<i className="fa-solid fa-layer-group text-accent-indigo" />
-								Boards &middot; Texturas de Bordo
+								<span>Boards &middot; Texturas de Bordo</span>
 							</h5>
 							<span className="text-[0.5rem] font-mono text-accent-indigo-light uppercase bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
 								Claudico EHS²
@@ -367,11 +371,13 @@ export function BayesianPokerTable({
 						<i className="fa-solid fa-atom text-accent-indigo-light text-xs mt-0.5 shrink-0" />
 						<div className="text-[0.6rem] text-text-muted leading-relaxed font-medium">
 							<strong className="text-white font-bold block mb-0.5">Didática do Spot:</strong>
-							Como o <span className="text-emerald-400 font-bold">Hero ({heroPosition})</span> detém
-							vantagem posicional (IP), o{' '}
-							<span className="text-rose-400 font-bold">Vilão ({villainPosition})</span> é forçado a agir
-							primeiro (OOP). Cada check ou aposta dele fornece evidência pura que comprime os 1326
-							combos em direção aos extremos da matriz.
+							<p className="m-0">
+								Como o <span className="text-emerald-400 font-bold">Hero ({heroPosition})</span> detém
+								vantagem posicional (IP), o{' '}
+								<span className="text-rose-400 font-bold">Vilão ({villainPosition})</span> é forçado a agir
+								primeiro (OOP). Cada check ou aposta dele fornece evidência pura que comprime os 1326
+								combos em direção aos extremos da matriz.
+							</p>
 						</div>
 					</div>
 				</div>

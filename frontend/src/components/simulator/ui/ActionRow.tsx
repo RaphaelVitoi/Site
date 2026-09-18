@@ -49,14 +49,26 @@ export const ActionRow = ({
 	const isExcesso = deviation > 1.0;
 	const isDeficit = deviation < -1.0;
 
-	const deltaLabel = isEquilibrium ? 'Equilíbrio' : isExcesso ? 'Excesso' : 'Déficit';
-	const deltaBadgeColor = isEquilibrium ? '#10b981' : isExcesso ? '#f43f5e' : '#f59e0b';
-	const deltaSign = isEquilibrium ? '' : deviation > 0 ? '+' : '';
+	let deltaLabel = 'Déficit';
+	let deltaBadgeColor = '#f59e0b';
+	let deltaIcon = '▼';
+	let deltaSign = '';
+
+	if (isEquilibrium) {
+		deltaLabel = 'Equilíbrio';
+		deltaBadgeColor = '#10b981';
+		deltaIcon = '●';
+	} else if (isExcesso) {
+		deltaLabel = 'Excesso';
+		deltaBadgeColor = '#f43f5e';
+		deltaIcon = '▲';
+		deltaSign = '+';
+	}
+
 	const formattedDelta = isEquilibrium ? '0%' : `${deltaSign}${deviation.toFixed(0)}%`;
-	const deltaIcon = isEquilibrium ? '●' : isExcesso ? '▲' : '▼';
 
 	return (
-		<div className="group/row flex flex-col gap-2 rounded-2xl border border-white/[0.06] bg-slate-950/45 p-3 hover:border-white/15 hover:bg-slate-950/75 transition-all duration-300">
+		<div className="group/row flex flex-col gap-2 rounded-2xl border border-white/6 bg-slate-950/45 p-3 hover:border-white/15 hover:bg-slate-950/75 transition-all duration-300">
 			{/* Andar 1: Identificação da Ação e Diagnóstico de Divergência com Status */}
 			<div className="flex items-center justify-between gap-2">
 				<span
@@ -85,7 +97,7 @@ export const ActionRow = ({
 			</div>
 
 			{/* Andar 2: Comparativo Direto (Frequência -> Alvo GTO) - SEM "SUA:" */}
-			<div className="flex items-center justify-between gap-2 rounded-xl bg-black/35 px-2.5 py-1.5 border border-white/[0.03]">
+			<div className="flex items-center justify-between gap-2 rounded-xl bg-black/35 px-2.5 py-1.5 border border-white/3">
 				{/* Frequência de Entrada */}
 				<div className="flex items-center gap-1">
 					<FreqInput value={chipEv} field={field} freqs={freqs} onChange={onChange} />
