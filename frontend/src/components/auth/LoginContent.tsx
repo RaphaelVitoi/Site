@@ -90,9 +90,9 @@ export function LoginContent() {
 				) : null}
 
 				{provedores.status === 'pronto' && provedores.lista.length === 0 ? (
-					<p role="status" className="text-center text-sm text-text-muted">
+					<output className="block text-center text-sm text-text-muted">
 						Nenhum provedor de login está configurado neste ambiente.
-					</p>
+					</output>
 				) : null}
 
 				{provedores.status === 'pronto'

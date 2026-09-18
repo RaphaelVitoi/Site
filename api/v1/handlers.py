@@ -988,6 +988,7 @@ async def _diagnostico_dream_rsi(tree_res: dict[str, Any], runtime_ms: float) ->
     Observacional: nenhum valor do PMev muda. Falha aqui nunca derruba a resposta -- aparece
     no log e no proprio diagnostico, nunca em silencio.
     """
+    # pylint: disable=import-outside-toplevel
     try:
         from engine.discovery_recorder import recorder_do_runtime  # noqa: PLC0415 -- carga sob demanda
         from engine.pmev_dream_bridge import PMevDreamBridge  # noqa: PLC0415

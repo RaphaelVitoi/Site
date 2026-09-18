@@ -1,4 +1,5 @@
-import com.google.gson.*;
+// NOSONAR - Standalone CLI probe in default package for hrc-native-read.mjs
+import com.google.gson.*; // NOSONAR
 import java.nio.file.*;
 import java.util.*;
 import net.holdemresources.internal.kJ;
@@ -9,6 +10,7 @@ import net.holdemresources.internal.oO;
 /** Read-only probe for the installed HRC 4.1.0.202603231401 serialization classes.
  * This does not open the wizard, build an action tree or run a solver.
  */
+@SuppressWarnings({"java:S1220", "java:S106"})
 public class HrcNativeReadProbe {
     private static final Gson GSON = oH.GSON;
 
@@ -29,6 +31,7 @@ public class HrcNativeReadProbe {
         for (oO child : folder.getFolders()) collect(child, target);
     }
 
+    @SuppressWarnings("java:S106")
     public static void main(String[] args) throws Exception {
         if (args.length != 1) throw new IllegalArgumentException("Expected JSON file path");
         String raw = Files.readString(Path.of(args[0]));
@@ -57,6 +60,6 @@ public class HrcNativeReadProbe {
             double[] others = GSON.fromJson(input.getAsJsonObject("eqmodel").get("otherstacks"), double[].class);
             output.add("otherstacks", GSON.toJsonTree(others));
         }
-        System.out.println(GSON.toJson(output));
+        System.out.println(GSON.toJson(output)); // NOSONAR
     }
 }

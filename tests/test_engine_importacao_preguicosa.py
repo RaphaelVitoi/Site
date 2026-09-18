@@ -5,6 +5,7 @@ database.queue_manager -> core.config), e importar `engine.jules_bridge`, que so
 526 MB de memoria privada contra 9 MB de um Python vazio. O servidor MCP do Jules roda uma copia por hospedeiro de
 agente; com cinco hospedeiros abertos eram ~2,8 GB, num host com a memoria comprometida em 98%.
 """
+# pylint: disable=protected-access, pointless-statement
 
 from __future__ import annotations
 

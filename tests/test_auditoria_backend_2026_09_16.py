@@ -3,6 +3,7 @@
 Um teste por achado. Cada um foi escrito para falhar no codigo anterior a correcao:
 o nome do teste diz o defeito, e o corpo reproduz a prova da auditoria.
 """
+# pylint: disable=redefined-outer-name, protected-access, import-outside-toplevel
 
 from __future__ import annotations
 

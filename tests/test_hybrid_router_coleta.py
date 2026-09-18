@@ -10,3 +10,5 @@ from tools.hybrid_router.test_hybrid_router import (  # noqa: F401
     TestComplexityAnalyzer,
     TestSondaDoLlamaLocal,
 )
+
+__all__ = ["TestComplexityAnalyzer", "TestSondaDoLlamaLocal"]

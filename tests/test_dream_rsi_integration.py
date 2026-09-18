@@ -10,6 +10,7 @@ Valida:
 
 Padrao SOTA: Pure ASCII, Zero-Any, Tipagem Estrita Python 3.12+.
 """
+# pylint: disable=redefined-outer-name, protected-access, import-outside-toplevel, reimported, abstract-class-instantiated
 
 from __future__ import annotations
 
@@ -494,13 +495,13 @@ def test_review_findings_hardening(tmp_path: object) -> None:
 
     # 1. Reset obrigatorio como abstractmethod
     class SubWithoutReset(ExplorationPolicy):
-        def select_candidates(self, tree: object) -> list[object]:
+        def select_candidates(self, tree: DiscoveryTree) -> list[DiscoveryNode]:
             return []
 
-        def should_prune(self, node: object, tree: object) -> bool:
+        def should_prune(self, node: DiscoveryNode, tree: DiscoveryTree) -> bool:
             return False
 
-        def should_stop(self, tree: object, round_count: int, best_metric: float) -> bool:
+        def should_stop(self, tree: DiscoveryTree, round_count: int, best_metric: float) -> bool:
             return True
 
         def branch_factor(self, current_depth: int) -> int:

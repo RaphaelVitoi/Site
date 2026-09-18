@@ -26,11 +26,11 @@ E a mesma regra do contrato de evidencia: "nao lido" nunca e "lido como zero".
 
 from __future__ import annotations
 
-import json
-import subprocess
 from dataclasses import dataclass
 from datetime import date
+import json
 from pathlib import Path
+import subprocess
 
 RAIZ = Path(__file__).resolve().parents[2]
 DIARIO = RAIZ / "reports" / "agent-calibration" / "daily"

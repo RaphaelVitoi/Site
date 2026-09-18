@@ -60,6 +60,41 @@ function getFiles(dir, fileList = []) {
 
 const GRAVAR = process.argv.includes('--gravar');
 
+function compressSingleFile(safeFilePath, gravar) {
+  const raw = fs.readFileSync(safeFilePath);
+  const rawSize = raw.length;
+
+  // 1. Gzip Compression (Level 9)
+  const gz = zlib.gzipSync(raw, { level: 9 });
+  if (gravar) fs.writeFileSync(assertSafePath(`${safeFilePath}.gz`), gz);
+
+  // 2. Brotli Compression (Quality 11, Text/Generic Mode)
+  const isWasm = safeFilePath.endsWith('.wasm');
+  const br = zlib.brotliCompressSync(raw, {
+    params: {
+      [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
+      [zlib.constants.BROTLI_PARAM_MODE]: isWasm
+        ? zlib.constants.BROTLI_MODE_GENERIC
+        : zlib.constants.BROTLI_MODE_TEXT,
+    },
+  });
+  if (gravar) fs.writeFileSync(assertSafePath(`${safeFilePath}.br`), br);
+
+  const relPath = path.relative(BASE_DIR, safeFilePath).replaceAll('\\', '/');
+  return {
+    rawSize,
+    gzSize: gz.length,
+    brSize: br.length,
+    result: {
+      path: relPath,
+      rawKb: (rawSize / 1024).toFixed(2),
+      gzKb: (gz.length / 1024).toFixed(2),
+      brKb: (br.length / 1024).toFixed(2),
+      reduction: (((rawSize - br.length) / (rawSize || 1)) * 100).toFixed(1),
+    },
+  };
+}
+
 export async function compressAllStaticAssets() {
   console.log('\n======================================================================');
   console.log('[SOTA COMPRESSION ENGINE] Static Brotli (q=11) & Gzip (lvl=9) Compressor');
@@ -77,38 +112,12 @@ export async function compressAllStaticAssets() {
     const files = getFiles(safeTargetDir);
     for (const filePath of files) {
       const safeFilePath = assertSafePath(filePath);
-
-      const raw = fs.readFileSync(safeFilePath);
-      const rawSize = raw.length;
+      const { rawSize, gzSize, brSize, result } = compressSingleFile(safeFilePath, GRAVAR);
       totalRawBytes += rawSize;
-
-      // 1. Gzip Compression (Level 9)
-      const gz = zlib.gzipSync(raw, { level: 9 });
-      if (GRAVAR) fs.writeFileSync(assertSafePath(`${safeFilePath}.gz`), gz);
-      totalGzBytes += gz.length;
-
-      // 2. Brotli Compression (Quality 11, Text/Generic Mode)
-      const isWasm = safeFilePath.endsWith('.wasm');
-      const br = zlib.brotliCompressSync(raw, {
-        params: {
-          [zlib.constants.BROTLI_PARAM_QUALITY]: 11,
-          [zlib.constants.BROTLI_PARAM_MODE]: isWasm
-            ? zlib.constants.BROTLI_MODE_GENERIC
-            : zlib.constants.BROTLI_MODE_TEXT,
-        },
-      });
-      if (GRAVAR) fs.writeFileSync(assertSafePath(`${safeFilePath}.br`), br);
-      totalBrBytes += br.length;
-
+      totalGzBytes += gzSize;
+      totalBrBytes += brSize;
       processedCount++;
-      const relPath = path.relative(BASE_DIR, safeFilePath).replaceAll('\\', '/');
-      results.push({
-        path: relPath,
-        rawKb: (rawSize / 1024).toFixed(2),
-        gzKb: (gz.length / 1024).toFixed(2),
-        brKb: (br.length / 1024).toFixed(2),
-        reduction: (((rawSize - br.length) / (rawSize || 1)) * 100).toFixed(1),
-      });
+      results.push(result);
     }
   }
 

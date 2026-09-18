@@ -6,6 +6,7 @@ passou a fechar: o executor grava o desfecho de cada tarefa, o handler PMev grav
 arvore simulada (observacional), e `nexus agent dream-optimize` roda a fase de Sonho com
 a TimesFMPredictivePolicy sobre esse historico.
 """
+# pylint: disable=import-outside-toplevel
 
 from __future__ import annotations
 
