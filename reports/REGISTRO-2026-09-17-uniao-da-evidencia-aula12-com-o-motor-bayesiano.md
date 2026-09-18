@@ -18,6 +18,8 @@ caminhos:
   - frontend/src/tests/simulator/bayesianRangeEngine.test.ts
   - frontend/src/tests/simulator/pkoEmDesenvolvimento.test.tsx
   - scripts/ops/record_gate.py
+referencias_nao_resolviveis:
+  - frontend/src/components/simulator/solver/__fixtures__/aula12Pairs.ts
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
