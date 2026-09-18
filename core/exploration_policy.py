@@ -24,6 +24,9 @@ class ExplorationPolicy(ABC):
         self.name = name
         self.version = version
 
+    def reset(self) -> None:  # noqa: B027
+        """Reinicia qualquer estado interno da politica para nova execucao."""
+
     @property
     def identifier(self) -> str:
         """Identificador estavel incluindo versao e configuracao da instancia."""

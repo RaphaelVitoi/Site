@@ -13,6 +13,7 @@ import contextlib
 import copy
 import json
 import sqlite3
+from typing import Any
 
 from core.discovery_tree_schemas import (
     DiscoveryNode,
@@ -89,6 +90,13 @@ class DreamReplaySimulator:
                 loaded_trees.append(DiscoveryTree.model_validate(data))
 
         return loaded_trees
+
+    def get_database_health_telemetry(self) -> dict[str, Any]:
+        """Consulta a telemetria de integridade e crescimento do banco SQLite."""
+        from engine.discovery_recorder import DiscoveryRecorder  # noqa: PLC0415
+
+        recorder = DiscoveryRecorder(db_path=self.db_path)
+        return recorder.get_database_health_telemetry()
 
     def simulate_policy_on_tree(self, policy: ExplorationPolicy, tree: DiscoveryTree) -> ReplayEvaluationResult:
         """Simula o comportamento da politica sobre uma arvore de descoberta exata rodada por rodada."""

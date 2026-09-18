@@ -55,6 +55,23 @@ class DreamTimesFMForecaster:
             target_name="trajectory_metric",
         )
 
+    def calibrate_short_series_upper_bound(self, scores: Sequence[float], horizon: int = 5) -> float:
+        """Estima teto previo adaptativo para series curtas (< 4 pontos) antes do TimesFM."""
+        if not scores:
+            return 1.0
+        n = len(scores)
+        last_score = scores[-1]
+        if n == 1:
+            return min(1.0, max(0.0, last_score + 0.25))
+        if n == 2:
+            slope = scores[1] - scores[0]
+            gain = max(0.0, slope) * min(2, horizon) + 0.15
+            return min(1.0, max(0.0, last_score + gain))
+        # n == 3
+        slope = (scores[2] - scores[0]) / 2.0
+        gain = max(0.0, slope) * min(2, horizon) + 0.08
+        return min(1.0, max(0.0, last_score + gain))
+
     def should_prune_predictively(
         self,
         scores: Sequence[float],
@@ -62,9 +79,22 @@ class DreamTimesFMForecaster:
         margin: float = 0.02,
         horizon: int = 5,
     ) -> tuple[bool, str]:
-        """Avalia se o teto estatistico (Q90) da trajetoria justifica continuar explorando."""
+        """Avalia se o teto estatistico da trajetoria justifica continuar explorando."""
+        if not scores:
+            return False, "Trajetoria vazia"
+
         if len(scores) < 4:
-            return False, "Trajetoria curta para inferencia temporal (< 4 pontos)"
+            # Calibracao adaptativa de momentum para series curtas (<= 3 pontos)
+            short_ceiling = self.calibrate_short_series_upper_bound(scores, horizon=horizon)
+            if short_ceiling + margin < global_best_score:
+                return (
+                    True,
+                    f"[CALIBRATED-MOMENTUM] Teto heuristico ({short_ceiling:.3f}) inferior ao melhor global ({global_best_score:.3f})",
+                )
+            return (
+                False,
+                f"[CALIBRATED-MOMENTUM] Trajetoria curta promissora (Teto={short_ceiling:.3f} >= {global_best_score:.3f})",
+            )
 
         forecast = self.forecast_trajectory(scores, horizon=horizon)
         if not forecast or not forecast.quantile_90:

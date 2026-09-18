@@ -427,3 +427,49 @@ def test_cli_route_task_includes_dream_gate(capsys: object) -> None:
     out = json.loads(captured.out)
     assert "dream_gate" in out["metadata"]
     assert out["metadata"]["dream_gate"]["should_proceed"] is False
+
+
+def test_timesfm_short_series_calibration() -> None:
+    """Valida a calibracao adaptativa em trajetorias curtas (<= 3 pontos)."""
+    from engine.dream_timesfm_forecaster import DreamTimesFMForecaster  # noqa: PLC0415
+
+    forecaster = DreamTimesFMForecaster()
+
+    # Serie com 1 ponto
+    c1 = forecaster.calibrate_short_series_upper_bound([0.30])
+    assert 0.30 < c1 <= 0.60
+
+    # Serie com declinio rapido (ex: 0.20 -> 0.10) avaliada contra global_best = 0.90
+    prune, reason = forecaster.should_prune_predictively(
+        scores=[0.20, 0.10],
+        global_best_score=0.90,
+    )
+    assert prune is True
+    assert "[CALIBRATED-MOMENTUM]" in reason
+
+    # Serie curta promissora (ex: 0.70 -> 0.85) contra global_best = 0.80
+    prune_ok, reason_ok = forecaster.should_prune_predictively(
+        scores=[0.70, 0.85],
+        global_best_score=0.80,
+    )
+    assert prune_ok is False
+    assert "[CALIBRATED-MOMENTUM]" in reason_ok
+
+
+def test_pmev_history_seeding_and_health_telemetry(tmp_path: object) -> None:
+    """Valida o povoamento de arvores pmev_math e a telemetria de saude do banco."""
+    from engine.discovery_recorder import DiscoveryRecorder  # noqa: PLC0415
+
+    db_path = str(tmp_path) + "/pmev_test.db"
+    recorder = DiscoveryRecorder(db_path=db_path)
+
+    seeded = recorder.seed_pmev_history(count=20)
+    assert seeded == 20
+
+    telemetry = recorder.get_database_health_telemetry()
+    assert telemetry["status"] == "HEALTHY"
+    assert telemetry["integrity_check"].lower() == "ok"
+    assert telemetry["total_trees"] == 20
+    assert telemetry["domain_distribution"]["pmev_math"] == 20
+    assert telemetry["size_kb"] > 0
+    assert telemetry["projected_annual_growth_mb"] >= 0
