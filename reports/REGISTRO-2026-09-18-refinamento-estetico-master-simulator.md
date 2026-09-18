@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-18T13:19:00-03:00'
-atualizado_em: '2026-09-18T13:31:00-03:00'
+atualizado_em: '2026-09-18T13:46:00-03:00'
 classes: [interno, medido, governanca, simulador, frontend]
 caminhos:
   - reports/REGISTRO-2026-09-18-refinamento-estetico-master-simulator.md
@@ -26,15 +26,17 @@ revisoes_de_ancora:
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
-  commit_base: f4d3b07d
+  commit_base: 3eada2bc
   host: Windows 11 Pro 10.0.26200
   data_das_medicoes: 2026-09-18
 verificado:
-  - frontend/src/components/simulator/ui/ActionRow.tsx estruturado em 2 andares com badge didatico de delta (sinal, % e cor semantica) e barra de desvio de largura total linkada organicamente ao dado
-  - Etiqueta semantica didatica associada a barra (Equilibrio, Excesso, Deficit) informando o significado da divergencia em relacao ao GTO
-  - Sub-cabecalho de colunas explicativo nos cards de acao em NashPanel.tsx (Acao -> GTO . Delta Desvio)
-  - Eliminacao total de qualquer resíduo ou vazamento lateral com overflow-hidden blindado
-  - Regeneracao do subconjunto FontAwesome sem icones orfaos (136 icones, 6 marcas)
+  - frontend/src/components/simulator/ui/ActionRow.tsx com barra inferior de frequencia proporcional a entrada (preenche ao aumentar e esvazia ao diminuir)
+  - Marcador vertical do alvo Nash GTO integrado diretamente sobre a barra inferior, sempre visivel em camada superior
+  - Zona de deficit em ambar sutil e zona de excesso em rose destacando o desvio em relacao ao GTO
+  - Polaridade do badge de divergencia corrigida (aumentar alem do GTO resulta em excesso positivo com triangulo para cima; diminuir resulta em deficit negativo com triangulo para baixo)
+  - Remocao do rotulo informal SUA e estilizacao em capsula fechada do input de frequencia com simbolo percentual integrado
+  - Cores semanticas robustas no badge de delta (verde esmeralda para equilibrio, rose para excesso, ambar para deficit)
+  - Sub-cabecalho limpo nos cards de acao do NashPanel.tsx sem aperto textual
   - npm run typecheck executado com zero erros de tipo
   - npm test executado com sucesso -- 93/93 test suites passaram, 625/625 testes unitarios aprovados
 nao_verificado:
@@ -46,16 +48,18 @@ nao_verificado:
 ## 1. Contexto e Diagnostico
 Ao renderizar o Master Simulator em colunas divididas (`lg:col-span-7`), o container do `NashPanel` apresentava:
 1. Corte a direita na coluna OOP (Out of Position), decepando a barra de delta e os dados de divergencia Nash.
-2. Invasao do IP no espaco central devido a um grid rigido `grid-cols-[80px_90px_25px_1fr_80px]` em `ActionRow.tsx` que exigia no minimo 380px por coluna, enquanto o espaco util disponivel era de ~280px.
-3. Na primeira iteracao, a barra de delta colocada ao lado do numero transbordou lateralmente como um tracinho residual, e o delta numerico isolado causava desorientacao didatica.
+2. Invasao do IP no espaco central devido a um grid rigido `grid-cols-[80px_90px_25px_1fr_80px]` em `ActionRow.tsx`.
+3. Nas iteracoes iniciais, a barra de preenchimento falhava ao carregar cores nao resolvidas e faltava a dinamica direta de preenchimento com a frequencia de entrada, alem da presenca do rotulo informal `SUA:`.
+4. Inversao cognitiva de polaridade no delta do solver (apresentava sinal negativo para excesso e positivo para deficit, contradizendo a direcao de enchimento e esvaziamento das barras).
 
 ## 2. Intervencoes Executadas
-- **`FreqInput.tsx`**: Ajustado para `w-11 sm:w-12`, centralizado, estilizado com capsula `bg-black/50 border-white/10` e foco indigo.
-- **`ActionRow.tsx`**: Arquitetura em 2 andares:
-  - Andar 1: Acao + FreqInput + conector `->` + GTO (`center ± spread`) + Badge Didatico `Δ -11%` (ou `Δ +0%`).
-  - Andar 2: Barra de desvio horizontal de largura total diretamente linkada ao dado, com escala sensivel proporcional a magnitude do desvio (`Math.round(absDelta * 4)`), acompanhada de legenda de status (`Equilibrio`, `Excesso` ou `Deficit`).
-- **`NashPanel.tsx`**: Rebalanceado padding para `!p-5 sm:!p-6 lg:!p-7`, reorganizado `ActionStrategies` em 2 cards isolados com bordas semanticas (`border-accent-indigo/20` para IP e `border-accent-rose/20` para OOP), sub-cabecalho de orientacao (`Acao -> GTO . Delta Desvio`) e `overflow-hidden`.
-- **Subconjunto FontAwesome**: Sincronizado via `frontend/scripts/fontawesome-subset.py`, mantendo a suíte de estilo 100% verde.
+- **`FreqInput.tsx`**: Capsula unificada com input numerico e percentual integrados em fundo escuro com bordas sutis e foco indigo, prevenindo rolagem acidental via `onWheel`.
+- **`ActionRow.tsx`**:
+  - Andar 1: Acao + Badge Didatico com polaridade corrigida (`+X% . Excesso` com icone direcional superior, `-X% . Deficit` com icone direcional inferior, `0% . Equilibrio` com icone neutro).
+  - Andar 2: Input de frequencia limpo em capsula fechada + conector visual minimalista `->` + valor de referencia `GTO: XX.X% +-X.X`.
+  - Andar 3: Barra inferior reativa (preenche ao aumentar e esvazia ao diminuir), marcador vertical do alvo Nash GTO sempre em primeiro plano, com zona de deficit (ambar) e zona de excesso (rose) demarcadas.
+- **`NashPanel.tsx`**: Rebalanceado padding para `!p-4 sm:!p-5 lg:!p-6`, reorganizado `ActionStrategies` em 2 cards isolados com bordas semanticas (`border-accent-indigo/20` para IP e `border-accent-rose/20` para OOP), cabecalho limpo e `overflow-hidden`.
+- **Subconjunto FontAwesome**: Sincronizado via `frontend/scripts/fontawesome-subset.py`.
 
 ## 3. Validacao
 - `npm run typecheck`: 0 erros.
