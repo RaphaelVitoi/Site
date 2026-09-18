@@ -12,6 +12,7 @@ from collections.abc import Sequence
 import contextlib
 import copy
 import json
+from pathlib import Path
 import sqlite3
 from typing import Any
 
@@ -34,6 +35,11 @@ class DreamReplaySimulator:
         self._memory_trees: dict[str, DiscoveryTree] = {}
         if self.db_path != ":memory:":
             self._init_db()
+
+    @property
+    def memory_trees(self) -> dict[str, DiscoveryTree]:
+        """Acesso publico seguro ao mapa de arvores em memoria."""
+        return self._memory_trees
 
     def _init_db(self) -> None:
         """Inicializa as tabelas necessarias no SQLite para persistencia persistente."""
@@ -93,12 +99,64 @@ class DreamReplaySimulator:
 
     def get_database_health_telemetry(self) -> dict[str, Any]:
         """Consulta a telemetria de integridade e crescimento do banco SQLite."""
-        from engine.discovery_recorder import DiscoveryRecorder  # noqa: PLC0415
+        p = Path(self.db_path)
+        size_bytes = p.stat().st_size if p.exists() else 0
+        size_kb = round(size_bytes / 1024.0, 2)
+        size_mb = round(size_bytes / (1024.0 * 1024.0), 4)
 
-        recorder = DiscoveryRecorder(db_path=self.db_path)
+        integrity = "OK"
+        domain_counts: dict[str, int] = {}
+        total_trees = 0
+        total_nodes = 0
+        invalid_payloads = 0
+
         if self.db_path == ":memory:":
-            recorder.simulator = self
-        return recorder.get_database_health_telemetry()
+            total_trees = len(self._memory_trees)
+            for t in self._memory_trees.values():
+                domain_counts[t.domain] = domain_counts.get(t.domain, 0) + 1
+                total_nodes += len(t.nodes)
+        else:
+            with contextlib.closing(sqlite3.connect(self.db_path)) as conn:
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA integrity_check")
+                row = cursor.fetchone()
+                integrity = row[0] if row else "UNKNOWN"
+
+                cursor.execute("SELECT domain, COUNT(*) FROM discovery_trees GROUP BY domain")
+                for dom, cnt in cursor.fetchall():
+                    domain_counts[dom] = cnt
+                    total_trees += cnt
+
+                cursor.execute("SELECT payload_json FROM discovery_trees")
+                for (payload,) in cursor.fetchall():
+                    try:
+                        data = json.loads(payload)
+                        if isinstance(data, dict) and isinstance(data.get("nodes"), dict):
+                            total_nodes += len(data["nodes"])
+                        else:
+                            invalid_payloads += 1
+                    except (json.JSONDecodeError, TypeError):
+                        invalid_payloads += 1
+
+        avg_nodes = round(total_nodes / total_trees, 2) if total_trees > 0 else 0.0
+        avg_bytes = (size_bytes / total_trees) if total_trees > 0 else 1024.0
+        projected_annual_mb = round((avg_bytes * 500 * 12) / (1024.0 * 1024.0), 2)
+
+        is_healthy = integrity.lower() == "ok" and invalid_payloads == 0
+        return {
+            "db_path": self.db_path,
+            "status": "HEALTHY" if is_healthy else "DEGRADED",
+            "integrity_check": integrity,
+            "invalid_payloads": invalid_payloads,
+            "size_bytes": size_bytes,
+            "size_kb": size_kb,
+            "size_mb": size_mb,
+            "total_trees": total_trees,
+            "total_nodes": total_nodes,
+            "avg_nodes_per_tree": avg_nodes,
+            "domain_distribution": domain_counts,
+            "projected_annual_growth_mb": projected_annual_mb,
+        }
 
     def simulate_policy_on_tree(self, policy: ExplorationPolicy, tree: DiscoveryTree) -> ReplayEvaluationResult:
         """Simula o comportamento da politica sobre uma arvore de descoberta exata rodada por rodada."""

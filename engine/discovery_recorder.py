@@ -9,10 +9,7 @@ Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 
 from __future__ import annotations
 
-import contextlib
-import json
 from pathlib import Path
-import sqlite3
 import time
 from typing import Any
 import uuid
@@ -307,61 +304,4 @@ class DiscoveryRecorder:
 
     def get_database_health_telemetry(self) -> dict[str, Any]:
         """Calcula telemetria de integridade, tamanho e projecao do banco SQLite."""
-        p = Path(self.db_path)
-        size_bytes = p.stat().st_size if p.exists() else 0
-        size_kb = round(size_bytes / 1024.0, 2)
-        size_mb = round(size_bytes / (1024.0 * 1024.0), 4)
-
-        integrity = "OK"
-        domain_counts: dict[str, int] = {}
-        total_trees = 0
-        total_nodes = 0
-        invalid_payloads = 0
-
-        if self.db_path == ":memory:":
-            total_trees = len(self.simulator._memory_trees)
-            for t in self.simulator._memory_trees.values():
-                domain_counts[t.domain] = domain_counts.get(t.domain, 0) + 1
-                total_nodes += len(t.nodes)
-        else:
-            with contextlib.closing(sqlite3.connect(self.db_path)) as conn:
-                cursor = conn.cursor()
-                cursor.execute("PRAGMA integrity_check")
-                row = cursor.fetchone()
-                integrity = row[0] if row else "UNKNOWN"
-
-                cursor.execute("SELECT domain, COUNT(*) FROM discovery_trees GROUP BY domain")
-                for dom, cnt in cursor.fetchall():
-                    domain_counts[dom] = cnt
-                    total_trees += cnt
-
-                cursor.execute("SELECT payload_json FROM discovery_trees")
-                for (payload,) in cursor.fetchall():
-                    try:
-                        data = json.loads(payload)
-                        if isinstance(data, dict) and isinstance(data.get("nodes"), dict):
-                            total_nodes += len(data["nodes"])
-                        else:
-                            invalid_payloads += 1
-                    except (json.JSONDecodeError, TypeError):
-                        invalid_payloads += 1
-
-        avg_nodes = round(total_nodes / total_trees, 2) if total_trees > 0 else 0.0
-        avg_bytes = (size_bytes / total_trees) if total_trees > 0 else 1024.0
-        projected_annual_mb = round((avg_bytes * 500 * 12) / (1024.0 * 1024.0), 2)
-
-        is_healthy = integrity.lower() == "ok" and invalid_payloads == 0
-        return {
-            "db_path": self.db_path,
-            "status": "HEALTHY" if is_healthy else "DEGRADED",
-            "integrity_check": integrity,
-            "invalid_payloads": invalid_payloads,
-            "size_bytes": size_bytes,
-            "size_kb": size_kb,
-            "size_mb": size_mb,
-            "total_trees": total_trees,
-            "total_nodes": total_nodes,
-            "avg_nodes_per_tree": avg_nodes,
-            "domain_distribution": domain_counts,
-            "projected_annual_growth_mb": projected_annual_mb,
-        }
+        return self.simulator.get_database_health_telemetry()
