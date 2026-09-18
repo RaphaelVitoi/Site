@@ -116,21 +116,15 @@ export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMRes
 		// congelava um ruido de Monte Carlo diferente a cada carga da pagina, e a
 		// mesma mesa devolvia numeros diferentes entre sessoes. Com semente fixa a
 		// funcao volta a ser pura, que e o que um cache por chave pressupoe.
-		const { equities } = calculateIcmMonteCarlo(stacks, prizes, {
+		const { equities, placementDistribution } = calculateIcmMonteCarlo(stacks, prizes, {
 			iterations: 20000,
 			seed: MAPA_ICM_SEED,
 		});
 
-		const positionProbs = Array.from({ length: n }, () =>
+		const positionProbs: number[][] = placementDistribution ?? Array.from({ length: n }, () =>
 			new Array(Math.min(n, prizes.length)).fill(0),
 		);
 
-		if (totalChips > 0 && prizes.length > 0) {
-			stacks.forEach((s, i) => {
-				const row = positionProbs[i];
-				if (row) row[0] = s / totalChips;
-			});
-		}
 		return { positionProbs, equities, totalChips };
 	}
 

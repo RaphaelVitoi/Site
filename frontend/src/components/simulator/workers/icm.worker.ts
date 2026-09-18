@@ -23,12 +23,14 @@ export interface IcmWorkerRequest {
 export interface IcmWorkerResponse {
 	type: 'SUCCESS' | 'ERROR' | 'PONG';
 	simulationId: string | number;
-	equities?: number[];
-	stdErrorPerPlayer?: number[];
-	iterations?: number;
-	workerIndex?: number;
-	latencyMs?: number;
-	error?: string;
+	equities?: number[] | undefined;
+	stdErrorPerPlayer?: number[] | undefined;
+	variancePerPlayer?: number[] | undefined;
+	placementDistribution?: number[][] | undefined;
+	iterations?: number | undefined;
+	workerIndex?: number | undefined;
+	latencyMs?: number | undefined;
+	error?: string | undefined;
 }
 
 self.onmessage = (e: MessageEvent<IcmWorkerRequest>) => {
@@ -72,6 +74,8 @@ self.onmessage = (e: MessageEvent<IcmWorkerRequest>) => {
 			simulationId,
 			equities: result.equities,
 			stdErrorPerPlayer: result.stdErrorPerPlayer,
+			variancePerPlayer: result.variancePerPlayer,
+			placementDistribution: result.placementDistribution,
 			iterations: result.iterations,
 			workerIndex,
 			latencyMs,

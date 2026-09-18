@@ -43,4 +43,39 @@ describe('IcmWorkerPool', () => {
 		expect(res1.equities).toEqual(res2.equities);
 		expect(res1.stdErrorPerPlayer).toEqual(res2.stdErrorPerPlayer);
 	});
+
+	it('should never produce NaN in standard errors for large monetary prize pools', async () => {
+		const pool = IcmWorkerPool.getInstance();
+		// Sunday Million payouts reais: equities > 1.0 (onde a formula antiga causava NaN por p*(1-p) < 0)
+		const stacks = [55000000, 42000000, 25000000, 8000000];
+		const prizes = [110000, 78000, 55000, 39000];
+
+		const result = await pool.calculateIcm({
+			stacks,
+			prizes,
+			iterations: 5000,
+			seed: 777,
+		});
+
+		expect(result.equities).toHaveLength(4);
+		expect(result.stdErrorPerPlayer).toHaveLength(4);
+
+		// Nenhuma equity nem erro padrão pode ser NaN ou negativo
+		result.equities.forEach((eq) => {
+			expect(Number.isFinite(eq)).toBe(true);
+			expect(Number.isNaN(eq)).toBe(false);
+			expect(eq).toBeGreaterThan(0);
+		});
+
+		result.stdErrorPerPlayer.forEach((se) => {
+			expect(Number.isFinite(se)).toBe(true);
+			expect(Number.isNaN(se)).toBe(false);
+			expect(se).toBeGreaterThan(0);
+		});
+
+		// Conservação total de massa
+		const sumPrizes = prizes.reduce((s, v) => s + v, 0);
+		const sumEquities = result.equities.reduce((s, v) => s + v, 0);
+		expect(sumEquities).toBeCloseTo(sumPrizes, 0);
+	});
 });

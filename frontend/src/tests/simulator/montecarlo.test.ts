@@ -54,4 +54,63 @@ describe('calculateIcmMonteCarlo', () => {
 		const sumEquities = result.equities.reduce((s, v) => s + v, 0);
 		expect(sumEquities).toBeCloseTo(sumPrizesActive, 1);
 	});
+
+	it('should preserve 100% of prize mass with zero-stack players according to terminal convention', () => {
+		// Cenário da auditoria: [100, 100, 0] com prêmios [70, 20, 10]
+		// Jogador 2 já sem fichas deve receber o prêmio terminal residual (10)
+		// Jogadores 0 e 1 disputam os prêmios de topo [70, 20] -> ~45 cada
+		const stacks = [100, 100, 0];
+		const prizes = [70, 20, 10];
+		const result = calculateIcmMonteCarlo(stacks, prizes, { iterations: 10000, seed: 42 });
+
+		expect(result.equities).toHaveLength(3);
+		// Conservação estrita de massa
+		const sumEquities = result.equities.reduce((s, v) => s + v, 0);
+		expect(sumEquities).toBeCloseTo(100, 2);
+
+		// Jogador 2 recebe exatamente 10 (prêmio terminal dividido entre os 1 jogadores com stack zero)
+		expect(result.equities[2]).toBe(10);
+		expect(result.variancePerPlayer?.[2]).toBe(0);
+		expect(result.stdErrorPerPlayer[2]).toBe(0);
+
+		// Jogadores 0 e 1 disputam igualmente os prêmios 70 e 20 -> média 45
+		expect(result.equities[0]).toBeCloseTo(45, 0);
+		expect(result.equities[1]).toBeCloseTo(45, 0);
+	});
+
+	it('should calculate true sample variance and provide placementDistribution matrix', () => {
+		const stacks = [5000, 3000, 2000];
+		const prizes = [100, 60, 30];
+		const result = calculateIcmMonteCarlo(stacks, prizes, { iterations: 5000, seed: 12345 });
+
+		// Variância e erro padrão reais
+		expect(result.variancePerPlayer).toBeDefined();
+		expect(result.variancePerPlayer).toHaveLength(3);
+		expect(result.stdErrorPerPlayer.every((se) => !Number.isNaN(se) && se > 0)).toBe(true);
+
+		// Placement distribution matrix: 3 jogadores x 3 colocações
+		expect(result.placementDistribution).toBeDefined();
+		expect(result.placementDistribution).toHaveLength(3);
+
+		// Cada linha deve somar 1.0 (probabilidade total do jogador terminar em alguma colocação)
+		result.placementDistribution!.forEach((row) => {
+			const sumRow = row.reduce((s, v) => s + v, 0);
+			expect(sumRow).toBeCloseTo(1, 4);
+		});
+
+		// Cada coluna deve somar 1.0 (exatamente 1 jogador por colocação)
+		for (let j = 0; j < prizes.length; j++) {
+			const colSum = result.placementDistribution!.reduce((s, row) => s + (row[j] ?? 0), 0);
+			expect(colSum).toBeCloseTo(1, 4);
+		}
+
+		// A equity esperada deve ser exatamente a soma de P_ij * prize_j
+		result.equities.forEach((eq, i) => {
+			const eqFromPlacements = result.placementDistribution![i]!.reduce(
+				(sum, p, j) => sum + p * prizes[j]!,
+				0,
+			);
+			expect(eq).toBeCloseTo(eqFromPlacements, 3);
+		});
+	});
 });
