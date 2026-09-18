@@ -229,7 +229,25 @@ def _intelligent_route_task(description: str, explicit_agent: str | None = None)
 
 def intelligent_route_task(description: str, explicit_agent: str | None = None) -> tuple[str, dict[str, Any]]:
     """Public wrapper for task routing to satisfy static analysis lint rules."""
-    return _intelligent_route_task(description, explicit_agent)
+    agent, metadata = _intelligent_route_task(description, explicit_agent)
+    # SOTA Dream-RSI: Triagem offline preditiva de risco e ancora
+    try:
+        from conductor.dream_gate import DreamGate  # noqa: PLC0415
+
+        gate = DreamGate()
+        tokens = description.split()
+        candidate_files = [
+            t for t in tokens if "." in t and ("/" in t or "\\" in t or t.endswith((".py", ".ts", ".md")))
+        ]
+        assessment = gate.assess_proposal(target_files=candidate_files)
+        metadata["dream_gate"] = {
+            "should_proceed": assessment.should_proceed,
+            "risk_score": assessment.risk_score,
+            "suggested_action": assessment.suggested_action,
+        }
+    except Exception as exc:
+        logger.debug("[DREAM-GATE] Triagem preditiva ignorada: %s", exc)
+    return agent, metadata
 
 
 # Cold start: garante que o state manager leu do disco pelo menos uma vez
