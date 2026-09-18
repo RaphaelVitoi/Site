@@ -19,6 +19,7 @@ import {
   assessReproducibility,
   countReproduciblePairs,
   isUnreadable,
+  validateReconference,
   type EvidenceViolationCode,
 } from '../evidenceContract';
 import {
@@ -43,6 +44,9 @@ import {
   RANGES_PREFLOP,
   MESA_COMPLETA_NO_OPEN,
   BOARD_ATE_O_RIVER,
+  AULA_1_2_SHA256,
+  AULA_1_2_SHA256_VIGENTE,
+  RECONFERENCIA_AULA_1_2,
 } from '../evidencia/aula12Pairs';
 
 const codes = ( vs: { code: EvidenceViolationCode }[] ): EvidenceViolationCode[] =>
@@ -674,5 +678,38 @@ describe( 'Aula 1.2 — o portão de reprodutibilidade do ledger', () => {
     );
     expect( bloqueados ).toHaveLength( 0 );
     expect( countReproduciblePairs( AULA_1_2_PAIRS ) ).toBe( 0 );
+  } );
+} );
+
+
+describe( 'Aula 1.2 — a reconferência de 2026-09-18 contra a versão vigente', () => {
+  it( 'a âncora que os sete pares declaram é sustentada pelo que se conferiu', () => {
+    expect( validateReconference( RECONFERENCIA_AULA_1_2, AULA_1_2_SHA256 ) ).toEqual( [] );
+    for ( const par of AULA_1_2_PAIRS ) {
+      expect( par.source.documentSha256 ).toBe( AULA_1_2_SHA256 );
+    }
+  } );
+
+  it( 'a versão vigente é OUTRA, e é exatamente por isso que o campo existe', () => {
+    expect( AULA_1_2_SHA256_VIGENTE ).not.toBe( AULA_1_2_SHA256 );
+    expect( RECONFERENCIA_AULA_1_2.documentSha256 ).toBe( AULA_1_2_SHA256_VIGENTE );
+  } );
+
+  it( 'não declara ter alcançado as figuras, e diz por quê', () => {
+    expect( RECONFERENCIA_AULA_1_2.camadasAlcancadas ).not.toContain( 'figuras' );
+    expect( RECONFERENCIA_AULA_1_2.naoAlcancado.some( i => i.includes( 'figuras' ) ) ).toBe( true );
+  } );
+
+  it( 'as duas divergências achadas nomeiam os pares que elas afetam', () => {
+    const afetados = ATRIBUICAO_AMBIGUA_NODELOCK.afetaPares;
+    expect( RECONFERENCIA_AULA_1_2.divergencias ).toHaveLength( 2 );
+    for ( const d of RECONFERENCIA_AULA_1_2.divergencias ) {
+      expect( afetados.some( chave => d.startsWith( chave.slice( 0, 5 ) ) ) ).toBe( true );
+    }
+  } );
+
+  it( 'reancorar sem reler as capturas seria reprovado', () => {
+    const vs = validateReconference( RECONFERENCIA_AULA_1_2, AULA_1_2_SHA256_VIGENTE );
+    expect( vs.map( v => v.code ) ).toEqual( [ 'RECONFERENCE_ANCHOR_UNSUPPORTED' ] );
   } );
 } );

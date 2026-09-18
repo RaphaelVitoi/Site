@@ -56,11 +56,81 @@ import {
   unreadable,
   type EvidencePair,
   type EvidencePlayer,
+  type EvidenceReconference,
 } from '../evidenceContract';
 
-/** SHA-256 do `Aula 1.2.docx`, minúsculo conforme o contrato. */
+/**
+ * SHA-256 da VERSÃO DE ONDE OS NÚMEROS FORAM LIDOS, minúsculo conforme o
+ * contrato. Não é o SHA do arquivo vigente, e a diferença é deliberada — ver
+ * `RECONFERENCIA_AULA_1_2`.
+ */
 export const AULA_1_2_SHA256 =
   '7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769';
+
+/** SHA-256 do `Aula 1.2.docx` vigente, editado em 2026-09-02/03. */
+export const AULA_1_2_SHA256_VIGENTE =
+  'b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930';
+
+/**
+ * RECONFERÊNCIA DE 2026-09-18 — a transcrição contra a versão vigente.
+ *
+ * O documento foi editado depois da transcrição: 311 parágrafos viraram 329, o
+ * SHA mudou, e `AULA_1_2_SHA256` deixou de resolver contra qualquer arquivo em
+ * disco. A saída óbvia — trocar o SHA — foi recusada, e o motivo é a `camada`.
+ *
+ * O que estava ao alcance era a EXTRAÇÃO DE TEXTO da versão vigente, versionada
+ * no próprio repositório (`reports/curation/pmev-2026-09-09/text/S08.txt`, sob a
+ * entrada `S08` de `sources.json`). Ela é fiel: seu `text_sha256` declarado bate
+ * dígito a dígito quando o arquivo é lido com CRLF, e a divergência vista com LF
+ * é normalização de fim de linha do checkout, não corrupção.
+ *
+ * E ela tem 1.489 palavras e `media: 0`. Texto alcança rótulo de nó, numeração e
+ * o contexto que o documento declara em palavras. NÃO alcança um único dos
+ * valores transcritos: frequência, combo e sizing vivem nas 84 imagens.
+ *
+ * Por isso a âncora fica onde está e o resíduo fica aqui, contável. Quem tiver o
+ * `.docx` em disco relê as catorze capturas, acrescenta `'figuras'` às camadas —
+ * e só então `validateReconference` deixa de reprovar a reancoragem.
+ */
+export const RECONFERENCIA_AULA_1_2: EvidenceReconference = {
+  documentSha256: AULA_1_2_SHA256_VIGENTE,
+  conferidoEm: '2026-09-18',
+  camadasAlcancadas: [ 'metadados', 'texto' ],
+  substrato:
+    'reports/curation/pmev-2026-09-09/text/S08.txt — extração de texto do docx ' +
+    'vigente, declarada em sources.json (entrada S08, 31.329.198 bytes); ' +
+    'text_sha256 conferido com CRLF',
+  confere: [
+    '14 de 14 rótulos de nó: os sete pares ancoram ChipEV e ICMev, e os catorze ' +
+      'aparecem literalmente na versão vigente, com a mesma redação e o mesmo número',
+    '11 de 11 grandezas de contexto declaradas em texto: pote 5,63bb; stacks ' +
+      'pós-flop BTN 38 / BB 53; RP BTN 21,4% e BB 12,9%; BTN RFI 33,6%; e as cinco ' +
+      'frequências de defesa do BB (17,1 / 64,4 / 3,7 / 6,5 / 8,4)',
+    'a nota de PAR_1 — prosa "7% de lead" contra 5,7% medido na captura — segue no texto',
+    'formato e settings da árvore: MTT Vanilla 11$, field 126, FT de 9; leads de 25% ' +
+      'em todas as streets, raise geométrico em SPR 2,5, all-in a partir de SPR 5',
+    'as duas versões declaram as mesmas 97 inserções de figura',
+    'as três marcas de ATRIBUICAO_AMBIGUA_NODELOCK seguem válidas na versão vigente',
+  ],
+  divergencias: [
+    'PAR_6: a nota de ambiguidade nomeia só o nó 21 como legenda concorrente de ' +
+      'image45.png, e a versão vigente traz a MESMA redação também no nó 17 — a ' +
+      'ambiguidade é mais larga do que o registrado',
+    'PAR_7: o número de nó 13 aparece duas vezes na versão vigente — na âncora ' +
+      'ChipEV do par e de novo entre o nó 92 e as conclusões do ICMev, onde quase ' +
+      'certamente é 93 com o dígito perdido. Risco de colisão que a nota não registra',
+  ],
+  naoAlcancado: [
+    'as figuras: nenhuma frequência, combo ou sizing dos sete pares foi reconferida, ' +
+      'porque as 84 imagens não estavam ao alcance da extração de texto',
+    'a ordem real de inserção das figuras — o que há é a regularidade interna ' +
+      '`figura ChipEV = nó + 6` e `figura ICMev = nó + 7`, que vale nos sete e é ' +
+      'coerência do fixture, não conferência contra a fonte',
+    'os parâmetros de árvore das figuras 01 a 04 (premiação, sizings do HRC por ' +
+      'street, stacks por assento, bubble factors), que exigem ler as imagens',
+    'e-Nash, que segue ausente por propriedade da fonte e não por falta de busca',
+  ],
+};
 
 /**
  * ATENÇÃO À REDAÇÃO: o HRC **expõe** combos e stacks. O que falta é o RECORTE.

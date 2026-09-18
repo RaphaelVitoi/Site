@@ -25,13 +25,66 @@ nao_verificado:
 | Campo | Valor |
 | --- | --- |
 | Autor e fonte primária | Raphael Vitoi, `C:\Users\rapha\Downloads\Aula 1.2.docx` |
-| SHA-256 | `7CA7C89F52C1A4173EE404F1BC4059CABD564FDDFB62129A6CD34789B86E4769` |
+| SHA-256 **da versão lida** | `7CA7C89F52C1A4173EE404F1BC4059CABD564FDDFB62129A6CD34789B86E4769` |
+| SHA-256 **da versão vigente** | `B3FC15BA0B22AE2E15E38B5EA1AA59E1356B168D866BBA2A1516958A5C23F930` |
 | Estrutura lida | 311 parágrafos, 97 figuras incorporadas, 0 tabelas Word |
+| Estrutura vigente | 329 parágrafos, 97 inserções de figura sobre 84 arquivos |
 | Natureza | Estudo próprio comparando pós-flop ChipEV (GTO Wizard) e ICMev (HRC Pós-Flop) |
 
 O DOCX original permanece fora do repositório. Este registro conserva apenas
 proveniência, metadados de cenário e limites de inferência; não replica as
 capturas de solver nem declara uma reprodução independente.
+
+### As duas linhas de SHA são duas perguntas, e não se fundem
+
+**A de cima responde de qual documento os números foram lidos; a de baixo, qual
+documento está em disco hoje.** O arquivo foi editado em 2026-09-02/03, depois
+da transcrição, e por isso o SHA da versão lida não resolve mais contra nenhum
+arquivo. Isso não invalida a transcrição: invalida a suposição de que um campo
+só bastava.
+
+Trocar a primeira linha pela segunda — a saída óbvia — declararia que as
+catorze capturas foram relidas na versão vigente. Elas não foram. A verificação
+deixou de ser prosa em 2026-09-18: `EvidenceReconference` e
+`validateReconference`, em
+`frontend/src/components/simulator/solver/evidenceContract.ts`, reprovam com
+`RECONFERENCE_ANCHOR_UNSUPPORTED` qualquer âncora apontada para uma versão cujas
+figuras a reconferência não alcançou. O lado Python falha fechado pelo mesmo
+critério em `Reconference.ancora_sustentada`.
+
+### Reconferência de 2026-09-18 — camadas `metadados` e `texto`
+
+Substrato: `reports/curation/pmev-2026-09-09/text/S08.txt`, extração de texto do
+DOCX vigente declarada na entrada `S08` de
+`reports/curation/pmev-2026-09-09/sources.json`. O `text_sha256` declarado ali
+bate dígito a dígito quando o arquivo é lido com CRLF; a divergência que aparece
+com LF é normalização de fim de linha do checkout, não corrupção.
+
+| Resultado | Medição |
+| --- | --- |
+| Rótulos de nó | **14 de 14** presentes literalmente, mesma redação e mesmo número |
+| Grandezas de contexto declaradas em texto | **11 de 11** idênticas |
+| Inserções de figura | 97 nas duas versões |
+| Divergências | **2**, ambas de vizinhança de rótulo e nenhuma de valor |
+| Figuras relidas | **nenhuma** |
+
+As duas divergências, registradas em
+`RECONFERENCIA_AULA_1_2.divergencias` e espelhadas em `data/aula12_pairs.json`:
+
+1. **PAR_6** — a nota de ambiguidade nomeia só o nó 21 como legenda concorrente
+   de `image45.png`; a versão vigente traz a mesma redação também no nó 17.
+2. **PAR_7** — o número de nó `13` aparece duas vezes: na âncora ChipEV do par e
+   de novo entre o nó 92 e as conclusões do ICMev, onde quase certamente é `93`
+   com o dígito perdido.
+
+**Nenhum valor transcrito foi reconferido.** Frequência, combo e sizing vivem nas
+84 imagens, e a extração de texto tem `media: 0`. Também seguem fora de alcance a
+ordem real de inserção das figuras, os parâmetros de árvore das figuras 01 a 04 e
+o e-Nash — este último por propriedade da fonte, não por falta de busca.
+
+Reancorar exige ler as capturas: quem tiver o DOCX em disco relê as catorze,
+acrescenta `'figuras'` a `camadasAlcancadas`, e só então a reancoragem passa nos
+dois validadores.
 
 ## Cenário-âncora identificado
 
