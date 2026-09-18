@@ -32,6 +32,11 @@ class DreamTimesFMForecaster:
         self.preferred_model_key = preferred_model_key
         self.engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
 
+    @classmethod
+    def for_research(cls, preferred_model_key: str = "timesfm-3.0-330m") -> DreamTimesFMForecaster:
+        """Fabrica ergonomica para pesquisa academica/cientifica com TimesFM 3.0 (nao-comercial)."""
+        return cls(mode=ExecutionMode.RESEARCH_BENCHMARK, preferred_model_key=preferred_model_key)
+
     def extract_trajectory_scores(self, tree: DiscoveryTree, node_id: str) -> list[float]:
         """Extrai a serie temporal de metric_score da raiz ate o no especificado."""
         scores: list[float] = []
