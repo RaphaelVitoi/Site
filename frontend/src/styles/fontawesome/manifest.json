@@ -112,7 +112,6 @@
     "scale-unbalanced",
     "scroll",
     "shapes",
-    "shield",
     "shield-halved",
     "shuttle-space",
     "skull-crossbones",
@@ -149,9 +148,9 @@
   ],
   "fontes": {
     "fa-solid-900": {
-      "glifos": 137,
+      "glifos": 136,
       "bytes_origem": 119488,
-      "bytes_recorte": 13688
+      "bytes_recorte": 13720
     },
     "fa-regular-400": {
       "glifos": 27,
