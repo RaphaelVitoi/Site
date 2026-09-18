@@ -10,6 +10,8 @@ Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 from __future__ import annotations
 
 from pathlib import Path
+import time
+import uuid
 
 from core.discovery_tree_schemas import DiscoveryNode, DiscoveryTree
 from engine.dream_replay_simulator import DreamReplaySimulator
@@ -66,11 +68,13 @@ class DiscoveryRecorder:
         passed: bool,
         duration_ms: float,
         error_count: int = 0,
+        run_id: str | None = None,
     ) -> DiscoveryNode:
-        """Registra a execucao de uma suite de testes como no de descoberta."""
+        """Registra a execucao real de uma suite de testes como no de descoberta."""
         status = "success" if passed else "test_failure"
         score = 1.0 if passed else max(0.0, 1.0 - (0.2 * error_count))
-        node_id = f"test_{Path(test_file).stem}"
+        exec_id = run_id or f"{int(time.time() * 1000)}_{uuid.uuid4().hex[:6]}"
+        node_id = f"test_{Path(test_file).stem}_{exec_id}"
 
         node = DiscoveryNode(
             node_id=node_id,
@@ -78,10 +82,36 @@ class DiscoveryRecorder:
             depth=0,
             domain="code_engineering",
             action_type="pytest_run",
-            action_payload={"suite": test_file, "errors": error_count},
+            action_payload={"suite": test_file, "errors": error_count, "run_id": exec_id},
             status=status,
             metric_score=score,
             runtime_ms=duration_ms,
+            tokens_consumed=0,
+        )
+
+        tree = DiscoveryTree(
+            tree_id=f"tree_{node_id}",
+            root_id=node.node_id,
+            domain="code_engineering",
+            nodes={node.node_id: node},
+        )
+        self.simulator.record_tree(tree)
+        return node
+
+    def record_test_inventory(self, test_file: str) -> DiscoveryNode:
+        """Registra o inventario de uma suite descoberta sem simular execucao."""
+        stem = Path(test_file).stem
+        node_id = f"inventory_{stem}"
+        node = DiscoveryNode(
+            node_id=node_id,
+            parent_id=None,
+            depth=0,
+            domain="code_engineering",
+            action_type="test_inventory",
+            action_payload={"suite": test_file, "discovered": True},
+            status="success",
+            metric_score=1.0,
+            runtime_ms=0.0,
             tokens_consumed=0,
         )
 
@@ -100,15 +130,10 @@ class DiscoveryRecorder:
         r_dir = reports_dir or Path("reports")
         nodes_created = 0
 
-        # Indexa suites de testes existentes
+        # Indexa suites de testes existentes como inventario
         if t_dir.exists():
             for test_file in t_dir.glob("test_*.py"):
-                self.record_test_run(
-                    test_file=test_file.name,
-                    passed=True,
-                    duration_ms=50.0,
-                    error_count=0,
-                )
+                self.record_test_inventory(test_file=test_file.name)
                 nodes_created += 1
 
         # Indexa relatorios de ancoragem conhecidos

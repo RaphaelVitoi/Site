@@ -55,8 +55,9 @@ class DreamGate:
 
         anchor_hits: list[str] = []
         for file_path in target_files:
+            normalized_path = file_path.replace("\\", "/")
             for pattern in self.CRITICAL_ANCHOR_PATTERNS:
-                if pattern in file_path:
+                if pattern in normalized_path:
                     anchor_hits.append(file_path)
                     break
 

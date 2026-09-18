@@ -24,6 +24,14 @@ class ExplorationPolicy(ABC):
         self.name = name
         self.version = version
 
+    @property
+    def identifier(self) -> str:
+        """Identificador estavel incluindo versao e configuracao da instancia."""
+        public_attrs = {k: v for k, v in sorted(self.__dict__.items()) if not k.startswith("_") and not callable(v)}
+        cfg_items = [f"{k}={v}" for k, v in public_attrs.items() if k not in ("name", "version")]
+        cfg_str = f"({', '.join(cfg_items)})" if cfg_items else ""
+        return f"{self.name}:v{self.version}{cfg_str}"
+
     @abstractmethod
     def select_candidates(self, tree: DiscoveryTree) -> list[DiscoveryNode]:
         """Seleciona quais nos da arvore devem ser continuados/expandidos."""
@@ -52,7 +60,9 @@ class ParallelRefinePolicy(ExplorationPolicy):
 
     def select_candidates(self, tree: DiscoveryTree) -> list[DiscoveryNode]:
         """Seleciona os top-N nos com melhor pontuacao para expansao paralela."""
-        valid_nodes = [node for node in tree.nodes.values() if node.status != "pruned"]
+        leaf_nodes = tree.get_leaf_nodes()
+        target_nodes = leaf_nodes if leaf_nodes else list(tree.nodes.values())
+        valid_nodes = [node for node in target_nodes if node.status != "pruned"]
         if not valid_nodes:
             return []
         sorted_nodes = sorted(valid_nodes, key=lambda n: n.metric_score, reverse=True)
@@ -96,6 +106,11 @@ class AdaptiveDreamPolicy(ExplorationPolicy):
         self.stagnation_patience = stagnation_patience
         self.max_depth = max_depth
         self.min_metric_threshold = min_metric_threshold
+        self._plateau_counter = 0
+        self._last_best_metric = 0.0
+
+    def reset(self) -> None:
+        """Reinicia o estado interno da politica para nova simulacao independente."""
         self._plateau_counter = 0
         self._last_best_metric = 0.0
 
@@ -235,12 +250,19 @@ def select_monotonic_best_policy(
     A politica candidata vencedora nunca pode pontuar pior do que a
     politica atualmente em producao sobre o historico de replay acumulado.
     """
-    current_score = policy_scores.get(current_policy.name, float("-inf"))
+
+    def _lookup_score(pol: ExplorationPolicy) -> float:
+        ident = getattr(pol, "identifier", pol.name)
+        if ident in policy_scores:
+            return policy_scores[ident]
+        return policy_scores.get(pol.name, float("-inf"))
+
+    current_score = _lookup_score(current_policy)
     best_candidate = current_policy
     best_score = current_score
 
     for policy in candidates:
-        score = policy_scores.get(policy.name, float("-inf"))
+        score = _lookup_score(policy)
         if score > best_score:
             best_score = score
             best_candidate = policy

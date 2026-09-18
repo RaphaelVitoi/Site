@@ -372,7 +372,7 @@ global_yield_manager = DynamicYieldManager()
 def _cli_route_task(sys_argv: list[str]) -> None:
     desc = sys_argv[2]
     explicit = sys_argv[3] if len(sys_argv) > 3 and sys_argv[3].strip() else None
-    agent, meta = _intelligent_route_task(desc, explicit)
+    agent, meta = intelligent_route_task(desc, explicit)
     print(json.dumps({"agent": agent, "metadata": meta}))
     sys.exit(0)
 

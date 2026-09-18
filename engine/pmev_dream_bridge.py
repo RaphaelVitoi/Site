@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+import uuid
 
 from core.discovery_tree_schemas import DiscoveryNode, DiscoveryTree
 
@@ -55,12 +56,12 @@ class PMevDreamBridge:
             else:
                 surviving.append(branch)
 
-        # Se houver arvore de historico, refina com os nos anteriores
+        # Se houver arvore de historico, refina com os nos anteriores do dominio pmev_math
         if replay_tree:
             known_bad_actions = {
                 node.action_type
                 for node in replay_tree.nodes.values()
-                if node.status != "success" or node.metric_score < 0.2
+                if node.domain == "pmev_math" and (node.status != "success" or node.metric_score < 0.2)
             }
             further_filtered: list[PMevActionBranch] = []
             for b in surviving:
@@ -86,9 +87,11 @@ class PMevDreamBridge:
         metric_score: float,
         runtime_ms: float,
         parent_id: str | None = None,
+        run_id: str | None = None,
     ) -> DiscoveryNode:
         """Cria um no de descoberta formal para persistir a execucao PMev na arvore."""
-        node_id = f"pmev_{tree_id}_{action_name}_{int(runtime_ms)}"
+        exec_suffix = run_id or uuid.uuid4().hex[:8]
+        node_id = f"pmev_{tree_id}_{action_name}_{exec_suffix}"
         return DiscoveryNode(
             node_id=node_id,
             parent_id=parent_id,
