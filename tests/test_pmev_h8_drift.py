@@ -55,7 +55,8 @@ def test_o_discriminante_e_pedir_mesa_e_nao_a_grafia_do_rotulo():
     river = next(p for p in load_aula12_pairs() if p.key == "PAR_4_OOP_RIVER")
     assert classify_action("Allin 27.2 (87%)") is ActionClass.RAISE
     assert classify_action_in_side("Allin 27.2 (87%)", river.chip_ev) is ActionClass.BET
-    assert is_free_bet_node(river.chip_ev) and is_free_bet_node(river.icm_ev)
+    assert is_free_bet_node(river.chip_ev)
+    assert is_free_bet_node(river.icm_ev)
 
 
 def test_convencao_de_fracao_do_pote_reproduz_o_rotulo_em_todo_no_de_aposta():
@@ -81,7 +82,7 @@ def test_convencao_de_fracao_do_pote_reproduz_o_rotulo_em_todo_no_de_aposta():
     assert conferidos >= 7
 
 
-def test_a_mesma_convencao_NAO_vale_nos_nos_de_aumento_e_e_por_isso_que_eles_ficam_fora():
+def test_a_mesma_convencao_nao_vale_nos_nos_de_aumento_e_e_por_isso_que_eles_ficam_fora():
     """A exclusao dos raises e medida, nao preferencia.
 
     `Raise 5 (50%)` com pote 6.73 da 74% por sizing/pote: o rotulo do GTOW mede
@@ -113,7 +114,7 @@ def test_a_mesma_convencao_NAO_vale_nos_nos_de_aumento_e_e_por_isso_que_eles_fic
 # ---------------------------------------------------------------------------
 
 
-def test_o_ramo_rotulado_50_pct_NAO_alcanca_o_limiar_em_comparacao_estrita():
+def test_o_ramo_rotulado_50_pct_nao_alcanca_o_limiar_em_comparacao_estrita():
     """O CASO DE FRONTEIRA, medido antes de qualquer veredito.
 
     PAR_2, pote 5.63: o GTO Wizard rotula `Bet 2.8 (50%)`, e 2.8 / 5.63 = 49.73%.
@@ -132,9 +133,7 @@ def test_o_ramo_rotulado_50_pct_NAO_alcanca_o_limiar_em_comparacao_estrita():
     estrita = frequency_at_or_above_threshold(par.chip_ev, pote.value, tolerance=TOLERANCIA_LIMIAR_ESTRITA)
     assert estrita == pytest.approx(6.6, abs=1e-9)
 
-    por_resolucao = frequency_at_or_above_threshold(
-        par.chip_ev, pote.value, tolerance=TOLERANCIA_LIMIAR_POR_RESOLUCAO
-    )
+    por_resolucao = frequency_at_or_above_threshold(par.chip_ev, pote.value, tolerance=TOLERANCIA_LIMIAR_POR_RESOLUCAO)
     assert por_resolucao == pytest.approx(82.5 + 6.6, abs=1e-9)
 
 

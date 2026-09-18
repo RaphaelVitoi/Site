@@ -66,6 +66,7 @@ _ORIGEM: dict[str, str] = {
         ),
         "engine.timesfm_engine",
     ),
+    **dict.fromkeys(("H8Result", "NodeDrift", "Verdict", "measure_h8"), "engine.pmev_h8_drift"),
 }
 
 __all__ = [
@@ -106,6 +107,10 @@ __all__ = [
     "forecast_opponent_drift",
     "forecast_bankroll_trajectory",
     "forecast_pmev_risk_dynamics",
+    "measure_h8",
+    "H8Result",
+    "NodeDrift",
+    "Verdict",
 ]
 
 
@@ -151,6 +156,12 @@ if TYPE_CHECKING:  # analisadores estaticos enxergam a API sem pagar a importaca
     from .llm_api import call_llm_api
     from .math_rio import calculate_rio_risk
     from .math_sota import calculate_geometric_sizing, calculate_rio_tension, solve_icm_distortion_v2
+    from .pmev_h8_drift import (
+        H8Result,
+        NodeDrift,
+        Verdict,
+        measure_h8,
+    )
     from .timesfm_engine import (
         CfrConvergenceForecast,
         OpponentDriftForecast,
