@@ -21,6 +21,8 @@ import pytest
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "scripts" / "ops"))
 
+from gerar_reconferencia_aula12 import reconferencia as reconferencia_do_fixture  # noqa: E402
+
 from engine.pmev_aula12_evidence import (  # noqa: E402
     AULA_1_2_SHA256,
     DATA_PATH,
@@ -28,7 +30,6 @@ from engine.pmev_aula12_evidence import (  # noqa: E402
     Reconference,
     load_reconference,
 )
-from gerar_reconferencia_aula12 import reconferencia as reconferencia_do_fixture  # noqa: E402
 
 SHA_VIGENTE = "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930"
 
@@ -87,18 +88,24 @@ class TestAncoraSustentada:
 
 class TestDeclaracaoMalformada:
     @pytest.mark.parametrize(
-        "troca",
+        ("troca", "motivo"),
         [
-            {"document_sha256": "7CA7C89F52C1A4173EE404F1BC4059CABD564FDDFB62129A6CD34789B86E4769"},
-            {"document_sha256": "b3fc15ba"},
-            {"camadas_alcancadas": ()},
-            {"camadas_alcancadas": ("capturas",)},
-            {"substrato": "   "},
+            (
+                {"document_sha256": "7CA7C89F52C1A4173EE404F1BC4059CABD564FDDFB62129A6CD34789B86E4769"},
+                "hexadecimal minusculo",
+            ),
+            ({"document_sha256": "b3fc15ba"}, "hexadecimal minusculo"),
+            ({"camadas_alcancadas": ()}, "nenhuma camada alcancada"),
+            ({"camadas_alcancadas": ("capturas",)}, "camada desconhecida"),
+            ({"substrato": "   "}, "sem substrato nao e auditavel"),
         ],
         ids=["sha maiusculo", "sha curto", "sem camada", "camada inexistente", "sem substrato"],
     )
-    def test_falha_fechado(self, troca: dict[str, object]) -> None:
-        with pytest.raises(ValueError):
+    def test_falha_fechado(self, troca: dict[str, object], motivo: str) -> None:
+        # O `match` e o ponto: cada declaracao malformada tem que falhar pelo
+        # SEU motivo. Um ValueError qualquer passaria mesmo se a validacao
+        # errada disparasse, e o teste diria verde sobre a checagem trocada.
+        with pytest.raises(ValueError, match=motivo):
             _reconferencia(**troca)
 
     def test_o_espelho_sem_o_bloco_e_erro_nao_ausencia_benigna(self, tmp_path: Path) -> None:
@@ -110,7 +117,7 @@ class TestDeclaracaoMalformada:
             load_reconference(alvo)
 
     def test_as_camadas_conhecidas_sao_exatamente_tres(self) -> None:
-        assert RECONFERENCE_LAYERS == {"metadados", "texto", "figuras"}
+        assert {"metadados", "texto", "figuras"} == RECONFERENCE_LAYERS
 
 
 class TestConteudoMedido:
