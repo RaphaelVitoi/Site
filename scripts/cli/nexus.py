@@ -802,6 +802,43 @@ def _build_calibration_panel() -> Panel:
     )
 
 
+def _build_notifications_panel() -> Panel:
+    """Painel Executivo de Notificacoes em Tempo Real & Recomendacoes Acionaveis."""
+    from engine.dashboard_notifications import DashboardNotificationsEngine
+
+    engine = DashboardNotificationsEngine(base_dir=BASE_DIR)
+    report = engine.evaluate()
+
+    grid = Table.grid(expand=True, padding=(0, 2))
+    grid.add_column(ratio=1)
+    grid.add_column(ratio=2)
+
+    health_col = (
+        f"[bold #50fa7b]Dream-RSI:[/] [white]{report.dream_trees_count} arvores[/] ([white]{report.dream_nodes_count} nos[/])\n"
+        f"[dim]Poda Preditiva TimesFM:[/] [bold #50fa7b]-15.1% espaco[/] | [dim]Monotonicidade:[/] [bold #50fa7b]100%[/]\n"
+        f"[bold #8be9fd]Token Headroom:[/] [white]{report.token_budget_consumed:,} / {report.token_budget_limit:,}[/] ([bold #50fa7b]+{report.token_headroom_percent:.1f}% livre[/])\n"
+        f"[bold #bd93f9]Integridade Global:[/] [bold #50fa7b]{report.health_status}[/]"
+    )
+
+    recs_lines: list[str] = []
+    for rec in report.recommendations[:3]:
+        urg_color = "#ff5555" if rec.urgency == "CRITICA" else ("#f1fa8c" if rec.urgency == "ALTA" else "#50fa7b")
+        recs_lines.append(
+            f"[bold {urg_color}][{rec.shortcut_key}][/] [bold white]{rec.action_name}:[/] {rec.description} [dim]({rec.impact})[/]"
+        )
+    recs_str = "\n".join(recs_lines) if recs_lines else "[dim #6272a4]Nenhuma recomendacao pendente.[/]"
+
+    grid.add_row(health_col, recs_str)
+
+    return Panel(
+        grid,
+        title="[bold #ff79c6]NOTIFICACOES, STATUS DINAMICO & RECOMENDACOES (Pressione [D], [T] ou [K])[/]",
+        border_style="#ff79c6",
+        padding=(0, 2),
+        box=box.ROUNDED,
+    )
+
+
 def _build_footer_panel() -> Panel:
     grid = Table.grid(expand=True, padding=(0, 2))
     grid.add_column(ratio=1)
@@ -819,11 +856,11 @@ def _build_footer_panel() -> Panel:
     c2 = (
         "[5] [bold #8be9fd]nexus agent handoff[/]\n[dim #6272a4]    Sessao Web (Clipboard)[/]\n\n"
         "[6] [bold #8be9fd]nexus agent route[/]\n[dim #6272a4]    Testar Roteamento[/]\n\n"
+        "[D] [bold #ff79c6]nexus dream-optimize[/]\n[dim #6272a4]    Fase de Sonho (TimesFM 3.0)[/]\n\n"
         "[K] [bold #50fa7b]nexus calib-forecast[/]\n[dim #6272a4]    Calibracao & TimesFM[/]\n\n"
+        "[T] [bold #bd93f9]nexus stats timesfm[/]\n[dim #6272a4]    Oraculo de Series Temporais[/]\n\n"
         "[7] [bold #8be9fd]nexus stats daily[/]\n[dim #6272a4]    Status Diario[/]\n\n"
-        "[8] [bold #8be9fd]nexus stats historian[/]\n[dim #6272a4]    Motor Preditivo[/]\n\n"
-        "[G] [bold #8be9fd]nexus ops start-gemma[/]\n[dim #6272a4]    Ligar Servidor Gemma 4[/]\n\n"
-        "[I] [bold #8be9fd]nexus ops chat-gemma[/]\n[dim #6272a4]    Ingressar/Chat Modelos[/]"
+        "[8] [bold #8be9fd]nexus stats historian[/]\n[dim #6272a4]    Motor Preditivo[/]"
     )
     c3 = (
         "[9] [bold #f1fa8c]nexus db audit-dag[/]\n[dim #6272a4]    Auditoria DAG[/]\n\n"
@@ -857,10 +894,11 @@ def _generate_dashboard_ui(counts: dict) -> Group:
 
     col_table.add_row(_build_system_status_panel(), _build_task_status_panel(counts), _build_metrics_panel())
 
+    notif_panel = _build_notifications_panel()
     calib_panel = _build_calibration_panel()
     footer = _build_footer_panel()
 
-    return Group(header, col_table, calib_panel, footer)
+    return Group(header, col_table, notif_panel, calib_panel, footer)
 
 
 # Flag de modulo, e nao atributo pendurado na propria funcao. As duas formas do
@@ -912,6 +950,8 @@ def _execute_shortcut(key: str):
         "i": [sys.executable, __file__, "ops", "chat-gemma"],
         "s": [sys.executable, __file__, "status"],
         "k": [sys.executable, __file__, "agent", "calibration-forecast"],
+        "d": [sys.executable, __file__, "agent", "dream-optimize", "--model", "3.0", "--research"],
+        "t": [sys.executable, __file__, "stats", "timesfm"],
     }
     if key in cmd_map:
         console.clear()
@@ -922,7 +962,30 @@ def _execute_shortcut(key: str):
 async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
     counts = await qm.get_task_counts()
     live.update(_generate_dashboard_ui(counts))
-    valid_keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "c", "f", "v", "r", "m", "g", "i", "s", "k", "q"}
+    valid_keys = {
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "0",
+        "c",
+        "f",
+        "v",
+        "r",
+        "m",
+        "g",
+        "i",
+        "s",
+        "k",
+        "d",
+        "t",
+        "q",
+    }
     for _ in range(50):
         await asyncio.sleep(0.1)
         key = _get_key()
@@ -940,8 +1003,18 @@ async def render_dashboard(
         "-1",
         help="Gera um snapshot instantaneo estatico do Dashboard sem entrar no loop interativo.",
     ),
+    notify: bool = typer.Option(
+        False,
+        "--notify",
+        "-n",
+        help="Exibe apenas o painel sintetizado de notificacoes e recomendacoes acionaveis para automacoes.",
+    ),
 ):
     """Painel Executivo SOTA (CEO Level). Dinamico, Responsivo e Interativo."""
+    if notify:
+        console.print(_build_notifications_panel())
+        return
+
     qm = QueueManager()
 
     try:
