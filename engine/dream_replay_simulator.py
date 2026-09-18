@@ -96,6 +96,8 @@ class DreamReplaySimulator:
         from engine.discovery_recorder import DiscoveryRecorder  # noqa: PLC0415
 
         recorder = DiscoveryRecorder(db_path=self.db_path)
+        if self.db_path == ":memory:":
+            recorder.simulator = self
         return recorder.get_database_health_telemetry()
 
     def simulate_policy_on_tree(self, policy: ExplorationPolicy, tree: DiscoveryTree) -> ReplayEvaluationResult:

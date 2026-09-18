@@ -473,3 +473,84 @@ def test_pmev_history_seeding_and_health_telemetry(tmp_path: object) -> None:
     assert telemetry["domain_distribution"]["pmev_math"] == 20
     assert telemetry["size_kb"] > 0
     assert telemetry["projected_annual_growth_mb"] >= 0
+
+
+def test_review_findings_hardening(tmp_path: object) -> None:
+    """Valida as correcoes dos review findings: reset abstrato, payload validation, memory delegation e log de margem."""
+    import json
+    import sqlite3
+
+    import pytest
+
+    from core.exploration_policy import (  # noqa: PLC0415
+        AdaptiveDreamPolicy,
+        ExplorationPolicy,
+        ParallelRefinePolicy,
+        TimesFMPredictivePolicy,
+    )
+    from engine.discovery_recorder import DiscoveryRecorder  # noqa: PLC0415
+    from engine.dream_replay_simulator import DreamReplaySimulator  # noqa: PLC0415
+    from engine.dream_timesfm_forecaster import DreamTimesFMForecaster  # noqa: PLC0415
+
+    # 1. Reset obrigatorio como abstractmethod
+    class SubWithoutReset(ExplorationPolicy):
+        def select_candidates(self, tree: object) -> list[object]:
+            return []
+
+        def should_prune(self, node: object, tree: object) -> bool:
+            return False
+
+        def should_stop(self, tree: object, round_count: int, best_metric: float) -> bool:
+            return True
+
+        def branch_factor(self, current_depth: int) -> int:
+            return 1
+
+    with pytest.raises(TypeError, match="abstract method.*reset"):
+        SubWithoutReset(name="Incomplete")  # type: ignore[abstract]
+
+    # Todas as subclasses concretas devem poder ser instanciadas e possuir reset()
+    p1 = ParallelRefinePolicy()
+    p1.reset()
+    p2 = AdaptiveDreamPolicy()
+    p2.reset()
+    p3 = TimesFMPredictivePolicy()
+    p3.reset()
+
+    # 2. Validacao de payload corrompido / shape invalido na telemetria
+    test_db = str(tmp_path) + "/corrupt_test.db"
+    rec = DiscoveryRecorder(db_path=test_db)
+    rec.seed_pmev_history(count=5)
+    with sqlite3.connect(test_db) as conn:
+        conn.execute(
+            "INSERT INTO discovery_trees (tree_id, root_id, domain, created_at, payload_json) VALUES (?, ?, ?, ?, ?)",
+            ("bad_1", "r", "code_engineering", "2026-09-18T00:00:00Z", "not-a-json"),
+        )
+        conn.execute(
+            "INSERT INTO discovery_trees (tree_id, root_id, domain, created_at, payload_json) VALUES (?, ?, ?, ?, ?)",
+            ("bad_2", "r", "code_engineering", "2026-09-18T00:00:00Z", json.dumps({"nodes": "not_a_dict"})),
+        )
+
+    telem = rec.get_database_health_telemetry()
+    assert telem["invalid_payloads"] == 2
+    assert telem["status"] == "DEGRADED"
+
+    # 3. Delegacao de telemetria para :memory:
+    sim_mem = DreamReplaySimulator(db_path=":memory:")
+    rec_mem = DiscoveryRecorder(db_path=":memory:")
+    rec_mem.simulator = sim_mem
+    rec_mem.record_task_outcome("t1", "agent", "desc", "completed")
+    telem_mem = sim_mem.get_database_health_telemetry()
+    assert telem_mem["total_trees"] == 1
+    assert telem_mem["status"] == "HEALTHY"
+
+    # 4. Log de momentum calibrado com margem ajustada
+    forecaster = DreamTimesFMForecaster()
+    prune, reason = forecaster.should_prune_predictively(
+        scores=[0.45, 0.46],
+        global_best_score=0.53,
+        margin=0.10,
+    )
+    assert prune is False
+    assert "margem=" in reason
+    assert "[CALIBRATED-MOMENTUM]" in reason
