@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Templo de Quiz & Avaliação Cognitiva SOTA v7.0 GOLD
+ * IDENTITY: Templo de Quiz & Avaliação Cognitiva SOTA v8.0 GOLD
  * PATH: src/app/(lab)/quiz/page.tsx
  * ROLE: Laboratório interativo de validação neural e assimilação dos axiomas de Raphael Vitoi.
  * DESIGN: Container centralizado simétrico com telemetria quântica e feedback em tempo real.
