@@ -204,9 +204,10 @@ const LIBRARY_CATEGORIES: LibraryCategory[] = [
         desc: 'Cenários simplificados de combate puro de stacks.',
       },
       {
-        title: 'Nós de Calibragem (Âncora)',
+        title: 'Nós de Calibração (Aula 1.2)',
         slug: 'nos-de-calibragem',
-        desc: 'Pontos de verificação estratégica para a mesa ao vivo.',
+        desc: 'Validação empírica dos 93 nós da Aula 1.2 com o referencial visual interativo.',
+        isLab: true,
       },
     ],
   },
