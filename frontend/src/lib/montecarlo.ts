@@ -18,7 +18,7 @@ export interface MonteCarloConfig {
 export interface MonteCarloIcmResult {
 	/** Equity monetária média por jogador (mesma unidade de `prizes`). */
 	equities: number[];
-	/** Erro padrão de Bernoulli por slot: √(p·(1-p)/N). */
+	/** Erro padrão real da média amostral por jogador: SE(E_i) = s_i / √N. */
 	stdErrorPerPlayer: number[];
 	/**
 	 * Semente efetivamente usada — nunca nula, inclusive quando `config.seed` foi
@@ -26,6 +26,10 @@ export interface MonteCarloIcmResult {
 	 */
 	seed: number;
 	iterations: number;
+	/** Variância amostral não-viesada por jogador s²_i (correção de Bessel). */
+	variancePerPlayer?: number[] | undefined;
+	/** Matriz de distribuição de colocação: P[playerIdx][placementIdx] (0-indexed). */
+	placementDistribution?: number[][] | undefined;
 }
 
 /**
@@ -132,6 +136,8 @@ function runSingleMonteCarloIteration(
 	activePrizes: number[],
 	totalChips: number,
 	totalEquity: number[],
+	sumSquares: number[],
+	placementCounts: number[][],
 	isBusted: Uint8Array | null,
 	random: () => number,
 ) {
@@ -142,7 +148,8 @@ function runSingleMonteCarloIteration(
 		isBusted.fill(0);
 	}
 
-	for (const prize of activePrizes) {
+	const numPrizes = activePrizes.length;
+	for (let j = 0; j < numPrizes; j++) {
 		if (remainingTotalChips <= 0) break;
 
 		const winnerIdx = pickWinner(
@@ -156,7 +163,13 @@ function runSingleMonteCarloIteration(
 
 		// Distribui o prêmio e remove o jogador da pool
 		if (winnerIdx !== -1) {
-			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + (prize || 0);
+			const prize = activePrizes[j] ?? 0;
+			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + prize;
+			sumSquares[winnerIdx] = (sumSquares[winnerIdx] ?? 0) + prize * prize;
+			const pRow = placementCounts[winnerIdx];
+			if (pRow) {
+				pRow[j] = (pRow[j] ?? 0) + 1;
+			}
 			remainingTotalChips -= stacks[winnerIdx] || 0;
 
 			if (isBusted) {
@@ -178,10 +191,15 @@ function runSingleMonteCarloIteration(
  * Omitir `config.seed` sorteia uma semente e a devolve em `result.seed`, de modo
  * que qualquer corrida possa ser reexecutada depois do fato.
  *
+ * SOTA v8.0 GOLD:
+ * - Estimador de variância amostral real s²_i e erro padrão da média SE = s / √N.
+ * - Tratamento canônico de stacks zero com partição terminal equitativa (100% conservação de massa).
+ * - Matriz de distribuição de colocação completa P(jogador i termina em colocação j).
+ *
  * @param stacks Array com os stacks dos jogadores
  * @param prizes Array com a estrutura de premiação
  * @param config Configurações de iteração (default: 10000 para velocidade web)
- * @returns `MonteCarloIcmResult` com equities, stdErrorPerPlayer, seed e iterations.
+ * @returns `MonteCarloIcmResult` com equities, stdErrorPerPlayer, seed, iterations, variancePerPlayer e placementDistribution.
  */
 export function calculateIcmMonteCarlo(
 	stacks: number[],
@@ -193,23 +211,123 @@ export function calculateIcmMonteCarlo(
 	if (config.seed !== undefined && (!Number.isSafeInteger(config.seed) || config.seed < 0 || config.seed > 0xffffffff)) {
 		throw new RangeError('Seed must be an unsigned 32-bit integer');
 	}
-	// Omitir a semente nao dispensa semente: sorteamos uma, usamos, e devolvemos.
-	// Antes, o caminho sem semente caia em Math.random e a corrida era irreplayavel
-	// -- `seed: null` no resultado significava, na pratica, "ninguem consegue mais
-	// reproduzir este numero".
 	const resolvedSeed = config.seed ?? deriveSeed();
 	const random = seededRandom(resolvedSeed);
 	const numPlayers = stacks.length;
 
 	// Se há mais prêmios que jogadores, trunca os prêmios
 	const activePrizes = prizes.slice(0, numPlayers);
-	const totalEquity = new Array(numPlayers).fill(0);
+	const k = activePrizes.length;
+	const totalChips = stacks.reduce((a, b) => a + b, 0);
 
 	// Se todos os stacks são 0, ou não há prêmios
-	const totalChips = stacks.reduce((a, b) => a + b, 0);
-	if (totalChips <= 0 || activePrizes.length === 0) {
-		return { equities: totalEquity, stdErrorPerPlayer: totalEquity.map(() => 0), seed: resolvedSeed, iterations: 0 };
+	if (totalChips <= 0 || k === 0) {
+		return {
+			equities: new Array(numPlayers).fill(0),
+			stdErrorPerPlayer: new Array(numPlayers).fill(0),
+			variancePerPlayer: new Array(numPlayers).fill(0),
+			placementDistribution: Array.from({ length: numPlayers }, () => new Array(k).fill(0)),
+			seed: resolvedSeed,
+			iterations: 0,
+		};
 	}
+
+	// Identifica jogadores ativos com fichas vs. jogadores com stack zero
+	const activeIndices: number[] = [];
+	const zeroIndices: number[] = [];
+	for (let i = 0; i < numPlayers; i++) {
+		if ((stacks[i] ?? 0) > 0) {
+			activeIndices.push(i);
+		} else {
+			zeroIndices.push(i);
+		}
+	}
+
+	// Caso com stacks zero: convenção terminal canônica (idêntica ao kernel exato)
+	// Jogadores ativos disputam os kActive primeiros prêmios. Prêmios excedentes
+	// são divididos equitativamente entre os jogadores com stack zero.
+	if (zeroIndices.length > 0) {
+		const kActive = Math.min(activeIndices.length, k);
+		const activePrizesForSim = activePrizes.slice(0, kActive);
+		const remainingPrizes = activePrizes.slice(kActive);
+		const terminalPrize = remainingPrizes.length > 0
+			? remainingPrizes.reduce((a, b) => a + b, 0) / zeroIndices.length
+			: 0;
+
+		const activeStacks = activeIndices.map((i) => stacks[i] ?? 0);
+		const numActive = activeIndices.length;
+		const totalActiveEquity = new Array(numActive).fill(0);
+		const sumActiveSquares = new Array(numActive).fill(0);
+		const placementActiveCounts: number[][] = Array.from({ length: numActive }, () => new Array(kActive).fill(0));
+		const isBusted = numActive > 30 ? new Uint8Array(numActive) : null;
+
+		for (let i = 0; i < iterations; i++) {
+			runSingleMonteCarloIteration(
+				numActive,
+				activeStacks,
+				activePrizesForSim,
+				totalChips,
+				totalActiveEquity,
+				sumActiveSquares,
+				placementActiveCounts,
+				isBusted,
+				random,
+			);
+		}
+
+		const equities = new Array(numPlayers).fill(0);
+		const variancePerPlayer = new Array(numPlayers).fill(0);
+		const stdErrorPerPlayer = new Array(numPlayers).fill(0);
+		const placementDistribution: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
+
+		for (let a = 0; a < numActive; a++) {
+			const origIdx = activeIndices[a]!;
+			const eq = totalActiveEquity[a]! / iterations;
+			equities[origIdx] = eq;
+
+			if (iterations > 1) {
+				const sumSq = sumActiveSquares[a] ?? 0;
+				const s2 = Math.max(0, (sumSq - (totalActiveEquity[a]! * totalActiveEquity[a]!) / iterations) / (iterations - 1));
+				variancePerPlayer[origIdx] = Number(s2.toFixed(4));
+				stdErrorPerPlayer[origIdx] = Number(Math.sqrt(s2 / iterations).toFixed(4));
+			}
+
+			const activePlacementRow = placementActiveCounts[a];
+			const targetRow = placementDistribution[origIdx];
+			if (activePlacementRow && targetRow) {
+				for (let j = 0; j < kActive; j++) {
+					targetRow[j] = (activePlacementRow[j] ?? 0) / iterations;
+				}
+			}
+		}
+
+		const zeroPlacementShare = 1 / zeroIndices.length;
+		for (const z of zeroIndices) {
+			equities[z] = terminalPrize;
+			variancePerPlayer[z] = 0;
+			stdErrorPerPlayer[z] = 0;
+			const targetRow = placementDistribution[z];
+			if (targetRow) {
+				for (let j = kActive; j < k; j++) {
+					targetRow[j] = zeroPlacementShare;
+				}
+			}
+		}
+
+		return {
+			equities,
+			stdErrorPerPlayer,
+			variancePerPlayer,
+			placementDistribution,
+			seed: resolvedSeed,
+			iterations,
+		};
+	}
+
+	// Caso padrão (todos os stacks estritamente positivos):
+	const totalEquity = new Array(numPlayers).fill(0);
+	const sumSquares = new Array(numPlayers).fill(0);
+	const placementCounts: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
 
 	// N > 30: bitmask JS de 32 bits não comporta — usa Uint8Array alocada uma vez.
 	const isBusted = numPlayers > 30 ? new Uint8Array(numPlayers) : null;
@@ -218,17 +336,41 @@ export function calculateIcmMonteCarlo(
 	}
 
 	for (let i = 0; i < iterations; i++) {
-		runSingleMonteCarloIteration(numPlayers, stacks, activePrizes, totalChips, totalEquity, isBusted, random);
+		runSingleMonteCarloIteration(
+			numPlayers,
+			stacks,
+			activePrizes,
+			totalChips,
+			totalEquity,
+			sumSquares,
+			placementCounts,
+			isBusted,
+			random,
+		);
 	}
 
-	// Média e erro padrão por slot (escalado pela premiação total ativa)
-	const totalActivePrize = activePrizes.reduce((a, b) => a + b, 0);
+	// Estimador de média, variância amostral e erro padrão real
 	const equities = totalEquity.map((e) => e / iterations);
-	const stdErrorPerPlayer = equities.map((eq) => {
-		if (totalActivePrize <= 0) return 0;
-		const p = Math.max(0, Math.min(1, eq / totalActivePrize));
-		return Number((totalActivePrize * Math.sqrt((p * (1 - p)) / Math.max(iterations, 1))).toFixed(4));
+	const variancePerPlayer = totalEquity.map((tot, i) => {
+		if (iterations <= 1) return 0;
+		const sumSq = sumSquares[i] ?? 0;
+		const s2 = Math.max(0, (sumSq - (tot * tot) / iterations) / (iterations - 1));
+		return Number(s2.toFixed(4));
 	});
+	const stdErrorPerPlayer = variancePerPlayer.map((s2) => {
+		if (iterations <= 1) return 0;
+		return Number(Math.sqrt(s2 / iterations).toFixed(4));
+	});
+	const placementDistribution: number[][] = placementCounts.map((row) =>
+		row.map((cnt) => cnt / iterations),
+	);
 
-	return { equities, stdErrorPerPlayer, seed: resolvedSeed, iterations };
+	return {
+		equities,
+		stdErrorPerPlayer,
+		variancePerPlayer,
+		placementDistribution,
+		seed: resolvedSeed,
+		iterations,
+	};
 }
