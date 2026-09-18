@@ -98,14 +98,27 @@ export interface PerspectivaInput {
 // === MOTOR ICM (Malmuth-Harville / Monte Carlo Estocástico) ===
 const _icmCache = new Map<string, MapaICMResult>();
 
+/**
+ * Semente canonica do fallback Monte Carlo de `calculateMapaICM` (N > 10).
+ * Constante e versionada de proposito: mudar este numero muda todo valor que a
+ * UI ja mostrou para fields grandes, e essa mudanca deve aparecer no diff.
+ */
+const MAPA_ICM_SEED = 0x5ed1c3;
+
 export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMResult {
 	const n = stacks.length;
 
 	// SOTA: Monte Carlo Fallback para evitar explosão combinatória (O(2^N))
 	if (n > 10) {
 		const totalChips = stacks.reduce((s, v) => s + v, 0);
+		// Semente fixa: `calculateMapaICM` e memoizada em `_icmCache` por
+		// stacks+prizes. Sem semente declarada, o primeiro calculo de uma chave
+		// congelava um ruido de Monte Carlo diferente a cada carga da pagina, e a
+		// mesma mesa devolvia numeros diferentes entre sessoes. Com semente fixa a
+		// funcao volta a ser pura, que e o que um cache por chave pressupoe.
 		const { equities } = calculateIcmMonteCarlo(stacks, prizes, {
 			iterations: 20000,
+			seed: MAPA_ICM_SEED,
 		});
 
 		const positionProbs = Array.from({ length: n }, () =>

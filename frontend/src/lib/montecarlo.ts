@@ -7,6 +7,11 @@
 
 export interface MonteCarloConfig {
 	iterations?: number | undefined;
+	/**
+	 * Semente de 32 bits sem sinal. Omitir NAO significa "sem semente": significa
+	 * "sorteie uma e me devolva". O valor efetivo volta em `MonteCarloIcmResult.seed`
+	 * e reexecutar com ele reproduz a corrida bit a bit.
+	 */
 	seed?: number | undefined;
 }
 
@@ -15,15 +20,48 @@ export interface MonteCarloIcmResult {
 	equities: number[];
 	/** Erro padrão de Bernoulli por slot: √(p·(1-p)/N). */
 	stdErrorPerPlayer: number[];
-	/** Seed utilizado (reprodutibilidade auditável). */
-	seed: number | null;
+	/**
+	 * Semente efetivamente usada — nunca nula, inclusive quando `config.seed` foi
+	 * omitido. É o que torna a corrida replayável depois do fato.
+	 */
+	seed: number;
 	iterations: number;
 }
 
-function seededRandom(seed: number): () => number {
+/**
+ * Sorteia uma semente de 32 bits para uma corrida que não declarou a sua.
+ *
+ * Fonte única desta derivação no repositório: o `IcmWorkerPool` a importa daqui
+ * em vez de manter cópia própria. Preferimos `crypto.getRandomValues` por ser a
+ * fonte de entropia disponível nos dois runtimes (browser e Node >= 19); o
+ * fallback por relógio existe só para ambientes sem WebCrypto e nunca protege
+ * nada — o valor sorteado é publicado no resultado.
+ */
+export function deriveSeed(): number {
+	if (typeof globalThis.crypto?.getRandomValues === 'function') {
+		const buf = new Uint32Array(1);
+		globalThis.crypto.getRandomValues(buf);
+		const val = buf.at(0);
+		if (val !== undefined) return val >>> 0;
+	}
+	const perfTime = typeof performance !== 'undefined' ? performance.now() * 1000 : 0;
+	return ((Date.now() ^ Math.floor(perfTime)) >>> 0) || 0xdeadbeef;
+}
+
+/**
+ * mulberry32 — gerador determinístico de 32 bits, ciclo único de 2^32.
+ *
+ * Exportado para que o teste possa congelar um vetor conhecido: trocar o gerador
+ * muda todo resultado já publicado com uma dada semente, e essa troca tem que
+ * reprovar um teste em vez de passar silenciosa.
+ *
+ * O nome no comentário anterior dizia "SplitMix32"; é mulberry32. A aritmética
+ * está correta, o rótulo não estava.
+ */
+export function seededRandom(seed: number): () => number {
 	let state = seed >>> 0;
 	return () => {
-		state = (state + 0x6d2b79f5) | 0; // NOSONAR (SplitMix32 exige wrap signed 32-bit)
+		state = (state + 0x6d2b79f5) | 0; // wrap signed 32-bit é exigência do algoritmo
 		let value = Math.imul(state ^ (state >>> 15), 1 | state);
 		value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
 		return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
@@ -74,11 +112,12 @@ function pickWinner(
 	remainingTotalChips: number,
 	random: () => number,
 ): number {
-	// sonarjs typescript:S2245 — falso positivo por contexto, nao suprimir com
-	// crypto.getRandomValues. Este e o sorteio de vencedor de uma simulacao de
-	// Monte Carlo para ICM: o resultado nao protege nada, nao gera token, nao
-	// deriva chave e nao e observavel por adversario. Trocar por CSPRNG custaria
-	// ordens de grandeza no laco quente sem ganho de seguranca algum.
+	// `random` aqui e sempre `seededRandom`: nao ha mais caminho que caia em
+	// Math.random, que era o gatilho do typescript:S2245 neste arquivo. Continua
+	// valendo por que nao e um CSPRNG: este e o sorteio de vencedor de uma
+	// simulacao de Monte Carlo para ICM — nao protege nada, nao gera token, nao
+	// deriva chave. E o oposto do que um CSPRNG oferece: aqui a reprodutibilidade
+	// e o requisito, e um CSPRNG a destruiria por construcao.
 	const r = random() * remainingTotalChips;
 	if (isBusted) {
 		return pickWinnerWithBusted(numPlayers, stacks, isBusted, r);
@@ -134,6 +173,11 @@ function runSingleMonteCarloIteration(
  * Sorteia o 1º colocado baseado na proporção de fichas.
  * Remove o vencedor, recalcula as proporções, sorteia o 2º, e assim por diante.
  *
+ * A corrida é sempre determinística: dada a mesma `seed`, os mesmos `stacks`,
+ * os mesmos `prizes` e o mesmo `iterations`, o resultado é idêntico bit a bit.
+ * Omitir `config.seed` sorteia uma semente e a devolve em `result.seed`, de modo
+ * que qualquer corrida possa ser reexecutada depois do fato.
+ *
  * @param stacks Array com os stacks dos jogadores
  * @param prizes Array com a estrutura de premiação
  * @param config Configurações de iteração (default: 10000 para velocidade web)
@@ -149,7 +193,12 @@ export function calculateIcmMonteCarlo(
 	if (config.seed !== undefined && (!Number.isSafeInteger(config.seed) || config.seed < 0 || config.seed > 0xffffffff)) {
 		throw new RangeError('Seed must be an unsigned 32-bit integer');
 	}
-	const random = config.seed === undefined ? Math.random : seededRandom(config.seed);
+	// Omitir a semente nao dispensa semente: sorteamos uma, usamos, e devolvemos.
+	// Antes, o caminho sem semente caia em Math.random e a corrida era irreplayavel
+	// -- `seed: null` no resultado significava, na pratica, "ninguem consegue mais
+	// reproduzir este numero".
+	const resolvedSeed = config.seed ?? deriveSeed();
+	const random = seededRandom(resolvedSeed);
 	const numPlayers = stacks.length;
 
 	// Se há mais prêmios que jogadores, trunca os prêmios
@@ -159,7 +208,7 @@ export function calculateIcmMonteCarlo(
 	// Se todos os stacks são 0, ou não há prêmios
 	const totalChips = stacks.reduce((a, b) => a + b, 0);
 	if (totalChips <= 0 || activePrizes.length === 0) {
-		return { equities: totalEquity, stdErrorPerPlayer: totalEquity.map(() => 0), seed: config.seed ?? null, iterations: 0 };
+		return { equities: totalEquity, stdErrorPerPlayer: totalEquity.map(() => 0), seed: resolvedSeed, iterations: 0 };
 	}
 
 	// N > 30: bitmask JS de 32 bits não comporta — usa Uint8Array alocada uma vez.
@@ -181,5 +230,5 @@ export function calculateIcmMonteCarlo(
 		return Number((totalActivePrize * Math.sqrt((p * (1 - p)) / Math.max(iterations, 1))).toFixed(4));
 	});
 
-	return { equities, stdErrorPerPlayer, seed: config.seed ?? null, iterations };
+	return { equities, stdErrorPerPlayer, seed: resolvedSeed, iterations };
 }
