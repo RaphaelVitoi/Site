@@ -270,3 +270,160 @@ def test_timesfm_governance_enforcement() -> None:
             mode=ExecutionMode.COMMERCIAL_PRODUCTION,
             preferred_model_key="timesfm-3.0-330m",
         )
+
+
+def test_discovery_tree_and_node_deep_immutability() -> None:
+    """Valida a protecao contra mutacao pos-persistencia em nos e arvores."""
+    import pytest  # noqa: PLC0415
+
+    node = DiscoveryNode(
+        node_id="immut_node",
+        parent_id=None,
+        depth=0,
+        domain="code_engineering",
+        action_type="eval",
+        action_payload={"key": "val", "nested": {"inner": 42}},
+        status="success",
+        metric_score=1.0,
+    )
+    tree = DiscoveryTree(
+        tree_id="immut_tree",
+        root_id="immut_node",
+        domain="code_engineering",
+        nodes={"immut_node": node},
+    )
+
+    with pytest.raises(TypeError, match="FrozenDict is immutable"):
+        node.action_payload["key"] = "modified"
+
+    with pytest.raises(TypeError, match="FrozenDict is immutable"):
+        node.action_payload["nested"]["inner"] = 99  # type: ignore[index]
+
+    with pytest.raises(TypeError, match="FrozenDict is immutable"):
+        tree.nodes["new_node"] = node  # type: ignore[index]
+
+
+def test_parallel_refine_policy_leaf_selection_and_fallback() -> None:
+    """Valida se a selecao de candidatos prioriza folhas e tem fallback gracioso."""
+    tree = _create_mock_discovery_tree()
+    policy = ParallelRefinePolicy(beam_width=2)
+
+    candidates = policy.select_candidates(tree)
+    # Folhas validas sao c3 (score 0.98) e c2 (score 0.1, status compiler_error != pruned)
+    assert len(candidates) <= 2
+    assert candidates[0].node_id == "c3"
+
+    # Fallback quando arvore nao tem folhas validas
+    empty_tree = DiscoveryTree(
+        tree_id="empty_tree",
+        root_id="none",
+        domain="code_engineering",
+        nodes={},
+    )
+    assert policy.select_candidates(empty_tree) == []
+
+
+def test_dream_gate_backslash_normalization() -> None:
+    """Garante que caminhos Windows com contra-barra sao normalizados e detectados."""
+    gate = DreamGate()
+
+    assessment = gate.assess_proposal(
+        target_files=["reports\\REGISTRO-teste.md", "src\\components\\Button.tsx"],
+        has_formal_anchor_revision=False,
+    )
+    assert assessment.should_proceed is False
+    assert "reports\\REGISTRO-teste.md" in assessment.anchor_protected_files
+    assert assessment.suggested_action == "PRUNE_AND_REQUEST_REVISION_RECORD"
+
+
+def test_discovery_recorder_unique_runs_and_inventory(tmp_path: object) -> None:
+    """Valida a unicidade de execucoes de teste e inventario sem falsas execucoes."""
+    from engine.discovery_recorder import DiscoveryRecorder  # noqa: PLC0415
+
+    db_path = str(tmp_path) + "/test_recorder.db"
+    recorder = DiscoveryRecorder(db_path=db_path)
+
+    run1 = recorder.record_test_run("test_suite_a.py", passed=True, duration_ms=10.0)
+    run2 = recorder.record_test_run("test_suite_a.py", passed=True, duration_ms=12.0)
+    assert run1.node_id != run2.node_id
+
+    trees = recorder.simulator.load_trees()
+    assert len(trees) == 2
+
+    inv = recorder.record_test_inventory("test_discovered.py")
+    assert inv.action_type == "test_inventory"
+    assert inv.action_payload["discovered"] is True
+    assert inv.runtime_ms == 0.0
+
+
+def test_dream_replay_simulator_round_by_round_and_isolation() -> None:
+    """Valida a simulacao rodada a rodada, metrica por no e isolamento de estado."""
+    tree = _create_mock_discovery_tree()
+    simulator = DreamReplaySimulator(db_path=":memory:")
+    simulator.record_tree(tree)
+
+    policy = AdaptiveDreamPolicy(base_beam_width=2, wide_beam_width=4)
+    res = simulator.simulate_policy_on_tree(policy, tree)
+
+    assert res.best_node_metric == 0.98
+    assert res.best_node_id == "c3"
+
+    # Multiplos mundos avaliados sem vazamento de estado de plateau
+    tree2 = _create_mock_discovery_tree("tree_test_02")
+    res_agg = simulator.evaluate_policy(policy, [tree, tree2])
+    assert res_agg.best_node_metric == 0.98
+    assert res_agg.best_node_id == "c3"
+
+
+def test_pmev_dream_bridge_cross_domain_protection() -> None:
+    """Garante que falhas de outros dominios nao podam acoes do dominio pmev_math."""
+    bridge = PMevDreamBridge(min_ev_threshold=0.0)
+
+    # Arvore de historico contendo erro no dominio code_engineering com acao 'bet_flop'
+    foreign_node = DiscoveryNode(
+        node_id="foreign_err",
+        parent_id=None,
+        depth=0,
+        domain="code_engineering",
+        action_type="bet_flop",
+        action_payload={},
+        status="test_failure",
+        metric_score=0.0,
+    )
+    foreign_tree = DiscoveryTree(
+        tree_id="foreign_tree",
+        root_id="foreign_err",
+        domain="code_engineering",
+        nodes={"foreign_err": foreign_node},
+    )
+
+    branches = [
+        PMevActionBranch(action_name="bet_flop", bet_size_bb=10.0, estimated_ev=2.0, risk_metric=0.1),
+    ]
+
+    # O no estrangeiro nao deve contaminar o pmev_math
+    pruning = bridge.filter_dominated_branches(branches, replay_tree=foreign_tree)
+    assert len(pruning.surviving_branches) == 1
+    assert len(pruning.pruned_branches) == 0
+
+    # Unicidade do record_pmev_run
+    r1 = bridge.record_pmev_run("tree_1", "shove", metric_score=1.0, runtime_ms=0.0)
+    r2 = bridge.record_pmev_run("tree_1", "shove", metric_score=1.0, runtime_ms=0.0)
+    assert r1.node_id != r2.node_id
+
+
+def test_cli_route_task_includes_dream_gate(capsys: object) -> None:
+    """Garante que a rota via CLI enriquece metadados com dream_gate."""
+    import json  # noqa: PLC0415
+
+    import pytest  # noqa: PLC0415
+
+    import task_executor  # noqa: PLC0415
+
+    with pytest.raises(SystemExit) as exc_info:
+        task_executor._cli_route_task(["python", "task_executor.py", "Tarefa com reports/REGISTRO.md", ""])
+    assert exc_info.value.code == 0
+    captured = capsys.readouterr()  # type: ignore[attr-defined]
+    out = json.loads(captured.out)
+    assert "dream_gate" in out["metadata"]
+    assert out["metadata"]["dream_gate"]["should_proceed"] is False

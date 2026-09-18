@@ -5,10 +5,54 @@ Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Pydantic v2.
 
 from __future__ import annotations
 
+import copy
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+class FrozenDict(dict):
+    """Mapeamento profundamente imutavel para proteger registros de replay contra mutacao."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        initial = dict(*args, **kwargs)
+        frozen: dict[Any, Any] = {}
+        for k, v in initial.items():
+            if isinstance(v, dict):
+                frozen[k] = FrozenDict(v)
+            elif isinstance(v, (list, tuple)):
+                frozen[k] = tuple(FrozenDict(x) if isinstance(x, dict) else copy.deepcopy(x) for x in v)
+            else:
+                frozen[k] = copy.deepcopy(v)
+        super().__init__(frozen)
+
+    def __setitem__(self, _key: Any, _value: Any) -> None:
+        raise TypeError("FrozenDict is immutable and cannot be modified")
+
+    def __delitem__(self, _key: Any) -> None:
+        raise TypeError("FrozenDict is immutable and cannot be modified")
+
+    def pop(self, *_args: Any, **_kwargs: Any) -> Any:
+        raise TypeError("FrozenDict is immutable and cannot be modified")
+
+    def popitem(self) -> tuple[Any, Any]:
+        raise TypeError("FrozenDict is immutable and cannot be modified")
+
+    def clear(self) -> None:
+        raise TypeError("FrozenDict is immutable and cannot be modified")
+
+    def update(self, *_args: Any, **_kwargs: Any) -> None:
+        raise TypeError("FrozenDict is immutable and cannot be modified")
+
+    def setdefault(self, *_args: Any, **_kwargs: Any) -> Any:
+        raise TypeError("FrozenDict is immutable and cannot be modified")
+
+    def __copy__(self) -> FrozenDict:
+        return self
+
+    def __deepcopy__(self, _memo: dict[int, Any]) -> FrozenDict:
+        return self
 
 
 class DiscoveryNode(BaseModel):
@@ -23,9 +67,7 @@ class DiscoveryNode(BaseModel):
         ..., description="Dominio de descoberta da exploracao"
     )
     action_type: str = Field(..., description="Tipo de acao executada (ex: branch, refine, test, eval)")
-    action_payload: dict[str, str | int | float | bool] = Field(
-        default_factory=dict, description="Parametros ou configuracao da acao"
-    )
+    action_payload: dict[str, Any] = Field(default_factory=dict, description="Parametros ou configuracao da acao")
     status: Literal["success", "compiler_error", "test_failure", "anchor_collision", "pruned"] = Field(
         ..., description="Resultado real da execucao no ambiente"
     )
@@ -37,9 +79,16 @@ class DiscoveryNode(BaseModel):
         description="Timestamp ISO 8601 UTC",
     )
 
+    @field_validator("action_payload", mode="after")
+    @classmethod
+    def _freeze_payload(cls, v: Any) -> FrozenDict:
+        return FrozenDict(v)
+
 
 class DiscoveryTree(BaseModel):
     """Arvore de Descoberta completa persistida em historico."""
+
+    model_config = ConfigDict(frozen=True)
 
     tree_id: str = Field(..., description="ID unico da arvore de descoberta")
     root_id: str = Field(..., description="ID do no raiz")
@@ -53,6 +102,11 @@ class DiscoveryTree(BaseModel):
         default_factory=lambda: datetime.now(UTC).isoformat(),
         description="Timestamp de criacao da arvore",
     )
+
+    @field_validator("nodes", mode="after")
+    @classmethod
+    def _freeze_nodes(cls, v: Any) -> FrozenDict:
+        return FrozenDict(v)
 
     def get_children(self, node_id: str) -> list[DiscoveryNode]:
         """Retorna os nos filhos imediatos de um dado no."""
@@ -83,3 +137,4 @@ class ReplayEvaluationResult(BaseModel):
     simulated_tokens_saved: int = Field(..., ge=0, description="Estimativa de tokens economizados")
     pruned_nodes_count: int = Field(..., ge=0, description="Quantidade de nos podados antes da execucao")
     best_node_id: str | None = Field(default=None, description="Melhor no alcancado pela politica")
+    best_node_metric: float = Field(default=0.0, description="Pontuacao metrica do melhor no alcancado")
