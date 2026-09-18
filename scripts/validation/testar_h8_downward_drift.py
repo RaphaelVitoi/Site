@@ -101,9 +101,7 @@ def main() -> int:
     # filtro de massa residual e a convencao ja usada por A6 do contraste
     # TypeScript. Reportado a parte para que a escolha fique visivel.
     com_massa = tuple(
-        p
-        for p in free_bet_nodes(pares)
-        if node_drift(p).aggressive_mass_chip_pct > MASSA_AGRESSIVA_MINIMA_PCT
+        p for p in free_bet_nodes(pares) if node_drift(p).aggressive_mass_chip_pct > MASSA_AGRESSIVA_MINIMA_PCT
     )
     secundario = measure_h8(
         com_massa,
