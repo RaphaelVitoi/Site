@@ -9,6 +9,7 @@ import {
 	generateTextureAwareLikelihood,
 	getSolverNodeData,
 	computeSplitGradient,
+	normalizarLarguras,
 } from '../../lib/bayesianRangeEngine';
 
 describe('bayesianRangeEngine', () => {
@@ -168,7 +169,7 @@ describe('bayesianRangeEngine', () => {
 			const xrData = getSolverNodeData('aula1_2', 'check_raise', 'icm');
 			expect(xrData.actor).toBe('BB');
 			expect(xrData.combos['AQs'].isIndifferent).toBe(true);
-			expect(xrData.combos['AQs'].actions.length).toBe(2);
+			expect(xrData.combos['AQs'].actions).toHaveLength(2);
 			expect(xrData.combos['AQs'].localFreq).toBe(35); // 35% raise
 			expect(xrData.combos['99'].arrived).toBe(false); // 99 foldou ou não deu XR
 		});
@@ -198,4 +199,89 @@ describe('bayesianRangeEngine', () => {
 	});
 });
 
+describe('o no de c-bet consome a evidencia canonica, nao uma segunda transcricao', () => {
+	it('serve os combos da captura no regime ChipEV, que so a fixture tinha', () => {
+		const dados = getSolverNodeData('aula1_2', 'cbet_small', 'chipev');
+		const bet50 = dados.globalBar.find((a) => a.pct === 82.5);
+		expect(bet50?.combos).toBe(306.02);
+		expect(bet50?.larguraBase).toBe('combos');
+	});
 
+	it('a largura por combos e mais exata do que a porcentagem arredondada', () => {
+		const dados = getSolverNodeData('aula1_2', 'cbet_small', 'chipev');
+		const bet50 = dados.globalBar.find((a) => a.pct === 82.5);
+		expect(bet50?.largura).toBeCloseTo((306.02 * 100) / 370.94, 9);
+		expect(bet50?.largura).not.toBe(82.5);
+	});
+
+	it('no regime ICMev o HRC nao expoe combos, e isso e declarado em vez de fingido', () => {
+		const dados = getSolverNodeData('aula1_2', 'cbet_small', 'icm');
+		expect(dados.globalBar.every((a) => a.combos === undefined)).toBe(true);
+		expect(dados.globalBar.every((a) => a.larguraBase === 'frequencia')).toBe(true);
+	});
+
+	it('as frequencias continuam sendo os digitos da captura, soma 100.1 inclusive', () => {
+		const chip = getSolverNodeData('aula1_2', 'cbet_small', 'chipev');
+		expect(chip.globalBar.map((a) => a.pct).sort((x, y) => x - y)).toEqual([2.3, 6.6, 8.7, 82.5]);
+		const icm = getSolverNodeData('aula1_2', 'cbet_small', 'icm');
+		expect(icm.globalBar.map((a) => a.pct).sort((x, y) => x - y)).toEqual([1.4, 7.5, 23.6, 67.5]);
+	});
+
+	it('a acao de frequencia zero do HRC (folds) sai do desenho sem sumir da evidencia', () => {
+		const icm = getSolverNodeData('aula1_2', 'cbet_small', 'icm');
+		expect(icm.globalBar).toHaveLength(4);
+		expect(icm.globalBar.some((a) => a.pct === 0)).toBe(false);
+	});
+});
+
+describe('frequencias transcritas da Aula 1.2 -- residuo de arredondamento', () => {
+	/**
+	 * A fonte e uma transcricao com uma casa decimal, entao alguns conjuntos somam 100.1 ou 99.9. Medido em
+	 * 2026-09-17: 3 dos 16 conjuntos do motor. O contrato NAO exige soma exata -- exigir isso obrigaria a inventar
+	 * a decima que falta. O que ele exige e que o desvio continue sendo residuo de arredondamento, e nao erro de
+	 * transcricao: passar de 0.5 ponto ja nao se explica por arredondar uma casa.
+	 */
+	const TOLERANCIA_DE_ARREDONDAMENTO = 0.5;
+
+	it.each([
+		['aula1_2 / cbet_small / icm', 'aula1_2', 'cbet_small', 'icm'],
+		['aula1_2 / cbet_small / chipev', 'aula1_2', 'cbet_small', 'chipev'],
+	] as const)('a barra global de %s fecha em 100 dentro da tolerancia', (_rotulo, textura, acao, contexto) => {
+		const dados = getSolverNodeData(textura as never, acao as never, contexto as never);
+		const soma = dados.globalBar.reduce((acc, a) => acc + a.pct, 0);
+		expect(Math.abs(soma - 100)).toBeLessThanOrEqual(TOLERANCIA_DE_ARREDONDAMENTO);
+	});
+
+	it('normalizarLarguras devolve exatamente 100 mesmo com a fonte somando 100.1', () => {
+		const acoes = [
+			{ name: 'Check', label: 'Check', pct: 2.3, color: '#4ade80' },
+			{ name: 'Bet 20%', label: 'Bet 1.1bb', pct: 8.7, color: '#fda4af' },
+			{ name: 'Bet 50%', label: 'Bet 2.8bb', pct: 82.5, color: '#fb923c' },
+			{ name: 'Bet 75%', label: 'Bet 4.2bb', pct: 6.6, color: '#ef4444' },
+		];
+		expect(acoes.reduce((a, b) => a + b.pct, 0)).toBeCloseTo(100.1, 5);
+		expect(normalizarLarguras(acoes).reduce((a, b) => a + b, 0)).toBeCloseTo(100, 9);
+	});
+
+	it('normalizarLarguras nao divide por zero quando tudo e zero', () => {
+		const zerados = [
+			{ name: 'a', label: 'a', pct: 0, color: '#000' },
+			{ name: 'b', label: 'b', pct: 0, color: '#fff' },
+		];
+		expect(normalizarLarguras(zerados)).toEqual([0, 0]);
+	});
+
+	it('o gradiente sempre termina em 100.0%, venha a fonte somando 99.9 ou 100.1', () => {
+		const sobrando = computeSplitGradient([
+			{ name: 'a', label: 'a', pct: 2.3, color: '#111' },
+			{ name: 'b', label: 'b', pct: 97.8, color: '#222' },
+		]);
+		const faltando = computeSplitGradient([
+			{ name: 'a', label: 'a', pct: 35.7, color: '#111' },
+			{ name: 'b', label: 'b', pct: 57.4, color: '#222' },
+			{ name: 'c', label: 'c', pct: 6.8, color: '#333' },
+		]);
+		expect(sobrando.endsWith('100.0%)')).toBe(true);
+		expect(faltando.endsWith('100.0%)')).toBe(true);
+	});
+});

@@ -4,6 +4,9 @@
  * ROLE: Motor matemático vetorial para inferência e atualização de crença em ranges de Poker (Prior -> Posterior).
  */
 
+import { PAR_2_IP_APOS_CHECK } from '@/components/simulator/solver/__fixtures__/aula12Pairs';
+import { acoesComProcedencia, type BaseDaLargura } from '@/lib/aula12Evidence';
+
 export type BeliefVector = Record<string, number>;
 export type ActionLikelihood = Record<string, number>;
 
@@ -219,90 +222,92 @@ export function classifyHand(hand: string): HandClassification {
 	};
 }
 
-function computeCbetLikelihood(
-	h: HandClassification,
-	texture: BoardTexture,
-	solverContext: SolverContext = 'icm',
-): number {
-	// AULA 1.2: SPOT CANÔNICO FT 9-MAX (Kd Jc Ts)
-	if (texture === 'aula1_2') {
-		if (solverContext === 'chipev') {
-			// ChipEV (GTO Wizard): C-Bet de 97.7% quase puro, sem penalidade de ICM
-			if (['AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44'].includes(h.hand)) return 0.97;
-			if (h.hasAce || h.hasKing || h.hasQueen || h.hasJack || h.hasTen) return 0.98;
-			if (h.isSuited) return 0.95;
-			return 0.85;
-		}
+function computeCbetAula12ChipEv(h: HandClassification): number {
+	// ChipEV (GTO Wizard): C-Bet de 97.7% quase puro, sem penalidade de ICM
+	if (['AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44'].includes(h.hand)) return 0.97;
+	if (h.hasAce || h.hasKing || h.hasQueen || h.hasJack || h.hasTen) return 0.98;
+	if (h.isSuited) return 0.95;
+	return 0.85;
+}
 
-		// ICMev (HRC Pós-Flop - Aula 1.2): Sizing pequeno de 20% (1.13bb) vira dominante (67.5%)
-		// Pares médios (TT, 99, 88, 77, 66) checam 100% para evitar check-raise sob RP de 21.4%!
-		if (['TT', '99', '88', '77', '66'].includes(h.hand)) return 0.01; // 100% CHECK no ICM!
-		if (h.hand === '55') return 0.95; // 100% bet small (blefe puro com blockers)
-		if (h.hand === '44') return 0.60; // 60% bet small, 40% check
-		if (['AA', 'KK', 'QQ', 'JJ'].includes(h.hand)) return 0.90; // Sets / Overpairs c-betam alto
-		if (['AKs', 'AQs', 'AJs', 'ATs'].includes(h.hand)) return 0.98; // Nut draws e topo
-		if (['KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs'].includes(h.hand)) return 0.98;
-		if (h.hasAce && h.isSuited) return 0.95; // A9s-A2s bet small
-		if (h.hasKing && h.isSuited) return 0.95; // K9s-K3s bet small, K2s 60%
-		if (h.hasQueen && h.isSuited) return 0.95; // Q9s-Q5s bet small
-		if (h.hasJack && h.isSuited) return 0.95; // J9s-J7s bet small
-		if (h.hasTen && h.isSuited) return 0.95; // T9s-T7s bet small
-		if (['98s', '87s', '76s', '65s'].includes(h.hand)) return 0.80;
-		if (['AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A5o'].includes(h.hand)) return 0.96;
-		if (['KQo', 'KJo', 'KTo', 'QJo', 'QTo', 'JTo'].includes(h.hand)) return 0.96;
-		if (h.hand === 'A7o') return 0.90;
-		if (['A6o', 'A4o', 'K9o', 'Q9o', 'T9o'].includes(h.hand)) return 0.55;
-		if (h.hand === 'J9o') return 0.40;
-		if (h.hand === 'K8o') return 0.20;
-		if (h.hand === 'A3o') return 0.05;
-		return 0.02;
+function computeCbetAula12Icm(h: HandClassification): number {
+	// ICMev (HRC Pós-Flop - Aula 1.2): Sizing pequeno de 20% (1.13bb) vira dominante (67.5%)
+	// Pares médios (TT, 99, 88, 77, 66) checam 100% para evitar check-raise sob RP de 21.4%!
+	if (['TT', '99', '88', '77', '66'].includes(h.hand)) return 0.01; // 100% CHECK no ICM!
+	if (h.hand === '55') return 0.95; // 100% bet small (blefe puro com blockers)
+	if (h.hand === '44') return 0.60; // 60% bet small, 40% check
+	if (['AA', 'KK', 'QQ', 'JJ'].includes(h.hand)) return 0.90; // Sets / Overpairs c-betam alto
+	if (['AKs', 'AQs', 'AJs', 'ATs', 'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs'].includes(h.hand)) return 0.98; // Nut draws e topo
+	if (h.isSuited && (h.hasAce || h.hasKing || h.hasQueen || h.hasJack || h.hasTen)) return 0.95;
+	if (['98s', '87s', '76s', '65s'].includes(h.hand)) return 0.80;
+	if (['AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A5o', 'KQo', 'KJo', 'KTo', 'QJo', 'QTo', 'JTo'].includes(h.hand)) return 0.96;
+	if (h.hand === 'A7o') return 0.90;
+	if (['A6o', 'A4o', 'K9o', 'Q9o', 'T9o'].includes(h.hand)) return 0.55;
+	if (h.hand === 'J9o') return 0.40;
+	if (h.hand === 'K8o') return 0.20;
+	if (h.hand === 'A3o') return 0.05;
+	return 0.02;
+}
+
+function computeCbetAula12(h: HandClassification, solverContext: SolverContext): number {
+	if (solverContext === 'chipev') {
+		return computeCbetAula12ChipEv(h);
 	}
+	return computeCbetAula12Icm(h);
+}
 
-	if (texture === 'dry') {
-		// Bordo Seco: Ah Kd 2c (BTN c-bets ~80% do range)
-		if (h.hand === 'AA') return 0.98;
-		if (h.hand === 'KK') return 0.96;
-		if (h.hand === '22') return 0.92;
-		if (h.hand === 'AKs' || h.hand === 'AKo') return 0.97;
-		if (h.hasAce && (h.r2 === '2' || h.r1 === '2')) return 0.94; // A2s, A2o
-		if (h.hasKing && (h.r2 === '2' || h.r1 === '2')) return 0.90; // K2s, K2o
-		if (h.hasAce) return h.isSuited ? 0.93 : 0.89; // Todos os Ax c-betam alto
-		if (h.hasKing) return h.isSuited ? 0.88 : 0.84; // Todos os Kx (second pair)
-		if (h.isPair) return 0.82; // QQ-33 c-betam por proteção e negação de equidade
-		// Blefes com equidade: Broadways com gutshot (QJ, QT, JT) e draws wheel (54s, 43s, 53s)
-		if (['QJs', 'QJo', 'QTs', 'QTo', 'JTs', 'JTo'].includes(h.hand)) return 0.89;
-		if (['54s', '43s', '53s', 'A5s', 'A4s', 'A3s'].includes(h.hand)) return 0.85;
-		if (h.isSuited && h.v1 >= 9 && h.v2 >= 7) return 0.72; // Conectores com backdoor
-		return 0.20; // Lixo offsuit desconectado
-	}
+function computeCbetDryValue(h: HandClassification): number | null {
+	if (h.hand === 'AA') return 0.98;
+	if (h.hand === 'KK') return 0.96;
+	if (h.hand === '22') return 0.92;
+	if (h.hand === 'AKs' || h.hand === 'AKo') return 0.97;
+	const hasTwo = h.r2 === '2' || h.r1 === '2';
+	if (h.hasAce && hasTwo) return 0.94; // A2s, A2o
+	if (h.hasKing && hasTwo) return 0.90; // K2s, K2o
+	if (h.hasAce) return h.isSuited ? 0.93 : 0.89; // Todos os Ax c-betam alto
+	if (h.hasKing) return h.isSuited ? 0.88 : 0.84; // Todos os Kx (second pair)
+	if (h.isPair) return 0.82; // QQ-33 c-betam por proteção e negação de equidade
+	return null;
+}
 
-	if (texture === 'wet') {
-		// Bordo Molhado: Jh Th 9d (BTN c-bets ~45%, range seletivo e polarizado)
-		if (h.hand.startsWith('KQ')) return 0.95; // Nut straight
-		if (h.hand.startsWith('87')) return 0.92; // Straight
-		if (h.hand.startsWith('Q8')) return 0.88; // Straight
-		if (['JJ', 'TT', '99'].includes(h.hand)) return 0.94; // Sets
-		if (['JT', 'JTs', 'JTo', 'T9', 'T9s', 'T9o', 'J9', 'J9s', 'J9o'].includes(h.hand)) return 0.88; // Two pairs
-		if (['AA', 'KK', 'QQ'].includes(h.hand)) return 0.82; // Overpairs
-		// Monster draws (OESD + flush draws)
-		if (['QJs', 'QTs', 'Q9s', 'T8s', '98s', '87s', 'AhKh', 'AhQh', 'KhQh', 'Ah8h'].includes(h.hand)) return 0.88;
-		if (h.isSuited && (h.hasAce || h.hasKing || h.hasQueen)) return 0.65;
-		if (h.hasJack || h.hasTen || h.hasNine) return 0.32; // Top pairs marginais dão check para controle
-		return 0.05; // Air puro dá check no bordo molhado
-	}
+function computeCbetDry(h: HandClassification): number {
+	const val = computeCbetDryValue(h);
+	if (val !== null) return val;
+	// Blefes com equidade: Broadways com gutshot (QJ, QT, JT) e draws wheel (54s, 43s, 53s)
+	if (['QJs', 'QJo', 'QTs', 'QTo', 'JTs', 'JTo'].includes(h.hand)) return 0.89;
+	if (['54s', '43s', '53s', 'A5s', 'A4s', 'A3s'].includes(h.hand)) return 0.85;
+	if (h.isSuited && h.v1 >= 9 && h.v2 >= 7) return 0.72; // Conectores com backdoor
+	return 0.20; // Lixo offsuit desconectado
+}
 
-	if (texture === 'paired') {
-		// Bordo Dobrado: Qc Qd 4s (BTN c-bets ~75%, alta frequência)
-		if (h.hand === 'QQ') return 0.98; // Quads
-		if (h.hand === '44') return 0.94; // Full house
-		if (h.hasQueen) return 0.95; // Trips (todos os Qx)
-		if (['AA', 'KK'].includes(h.hand)) return 0.92; // Overpairs
-		if (h.isPair) return 0.82; // Pares médios protegem contra floats
-		if (h.hasAce && (h.hasKing || h.hasJack || h.hasTen)) return 0.86; // AK, AJ, AT
-		if (['65s', '53s', 'A5s', 'A3s', 'A2s'].includes(h.hand)) return 0.78; // Backdoors
-		return 0.22;
-	}
+function computeCbetWet(h: HandClassification): number {
+	// Bordo Molhado: Jh Th 9d (BTN c-bets ~45%, range seletivo e polarizado)
+	if (h.hand.startsWith('KQ')) return 0.95; // Nut straight
+	if (h.hand.startsWith('87')) return 0.92; // Straight
+	if (h.hand.startsWith('Q8')) return 0.88; // Straight
+	if (['JJ', 'TT', '99'].includes(h.hand)) return 0.94; // Sets
+	if (['JT', 'JTs', 'JTo', 'T9', 'T9s', 'T9o', 'J9', 'J9s', 'J9o'].includes(h.hand)) return 0.88; // Two pairs
+	if (['AA', 'KK', 'QQ'].includes(h.hand)) return 0.82; // Overpairs
+	// Monster draws (OESD + flush draws)
+	if (['QJs', 'QTs', 'Q9s', 'T8s', '98s', '87s', 'AhKh', 'AhQh', 'KhQh', 'Ah8h'].includes(h.hand)) return 0.88;
+	if (h.isSuited && (h.hasAce || h.hasKing || h.hasQueen)) return 0.65;
+	if (h.hasJack || h.hasTen || h.hasNine) return 0.32; // Top pairs marginais dão check para controle
+	return 0.05; // Air puro dá check no bordo molhado
+}
 
+function computeCbetPaired(h: HandClassification): number {
+	// Bordo Dobrado: Qc Qd 4s (BTN c-bets ~75%, alta frequência)
+	if (h.hand === 'QQ') return 0.98; // Quads
+	if (h.hand === '44') return 0.94; // Full house
+	if (h.hasQueen) return 0.95; // Trips (todos os Qx)
+	if (['AA', 'KK'].includes(h.hand)) return 0.92; // Overpairs
+	if (h.isPair) return 0.82; // Pares médios protegem contra floats
+	if (h.hasAce && (h.hasKing || h.hasJack || h.hasTen)) return 0.86; // AK, AJ, AT
+	if (['65s', '53s', 'A5s', 'A3s', 'A2s'].includes(h.hand)) return 0.78; // Backdoors
+	return 0.22;
+}
+
+function computeCbetMonotone(h: HandClassification): number {
 	// Bordo Monotone: Kh 8h 3h (BTN c-bets ~40%, polarização em Flush e Blocker de Ás)
 	if (h.isSuited) return 0.90; // Em modelo agregado, suited combos representam o flush floppado
 	if (['KK', '88', '33'].includes(h.hand)) return 0.88; // Sets
@@ -312,68 +317,89 @@ function computeCbetLikelihood(
 	return 0.08; // Pares sem copas e lixo puro dão check
 }
 
-function computeCheckRaiseLikelihood(
+function computeCbetLikelihood(
 	h: HandClassification,
 	texture: BoardTexture,
 	solverContext: SolverContext = 'icm',
 ): number {
-	// AULA 1.2: SPOT CANÔNICO FT 9-MAX (Kd Jc Ts)
-	if (texture === 'aula1_2') {
-		if (solverContext === 'chipev') {
-			// ChipEV: BB check-raise mais amplo (~14.5%) sem penalidade de eliminação
-			if (['AQs', 'AQo'].includes(h.hand)) return 0.96; // Nut straight
-			if (['JJ', 'TT'].includes(h.hand)) return 0.90; // Sets
-			if (['KTs', 'KJs', 'QJs', 'JTs'].includes(h.hand)) return 0.88; // Two pairs
-			if (['Q9s', '98s', '87s', 'Q8s', 'T8s'].includes(h.hand)) return 0.82; // OESD / Gutshots
-			if (h.isSuited && (h.hasKing || h.hasQueen || h.hasJack)) return 0.50;
-			if (h.hasKing || h.hasJack || h.hasTen) return 0.15; // Calls dominam mãos médias
-			return 0.02;
-		}
-
-		// ICMev (HRC Pós-Flop - Aula 1.2): Check-Raise cirúrgico de 9.3% contra BTN c-bet 20%
-		// Valor: AQs nut straight, KTs, JTs two pairs
-		// Semi-blefes com backdoors: Q9s, Q8s, 97s, T8s, K2s, Q2s, J2s (aproveitando o RP de 21.4% do BTN)
-		if (['AQs', 'AQo'].includes(h.hand)) return 0.96; // Nut straight
-		if (['KTs', 'JTs'].includes(h.hand)) return 0.90; // Two pair
-		if (['Q9s', 'Q8s'].includes(h.hand)) return 0.85; // Gutshots / draws fortes
-		if (['97s', 'T8s'].includes(h.hand)) return 0.75;
-		if (['K2s', 'Q2s', 'J2s'].includes(h.hand)) return 0.70; // Backdoor de ouros
-		if (['JJ', 'TT'].includes(h.hand)) return 0.50; // Sets (mixam XR e call para proteger range)
-		if (h.hasKing || h.hasJack || h.hasTen) return 0.08; // Mãos médias dão call (48.1%)
-		return 0.01;
+	switch (texture) {
+		case 'aula1_2':
+			return computeCbetAula12(h, solverContext);
+		case 'dry':
+			return computeCbetDry(h);
+		case 'wet':
+			return computeCbetWet(h);
+		case 'paired':
+			return computeCbetPaired(h);
+		default:
+			return computeCbetMonotone(h);
 	}
+}
 
-	if (texture === 'dry') {
-		// BB check-raise no bordo Ah Kd 2c: polarização em valor monstro e blefes selecionados
-		if (h.hand === '22') return 0.95;
-		if (['A2s', 'K2s', 'AKs', 'AKo'].includes(h.hand)) return 0.90;
-		if (['QJs', 'QTs', 'JTs'].includes(h.hand)) return 0.78; // Gutshots broadway
-		if (['54s', '43s', '53s', 'A5s', 'A4s'].includes(h.hand)) return 0.82; // Wheel draws
-		if (['AA', 'KK'].includes(h.hand)) return 0.50; // Slowplay ou cap
-		if (h.hasAce || h.hasKing || (h.isPair && h.v1 >= 8)) return 0.08; // Mãos de call
-		return 0.01;
+function computeCheckRaiseAula12ChipEv(h: HandClassification): number {
+	// ChipEV: BB check-raise mais amplo (~14.5%) sem penalidade de eliminação
+	if (['AQs', 'AQo'].includes(h.hand)) return 0.96; // Nut straight
+	if (['JJ', 'TT'].includes(h.hand)) return 0.90; // Sets
+	if (['KTs', 'KJs', 'QJs', 'JTs'].includes(h.hand)) return 0.88; // Two pairs
+	if (['Q9s', '98s', '87s', 'Q8s', 'T8s'].includes(h.hand)) return 0.82; // OESD / Gutshots
+	if (h.isSuited && (h.hasKing || h.hasQueen || h.hasJack)) return 0.50;
+	if (h.hasKing || h.hasJack || h.hasTen) return 0.15; // Calls dominam mãos médias
+	return 0.02;
+}
+
+function computeCheckRaiseAula12Icm(h: HandClassification): number {
+	// ICMev (HRC Pós-Flop - Aula 1.2): Check-Raise cirúrgico de 9.3% contra BTN c-bet 20%
+	// Valor: AQs nut straight, KTs, JTs two pairs
+	// Semi-blefes com backdoors: Q9s, Q8s, 97s, T8s, K2s, Q2s, J2s (aproveitando o RP de 21.4% do BTN)
+	if (['AQs', 'AQo'].includes(h.hand)) return 0.96; // Nut straight
+	if (['KTs', 'JTs'].includes(h.hand)) return 0.90; // Two pair
+	if (['Q9s', 'Q8s'].includes(h.hand)) return 0.85; // Gutshots / draws fortes
+	if (['97s', 'T8s'].includes(h.hand)) return 0.75;
+	if (['K2s', 'Q2s', 'J2s'].includes(h.hand)) return 0.70; // Backdoor de ouros
+	if (['JJ', 'TT'].includes(h.hand)) return 0.50; // Sets (mixam XR e call para proteger range)
+	if (h.hasKing || h.hasJack || h.hasTen) return 0.08; // Mãos médias dão call (48.1%)
+	return 0.01;
+}
+
+function computeCheckRaiseAula12(h: HandClassification, solverContext: SolverContext): number {
+	if (solverContext === 'chipev') {
+		return computeCheckRaiseAula12ChipEv(h);
 	}
+	return computeCheckRaiseAula12Icm(h);
+}
 
-	if (texture === 'wet') {
-		// BB check-raise no bordo Jh Th 9d: alta agressividade em sequências e combos pesados
-		if (h.hand.startsWith('KQ')) return 0.96;
-		if (h.hand.startsWith('87')) return 0.94;
-		if (['JJ', 'TT', '99'].includes(h.hand)) return 0.95;
-		if (['JT', 'JTs', 'T9s', 'J9s'].includes(h.hand)) return 0.90;
-		if (h.hand === 'AA') return 0.92; // Overpair de controle
-		if (['Q8s', 'T8s', '98s', 'AhQh', 'KhQh', 'Ah8h', '8h7h'].includes(h.hand)) return 0.86;
-		if (h.isPair && h.v1 <= 8) return 0.06; // Pares pequenos sem draw apenas dão fold/call
-		if (h.hasJack || h.hasTen || h.hasNine) return 0.08; // Pares médios apenas dão call
-		return 0.01;
-	}
+function computeCheckRaiseDry(h: HandClassification): number {
+	// BB check-raise no bordo Ah Kd 2c: polarização em valor monstro e blefes selecionados
+	if (h.hand === '22') return 0.95;
+	if (['A2s', 'K2s', 'AKs', 'AKo'].includes(h.hand)) return 0.90;
+	if (['QJs', 'QTs', 'JTs'].includes(h.hand)) return 0.78; // Gutshots broadway
+	if (['54s', '43s', '53s', 'A5s', 'A4s'].includes(h.hand)) return 0.82; // Wheel draws
+	if (['AA', 'KK'].includes(h.hand)) return 0.50; // Slowplay ou cap
+	if (h.hasAce || h.hasKing || (h.isPair && h.v1 >= 8)) return 0.08; // Mãos de call
+	return 0.01;
+}
 
-	if (texture === 'paired') {
-		if (h.hasQueen && (h.hasAce || h.hasKing || h.hasJack)) return 0.96;
-		if (h.hand === '44') return 0.95;
-		if (['A5s', 'A3s', '65s', '53s'].includes(h.hand)) return 0.84;
-		return 0.05;
-	}
+function computeCheckRaiseWet(h: HandClassification): number {
+	// BB check-raise no bordo Jh Th 9d: alta agressividade em sequências e combos pesados
+	if (h.hand.startsWith('KQ')) return 0.96;
+	if (h.hand.startsWith('87')) return 0.94;
+	if (['JJ', 'TT', '99'].includes(h.hand)) return 0.95;
+	if (['JT', 'JTs', 'T9s', 'J9s'].includes(h.hand)) return 0.90;
+	if (h.hand === 'AA') return 0.92; // Overpair de controle
+	if (['Q8s', 'T8s', '98s', 'AhQh', 'KhQh', 'Ah8h', '8h7h'].includes(h.hand)) return 0.86;
+	if (h.isPair && h.v1 <= 8) return 0.06; // Pares pequenos sem draw apenas dão fold/call
+	if (h.hasJack || h.hasTen || h.hasNine) return 0.08; // Pares médios apenas dão call
+	return 0.01;
+}
 
+function computeCheckRaisePaired(h: HandClassification): number {
+	if (h.hasQueen && (h.hasAce || h.hasKing || h.hasJack)) return 0.96;
+	if (h.hand === '44') return 0.95;
+	if (['A5s', 'A3s', '65s', '53s'].includes(h.hand)) return 0.84;
+	return 0.05;
+}
+
+function computeCheckRaiseMonotone(h: HandClassification): number {
 	// Monotone Kh 8h 3h
 	if (h.isSuited && (h.hasAce || h.hasQueen || h.hasJack)) return 0.96; // Flushes
 	if (['88', '33'].includes(h.hand)) return 0.88; // Sets
@@ -381,115 +407,157 @@ function computeCheckRaiseLikelihood(
 	return 0.04;
 }
 
-function computeBarrelHeavyLikelihood(
+function computeCheckRaiseLikelihood(
 	h: HandClassification,
 	texture: BoardTexture,
 	solverContext: SolverContext = 'icm',
 ): number {
-	// AULA 1.2: SPOT CANÔNICO FT 9-MAX (Kd Jc Ts 2d)
-	if (texture === 'aula1_2') {
-		if (solverContext === 'chipev') {
-			// ChipEV: Turn 2d barrel contínuo pesado (~58%)
-			if (['AQs', 'AQo', 'JJ', 'TT', 'KJs', 'KTs'].includes(h.hand)) return 0.95;
-			if (['Q9s', 'Q8s', 'AKs', 'AKo', 'KQo', 'QJs'].includes(h.hand)) return 0.85;
-			if (h.isPair) return 0.35;
-			return 0.05;
-		}
-
-		// ICMev (HRC Pós-Flop - Aula 1.2): BB dispara 50% pot (7.88bb) em 42.8% no Turn 2d
-		// Valor sólido: AQs nut straight, JJ set, KJs two pair
-		// Blefes com blocker: Q9s, Q8s, Q2s (Queen blocker / gutshot)
-		if (['AQs', 'AQo'].includes(h.hand)) return 0.98; // Nut straight
-		if (['JJ', 'TT', '22'].includes(h.hand)) return 0.94; // Sets
-		if (['KJs', 'KTs'].includes(h.hand)) return 0.90; // Two pairs
-		if (['Q9s', 'Q8s', 'Q2s'].includes(h.hand)) return 0.82; // Blefes de barrel com blocker de Q
-		if (['AKs', 'AKo'].includes(h.hand)) return 0.40; // Top pairs mixam check
-		if (h.isPair && ['99', '88', '77', '66'].includes(h.hand)) return 0.05; // Showdown checks
-		return 0.02;
+	switch (texture) {
+		case 'aula1_2':
+			return computeCheckRaiseAula12(h, solverContext);
+		case 'dry':
+			return computeCheckRaiseDry(h);
+		case 'wet':
+			return computeCheckRaiseWet(h);
+		case 'paired':
+			return computeCheckRaisePaired(h);
+		default:
+			return computeCheckRaiseMonotone(h);
 	}
+}
 
-	if (texture === 'dry') {
-		// Turn 7s: Ah Kd 2c 7s (Pote cresce, range concentra em topo dominante e draws restantes)
-		if (['AA', 'KK', '22', '77'].includes(h.hand)) return 0.96;
-		if (['AKs', 'AKo', 'A7s', 'K7s'].includes(h.hand)) return 0.92;
-		if (['AQs', 'AQo', 'AJs', 'AJo', 'ATs'].includes(h.hand)) return 0.86;
-		if (['QJs', 'QTs', 'JTs'].includes(h.hand)) return 0.72; // Continuação de blefe com blockers
-		if (['98s', '87s', '65s'].includes(h.hand)) return 0.65;
-		if (h.isPair) return 0.12;
-		return 0.02;
+function computeBarrelHeavyAula12ChipEv(h: HandClassification): number {
+	// ChipEV: Turn 2d barrel contínuo pesado (~58%)
+	if (['AQs', 'AQo', 'JJ', 'TT', 'KJs', 'KTs'].includes(h.hand)) return 0.95;
+	if (['Q9s', 'Q8s', 'AKs', 'AKo', 'KQo', 'QJs'].includes(h.hand)) return 0.85;
+	if (h.isPair) return 0.35;
+	return 0.05;
+}
+
+function computeBarrelHeavyAula12Icm(h: HandClassification): number {
+	// ICMev (HRC Pós-Flop - Aula 1.2): BB dispara 50% pot (7.88bb) em 42.8% no Turn 2d
+	// Valor sólido: AQs nut straight, JJ set, KJs two pair
+	// Blefes com blocker: Q9s, Q8s, Q2s (Queen blocker / gutshot)
+	if (['AQs', 'AQo'].includes(h.hand)) return 0.98; // Nut straight
+	if (['JJ', 'TT', '22'].includes(h.hand)) return 0.94; // Sets
+	if (['KJs', 'KTs'].includes(h.hand)) return 0.90; // Two pairs
+	if (['Q9s', 'Q8s', 'Q2s'].includes(h.hand)) return 0.82; // Blefes de barrel com blocker de Q
+	if (['AKs', 'AKo'].includes(h.hand)) return 0.40; // Top pairs mixam check
+	if (h.isPair && ['99', '88', '77', '66'].includes(h.hand)) return 0.05; // Showdown checks
+	return 0.02;
+}
+
+function computeBarrelHeavyAula12(h: HandClassification, solverContext: SolverContext): number {
+	if (solverContext === 'chipev') {
+		return computeBarrelHeavyAula12ChipEv(h);
 	}
+	return computeBarrelHeavyAula12Icm(h);
+}
 
-	if (texture === 'wet') {
-		// Turn 8c: Jh Th 9d 8c (Bordo com 4 cartas conectadas)
-		if (h.hand.startsWith('KQ')) return 0.96;
-		if (h.hand.startsWith('Q7') || h.hand.startsWith('87') || h.hand.startsWith('76')) return 0.92;
-		if (['JJ', 'TT', '99', '88'].includes(h.hand)) return 0.88;
-		if (h.isSuited && (h.hasAce || h.hasKing)) return 0.75;
-		return 0.05;
-	}
+function computeBarrelHeavyDry(h: HandClassification): number {
+	// Turn 7s: Ah Kd 2c 7s (Pote cresce, range concentra em topo dominante e draws restantes)
+	if (['AA', 'KK', '22', '77'].includes(h.hand)) return 0.96;
+	if (['AKs', 'AKo', 'A7s', 'K7s'].includes(h.hand)) return 0.92;
+	if (['AQs', 'AQo', 'AJs', 'AJo', 'ATs'].includes(h.hand)) return 0.86;
+	if (['QJs', 'QTs', 'JTs'].includes(h.hand)) return 0.72; // Continuação de blefe com blockers
+	if (['98s', '87s', '65s'].includes(h.hand)) return 0.65;
+	if (h.isPair) return 0.12;
+	return 0.02;
+}
 
-	if (texture === 'paired') {
-		// Turn 9h: Qc Qd 4s 9h
-		if (h.hasQueen) return 0.95;
-		if (['AA', 'KK', '44', '99'].includes(h.hand)) return 0.93;
-		if (['AKs', 'AKo', 'AJs'].includes(h.hand)) return 0.75;
-		return 0.08;
-	}
+function computeBarrelHeavyWet(h: HandClassification): number {
+	// Turn 8c: Jh Th 9d 8c (Bordo com 4 cartas conectadas)
+	if (h.hand.startsWith('KQ')) return 0.96;
+	if (h.hand.startsWith('Q7') || h.hand.startsWith('87') || h.hand.startsWith('76')) return 0.92;
+	if (['JJ', 'TT', '99', '88'].includes(h.hand)) return 0.88;
+	if (h.isSuited && (h.hasAce || h.hasKing)) return 0.75;
+	return 0.05;
+}
 
+function computeBarrelHeavyPaired(h: HandClassification): number {
+	// Turn 9h: Qc Qd 4s 9h
+	if (h.hasQueen) return 0.95;
+	if (['AA', 'KK', '44', '99'].includes(h.hand)) return 0.93;
+	if (['AKs', 'AKo', 'AJs'].includes(h.hand)) return 0.75;
+	return 0.08;
+}
+
+function computeBarrelHeavyMonotone(h: HandClassification): number {
 	// Monotone: Turn Jh: Kh 8h 3h Jh (4 de copas no bordo)
 	if (h.isSuited) return 0.92;
 	if (h.hasAce) return 0.90; // Ah nut flush blocker
 	return 0.03;
 }
 
-function computeBluffPolarLikelihood(
+function computeBarrelHeavyLikelihood(
 	h: HandClassification,
 	texture: BoardTexture,
 	solverContext: SolverContext = 'icm',
 ): number {
-	// AULA 1.2: SPOT CANÔNICO FT 9-MAX (Kd Jc Ts 2d 3h)
-	if (texture === 'aula1_2') {
-		if (solverContext === 'chipev') {
-			// ChipEV: River 3h shove polarizado padrão
-			if (['AQs', 'AQo', 'JJ', 'TT', '33', '22', 'KJs', 'KTs'].includes(h.hand)) return 0.98;
-			if (['Q9s', 'Q8s', '98s', '87s', 'Q2s'].includes(h.hand)) return 0.85; // Blefe puro
-			return 0.02;
-		}
-
-		// ICMev (Aula 1.2): BB Shove polarizado no River 3h
-		// Nuts: AQs, AQo, JJ, TT, 33, 22, KJs
-		// Blefes polarizados que bloqueiam o topo de call do BTN: Q9s, Q8s, Q2s, 97s
-		if (['AQs', 'AQo'].includes(h.hand)) return 0.99; // Nut straight
-		if (['JJ', 'TT', '33', '22'].includes(h.hand)) return 0.96; // Sets
-		if (['KJs', 'KTs'].includes(h.hand)) return 0.92; // Two pairs fortes
-		if (['Q9s', 'Q8s', 'Q2s', '97s'].includes(h.hand)) return 0.86; // Busted draws polarizados
-		if (['AA', 'KK', 'QQ'].includes(h.hand)) return 0.15; // Slowplay check
-		return 0.02;
+	switch (texture) {
+		case 'aula1_2':
+			return computeBarrelHeavyAula12(h, solverContext);
+		case 'dry':
+			return computeBarrelHeavyDry(h);
+		case 'wet':
+			return computeBarrelHeavyWet(h);
+		case 'paired':
+			return computeBarrelHeavyPaired(h);
+		default:
+			return computeBarrelHeavyMonotone(h);
 	}
+}
 
-	if (texture === 'dry') {
-		// River 2h: Ah Kd 2c 7s 2h (Polarização estrita Nuts vs Air com blockers)
-		if (['AA', 'KK', '22', '77', 'AKs', 'AKo', 'A2s', 'K2s'].includes(h.hand)) return 0.98; // Nuts
-		if (['QJo', 'QTo', 'JTo'].includes(h.hand)) return 0.86; // Blefe puro com blockers broadway
-		if (['54s', '53s', '43s'].includes(h.hand)) return 0.78; // Blefes sem showdown
-		if (['AQs', 'AQo', 'AJs', 'KQo', 'QQ', 'JJ', 'TT', '99'].includes(h.hand)) return 0.04; // Showdown value dá check
-		return 0.02;
+function computeBluffPolarAula12ChipEv(h: HandClassification): number {
+	// ChipEV: River 3h shove polarizado padrão
+	if (['AQs', 'AQo', 'JJ', 'TT', '33', '22', 'KJs', 'KTs'].includes(h.hand)) return 0.98;
+	if (['Q9s', 'Q8s', '98s', '87s', 'Q2s'].includes(h.hand)) return 0.85; // Blefe puro
+	return 0.02;
+}
+
+function computeBluffPolarAula12Icm(h: HandClassification): number {
+	// ICMev (Aula 1.2): BB Shove polarizado no River 3h
+	// Nuts: AQs, AQo, JJ, TT, 33, 22, KJs
+	// Blefes polarizados que bloqueiam o topo de call do BTN: Q9s, Q8s, Q2s, 97s
+	if (['AQs', 'AQo'].includes(h.hand)) return 0.99; // Nut straight
+	if (['JJ', 'TT', '33', '22'].includes(h.hand)) return 0.96; // Sets
+	if (['KJs', 'KTs'].includes(h.hand)) return 0.92; // Two pairs fortes
+	if (['Q9s', 'Q8s', 'Q2s', '97s'].includes(h.hand)) return 0.86; // Busted draws polarizados
+	if (['AA', 'KK', 'QQ'].includes(h.hand)) return 0.15; // Slowplay check
+	return 0.02;
+}
+
+function computeBluffPolarAula12(h: HandClassification, solverContext: SolverContext): number {
+	if (solverContext === 'chipev') {
+		return computeBluffPolarAula12ChipEv(h);
 	}
+	return computeBluffPolarAula12Icm(h);
+}
 
-	if (texture === 'wet') {
-		// River 2s: Jh Th 9d 8c 2s
-		if (h.hand.startsWith('KQ') || h.hand.startsWith('87') || ['JJ', 'TT', '99'].includes(h.hand)) return 0.98;
-		if (h.hasAce && !h.isSuited && h.v2 <= 8) return 0.84; // Blefes com Ace blocker
-		return 0.03;
-	}
+function computeBluffPolarDry(h: HandClassification): number {
+	// River 2h: Ah Kd 2c 7s 2h (Polarização estrita Nuts vs Air com blockers)
+	if (['AA', 'KK', '22', '77', 'AKs', 'AKo', 'A2s', 'K2s'].includes(h.hand)) return 0.98; // Nuts
+	if (['QJo', 'QTo', 'JTo'].includes(h.hand)) return 0.86; // Blefe puro com blockers broadway
+	if (['54s', '53s', '43s'].includes(h.hand)) return 0.78; // Blefes sem showdown
+	if (['AQs', 'AQo', 'AJs', 'KQo', 'QQ', 'JJ', 'TT', '99'].includes(h.hand)) return 0.04; // Showdown value dá check
+	return 0.02;
+}
 
-	if (texture === 'paired') {
-		// River As: Qc Qd 4s 9h As
-		if (h.hasQueen || ['AA', '44', '99'].includes(h.hand)) return 0.98;
-		if (['JTs', 'KTs', '65s', '53s'].includes(h.hand)) return 0.80; // Blefe puro
-		return 0.04;
-	}
+function computeBluffPolarWet(h: HandClassification): number {
+	// River 2s: Jh Th 9d 8c 2s
+	if (h.hand.startsWith('KQ') || h.hand.startsWith('87') || ['JJ', 'TT', '99'].includes(h.hand)) return 0.98;
+	if (h.hasAce && !h.isSuited && h.v2 <= 8) return 0.84; // Blefes com Ace blocker
+	return 0.03;
+}
 
+function computeBluffPolarPaired(h: HandClassification): number {
+	// River As: Qc Qd 4s 9h As
+	if (h.hasQueen || ['AA', '44', '99'].includes(h.hand)) return 0.98;
+	if (['JTs', 'KTs', '65s', '53s'].includes(h.hand)) return 0.80; // Blefe puro
+	return 0.04;
+}
+
+function computeBluffPolarMonotone(h: HandClassification): number {
 	// Monotone River 2c: Kh 8h 3h Jh 2c
 	if (h.isSuited && h.hasAce) return 0.99; // Nut flush
 	if (h.isSuited) return 0.90; // Flush
@@ -497,58 +565,97 @@ function computeBluffPolarLikelihood(
 	return 0.02;
 }
 
+function computeBluffPolarLikelihood(
+	h: HandClassification,
+	texture: BoardTexture,
+	solverContext: SolverContext = 'icm',
+): number {
+	switch (texture) {
+		case 'aula1_2':
+			return computeBluffPolarAula12(h, solverContext);
+		case 'dry':
+			return computeBluffPolarDry(h);
+		case 'wet':
+			return computeBluffPolarWet(h);
+		case 'paired':
+			return computeBluffPolarPaired(h);
+		default:
+			return computeBluffPolarMonotone(h);
+	}
+}
+
+function computeCallCondensedAula12ChipEv(h: HandClassification): number {
+	// ChipEV: Bluff catcher amplo (~58%) baseado em pot odds puras
+	if (['AQs', 'AQo', 'JJ', 'TT', '33', '22', 'KJs', 'KTs', 'QJs', 'JTs', 'AKs', 'AKo'].includes(h.hand)) return 0.95;
+	if (['KQs', 'KQo', 'AJo', 'ATo'].includes(h.hand)) return 0.70;
+	if (h.isPair) return 0.40;
+	return 0.03;
+}
+
+function computeCallCondensedAula12Icm(h: HandClassification): number {
+	// ICMev (Aula 1.2): BTN Bluff Catching vs Shove no River 3h (Call 48.2%, Fold 51.8%)
+	// Paga 100%: AQs, AQo (Nuts), 33 (100% set), 22 (100% set)
+	// Paga quase puro: TT (93% set), JJ (82% set), KJs, KTs, K2s, JTs (dois pares)
+	// Paga parcial: AKs, AKo (top pair top kicker com blocker)
+	if (['AQs', 'AQo', '33', '22'].includes(h.hand)) return 0.99;
+	if (h.hand === 'TT') return 0.93; // 93% call
+	if (h.hand === 'JJ') return 0.82; // 82% call
+	if (['KJs', 'KTs', 'K2s', 'JTs', 'QTs'].includes(h.hand)) return 0.88;
+	if (['AKs', 'AKo'].includes(h.hand)) return 0.55;
+	if (['KQo', 'KQs', 'AJs', 'ATs'].includes(h.hand)) return 0.20;
+	return 0.02;
+}
+
+function computeCallCondensedAula12(h: HandClassification, solverContext: SolverContext): number {
+	if (solverContext === 'chipev') {
+		return computeCallCondensedAula12ChipEv(h);
+	}
+	return computeCallCondensedAula12Icm(h);
+}
+
+function computeCallCondensedDry(h: HandClassification): number {
+	// Bluff Catchers no bordo seco: Mãos que ganham de blefes (QJ, 54) e perdem para o topo
+	if (['AQs', 'AQo', 'AJs', 'AJo', 'ATs', 'ATo', 'A9s', 'KQo', 'KQs', 'KJs'].includes(h.hand)) return 0.94;
+	if (['QQ', 'JJ', 'TT', '99', '88'].includes(h.hand)) return 0.90;
+	if (['AA', 'KK', '22', 'AKs'].includes(h.hand)) return 0.15; // Mãos de raise/shove
+	return 0.02;
+}
+
+function computeCallCondensedWet(h: HandClassification): number {
+	if (['AJs', 'AJo', 'KJs', 'QJs', 'JTs', 'T9s', 'J9s', 'AA', 'KK'].includes(h.hand)) return 0.90;
+	if (h.hand.startsWith('KQ') || h.hand.startsWith('87')) return 0.15; // Raise
+	return 0.03;
+}
+
+function computeCallCondensedPaired(h: HandClassification): number {
+	if (['JJ', 'TT', '99', '88', '77', '66', '55', 'A4s', 'K4s'].includes(h.hand)) return 0.92;
+	if (h.hasQueen && (h.r2 === '6' || h.r2 === '5' || h.r2 === '3' || h.r2 === '2')) return 0.88;
+	return 0.04;
+}
+
+function computeCallCondensedMonotone(h: HandClassification): number {
+	if (['KQs', 'KJs', 'KTs', 'K8s', '88'].includes(h.hand)) return 0.88;
+	if (h.isSuited && !h.hasAce) return 0.85; // Flushes médios que pagam
+	return 0.03;
+}
+
 function computeCallCondensedLikelihood(
 	h: HandClassification,
 	texture: BoardTexture,
 	solverContext: SolverContext = 'icm',
 ): number {
-	// AULA 1.2: SPOT CANÔNICO FT 9-MAX (Kd Jc Ts 2d 3h)
-	if (texture === 'aula1_2') {
-		if (solverContext === 'chipev') {
-			// ChipEV: Bluff catcher amplo (~58%) baseado em pot odds puras
-			if (['AQs', 'AQo', 'JJ', 'TT', '33', '22', 'KJs', 'KTs', 'QJs', 'JTs', 'AKs', 'AKo'].includes(h.hand)) return 0.95;
-			if (['KQs', 'KQo', 'AJo', 'ATo'].includes(h.hand)) return 0.70;
-			if (h.isPair) return 0.40;
-			return 0.03;
-		}
-
-		// ICMev (Aula 1.2): BTN Bluff Catching vs Shove no River 3h (Call 48.2%, Fold 51.8%)
-		// Paga 100%: AQs, AQo (Nuts), 33 (100% set), 22 (100% set)
-		// Paga quase puro: TT (93% set), JJ (82% set), KJs, KTs, K2s, JTs (dois pares)
-		// Paga parcial: AKs, AKo (top pair top kicker com blocker)
-		if (['AQs', 'AQo', '33', '22'].includes(h.hand)) return 0.99;
-		if (h.hand === 'TT') return 0.93; // 93% call
-		if (h.hand === 'JJ') return 0.82; // 82% call
-		if (['KJs', 'KTs', 'K2s', 'JTs', 'QTs'].includes(h.hand)) return 0.88;
-		if (['AKs', 'AKo'].includes(h.hand)) return 0.55;
-		if (['KQo', 'KQs', 'AJs', 'ATs'].includes(h.hand)) return 0.20;
-		return 0.02;
+	switch (texture) {
+		case 'aula1_2':
+			return computeCallCondensedAula12(h, solverContext);
+		case 'dry':
+			return computeCallCondensedDry(h);
+		case 'wet':
+			return computeCallCondensedWet(h);
+		case 'paired':
+			return computeCallCondensedPaired(h);
+		default:
+			return computeCallCondensedMonotone(h);
 	}
-
-	if (texture === 'dry') {
-		// Bluff Catchers no bordo seco: Mãos que ganham de blefes (QJ, 54) e perdem para o topo
-		if (['AQs', 'AQo', 'AJs', 'AJo', 'ATs', 'ATo', 'A9s', 'KQo', 'KQs', 'KJs'].includes(h.hand)) return 0.94;
-		if (['QQ', 'JJ', 'TT', '99', '88'].includes(h.hand)) return 0.90;
-		if (['AA', 'KK', '22', 'AKs'].includes(h.hand)) return 0.15; // Mãos de raise/shove
-		return 0.02;
-	}
-
-	if (texture === 'wet') {
-		if (['AJs', 'AJo', 'KJs', 'QJs', 'JTs', 'T9s', 'J9s', 'AA', 'KK'].includes(h.hand)) return 0.90;
-		if (h.hand.startsWith('KQ') || h.hand.startsWith('87')) return 0.15; // Raise
-		return 0.03;
-	}
-
-	if (texture === 'paired') {
-		if (['JJ', 'TT', '99', '88', '77', '66', '55', 'A4s', 'K4s'].includes(h.hand)) return 0.92;
-		if (h.hasQueen && (h.r2 === '6' || h.r2 === '5' || h.r2 === '3' || h.r2 === '2')) return 0.88;
-		return 0.04;
-	}
-
-	// Monotone
-	if (['KQs', 'KJs', 'KTs', 'K8s', '88'].includes(h.hand)) return 0.88;
-	if (h.isSuited && !h.hasAce) return 0.85; // Flushes médios que pagam
-	return 0.03;
 }
 
 function evaluateTacticalProbability(
@@ -880,9 +987,18 @@ export function getTacticalStrategyExplanation(
 export interface NodeAction {
 	name: string;
 	label: string;
+	/** Frequencia como a captura de origem a mostra. Nunca corrigida para fechar soma. */
 	pct: number;
 	color: string;
 	bgClass?: string;
+	/** Combos lidos da captura, quando ela os expoe. O HRC nao expoe; o GTO Wizard sim. */
+	combos?: number;
+	/**
+	 * Largura proporcional para desenho, ja somando 100 no conjunto, e a origem dela.
+	 * Presente apenas nos nos ligados a evidencia canonica -- ver `@/lib/aula12Evidence`.
+	 */
+	largura?: number;
+	larguraBase?: BaseDaLargura;
 }
 
 export interface ComboNodeState {
@@ -905,20 +1021,80 @@ export interface SolverNodeData {
 	combos: Record<string, ComboNodeState>;
 }
 
+/**
+ * Larguras proporcionais, em porcento, de um conjunto de acoes -- sempre somando 100.
+ *
+ * As frequencias sao **transcritas** da Aula 1.2, nao resolvidas aqui, e a fonte arredonda para uma casa decimal:
+ * medido em 2026-09-17, 3 dos 16 conjuntos deste motor somam 100.1 ou 99.9. O residuo e desprezivel como numero e
+ * **nao** e desprezivel como geometria, porque o CSS trunca o que passa de 100% e deixa buraco no que falta -- a
+ * barra passaria a mentir sobre a proporcao que os proprios rotulos declaram.
+ *
+ * Esta funcao e o caminho de menor precisao, e existe para os nos que so tem porcentagem. **Onde houver combos,
+ * prefira `acoesComProcedencia` de `@/lib/aula12Evidence`**: a razao entre combos lidos nao e normalizacao, e o
+ * fato -- 306.02/370.94 --, enquanto a porcentagem e a grandeza derivada e arredondada.
+ *
+ * Em qualquer caso o `pct` nao e tocado: o rotulo continua sendo o digito que a captura mostra.
+ */
+export function normalizarLarguras(actions: NodeAction[]): number[] {
+	const total = actions.reduce((acc, act) => acc + act.pct, 0);
+	if (total <= 0) return actions.map(() => 0);
+	return actions.map((act) => (act.pct * 100) / total);
+}
+
+/**
+ * Apresentacao fixa da barra do no de c-bet da Aula 1.2, por posicao.
+ *
+ * Cor e rotulo curto sao decisao de interface e ficam aqui; **frequencia e combos vem da evidencia canonica** e
+ * nao se repetem neste arquivo. Ate 2026-09-17 os oito numeros deste no estavam transcritos duas vezes -- aqui e
+ * na fixture de dupla leitura cega --, e 24 das 35 frequencias do motor tinham copia la.
+ */
+const APRESENTACAO_CBET_AULA12 = [
+	{ name: 'Check', color: '#4ade80', bgClass: 'bg-emerald-400' },
+	{ name: 'Bet 20%', color: '#fda4af', bgClass: 'bg-rose-300' },
+	{ name: 'Bet 50%', color: '#fb923c', bgClass: 'bg-amber-500' },
+	{ name: 'Bet 75%', color: '#ef4444', bgClass: 'bg-red-500' },
+] as const;
+
+/**
+ * Monta a barra global do no `3 IP action apos BB check` a partir do par de evidencia canonico.
+ *
+ * Descarta as acoes de frequencia zero porque elas nao ocupam largura na barra -- o cenario ICMev do HRC traz
+ * `folds 0.0`, que existe no solve e nao tem o que desenhar. A acao continua na evidencia; some so do desenho.
+ */
+function barraDaAula12(contexto: SolverContext): NodeAction[] {
+	const cenario = contexto === 'icm' ? PAR_2_IP_APOS_CHECK.icmEv : PAR_2_IP_APOS_CHECK.chipEv;
+	const acoes = acoesComProcedencia(cenario).filter((a) => a.pct > 0);
+	return acoes.map((acao, i) => {
+		const estilo = APRESENTACAO_CBET_AULA12[i] ?? APRESENTACAO_CBET_AULA12[0];
+		return {
+			name: estilo?.name ?? acao.label,
+			label: acao.label,
+			pct: acao.pct,
+			color: estilo?.color ?? '#94a3b8',
+			bgClass: estilo?.bgClass,
+			...(acao.combos !== null ? { combos: acao.combos } : {}),
+			largura: acao.largura,
+			larguraBase: acao.base,
+		};
+	});
+}
+
 export function computeSplitGradient(actions: NodeAction[]): string {
 	if (!actions || actions.length === 0) return 'rgba(15, 23, 42, 0.4)';
 	const firstAction = actions[0];
 	if (actions.length === 1 && firstAction) return firstAction.color;
 
+	const larguras = normalizarLarguras(actions);
 	let currentPct = 0;
 	const stops: string[] = [];
-	for (const act of actions) {
+	actions.forEach((act, i) => {
 		const start = currentPct;
-		const end = currentPct + act.pct;
-		stops.push(`${act.color} ${start.toFixed(1)}%`);
-		stops.push(`${act.color} ${end.toFixed(1)}%`);
+		const end = i === actions.length - 1 ? 100 : currentPct + (larguras[i] ?? 0);
+		// Um push por faixa, com os dois stops juntos: a faixa e a unidade, e separa-la em duas chamadas nunca
+		// significou outra coisa. Tambem satisfaz S7778, que reprova push repetido no mesmo bloco.
+		stops.push(`${act.color} ${start.toFixed(1)}%`, `${act.color} ${end.toFixed(1)}%`);
 		currentPct = end;
-	}
+	});
 	return `linear-gradient(to right, ${stops.join(', ')})`;
 }
 
@@ -941,449 +1117,429 @@ const AULA1_2_BTN_OPEN: Record<string, number> = {
 	T9o: 0.5,
 };
 
-// Obter dados canônicos estruturados do nó de solver
-export function getSolverNodeData(
-	texture: BoardTexture,
-	actionType: TacticalActionType,
-	solverContext: SolverContext = 'icm',
-): SolverNodeData {
-	const allHands = Object.keys(generateUniformBelief());
+function getSolverNodeAula12Cbet(allHands: string[], solverContext: SolverContext): SolverNodeData {
 	const combos: Record<string, ComboNodeState> = {};
+	const isIcm = solverContext === 'icm';
+	const globalBar: NodeAction[] = barraDaAula12(isIcm ? 'icm' : 'chipev');
 
-	// ==========================================
-	// 1. AULA 1.2: DADOS CANÔNICOS REAIS (HRC vs GTO WIZARD)
-	// ==========================================
-	if (texture === 'aula1_2') {
-		if (actionType === 'cbet_small') {
-			const isIcm = solverContext === 'icm';
-			const globalBar: NodeAction[] = isIcm
-				? [
-						{ name: 'Check', label: 'Check', pct: 23.6, color: '#4ade80', bgClass: 'bg-emerald-400' },
-						{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 67.5, color: '#fda4af', bgClass: 'bg-rose-300' },
-						{ name: 'Bet 50%', label: 'Bet 2.81bb', pct: 7.5, color: '#fb923c', bgClass: 'bg-amber-500' },
-						{ name: 'Bet 75%', label: 'Bet 4.22bb', pct: 1.4, color: '#ef4444', bgClass: 'bg-red-500' },
-					]
-				: [
-						{ name: 'Check', label: 'Check', pct: 2.3, color: '#4ade80', bgClass: 'bg-emerald-400' },
-						{ name: 'Bet 20%', label: 'Bet 1.1bb', pct: 8.7, color: '#fda4af', bgClass: 'bg-rose-300' },
-						{ name: 'Bet 50%', label: 'Bet 2.8bb', pct: 82.5, color: '#fb923c', bgClass: 'bg-amber-500' },
-						{ name: 'Bet 75%', label: 'Bet 4.2bb', pct: 6.6, color: '#ef4444', bgClass: 'bg-red-500' },
-					];
-
-			for (const hand of allHands) {
-				const openWeight = AULA1_2_BTN_OPEN[hand] ?? 0;
-				if (openWeight === 0) {
-					combos[hand] = {
-						arrived: false,
-						arrivalWeight: 0,
-						localFreq: 0,
-						actions: [],
-						isIndifferent: false,
-						gradientStyle: 'rgba(15, 23, 42, 0.4)',
-					};
-					continue;
-				}
-
-				// Se chegou ao nó do flop
-				let actions: NodeAction[] = [];
-				let localFreq = 0;
-
-				if (isIcm) {
-					// ICMev: TT-66 dão 100% CHECK sob RP de 21.4%
-					if (['TT', '99', '88', '77', '66'].includes(hand)) {
-						actions = [{ name: 'Check', label: 'Check', pct: 100, color: '#4ade80' }];
-						localFreq = 0; // Aposta é 0%
-					} else if (hand === '55') {
-						actions = [{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 100, color: '#fda4af' }];
-						localFreq = 100;
-					} else if (hand === '44') {
-						actions = [
-							{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 60, color: '#fda4af' },
-							{ name: 'Check', label: 'Check', pct: 40, color: '#4ade80' },
-						];
-						localFreq = 60;
-					} else if (['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AQs', 'AJs', 'ATs', 'KQs', 'KJs', 'KTs'].includes(hand)) {
-						actions = [
-							{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 70, color: '#fda4af' },
-							{ name: 'Bet 50%', label: 'Bet 2.81bb', pct: 25, color: '#fb923c' },
-							{ name: 'Check', label: 'Check', pct: 5, color: '#4ade80' },
-						];
-						localFreq = 95;
-					} else {
-						// Demais combos abertos
-						actions = [
-							{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 85, color: '#fda4af' },
-							{ name: 'Check', label: 'Check', pct: 15, color: '#4ade80' },
-						];
-						localFreq = 85;
-					}
-				} else {
-					// ChipEV (GTO Wizard Baseline): Bet 50% dominante em 82.5%, TT-66 apostam 97%+
-					actions = [
-						{ name: 'Bet 50%', label: 'Bet 2.8bb', pct: 85, color: '#fb923c' },
-						{ name: 'Bet 20%', label: 'Bet 1.1bb', pct: 12, color: '#fda4af' },
-						{ name: 'Check', label: 'Check', pct: 3, color: '#4ade80' },
-					];
-					localFreq = 97;
-				}
-
-				combos[hand] = {
-					arrived: true,
-					arrivalWeight: openWeight,
-					localFreq,
-					actions,
-					isIndifferent: actions.filter((a) => a.pct > 0).length > 1,
-					gradientStyle: computeSplitGradient(actions),
-				};
-			}
-
-			return {
-				nodeId: 'cbet_small',
-				streetName: 'Flop',
-				actor: 'BTN',
-				potBB: 6.76,
-				activeCombosCount: 445,
-				globalBar,
-				combos,
+	for (const hand of allHands) {
+		const openWeight = AULA1_2_BTN_OPEN[hand] ?? 0;
+		if (openWeight === 0) {
+			combos[hand] = {
+				arrived: false,
+				arrivalWeight: 0,
+				localFreq: 0,
+				actions: [],
+				isIndifferent: false,
+				gradientStyle: 'rgba(15, 23, 42, 0.4)',
 			};
+			continue;
 		}
 
-		if (actionType === 'check_raise') {
-			const isIcm = solverContext === 'icm';
-			const globalBar: NodeAction[] = isIcm
-				? [
-						{ name: 'Fold', label: 'Fold', pct: 42.6, color: '#64748b', bgClass: 'bg-slate-500' },
-						{ name: 'Call', label: 'Call', pct: 48.1, color: '#4ade80', bgClass: 'bg-emerald-400' },
-						{ name: 'Raise 5.06bb', label: 'Raise 5.06bb', pct: 9.3, color: '#fb7185', bgClass: 'bg-rose-400' },
-					]
-				: [
-						{ name: 'Fold', label: 'Fold', pct: 35.7, color: '#38bdf8', bgClass: 'bg-sky-400' },
-						{ name: 'Call', label: 'Call', pct: 57.4, color: '#4ade80', bgClass: 'bg-emerald-400' },
-						{ name: 'Raise 5bb', label: 'Raise 5bb', pct: 6.8, color: '#fb923c', bgClass: 'bg-amber-500' },
-					];
+		let actions: NodeAction[] = [];
+		let localFreq = 0;
 
-			// Lista exata de combos que Check-Raisam no BB (Aula 1.2)
-			const xrCombosMap: Record<string, number> = {
-				AQs: 35, KTs: 30, Q9s: 15, Q8s: 25, '97s': 35, T8s: 15, K2s: 25, Q2s: 20, J2s: 15,
-				JJ: 15, TT: 10, AQo: 15, KJs: 10, JTs: 15, Q7s: 15, Q6s: 15, Q5s: 15, Q4s: 20, Q3s: 20,
-				J3s: 15, '98s': 15, A9s: 10, A6s: 10, A5s: 10, A4s: 10, A3s: 10, A2s: 10,
-				A9o: 10, Q9o: 10, Q8o: 10, Q7o: 10, Q6o: 10, Q5o: 15, Q4o: 15, Q3o: 15, Q2o: 15,
-				JTo: 10, '98o': 10, '97o': 10, K2o: 10,
-			};
-
-			const bbCallingCombos = [
-				'AJs', 'ATs', 'A8s', 'A7s', 'KQs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s',
-				'QQ', 'QJs', 'QTs', 'J9s', 'J8s', 'J7s', 'J6s', 'J5s', 'J4s', 'T9s', 'T7s', 'T6s', 'T5s', 'T4s', 'T3s', 'T2s',
-				'KQo', 'KJo', 'KTo', 'QJo', 'QTo', 'J9o', 'J8o', 'J7o', 'J6o', 'T9o', 'T8o', 'T7o', 'T6o',
-				'K9o', 'K8o', 'K7o', 'K6o', 'K5o', 'K4o', 'K3o',
-			];
-
-			for (const hand of allHands) {
-				const raiseFreq = xrCombosMap[hand];
-				const isPureCall = bbCallingCombos.includes(hand);
-
-				if (raiseFreq !== undefined) {
-					// Mão de Check-Raise (Indiferença de Nash: Raise vs Call)
-					const callFreq = 100 - raiseFreq;
-					const actions = [
-						{ name: 'Raise 5.06bb', label: 'Raise', pct: raiseFreq, color: '#fb7185' },
-						{ name: 'Call', label: 'Call', pct: callFreq, color: '#4ade80' },
-					];
-					combos[hand] = {
-						arrived: true,
-						arrivalWeight: 0.9,
-						localFreq: raiseFreq,
-						actions,
-						isIndifferent: true,
-						gradientStyle: computeSplitGradient(actions),
-						notes: `${hand} · Indiferença de Nash: ${raiseFreq}% Raise / ${callFreq}% Call (EV Empatado)`,
-					};
-				} else if (isPureCall) {
-					// Mão de Call
-					const actions = [{ name: 'Call', label: 'Call', pct: 100, color: '#4ade80' }];
-					combos[hand] = {
-						arrived: true,
-						arrivalWeight: 0.8,
-						localFreq: 0,
-						actions,
-						isIndifferent: false,
-						gradientStyle: '#4ade80',
-					};
-				} else {
-					// Mão não chegou ou foldou (AA, KK, AKs 3-betaram pré-flop; 99-22 foldaram; lixo offsuit)
-					combos[hand] = {
-						arrived: false,
-						arrivalWeight: 0,
-						localFreq: 0,
-						actions: [],
-						isIndifferent: false,
-						gradientStyle: 'rgba(15, 23, 42, 0.4)',
-					};
-				}
-			}
-
-			return {
-				nodeId: 'check_raise',
-				streetName: 'Flop',
-				actor: 'BB',
-				potBB: 11.3,
-				activeCombosCount: 51,
-				globalBar,
-				combos,
-			};
-		}
-
-		if (actionType === 'barrel_heavy') {
-			// TURN 2d: APENAS COMBOS QUE DERAM CHECK-RAISE CHEGAM AQUI!
-			const globalBar: NodeAction[] = [
-				{ name: 'Check', label: 'Check', pct: 42.0, color: '#4ade80', bgClass: 'bg-emerald-400' },
-				{ name: 'Bet 20%', label: 'Bet 3.15bb', pct: 11.0, color: '#fda4af', bgClass: 'bg-rose-300' },
-				{ name: 'Bet 50%', label: 'Bet 7.88bb', pct: 42.8, color: '#f97316', bgClass: 'bg-amber-500' },
-				{ name: 'Shove', label: 'All-in 32.8bb', pct: 4.2, color: '#ef4444', bgClass: 'bg-red-500' },
-			];
-
-			// Frequências locais do Turn 2d (Aula 1.2 - Imagem 40)
-			const turnBetMap: Record<string, { bet50: number; check: number; shove: number }> = {
-				AQs: { bet50: 43, check: 35, shove: 22 },
-				AQo: { bet50: 46, check: 38, shove: 16 },
-				JJ: { bet50: 45, check: 45, shove: 10 },
-				TT: { bet50: 6, check: 94, shove: 0 },
-				KJs: { bet50: 40, check: 50, shove: 10 },
-				KTs: { bet50: 32, check: 60, shove: 8 },
-				JTs: { bet50: 23, check: 70, shove: 7 },
-				Q9s: { bet50: 50, check: 40, shove: 10 },
-				Q8s: { bet50: 26, check: 65, shove: 9 },
-				Q7s: { bet50: 43, check: 50, shove: 7 },
-				Q6s: { bet50: 49, check: 45, shove: 6 },
-				Q5s: { bet50: 28, check: 65, shove: 7 },
-				Q4s: { bet50: 73, check: 20, shove: 7 },
-				Q3s: { bet50: 55, check: 38, shove: 7 },
-				Q2s: { bet50: 71, check: 15, shove: 14 },
-				'97s': { bet50: 50, check: 45, shove: 5 },
-				'98s': { bet50: 17, check: 83, shove: 0 },
-				K2s: { bet50: 19, check: 81, shove: 0 },
-				A9s: { bet50: 27, check: 73, shove: 0 },
-				A8s: { bet50: 2, check: 98, shove: 0 },
-				A6s: { bet50: 11, check: 89, shove: 0 },
-				A5s: { bet50: 18, check: 82, shove: 0 },
-				A4s: { bet50: 12, check: 88, shove: 0 },
-				A3s: { bet50: 7, check: 93, shove: 0 },
-				A2s: { bet50: 12, check: 88, shove: 0 },
-				J3s: { bet50: 19, check: 81, shove: 0 },
-				J2s: { bet50: 6, check: 94, shove: 0 },
-				K5s: { bet50: 8, check: 92, shove: 0 },
-				K4s: { bet50: 1, check: 99, shove: 0 },
-				T3s: { bet50: 10, check: 90, shove: 0 },
-				T2s: { bet50: 2, check: 98, shove: 0 },
-				A9o: { bet50: 13, check: 87, shove: 0 },
-				Q9o: { bet50: 20, check: 80, shove: 0 },
-				Q8o: { bet50: 16, check: 84, shove: 0 },
-				Q7o: { bet50: 11, check: 89, shove: 0 },
-				Q6o: { bet50: 11, check: 89, shove: 0 },
-				Q5o: { bet50: 38, check: 62, shove: 0 },
-				Q4o: { bet50: 33, check: 67, shove: 0 },
-				Q3o: { bet50: 36, check: 64, shove: 0 },
-				Q2o: { bet50: 30, check: 70, shove: 0 },
-				JTo: { bet50: 10, check: 90, shove: 0 },
-				'98o': { bet50: 9, check: 91, shove: 0 },
-				'97o': { bet50: 9, check: 91, shove: 0 },
-				K6o: { bet50: 4, check: 96, shove: 0 },
-				K5o: { bet50: 2, check: 98, shove: 0 },
-				K4o: { bet50: 3, check: 97, shove: 0 },
-				K3o: { bet50: 4, check: 96, shove: 0 },
-				K2o: { bet50: 11, check: 89, shove: 0 },
-			};
-
-			for (const hand of allHands) {
-				const plan = turnBetMap[hand];
-				if (!plan) {
-					// 90%+ do grid colapsa para cinza (não deram XR no flop)
-					combos[hand] = {
-						arrived: false,
-						arrivalWeight: 0,
-						localFreq: 0,
-						actions: [],
-						isIndifferent: false,
-						gradientStyle: 'rgba(15, 23, 42, 0.4)',
-					};
-					continue;
-				}
-
-				const actions: NodeAction[] = [];
-				if (plan.bet50 > 0) {
-					actions.push({ name: 'Bet 50%', label: 'Bet 7.88bb', pct: plan.bet50, color: '#f97316' });
-				}
-				if (plan.shove > 0) {
-					actions.push({ name: 'Shove', label: 'All-in', pct: plan.shove, color: '#ef4444' });
-				}
-				if (plan.check > 0) {
-					actions.push({ name: 'Check', label: 'Check', pct: plan.check, color: '#4ade80' });
-				}
-
-				const localFreq = plan.bet50 + plan.shove;
-				combos[hand] = {
-					arrived: true,
-					arrivalWeight: 0.35,
-					localFreq,
-					actions,
-					isIndifferent: actions.length > 1,
-					gradientStyle: computeSplitGradient(actions),
-					notes: `${hand} · Indiferença de Nash no Turn: ${plan.bet50}% Bet 50% | ${plan.check}% Check`,
-				};
-			}
-
-			return {
-				nodeId: 'barrel_heavy',
-				streetName: 'Turn',
-				actor: 'BB',
-				potBB: 27.06,
-				activeCombosCount: 38,
-				globalBar,
-				combos,
-			};
-		}
-
-		if (actionType === 'bluff_polar') {
-			// RIVER 3h: BB SHOVE POLARIZADO (Imagem 42)
-			const globalBar: NodeAction[] = [
-				{ name: 'Check', label: 'Check', pct: 30.7, color: '#4ade80', bgClass: 'bg-emerald-400' },
-				{ name: 'Bet 10%', label: 'Bet 6.30bb', pct: 1.1, color: '#fda4af', bgClass: 'bg-rose-300' },
-				{ name: 'Bet 25%', label: 'Bet 15.75bb', pct: 22.5, color: '#f97316', bgClass: 'bg-amber-500' },
-				{ name: 'Shove', label: 'All-in 24.94bb', pct: 45.8, color: '#ef4444', bgClass: 'bg-red-500' },
-			];
-
-			const riverShoveMap: Record<string, { shove: number; bet25: number; check: number }> = {
-				AQs: { shove: 28, bet25: 50, check: 22 },
-				AQo: { shove: 25, bet25: 50, check: 25 },
-				JJ: { shove: 27, bet25: 55, check: 18 },
-				TT: { shove: 2, bet25: 0, check: 98 },
-				JTs: { shove: 10, bet25: 30, check: 60 },
-				Q9s: { shove: 45, bet25: 35, check: 20 },
-				Q8s: { shove: 11, bet25: 40, check: 49 },
-				Q7s: { shove: 13, bet25: 45, check: 42 },
-				Q6s: { shove: 8, bet25: 50, check: 42 },
-				Q4s: { shove: 25, bet25: 55, check: 20 },
-				Q3s: { shove: 28, bet25: 50, check: 22 },
-				Q2s: { shove: 2, bet25: 25, check: 73 },
-				A9s: { shove: 6, bet25: 0, check: 94 },
-				A5s: { shove: 6, bet25: 0, check: 94 },
-				A4s: { shove: 4, bet25: 0, check: 96 },
-				A3s: { shove: 5, bet25: 0, check: 95 },
-				Q9o: { shove: 16, bet25: 0, check: 84 },
-				Q4o: { shove: 10, bet25: 0, check: 90 },
-				Q3o: { shove: 17, bet25: 0, check: 83 },
-			};
-
-			for (const hand of allHands) {
-				const plan = riverShoveMap[hand];
-				if (!plan) {
-					combos[hand] = {
-						arrived: false,
-						arrivalWeight: 0,
-						localFreq: 0,
-						actions: [],
-						isIndifferent: false,
-						gradientStyle: 'rgba(15, 23, 42, 0.4)',
-					};
-					continue;
-				}
-
-				const actions: NodeAction[] = [];
-				if (plan.shove > 0) {
-					actions.push({ name: 'Shove', label: 'All-in 24.94bb', pct: plan.shove, color: '#ef4444' });
-				}
-				if (plan.bet25 > 0) {
-					actions.push({ name: 'Bet 25%', label: 'Bet 15.75bb', pct: plan.bet25, color: '#f97316' });
-				}
-				if (plan.check > 0) {
-					actions.push({ name: 'Check', label: 'Check', pct: plan.check, color: '#4ade80' });
-				}
-
-				combos[hand] = {
-					arrived: true,
-					arrivalWeight: 0.18,
-					localFreq: plan.shove,
-					actions,
-					isIndifferent: actions.length > 1,
-					gradientStyle: computeSplitGradient(actions),
-					notes: `${hand} · Shove Polarizado (River 3h): ${plan.shove}% Shove | ${plan.check}% Check`,
-				};
-			}
-
-			return {
-				nodeId: 'bluff_polar',
-				streetName: 'River',
-				actor: 'BB',
-				potBB: 76.0,
-				activeCombosCount: 22,
-				globalBar,
-				combos,
-			};
-		}
-
-		if (actionType === 'call_condensed') {
-			// RIVER 3h: BTN BLUFF CATCHER VS SHOVE (Imagem 44)
-			const globalBar: NodeAction[] = [
-				{ name: 'Fold', label: 'Fold', pct: 51.8, color: '#64748b', bgClass: 'bg-slate-500' },
-				{ name: 'Call', label: 'Call', pct: 48.2, color: '#4ade80', bgClass: 'bg-emerald-400' },
-			];
-
-			const bluffCatchMap: Record<string, number> = {
-				AQs: 100, AQo: 100, '33': 100, '22': 100,
-				TT: 93, JJ: 82, K2s: 41, K3o: 41, K2o: 41,
-				KJs: 28, KTs: 28, KJo: 28, KTo: 28,
-				JTs: 9, JTo: 9,
-			};
-
-			for (const hand of allHands) {
-				const callPct = bluffCatchMap[hand];
-				if (callPct === undefined) {
-					// 95%+ do grid colapsa para cinza
-					combos[hand] = {
-						arrived: false,
-						arrivalWeight: 0,
-						localFreq: 0,
-						actions: [],
-						isIndifferent: false,
-						gradientStyle: 'rgba(15, 23, 42, 0.4)',
-					};
-					continue;
-				}
-
-				const foldPct = 100 - callPct;
-				const actions: NodeAction[] = [
-					{ name: 'Call', label: 'Call', pct: callPct, color: '#4ade80' },
+		if (isIcm) {
+			if (['TT', '99', '88', '77', '66'].includes(hand)) {
+				actions = [{ name: 'Check', label: 'Check', pct: 100, color: '#4ade80' }];
+			} else if (hand === '55') {
+				actions = [{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 100, color: '#fda4af' }];
+				localFreq = 100;
+			} else if (hand === '44') {
+				actions = [
+					{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 60, color: '#fda4af' },
+					{ name: 'Check', label: 'Check', pct: 40, color: '#4ade80' },
 				];
-				if (foldPct > 0) {
-					actions.push({ name: 'Fold', label: 'Fold', pct: foldPct, color: '#64748b' });
-				}
-
-				combos[hand] = {
-					arrived: true,
-					arrivalWeight: 0.12,
-					localFreq: callPct,
-					actions,
-					isIndifferent: foldPct > 0,
-					gradientStyle: computeSplitGradient(actions),
-					notes: `${hand} · Bluff Catcher (Indiferença de Nash): ${callPct}% Call | ${foldPct}% Fold (EV Empatado)`,
-				};
+				localFreq = 60;
+			} else if (['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AQs', 'AJs', 'ATs', 'KQs', 'KJs', 'KTs'].includes(hand)) {
+				actions = [
+					{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 70, color: '#fda4af' },
+					{ name: 'Bet 50%', label: 'Bet 2.81bb', pct: 25, color: '#fb923c' },
+					{ name: 'Check', label: 'Check', pct: 5, color: '#4ade80' },
+				];
+				localFreq = 95;
+			} else {
+				actions = [
+					{ name: 'Bet 20%', label: 'Bet 1.13bb', pct: 85, color: '#fda4af' },
+					{ name: 'Check', label: 'Check', pct: 15, color: '#4ade80' },
+				];
+				localFreq = 85;
 			}
+		} else {
+			actions = [
+				{ name: 'Bet 50%', label: 'Bet 2.8bb', pct: 85, color: '#fb923c' },
+				{ name: 'Bet 20%', label: 'Bet 1.1bb', pct: 12, color: '#fda4af' },
+				{ name: 'Check', label: 'Check', pct: 3, color: '#4ade80' },
+			];
+			localFreq = 97;
+		}
 
-			return {
-				nodeId: 'call_condensed',
-				streetName: 'River',
-				actor: 'BTN',
-				potBB: 76.0,
-				activeCombosCount: 15,
-				globalBar,
-				combos,
+		combos[hand] = {
+			arrived: true,
+			arrivalWeight: openWeight,
+			localFreq,
+			actions,
+			isIndifferent: actions.filter((a) => a.pct > 0).length > 1,
+			gradientStyle: computeSplitGradient(actions),
+		};
+	}
+
+	return {
+		nodeId: 'cbet_small',
+		streetName: 'Flop',
+		actor: 'BTN',
+		potBB: 6.76,
+		activeCombosCount: 445,
+		globalBar,
+		combos,
+	};
+}
+
+function getSolverNodeAula12CheckRaise(allHands: string[], solverContext: SolverContext): SolverNodeData {
+	const combos: Record<string, ComboNodeState> = {};
+	const isIcm = solverContext === 'icm';
+	const globalBar: NodeAction[] = isIcm
+		? [
+				{ name: 'Fold', label: 'Fold', pct: 42.6, color: '#64748b', bgClass: 'bg-slate-500' },
+				{ name: 'Call', label: 'Call', pct: 48.1, color: '#4ade80', bgClass: 'bg-emerald-400' },
+				{ name: 'Raise 5.06bb', label: 'Raise 5.06bb', pct: 9.3, color: '#fb7185', bgClass: 'bg-rose-400' },
+			]
+		: [
+				{ name: 'Fold', label: 'Fold', pct: 35.7, color: '#38bdf8', bgClass: 'bg-sky-400' },
+				{ name: 'Call', label: 'Call', pct: 57.4, color: '#4ade80', bgClass: 'bg-emerald-400' },
+				{ name: 'Raise 5bb', label: 'Raise 5bb', pct: 6.8, color: '#fb923c', bgClass: 'bg-amber-500' },
+			];
+
+	// Lista exata de combos que Check-Raisam no BB (Aula 1.2)
+	const xrCombosMap: Record<string, number> = {
+		AQs: 35, KTs: 30, Q9s: 15, Q8s: 25, '97s': 35, T8s: 15, K2s: 25, Q2s: 20, J2s: 15,
+		JJ: 15, TT: 10, AQo: 15, KJs: 10, JTs: 15, Q7s: 15, Q6s: 15, Q5s: 15, Q4s: 20, Q3s: 20,
+		J3s: 15, '98s': 15, A9s: 10, A6s: 10, A5s: 10, A4s: 10, A3s: 10, A2s: 10,
+		A9o: 10, Q9o: 10, Q8o: 10, Q7o: 10, Q6o: 10, Q5o: 15, Q4o: 15, Q3o: 15, Q2o: 15,
+		JTo: 10, '98o': 10, '97o': 10, K2o: 10,
+	};
+
+	const bbCallingCombos = new Set([
+		'AJs', 'ATs', 'A8s', 'A7s', 'KQs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s',
+		'QQ', 'QJs', 'QTs', 'J9s', 'J8s', 'J7s', 'J6s', 'J5s', 'J4s', 'T9s', 'T7s', 'T6s', 'T5s', 'T4s', 'T3s', 'T2s',
+		'KQo', 'KJo', 'KTo', 'QJo', 'QTo', 'J9o', 'J8o', 'J7o', 'J6o', 'T9o', 'T8o', 'T7o', 'T6o',
+		'K9o', 'K8o', 'K7o', 'K6o', 'K5o', 'K4o', 'K3o',
+	]);
+
+	for (const hand of allHands) {
+		const raiseFreq = xrCombosMap[hand];
+		const isPureCall = bbCallingCombos.has(hand);
+
+		if (raiseFreq !== undefined) {
+			// Mão de Check-Raise (Indiferença de Nash: Raise vs Call)
+			const callFreq = 100 - raiseFreq;
+			const actions = [
+				{ name: 'Raise 5.06bb', label: 'Raise', pct: raiseFreq, color: '#fb7185' },
+				{ name: 'Call', label: 'Call', pct: callFreq, color: '#4ade80' },
+			];
+			combos[hand] = {
+				arrived: true,
+				arrivalWeight: 0.9,
+				localFreq: raiseFreq,
+				actions,
+				isIndifferent: true,
+				gradientStyle: computeSplitGradient(actions),
+				notes: `${hand} · Indiferença de Nash: ${raiseFreq}% Raise / ${callFreq}% Call (EV Empatado)`,
+			};
+		} else if (isPureCall) {
+			// Mão de Call
+			const actions = [{ name: 'Call', label: 'Call', pct: 100, color: '#4ade80' }];
+			combos[hand] = {
+				arrived: true,
+				arrivalWeight: 0.8,
+				localFreq: 0,
+				actions,
+				isIndifferent: false,
+				gradientStyle: '#4ade80',
+			};
+		} else {
+			// Mão não chegou ou foldou (AA, KK, AKs 3-betaram pré-flop; 99-22 foldaram; lixo offsuit)
+			combos[hand] = {
+				arrived: false,
+				arrivalWeight: 0,
+				localFreq: 0,
+				actions: [],
+				isIndifferent: false,
+				gradientStyle: 'rgba(15, 23, 42, 0.4)',
 			};
 		}
 	}
 
-	// ==========================================
-	// 2. TEXTURAS GENÉRICAS (DRY, WET, PAIRED, MONOTONE)
-	// ==========================================
+	return {
+		nodeId: 'check_raise',
+		streetName: 'Flop',
+		actor: 'BB',
+		potBB: 11.3,
+		activeCombosCount: 51,
+		globalBar,
+		combos,
+	};
+}
+
+function getSolverNodeAula12Barrel(allHands: string[]): SolverNodeData {
+	const combos: Record<string, ComboNodeState> = {};
+	const globalBar: NodeAction[] = [
+		{ name: 'Check', label: 'Check', pct: 42.0, color: '#4ade80', bgClass: 'bg-emerald-400' },
+		{ name: 'Bet 20%', label: 'Bet 3.15bb', pct: 11.0, color: '#fda4af', bgClass: 'bg-rose-300' },
+		{ name: 'Bet 50%', label: 'Bet 7.88bb', pct: 42.8, color: '#f97316', bgClass: 'bg-amber-500' },
+		{ name: 'Shove', label: 'All-in 32.8bb', pct: 4.2, color: '#ef4444', bgClass: 'bg-red-500' },
+	];
+
+	const turnBetMap: Record<string, { bet50: number; check: number; shove: number }> = {
+		AQs: { bet50: 43, check: 35, shove: 22 },
+		AQo: { bet50: 46, check: 38, shove: 16 },
+		JJ: { bet50: 45, check: 45, shove: 10 },
+		TT: { bet50: 6, check: 94, shove: 0 },
+		KJs: { bet50: 40, check: 50, shove: 10 },
+		KTs: { bet50: 32, check: 60, shove: 8 },
+		JTs: { bet50: 23, check: 70, shove: 7 },
+		Q9s: { bet50: 50, check: 40, shove: 10 },
+		Q8s: { bet50: 26, check: 65, shove: 9 },
+		Q7s: { bet50: 43, check: 50, shove: 7 },
+		Q6s: { bet50: 49, check: 45, shove: 6 },
+		Q5s: { bet50: 28, check: 65, shove: 7 },
+		Q4s: { bet50: 73, check: 20, shove: 7 },
+		Q3s: { bet50: 55, check: 38, shove: 7 },
+		Q2s: { bet50: 71, check: 15, shove: 14 },
+		'97s': { bet50: 50, check: 45, shove: 5 },
+		'98s': { bet50: 17, check: 83, shove: 0 },
+		K2s: { bet50: 19, check: 81, shove: 0 },
+		A9s: { bet50: 27, check: 73, shove: 0 },
+		A8s: { bet50: 2, check: 98, shove: 0 },
+		A6s: { bet50: 11, check: 89, shove: 0 },
+		A5s: { bet50: 18, check: 82, shove: 0 },
+		A4s: { bet50: 12, check: 88, shove: 0 },
+		A3s: { bet50: 7, check: 93, shove: 0 },
+		A2s: { bet50: 12, check: 88, shove: 0 },
+		J3s: { bet50: 19, check: 81, shove: 0 },
+		J2s: { bet50: 6, check: 94, shove: 0 },
+		K5s: { bet50: 8, check: 92, shove: 0 },
+		K4s: { bet50: 1, check: 99, shove: 0 },
+		T3s: { bet50: 10, check: 90, shove: 0 },
+		T2s: { bet50: 2, check: 98, shove: 0 },
+		A9o: { bet50: 13, check: 87, shove: 0 },
+		Q9o: { bet50: 20, check: 80, shove: 0 },
+		Q8o: { bet50: 16, check: 84, shove: 0 },
+		Q7o: { bet50: 11, check: 89, shove: 0 },
+		Q6o: { bet50: 11, check: 89, shove: 0 },
+		Q5o: { bet50: 38, check: 62, shove: 0 },
+		Q4o: { bet50: 33, check: 67, shove: 0 },
+		Q3o: { bet50: 36, check: 64, shove: 0 },
+		Q2o: { bet50: 30, check: 70, shove: 0 },
+		JTo: { bet50: 10, check: 90, shove: 0 },
+		'98o': { bet50: 9, check: 91, shove: 0 },
+		'97o': { bet50: 9, check: 91, shove: 0 },
+		K6o: { bet50: 4, check: 96, shove: 0 },
+		K5o: { bet50: 2, check: 98, shove: 0 },
+		K4o: { bet50: 3, check: 97, shove: 0 },
+		K3o: { bet50: 4, check: 96, shove: 0 },
+		K2o: { bet50: 11, check: 89, shove: 0 },
+	};
+
+	for (const hand of allHands) {
+		const plan = turnBetMap[hand];
+		if (!plan) {
+			combos[hand] = {
+				arrived: false,
+				arrivalWeight: 0,
+				localFreq: 0,
+				actions: [],
+				isIndifferent: false,
+				gradientStyle: 'rgba(15, 23, 42, 0.4)',
+			};
+			continue;
+		}
+
+		const actions: NodeAction[] = [];
+		if (plan.bet50 > 0) {
+			actions.push({ name: 'Bet 50%', label: 'Bet 7.88bb', pct: plan.bet50, color: '#f97316' });
+		}
+		if (plan.shove > 0) {
+			actions.push({ name: 'Shove', label: 'All-in', pct: plan.shove, color: '#ef4444' });
+		}
+		if (plan.check > 0) {
+			actions.push({ name: 'Check', label: 'Check', pct: plan.check, color: '#4ade80' });
+		}
+
+		const localFreq = plan.bet50 + plan.shove;
+		combos[hand] = {
+			arrived: true,
+			arrivalWeight: 0.35,
+			localFreq,
+			actions,
+			isIndifferent: actions.length > 1,
+			gradientStyle: computeSplitGradient(actions),
+			notes: `${hand} · Indiferença de Nash no Turn: ${plan.bet50}% Bet 50% | ${plan.check}% Check`,
+		};
+	}
+
+	return {
+		nodeId: 'barrel_heavy',
+		streetName: 'Turn',
+		actor: 'BB',
+		potBB: 27.06,
+		activeCombosCount: 38,
+		globalBar,
+		combos,
+	};
+}
+
+function getSolverNodeAula12Bluff(allHands: string[]): SolverNodeData {
+	const combos: Record<string, ComboNodeState> = {};
+	const globalBar: NodeAction[] = [
+		{ name: 'Check', label: 'Check', pct: 30.7, color: '#4ade80', bgClass: 'bg-emerald-400' },
+		{ name: 'Bet 10%', label: 'Bet 6.30bb', pct: 1.1, color: '#fda4af', bgClass: 'bg-rose-300' },
+		{ name: 'Bet 25%', label: 'Bet 15.75bb', pct: 22.5, color: '#f97316', bgClass: 'bg-amber-500' },
+		{ name: 'Shove', label: 'All-in 24.94bb', pct: 45.8, color: '#ef4444', bgClass: 'bg-red-500' },
+	];
+
+	const riverShoveMap: Record<string, { shove: number; bet25: number; check: number }> = {
+		AQs: { shove: 28, bet25: 50, check: 22 },
+		AQo: { shove: 25, bet25: 50, check: 25 },
+		JJ: { shove: 27, bet25: 55, check: 18 },
+		TT: { shove: 2, bet25: 0, check: 98 },
+		JTs: { shove: 10, bet25: 30, check: 60 },
+		Q9s: { shove: 45, bet25: 35, check: 20 },
+		Q8s: { shove: 11, bet25: 40, check: 49 },
+		Q7s: { shove: 13, bet25: 45, check: 42 },
+		Q6s: { shove: 8, bet25: 50, check: 42 },
+		Q4s: { shove: 25, bet25: 55, check: 20 },
+		Q3s: { shove: 28, bet25: 50, check: 22 },
+		Q2s: { shove: 2, bet25: 25, check: 73 },
+		A9s: { shove: 6, bet25: 0, check: 94 },
+		A5s: { shove: 6, bet25: 0, check: 94 },
+		A4s: { shove: 4, bet25: 0, check: 96 },
+		A3s: { shove: 5, bet25: 0, check: 95 },
+		Q9o: { shove: 16, bet25: 0, check: 84 },
+		Q4o: { shove: 10, bet25: 0, check: 90 },
+		Q3o: { shove: 17, bet25: 0, check: 83 },
+	};
+
+	for (const hand of allHands) {
+		const plan = riverShoveMap[hand];
+		if (!plan) {
+			combos[hand] = {
+				arrived: false,
+				arrivalWeight: 0,
+				localFreq: 0,
+				actions: [],
+				isIndifferent: false,
+				gradientStyle: 'rgba(15, 23, 42, 0.4)',
+			};
+			continue;
+		}
+
+		const actions: NodeAction[] = [];
+		if (plan.shove > 0) {
+			actions.push({ name: 'Shove', label: 'All-in 24.94bb', pct: plan.shove, color: '#ef4444' });
+		}
+		if (plan.bet25 > 0) {
+			actions.push({ name: 'Bet 25%', label: 'Bet 15.75bb', pct: plan.bet25, color: '#f97316' });
+		}
+		if (plan.check > 0) {
+			actions.push({ name: 'Check', label: 'Check', pct: plan.check, color: '#4ade80' });
+		}
+
+		combos[hand] = {
+			arrived: true,
+			arrivalWeight: 0.18,
+			localFreq: plan.shove,
+			actions,
+			isIndifferent: actions.length > 1,
+			gradientStyle: computeSplitGradient(actions),
+			notes: `${hand} · Shove Polarizado (River 3h): ${plan.shove}% Shove | ${plan.check}% Check`,
+		};
+	}
+
+	return {
+		nodeId: 'bluff_polar',
+		streetName: 'River',
+		actor: 'BB',
+		potBB: 76.0,
+		activeCombosCount: 22,
+		globalBar,
+		combos,
+	};
+}
+
+function getSolverNodeAula12CallCondensed(allHands: string[]): SolverNodeData {
+	const combos: Record<string, ComboNodeState> = {};
+	const globalBar: NodeAction[] = [
+		{ name: 'Fold', label: 'Fold', pct: 51.8, color: '#64748b', bgClass: 'bg-slate-500' },
+		{ name: 'Call', label: 'Call', pct: 48.2, color: '#4ade80', bgClass: 'bg-emerald-400' },
+	];
+
+	const bluffCatchMap: Record<string, number> = {
+		AQs: 100, AQo: 100, '33': 100, '22': 100,
+		TT: 93, JJ: 82, K2s: 41, K3o: 41, K2o: 41,
+		KJs: 28, KTs: 28, KJo: 28, KTo: 28,
+		JTs: 9, JTo: 9,
+	};
+
+	for (const hand of allHands) {
+		const callPct = bluffCatchMap[hand];
+		if (callPct === undefined) {
+			combos[hand] = {
+				arrived: false,
+				arrivalWeight: 0,
+				localFreq: 0,
+				actions: [],
+				isIndifferent: false,
+				gradientStyle: 'rgba(15, 23, 42, 0.4)',
+			};
+			continue;
+		}
+
+		const foldPct = 100 - callPct;
+		const actions: NodeAction[] = [
+			{ name: 'Call', label: 'Call', pct: callPct, color: '#4ade80' },
+		];
+		if (foldPct > 0) {
+			actions.push({ name: 'Fold', label: 'Fold', pct: foldPct, color: '#64748b' });
+		}
+
+		combos[hand] = {
+			arrived: true,
+			arrivalWeight: 0.12,
+			localFreq: callPct,
+			actions,
+			isIndifferent: foldPct > 0,
+			gradientStyle: computeSplitGradient(actions),
+			notes: `${hand} · Bluff Catcher (Indiferença de Nash): ${callPct}% Call | ${foldPct}% Fold (EV Empatado)`,
+		};
+	}
+
+	return {
+		nodeId: 'call_condensed',
+		streetName: 'River',
+		actor: 'BTN',
+		potBB: 76.0,
+		activeCombosCount: 15,
+		globalBar,
+		combos,
+	};
+}
+
+const ACTION_PRIMARY_COLORS: Record<TacticalActionType, string> = {
+	cbet_small: '#fda4af',
+	check_raise: '#fb7185',
+	barrel_heavy: '#f97316',
+	bluff_polar: '#ef4444',
+	call_condensed: '#4ade80',
+};
+
+function getSolverNodeGenericFallback(
+	allHands: string[],
+	texture: BoardTexture,
+	actionType: TacticalActionType,
+	solverContext: SolverContext,
+): SolverNodeData {
+	const combos: Record<string, ComboNodeState> = {};
 	const streetNames: Record<TacticalActionType, 'Flop' | 'Turn' | 'River'> = {
 		cbet_small: 'Flop',
 		check_raise: 'Flop',
@@ -1417,16 +1573,7 @@ export function getSolverNodeData(
 		const isLikely = rawP > 0.15;
 		if (isLikely) activeCount++;
 
-		const primaryColor =
-			actionType === 'cbet_small'
-				? '#fda4af'
-				: actionType === 'check_raise'
-					? '#fb7185'
-					: actionType === 'barrel_heavy'
-						? '#f97316'
-						: actionType === 'bluff_polar'
-							? '#ef4444'
-							: '#4ade80';
+		const primaryColor = ACTION_PRIMARY_COLORS[actionType] ?? '#4ade80';
 
 		const actions: NodeAction[] = isLikely
 			? [
@@ -1457,4 +1604,30 @@ export function getSolverNodeData(
 		],
 		combos,
 	};
+}
+
+// Obter dados canônicos estruturados do nó de solver
+export function getSolverNodeData(
+	texture: BoardTexture,
+	actionType: TacticalActionType,
+	solverContext: SolverContext = 'icm',
+): SolverNodeData {
+	const allHands = Object.keys(generateUniformBelief());
+
+	if (texture === 'aula1_2') {
+		switch (actionType) {
+			case 'cbet_small':
+				return getSolverNodeAula12Cbet(allHands, solverContext);
+			case 'check_raise':
+				return getSolverNodeAula12CheckRaise(allHands, solverContext);
+			case 'barrel_heavy':
+				return getSolverNodeAula12Barrel(allHands);
+			case 'bluff_polar':
+				return getSolverNodeAula12Bluff(allHands);
+			case 'call_condensed':
+				return getSolverNodeAula12CallCondensed(allHands);
+		}
+	}
+
+	return getSolverNodeGenericFallback(allHands, texture, actionType, solverContext);
 }
