@@ -16,6 +16,8 @@ caminhos:
   - engine/dream_replay_simulator.py
   - conductor/dream_gate.py
   - task_executor.py
+referencias_nao_resolviveis:
+  - C:/Users/rapha/.gemini/scripts/ops/alinhar_confianca_do_workspace.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
@@ -162,7 +164,7 @@ encerramento abaixo tem o motivo medido; nenhum foi fechado por conveniência.
 | `outlier-7e5ca052` | **reavaliado** | contexto semelhante ocorreu (triagem de segurança); contramedida parcialmente comprovada; reavaliação retida no ledger de outliers como `4e9af621` (sequência 13) |
 | `lldb-dap-ausente` | **resolvida** | LLVM 23.1.1 instalado via winget; `lldb-dap.executable-path` apontado no `.vscode/settings.json` do projeto, sem expor `clang` no PATH global; binário executa. **Não verificado:** sessão de depuração completa |
 | `metrica-de-escolha-nao-de-execucao` | **encerrada por arbitragem** | o Tier 0 descartou em 2026-09-17 a linha de métrica por reincidência (*"acho que não precisamos mais de reincidência"*); a calibração `fee1823b` adotou outras métricas |
-| `confiar-workspace-na-extensao` | **resolvida** | três chaves no `~/.claude.json` para a mesma pasta, variando só a grafia; a `c:/` minúscula sem confiança. `scripts/ops/alinhar_confianca_do_workspace.py` estende confiança **só** a chave cuja pasta já era confiada em outra grafia — alinhou também `C:/Users/rapha`, já confiada. **Não verificado:** persistência depois que sessões abertas reescreverem o arquivo |
+| `confiar-workspace-na-extensao` | **resolvida** | três chaves no `~/.claude.json` para a mesma pasta, variando só a grafia; a `c:/` minúscula sem confiança. `C:/Users/rapha/.gemini/scripts/ops/alinhar_confianca_do_workspace.py` (raiz multiprojeto, não este repositório) estende confiança **só** a chave cuja pasta já era confiada em outra grafia — alinhou também `C:/Users/rapha`, já confiada. **Não verificado:** persistência depois que sessões abertas reescreverem o arquivo |
 | `frontend-src-projects` | **resolvida** | 125 arquivos (112 `.md`, 12 `.png`, 1 `.html`), zero consumidores, zero padrões de credencial. Preservados byte a byte em `remediacao_backup_aplicado\site-frontend-src-projects-20260918\` (impressão do conjunto `9cb088d1…` igual à versionada) e removidos da árvore pública. Histórico **não** reescrito (§2.4 da raiz). A única referência de código era um guarda que exige que `subagents/` não esteja versionado — segue verde, 18/18 |
 | `branch-local-submodule-ownership` | **decidida: arquivar, não mesclar, não apagar** | 1.980 arquivos tocados, 1.928 inexistentes no master — quase todos `core/vendor/eigen`, vendorização que o master rejeitou; ~20 arquivos de trabalho único (auditorias de 22/08, manifestos editorial e de cenários, contrato de ambiente). Bundle verificado de 3,7 MB em `remediacao_backup_aplicado\`. **Limite:** a cópia não sai deste disco — a área de rollback é ignorada pela raiz por desenho e o remoto do `Site` é público |
 
