@@ -209,8 +209,3 @@ motor — equity de mão via WASM, range contra range — e **não** um caminho 
 **Limite dos números.** Os portes reproduzem a aritmética dos kernels linha a linha, mas
 são portes: uma divergência entre eles e o TypeScript original só seria descartada por
 execução da suíte real, que não ocorreu.
-
-
-<ADDITIONAL_METADATA>
-The current local time is: 2026-09-18T17:15:19-03:00.
-</ADDITIONAL_METADATA>
