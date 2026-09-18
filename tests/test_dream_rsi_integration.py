@@ -273,6 +273,45 @@ def test_timesfm_governance_enforcement() -> None:
         )
 
 
+def test_dream_timesfm_forecaster_research_mode_timesfm_3_0() -> None:
+    """Valida integracao harmonica do TimesFM 3.0 para pesquisa academica nao-comercial."""
+    from core.exploration_policy import TimesFMPredictivePolicy  # noqa: PLC0415
+    from engine.dream_replay_simulator import DreamReplaySimulator  # noqa: PLC0415
+    from engine.dream_timesfm_forecaster import DreamTimesFMForecaster  # noqa: PLC0415
+    from engine.timesfm_engine import ExecutionMode, LicenseTier  # noqa: PLC0415
+
+    # Fabrica ergonomica for_research aceita alias '3.0' e modelo completo
+    forecaster = DreamTimesFMForecaster.for_research("3.0")
+    assert forecaster.mode == ExecutionMode.RESEARCH_BENCHMARK
+    assert forecaster.engine.is_research_mode is True
+    assert forecaster.engine.metadata.version == "3.0"
+    assert forecaster.engine.metadata.license_tier == LicenseTier.NON_COMMERCIAL_V1
+    assert forecaster.engine.metadata.is_commercial_allowed is False
+
+    # Projecao de trajetoria estocastica em modo de pesquisa
+    scores = [0.40, 0.50, 0.60, 0.70]
+    forecast = forecaster.forecast_trajectory(scores, horizon=3)
+    assert forecast is not None
+    assert len(forecast.mean_prediction) == 3
+    assert forecast.license_tier == LicenseTier.NON_COMMERCIAL_V1.value
+    assert "google/timesfm-3.0-pytorch" in forecast.intended_model
+
+    # Poda preditiva e deteccao de plateau
+    prune, _ = forecaster.should_prune_predictively(scores, global_best_score=0.99)
+    assert isinstance(prune, bool)
+    plateau = forecaster.is_plateau_imminent(scores)
+    assert isinstance(plateau, bool)
+
+    # Avaliacao hermetica com DiscoveryTree e Replay Simulator
+    tree = _create_mock_discovery_tree("tree_timesfm_30_research")
+
+    policy_30 = TimesFMPredictivePolicy(forecaster=forecaster)
+    sim = DreamReplaySimulator(db_path=":memory:")
+    eval_res = sim.evaluate_policy(policy_30, [tree])
+    assert eval_res.policy_name == "TimesFMPredictivePolicy"
+    assert eval_res.total_score > 0.0
+
+
 def test_discovery_tree_and_node_deep_immutability() -> None:
     """Valida a protecao contra mutacao pos-persistencia em nos e arvores."""
     import pytest  # noqa: PLC0415

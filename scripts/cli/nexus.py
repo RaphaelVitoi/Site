@@ -1327,8 +1327,11 @@ def generate_daily_report():
 def stats_timesfm(
     horizon: int = typer.Option(12, "--horizon", "-h", help="Horizonte de passos futuros (H)"),
     mode: str = typer.Option("commercial", "--mode", "-m", help="Modo: commercial ou research"),
+    model: str | None = typer.Option(
+        None, "--model", "-M", help="Chave ou alias do modelo TimesFM (2.0, 2.5, 3.0 ou nome completo)"
+    ),
 ):
-    """Executa previsao de series temporais SOTA via Google Research TimesFM 2.0."""
+    """Executa previsao de series temporais SOTA via Google Research TimesFM (2.0/2.5/3.0)."""
     from engine.timesfm_engine import (
         ExecutionMode,
         forecast_bankroll_trajectory,
@@ -1337,16 +1340,26 @@ def stats_timesfm(
 
     exec_mode = (
         ExecutionMode.RESEARCH_BENCHMARK
-        if mode.lower() in ("research", "benchmark")
+        if mode.lower() in ("research", "benchmark") or (model and ("3.0" in model or "330m" in model))
         else ExecutionMode.COMMERCIAL_PRODUCTION
     )
-
-    console.print(f"\n[bold #50fa7b]=== ORACULO DE PREVISAO DE SERIES TEMPORAIS TIMESFM (H={horizon}) ===[/]")
-    console.print("[dim #6272a4]Google Research TimesFM 2.0 (500M) | Licenca: Apache 2.0 Comercial SOTA[/]\n")
+    if model is not None:
+        target_model = model
+    elif exec_mode == ExecutionMode.RESEARCH_BENCHMARK:
+        target_model = "timesfm-3.0-330m"
+    else:
+        target_model = "timesfm-2.0-500m"
 
     # 1. Projecao Estocastica de Bankroll
     history_bb = [100.0, 102.5, 99.0, 101.2, 103.8, 102.0, 105.4, 104.2, 106.0, 108.5, 107.2, 110.0]
-    bankroll_fc = forecast_bankroll_trajectory(history_bb, horizon_tournaments=horizon, mode=exec_mode)
+    bankroll_fc = forecast_bankroll_trajectory(
+        history_bb, horizon_tournaments=horizon, mode=exec_mode, preferred_model_key=target_model
+    )
+
+    console.print(f"\n[bold #50fa7b]=== ORACULO DE PREVISAO DE SERIES TEMPORAIS TIMESFM (H={horizon}) ===[/]")
+    console.print(
+        f"[dim #6272a4]Google Research TimesFM ({bankroll_fc.intended_model}) | Licenca: {bankroll_fc.license_tier}[/]\n"
+    )
 
     table_br = Table(title="[bold #50fa7b]Trajetoria de Bankroll Estocastico (H Passos)[/]", box=box.ROUNDED)
     table_br.add_column("Passo", style="bold cyan", justify="center")
@@ -1369,7 +1382,9 @@ def stats_timesfm(
     history_rio = [0.12, 0.11, 0.14, 0.10, 0.09, 0.11, 0.08, 0.07, 0.08, 0.06]
     history_icm = [1.10, 1.12, 1.15, 1.18, 1.20, 1.22, 1.25, 1.28, 1.30, 1.32]
     steps = min(horizon, 10)
-    pmev_fc = forecast_pmev_risk_dynamics(history_psi, history_rio, history_icm, horizon_steps=steps, mode=exec_mode)
+    pmev_fc = forecast_pmev_risk_dynamics(
+        history_psi, history_rio, history_icm, horizon_steps=steps, mode=exec_mode, preferred_model_key=target_model
+    )
 
     table_pmev = Table(title="[bold #bd93f9]Dinamica Conjunta dos Tensores de Risco PMev[/]", box=box.ROUNDED)
     table_pmev.add_column("Passo", style="bold cyan", justify="center")
@@ -1390,10 +1405,11 @@ def stats_timesfm(
     # 3. Sumario Executivo de Riscos
     console.print(
         Panel(
-            "[bold #50fa7b]* Risco de Ruina Estocastico:[/] [green]0.2% (Homeostase Segura)[/]\n"
-            "[bold #50fa7b]* Downward Drift:[/] [green]Zero Inclinacao Negativa Detectada[/]\n"
-            "[bold #8be9fd]* Ponto Crossover Insolvencia:[/] [cyan]H > 48 (Margem Ampla)[/]\n"
-            "[bold #bd93f9]* Modelo & Pesos:[/] [magenta]TimesFM 2.0 500M PyTorch (Apache 2.0 Commercial SOTA)[/]",
+            f"[bold #50fa7b]* Risco de Ruina Estocastico:[/] [green]0.2% (Homeostase Segura)[/]\n"
+            f"[bold #50fa7b]* Downward Drift:[/] [green]Zero Inclinacao Negativa Detectada[/]\n"
+            f"[bold #8be9fd]* Ponto Crossover Insolvencia:[/] [cyan]H > 48 (Margem Ampla)[/]\n"
+            f"[bold #bd93f9]* Modelo & Pesos:[/] [magenta]{bankroll_fc.intended_model} ({bankroll_fc.license_tier})[/]\n"
+            f"[bold #bd93f9]* Procedencia / Backend:[/] [cyan]{bankroll_fc.model_used}[/]",
             title="[bold #f1fa8c]SUMARIO EXECUTIVO DE RISCO PREFERENCIAL[/]",
             border_style="#f1fa8c",
             box=box.ROUNDED,
@@ -3222,13 +3238,28 @@ def agent_calibration_forecast(
     multimodel: bool = typer.Option(
         False, "--multimodel", "-m", help="Projecao escalonada multivariada por modelo condutor"
     ),
+    mode: str = typer.Option("commercial", "--mode", help="Modo: commercial ou research"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Modelo TimesFM (2.0, 2.5, 3.0 ou chave completa)"),
     json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
 ) -> None:
-    """Projecao estocastica de calibracao de agentes via Google Research TimesFM 2.0 (Apache 2.0)."""
+    """Projecao estocastica de calibracao de agentes via Google Research TimesFM (2.0/2.5/3.0)."""
     from engine.timesfm_engine import (
+        ExecutionMode,
         forecast_agent_calibration_trajectory,
         forecast_multimodel_calibration,
     )
+
+    exec_mode = (
+        ExecutionMode.RESEARCH_BENCHMARK
+        if mode.lower() in ("research", "benchmark") or (model and ("3.0" in model or "330m" in model))
+        else ExecutionMode.COMMERCIAL_PRODUCTION
+    )
+    if model is not None:
+        target_model = model
+    elif exec_mode == ExecutionMode.RESEARCH_BENCHMARK:
+        target_model = "timesfm-3.0-330m"
+    else:
+        target_model = "timesfm-2.0-500m"
 
     ledger_path = BASE_DIR / "reports" / "agent-calibration" / "feedback-ledger.jsonl"
     if not ledger_path.exists():
@@ -3255,7 +3286,9 @@ def agent_calibration_forecast(
                 continue
 
     if multimodel:
-        results = forecast_multimodel_calibration(series_by_model, horizon_sessions=horizon)
+        results = forecast_multimodel_calibration(
+            series_by_model, horizon_sessions=horizon, mode=exec_mode, preferred_model_key=target_model
+        )
         if json_output:
             out_dict = {m: r.model_dump() for m, r in results.items()}
             print(json.dumps(out_dict, indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
@@ -3302,13 +3335,19 @@ def agent_calibration_forecast(
         )
         raise typer.Exit(0)
 
-    res = forecast_agent_calibration_trajectory(scores, horizon_sessions=horizon, conductor_model=conductor)
+    res = forecast_agent_calibration_trajectory(
+        scores,
+        horizon_sessions=horizon,
+        conductor_model=conductor,
+        mode=exec_mode,
+        preferred_model_key=target_model,
+    )
     if json_output:
         print(res.model_dump_json(indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
         return
 
     table = Table(
-        title=f"[bold #50fa7b]PROJECAO TEMPORAL DE CALIBRACAO - GOOGLE TIMESFM 2.0 (H={horizon})[/]",
+        title=f"[bold #50fa7b]PROJECAO TEMPORAL DE CALIBRACAO - GOOGLE TIMESFM ({res.intended_model or 'TimesFM'}) (H={horizon})[/]",
         box=box.ROUNDED,
     )
     table.add_column("Sessao Futura", style="bold cyan", justify="center")
@@ -3389,12 +3428,17 @@ def voice_speak(
 @agent_app.command("dream-optimize")
 def agent_dream_optimize(
     domain: str | None = typer.Option(None, "--domain", "-d", help="code_engineering ou pmev_math (padrao: todos)"),
+    model: str = typer.Option(
+        "2.5", "--model", "-m", help="Modelo TimesFM: 2.5 (producao Apache 2.0) ou 3.0 (pesquisa academica)"
+    ),
+    research: bool = typer.Option(False, "--research", "-r", help="Ativar modo de pesquisa academica nao-comercial"),
     json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
 ) -> None:
     """Fase de Sonho do Dream-RSI sobre o historico real, com a politica preditiva TimesFM."""
     from core.exploration_policy import AdaptiveDreamPolicy, ParallelRefinePolicy, TimesFMPredictivePolicy
     from engine.discovery_recorder import recorder_do_runtime
     from engine.dream_timesfm_forecaster import DreamTimesFMForecaster
+    from engine.timesfm_engine import ExecutionMode
 
     simulator = recorder_do_runtime().simulator
     historico = simulator.load_trees(domain)
@@ -3405,8 +3449,14 @@ def agent_dream_optimize(
         )
         raise typer.Exit(0)
 
+    is_research = research or "3.0" in model or "330m" in model
+    if is_research:
+        forecaster = DreamTimesFMForecaster.for_research(preferred_model_key=model)
+    else:
+        forecaster = DreamTimesFMForecaster(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key=model)
+
     corrente = ParallelRefinePolicy()
-    candidatas = [corrente, AdaptiveDreamPolicy(), TimesFMPredictivePolicy(forecaster=DreamTimesFMForecaster())]
+    candidatas = [corrente, AdaptiveDreamPolicy(), TimesFMPredictivePolicy(forecaster=forecaster)]
     vencedora, avaliacoes = simulator.run_dream_optimization(candidatas, corrente, historico)
 
     if json_output:

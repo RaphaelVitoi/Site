@@ -71,6 +71,18 @@ TIMESFM_CATALOG: dict[str, ModelMetadata] = {
     ),
 }
 
+TIMESFM_ALIASES: dict[str, str] = {
+    "3.0": "timesfm-3.0-330m",
+    "timesfm-3.0": "timesfm-3.0-330m",
+    "330m": "timesfm-3.0-330m",
+    "2.5": "timesfm-2.5-200m",
+    "timesfm-2.5": "timesfm-2.5-200m",
+    "200m": "timesfm-2.5-200m",
+    "2.0": "timesfm-2.0-500m",
+    "timesfm-2.0": "timesfm-2.0-500m",
+    "500m": "timesfm-2.0-500m",
+}
+
 
 # Procedencia declarada quando NENHUM peso do TimesFM foi carregado. `model_used`
 # devolvia o id do Google incondicionalmente -- inclusive no caminho analitico, que
@@ -173,9 +185,15 @@ class TimesFMEngine:
         preferred_model_key: str = "timesfm-2.0-500m",
     ) -> None:
         self.mode = mode
-        self.preferred_model_key = preferred_model_key
-        self.metadata = self._validate_and_resolve_model(mode, preferred_model_key)
+        canonical_key = TIMESFM_ALIASES.get(preferred_model_key.strip().lower(), preferred_model_key)
+        self.preferred_model_key = canonical_key
+        self.metadata = self._validate_and_resolve_model(mode, canonical_key)
         self._model = None
+
+    @property
+    def is_research_mode(self) -> bool:
+        """Indica se a inferencia esta sob o modo de pesquisa nao-comercial."""
+        return self.mode == ExecutionMode.RESEARCH_BENCHMARK
 
     @property
     def weights_loaded(self) -> bool:
@@ -202,21 +220,22 @@ class TimesFMEngine:
         mode: ExecutionMode,
         model_key: str,
     ) -> ModelMetadata:
-        if model_key not in TIMESFM_CATALOG:
-            raise ValueError(f"Modelo desconhecido: '{model_key}'. Op\u00e7\u00f5es: {list(TIMESFM_CATALOG.keys())}")
+        canonical_key = TIMESFM_ALIASES.get(model_key.strip().lower(), model_key)
+        if canonical_key not in TIMESFM_CATALOG:
+            raise ValueError(f"Modelo desconhecido: '{model_key}'. Opções: {list(TIMESFM_CATALOG.keys())}")
 
-        meta = TIMESFM_CATALOG[model_key]
+        meta = TIMESFM_CATALOG[canonical_key]
 
         if mode == ExecutionMode.COMMERCIAL_PRODUCTION and not meta.is_commercial_allowed:
             raise TimesFMGovernanceError(
-                f"VIOLA\u00c7\u00c3O DE LICEN\u00c7A: O modelo '{model_key}' est\u00e1 sob '{meta.license_tier.value}'. "
-                "O Google pro\u00edbe expressamente o uso de pesos do TimesFM 3.0 em ambientes comerciais ou de produ\u00e7\u00e3o. "
-                "Para produ\u00e7\u00e3o comercial, utilize 'timesfm-2.0-500m' / 'timesfm-2.5-200m' (Apache 2.0) "
-                "ou utilize o servi\u00e7o gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
+                f"VIOLAÇÃO DE LICENÇA: O modelo '{canonical_key}' está sob '{meta.license_tier.value}'. "
+                "O Google proíbe expressamente o uso de pesos do TimesFM 3.0 em ambientes comerciais ou de produção. "
+                "Para produção comercial, utilize 'timesfm-2.0-500m' / 'timesfm-2.5-200m' (Apache 2.0) "
+                "ou utilize o serviço gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
             )
 
         logger.debug(
-            "TimesFM Inicializado | Modo: %s | Modelo: %s | Licen\u00e7a: %s",
+            "TimesFM Inicializado | Modo: %s | Modelo: %s | Licença: %s",
             mode.value,
             meta.model_id,
             meta.license_tier.value,

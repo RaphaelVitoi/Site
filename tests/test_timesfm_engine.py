@@ -65,6 +65,25 @@ def test_timesfm_engine_initialization_research_mode():
     assert engine_3_0.metadata.version == "3.0"
     assert engine_3_0.metadata.license_tier == LicenseTier.NON_COMMERCIAL_V1
     assert engine_3_0.metadata.is_commercial_allowed is False
+    assert engine_3_0.is_research_mode is True
+
+
+def test_timesfm_engine_aliases_resolution():
+    """Valida resolucao ergonomica de aliases (3.0, 2.5, 2.0) no catalogo."""
+    engine_alias_3 = TimesFMEngine(
+        mode=ExecutionMode.RESEARCH_BENCHMARK,
+        preferred_model_key="3.0",
+    )
+    assert engine_alias_3.preferred_model_key == "timesfm-3.0-330m"
+    assert engine_alias_3.metadata.version == "3.0"
+
+    engine_alias_25 = TimesFMEngine(
+        mode=ExecutionMode.COMMERCIAL_PRODUCTION,
+        preferred_model_key="2.5",
+    )
+    assert engine_alias_25.preferred_model_key == "timesfm-2.5-200m"
+    assert engine_alias_25.metadata.version == "2.5"
+    assert engine_alias_25.is_research_mode is False
 
 
 def test_timesfm_engine_unknown_model_rejected():
