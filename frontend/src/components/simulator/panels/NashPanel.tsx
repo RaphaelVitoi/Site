@@ -51,23 +51,23 @@ interface StreetInfo {
 }
 
 const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: number; current: StreetInfo }) => (
-  <div className="relative z-10 grid grid-cols-1 gap-8 md:grid-cols-2">
-    <div className="hover:border-accent-indigo/40 group/ip flex flex-col gap-4 rounded-4xl border border-white/5 bg-slate-900/40 p-8 shadow-inner transition-all duration-500 hover:bg-slate-900/60">
+  <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="hover:border-accent-indigo/40 group/ip flex flex-col gap-3 rounded-3xl border border-white/5 bg-slate-900/40 p-5 shadow-inner transition-all duration-500 hover:bg-slate-900/60">
       <div className="flex items-center justify-between px-1">
-        <span className="text-text-darker group-hover/ip:text-accent-indigo-light text-[0.6rem] font-black tracking-[0.4em] uppercase transition-colors">
+        <span className="text-text-darker group-hover/ip:text-accent-indigo-light text-[0.6rem] font-black tracking-[0.3em] uppercase transition-colors">
           Pressão Agressor (IP)
         </span>
         <i className="fa-solid fa-bolt text-accent-indigo/20 group-hover/ip:text-accent-indigo/60 text-[0.7rem] transition-colors" />
       </div>
       <div className="flex items-baseline gap-3">
         <span
-          className={`font-mono text-4xl font-black tracking-tighter text-white tabular-nums ${current.textShadowClass}`}
+          className={`font-mono text-3xl sm:text-4xl font-black tracking-tighter text-white tabular-nums ${current.textShadowClass}`}
         >
           {ipRp.toFixed(1)}
         </span>
-        <span className="text-text-darker text-[0.7rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
+        <span className="text-text-darker text-[0.65rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
       </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(100, ipRp * 2.5)}%` }}
@@ -77,20 +77,20 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
       </div>
     </div>
 
-    <div className="hover:border-accent-amber/40 group/oop flex flex-col gap-4 rounded-4xl border border-white/5 bg-slate-900/40 p-8 shadow-inner transition-all duration-500 hover:bg-slate-900/60 md:items-end md:text-right">
+    <div className="hover:border-accent-amber/40 group/oop flex flex-col gap-3 rounded-3xl border border-white/5 bg-slate-900/40 p-5 shadow-inner transition-all duration-500 hover:bg-slate-900/60 md:items-end md:text-right">
       <div className="flex w-full flex-row-reverse items-center justify-between px-1 md:flex-row">
         <i className="fa-solid fa-shield-halved text-accent-amber/20 group-hover/oop:text-accent-amber/60 text-[0.7rem] transition-colors" />
-        <span className="text-text-darker group-hover/oop:text-accent-amber text-[0.6rem] font-black tracking-[0.4em] uppercase transition-colors">
+        <span className="text-text-darker group-hover/oop:text-accent-amber text-[0.6rem] font-black tracking-[0.3em] uppercase transition-colors">
           Pressão Defensor (OOP)
         </span>
       </div>
       <div className="flex items-baseline gap-3">
-        <span className="text-accent-amber font-mono text-4xl font-black tracking-tighter tabular-nums [text-shadow:0_0_25px_rgba(245,158,11,0.3)]">
+        <span className="text-accent-amber font-mono text-3xl sm:text-4xl font-black tracking-tighter tabular-nums [text-shadow:0_0_25px_rgba(245,158,11,0.3)]">
           {oopRp.toFixed(1)}
         </span>
-        <span className="text-text-darker text-[0.7rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
+        <span className="text-text-darker text-[0.65rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
       </div>
-      <div className="mt-2 flex h-1.5 w-full justify-end overflow-hidden rounded-full bg-white/5">
+      <div className="mt-1 flex h-1.5 w-full justify-end overflow-hidden rounded-full bg-white/5">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(100, oopRp * 2.5)}%` }}
@@ -111,16 +111,17 @@ const ActionStrategies = ({
   activeStreet: keyof StreetChipEvFreqs;
   onStreetFreqChange: (s: keyof StreetChipEvFreqs, f: ChipEvFreqs) => void;
 }) => (
-  <div className="relative z-10 grid grid-cols-1 gap-16 xl:grid-cols-2">
-    <div className="w-full space-y-8">
-      <div className="text-accent-indigo-light border-accent-indigo/20 flex items-center justify-between border-b px-2 pb-6 text-[0.85rem] font-black tracking-[0.4em] uppercase">
-        <div className="flex items-center gap-5">
-          <div className="bg-accent-indigo h-3.5 w-3.5 rounded-full shadow-[0_0_15px_var(--accent-indigo)]" />
-          IP &middot; Estratégia de Agressão
+  <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+    {/* Card IP (Agressor) */}
+    <div className="w-full flex flex-col rounded-3xl border border-accent-indigo/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-indigo-950/20 backdrop-blur-md">
+      <div className="text-accent-indigo-light border-accent-indigo/20 mb-4 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.25em] uppercase">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-accent-indigo h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-indigo)]" />
+          <span>IP &middot; Agressor</span>
         </div>
-        <i className="fa-solid fa-crosshairs text-[0.8rem] opacity-30" />
+        <i className="fa-solid fa-crosshairs text-[0.75rem] text-accent-indigo/40" />
       </div>
-      <div className="space-y-5 px-1">
+      <div className="flex flex-col gap-3">
         <ActionRow
           label="Check"
           chipEv={current.freqs.ip_check}
@@ -150,15 +151,17 @@ const ActionStrategies = ({
         />
       </div>
     </div>
-    <div className="w-full space-y-8">
-      <div className="text-accent-rose border-accent-rose/20 flex items-center justify-between border-b px-2 pb-6 text-[0.85rem] font-black tracking-[0.4em] uppercase">
-        <div className="flex items-center gap-5">
-          <div className="bg-accent-rose h-3.5 w-3.5 rounded-full shadow-[0_0_15px_var(--accent-rose)]" />
-          OOP &middot; Estratégia de Defesa
+
+    {/* Card OOP (Defensor) */}
+    <div className="w-full flex flex-col rounded-3xl border border-accent-rose/20 bg-slate-900/50 p-4 sm:p-5 shadow-lg shadow-rose-950/20 backdrop-blur-md">
+      <div className="text-accent-rose border-accent-rose/20 mb-4 flex items-center justify-between border-b px-1 pb-3 text-[0.75rem] font-black tracking-[0.25em] uppercase">
+        <div className="flex items-center gap-2.5">
+          <div className="bg-accent-rose h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-rose)]" />
+          <span>OOP &middot; Defensor</span>
         </div>
-        <i className="fa-solid fa-shield text-[0.8rem] opacity-30" />
+        <i className="fa-solid fa-shield text-[0.75rem] text-accent-rose/40" />
       </div>
-      <div className="space-y-5 px-1">
+      <div className="flex flex-col gap-3">
         <ActionRow
           label="Call"
           chipEv={current.freqs.oop_call}
@@ -198,7 +201,7 @@ const EntropyModulators = ({
   aggressionFactor: number;
   onAggressionChange: (v: number) => void;
 }) => (
-  <div className="relative z-10 grid grid-cols-1 gap-10 pt-10">
+  <div className="relative z-10 grid grid-cols-1 pt-4">
     <SotaTooltip
       align="left"
       title="Agressividade Humana (Fator Ψ)"
@@ -206,19 +209,19 @@ const EntropyModulators = ({
       theme="indigo"
       fullWidth
     >
-      <div className="hover:border-accent-indigo/40 group/psi relative overflow-hidden rounded-[2.5rem] border border-white/5 bg-slate-900/40 p-10 shadow-inner transition-all hover:bg-slate-900/60">
+      <div className="hover:border-accent-indigo/40 group/psi relative overflow-hidden rounded-3xl border border-white/5 bg-slate-900/40 p-5 sm:p-6 shadow-inner transition-all hover:bg-slate-900/60">
         <div className="from-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_top_right] to-transparent" />
-        <div className="relative z-10 mb-10 flex items-center justify-between px-1">
-          <div className="space-y-2">
-            <span className="text-text-muted group-hover/psi:text-white text-[0.75rem] font-black tracking-[0.3em] uppercase transition-colors">
+        <div className="relative z-10 mb-6 flex items-center justify-between px-1">
+          <div className="space-y-1.5">
+            <span className="text-text-muted group-hover/psi:text-white text-[0.75rem] font-black tracking-[0.25em] uppercase transition-colors">
               Modulador Ψ
             </span>
             <p className="text-text-darker m-0 text-[0.6rem] font-black tracking-widest uppercase">
               Agressividade Relativa
             </p>
           </div>
-          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-black/60 px-6 py-3 shadow-2xl">
-            <span className="text-accent-emerald font-mono text-[1.1rem] font-black tabular-nums">
+          <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/60 px-4 py-2 shadow-xl">
+            <span className="text-accent-emerald font-mono text-[1rem] font-black tabular-nums">
               {aggressionFactor.toFixed(1)}
               <span className="ml-1 text-[0.7rem] opacity-50">×</span>
             </span>
@@ -233,7 +236,7 @@ const EntropyModulators = ({
           step="0.1"
           value={aggressionFactor}
           onChange={(e) => onAggressionChange(Number.parseFloat(e.target.value))}
-          className="accent-accent-indigo relative z-10 mb-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/5"
+          className="accent-accent-indigo relative z-10 mb-2 h-2 w-full cursor-pointer appearance-none rounded-full bg-white/5"
           aria-label="Fator de Agressão Humana"
         />
       </div>
@@ -317,12 +320,12 @@ export default function NashPanel({
   const oopRp = isBaseline ? 0 : current.rps.oop;
 
   return (
-    <div className="glass-panel bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-12 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
+    <div className="glass-panel !p-5 sm:!p-6 lg:!p-7 bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-6 sm:gap-8 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
       <div className="bg-accent-indigo/10 group-hover/nash:bg-accent-indigo/15 pointer-events-none absolute -top-32 -right-32 h-80 w-80 rounded-full blur-[140px] transition-all duration-1000" />
       <div className="bg-accent-rose/5 pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full blur-[140px]" />
 
       {/* Header com Status do Motor */}
-      <div className="relative z-10 flex flex-col items-start justify-between gap-8 border-b border-white/5 pb-10 md:flex-row">
+      <div className="relative z-10 flex flex-col items-start justify-between gap-4 sm:gap-6 border-b border-white/5 pb-6 md:flex-row">
         <div className="space-y-4">
           <div className="flex items-center gap-4">
             <div className="bg-accent-indigo h-2.5 w-2.5 animate-pulse rounded-full shadow-[0_0_20px_var(--color-accent-indigo)]" />
