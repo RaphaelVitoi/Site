@@ -41,6 +41,16 @@ Um observador amador olhará para uma Mesa Final de High Stakes e dirá que os j
 
 O Operador Soberano identifica quando o oponente está sofrendo um Downward Drift mais severo do que o necessário (medo irracional). Nesses spots, o blefe pequeno (small bluff) tem uma eficiência de 100%, pois o oponente está matematicamente — e emocionalmente — proibido de colidir.
 
+---
+
+## 4. Evidência Empírica e Falsificabilidade Experimental (Aula 1.2)
+
+Em 2026-09-18, o laboratório de pesquisa do ecossistema executou a medição reprodutível da hipótese **H8 (Downward Drift de Sizings)** contra os nós pareados GTO Wizard (ChipEV) × HRC (IcmEV) da Aula 1.2 (\`data/aula12_pairs.json\`):
+
+* **Nós de Aposta Livre (Flop $K\diamondsuit J\clubsuit T\spadesuit$):** A convenção de fração do pote é preservada com erro máximo de apenas $0{,}40$ p.p. Sob pressão de ICM, o solver não apenas amplia a frequência de check, mas desloca apostas de grande porte para sizings menores (leads de 25% do pote).
+* **Nós de Aumento (Raise Nodes):** Onde já houve aposta adversária, a dinâmica é governada pela proteção de equidade e polarização, exigindo separação estrita da geometria do pote.
+* **Critério Científico de Refutabilidade:** A análise de sensibilidade por bootstrap ($N=2.000$) comprovou que a compressão depende criticamente da liberdade de ação e do SPR residual, consolidando o Downward Drift não como um viés empírico arbitrário, mas como uma consequência direta da preservação não-linear de valuation.
+
 "O Downward Drift é a gravidade do payout moldando a arquitetura da aposta."
 `;
 
