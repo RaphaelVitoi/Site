@@ -10,6 +10,7 @@ tarefa; api/v1/handlers.py grava cada arvore PMev simulada; o comando
 
 Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 """
+# pylint: disable=global-statement
 
 from __future__ import annotations
 
@@ -315,7 +316,7 @@ class DiscoveryRecorder:
 # Banco do runtime ancorado na raiz do repositorio: o DEFAULT_DB_PATH relativo gravaria
 # onde quer que o processo tenha sido lancado (worker, API e CLI partem de lugares distintos).
 RUNTIME_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "discovery_tree.db"
-_recorder_runtime: DiscoveryRecorder | None = None
+_recorder_runtime: DiscoveryRecorder | None = None  # pylint: disable=invalid-name
 
 
 def recorder_do_runtime() -> DiscoveryRecorder:
@@ -324,7 +325,7 @@ def recorder_do_runtime() -> DiscoveryRecorder:
     NEXUS_DISCOVERY_DB redireciona o banco -- a suite a aponta para um diretorio
     temporario, para que nenhum teste escreva no historico real.
     """
-    global _recorder_runtime  # noqa: PLW0603 -- singleton preguicoso do processo
+    global _recorder_runtime  # pylint: disable=global-statement # noqa: PLW0603
     if _recorder_runtime is None:
         _recorder_runtime = DiscoveryRecorder(os.environ.get("NEXUS_DISCOVERY_DB") or RUNTIME_DB_PATH)
     return _recorder_runtime

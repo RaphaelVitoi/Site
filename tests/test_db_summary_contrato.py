@@ -3,6 +3,7 @@
 O dashboard exibia teto de orcamento e agentes como constantes. O backend passa a devolver os dois a
 partir das fontes canonicas, e este guard falha se alguem voltar a fixa-los em qualquer ponta.
 """
+# pylint: disable=protected-access
 
 from __future__ import annotations
 

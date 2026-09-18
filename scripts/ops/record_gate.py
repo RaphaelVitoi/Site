@@ -185,6 +185,36 @@ def arquivos_em_stage() -> list[str]:
     return [linha for linha in saida.splitlines() if linha.strip()]
 
 
+def caminhos_removidos_em_stage() -> list[str]:
+    """Caminhos que o commit apaga ou renomeia -- o nome antigo deixa de existir."""
+    removidos = []
+    for linha in _git("diff", "--cached", "--name-status", "-M", "--diff-filter=DR").splitlines():
+        partes = linha.split("\t")
+        if len(partes) >= 2:
+            removidos.append(partes[1])  # D: o caminho; R: o nome ANTIGO
+    return removidos
+
+
+def citacoes_ao_que_o_commit_remove(em_stage: list[str]) -> list[str]:
+    """G6b: documento prescritivo FORA do stage que cita caminho que este commit apaga ou move.
+
+    A G6 so olha documento em stage. Apagar ou mover o arquivo citado deixa o documento
+    fora do stage, e a morte so aparecia na suite do pre-push, minutos depois do commit
+    aprovado. Medido em 2026-09-18: duas vezes num dia, as duas por mim.
+    """
+    erros = []
+    for removido in caminhos_removidos_em_stage():
+        for rel in _git("grep", "--cached", "-l", "-F", removido, "--", "*.md").splitlines():
+            if rel in em_stage or not _e_prescritivo(rel):
+                continue  # em stage, a G6 ja o cobre
+            if removido in referencias_mortas(rel):
+                erros.append(
+                    f"{rel} cita `{removido}`, que este commit apaga ou move. Atualize a citacao, "
+                    "ou -- se o registro e historico -- declare o caminho em referencias_nao_resolviveis."
+                )
+    return erros
+
+
 def _blob(revisao_e_caminho: str) -> str | None:
     """Hash do blob de um caminho numa revisao (`HEAD:x`) ou no indice (`:x`)."""
     r = subprocess.run(
@@ -757,6 +787,9 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
                 "Corrija o caminho ou remova a referencia -- documento que instrui "
                 "nao pode apontar para o vazio."
             )
+
+    # --- G6b. o commit apaga ou move o que um documento prescritivo cita ------
+    erros.extend(citacoes_ao_que_o_commit_remove(em_stage))
 
     # --- G5b. ampliacao de ACL/CORS/origem ------------------------------------
     for rel in em_stage:

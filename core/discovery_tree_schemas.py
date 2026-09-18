@@ -2,6 +2,7 @@
 
 Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Pydantic v2.
 """
+# pylint: disable=no-member
 
 from __future__ import annotations
 

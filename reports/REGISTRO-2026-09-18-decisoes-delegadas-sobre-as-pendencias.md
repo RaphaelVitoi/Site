@@ -16,6 +16,8 @@ caminhos:
   - engine/discovery_recorder.py
   - engine/dream_replay_simulator.py
   - tests/test_dream_rsi_experimental.py
+referencias_nao_resolviveis:
+  - tests/test_dream_rsi_experimental.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
