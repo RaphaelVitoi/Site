@@ -40,7 +40,7 @@
  * @format
  */
 
-import { buildSimulatedStacks, calculateMapaICM, calculatePerspectivaVitoi, premioDeRiscoDoBf, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
+import { buildSimulatedStacks, calculateMapaICM, calculatePerspectivaVitoi, premioDeRiscoCanonico, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
 
 const RP_MAX = 60;
 export const BF_THRESHOLD = 1.01;
@@ -78,9 +78,9 @@ function deriveRecommendedSizing(
 	return 'medium';
 }
 
-// RP com sinal (Teorema 2) e teto de exibição RP_MAX. O piso é o de premioDeRiscoDoBf.
-function bfToRp(bf: number): number {
-	return Math.min(RP_MAX, premioDeRiscoDoBf(bf));
+// RP com sinal (Teorema 2) na grandeza canônica RP = (E* - a)/(1 - a) e teto de exibição RP_MAX.
+function bfToRp(bf: number, potOdds: number = 0.5): number {
+	return Math.min(RP_MAX, premioDeRiscoCanonico(bf, potOdds));
 }
 
 export function deriveRps(
@@ -99,8 +99,8 @@ export function deriveRps(
 
 	// SOTA v8.0 GOLD CALIBRATION:
 	// Para a matriz de RP didática, não simulamos o Shove (que explode o RP para > 60%).
-	// Simulamos um "Investimento de Referência" (~35% do stack) que coincide com os 21.4% da Aula 1.2.
-	const effStack = simulationAmount ?? rawEffStack * 0.35;
+	// Simulamos um "Investimento de Referência" (~61% do stack) sob a grandeza canônica que coincide com os 21.4% da Aula 1.2.
+	const effStack = simulationAmount ?? rawEffStack * 0.6101;
 
 	if (rawEffStack <= 0 || effStack <= 0) {
 		return {
@@ -158,7 +158,7 @@ export function deriveRps(
 		return 1;
 	});
 
-	const allRps = allBfs.map((bf) => bfToRp(bf));
+	const allRps = allBfs.map((bf) => bfToRp(bf, 0.5));
 	const ipRp = allRps[ipIdx] ?? 0;
 	const oopRp = allRps[oopIdx] ?? 0;
 	const deltaRp = ipRp - oopRp;
@@ -301,7 +301,8 @@ export function derivePostFlopRps(
 		return 1;
 	});
 
-	const allRps = allBfs.map((bf) => bfToRp(bf));
+	const aDecision = potTotal > 0 ? Math.min(Math.max(heroCost / potTotal, 0.001), 0.999) : 0.5;
+	const allRps = allBfs.map((bf) => bfToRp(bf, aDecision));
 	const ipRp = allRps[ipIndex] ?? 0;
 	const oopRp = allRps[oopIndex] ?? 0;
 	// Delta de risco entre os dois jogadores (perspectiva do IP agressor)
