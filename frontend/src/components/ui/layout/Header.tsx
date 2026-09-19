@@ -142,7 +142,7 @@ const HEADER_STRINGS = {
   author: 'O Autor',
   brandTitle: 'POKER',
   brandSubtitle: 'RACIONAL',
-  tagline: 'Nexus · SOTA v7.0 GOLD',
+  tagline: 'Nexus · SOTA v8.0 GOLD',
   openMenu: 'Abrir Menu',
   closeMenu: 'Fechar menu',
   oracleOnline: 'Oráculo Online',
