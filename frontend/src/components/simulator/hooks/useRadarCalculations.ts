@@ -31,9 +31,10 @@ export interface TopologicalMetrics {
 	exploitDirectives: string[];
 }
 
+/** Builds the topological radar metrics for a simulator scenario. */
 function buildTopologicalData(scenario: Scenario, nash?: IcmDistortionResult): TopologicalMetrics {
 	const firstSpr = scenario.sprData[0];
-	const lastSpr = scenario.sprData.at(-1);
+	const lastSpr = scenario.sprData[scenario.sprData.length - 1];
 	const resolvedNash =
 		nash ??
 		solveIcmDistortion(scenario.ipRp, scenario.oopRp, scenario.defaultStreetFreqs.flop, 1);
@@ -131,4 +132,3 @@ export function useRadarCalculations({
 
 	return { currentScenario, compareScenario, radarData, metricsA, metricsB, deltaMetrics };
 }
-

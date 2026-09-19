@@ -55,6 +55,7 @@ const ACTION_STREET_MAP: Record<TacticalActionType, number> = {
 	call_condensed: 2,
 };
 
+/** Tracks Bayesian range beliefs and exposes actions that update the current state. */
 export function useBayesianRange(options?: UseBayesianRangeOptions) {
 	const initialTexture = options?.initialBoardTexture ?? 'aula1_2';
 	const [boardTexture, setBoardTexture] = useState<BoardTextureId>(initialTexture);
@@ -151,7 +152,7 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 				return [null];
 			}
 			const next = prev.slice(0, -1);
-			const last = next.at(-1) ?? null;
+			const last = next[next.length - 1] ?? null;
 			setActiveAction(last);
 			return next;
 		});
@@ -198,6 +199,3 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 		resetBelief,
 	};
 }
-
-
-
