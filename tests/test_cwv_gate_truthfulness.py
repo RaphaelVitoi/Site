@@ -74,6 +74,29 @@ def test_gate_sem_cdp_declara_cwv_e_a11y_nao_medidos(tmp_path: Path) -> None:
     assert "NAO MEDIDO" in output
     assert "FRAGIL (AMARELO)" in output
     assert "APPROVED (SOTA GOLD)" not in output
+    # Este processo e lancado pelo Python, que -- ao contrario do pwsh -- repassa
+    # ao 5.1 o PSModulePath do PowerShell 7. E o caminho em que o cache de CVE
+    # falhava calado; agora a falha se imprime, e aqui ela reprova.
+    assert "CACHE CVE INDISPONIVEL" not in output, output
+
+
+def test_gate_nao_depende_de_funcao_de_script_do_utility_5_1() -> None:
+    """Get-FileHash & cia. somem no 5.1 quando o PSModulePath herdado vem do pwsh 7.
+
+    No Windows PowerShell 5.1 esses comandos sao FUNCOES de script do modulo
+    Microsoft.PowerShell.Utility, nao cmdlets compilados. Lancado pelo Python, o
+    portao herda o PSModulePath do 7, resolve o Utility 7.0.0.0, nao o carrega, e
+    o comando deixa de existir. Medido em 2026-09-18: o cache de CVE nunca acertava
+    por esse caminho. Comentario pode citar o nome; codigo nao pode chama-lo.
+    """
+    funcoes_de_script = ("Get-FileHash", "New-TemporaryFile", "Format-Hex", "Import-PowerShellDataFile")
+    codigo = [
+        (n, linha)
+        for n, linha in enumerate(GATE.read_text(encoding="utf-8-sig").splitlines(), start=1)
+        if not linha.lstrip().startswith("#")
+    ]
+    chamadas = [f"{n}: {linha.strip()}" for n, linha in codigo if any(f in linha for f in funcoes_de_script)]
+    assert not chamadas, "use Get-Sha256Hex (.NET):\n  " + "\n  ".join(chamadas)
 
 
 @pytest.mark.skipif(shutil.which("powershell") is None, reason="PowerShell 5.1 ausente do PATH")
@@ -370,7 +393,11 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
         encoding="utf-8",
         errors="replace",
         capture_output=True,
-        timeout=45,
+        # Mesmo gate completo dos dois primeiros casos, e o mesmo teto. Medido em
+        # 2026-09-17: 11 s o gate isolado, 30 s este teste isolado, 38 s com quatro
+        # execucoes em paralelo, e tres reprovacoes por TimeoutExpired de 45 s na
+        # suite integral com a maquina carregada. Decisao do Tier 0.
+        timeout=90,
         check=False,
     )
 

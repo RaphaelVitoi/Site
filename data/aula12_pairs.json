@@ -1,6 +1,6 @@
 {
-  "descricao": "Espelho JSON dos sete pares transcritos da Aula 1.2 para consumo do motor Python. Fonte curada: frontend/src/components/simulator/solver/__fixtures__/aula12Pairs.ts. frontend/src/tests/simulator/aula12PairsJson.test.ts reprova se divergirem. Nao editar a mao.",
-  "geradoDe": "frontend/src/components/simulator/solver/__fixtures__/aula12Pairs.ts",
+  "descricao": "Espelho JSON dos sete pares transcritos da Aula 1.2 para consumo do motor Python. Fonte curada: frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts. frontend/src/tests/simulator/aula12PairsJson.test.ts reprova se divergirem. Nao editar a mao.",
+  "geradoDe": "frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts",
   "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
   "atribuicaoAmbiguaNodelock": [
     "PAR_5_IP_VS_XR_FLOP",

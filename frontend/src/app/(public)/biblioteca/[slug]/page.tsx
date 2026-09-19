@@ -56,8 +56,11 @@ const fetcher = async (url: string) => {
 };
 
 export default function DynamicArticlePage() {
-	const { slug } = useParams();
-	const { data: content, error, isLoading } = useSWR(`/api/v1/content/${slug}`, fetcher);
+	const params = useParams();
+	const slug = Array.isArray(params['slug']) ? params['slug'].join('/') : String(params['slug'] ?? '');
+	// O slug chega DECODIFICADO: `%2F` vira `/` e `..` atravessaria para outra rota de mesma origem.
+	// Encode antes de interpolar no caminho da API (FE-11).
+	const { data: content, error, isLoading } = useSWR(`/api/v1/content/${encodeURIComponent(slug)}`, fetcher);
 
 	if (isLoading)
 		return (

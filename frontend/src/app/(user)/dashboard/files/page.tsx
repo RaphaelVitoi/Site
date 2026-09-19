@@ -313,7 +313,7 @@ function FileViewerBody({
       {selectedFile.category === 'pdf' && pdfTab === 'visual' && (
         <div className="h-137.5 grow overflow-hidden rounded-lg border border-white/5 bg-black/20">
           <iframe
-            src={`/api/proxy?url=/api/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
+            src={`/api/vitoi/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
             className="h-full w-full border-0"
             title="PDF Viewer"
           />
@@ -378,7 +378,7 @@ function FileViewerBody({
               </div>
               <audio
                 controls
-                src={`/api/proxy?url=/api/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
+                src={`/api/vitoi/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
                 className="w-full shadow-lg"
               >
                 <track kind="captions" />
@@ -392,7 +392,7 @@ function FileViewerBody({
             <>
               <video
                 controls
-                src={`/api/proxy?url=/api/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
+                src={`/api/vitoi/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
                 className="max-h-95 w-full rounded-lg border border-white/10 shadow-2xl"
               >
                 <track kind="captions" />
@@ -551,7 +551,7 @@ export default function FilesDashboardPage() {
   useEffect(() => {
     async function fetchFiles() {
       try {
-        const res = await fetch('/api/proxy?url=/api/files/list');
+        const res = await fetch('/api/vitoi/files/list');
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = (await res.json()) as { status: string; tree: SourceTree[]; error?: string };
         if (data.status === 'SUCCESS') {
@@ -575,27 +575,33 @@ export default function FilesDashboardPage() {
     const file = selectedFile;
     setPdfTab('visual');
 
+    // Resposta de um arquivo selecionado antes não pode sobrescrever a do arquivo atual.
+    let ativo = true;
     async function fetchFileContent() {
       setLoadingContent(true);
       setFileContent(null);
       setGridSearch('');
       try {
         const encPath = encodeURIComponent(file.path);
-        const res = await fetch(`/api/proxy?url=/api/files/view?path=${encPath}`);
+        const res = await fetch(`/api/vitoi/files/view?path=${encPath}`);
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = (await res.json()) as FileContent;
-        setFileContent(data);
+        if (ativo) setFileContent(data);
       } catch (err: unknown) {
         console.error('[Files DB] File view failed:', err);
-        setFileContent({
-          type: 'text',
-          error: (err as Error).message || 'Failed to read file.',
-        });
+        if (ativo)
+          setFileContent({
+            type: 'text',
+            error: (err as Error).message || 'Failed to read file.',
+          });
       } finally {
-        setLoadingContent(false);
+        if (ativo) setLoadingContent(false);
       }
     }
     fetchFileContent();
+    return () => {
+      ativo = false;
+    };
   }, [selectedFile]);
 
   const toggleSource = (source: string) => {
@@ -677,7 +683,7 @@ export default function FilesDashboardPage() {
                 </div>
                 <div className="flex shrink-0 items-center space-x-2">
                   <a
-                    href={`/api/proxy?url=/api/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
+                    href={`/api/vitoi/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center space-x-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-white/10"

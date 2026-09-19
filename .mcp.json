@@ -1,19 +1,7 @@
 {
   "mcpServers": {
-    "google-jules": {
-      "command": "uv",
-      "args": [
-        "run",
-        "--no-sync",
-        "python",
-        "engine/jules_mcp_server.py"
-      ],
-      "env": {
-        "JULES_API_KEY": "${env:JULES_API_KEY}",
-        "GOOGLE_CLOUD_PROJECT": "original-498419"
-      }
-    },
     "nexus-bridge": {
+      "type": "stdio",
       "command": "uv",
       "args": [
         "run",
@@ -23,11 +11,8 @@
       ]
     },
     "supabase": {
-      "type": "sse",
+      "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=pbgktpltovmgjzqksxit&read_only=true&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
-    },
-    "threat-composer": {
-      "command": "threat-composer-ai-mcp"
     }
   }
 }

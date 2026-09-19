@@ -14,7 +14,14 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true, // SOTA: Native Gzip/Brotli compression in production and edge
   devIndicators: false,
-  transpilePackages: ['@fortawesome/fontawesome-free'],
+  // Avatares dos provedores OAuth configurados em src/auth.ts, exibidos via next/image (FE-13).
+  // O otimizador serve a imagem pela propria origem, o que tambem a mantem compativel com o COEP.
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'cdn.discordapp.com' },
+    ],
+  },
   turbopack: {
     root: path.resolve(__dirname, '..'),
   },

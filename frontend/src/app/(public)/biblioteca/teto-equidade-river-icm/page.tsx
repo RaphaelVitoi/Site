@@ -1,14 +1,24 @@
 /**
- * IDENTITY: Teto Equidade River ICM GOLD (Artigo Interativo)
- * PATH: src/app/biblioteca/teto-equidade-river-icm/page.tsx
+ * IDENTITY: Teto Equidade River ICM (Artigo Interativo SOTA v8.0 GOLD)
+ * PATH: src/app/(public)/biblioteca/teto-equidade-river-icm/page.tsx
  * ROLE: Artigo técnico expondo a barreira invisível de valuation na última street.
- * VERSION: v7.0 GOLD
+ * VERSION: v8.0 GOLD
  */
 
+'use client';
+
+import dynamic from 'next/dynamic';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
-import EquityCalculator from '@/components/simulator/panels/EquityCalculator';
+import ContentFooter from '@/components/ui/layout/ContentFooter';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import { ROUTES } from '@/constants/routes';
+import { SITE_CONFIG } from '@/constants/site';
+
+const EquityCalculator = dynamic(
+	() => import('@/components/simulator/panels/EquityCalculator'),
+	{ ssr: false }
+);
 
 const content = `
 # O Teto de Equidade no River
@@ -59,6 +69,13 @@ export default function TetoEquidadeRiverPage() {
 					</div>
 				</div>
 			</div>
+
+			<ContentFooter
+				shareTitle={`Teto de Equidade River | ${SITE_CONFIG.author}`}
+				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.TETO_EQUIDADE}`}
+				backLinkHref={ROUTES.BIBLIOTECA}
+				backLinkText="Voltar para Biblioteca"
+			/>
 		</div>
 	);
 }

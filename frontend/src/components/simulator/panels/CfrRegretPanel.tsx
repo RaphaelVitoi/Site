@@ -10,6 +10,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CfrCanvas, type CfrCanvasRef } from '../ui/CfrCanvas';
+import { useLoopVisibility } from '../hooks/useLoopVisibility';
 import { calculateJandaGeometricSizing, calculateJandaMDF } from '@/lib/canonicalTheoryEngine';
 import {
 	appendCfrRegretSample,
@@ -23,11 +24,13 @@ import {
 } from '@/lib/timesfm-client';
 
 const TIMESFM_CAPABILITY = getEngineCapability('timesfm-forecast');
-const WORKER_STATUS_LABEL = {
+export const HRC_CONVERGENCE_TARGET_CI = 0.003; // ~0.3% CI (métrica do HRC: distância em relação ao Nash / e-nash)
+const WORKER_STATUS_LABEL: Record<string, string> = {
 	starting: 'iniciando',
 	active: 'ativo',
+	converged: 'convergido (0.3% CI)',
 	error: 'indisponível',
-} as const;
+};
 
 interface CfrWorkerMessage {
 	matrix?: Float32Array;
@@ -61,6 +64,24 @@ function updateSizingDom(
 	if (elFlop) elFlop.textContent = `${flopBet.toFixed(1)} bb (${Math.round(flopPct * 100)}%)`;
 	if (elTurn) elTurn.textContent = `${turnBet.toFixed(1)} bb (${Math.round(turnPct * 100)}%)`;
 	if (elRiver) elRiver.textContent = `${Math.max(0, riverJam).toFixed(1)} bb (JAM)`;
+}
+
+function renderPathfindingSvg(
+	pathfindingEl: SVGPathElement | null,
+	path: { x: number; y: number }[],
+) {
+	if (!pathfindingEl || path.length === 0) return;
+	const firstNode = path[0];
+	if (!firstNode) return;
+	const w = 450;
+	const h = 450;
+	let d = `M ${firstNode.x * w} ${firstNode.y * h}`;
+	for (let i = 1; i < path.length; i++) {
+		const node = path.at(i);
+		if (!node) continue;
+		d += ` L ${node.x * w} ${node.y * h}`;
+	}
+	pathfindingEl.setAttribute('d', d);
 }
 
 function extractPathfinding(matrix: Float32Array, nodes: number): { x: number; y: number }[] {
@@ -109,7 +130,10 @@ export default function CfrRegretPanel({
 	const [stack, setStack] = useState<number>(initialStack);
 	const [equity, setEquity] = useState<number>(initialEquity);
 	const workerRef = useRef<Worker | null>(null);
-	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'error'>('starting');
+	// Sem pausa, o laço rAF seguia com a aba oculta ou o painel fora da tela (SIM-06).
+	const [painelRef, lacoAtivo] = useLoopVisibility();
+	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'converged' | 'error'>('starting');
+	const isConvergedRef = useRef(false);
 
 	const canonicalSizing = useMemo(() => {
 		return calculateJandaGeometricSizing(pot, stack, 3);
@@ -125,13 +149,13 @@ export default function CfrRegretPanel({
 	>('timesfm-2.5-200m');
 	const [regretSamples, setRegretSamples] = useState<CfrRegretDiagnostic[]>([]);
 	const [cfrConvergence, setCfrConvergence] = useState<CfrConvergenceForecastPayload>(() =>
-		calculateClientCfrConvergence([], 8, 0.001, preferredModel),
+		calculateClientCfrConvergence([], 8, HRC_CONVERGENCE_TARGET_CI, preferredModel),
 	);
 
 	useEffect(() => {
 		let cancelled = false;
 		const measuredHistory = regretSamples.map(({ value }) => value);
-		void forecastCfrConvergence(measuredHistory, 8, 0.001, preferredModel).then((forecast) => {
+		void forecastCfrConvergence(measuredHistory, 8, HRC_CONVERGENCE_TARGET_CI, preferredModel).then((forecast) => {
 			if (!cancelled) setCfrConvergence(forecast);
 		});
 		return () => {
@@ -159,12 +183,16 @@ export default function CfrRegretPanel({
 	});
 	useEffect(() => {
 		paramsRef.current = { kappa, nodes, pot, stack, equity };
+		isConvergedRef.current = false;
+		setWorkerStatus('active');
 	}, [kappa, nodes, pot, stack, equity]);
 
 	useEffect(() => {
 		setPot(initialPot);
 		setStack(initialStack);
 		setEquity(initialEquity);
+		isConvergedRef.current = false;
+		setWorkerStatus('active');
 	}, [initialPot, initialStack, initialEquity]);
 
 	useEffect(() => {
@@ -177,10 +205,18 @@ export default function CfrRegretPanel({
 
 		workerRef.current.onmessage = (e: MessageEvent<CfrWorkerMessage>) => {
 			isWorkerBusy = false;
-			setWorkerStatus('active');
 			const { matrix, diagnostic } = e.data;
 			if (diagnostic) {
 				setRegretSamples((history) => appendCfrRegretSample(history, diagnostic));
+				// SOTA HRC Criterion: Parada automática ao convergir para e-Nash <= 0.3% CI (0.003)
+				if (diagnostic.iteration >= 10 && diagnostic.value <= HRC_CONVERGENCE_TARGET_CI) {
+					isConvergedRef.current = true;
+					setWorkerStatus('converged');
+				} else if (!isConvergedRef.current) {
+					setWorkerStatus('active');
+				}
+			} else if (!isConvergedRef.current) {
+				setWorkerStatus('active');
 			}
 			if (!matrix) return; // SOTA Guard: Ignora pacotes paralelos do worker (ex: cfr_strategy) para evitar null-pointers e asfixia do Error Overlay
 
@@ -191,19 +227,7 @@ export default function CfrRegretPanel({
 			const path = extractPathfinding(matrix, paramsRef.current.nodes);
 
 			// Pathfinding Overlay O(1) (Manipulação Direta do DOM)
-			if (pathfindingRef.current && path.length > 0) {
-				const w = 450;
-				const h = 450; // Dimensões viewBox SVG
-				const firstNode = path[0];
-				if (!firstNode) return;
-				let d = `M ${firstNode.x * w} ${firstNode.y * h}`;
-				for (let i = 1; i < path.length; i++) {
-					const node = path.at(i);
-					if (!node) continue;
-					d += ` L ${node.x * w} ${node.y * h}`;
-				}
-				pathfindingRef.current.setAttribute('d', d);
-			}
+			renderPathfindingSvg(pathfindingRef.current, path);
 
 			updateSizingDom(path, paramsRef.current);
 		};
@@ -213,7 +237,7 @@ export default function CfrRegretPanel({
 		};
 
 		const loop = () => {
-			if (!isWorkerBusy && workerRef.current) {
+			if (!isWorkerBusy && workerRef.current && lacoAtivo.current && !isConvergedRef.current) {
 				isWorkerBusy = true;
 				// SOTA: Delega o cálculo do Regret Matching Real para o Web Worker
 				workerRef.current.postMessage({
@@ -235,10 +259,10 @@ export default function CfrRegretPanel({
 			workerRef.current?.terminate();
 			workerRef.current = null;
 		};
-	}, []);
+	}, [lacoAtivo]);
 
 	return (
-		<div className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
+		<div ref={painelRef} className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
 			<div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
 
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-white/5 gap-6">
@@ -250,10 +274,36 @@ export default function CfrRegretPanel({
 						Counterfactual Regret Minimization (CFR) & Predictive Pathfinding.
 					</p>
 				</div>
-				<div className="text-[0.6rem] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border border-accent-indigo/20 bg-accent-indigo/5 text-accent-indigo-light shadow-lg flex items-center gap-2">
-					<div className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse" />
-					CFR Worker {WORKER_STATUS_LABEL[workerStatus]} ·{' '}
-					{cfrConvergence.fallback_used ? 'forecast fallback' : 'TimesFM ativo'}
+				<div
+					className={`text-[0.6rem] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border shadow-lg flex items-center gap-2 transition-all ${
+						workerStatus === 'converged'
+							? 'border-accent-emerald/40 bg-accent-emerald/10 text-accent-emerald'
+							: 'border-accent-indigo/20 bg-accent-indigo/5 text-accent-indigo-light'
+					}`}
+				>
+					<div
+						className={`w-1.5 h-1.5 rounded-full ${
+							workerStatus === 'converged'
+								? 'bg-accent-emerald shadow-[0_0_8px_var(--color-accent-emerald,#10b981)]'
+								: 'bg-accent-indigo animate-pulse'
+						}`}
+					/>
+					<span>
+						CFR Worker {WORKER_STATUS_LABEL[workerStatus] ?? workerStatus} ·{' '}
+						{cfrConvergence.fallback_used ? 'forecast fallback' : 'TimesFM ativo'}
+					</span>
+					{workerStatus === 'converged' && (
+						<button
+							type="button"
+							onClick={() => {
+								isConvergedRef.current = false;
+								setWorkerStatus('active');
+							}}
+							className="ml-2 cursor-pointer rounded border border-accent-emerald/40 bg-accent-emerald/20 px-2 py-0.5 text-[0.5rem] font-black text-accent-emerald uppercase hover:bg-accent-emerald/30 transition-colors active:scale-95"
+						>
+							Reiterar
+						</button>
+					)}
 				</div>
 			</div>
 

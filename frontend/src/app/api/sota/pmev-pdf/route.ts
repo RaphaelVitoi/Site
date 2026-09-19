@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { escapePdfText, linhasDoCenario, validarParametrosDoTratado } from '@/lib/server/pmev-pdf-params';
 
 /**
  * IDENTITY: SOTA PMev Multi-Page Pedagogical Treatise & Technical Report PDF Export API
@@ -83,7 +84,7 @@ function generateMultiPagePdf(pagesData: string[][], docTitle: string): Uint8Arr
 
 		let y = 710;
 		for (const rawLine of pageLines) {
-			const line = rawLine.replace(/[()]/g, '');
+			const line = escapePdfText(rawLine);
 			if (line.startsWith('# ')) {
 				y -= 22;
 				contentStream.push(
@@ -160,14 +161,14 @@ function generateMultiPagePdf(pagesData: string[][], docTitle: string): Uint8Arr
 
 export async function POST(req: Request) {
 	try {
-		const body = await req.json().catch(() => ({}));
-		const stack = body.stack_bb ?? 18.5;
-		const bf = body.bubble_factor ?? 2.45;
-		const time = body.time_to_blind ?? 3.0;
-		const pmevReq = (body.pmev_threshold ? body.pmev_threshold * 100 : 43.16).toFixed(1);
-		const icmReq = '49.5';
-		const expanded = body.expanded_hands?.length > 0 ? body.expanded_hands.join(', ') : '55, 44, 33, 22, 87s, 76s, 65s, 54s, A6s, A3s, A2s, K9s';
-
+		const body: unknown = await req.json().catch(() => ({}));
+		const params = validarParametrosDoTratado(body);
+		if (!params) {
+			return NextResponse.json(
+				{ error: 'Parametros invalidos: numeros finitos na faixa e ate 169 maos canonicas (ex.: AKs, 72o, 55).' },
+				{ status: 400 },
+			);
+		}
 		const page1 = [
 			'# 1. FUNDAMENTACAO CONCEITUAL: O QUE E O ICM CLASSICO?',
 			'O Independent Chip Model - ICM - revolucionou a teoria dos torneios ao demonstrar que o valor',
@@ -213,22 +214,7 @@ export async function POST(req: Request) {
 		];
 
 		const page3 = [
-			'# 5. ESTUDO DE CASO REAL: HOLDEMRESOURCES HRC PRO VS. PMEV',
-			`Cenario: Mesa Final 8-Max MTT * Hero SB ${stack} BB vs BB 22.0 BB * BF = ${bf} * Blinds ${time}m`,
-			`   * Limiar ICM HRC: ${icmReq}% de equidade requerida -> Over-fold massivo e falencia induzida.`,
-			`   * Limiar PMev 3.2: ${pmevReq}% de equidade requerida -> Delta de Expansao: -6.33% de equidade viva.`,
-			'',
-			'# 6. MONTE CARLO BENCHMARK (100.000 ITERACOES)',
-			'   * Estrategia HRC Pro (ICM Puro): EV Medio = -2.00 BB | Degradacao de Stack: 100.0%',
-			'   * Estrategia PMev 3.2 (Expansao): EV Medio = +0.13 BB | Stack Pos-Orbita: 18.63 BB',
-			'   * Taxa de Sucesso PMev (Fold Equity + Dobra): 68.4% | Risco de Eliminacao: 31.6%',
-			'   * Vantagem Liquida PMev: +2.13 BB por decisao de fronteira!',
-			'',
-			'# 7. GUIA DIDATICO DE CLASSES RESGATADAS PELO PMEV',
-			`     Classes Expandidas: ${expanded}`,
-			'     Pares Pequenos (55, 44, 33, 22): Shove lucrativo por bloqueio de range de call do BB.',
-			'     Conectores Suited (87s, 76s, 65s, 54s): Retencao de 41% de equidade viva em caso de call.',
-			'     Ases Suited Marginais (A6s, A3s, A2s): Efeito blocker que reduz combos de AA/AK/AQ do BB em 50%.',
+			...linhasDoCenario(params),
 			'',
 			'# 8. CONCLUSAO PEDAGOGICA SOTA GOLD',
 			'O Operador Soberano nao joga para evitar perder fichas; joga para maximizar a sobrevivencia ativa.',
@@ -247,9 +233,7 @@ export async function POST(req: Request) {
 			},
 		});
 	} catch (error) {
-		return NextResponse.json(
-			{ error: error instanceof Error ? error.message : 'Falha na geracao do PDF' },
-			{ status: 500 }
-		);
+		console.error('[pmev-pdf] Falha na geracao do PDF', error);
+		return NextResponse.json({ error: 'Falha na geracao do PDF' }, { status: 500 });
 	}
 }

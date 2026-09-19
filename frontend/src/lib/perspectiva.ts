@@ -98,26 +98,33 @@ export interface PerspectivaInput {
 // === MOTOR ICM (Malmuth-Harville / Monte Carlo Estocástico) ===
 const _icmCache = new Map<string, MapaICMResult>();
 
+/**
+ * Semente canonica do fallback Monte Carlo de `calculateMapaICM` (N > 10).
+ * Constante e versionada de proposito: mudar este numero muda todo valor que a
+ * UI ja mostrou para fields grandes, e essa mudanca deve aparecer no diff.
+ */
+const MAPA_ICM_SEED = 0x5ed1c3;
+
 export function calculateMapaICM(stacks: number[], prizes: number[]): MapaICMResult {
 	const n = stacks.length;
 
 	// SOTA: Monte Carlo Fallback para evitar explosão combinatória (O(2^N))
 	if (n > 10) {
 		const totalChips = stacks.reduce((s, v) => s + v, 0);
-		const { equities } = calculateIcmMonteCarlo(stacks, prizes, {
+		// Semente fixa: `calculateMapaICM` e memoizada em `_icmCache` por
+		// stacks+prizes. Sem semente declarada, o primeiro calculo de uma chave
+		// congelava um ruido de Monte Carlo diferente a cada carga da pagina, e a
+		// mesma mesa devolvia numeros diferentes entre sessoes. Com semente fixa a
+		// funcao volta a ser pura, que e o que um cache por chave pressupoe.
+		const { equities, placementDistribution } = calculateIcmMonteCarlo(stacks, prizes, {
 			iterations: 20000,
+			seed: MAPA_ICM_SEED,
 		});
 
-		const positionProbs = Array.from({ length: n }, () =>
+		const positionProbs: number[][] = placementDistribution ?? Array.from({ length: n }, () =>
 			new Array(Math.min(n, prizes.length)).fill(0),
 		);
 
-		if (totalChips > 0 && prizes.length > 0) {
-			stacks.forEach((s, i) => {
-				const row = positionProbs[i];
-				if (row) row[0] = s / totalChips;
-			});
-		}
 		return { positionProbs, equities, totalChips };
 	}
 
@@ -237,6 +244,38 @@ export function classifyTier(stack: number, stacks: number[]): StackTier {
 	return 'big';
 }
 
+/**
+ * Piso numérico do RP na grandeza canônica: -100%.
+ */
+export const RP_PISO_NUMERICO = -100;
+
+/**
+ * Grandeza Canônica do Risk Premium (Teorema Vitoi / PMev Master):
+ * RP = (E* - a) / (1 - a) = a * (BF - 1) / (a * BF + 1 - a)
+ *
+ * Para a = 0.5 (all-in even money), reduz-se algebricamente a (BF - 1) / (BF + 1).
+ * Devolve o valor em percentual (-100% a 100%, com sinal conforme Teorema 2: BF < 1 => RP < 0).
+ *
+ * @param bf Bubble Factor (deltaLose / deltaWin)
+ * @param potOdds Pot odds cruas da decisão (a = heroCost / (potTotal)). Padrão: 0.5 (even money).
+ */
+export function premioDeRiscoCanonico(bf: number, potOdds: number = 0.5): number {
+	if (!Number.isFinite(bf)) return 0;
+	if (bf <= 0) return RP_PISO_NUMERICO;
+	const a = Math.min(Math.max(Number.isFinite(potOdds) ? potOdds : 0.5, 1e-6), 1 - 1e-6);
+	const denom = a * bf + 1.0 - a;
+	if (denom <= 0) return RP_PISO_NUMERICO;
+	const rp = (100 * (a * (bf - 1.0))) / denom;
+	return Math.max(RP_PISO_NUMERICO, rp);
+}
+
+/**
+ * Wrapper de retrocompatibilidade para premioDeRiscoCanonico sob all-in even money (a = 0.5).
+ */
+export function premioDeRiscoDoBf(bf: number): number {
+	return premioDeRiscoCanonico(bf, 0.5);
+}
+
 // --- HELPERS DE REDUÇÃO DE ENTROPIA COGNITIVA (SOTA v8.0 GOLD FUSED) ---
 
 /**
@@ -338,12 +377,13 @@ function _calculateValuationAndRio(
 		villainDeltaLoss > 0 ? deltaWinPct / ((villainDeltaLoss / totalPrizes) * 100) : 1;
 	const valuation = Math.max(0.1, Math.min(2, rawValuation));
 
-	// [v8.0] riskAdvantage: Fórmula BF canônica (100×(BF-1)/BF) aplicada ao Hero.
-	// Preservamos a fórmula v6.2.1 por sua rastreabilidade didática e fidelidade ao BF.
+	// [v8.0 GOLD] riskAdvantage: Fórmula canônica RP = (E* - a)/(1 - a) com pot odds reais da decisão.
 	const gainAbs = deltaWinPct;         // Δ equidade ICM em caso de vitória (positivo)
 	const lossAbs = Math.abs(deltaLosePct); // Δ equidade ICM em caso de derrota (magnitude)
 	const heroBf = gainAbs > 0 ? lossAbs / gainAbs : 1;
-	const riskAdvantage = heroBf <= 1 ? 0 : 100 * (heroBf - 1) / heroBf;
+	const potTotal = input.potSize + input.heroCost;
+	const heroPotOdds = potTotal > 0 ? input.heroCost / potTotal : 0.5;
+	const riskAdvantage = premioDeRiscoCanonico(heroBf, heroPotOdds);
 
 	// [v6.2.1] Expoente N^2.0 FIXO — sem feedback loop com noise factor.
 	// Decisão arquitetural: separar física multiway (expoente) da percepção humana (damping).

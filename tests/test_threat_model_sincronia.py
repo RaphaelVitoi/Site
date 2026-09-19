@@ -6,6 +6,7 @@ abre e mitigacoes `mitigationResolved` sem um unico teste. Parecia auditado e na
 descrevia o sistema. O arquivo continua editavel no threat-composer; estes guards
 cobram so o que torna uma afirmacao verificavel.
 """
+# pylint: disable=redefined-outer-name
 
 from __future__ import annotations
 

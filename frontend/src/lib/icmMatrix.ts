@@ -5,6 +5,8 @@
  * @format
  */
 
+import { premioDeRiscoCanonico } from './perspectiva';
+
 export interface ICMTournamentPreset {
 	id: string;
 	name: string;
@@ -227,9 +229,9 @@ export function computeBubbleFactorMatrix(
 			const bf = deltaLose / deltaWin;
 			setMatrixCell(bfMatrix, i, j, Number(bf.toFixed(3)), 'bfMatrix');
 
-			// Grandeza A do par B06/F07 (ver rpDeriver.ts). Exata na convencao
-			// `req = a + RP*(1-a)` sob all-in EVEN MONEY (a=0.5), premissa desta matriz.
-			const rp = Math.max(0, ((bf - 1.0) / (bf + 1.0)) * 100);
+			// Grandeza canônica sob all-in EVEN MONEY (a=0.5), premissa desta matriz.
+			// Algebricamente idêntica a (bf-1)/(bf+1) sob a=0.5 (Invariância I3).
+			const rp = Math.max(0, premioDeRiscoCanonico(bf, 0.5));
 			setMatrixCell(rpMatrix, i, j, Number(rp.toFixed(2)), 'rpMatrix');
 
 			const reqEq = (bf / (bf + 1.0)) * 100;

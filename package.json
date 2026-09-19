@@ -20,7 +20,7 @@
     "lint:workflows": "python -c \"import subprocess, sys; files = subprocess.check_output('git ls-files .github/workflows/*.yml .github/workflows/*.yaml', shell=True, text=True).split(); sys.exit(subprocess.run(['uv', 'run', '--with', 'actionlint-py', 'actionlint', *files]).returncode)\"",
     "lint:md": "npx -p markdownlint-cli markdownlint \"**/*.md\" --ignore-path .markdownlintignore",
     "lint:md:fix": "npx -p markdownlint-cli markdownlint --fix \"**/*.md\" --ignore-path .markdownlintignore",
-    "typecheck": "tsc --build frontend/tsconfig.json",
+    "typecheck": "npm --workspace frontend exec -- tsc --build tsconfig.json",
     "check:fast": "npm run python:lint && npm run python:typecheck && npm run lint && npm run typecheck",
     "test": "npm --workspace frontend run test",
     "format": "prettier --write \"frontend/src/**/*.{ts,tsx,css,js,jsx}\" \"scripts/**/*.{js,mjs,json}\" \"*.{json,md,js,mjs}\" --ignore-path .prettierignore && npm run lint:md:fix",

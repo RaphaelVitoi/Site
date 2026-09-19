@@ -23,16 +23,56 @@ logger = logging.getLogger(__name__)
 # W0 (stop) \u2282 W1 (default) \u2282 W2 (partial - Tier 3)
 # \u2282 W2.5 (full_restricted - Tier 2) \u2282 W3 (full - Tier 1)
 VALID_AUTONOMY_MODES = {"stop", "default", "partial", "full", "sandbox"}
-PROTECTED_KERNEL_PATHS = [  # pylint: disable=line-too-long
-    ".git",
-    ".venv",
-    "task_executor.py",
-    "do.ps1",
-    "_env.ps1",
-    ".env",
-    "autonomy.py",
-    "scripts",
-]
+
+# BK-02 (auditoria 2026-09-16). A lista anterior era comparada por SUBSTRING do
+# caminho absoluto e protegia `autonomy.py`, mas nao `autonomy.json` -- o arquivo
+# que define `god_mode_agents` e `sandbox_default`. Tambem deixava gravaveis as
+# superficies que EXECUTAM codigo depois: hook de commit, hooks e settings do
+# Claude Code, tasks do VS Code, workflows de CI, conftest do pytest e manifestos
+# cujos scripts rodam na instalacao. Resposta de LLM carrega conteudo web e RAG,
+# entao escrita nessas superficies e injecao de prompt promovida a execucao.
+#
+# A comparacao agora e por COMPONENTE de caminho relativo a raiz, sem diferenciar
+# caixa: `scripts` protege o diretorio `scripts/`, e nao `frontend/src/scripts_x`.
+PROTECTED_DIR_COMPONENTS = frozenset(
+    {".git", ".venv", "scripts", ".husky", ".claude", ".vscode", ".github", ".secrets", "node_modules"}
+)
+PROTECTED_FILE_NAMES = frozenset(
+    {
+        "task_executor.py",
+        "do.ps1",
+        "_env.ps1",
+        "autonomy.py",
+        "autonomy.json",
+        "conftest.py",
+        "package.json",
+        "pyproject.toml",
+        "requirements.txt",
+        "setup.py",
+        "setup.cfg",
+        ".gitattributes",
+        ".gitmodules",
+    }
+)
+
+
+def is_protected_kernel_path(target_path: Path, base_path: Path) -> bool:
+    """Diz se o destino toca superficie de kernel ou de execucao, por componente de caminho."""
+    try:
+        relative = target_path.relative_to(base_path)
+    except ValueError:
+        return True
+    # O Windows descarta ponto e espaco finais ao criar o arquivo: `autonomy.json.`
+    # vira `autonomy.json`. `resolve()` so normaliza isso quando o arquivo ja existe,
+    # entao a comparacao normaliza por conta propria (achado da security-review).
+    parts = [p.rstrip(". ").lower() for p in relative.parts]
+    if not parts:
+        return True
+    if any(p in PROTECTED_DIR_COMPONENTS for p in parts[:-1]):
+        return True
+    name = parts[-1]
+    return name in PROTECTED_FILE_NAMES or name == ".env" or name.startswith(".env.")
+
 
 # Modos legados mapeados para o novo sistema
 LEGACY_MODE_MAP = {"off": "stop"}
@@ -95,15 +135,16 @@ def _validate_forged_path(
         logger.error("[SEC] Path traversal explicito bloqueado: %s", filepath)
         return False, None
 
-    base_path = Path(__file__).parent.parent.absolute()
-    target_path = Path(filepath).resolve()  # noqa: ASYNC240
+    base_path = Path(__file__).parent.parent.resolve()
+    # Relativo a RAIZ, nao ao diretorio de trabalho do processo: o mesmo texto de
+    # resposta nao pode materializar em lugares diferentes conforme o cwd.
+    target_path = (base_path / filepath).resolve()  # noqa: ASYNC240
 
     if not target_path.is_relative_to(base_path):
         logger.error("[SEC] Bloqueio de escrita fora da raiz: %s", filepath)
         return False, None
 
-    target_path_str = os.path.normpath(str(target_path))  # noqa: ASYNC240
-    is_protected = any(os.path.normpath(p) in target_path_str for p in PROTECTED_KERNEL_PATHS)  # noqa: ASYNC240
+    is_protected = is_protected_kernel_path(target_path, base_path)
     privileged_agents = ["@chico", "@gemma4"]
     if is_protected:
         if effective_mode == "full" and agent_name in privileged_agents:
@@ -182,8 +223,11 @@ def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
 
     # SOTA: Expansao implacavel dos vetores de bypass
     # (sub-expressoes, backticks, redirecionamentos).
+    # BK-12: quebra de linha e separador de comando no `powershell -Command` e no
+    # `bash -c`; sem ela na lista, um bloco multilinha encadeava comandos no
+    # modo partial. Parenteses abrem sub-expressao no PowerShell.
     if effective_mode not in ["full", "full_restricted"] and any(
-        char in cmd for char in [";", "|", "&&", "&", "$", "`", ">", "<"]
+        char in cmd for char in [";", "|", "&&", "&", "$", "`", ">", "<", "\n", "\r", "(", ")"]
     ):
         error_msg = (
             f"Encadeamento, sub-expressoes ou redirecionamento bloqueado no modo "
@@ -192,12 +236,14 @@ def _validate_command(cmd: str, effective_mode: str, agent_name: str) -> bool:
         logger.error("[SEC] %s", error_msg)
         raise PermissionError(error_msg)
 
-    if any(f in cmd.lower() for f in forbidden_tokens):
+    # Espacos repetidos derrubavam a denylist (`rm -rf  /`). Normaliza antes de comparar.
+    normalized_cmd = " ".join(cmd.lower().split())
+    if any(f in normalized_cmd for f in forbidden_tokens):
         error_msg = f"Comando destrutivo bloqueado por regras de seguranca: {cmd}"
         logger.error("[SEC] %s", error_msg)
         raise PermissionError(error_msg)
 
-    if effective_mode == "partial" and any(k in cmd.lower() for k in state_changing_commands):
+    if effective_mode == "partial" and any(k in normalized_cmd for k in state_changing_commands):
         logger.warning(
             "[SEC TIER 3] O agente %s tentou mutar o estado do ecossistema. Comando interceptado: '%s'",
             agent_name,
@@ -366,20 +412,22 @@ def _resolve_effective_mode(
     return "partial" if global_mode in ["partial", "full"] else global_mode
 
 
-async def apply_god_mode(text: str, manager: QueueManager, agent_name: str | None = None) -> list[str]:
+async def apply_god_mode(text: str, manager: QueueManager, agent_name: str) -> list[str]:
     """
     Orquestrador VITOI 3.2 de Autonomia (Cortex de Execucao).
     Aplica a hierarquia de privilegios de Tier 0 a Tier 3 dinamicamente.
+
+    `agent_name` e OBRIGATORIO e deve ser o autor da resposta. Ate 2026-09-16 ele
+    era opcional e, ausente, deduzido de `get_tasks("running")[0]` -- a tarefa
+    running mais recente de QUALQUER agente. Com 4 tarefas concorrentes, a resposta
+    de um agente sem privilegio era aplicada com os privilegios de outro (BK-01).
+    Identidade nao se deduz do estado da fila: ela vem de quem produziu o texto.
     """
+    if not agent_name or not isinstance(agent_name, str):
+        raise ValueError("apply_god_mode exige agent_name explicito: a identidade vem do autor da resposta.")
+
     god_mode_agents, sandbox_default = await _read_autonomy_levers()
     global_mode = await get_autonomy_mode(manager)
-
-    # Deducao dinamica de identidade caso nao seja provida explicitamente pela DAG
-    if not agent_name:
-        running_tasks = await manager.get_tasks(status="running")
-        # SOTA: Obliteracao da escalada de privilegios (Zero-Trust).
-        # Fallback para Tier inferior.
-        agent_name = running_tasks[0].agent if running_tasks else "@dispatcher"
 
     effective_mode = _resolve_effective_mode(global_mode, agent_name, god_mode_agents, sandbox_default)
 

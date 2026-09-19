@@ -1,4 +1,4 @@
-import type { ChipEvFreqs, IcmDistortionResult } from '../solver/types';
+import type { IcmDistortionResult } from '../solver/types';
 import type { PerspectivaResult, ReferencePointStatus } from '../../../lib/perspectiva';
 
 export interface InsolvencyPayload {
@@ -11,21 +11,6 @@ export interface InsolvencyPayload {
   kappaOverride?: number;
   heroRange?: string;
   betSizing?: number;
-}
-
-export interface DistortionPayload {
-  ipRpFlop: number;
-  oopRpFlop: number;
-  freqFlop: ChipEvFreqs;
-  ipRpTurn: number;
-  oopRpTurn: number;
-  freqTurn: ChipEvFreqs;
-  ipRpRiver: number;
-  oopRpRiver: number;
-  freqRiver: ChipEvFreqs;
-  topologicAggression: number;
-  activePlayers: number;
-  pots: [number, number, number];
 }
 
 export interface MultiwayPayload {
@@ -53,7 +38,6 @@ export interface InsolvencyMetrics {
 /** Outputs are executable working models, not an assertion of theoretical fidelity. */
 export type InsolvencyWorkerRequest =
   | (InsolvencyPayload & { type: 'MATRIX'; id: number; kappa: number; humanNoiseFactor: number; iterations?: number; seed?: number })
-  | (DistortionPayload & { type: 'DISTORTION'; id: number; humanNoiseFactor: number })
   | (MultiwayPayload & { type: 'MULTIWAY_MATRIX'; id: number });
 
 export interface InsolvencyWorkerResponse {
@@ -61,7 +45,6 @@ export interface InsolvencyWorkerResponse {
   id: number;
   outputKind: 'working-model';
   error?: string;
-  nashResults?: NashDistortionResults;
   matrix?: number[];
   multiwayResult?: Float64Array;
 }

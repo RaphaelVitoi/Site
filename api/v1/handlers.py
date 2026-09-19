@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import contextlib
+from datetime import UTC, datetime
 import json
 import logging
 import math
@@ -25,7 +26,7 @@ except ImportError:
     psutil = None  # type: ignore[assignment]
 
 from aiohttp import web
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, ValidationInfo, field_validator
 
 from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 from core.canonical_theory_schemas import (
@@ -90,7 +91,10 @@ from engine.timesfm_engine import (
     TimesFMGovernanceError,
 )
 from engine.vitoi_perspective_engine import VitoiPerspectiveEngine
-from llm.budget import _RATE_LIMITERS  # pyright: ignore[reportPrivateUsage]
+from llm.budget import (
+    _RATE_LIMITERS,  # pyright: ignore[reportPrivateUsage]
+    DAILY_API_BUDGET,
+)
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
 from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
@@ -164,12 +168,32 @@ async def handle_ping(_request: web.Request) -> web.Response:
     return web.json_response({"status": "PONG", "timestamp": time.time()})
 
 
+def normalizar_timestamp_iso(valor: str) -> str:
+    """Normaliza para ISO-8601 em UTC, o formato que a fila compara lexicograficamente.
+
+    BK-11: `Task.timestamp` aceitava string livre por `POST /add`, e `cleanup` e
+    `promote_starved_tasks` comparam essa coluna como TEXTO contra isoformat UTC.
+    `"9999"` nunca expirava; `"16/09/2026"` ordenava ao acaso. Data sem fuso e
+    tratada como UTC.
+    """
+    momento = datetime.fromisoformat(valor.strip())
+    if momento.tzinfo is None:
+        momento = momento.replace(tzinfo=UTC)
+    return momento.astimezone(UTC).isoformat()
+
+
 async def handle_add_task(request: web.Request) -> web.Response:
     """Lida com a adicao de novas tarefas a fila."""
     manager = request.app[MANAGER_KEY]
     try:
         post_data = await request.json()
         new_task = Task.model_validate(post_data)
+        try:
+            new_task.timestamp = normalizar_timestamp_iso(new_task.timestamp)
+        except ValueError:
+            return web.json_response(
+                {"error": "timestamp deve ser ISO-8601 (ex.: 2026-09-16T23:40:00-03:00)."}, status=400
+            )
         await manager.add_task(new_task)
         return web.json_response({"status": "SUCCESS", "id": new_task.id})
     except ValidationError as ve:
@@ -300,12 +324,24 @@ async def handle_ask_oracle(request: web.Request) -> web.Response:
         except UnicodeDecodeError:
             body_text = raw_body.decode("latin-1", errors="ignore")
 
-        data = cast(dict[str, Any], json.loads(body_text) if body_text else {})
+        try:
+            parsed = json.loads(body_text) if body_text else {}
+        except json.JSONDecodeError:
+            return web.json_response({"error": "Corpo JSON invalido."}, status=400)
+        if not isinstance(parsed, dict):
+            return web.json_response({"error": "Corpo JSON deve ser um objeto."}, status=400)
+        data = cast(dict[str, Any], parsed)
         question = data.get("question")
-        n_results_raw = data.get("n_results", 3)
-        n_results = int(n_results_raw) if n_results_raw is not None else 3
-        if not question or not isinstance(question, str):
+        if not question or not isinstance(question, str) or len(question) > 4000:
             return web.json_response({"error": "Parametro 'question' ausente ou invalido."}, status=400)
+        # BK-18: `int()` de valor invalido virava 500, e o valor nao tinha teto.
+        n_results_raw = data.get("n_results", 3)
+        try:
+            n_results = int(n_results_raw) if n_results_raw is not None else 3
+        except (TypeError, ValueError):
+            return web.json_response({"error": "Parametro 'n_results' deve ser inteiro."}, status=400)
+        if not 1 <= n_results <= 50:
+            return web.json_response({"error": "Parametro 'n_results' deve estar entre 1 e 50."}, status=400)
 
         rag = await _te.get_rag_async()
         # SOTA BYOK: Bloqueio estrito de vazamento de tokens. Retrieval 100% local (CPU/SQLite).
@@ -345,10 +381,16 @@ async def handle_get_db_summary(request: web.Request) -> web.Response:
         # SOTA: Centraliza a leitura de metricas via API para evitar lock de DB
         counts = await manager.get_task_counts()
         budget = await manager.get_daily_budget_usage()
+        agents_manifest = getattr(_te, "AGENTS_MANIFEST", {})
+        # FE-05 (auditoria de frontend 2026-09-17): o dashboard exibia o teto do orcamento e a
+        # contagem de agentes como constantes (5000 e 15; o manifesto tem 19). Os dois saem das
+        # fontes canonicas, e o nome diz o que se conta: agentes REGISTRADOS, nao vivos.
         return web.json_response(
             {
                 "tasks": counts,
                 "budget": budget,
+                "budget_limit": DAILY_API_BUDGET,
+                "agents_registered": len(agents_manifest) if isinstance(agents_manifest, dict) else 0,
             }
         )
     except Exception as e:  # noqa: BLE001
@@ -452,10 +494,13 @@ async def handle_rag_query(request: web.Request) -> web.Response:
         rag = await _te.get_rag_async()
         answer = await rag.query_memory(query_data.query, n_results=query_data.top_k, local_only=True)
 
-        # Save to Cache
-        sota_cache.set(cache_key, answer)
+        # Save to Cache -- so em memoria (LRU com teto). O tier de disco criava um
+        # arquivo por consulta distinta, sem eviccao (BK-18).
+        sota_cache.set(cache_key, answer, persist=False)
 
         return web.json_response({"status": "SUCCESS", "answer": answer, "cached": False})
+    except ValidationError as ve:
+        return web.json_response({"error": str(ve)}, status=400)
     except Exception as e:
         return _internal_error(e, "handle_rag_query")
 
@@ -491,8 +536,37 @@ async def handle_bucket_op(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_bucket_op")
 
 
+#: Teto de eventos por requisicao em `/api/logs/frontend` (BK-05). O cliente de
+#: telemetria envia lotes; o teto limita o que UMA chamada pode empurrar ao disco.
+MAX_FRONTEND_EVENTS_PER_REQUEST = 100
+
+
+class FrontendLogEvent(BaseModel):
+    """Evento de log do frontend. Campos extras sao descartados, nao gravados."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    level: str = "info"
+    component: str = "Unknown"
+    message: str = ""
+
+    @field_validator("level", "component", "message", mode="before")
+    @classmethod
+    def _truncar(cls, value: Any, info: ValidationInfo) -> str:
+        """Trunca em vez de rejeitar: um stack longo nao deve descartar o lote inteiro."""
+        limite = {"level": 16, "component": 128, "message": 4000}[info.field_name or "message"]
+        return str(value if value is not None else "")[:limite]
+
+
 class FrontendLogsRequest(BaseModel):
-    events: list[Any]
+    """BK-05 (auditoria 2026-09-16): `events` era `list[Any]` sem teto.
+
+    Cada `{}` virava ~107 bytes de JSONL: medido 1,36 MB de corpo -> 36,4 MB em
+    disco (26,7x), numa rota de produto. E um evento nao-dict levantava
+    AttributeError na task em background, descartando o lote inteiro.
+    """
+
+    events: list[FrontendLogEvent] = Field(..., max_length=MAX_FRONTEND_EVENTS_PER_REQUEST)
 
 
 async def handle_frontend_logs(request: web.Request) -> web.Response:
@@ -506,7 +580,9 @@ async def handle_frontend_logs(request: web.Request) -> web.Response:
         if req.events:
             # Processamento assincrono para nao travar a resposta HTTP
             bg_tasks = _get_bg_tasks(request.app)
-            task = asyncio.create_task(audit_engine.process_frontend_events(req.events))
+            task = asyncio.create_task(
+                audit_engine.process_frontend_events([event.model_dump() for event in req.events])
+            )
             bg_tasks.add(task)
             task.add_done_callback(bg_tasks.discard)
         return web.json_response({"status": "SUCCESS", "processed": len(req.events)})
@@ -547,6 +623,8 @@ def _scan_root(name: str, root_resolved: Path, ignored_folders: set[str]) -> lis
                 continue
         for f in files:
             fpath = Path(current_root) / f
+            if _is_sensitive_path(fpath):
+                continue  # a listagem nao anuncia o que a leitura recusa
             files_list.append(
                 {
                     "name": f,
@@ -654,7 +732,29 @@ def _parse_image(file_path: Path) -> dict[str, Any]:
         return {"format": img.format, "size": f"{img.width}x{img.height}", "exif": exif_data, "base64": b64_str}
 
 
+#: BK-19 (auditoria 2026-09-16): a raiz do projeto inteira era legivel pela API,
+#: inclusive segredos e historico git. Estes nomes ficam fora mesmo para a
+#: credencial de servico -- e para qualquer processo local quando nenhum token
+#: esta configurado. `.env.example` e modelo sem valor, e continua legivel.
+_SENSITIVE_DIR_COMPONENTS = frozenset({".git", ".secrets", ".ssh", ".gnupg", ".aws"})
+_SENSITIVE_SUFFIXES = frozenset({".pem", ".key", ".p12", ".pfx", ".keystore", ".jks"})
+_SENSITIVE_NAMES = frozenset({"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", ".netrc", ".npmrc", ".pypirc"})
+
+
+def _is_sensitive_path(file_path: Path) -> bool:
+    # Ponto e espaco finais sao descartados pelo Windows ao abrir o arquivo.
+    parts = [p.rstrip(". ").lower() for p in file_path.parts]
+    name = parts[-1] if parts else ""
+    if any(p in _SENSITIVE_DIR_COMPONENTS for p in parts[:-1]):
+        return True
+    if name in _SENSITIVE_NAMES or file_path.suffix.lower() in _SENSITIVE_SUFFIXES:
+        return True
+    return (name == ".env" or name.startswith(".env.")) and name != ".env.example"
+
+
 def _is_file_access_allowed(file_path: Path) -> bool:
+    if _is_sensitive_path(file_path):
+        return False
     base_dir = Path(__file__).resolve().parent.parent.parent.resolve()
     if file_path.is_relative_to(base_dir):
         return True
@@ -705,7 +805,16 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
 
     ext = file_path.suffix.lower()
     if raw_param:
-        return web.FileResponse(file_path, headers={"Content-Type": _get_raw_content_type(ext)})
+        # `CSP: sandbox` impede script ativo no conteudo servido na origem da API:
+        # um .svg aberto no navegador executava JavaScript aqui (BK-19).
+        return web.FileResponse(
+            file_path,
+            headers={
+                "Content-Type": _get_raw_content_type(ext),
+                "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'",
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
 
     try:
         if ext in SPREADSHEET_EXTS:
@@ -770,7 +879,7 @@ async def handle_web_search(request: web.Request) -> web.Response:
 
         max_results_str = request.rel_url.query.get("max", "5")
         try:
-            max_results = int(max_results_str)
+            max_results = max(1, min(int(max_results_str), 20))
         except ValueError:
             max_results = 5
 
@@ -781,7 +890,10 @@ async def handle_web_search(request: web.Request) -> web.Response:
         resp = await engine.search(query, max_results=max_results, preferred_provider=provider)  # type: ignore
 
         if resp.error:
-            return web.json_response({"error": resp.error}, status=500)
+            # O texto do provedor pode trazer detalhe de conta ou de chave (BK-15): fica no log.
+            error_id = uuid4().hex[:12]
+            logger.warning("[%s] handle_web_search: provedor devolveu erro: %s", error_id, resp.error)
+            return web.json_response({"error": "Falha no provedor de busca.", "error_id": error_id}, status=502)
 
         results_list: list[dict[str, Any]] = []
         for r in resp.results:
@@ -870,6 +982,26 @@ async def handle_calculate_perspective(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_calculate_perspective")
 
 
+async def _diagnostico_dream_rsi(tree_res: dict[str, Any], runtime_ms: float) -> dict[str, object]:
+    """Grava a arvore no historico Dream-RSI e devolve o diagnostico de poda, fora do laco de eventos.
+
+    Observacional: nenhum valor do PMev muda. Falha aqui nunca derruba a resposta -- aparece
+    no log e no proprio diagnostico, nunca em silencio.
+    """
+    # pylint: disable=import-outside-toplevel
+    try:
+        from engine.discovery_recorder import recorder_do_runtime  # noqa: PLC0415 -- carga sob demanda
+        from engine.pmev_dream_bridge import PMevDreamBridge  # noqa: PLC0415
+
+        simulator = recorder_do_runtime().simulator
+        return await asyncio.to_thread(
+            PMevDreamBridge().diagnosticar_arvore_de_perspectiva, tree_res, runtime_ms, simulator
+        )
+    except Exception as exc:  # noqa: BLE001 -- telemetria nao pode derrubar o calculo
+        logger.warning("[DREAM-RSI] arvore PMev nao registrada: %s", exc)
+        return {"erro": type(exc).__name__}
+
+
 async def handle_simulate_perspective_tree(request: web.Request) -> web.Response:
     """Executa a simulacao recursiva da arvore de decisao de Perspectiva Matematica."""
     try:
@@ -886,6 +1018,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
             req.stack_eff, req.edge_base, req.aggression_factor
         )
 
+        inicio = time.perf_counter()
         tree_res = VitoiPerspectiveEngine.simulate_decision_tree(
             equity=req.equity,
             pot_size=req.pot_size,
@@ -904,6 +1037,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
             rp_opp=req.rp_opp,
             fold_equity=req.fold_equity,
         )
+        runtime_ms = (time.perf_counter() - inicio) * 1000.0
 
         resp = PerspectiveTreeResponse(
             status="SUCCESS",
@@ -912,6 +1046,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
                 "best_action": tree_res.get("best_action"),
                 "pm_best": tree_res.get("pm_best"),
                 "p_best_outcome": tree_res.get("p_best_outcome"),
+                "dream_rsi": await _diagnostico_dream_rsi(tree_res, runtime_ms),
             },
         )
         return web.json_response(resp.model_dump())
@@ -1341,13 +1476,18 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
         with contextlib.suppress(Exception):
             db_metrics = await manager.get_realtime_metrics()
 
-    # Coleta de metricas do SO em tempo real
-    cpu_load = 8.0
-    vram_bytes = 6151575960
-    ram_free_mb = 6400.0
+    # Coleta de metricas do SO em tempo real.
+    #
+    # BK-09 (auditoria 2026-09-16): este endpoint emitia VRAM constante
+    # (6151575960), circuit breakers fixos em 0 para dois backends, e CPU 8.0 /
+    # RAM 6400 quando psutil faltava. Um painel le serie Prometheus como medicao.
+    # Serie sem medicao agora e OMITIDA -- ausencia e informacao; valor inventado
+    # e desinformacao.
+    cpu_load: float | None = None
+    ram_free_mb: float | None = None
     if psutil is not None:
         with contextlib.suppress(Exception):
-            cpu_load = psutil.cpu_percent()
+            cpu_load = float(psutil.cpu_percent())
             ram_free_mb = psutil.virtual_memory().available / (1024 * 1024)
 
     lines = [
@@ -1371,24 +1511,21 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
         "# TYPE nexus_latency_ms_avg gauge",
         f"nexus_latency_ms_avg {float(db_metrics.get('avg_latency_ms_1h', 0.0)):.2f}",
         "",
-        "# HELP nexus_circuit_breaker_state Estado do Circuit Breaker (0=CLOSED, 1=HALF_OPEN, 2=OPEN)",
-        "# TYPE nexus_circuit_breaker_state gauge",
-        'nexus_circuit_breaker_state{backend="vulkan_8080"} 0',
-        'nexus_circuit_breaker_state{backend="ollama_11434"} 0',
-        "",
-        "# HELP nexus_hardware_vram_used_bytes VRAM ativa na GPU em bytes",
-        "# TYPE nexus_hardware_vram_used_bytes gauge",
-        f"nexus_hardware_vram_used_bytes {vram_bytes}",
-        "",
-        "# HELP nexus_hardware_cpu_load_percent Percentual de carga da CPU",
-        "# TYPE nexus_hardware_cpu_load_percent gauge",
-        f"nexus_hardware_cpu_load_percent {cpu_load:.1f}",
-        "",
-        "# HELP nexus_hardware_ram_free_mb Memoria RAM livre em megabytes",
-        "# TYPE nexus_hardware_ram_free_mb gauge",
-        f"nexus_hardware_ram_free_mb {ram_free_mb:.1f}",
-        "",
     ]
+    if cpu_load is not None:
+        lines += [
+            "# HELP nexus_hardware_cpu_load_percent Percentual de carga da CPU",
+            "# TYPE nexus_hardware_cpu_load_percent gauge",
+            f"nexus_hardware_cpu_load_percent {cpu_load:.1f}",
+            "",
+        ]
+    if ram_free_mb is not None:
+        lines += [
+            "# HELP nexus_hardware_ram_free_mb Memoria RAM livre em megabytes",
+            "# TYPE nexus_hardware_ram_free_mb gauge",
+            f"nexus_hardware_ram_free_mb {ram_free_mb:.1f}",
+            "",
+        ]
     return web.Response(
         text="\n".join(lines) + "\n",
         content_type="text/plain",

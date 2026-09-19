@@ -143,7 +143,7 @@ export function IcmDistortionsContent() {
 							<TabButton
 								active={activeTab === 'range_matrix'}
 								onClick={() => setActiveTab('range_matrix')}
-								icon="fa-grid-2"
+								icon="fa-table-cells-large"
 								label="Range Matrix"
 							/>
 						</div>

@@ -453,8 +453,9 @@ async def _cmd_get_mermaid_graph(manager: QueueManager, status_filter: str) -> N
 
 
 async def _fetch_gemini_health(session, key, model, system_prompt, health_prompt, client_timeout):
-    lm_url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
-    async with session.get(lm_url) as lm_resp:
+    # Chave no header, nunca na URL (BK-21, auditoria 2026-09-16).
+    lm_url = "https://generativelanguage.googleapis.com/v1beta/models"
+    async with session.get(lm_url, headers={"x-goog-api-key": key}) as lm_resp:
         if lm_resp.status != 200:
             lm_text = await lm_resp.text()
             return False, False, f"ListModels HTTP {lm_resp.status}: {lm_text[:120]}"
@@ -635,8 +636,8 @@ async def _cmd_run_health_parallel(manager: QueueManager) -> dict:
 
 
 async def _check_gemini_via_list_models(session, key):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key}"
-    async with session.get(url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+    url = "https://generativelanguage.googleapis.com/v1beta/models"
+    async with session.get(url, headers={"x-goog-api-key": key}, timeout=aiohttp.ClientTimeout(total=15)) as resp:
         status = resp.status
         body = await resp.text()
         if status == 200:
@@ -1167,7 +1168,10 @@ async def _cli_ingest(argv: list, manager: QueueManager) -> None:
             content = await f.read()
         from agents.autonomy import apply_god_mode  # pylint: disable=import-outside-toplevel # noqa: I001
 
-        await apply_god_mode(content, manager)
+        # Ingestao manual nao tem autor-agente. Antes da BK-01 a identidade era
+        # deduzida da fila e, com a fila parada, caia em @dispatcher; o valor
+        # explicito preserva esse caso sem herdar privilegio de tarefa alheia.
+        await apply_god_mode(content, manager, "@dispatcher")
         print(f"SUCCESS: Ingestion completed from {filepath}.")
 
         # SOTA: Amnesia Operacional Condicionada

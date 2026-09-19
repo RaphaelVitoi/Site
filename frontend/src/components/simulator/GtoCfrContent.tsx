@@ -74,12 +74,19 @@ function GtoCfrContentInner({
 				)}
 			</div>
 
-			{/* SEÇÃO 2: PERFIL E BAYES */}
-			<div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-				<div className="lg:col-span-5 flex flex-col gap-10">
-					<PredictiveProfilePanel />
+			{/* SEÇÃO 2: LABORATÓRIO BAYESIANO & PUBLIC BELIEF STATE */}
+			<div className="w-full">
+				<BayesianBeliefPanel />
+			</div>
 
-					<div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-4xl relative overflow-hidden group/wisdom">
+			{/* SEÇÃO 3: PERFIL PREDITIVO E MODELAGEM COMPORTAMENTAL */}
+			<div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch">
+				<div className="lg:col-span-6">
+					<PredictiveProfilePanel />
+				</div>
+
+				<div className="lg:col-span-6 flex flex-col justify-center">
+					<div className="p-8 bg-indigo-500/5 border border-indigo-500/10 rounded-4xl relative overflow-hidden group/wisdom h-full flex flex-col justify-center">
 						<div className="absolute top-0 right-0 p-6 opacity-5">
 							<i className="fa-solid fa-quote-left text-7xl text-white"></i>
 						</div>
@@ -95,10 +102,6 @@ function GtoCfrContentInner({
 							</span>
 						</div>
 					</div>
-				</div>
-
-				<div className="lg:col-span-7">
-					<BayesianBeliefPanel />
 				</div>
 			</div>
 		</main>

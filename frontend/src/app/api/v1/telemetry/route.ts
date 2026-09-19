@@ -134,12 +134,8 @@ function handleTelemetryError(error: unknown) {
 		);
 	}
 
-	return NextResponse.json(
-		{
-			error: error instanceof Error ? error.message : 'Entropia não tratada',
-		},
-		{ status: 500 },
-	);
+	// A mensagem de erro do Prisma descreve consulta e schema (BK-15): fica no log acima.
+	return NextResponse.json({ error: 'Falha interna ao registrar telemetria.' }, { status: 500 });
 }
 
 export async function POST(req: Request) {
@@ -153,7 +149,10 @@ export async function POST(req: Request) {
 			);
 		}
 
-		const rawPayload = await req.json();
+		const rawPayload: unknown = await req.json();
+		if (typeof rawPayload !== 'object' || rawPayload === null || Array.isArray(rawPayload)) {
+			return NextResponse.json({ error: 'Payload de telemetria deve ser um objeto JSON.' }, { status: 400 });
+		}
 
 		// Roteamento Híbrido Fricção Zero: Distingue TelemetryBatch, TelemetryEvent de PerspectiveMetric
 		if ('batch' in rawPayload && Array.isArray(rawPayload.batch)) {

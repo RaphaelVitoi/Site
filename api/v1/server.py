@@ -104,12 +104,15 @@ async def handle_predictive_profile(_request: web.Request) -> web.Response:
 def create_app(manager: QueueManager) -> web.Application:
     """Monta a aplicacao aiohttp com middlewares, estado e tabela de rotas."""
     app = web.Application(
+        # O primeiro da lista e o mais EXTERNO. security_headers era o ultimo, e por
+        # isso as recusas 401/403/429 dos middlewares de fora saiam sem nosniff nem
+        # X-Frame-Options (BK-20). Agora envolve todos.
         middlewares=[
+            security_headers_middleware,
             cors_middleware,
             rate_limit_middleware,
             auth_middleware,
             cookie_middleware,
-            security_headers_middleware,
         ]
     )
     app[MANAGER_KEY] = manager

@@ -6,9 +6,16 @@
  * TELEOLOGY: Monitoramento em tempo real de anomalias matemáticas e de UI, garantindo a integridade SOTA v7.0 GOLD.
  */
 
-import { buildNexusClientUrl } from '@/lib/api-contract';
-
 type LogLevel = 'info' | 'warn' | 'error' | 'critical' | 'metric';
+
+/** Espelha MAX_FRONTEND_EVENTS_PER_REQUEST em api/v1/handlers.py. */
+export const MAX_EVENTS_PER_REQUEST = 100;
+
+/**
+ * Gateway de mesma origem (src/app/api/v1/logs/frontend/route.ts). O navegador não chama mais o
+ * backend Python direto: sem a credencial de serviço, que ele não pode portar, recebia 401 sempre.
+ */
+export const LOGS_GATEWAY_PATH = '/api/v1/logs/frontend';
 
 interface LogEvent {
   level: LogLevel;
@@ -91,15 +98,24 @@ class SOTALogger {
   private async flush() {
     if (this.isProcessing || this.queue.length === 0) return;
     if (process.env['NODE_ENV'] === 'development') return; // Friccao Zero Absoluta: aniquila a tentativa de rede local.
+    // No servidor (route handlers) o log vai ao stdout; URL relativa nao resolve em Node e a
+    // telemetria remota e a da UI do visitante.
+    if (globalThis.window === undefined) {
+      this.queue = [];
+      return;
+    }
     this.isProcessing = true;
 
-    const events = [...this.queue];
-    this.queue = [];
+    // O backend aceita no maximo MAX_EVENTS_PER_REQUEST por chamada (BK-05);
+    // o restante segue no proximo flush.
+    const events = this.queue.slice(0, MAX_EVENTS_PER_REQUEST);
+    this.queue = this.queue.slice(MAX_EVENTS_PER_REQUEST);
 
     try {
-      await fetch(buildNexusClientUrl('/api/logs/frontend'), {
+      await fetch(LOGS_GATEWAY_PATH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ events }),
       });
     } catch (err) {

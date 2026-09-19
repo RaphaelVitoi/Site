@@ -43,7 +43,7 @@ import {
   RANGES_PREFLOP,
   MESA_COMPLETA_NO_OPEN,
   BOARD_ATE_O_RIVER,
-} from '../__fixtures__/aula12Pairs';
+} from '../evidencia/aula12Pairs';
 
 const codes = ( vs: { code: EvidenceViolationCode }[] ): EvidenceViolationCode[] =>
   vs.map( v => v.code );

@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { evaluateIcmTransitions, TransitionCapacityError } from '@/lib/icmTransitionExperiment';
+import { mensagemDeErroDeDominio } from '@/lib/server/domain-error-message';
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof ZodError) {
     return 'Informe stacks finitos, ordem de eliminação e probabilidades válidas.';
   }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return 'Não foi possível avaliar as transições.';
+  return mensagemDeErroDeDominio(error, 'Não foi possível avaliar as transições.', [TransitionCapacityError]);
 }
 
 export async function POST(request: Request) {

@@ -54,6 +54,7 @@ from scripts.ops.record_index import (  # noqa: E402
     resolvedores_de_ambiente,
     ttl_vencido,
 )
+from scripts.ops.saude_da_malha import imprimir as imprimir_saude_da_malha  # noqa: E402
 
 CAMPOS_OBRIGATORIOS = ("id", "tipo", "escopo", "autor", "criado_em", "verificado", "nao_verificado")
 
@@ -182,6 +183,36 @@ def _corpus_do_indice() -> list[tuple[str, str]]:
 def arquivos_em_stage() -> list[str]:
     saida = _git("diff", "--cached", "--name-only", "--diff-filter=ACM")
     return [linha for linha in saida.splitlines() if linha.strip()]
+
+
+def caminhos_removidos_em_stage() -> list[str]:
+    """Caminhos que o commit apaga ou renomeia -- o nome antigo deixa de existir."""
+    removidos = []
+    for linha in _git("diff", "--cached", "--name-status", "-M", "--diff-filter=DR").splitlines():
+        partes = linha.split("\t")
+        if len(partes) >= 2:
+            removidos.append(partes[1])  # D: o caminho; R: o nome ANTIGO
+    return removidos
+
+
+def citacoes_ao_que_o_commit_remove(em_stage: list[str]) -> list[str]:
+    """G6b: documento prescritivo FORA do stage que cita caminho que este commit apaga ou move.
+
+    A G6 so olha documento em stage. Apagar ou mover o arquivo citado deixa o documento
+    fora do stage, e a morte so aparecia na suite do pre-push, minutos depois do commit
+    aprovado. Medido em 2026-09-18: duas vezes num dia, as duas por mim.
+    """
+    erros = []
+    for removido in caminhos_removidos_em_stage():
+        for rel in _git("grep", "--cached", "-l", "-F", removido, "--", "*.md").splitlines():
+            if rel in em_stage or not _e_prescritivo(rel):
+                continue  # em stage, a G6 ja o cobre
+            if removido in referencias_mortas(rel):
+                erros.append(
+                    f"{rel} cita `{removido}`, que este commit apaga ou move. Atualize a citacao, "
+                    "ou -- se o registro e historico -- declare o caminho em referencias_nao_resolviveis."
+                )
+    return erros
 
 
 def _blob(revisao_e_caminho: str) -> str | None:
@@ -757,6 +788,9 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
                 "nao pode apontar para o vazio."
             )
 
+    # --- G6b. o commit apaga ou move o que um documento prescritivo cita ------
+    erros.extend(citacoes_ao_que_o_commit_remove(em_stage))
+
     # --- G5b. ampliacao de ACL/CORS/origem ------------------------------------
     for rel in em_stage:
         if not EXTENSOES_DE_CODIGO.search(rel):
@@ -855,7 +889,31 @@ def main() -> int:
 
 
 def _imprimir_pendencias() -> None:
-    """Exibe as tarefas abertas. Nao decide nada -- so impede que sumam."""
+    """Exibe as tarefas abertas e o que parou de rodar. Nao decide nada -- so impede que sumam.
+
+    A saude da malha entra AQUI, e nao num canal proprio, por medicao de 2026-09-17: a auditoria de calibracao
+    ficou tres dias parada e o portao de suficiencia cinco dias aberto sem ninguem saber, porque o unico lugar
+    que reportaria isso era a plataforma do veiculo que havia caido. Este e o canal que todo condutor ja roda ao
+    comecar -- a SS9.2 diz que a tarefa aberta mora onde um portao ja olha, e o mesmo vale para o instrumento
+    parado. Criar um segundo lugar nasceria com o defeito que ele corrigiria.
+    """
+    _imprimir_saude()
+    _listar_pendencias()
+
+
+def _imprimir_saude() -> None:
+    """Sinais de instrumento parado. Falha do proprio sinal nunca cala o portao de registro."""
+    try:
+        imprimir_saude_da_malha()
+    except Exception as erro:  # noqa: BLE001 -- ver docstring
+        # Deliberadamente amplo: este bloco e um ACESSORIO do portao de registro. Se a leitura da saude
+        # quebrar por qualquer motivo, o portao segue imprimindo pendencias e validando registros. Engolir a
+        # excecao em silencio, porem, seria o mesmo defeito que o modulo combate -- por isso ela aparece.
+        print(f"\n[SAUDE DA MALHA] NAO VERIFICADA -- a leitura falhou: {erro}")
+        print("   Nao verificado nunca e aprovado. Rode `python scripts/ops/saude_da_malha.py` para o erro completo.\n")
+
+
+def _listar_pendencias() -> None:
     abertas, _ = coletar_pendencias()
     if not abertas:
         print("\n[PENDENCIAS] Nenhuma tarefa aberta declarada no corpus.\n")

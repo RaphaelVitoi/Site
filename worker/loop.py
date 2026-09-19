@@ -10,6 +10,7 @@ import contextlib
 from datetime import UTC, datetime
 import logging
 import os
+import socket
 import time
 from typing import Any
 
@@ -47,22 +48,54 @@ else:
 _LAST_STATUS_UPDATE = 0.0
 MAX_CONCURRENT_TASKS = 4  # Externalizado: ajuste aqui para escalar o paralelismo
 
+#: Identidade deste processo na coluna `claimed_by` (BK-07). Host e PID bastam
+#: para decidir, na recuperacao, se o dono de uma reserva ainda esta vivo.
+WORKER_ID = f"{socket.gethostname()}:{os.getpid()}"
+
 logger = logging.getLogger(__name__)
 console = Console()
 
 
-async def _recover_zombies(manager: QueueManager) -> None:
-    """SOTA: Crash Recovery (Resgate de zumbis apos morte abrupta do processo)."""
+def _claim_owner_is_dead(claimed_by: str | None) -> bool:
+    """Decide se a reserva de uma tarefa 'running' ficou orfa.
+
+    Sem dono registrado (linha anterior a coluna) -> orfa: e o comportamento
+    antigo, restrito agora a quem nao tem dono. Dono em OUTRO host -> nao se
+    decide daqui; `recover_stalled_tasks` cobre pelo tempo. Dono neste host ->
+    orfa se o PID nao existe mais.
+    """
+    if not claimed_by:
+        return True
+    host, _, pid_text = claimed_by.rpartition(":")
+    if host != socket.gethostname() or not pid_text.isdigit():
+        return False
+    pid = int(pid_text)
+    if pid == os.getpid():
+        return True  # reserva deste mesmo PID numa vida anterior do processo
     try:
-        async with manager._get_async_db() as db:
-            cursor = await db.execute("UPDATE tasks SET status = 'pending' WHERE status = 'running'")
-            recovered_count = cursor.rowcount
-            await db.commit()
-            if recovered_count > 0:
-                logger.warning(
-                    "[CRASH RECOVERY SOTA] %d tarefas presas no limbo ('running') foram resgatadas para 'pending'.",
-                    recovered_count,
-                )
+        import psutil  # pylint: disable=import-outside-toplevel # noqa: PLC0415
+    except ImportError:
+        return False  # sem como provar a morte, nao se toma a tarefa de ninguem
+    return not psutil.pid_exists(pid)
+
+
+async def _recover_zombies(manager: QueueManager) -> None:
+    """SOTA: Crash Recovery -- devolve a fila so as reservas cujo dono morreu.
+
+    BK-07 (auditoria 2026-09-16): o UPDATE anterior resetava TODA tarefa
+    'running', de qualquer worker. `claim_task` existe para varios workers; subir
+    um segundo processo devolvia a fila o que o primeiro executava, e a tarefa
+    rodava duas vezes.
+    """
+    try:
+        claims = await manager.get_running_claims()
+        orphan_ids = [task_id for task_id, owner in claims if _claim_owner_is_dead(owner)]
+        recovered_count = await manager.release_running_tasks(orphan_ids)
+        if recovered_count > 0:
+            logger.warning(
+                "[CRASH RECOVERY SOTA] %d tarefas orfas ('running' sem dono vivo) foram resgatadas para 'pending'.",
+                recovered_count,
+            )
     except Exception:  # noqa: BLE001
         logger.exception("[SISTEMA] Falha ao executar Crash Recovery no SQLite")
 
@@ -216,6 +249,21 @@ async def _handle_deadlock(pending_tasks: list[Task], manager: QueueManager) -> 
         logger.error("[STARVATION FATAL] Ciclo Topologico detectado na fila. @chico acionado para arbitrar.")
 
 
+async def _fail_upstream_dependents(
+    tasks: list[Task], dependency_status: dict[str, str | None], manager: QueueManager
+) -> None:
+    """Marca como 'failed' as tarefas cuja dependencia falhou (semantica upstream_failed)."""
+    for task in tasks:
+        failed_deps = [d for d in UniversalArbitrator.dependency_ids(task) if dependency_status.get(d) == "failed"]
+        await manager.update_task_status(task.id, "failed")
+        await manager.update_task_metadata(
+            task.id,
+            {"workflow_status": "upstream_failed", "failed_dependencies": failed_deps},
+            merge=True,
+        )
+        logger.error("[DAG] Tarefa '%s' falhou por dependencia falha: %s", task.id, ", ".join(failed_deps))
+
+
 async def _dispatch_optimal_task(
     manager: QueueManager, semaphore: asyncio.Semaphore, running_tasks: set[asyncio.Future[Any]]
 ) -> None:
@@ -226,11 +274,26 @@ async def _dispatch_optimal_task(
         await asyncio.sleep(0.5)  # Friccao Zero
         return
 
+    # BK-04: o status das dependencias que ja sairam da fila pendente decide se
+    # quem depende delas pode rodar. Dependente de tarefa 'failed' nunca ficara
+    # pronto; falha-lo explicitamente evita espera eterna e silenciosa.
+    external_deps = UniversalArbitrator.external_dependency_ids(pending_tasks)
+    dependency_status = await manager.get_task_statuses(external_deps) if external_deps else {}
+    upstream_failed = UniversalArbitrator.upstream_failed_tasks(pending_tasks, dependency_status)
+    if upstream_failed:
+        await _fail_upstream_dependents(upstream_failed, dependency_status, manager)
+        semaphore.release()
+        return
+
     loop = asyncio.get_running_loop()
-    task = await loop.run_in_executor(None, UniversalArbitrator.extract_optimal_task, pending_tasks) if loop else None
+    task = (
+        await loop.run_in_executor(None, UniversalArbitrator.extract_optimal_task, pending_tasks, dependency_status)
+        if loop
+        else None
+    )
 
     if task:
-        claimed = await manager.claim_task(task.id)
+        claimed = await manager.claim_task(task.id, WORKER_ID)
         if not claimed:
             # Outro worker ou processo concorrente ja reivindicou a tarefa
             semaphore.release()
@@ -248,10 +311,15 @@ async def _dispatch_optimal_task(
         future = asyncio.create_task(_task_wrapper(task, manager, semaphore))
         running_tasks.add(future)
         future.add_done_callback(running_tasks.discard)
-    else:
+    elif UniversalArbitrator.has_dependency_cycle(pending_tasks):
         await _handle_deadlock(pending_tasks, manager)
         semaphore.release()
         await asyncio.sleep(2.0)
+    else:
+        # Espera legitima: as prontas dependem de tarefa ainda em execucao. Antes
+        # isto disparava alerta de deadlock -- e uma tarefa de LLM para @chico.
+        semaphore.release()
+        await asyncio.sleep(1.0)
 
 
 async def _cleanup_worker(manager: QueueManager, running_tasks: set[asyncio.Future[Any]]) -> None:
@@ -268,10 +336,9 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set[asyncio.Futu
         except Exception as e:  # noqa: BLE001
             logger.warning("[SISTEMA] Cancelamento interrompido: %s", e)
         try:
-            async with manager._get_async_db() as db:
-                await db.execute("UPDATE tasks SET status = 'pending' WHERE status = 'running'")
-                await db.commit()
-            logger.info("[SISTEMA] Tarefas orfas revertidas para 'pending'. Zumbis erradicados.")
+            # So as reservas DESTE worker (BK-07); as de outro processo seguem com ele.
+            released = await manager.release_tasks_claimed_by(WORKER_ID)
+            logger.info("[SISTEMA] %d tarefas deste worker revertidas para 'pending'.", released)
         except Exception:  # noqa: BLE001
             logger.exception("[SISTEMA] Falha ao curar estado zombie no banco de dados")
 

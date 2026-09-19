@@ -40,6 +40,7 @@ export interface ISotaSpotContext {
   primaryVillainIdx?: number;
   heroPosition?: HeroPosition;
   blindsRisingSoon?: boolean;
+  pkoValue?: number;
   aggFactor?: number;
 }
 
@@ -89,7 +90,6 @@ export interface ISotaWasmContext {
 
   // SOTA: Distorção de Nash e Despacho ICM (WASM)
   nashResults?: import('./hooks/useQuantumEngine').NashDistortionResults | null;
-  dispatchIcmDistortion?: (payload: import('./hooks/useQuantumEngine').DistortionPayload) => void;
 
   // Backwards compatibility shims
   insolvencyMatrixData?: import('./hooks/useQuantumEngine').InsolvencyMetrics | null;

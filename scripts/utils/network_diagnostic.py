@@ -35,9 +35,9 @@ def _print_root_cause(status_code: int):
 
 def _fetch_generate_model(api_key: str, headers: dict) -> str:
     """Extrai estritamente o modelo de geracao otimo e audita conexao primaria."""
-    list_url = f"{BASE_URL}/models?key={api_key}"
+    list_url = f"{BASE_URL}/models"
     print("[INFO] Passo 1/2: validando chave e conectividade via ListModels...")
-    list_resp = requests.get(list_url, headers=headers, timeout=15)
+    list_resp = requests.get(list_url, headers={**headers, "x-goog-api-key": api_key}, timeout=15)
     print(f"[INFO] Status Code HTTP (ListModels): {list_resp.status_code}")
 
     if not list_resp.ok:
@@ -69,10 +69,10 @@ def _test_generation(api_key: str, headers: dict, model_name: str) -> None:
     model_id = model_name.split("/")[-1]
     print(f"[INFO] Modelo selecionado para teste: {model_id}")
 
-    gen_url = f"{BASE_URL}/models/{model_id}:generateContent?key={api_key}"
+    gen_url = f"{BASE_URL}/models/{model_id}:generateContent"
     gen_data = {"contents": [{"parts": [{"text": "ping"}]}]}
     print("[INFO] Passo 2/2: testando generateContent...")
-    gen_resp = requests.post(gen_url, json=gen_data, headers=headers, timeout=15)  # type: ignore
+    gen_resp = requests.post(gen_url, json=gen_data, headers={**headers, "x-goog-api-key": api_key}, timeout=15)  # type: ignore
     print(f"[INFO] Status Code HTTP (generateContent): {gen_resp.status_code}")
 
     if gen_resp.ok:

@@ -8,7 +8,7 @@
  */
 
 import espelho from '../../../../data/aula12_pairs.json';
-import * as fixture from '../../components/simulator/solver/__fixtures__/aula12Pairs';
+import * as fixture from '../../components/simulator/solver/evidencia/aula12Pairs';
 
 const exportados = fixture as unknown as Record<string, unknown>;
 

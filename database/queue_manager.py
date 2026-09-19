@@ -140,6 +140,12 @@ class QueueManager:
             if not isinstance(db_path, Path):
                 db_path = Path(db_path)
             conn = await aiosqlite.connect(str(db_path.resolve()), timeout=10.0)
+        # BK-10 (auditoria 2026-09-16): PRAGMA de desempenho vale POR CONEXAO, e cada
+        # operacao abre a sua. Medido nesta data, 900 escritas por modo, 3 rodadas:
+        # synchronous FULL 8,40 ms/op contra NORMAL 8,26 ms/op -- 1,7%, que nao paga
+        # a perda de durabilidade. Por isso so busy_timeout, que e correcao e nao
+        # desempenho. O custo dominante e a conexao nova (6,8 ms contra 1,4 ms numa
+        # conexao persistente), e manter uma conexao ancora aberta NAO o reduziu.
         await conn.execute(_PRAGMA_BUSY_TIMEOUT)
         return conn
 
@@ -194,15 +200,10 @@ class QueueManager:
                     current_mode = row[0] if row else ""
                 if current_mode.lower() != "wal":
                     await conn.execute("PRAGMA journal_mode=WAL;")
-                await conn.execute("PRAGMA synchronous=NORMAL;")
-                await conn.execute(
-                    "PRAGMA cache_size=-262144;"
-                )  # SOTA: Alocacao Dinamica de 256MB de RAM. Fixa a B-Tree e llm_cache na memoria.
-                await conn.execute("PRAGMA temp_store=MEMORY;")
-                await conn.execute(
-                    "PRAGMA mmap_size=2147483648;"
-                )  # SOTA: 2GB MMAP O(1). Delega paginacao de tabelas estaticas ao Kernel do OS.
-                await conn.execute("PRAGMA threads=8;")  # SOTA: Aceleracao Multithread para operacoes B-Tree e Sorting
+                # synchronous, cache_size=256MB, temp_store, mmap_size=2GB e threads=8
+                # moravam aqui e nao tinham efeito: sao por conexao, e esta conexao
+                # fecha no fim do init. Removidos em vez de copiados para
+                # `_connect_raw` -- ver a medicao registrada ali.
 
                 await conn.execute("""
                 CREATE TABLE IF NOT EXISTS llm_cache (
@@ -228,6 +229,16 @@ class QueueManager:
                 )
             """)
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_status_time ON tasks (status, timestamp)")
+
+                # BK-07/BK-11: posse e hora da reserva em colunas proprias. `claim_task`
+                # gravava em `timestamp` -- a hora de CRIACAO, que ordena a fila e da o
+                # bonus de espera -- e nada registrava QUAL worker detinha a tarefa.
+                async with conn.execute("PRAGMA table_info(tasks)") as cursor:
+                    task_columns = {row[1] for row in await cursor.fetchall()}
+                if "claimed_by" not in task_columns:
+                    await conn.execute("ALTER TABLE tasks ADD COLUMN claimed_by TEXT")
+                if "claimed_at" not in task_columns:
+                    await conn.execute("ALTER TABLE tasks ADD COLUMN claimed_at TEXT")
 
                 # SOTA: Partial Expression Index para Extracao O(1) na Fila DAG com 10.000+ Tarefas
                 await conn.execute("""
@@ -278,8 +289,15 @@ class QueueManager:
                 await conn.execute("CREATE TABLE IF NOT EXISTS system_state ( key TEXT PRIMARY KEY, value TEXT )")
 
                 # SOTA: SQL View consolidada para Prometheus & Realtime Dashboard
+                #
+                # BK-08: a janela comparava `timestamp >= datetime('now','-1 hour')`.
+                # O gravado e ISO com 'T'; datetime() devolve com espaco, e 'T' > ' '
+                # fazia a "ultima hora" valer desde 00:00 UTC. strftime com 'T' casa o
+                # formato. DROP antes do CREATE: `IF NOT EXISTS` manteria a view velha
+                # em todo banco ja existente.
+                await conn.execute("DROP VIEW IF EXISTS v_nexus_realtime_metrics")
                 await conn.execute("""
-                CREATE VIEW IF NOT EXISTS v_nexus_realtime_metrics AS
+                CREATE VIEW v_nexus_realtime_metrics AS
                 SELECT
                     (SELECT COUNT(*) FROM tasks WHERE status = 'pending') AS tasks_pending,
                     (SELECT COUNT(*) FROM tasks WHERE status = 'running') AS tasks_running,
@@ -288,7 +306,7 @@ class QueueManager:
                     (SELECT COUNT(*) FROM tasks) AS tasks_total,
                     (SELECT COUNT(*) FROM llm_cache) AS cached_prompts_total,
                     (SELECT IFNULL(SUM(total_tokens), 0) FROM api_usage) AS total_tokens_consumed,
-                    (SELECT IFNULL(AVG(latency_ms), 0.0) FROM key_usage_metrics WHERE timestamp >= datetime('now', '-1 hour')) AS avg_latency_ms_1h;
+                    (SELECT IFNULL(AVG(latency_ms), 0.0) FROM key_usage_metrics WHERE timestamp >= strftime('%Y-%m-%dT%H:%M:%S', 'now', '-1 hour')) AS avg_latency_ms_1h;
                 """)
 
                 await conn.commit()
@@ -428,32 +446,104 @@ class QueueManager:
                 return dict(zip(col_names, row, strict=False))
         return {}
 
-    async def claim_task(self, task_id: str) -> bool:
+    async def claim_task(self, task_id: str, worker_id: str | None = None) -> bool:
         """
         Reserva atomicamente uma tarefa para execucao exclusiva (CAS: Compare-And-Swap).
         Retorna True se a tarefa estava 'pending' e foi promovida para 'running';
         Retorna False se ja foi reivindicada por outro worker concorrente.
+
+        A reserva grava `claimed_at` e `claimed_by`, e NAO toca `timestamp`, que e a
+        hora de criacao (BK-11).
         """
         async with self._get_async_db() as db:
             cursor = await db.execute(
-                "UPDATE tasks SET status = 'running', timestamp = ? WHERE id = ? AND status = 'pending'",
-                (datetime.now(UTC).isoformat(), task_id),
+                "UPDATE tasks SET status = 'running', claimed_at = ?, claimed_by = ? WHERE id = ? AND status = 'pending'",
+                (datetime.now(UTC).isoformat(), worker_id, task_id),
             )
             await db.commit()
             return cursor.rowcount > 0
 
+    #: Status aceitos pelo modelo `Task`. Gravar outro valor faria `_row_to_task`
+    #: levantar ValidationError e derrubar `get_tasks` inteiro -- e com ele o
+    #: despacho do worker.
+    VALID_STATUSES = frozenset({"pending", "running", "completed", "failed", "cancelled"})
+
     async def update_task_status(self, task_id: str, new_status: str) -> None:
         """Transicao de estado autonoma com timestamping automatico."""
+        if new_status not in self.VALID_STATUSES:
+            raise ValueError(f"Status de tarefa invalido: {new_status!r}")
         completed_at = datetime.now(UTC).isoformat() if new_status in ["completed", "failed"] else None
         async with self._get_async_db() as db:
+            # Sair de 'running' encerra a posse: a tarefa nao pertence mais a worker algum.
             if completed_at:
                 await db.execute(
-                    "UPDATE tasks SET status = ?, completedAt = ? WHERE id = ?",
+                    "UPDATE tasks SET status = ?, completedAt = ?, claimed_by = NULL WHERE id = ?",
                     (new_status, completed_at, task_id),
                 )
-            else:
+            elif new_status == "running":
                 await db.execute("UPDATE tasks SET status = ? WHERE id = ?", (new_status, task_id))
+            else:
+                await db.execute(
+                    "UPDATE tasks SET status = ?, claimed_by = NULL, claimed_at = NULL WHERE id = ?",
+                    (new_status, task_id),
+                )
             await db.commit()
+
+    async def get_task_statuses(self, task_ids: Iterable[str]) -> dict[str, str | None]:
+        """Status atual de cada id pedido; id inexistente mapeia para None."""
+        ids = list(dict.fromkeys(task_ids))
+        result: dict[str, str | None] = dict.fromkeys(ids)
+        if not ids:
+            return result
+        async with self._get_async_db() as db:
+            for start in range(0, len(ids), 500):
+                chunk = ids[start : start + 500]
+                placeholders = ",".join("?" for _ in chunk)
+                async with db.execute(
+                    f"SELECT id, status FROM tasks WHERE id IN ({placeholders})",  # noqa: S608 Record-Id: SQL-PLACEHOLDERS-2026-09-16
+                    chunk,
+                ) as cursor:
+                    for row in await cursor.fetchall():
+                        result[row[0]] = row[1]
+        return result
+
+    async def get_running_claims(self) -> list[tuple[str, str | None]]:
+        """Pares (id, claimed_by) de toda tarefa em 'running'."""
+        async with (
+            self._get_async_db() as db,
+            db.execute("SELECT id, claimed_by FROM tasks WHERE status = 'running'") as cursor,
+        ):
+            return [(row[0], row[1]) for row in await cursor.fetchall()]
+
+    async def release_running_tasks(self, task_ids: Iterable[str]) -> int:
+        """Devolve a 'pending' as tarefas indicadas que ainda estao 'running'."""
+        ids = list(dict.fromkeys(task_ids))
+        released = 0
+        if not ids:
+            return released
+        async with self._get_async_db() as db:
+            for start in range(0, len(ids), 500):
+                chunk = ids[start : start + 500]
+                placeholders = ",".join("?" for _ in chunk)
+                cursor = await db.execute(
+                    "UPDATE tasks SET status = 'pending', claimed_by = NULL, claimed_at = NULL "  # noqa: S608 Record-Id: SQL-PLACEHOLDERS-2026-09-16
+                    f"WHERE status = 'running' AND id IN ({placeholders})",
+                    chunk,
+                )
+                released += cursor.rowcount
+            await db.commit()
+        return released
+
+    async def release_tasks_claimed_by(self, worker_id: str) -> int:
+        """Devolve a 'pending' so as tarefas 'running' reservadas por `worker_id`."""
+        async with self._get_async_db() as db:
+            cursor = await db.execute(
+                "UPDATE tasks SET status = 'pending', claimed_by = NULL, claimed_at = NULL "
+                "WHERE status = 'running' AND claimed_by = ?",
+                (worker_id,),
+            )
+            await db.commit()
+            return cursor.rowcount
 
     async def update_task_metadata(self, task_id: str, metadata_patch: dict[str, Any], merge: bool = True) -> None:
         """
@@ -507,13 +597,16 @@ class QueueManager:
         Otimizacao ACID Absoluta: Resolvido via SQLite JSON1 na camada C (Zero Python Loops).
         """
         cutoff = (datetime.now(UTC) - timedelta(minutes=max_running_minutes)).isoformat()
-        now_iso = datetime.now(UTC).isoformat()
 
+        # A idade de uma tarefa travada conta da RESERVA (`claimed_at`); `timestamp`
+        # e a criacao e nao e mais reescrito aqui (BK-11). Linhas anteriores a
+        # coluna caem no COALESCE.
         query = """
             UPDATE tasks
             SET
                 status = CASE WHEN COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1 < 3 THEN 'pending' ELSE 'failed' END,
-                timestamp = ?,
+                claimed_by = NULL,
+                claimed_at = NULL,
                 metadata = json_set(
                     COALESCE(metadata, '{}'),
                     '$.retry_count', COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1,
@@ -523,12 +616,12 @@ class QueueManager:
                         ELSE 'Processamento abortado: Limite maximo de retentativas de travamento atingido.'
                     END
                 )
-            WHERE status = 'running' AND timestamp < ?
+            WHERE status = 'running' AND COALESCE(claimed_at, timestamp) < ?
             RETURNING id, status, json_extract(metadata, '$.retry_count') as retries, description;
         """
         async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
-            async with db.execute(query, (now_iso, str(max_running_minutes), cutoff)) as cursor:
+            async with db.execute(query, (str(max_running_minutes), cutoff)) as cursor:
                 recovered_rows = list(await cursor.fetchall())
 
             for row in recovered_rows:
@@ -1027,8 +1120,12 @@ class QueueManager:
             placeholders = ",".join("?" for _ in protected_agents)
 
             # SOTA Guard: Query construida de forma direta para o Ruff acatar o noqa com precisao
+            # Colunas explicitas: `tasks` ganhou claimed_by/claimed_at, e `SELECT *`
+            # contra as 8 colunas de archive_tasks falharia por contagem.
             insert_query = (
-                f"INSERT OR IGNORE INTO archive_tasks SELECT * FROM tasks "  # noqa: S608
+                f"INSERT OR IGNORE INTO archive_tasks "  # noqa: S608 Record-Id: SQL-PLACEHOLDERS-2026-09-16
+                f"(id, description, status, timestamp, agent, priority, metadata, completedAt) "
+                f"SELECT id, description, status, timestamp, agent, priority, metadata, completedAt FROM tasks "
                 f"WHERE status IN ('completed', 'failed') AND timestamp < ? "
                 f"AND agent NOT IN ({placeholders})"
             )

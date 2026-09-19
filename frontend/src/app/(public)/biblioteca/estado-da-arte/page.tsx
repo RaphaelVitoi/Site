@@ -9,12 +9,14 @@ import JsonLd from '@/components/seo/JsonLd';
 import { GtoCfrSimulator } from '@/components/simulator/GtoCfrSimulator';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SectionHeader } from '@/components/ui/layout/SectionHeader';
-import Link from 'next/link';
+import ContentFooter from '@/components/ui/layout/ContentFooter';
+import { ROUTES } from '@/constants/routes';
+import { SITE_CONFIG } from '@/constants/site';
 
 export const metadata = {
 	title: 'O Estado da Arte do ICM GOLD | Raphael Vitoi',
 	description:
-		'Novas Fronteiras e Tendências High Stakes. Protocolo v7.0 GOLD, Efeito de Irradiação e a batalha IA vs HRC Pro.',
+		'Novas Fronteiras e Tendências High Stakes. Protocolo v8.0 GOLD, Efeito de Irradiação e a batalha IA vs HRC Pro.',
 };
 
 const articleSchema = {
@@ -33,7 +35,7 @@ export default function EstadoDaArtePage() {
 
 			<ContentPageHeader
 				title="Estado da Arte GOLD"
-				subtitle="Protocolo v7.0 GOLD: Novas Fronteiras e Tendências High Stakes. A evolução do organismo estratégico."
+				subtitle="Protocolo v8.0 GOLD: Novas Fronteiras e Tendências High Stakes. A evolução do organismo estratégico."
 				category="Whitepaper"
 				icon="fa-shuttle-space"
 			/>
@@ -180,22 +182,12 @@ export default function EstadoDaArtePage() {
 				</GlassPanel>
 			</div>
 
-			<div className="sota-container pb-24">
-				<div className="flex justify-between border-t border-white/5 pt-12">
-					<Link
-						href="/biblioteca/entendendo-o-icm-e-suas-heuristicas"
-						className="text-accent-indigo-light text-xs font-black tracking-widest uppercase flex items-center gap-2 hover:text-text-bright transition-all"
-					>
-						<i className="fa-solid fa-arrow-left" /> ENTENDENDO O ICM
-					</Link>
-					<Link
-						href="/biblioteca/smart-sniper"
-						className="text-accent-indigo-light text-xs font-black tracking-widest uppercase flex items-center gap-2 hover:text-text-bright transition-all"
-					>
-						PROTOCOLO SMART SNIPER <i className="fa-solid fa-arrow-right" />
-					</Link>
-				</div>
-			</div>
+			<ContentFooter
+				shareTitle={`O Estado da Arte do ICM GOLD | ${SITE_CONFIG.author}`}
+				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.ESTADO_DA_ARTE}`}
+				backLinkHref={ROUTES.BIBLIOTECA}
+				backLinkText="Voltar para Biblioteca"
+			/>
 		</div>
 	);
 }

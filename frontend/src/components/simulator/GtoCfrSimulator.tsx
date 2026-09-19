@@ -27,6 +27,8 @@ import {
 import { SectionHeader } from '../ui/layout/SectionHeader';
 import { useSotaSync } from './hooks/useSotaSync';
 import { SotaSpotContext } from './SotaContext';
+import { useLoopVisibility } from './hooks/useLoopVisibility';
+import { estrategiaPorRegretMatching } from '../../lib/cfrSingleDecision';
 import { CfrCanvas, type CfrCanvasRef } from './ui/CfrCanvas';
 
 export function GtoCfrSimulator() {
@@ -38,11 +40,18 @@ export function GtoCfrSimulator() {
 	const villainStats = useMemo(() => ({ vpip: 25, pfr: 20, agg: 3 }), []);
 	const [actionProb, setActionProb] = useState({ val: 0.7, blf: 0.3 });
 	const [priorBelief, setPriorBelief] = useState(0.3);
-	const [cfrStrategy, setCfrStrategy] = useState<{ action: string; strategy: number }[]>([
-		{ action: 'FOLD', strategy: 100 },
-		{ action: 'CALL', strategy: 0 },
-		{ action: 'RAISE', strategy: 0 },
-	]);
+	const [painelCfrRef, lacoAtivo] = useLoopVisibility();
+
+	// Estratégia só existe com spot ativo. Até 2026-09-17 o estado inicial FOLD 100% ficava na tela como resultado,
+	// porque o worker descartava o pedido (SIM-01).
+	const actionMetrics = spot?.actionMetrics;
+	const cfrStrategy = useMemo(() => {
+		const fold = actionMetrics?.fold?.perspectiva;
+		const call = actionMetrics?.call?.perspectiva;
+		const raise = actionMetrics?.raise?.perspectiva;
+		if (fold === undefined || call === undefined || raise === undefined) return null;
+		return estrategiaPorRegretMatching({ FOLD: fold, CALL: call, RAISE: raise });
+	}, [actionMetrics]);
 
 	// SOTA: Debouncing de inputs de range para evitar colapso de UI em threads intensivas
 	const [debouncedPrior, setDebouncedPrior] = useState(0.3);
@@ -84,57 +93,47 @@ export function GtoCfrSimulator() {
 		[villainStats],
 	);
 
+	// Parâmetros do laço num ref: mudar pote ou spot não encerra e recria o worker (SIM-06).
+	const paramsRef = useRef({ pot: physics.pot, stack: physics.heroStack, equity: 50 });
+	paramsRef.current = {
+		pot: physics.pot,
+		stack: physics.heroStack,
+		equity: actionMetrics?.call?.perspectiva ?? 50,
+	};
+
 	// SOTA: Injeção Vetorial Zero-Copy (WebGPU) acoplada à Perspectiva
 	useEffect(() => {
 		if (!isHydrated) return;
-		workerRef.current ??= new Worker(new URL('./workers/cfr.worker.ts', import.meta.url), {
-			type: 'module',
-		});
+		const worker = new Worker(new URL('./workers/cfr.worker.ts', import.meta.url), { type: 'module' });
+		workerRef.current = worker;
 
-		let animId: number;
-		workerRef.current.onmessage = (e: MessageEvent) => {
-			if (e.data.type === 'cfr_strategy') {
-				setCfrStrategy(e.data.strategy);
-			} else if (e.data.matrix) {
-				cfrCanvasRef.current?.updateMatrix(e.data.matrix);
-			}
+		// Trava de ocupado: um pedido por vez. Sem ela, o setTimeout de 33 ms enfileirava pedidos mais rápido do que
+		// o worker respondia, e o laço seguia com a aba oculta ou o painel fora da tela (SIM-06).
+		let ocupado = false;
+		let temporizador: ReturnType<typeof setTimeout> | undefined;
+		worker.onmessage = (e: MessageEvent) => {
+			ocupado = false;
+			if (e.data.matrix) cfrCanvasRef.current?.updateMatrix(e.data.matrix);
+		};
+		worker.onerror = () => {
+			ocupado = false;
 		};
 
 		const loop = () => {
-			workerRef.current?.postMessage({
-				id: 'gto_cfr_tick',
-				nodes: 13,
-				pot: physics.pot,
-				stack: physics.heroStack,
-				equity: spot?.actionMetrics?.call?.perspectiva ?? 50,
-				kappa: 0.85,
-			});
-			animId = setTimeout(loop, 33) as unknown as number;
+			if (!ocupado && lacoAtivo.current) {
+				ocupado = true;
+				worker.postMessage({ id: 'gto_cfr_tick', nodes: 13, kappa: 0.85, ...paramsRef.current });
+			}
+			temporizador = setTimeout(loop, 33);
 		};
 		loop();
 
 		return () => {
-			clearTimeout(animId);
-			workerRef.current?.terminate();
+			clearTimeout(temporizador);
+			worker.terminate();
 			workerRef.current = null;
 		};
-	}, [isHydrated, physics.pot, physics.heroStack, spot]);
-
-	// SOTA: Offloading da estratégia CFR pesada para o Web Worker
-	useEffect(() => {
-		if (!isHydrated || !workerRef.current) return;
-
-		const evs = {
-			FOLD: spot?.actionMetrics?.fold?.perspectiva ?? 0,
-			CALL: spot?.actionMetrics?.call?.perspectiva ?? 0,
-			'RAISE (GTO)': spot?.actionMetrics?.raise?.perspectiva ?? 0,
-		};
-
-		workerRef.current.postMessage({
-			id: 'simulate_cfr_strategy',
-			evs,
-		});
-	}, [spot?.actionMetrics, isHydrated]);
+	}, [isHydrated, lacoAtivo]);
 
 	if (!isHydrated)
 		return (
@@ -278,6 +277,9 @@ export function GtoCfrSimulator() {
 							{archetype}
 						</span>
 					</div>
+					<p className="text-[0.55rem] font-mono text-text-dim leading-relaxed relative z-10 -mt-3">
+						Perfil ilustrativo (VPIP {villainStats.vpip} · PFR {villainStats.pfr} · AF {villainStats.agg}); não é dado medido de um vilão real.
+					</p>
 
 					<div className="flex-1 flex flex-col justify-center items-center py-8 bg-black/40 rounded-2xl border border-white/5 shadow-inner group-hover:border-accent-emerald/20 transition-colors duration-500 relative z-10">
 						<span className="text-[0.6rem] font-black uppercase tracking-[0.3em] text-text-darker mb-2">
@@ -336,7 +338,10 @@ export function GtoCfrSimulator() {
 				</div>
 
 				{/* CFR STRATEGY (Full Width but Shallow) */}
-				<div className="glass-panel p-8 md:col-span-2 border border-accent-amber/20 rounded-3xl overflow-hidden relative group shadow-2xl">
+				<div
+					ref={painelCfrRef}
+					className="glass-panel p-8 md:col-span-2 border border-accent-amber/20 rounded-3xl overflow-hidden relative group shadow-2xl"
+				>
 					<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-accent-amber/5 blur-[80px] rounded-full pointer-events-none" />
 
 					{/* SOTA: WebGPU Background Injection */}
@@ -348,10 +353,15 @@ export function GtoCfrSimulator() {
 							<span>CFR Convergence</span>
 						</h3>
 						<div className="text-[0.55rem] font-mono text-accent-amber font-black tracking-widest bg-accent-amber/5 px-3 py-1 rounded border border-accent-amber/20 uppercase">
-							GTO Stable
+							{cfrStrategy === null ? 'Sem spot ativo' : 'Regret matching · EV do spot'}
 						</div>
 					</div>
 
+					{cfrStrategy === null ? (
+						<output className="relative z-10 block m-0 text-[0.7rem] text-text-muted leading-relaxed">
+							Nenhum spot ativo: a estratégia só é calculada sobre as EVs de um spot do Simulador Mestre.
+						</output>
+					) : (
 					<div className="flex flex-col md:flex-row gap-12 items-center relative z-10">
 						<div className="w-40 h-40 shrink-0 relative min-w-40 min-h-40">
 							<ResponsiveContainer
@@ -434,6 +444,7 @@ export function GtoCfrSimulator() {
 							})}
 						</div>
 					</div>
+					)}
 				</div>
 			</div>
 		</div>

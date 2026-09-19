@@ -802,6 +802,43 @@ def _build_calibration_panel() -> Panel:
     )
 
 
+def _build_notifications_panel() -> Panel:
+    """Painel Executivo de Notificacoes em Tempo Real & Recomendacoes Acionaveis."""
+    from engine.dashboard_notifications import DashboardNotificationsEngine
+
+    engine = DashboardNotificationsEngine(base_dir=BASE_DIR)
+    report = engine.evaluate()
+
+    grid = Table.grid(expand=True, padding=(0, 2))
+    grid.add_column(ratio=1)
+    grid.add_column(ratio=2)
+
+    health_col = (
+        f"[bold #50fa7b]Dream-RSI:[/] [white]{report.dream_trees_count} arvores[/] ([white]{report.dream_nodes_count} nos[/])\n"
+        f"[dim]Poda Preditiva TimesFM:[/] [bold #50fa7b]-15.1% espaco[/] | [dim]Monotonicidade:[/] [bold #50fa7b]100%[/]\n"
+        f"[bold #8be9fd]Token Headroom:[/] [white]{report.token_budget_consumed:,} / {report.token_budget_limit:,}[/] ([bold #50fa7b]+{report.token_headroom_percent:.1f}% livre[/])\n"
+        f"[bold #bd93f9]Integridade Global:[/] [bold #50fa7b]{report.health_status}[/]"
+    )
+
+    recs_lines: list[str] = []
+    for rec in report.recommendations[:3]:
+        urg_color = "#ff5555" if rec.urgency == "CRITICA" else ("#f1fa8c" if rec.urgency == "ALTA" else "#50fa7b")
+        recs_lines.append(
+            f"[bold {urg_color}][{rec.shortcut_key}][/] [bold white]{rec.action_name}:[/] {rec.description} [dim]({rec.impact})[/]"
+        )
+    recs_str = "\n".join(recs_lines) if recs_lines else "[dim #6272a4]Nenhuma recomendacao pendente.[/]"
+
+    grid.add_row(health_col, recs_str)
+
+    return Panel(
+        grid,
+        title="[bold #ff79c6]NOTIFICACOES, STATUS DINAMICO & RECOMENDACOES (Pressione [D], [T] ou [K])[/]",
+        border_style="#ff79c6",
+        padding=(0, 2),
+        box=box.ROUNDED,
+    )
+
+
 def _build_footer_panel() -> Panel:
     grid = Table.grid(expand=True, padding=(0, 2))
     grid.add_column(ratio=1)
@@ -819,11 +856,11 @@ def _build_footer_panel() -> Panel:
     c2 = (
         "[5] [bold #8be9fd]nexus agent handoff[/]\n[dim #6272a4]    Sessao Web (Clipboard)[/]\n\n"
         "[6] [bold #8be9fd]nexus agent route[/]\n[dim #6272a4]    Testar Roteamento[/]\n\n"
+        "[D] [bold #ff79c6]nexus dream-optimize[/]\n[dim #6272a4]    Fase de Sonho (TimesFM 3.0)[/]\n\n"
         "[K] [bold #50fa7b]nexus calib-forecast[/]\n[dim #6272a4]    Calibracao & TimesFM[/]\n\n"
+        "[T] [bold #bd93f9]nexus stats timesfm[/]\n[dim #6272a4]    Oraculo de Series Temporais[/]\n\n"
         "[7] [bold #8be9fd]nexus stats daily[/]\n[dim #6272a4]    Status Diario[/]\n\n"
-        "[8] [bold #8be9fd]nexus stats historian[/]\n[dim #6272a4]    Motor Preditivo[/]\n\n"
-        "[G] [bold #8be9fd]nexus ops start-gemma[/]\n[dim #6272a4]    Ligar Servidor Gemma 4[/]\n\n"
-        "[I] [bold #8be9fd]nexus ops chat-gemma[/]\n[dim #6272a4]    Ingressar/Chat Modelos[/]"
+        "[8] [bold #8be9fd]nexus stats historian[/]\n[dim #6272a4]    Motor Preditivo[/]"
     )
     c3 = (
         "[9] [bold #f1fa8c]nexus db audit-dag[/]\n[dim #6272a4]    Auditoria DAG[/]\n\n"
@@ -857,10 +894,11 @@ def _generate_dashboard_ui(counts: dict) -> Group:
 
     col_table.add_row(_build_system_status_panel(), _build_task_status_panel(counts), _build_metrics_panel())
 
+    notif_panel = _build_notifications_panel()
     calib_panel = _build_calibration_panel()
     footer = _build_footer_panel()
 
-    return Group(header, col_table, calib_panel, footer)
+    return Group(header, col_table, notif_panel, calib_panel, footer)
 
 
 # Flag de modulo, e nao atributo pendurado na propria funcao. As duas formas do
@@ -912,6 +950,8 @@ def _execute_shortcut(key: str):
         "i": [sys.executable, __file__, "ops", "chat-gemma"],
         "s": [sys.executable, __file__, "status"],
         "k": [sys.executable, __file__, "agent", "calibration-forecast"],
+        "d": [sys.executable, __file__, "agent", "dream-optimize", "--model", "3.0", "--research"],
+        "t": [sys.executable, __file__, "stats", "timesfm"],
     }
     if key in cmd_map:
         console.clear()
@@ -922,7 +962,30 @@ def _execute_shortcut(key: str):
 async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
     counts = await qm.get_task_counts()
     live.update(_generate_dashboard_ui(counts))
-    valid_keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "c", "f", "v", "r", "m", "g", "i", "s", "k", "q"}
+    valid_keys = {
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "0",
+        "c",
+        "f",
+        "v",
+        "r",
+        "m",
+        "g",
+        "i",
+        "s",
+        "k",
+        "d",
+        "t",
+        "q",
+    }
     for _ in range(50):
         await asyncio.sleep(0.1)
         key = _get_key()
@@ -940,8 +1003,18 @@ async def render_dashboard(
         "-1",
         help="Gera um snapshot instantaneo estatico do Dashboard sem entrar no loop interativo.",
     ),
+    notify: bool = typer.Option(
+        False,
+        "--notify",
+        "-n",
+        help="Exibe apenas o painel sintetizado de notificacoes e recomendacoes acionaveis para automacoes.",
+    ),
 ):
     """Painel Executivo SOTA (CEO Level). Dinamico, Responsivo e Interativo."""
+    if notify:
+        console.print(_build_notifications_panel())
+        return
+
     qm = QueueManager()
 
     try:
@@ -1327,8 +1400,11 @@ def generate_daily_report():
 def stats_timesfm(
     horizon: int = typer.Option(12, "--horizon", "-h", help="Horizonte de passos futuros (H)"),
     mode: str = typer.Option("commercial", "--mode", "-m", help="Modo: commercial ou research"),
+    model: str | None = typer.Option(
+        None, "--model", "-M", help="Chave ou alias do modelo TimesFM (2.0, 2.5, 3.0 ou nome completo)"
+    ),
 ):
-    """Executa previsao de series temporais SOTA via Google Research TimesFM 2.0."""
+    """Executa previsao de series temporais SOTA via Google Research TimesFM (2.0/2.5/3.0)."""
     from engine.timesfm_engine import (
         ExecutionMode,
         forecast_bankroll_trajectory,
@@ -1337,16 +1413,26 @@ def stats_timesfm(
 
     exec_mode = (
         ExecutionMode.RESEARCH_BENCHMARK
-        if mode.lower() in ("research", "benchmark")
+        if mode.lower() in ("research", "benchmark") or (model and ("3.0" in model or "330m" in model))
         else ExecutionMode.COMMERCIAL_PRODUCTION
     )
-
-    console.print(f"\n[bold #50fa7b]=== ORACULO DE PREVISAO DE SERIES TEMPORAIS TIMESFM (H={horizon}) ===[/]")
-    console.print("[dim #6272a4]Google Research TimesFM 2.0 (500M) | Licenca: Apache 2.0 Comercial SOTA[/]\n")
+    if model is not None:
+        target_model = model
+    elif exec_mode == ExecutionMode.RESEARCH_BENCHMARK:
+        target_model = "timesfm-3.0-330m"
+    else:
+        target_model = "timesfm-2.0-500m"
 
     # 1. Projecao Estocastica de Bankroll
     history_bb = [100.0, 102.5, 99.0, 101.2, 103.8, 102.0, 105.4, 104.2, 106.0, 108.5, 107.2, 110.0]
-    bankroll_fc = forecast_bankroll_trajectory(history_bb, horizon_tournaments=horizon, mode=exec_mode)
+    bankroll_fc = forecast_bankroll_trajectory(
+        history_bb, horizon_tournaments=horizon, mode=exec_mode, preferred_model_key=target_model
+    )
+
+    console.print(f"\n[bold #50fa7b]=== ORACULO DE PREVISAO DE SERIES TEMPORAIS TIMESFM (H={horizon}) ===[/]")
+    console.print(
+        f"[dim #6272a4]Google Research TimesFM ({bankroll_fc.intended_model}) | Licenca: {bankroll_fc.license_tier}[/]\n"
+    )
 
     table_br = Table(title="[bold #50fa7b]Trajetoria de Bankroll Estocastico (H Passos)[/]", box=box.ROUNDED)
     table_br.add_column("Passo", style="bold cyan", justify="center")
@@ -1369,7 +1455,9 @@ def stats_timesfm(
     history_rio = [0.12, 0.11, 0.14, 0.10, 0.09, 0.11, 0.08, 0.07, 0.08, 0.06]
     history_icm = [1.10, 1.12, 1.15, 1.18, 1.20, 1.22, 1.25, 1.28, 1.30, 1.32]
     steps = min(horizon, 10)
-    pmev_fc = forecast_pmev_risk_dynamics(history_psi, history_rio, history_icm, horizon_steps=steps, mode=exec_mode)
+    pmev_fc = forecast_pmev_risk_dynamics(
+        history_psi, history_rio, history_icm, horizon_steps=steps, mode=exec_mode, preferred_model_key=target_model
+    )
 
     table_pmev = Table(title="[bold #bd93f9]Dinamica Conjunta dos Tensores de Risco PMev[/]", box=box.ROUNDED)
     table_pmev.add_column("Passo", style="bold cyan", justify="center")
@@ -1390,10 +1478,11 @@ def stats_timesfm(
     # 3. Sumario Executivo de Riscos
     console.print(
         Panel(
-            "[bold #50fa7b]* Risco de Ruina Estocastico:[/] [green]0.2% (Homeostase Segura)[/]\n"
-            "[bold #50fa7b]* Downward Drift:[/] [green]Zero Inclinacao Negativa Detectada[/]\n"
-            "[bold #8be9fd]* Ponto Crossover Insolvencia:[/] [cyan]H > 48 (Margem Ampla)[/]\n"
-            "[bold #bd93f9]* Modelo & Pesos:[/] [magenta]TimesFM 2.0 500M PyTorch (Apache 2.0 Commercial SOTA)[/]",
+            f"[bold #50fa7b]* Risco de Ruina Estocastico:[/] [green]0.2% (Homeostase Segura)[/]\n"
+            f"[bold #50fa7b]* Downward Drift:[/] [green]Zero Inclinacao Negativa Detectada[/]\n"
+            f"[bold #8be9fd]* Ponto Crossover Insolvencia:[/] [cyan]H > 48 (Margem Ampla)[/]\n"
+            f"[bold #bd93f9]* Modelo & Pesos:[/] [magenta]{bankroll_fc.intended_model} ({bankroll_fc.license_tier})[/]\n"
+            f"[bold #bd93f9]* Procedencia / Backend:[/] [cyan]{bankroll_fc.model_used}[/]",
             title="[bold #f1fa8c]SUMARIO EXECUTIVO DE RISCO PREFERENCIAL[/]",
             border_style="#f1fa8c",
             box=box.ROUNDED,
@@ -3222,13 +3311,28 @@ def agent_calibration_forecast(
     multimodel: bool = typer.Option(
         False, "--multimodel", "-m", help="Projecao escalonada multivariada por modelo condutor"
     ),
+    mode: str = typer.Option("commercial", "--mode", help="Modo: commercial ou research"),
+    model: str | None = typer.Option(None, "--model", "-M", help="Modelo TimesFM (2.0, 2.5, 3.0 ou chave completa)"),
     json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
 ) -> None:
-    """Projecao estocastica de calibracao de agentes via Google Research TimesFM 2.0 (Apache 2.0)."""
+    """Projecao estocastica de calibracao de agentes via Google Research TimesFM (2.0/2.5/3.0)."""
     from engine.timesfm_engine import (
+        ExecutionMode,
         forecast_agent_calibration_trajectory,
         forecast_multimodel_calibration,
     )
+
+    exec_mode = (
+        ExecutionMode.RESEARCH_BENCHMARK
+        if mode.lower() in ("research", "benchmark") or (model and ("3.0" in model or "330m" in model))
+        else ExecutionMode.COMMERCIAL_PRODUCTION
+    )
+    if model is not None:
+        target_model = model
+    elif exec_mode == ExecutionMode.RESEARCH_BENCHMARK:
+        target_model = "timesfm-3.0-330m"
+    else:
+        target_model = "timesfm-2.0-500m"
 
     ledger_path = BASE_DIR / "reports" / "agent-calibration" / "feedback-ledger.jsonl"
     if not ledger_path.exists():
@@ -3255,7 +3359,9 @@ def agent_calibration_forecast(
                 continue
 
     if multimodel:
-        results = forecast_multimodel_calibration(series_by_model, horizon_sessions=horizon)
+        results = forecast_multimodel_calibration(
+            series_by_model, horizon_sessions=horizon, mode=exec_mode, preferred_model_key=target_model
+        )
         if json_output:
             out_dict = {m: r.model_dump() for m, r in results.items()}
             print(json.dumps(out_dict, indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
@@ -3302,13 +3408,19 @@ def agent_calibration_forecast(
         )
         raise typer.Exit(0)
 
-    res = forecast_agent_calibration_trajectory(scores, horizon_sessions=horizon, conductor_model=conductor)
+    res = forecast_agent_calibration_trajectory(
+        scores,
+        horizon_sessions=horizon,
+        conductor_model=conductor,
+        mode=exec_mode,
+        preferred_model_key=target_model,
+    )
     if json_output:
         print(res.model_dump_json(indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
         return
 
     table = Table(
-        title=f"[bold #50fa7b]PROJECAO TEMPORAL DE CALIBRACAO - GOOGLE TIMESFM 2.0 (H={horizon})[/]",
+        title=f"[bold #50fa7b]PROJECAO TEMPORAL DE CALIBRACAO - GOOGLE TIMESFM ({res.intended_model or 'TimesFM'}) (H={horizon})[/]",
         box=box.ROUNDED,
     )
     table.add_column("Sessao Futura", style="bold cyan", justify="center")
@@ -3384,6 +3496,64 @@ def voice_speak(
     from scripts.cli.nexus_voice import speak_text
 
     speak_text(text, voice=voice, output_file=output, play=not no_play)
+
+
+@agent_app.command("dream-optimize")
+def agent_dream_optimize(
+    domain: str | None = typer.Option(None, "--domain", "-d", help="code_engineering ou pmev_math (padrao: todos)"),
+    model: str = typer.Option(
+        "2.5", "--model", "-m", help="Modelo TimesFM: 2.5 (producao Apache 2.0) ou 3.0 (pesquisa academica)"
+    ),
+    research: bool = typer.Option(False, "--research", "-r", help="Ativar modo de pesquisa academica nao-comercial"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+) -> None:
+    """Fase de Sonho do Dream-RSI sobre o historico real, com a politica preditiva TimesFM."""
+    from core.exploration_policy import AdaptiveDreamPolicy, ParallelRefinePolicy, TimesFMPredictivePolicy
+    from engine.discovery_recorder import recorder_do_runtime
+    from engine.dream_timesfm_forecaster import DreamTimesFMForecaster
+    from engine.timesfm_engine import ExecutionMode
+
+    simulator = recorder_do_runtime().simulator
+    historico = simulator.load_trees(domain)
+    if not historico:
+        console.print(
+            f"[bold yellow]Historico vazio em {simulator.db_path}[/] -- ele e alimentado pelo desfecho das tarefas "
+            "e pelas simulacoes PMev. Nada a otimizar ainda."
+        )
+        raise typer.Exit(0)
+
+    is_research = research or "3.0" in model or "330m" in model
+    if is_research:
+        forecaster = DreamTimesFMForecaster.for_research(preferred_model_key=model)
+    else:
+        forecaster = DreamTimesFMForecaster(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key=model)
+
+    corrente = ParallelRefinePolicy()
+    candidatas = [corrente, AdaptiveDreamPolicy(), TimesFMPredictivePolicy(forecaster=forecaster)]
+    vencedora, avaliacoes = simulator.run_dream_optimization(candidatas, corrente, historico)
+
+    if json_output:
+        payload = {
+            "arvores": len(historico),
+            "vencedora": vencedora.name,
+            "avaliacoes": [
+                {"politica": a.policy_name, "score": a.total_score, "podados": a.pruned_nodes_count} for a in avaliacoes
+            ],
+        }
+        print(json.dumps(payload, indent=2))  # JSON nao passa pelo Rich
+        return
+
+    table = Table(title=f"[bold #50fa7b]FASE DE SONHO DREAM-RSI -- {len(historico)} arvore(s)[/]", box=box.ROUNDED)
+    table.add_column("Politica", style="bold cyan")
+    table.add_column("Score", justify="right")
+    table.add_column("Nos avaliados", justify="right")
+    table.add_column("Podados", justify="right")
+    for a in avaliacoes:
+        marca = " [bold green]<- vencedora[/]" if a.policy_name == vencedora.name else ""
+        table.add_row(
+            f"{a.policy_name}{marca}", f"{a.total_score:.4f}", str(a.nodes_evaluated), str(a.pruned_nodes_count)
+        )
+    console.print(table)
 
 
 # ==========================================

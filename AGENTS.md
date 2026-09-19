@@ -9,19 +9,9 @@ cruzada tem valor; **segunda cópia da governança não tem.**
 
 ## Por que ponteiro e não cópia
 
-Entre 2026-08-24 e 2026-08-26 este arquivo existiu como fork do `CLAUDE.md`.
-Em dois dias divergiu em três pontos, dois deles falsos — ambos nascidos de um
-search-replace mecânico de `claude` para `Codex`:
-
-| Divergência | Estado |
-| :--- | :--- |
-| Apontava para `..\AGENTS.md` na raiz multiprojeto | **não existia** |
-| Dizia que os 19 documentos de agente ficam em `.Codex/agents/` | **falso** — `sync_agents_reality.ps1:54` escreve em `.claude/agents/`, e `.Codex/agents/` não existe |
-| Trazia a §6, diretrizes de manutenção contínua | **conteúdo real** — incorporado ao `CLAUDE.md` §6 em 2026-08-28 |
-
-Duas mentiras em dois dias, nenhuma delas detectada por nada. Documento de
-governança duplicado não diverge *se* alguém descuidar — diverge **por
-padrão**, porque a cópia não tem como saber que o original mudou.
+Entre 2026-08-24 e 2026-08-26 este arquivo divergiu do `CLAUDE.md`. Documento de
+governança duplicado diverge por padrão; a cópia não tem como saber que o
+original mudou. Toda governança canônica reside no `CLAUDE.md`.
 
 ## Se você é um agente lendo este arquivo
 
@@ -31,11 +21,6 @@ a obrigação de declaração e as diretrizes de manutenção contínua.
 
 A governança multiprojeto, que vale para todos os projetos sob `~/.gemini`,
 está em `../CLAUDE.md`.
-
----
-
-*`tests/test_governanca_agents.py` reprova se este arquivo voltar a crescer
-para além de um ponteiro, ou se o `CLAUDE.md` perder as seções que ele promete.*
 
 ## Se você é um agente de nuvem (Jules / `Bolt ⚡`)
 
