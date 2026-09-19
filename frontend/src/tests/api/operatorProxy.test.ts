@@ -64,4 +64,19 @@ describe('proxy da área do operador (FE-04)', () => {
 		expect(res.headers.get('location')).toBeNull();
 		expect(res.headers.get('x-middleware-next')).toBe('1');
 	});
+
+	it.each(['/dashboard/files', '/api/vitoi/files/view'])(
+		'desativa COEP apenas na superficie de documentos: %s',
+		async (caminho) => {
+			getToken.mockResolvedValue({ email: 'Operador@Exemplo.com' });
+			const res = await proxy(pedido(caminho));
+			expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBe('unsafe-none');
+		},
+	);
+
+	it('preserva COEP global nas demais rotas do operador', async () => {
+		getToken.mockResolvedValue({ email: 'Operador@Exemplo.com' });
+		const res = await proxy(pedido('/dashboard'));
+		expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBeNull();
+	});
 });

@@ -50,6 +50,7 @@
     "cloud-arrow-up",
     "code",
     "compass",
+    "copy",
     "crosshairs",
     "crown",
     "cube",
@@ -60,6 +61,7 @@
     "equals",
     "eye",
     "eye-slash",
+    "file",
     "file-code",
     "file-excel",
     "file-export",
@@ -124,7 +126,6 @@
     "terminal",
     "trash-can",
     "triangle-exclamation",
-    "up-right-from-square",
     "user-astronaut",
     "user-gear",
     "user-group",
@@ -148,14 +149,14 @@
   ],
   "fontes": {
     "fa-solid-900": {
-      "glifos": 136,
+      "glifos": 137,
       "bytes_origem": 119488,
-      "bytes_recorte": 13720
+      "bytes_recorte": 13664
     },
     "fa-regular-400": {
-      "glifos": 27,
+      "glifos": 29,
       "bytes_origem": 19512,
-      "bytes_recorte": 3892
+      "bytes_recorte": 3972
     },
     "fa-brands-400": {
       "glifos": 6,

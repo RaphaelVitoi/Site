@@ -41,7 +41,13 @@ export async function proxy(req: NextRequest) {
 		return NextResponse.redirect(url);
 	}
 
-	return NextResponse.next();
+	const response = NextResponse.next();
+	if (pathname === '/dashboard/files' || pathname === '/api/vitoi/files/view') {
+		// O visualizador nativo do Chromium usa uma extensao interna chrome-extension://.
+		// COEP require-corp bloqueia esse frame; CSP, SAMEORIGIN e autenticacao permanecem ativos.
+		response.headers.set('Cross-Origin-Embedder-Policy', 'unsafe-none');
+	}
+	return response;
 }
 
 export const config = {

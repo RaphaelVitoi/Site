@@ -9,6 +9,11 @@ export async function GET(request: Request) {
 	if (!path) return NextResponse.json({ status: 'ERROR', error: "Parâmetro 'path' ausente." }, { status: 400 });
 
 	const parametros: Record<string, string> = { path };
-	if (searchParams.get('raw') === 'true') parametros['raw'] = 'true';
+	if (searchParams.get('download') === 'true') {
+		parametros['raw'] = 'true';
+		parametros['download'] = 'true';
+	} else if (searchParams.get('raw') === 'true') {
+		parametros['raw'] = 'true';
+	}
 	return encaminharGetDeOperador('/api/files/view', parametros);
 }

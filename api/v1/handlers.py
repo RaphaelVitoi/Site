@@ -17,6 +17,7 @@ from pathlib import Path
 import re
 import time
 from typing import Any, Literal, cast
+from urllib.parse import quote
 from uuid import uuid4
 import zipfile
 
@@ -103,6 +104,7 @@ from utils.storage import buckets as sota_buckets
 from utils.web_search import get_search_engine_from_env
 
 BASE_WORKSPACE_DIR: Path = Path(__file__).resolve().parent.parent.parent
+INVALID_JSON_BODY = "Invalid JSON body"
 
 logger = logging.getLogger(__name__)
 
@@ -788,10 +790,87 @@ def _get_raw_content_type(ext: str) -> str:
     return "application/octet-stream"
 
 
+def _content_disposition(filename: str, *, download: bool) -> str:
+    mode = "attachment" if download else "inline"
+    ascii_filename = filename.encode("ascii", "ignore").decode("ascii")
+    ascii_filename = re.sub(r'["\\\r\n]', "_", ascii_filename) or "download"
+    encoded_filename = quote(filename, safe="")
+    return f"{mode}; filename=\"{ascii_filename}\"; filename*=UTF-8''{encoded_filename}"
+
+
+async def _parse_image_response(ext: str, file_path: Path) -> web.Response:
+    if ext != ".svg":
+        img_data = await asyncio.to_thread(_parse_image, file_path)
+        return web.json_response({"type": "image", "data": img_data})
+
+    def _read_svg_b64() -> str:
+        with open(file_path, "rb") as file:
+            return base64.b64encode(file.read()).decode("utf-8")
+
+    b64_str = await asyncio.to_thread(_read_svg_b64)
+    return web.json_response(
+        {
+            "type": "image",
+            "data": {
+                "format": "svg+xml",
+                "size": "Vetor (Escalavel)",
+                "exif": {},
+                "base64": b64_str,
+            },
+        }
+    )
+
+
+async def _serve_parsed_file(file_path: Path, ext: str) -> web.Response:
+    if ext in SPREADSHEET_EXTS:
+        sheet_data = await asyncio.to_thread(_parse_spreadsheet, ext, file_path)
+        return web.json_response({"type": "spreadsheet", "data": sheet_data})
+    if ext in ARCHIVE_EXTS:
+        archive_files = await asyncio.to_thread(_list_zip, file_path)
+        return web.json_response({"type": "archive", "files": archive_files})
+    if ext in IMAGE_EXTS:
+        return await _parse_image_response(ext, file_path)
+    if ext in (".mp4", ".avi", ".mkv", ".mov", ".mp3", ".wav"):
+        return web.json_response({"type": "media", "message": "Streaming de media disponivel."})
+    if ext in (".pdf", ".docx", ".odt", ".doc", ".ppt", ".pptx", ".odp"):
+        rag = await _te.get_rag_async()
+        extracted_text = await rag._extract_text_from_file(file_path)  # pyright: ignore[reportPrivateUsage] # pylint: disable=protected-access
+        words_count = len(extracted_text.split()) if extracted_text else 0
+        return web.json_response(
+            {
+                "type": "document",
+                "content": extracted_text,
+                "format": ext.lstrip("."),
+                "words": words_count,
+                "chars": len(extracted_text) if extracted_text else 0,
+            }
+        )
+
+    file_size = (await asyncio.to_thread(file_path.stat)).st_size
+    if file_size > 5 * 1024 * 1024:
+        return web.json_response(
+            {
+                "type": "text",
+                "content": f"[Aviso] O arquivo e muito grande ({file_size / 1024 / 1024:.1f} MB) para ser exibido diretamente como texto. Baixe o arquivo bruto ou use o RAG para processa-lo.",
+            }
+        )
+
+    text_content = await asyncio.to_thread(file_path.read_text, encoding="utf-8", errors="ignore")
+    return web.json_response(
+        {
+            "type": "text",
+            "content": text_content,
+            "format": ext.lstrip("."),
+            "lines": text_content.count("\n") + 1 if text_content else 0,
+        }
+    )
+
+
 async def handle_view_file(request: web.Request) -> web.StreamResponse:
     """SOTA CLI/API: Serves or parses the file content securely with traversal guards."""
     path_param = request.rel_url.query.get("path", "").strip()
-    raw_param = request.rel_url.query.get("raw", "false").strip().lower() == "true"
+    download_param = request.rel_url.query.get("download", "false").strip().lower() == "true"
+    raw_param = request.rel_url.query.get("raw", "false").strip().lower() == "true" or download_param
 
     if not path_param:
         return web.json_response({"error": "Parametro 'path' ausente."}, status=400)
@@ -807,6 +886,7 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
     if raw_param:
         headers = {
             "Content-Type": _get_raw_content_type(ext),
+            "Content-Disposition": _content_disposition(file_path.name, download=download_param),
             "X-Content-Type-Options": "nosniff",
         }
         if ext == ".pdf":
@@ -814,7 +894,6 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
             headers["Content-Security-Policy"] = (
                 "default-src 'self' data: blob:; object-src 'self' data: blob:; script-src 'none'; style-src 'unsafe-inline';"
             )
-            headers["Content-Disposition"] = f'inline; filename="{file_path.name}"'
         elif ext == ".svg":
             # SVG requer sandbox estrito para mitigar execucao de script arbitrario (BK-19)
             headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src 'self' data:;"
@@ -824,71 +903,7 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
         return web.FileResponse(file_path, headers=headers)
 
     try:
-        if ext in SPREADSHEET_EXTS:
-            sheet_data = await asyncio.to_thread(_parse_spreadsheet, ext, file_path)
-            return web.json_response({"type": "spreadsheet", "data": sheet_data})
-        if ext in ARCHIVE_EXTS:
-            archive_files = await asyncio.to_thread(_list_zip, file_path)
-            return web.json_response({"type": "archive", "files": archive_files})
-        if ext in IMAGE_EXTS:
-            if ext == ".svg":
-
-                def _read_svg_b64():
-                    with open(file_path, "rb") as f:
-                        return base64.b64encode(f.read()).decode("utf-8")
-
-                b64_str = await asyncio.to_thread(_read_svg_b64)
-                return web.json_response(
-                    {
-                        "type": "image",
-                        "data": {
-                            "format": "svg+xml",
-                            "size": "Vetor (Escalavel)",
-                            "exif": {},
-                            "base64": b64_str,
-                        },
-                    }
-                )
-            img_data = await asyncio.to_thread(_parse_image, file_path)
-            return web.json_response({"type": "image", "data": img_data})
-        if ext in (".mp4", ".avi", ".mkv", ".mov", ".mp3", ".wav"):
-            return web.json_response({"type": "media", "message": "Streaming de media disponivel."})
-        if ext in (".pdf", ".docx", ".odt", ".doc", ".ppt", ".pptx", ".odp"):
-            rag = await _te.get_rag_async()
-            extracted_text = await rag._extract_text_from_file(file_path)  # pyright: ignore[reportPrivateUsage] # pylint: disable=protected-access
-            words_count = len(extracted_text.split()) if extracted_text else 0
-            return web.json_response(
-                {
-                    "type": "document",
-                    "content": extracted_text,
-                    "format": ext.lstrip("."),
-                    "words": words_count,
-                    "chars": len(extracted_text) if extracted_text else 0,
-                }
-            )
-
-        # Safeguard: Prevent reading huge files as plain text to avoid memory spikes
-        file_size = file_path.stat().st_size
-        if file_size > 5 * 1024 * 1024:
-            return web.json_response(
-                {
-                    "type": "text",
-                    "content": f"[Aviso] O arquivo e muito grande ({file_size / 1024 / 1024:.1f} MB) para ser exibido diretamente como texto. Baixe o arquivo bruto ou use o RAG para processa-lo.",
-                }
-            )
-
-        def _read_text():
-            return file_path.read_text(encoding="utf-8", errors="ignore")
-
-        text_content = await asyncio.to_thread(_read_text)
-        return web.json_response(
-            {
-                "type": "text",
-                "content": text_content,
-                "format": ext.lstrip("."),
-                "lines": text_content.count("\n") + 1 if text_content else 0,
-            }
-        )
+        return await _serve_parsed_file(file_path, ext)
     except Exception as e:
         return _internal_error(e, "handle_view_file")
 
@@ -1166,7 +1181,7 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except Exception:
-        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = PluribusSolveRequest.model_validate(data)
@@ -1223,7 +1238,7 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except Exception:
-        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = DeepStackResolveRequest.model_validate(data)
@@ -1278,7 +1293,7 @@ async def handle_rebel_pbs_evaluate(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except Exception:
-        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = RebelPbsEvaluateRequest.model_validate(data)
@@ -1479,7 +1494,7 @@ async def handle_canonical_bluff_ratios(request: web.Request) -> web.Response:
 async def handle_engine_capabilities(_request: web.Request) -> web.Response:
     """Publica o contrato estatico sem alegar que houve probe de runtime."""
     try:
-        manifest = load_engine_capability_manifest()
+        manifest = await asyncio.to_thread(load_engine_capability_manifest)
         return web.json_response(
             {
                 "status": "SUCCESS",
@@ -1561,7 +1576,7 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
     try:
         data = await request.json()
     except Exception:
-        return web.json_response({"status": "ERROR", "error": "Invalid JSON body"}, status=400)
+        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = TimesFMForecastRequest.model_validate(data)
@@ -1599,9 +1614,9 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
                 weights_loaded=engine.weights_loaded,
             )
         else:
-            assert req.series is not None
+            series = cast(list[float], req.series)
             result = engine.forecast_univariate(
-                series=req.series,
+                series=series,
                 horizon=req.horizon,
                 frequency_indicator=req.frequency_indicator,
                 target_name=req.target_name,

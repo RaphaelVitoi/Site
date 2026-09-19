@@ -111,6 +111,23 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
     expect(screen.getByText(/Texto extraído do PDF via motor RAG/i)).toBeInTheDocument();
   });
 
+  it('usa o contrato global de attachment com o nome original no download', () => {
+    render(
+      <UniversalDocumentViewer
+        selectedFile={basePdfFile}
+        fileContent={{ type: 'document', content: 'PDF' }}
+        loadingContent={false}
+      />
+    );
+
+    const download = screen.getByRole('link', { name: /Baixar/i });
+    expect(download).toHaveAttribute(
+      'href',
+      '/api/vitoi/files/view?path=docs%2Fdocumento_tecnico.pdf&raw=true&download=true'
+    );
+    expect(download).toHaveAttribute('download', 'documento_tecnico.pdf');
+  });
+
   it('renderiza Markdown com modo formatado e código fonte', () => {
     const mdContent: FileContent = {
       type: 'text',
