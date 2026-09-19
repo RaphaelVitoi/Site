@@ -12,6 +12,7 @@ import os
 import re
 import secrets
 import time
+from urllib.parse import urlsplit
 
 from aiohttp import web
 
@@ -183,7 +184,24 @@ def _trusted_origins() -> set[str]:
 
 
 def _origin_is_trusted(origin: str | None) -> bool:
-    return bool(origin) and origin in _trusted_origins()
+    if not origin:
+        return False
+    if origin in _trusted_origins():
+        return True
+    try:
+        parsed = urlsplit(origin)
+        _ = parsed.port
+    except ValueError:
+        return False
+    return (
+        parsed.scheme in {"http", "https"}
+        and parsed.hostname in {"localhost", "127.0.0.1", "::1"}
+        and parsed.username is None
+        and parsed.password is None
+        and parsed.path in {"", "/"}
+        and not parsed.query
+        and not parsed.fragment
+    )
 
 
 def _is_loopback(remote: str | None) -> bool:

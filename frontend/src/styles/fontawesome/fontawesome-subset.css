@@ -187,13 +187,13 @@
 
 .fa-pull-left,
 .fa-pull-start {
-  float: left;
+  float: inline-start;
   margin-inline-end: var(--fa-pull-margin, 0.3em);
 }
 
 .fa-pull-right,
 .fa-pull-end {
-  float: right;
+  float: inline-end;
   margin-inline-start: var(--fa-pull-margin, 0.3em);
 }
 
@@ -1792,6 +1792,9 @@
 
 
 
+.fa-copy {
+  --fa: "\f0c5";
+}
 
 .fa-paperclip {
   --fa: "\f0c6";
@@ -2032,6 +2035,9 @@
 
 
 
+.fa-file {
+  --fa: "\f15b";
+}
 
 .fa-file-lines {
   --fa: "\f15c";
@@ -2462,9 +2468,6 @@
 
 
 
-.fa-up-right-from-square {
-  --fa: "\f35d";
-}
 
 
 
@@ -3360,11 +3363,6 @@
 :root, :host {
   --fa-family-brands: 'Font Awesome 7 Brands';
   --fa-font-brands: normal 400 1em/1 var(--fa-family-brands);
-  --fa-family-classic: 'Font Awesome 7 Free';
-  --fa-font-regular: normal 400 1em/1 var(--fa-family-classic);
-  --fa-font-solid: normal 900 1em/1 var(--fa-family-classic);
-  /* deprecated: this older custom property will be removed next major release */
-  --fa-style-family-classic: var(--fa-family-classic);
 }
 
 @font-face {
@@ -4015,7 +4013,12 @@
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2026 Fonticons, Inc.
  */
-
+:root, :host {
+  --fa-family-classic: 'Font Awesome 7 Free';
+  --fa-font-regular: normal 400 1em/1 var(--fa-family-classic);
+  /* deprecated: this older custom property will be removed next major release */
+  --fa-style-family-classic: var(--fa-family-classic);
+}
 
 @font-face {
   font-family: "Font Awesome 7 Free";
@@ -4041,7 +4044,12 @@
  * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  * Copyright 2026 Fonticons, Inc.
  */
-
+:root, :host {
+  --fa-family-classic: 'Font Awesome 7 Free';
+  --fa-font-solid: normal 900 1em/1 var(--fa-family-classic);
+  /* deprecated: this older custom property will be removed next major release */
+  --fa-style-family-classic: var(--fa-family-classic);
+}
 
 @font-face {
   font-family: "Font Awesome 7 Free";
@@ -4055,7 +4063,9 @@
   --fa-style: 900;
 }
 
-
+.fa-classic {
+  --fa-family: var(--fa-family-classic);
+}
 
 .fa-solid {
   --fa-style: 900;

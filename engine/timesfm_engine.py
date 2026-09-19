@@ -44,8 +44,12 @@ class ModelMetadata:
     parameter_count: str
 
 
+TIMESFM_20_500M = "timesfm-2.0-500m"
+TIMESFM_25_200M = "timesfm-2.5-200m"
+TIMESFM_30_330M = "timesfm-3.0-330m"
+
 TIMESFM_CATALOG: dict[str, ModelMetadata] = {
-    "timesfm-2.0-500m": ModelMetadata(
+    TIMESFM_20_500M: ModelMetadata(
         model_id="google/timesfm-2.0-500m-pytorch",
         version="2.0",
         license_tier=LicenseTier.APACHE_2_COMMERCIAL,
@@ -53,7 +57,7 @@ TIMESFM_CATALOG: dict[str, ModelMetadata] = {
         context_length=2048,
         parameter_count="500M",
     ),
-    "timesfm-2.5-200m": ModelMetadata(
+    TIMESFM_25_200M: ModelMetadata(
         model_id="google/timesfm-2.5-200m-pytorch",
         version="2.5",
         license_tier=LicenseTier.APACHE_2_COMMERCIAL,
@@ -61,7 +65,7 @@ TIMESFM_CATALOG: dict[str, ModelMetadata] = {
         context_length=2048,
         parameter_count="200M",
     ),
-    "timesfm-3.0-330m": ModelMetadata(
+    TIMESFM_30_330M: ModelMetadata(
         model_id="google/timesfm-3.0-pytorch",
         version="3.0",
         license_tier=LicenseTier.NON_COMMERCIAL_V1,
@@ -72,15 +76,15 @@ TIMESFM_CATALOG: dict[str, ModelMetadata] = {
 }
 
 TIMESFM_ALIASES: dict[str, str] = {
-    "3.0": "timesfm-3.0-330m",
-    "timesfm-3.0": "timesfm-3.0-330m",
-    "330m": "timesfm-3.0-330m",
-    "2.5": "timesfm-2.5-200m",
-    "timesfm-2.5": "timesfm-2.5-200m",
-    "200m": "timesfm-2.5-200m",
-    "2.0": "timesfm-2.0-500m",
-    "timesfm-2.0": "timesfm-2.0-500m",
-    "500m": "timesfm-2.0-500m",
+    "3.0": TIMESFM_30_330M,
+    "timesfm-3.0": TIMESFM_30_330M,
+    "330m": TIMESFM_30_330M,
+    "2.5": TIMESFM_25_200M,
+    "timesfm-2.5": TIMESFM_25_200M,
+    "200m": TIMESFM_25_200M,
+    "2.0": TIMESFM_20_500M,
+    "timesfm-2.0": TIMESFM_20_500M,
+    "500m": TIMESFM_20_500M,
 }
 
 
@@ -156,7 +160,7 @@ class TimesFMForecastRequest(BaseModel):
         ExecutionMode.COMMERCIAL_PRODUCTION,
         description="Modo de execucao (commercial_production ou research_benchmark)",
     )
-    preferred_model_key: str = Field("timesfm-2.0-500m", description="Chave do modelo no catalogo TimesFM")
+    preferred_model_key: str = Field(TIMESFM_20_500M, description="Chave do modelo no catalogo TimesFM")
 
 
 class TimesFMForecastResponse(BaseModel):
@@ -182,7 +186,7 @@ class TimesFMEngine:
     def __init__(
         self,
         mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-        preferred_model_key: str = "timesfm-2.0-500m",
+        preferred_model_key: str = TIMESFM_20_500M,
     ) -> None:
         self.mode = mode
         canonical_key = TIMESFM_ALIASES.get(preferred_model_key.strip().lower(), preferred_model_key)
@@ -230,7 +234,7 @@ class TimesFMEngine:
             raise TimesFMGovernanceError(
                 f"VIOLAÇÃO DE LICENÇA: O modelo '{canonical_key}' está sob '{meta.license_tier.value}'. "
                 "O Google proíbe expressamente o uso de pesos do TimesFM 3.0 em ambientes comerciais ou de produção. "
-                "Para produção comercial, utilize 'timesfm-2.0-500m' / 'timesfm-2.5-200m' (Apache 2.0) "
+                f"Para produção comercial, utilize '{TIMESFM_20_500M}' / '{TIMESFM_25_200M}' (Apache 2.0) "
                 "ou utilize o serviço gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
             )
 
@@ -299,7 +303,7 @@ def forecast_bankroll_trajectory(
     history_bb: list[float],
     horizon_tournaments: int = 12,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = "timesfm-2.0-500m",
+    preferred_model_key: str = TIMESFM_20_500M,
 ) -> ForecastResult:
     """Funcao de dominio SOTA: Projeta a trajetoria estocastica de Bankroll (em BB).
 
@@ -319,7 +323,7 @@ def forecast_pmev_risk_dynamics(
     history_icm: list[float],
     horizon_steps: int = 10,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = "timesfm-2.0-500m",
+    preferred_model_key: str = TIMESFM_20_500M,
 ) -> dict[str, ForecastResult]:
     """Funcao de dominio SOTA: Projeta a evolucao conjunta dos tensores de risco PMev.
 
@@ -361,14 +365,14 @@ def forecast_agent_calibration_trajectory(
     horizon_sessions: int = 3,
     conductor_model: str | None = None,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = "timesfm-2.0-500m",
+    preferred_model_key: str = TIMESFM_20_500M,
 ) -> AgentCalibrationForecast:
     """Funcao de Dominio: Projeta a trajetoria e volatilidade de notas de calibracao dos agentes.
 
     Utiliza TimesFM 2.0 (Apache 2.0) para antecipar desvios de performance, quantis e downward drift.
     """
     if len(history_scores) < 4:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
         return AgentCalibrationForecast(
             status="INSUFFICIENT_HISTORY",
             history_points=len(history_scores),
@@ -453,7 +457,7 @@ def forecast_multimodel_calibration(
     series_by_model: dict[str, list[float]],
     horizon_sessions: int = 3,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = "timesfm-2.0-500m",
+    preferred_model_key: str = TIMESFM_20_500M,
 ) -> dict[str, AgentCalibrationForecast]:
     """Escalonamento Multivariado: Projeta series temporais segmentadas por modelo condutor."""
     return {
@@ -491,7 +495,7 @@ def forecast_cfr_convergence(
     horizon_iterations: int = 10,
     target_epsilon: float = 0.001,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = "timesfm-2.0-500m",
+    preferred_model_key: str = TIMESFM_20_500M,
 ) -> CfrConvergenceForecast:
     """Projeta a trajetoria de decaimento do arrependimento medio ou explorabilidade no CFR+.
 
@@ -499,7 +503,7 @@ def forecast_cfr_convergence(
     ou quando a variacao entre iteracoes indica convergencia assintotica ou plato.
     """
     if len(regret_history) < 4:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
         return CfrConvergenceForecast(
             status="INSUFFICIENT_HISTORY",
             current_exploitability=float(regret_history[-1]) if regret_history else 1.0,
@@ -518,7 +522,7 @@ def forecast_cfr_convergence(
 
     current_val = float(regret_history[-1])
     if current_val <= target_epsilon:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
         return CfrConvergenceForecast(
             status="CONVERGED",
             current_exploitability=current_val,
@@ -612,11 +616,11 @@ def forecast_opponent_drift(
     canonical_benchmark: float = 0.5,
     metric_name: str = "vpip",
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = "timesfm-2.0-500m",
+    preferred_model_key: str = TIMESFM_20_500M,
 ) -> OpponentDriftForecast:
     """Projeta a deriva de tendencias do vilao (VPIP, 3-bet, fold to c-bet) vs limiares GTO."""
     if len(history_frequencies) < 4:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG["timesfm-2.0-500m"])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
         return OpponentDriftForecast(
             status="INSUFFICIENT_HISTORY",
             metric_name=metric_name,

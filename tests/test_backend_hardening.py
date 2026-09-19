@@ -236,6 +236,27 @@ async def test_view_file_entrega_texto_e_barra_arquivo_gigante(local_tmp_dir: Pa
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+async def test_view_file_separa_visualizacao_e_download_com_nome_original(local_tmp_dir: Path) -> None:
+    """Raw permanece inline; download força attachment com filename e filename*."""
+    from api.v1 import handlers
+
+    arquivo = local_tmp_dir / "tratado didático.pdf"
+    arquivo.write_bytes(b"%PDF-1.4\n%%EOF")
+
+    inline = await handlers.handle_view_file(
+        SimpleNamespace(rel_url=SimpleNamespace(query={"path": str(arquivo), "raw": "true"}))
+    )
+    download = await handlers.handle_view_file(
+        SimpleNamespace(rel_url=SimpleNamespace(query={"path": str(arquivo), "download": "true"}))
+    )
+
+    assert inline.headers["Content-Disposition"].startswith('inline; filename="tratado didtico.pdf";')
+    assert download.headers["Content-Disposition"].startswith('attachment; filename="tratado didtico.pdf";')
+    assert "filename*=UTF-8''tratado%20did%C3%A1tico.pdf" in download.headers["Content-Disposition"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
 async def test_list_files_e_web_search_respondem_o_contrato_do_dashboard(local_tmp_dir: Path, monkeypatch) -> None:
     """/api/files/list devolve a arvore esperada; /api/web-search exige 'q'."""
     (local_tmp_dir / "visivel.md").write_text("# doc", encoding="utf-8")
@@ -295,6 +316,46 @@ async def test_cors_middleware_does_not_reflect_wildcard_for_untrusted_origin() 
     # No SOTA GOLD, o CORS deve ser restrito ou retornar headers especificos
     # Se retornar *, deve ser apenas para rotas publicas. Aqui testamos a nao-reflexao.
     assert response.headers.get("Access-Control-Allow-Origin") != "http://untrusted.com"
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://localhost:49152",
+        "https://localhost:8443",
+        "http://127.0.0.1:65535",
+        "http://[::1]:3001",
+    ],
+)
+async def test_cors_middleware_allows_loopback_on_any_valid_port(origin: str) -> None:
+    """CORS aceita somente hosts loopback, independentemente da porta local."""
+
+    async def handler(_request):
+        return web.Response(text="OK")
+
+    request = SimpleNamespace(headers={"Origin": origin}, method="GET")
+
+    response = await middleware.cors_middleware(request, handler)
+
+    assert response.headers["Access-Control-Allow-Origin"] == origin
+    assert response.headers["Access-Control-Allow-Credentials"] == "true"
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://localhost.evil.example:3000",
+        "http://localhost@evil.example:3000",
+        "file://localhost/C:/segredo.txt",
+        "http://127.0.0.1:99999",
+    ],
+)
+def test_origin_is_trusted_rejects_loopback_lookalikes(origin: str) -> None:
+    """A allowlist local nao aceita host semelhante, credencial embutida ou porta invalida."""
+
+    assert middleware._origin_is_trusted(origin) is False
 
 
 @pytest.mark.asyncio

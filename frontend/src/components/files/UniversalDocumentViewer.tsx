@@ -83,6 +83,7 @@ export function UniversalDocumentViewer({
   const rawUrl =
     customRawUrl ||
     `/api/vitoi/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`;
+  const downloadUrl = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}download=true`;
 
   const isMarkdown = selectedFile.name.toLowerCase().endsWith('.md');
   const isDoc =
@@ -177,7 +178,7 @@ export function UniversalDocumentViewer({
             <span>Tentar Abrir Raw</span>
           </a>
           <a
-            href={rawUrl}
+            href={downloadUrl}
             download={selectedFile.name}
             className="flex items-center space-x-1.5 rounded-lg bg-accent-indigo px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-indigo/80"
           >
@@ -292,7 +293,7 @@ export function UniversalDocumentViewer({
 
           {/* Botão Baixar */}
           <a
-            href={rawUrl}
+            href={downloadUrl}
             download={selectedFile.name}
             className="flex items-center space-x-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-white/20"
             title="Baixar arquivo original"

@@ -98,6 +98,45 @@ def _escalate_security_cognition(task: Task) -> None:
         )
 
 
+async def _apply_task_mcp_routing(task: Task, manager: QueueManager) -> None:
+    original_metadata = dict(task.metadata or {})
+    routed_metadata = apply_mcp_addon_routing(task.description, original_metadata)
+    if routed_metadata == original_metadata:
+        return
+
+    object.__setattr__(task, "metadata", routed_metadata)
+    mcp_patch = {key: routed_metadata[key] for key in MCP_OUTPUT_KEYS if key in routed_metadata}
+    if mcp_patch:
+        await manager.update_task_metadata(task.id, mcp_patch, merge=True)
+
+
+def _record_positive_timing(timing_metrics: dict[str, float], metric: str, value: int) -> None:
+    if value > 0:
+        timing_metrics[metric] = value
+
+
+async def _compress_agent_context(
+    task: Task,
+    manager: QueueManager,
+    operational_agents: tuple[str, ...],
+    project_context: str,
+    agent_memory: str,
+    timing_metrics: dict[str, float],
+) -> tuple[str, str]:
+    if task.agent in operational_agents:
+        if len(project_context) > 6000:
+            project_context = (
+                project_context[:6000] + "\n\n[TRUNCADO SOTA: AGENTE OPERACIONAL PRESCINDE DE CONTEXTO MASSIVO]"
+            )
+        return project_context, agent_memory
+
+    project_context, agent_memory, comp_ms = await cb._apply_context_compression(
+        project_context, agent_memory, task, manager
+    )
+    _record_positive_timing(timing_metrics, "context_compression_ms", comp_ms)
+    return project_context, agent_memory
+
+
 async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: dict[str, float]) -> str:
     """Motor de orquestracao SOTA descentralizado."""
     # SOTA: Avaliacao Antecipada de Bypass Cognitivo
@@ -110,13 +149,7 @@ async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: 
     # Recalcula a selecao para a descricao atual. Isso evita que uma subtask
     # herde silenciosamente o addon escolhido para o pai e torna o uso
     # observavel na DAL sem iniciar servidores ou chamadas externas.
-    original_metadata = dict(task.metadata or {})
-    routed_metadata = apply_mcp_addon_routing(task.description, original_metadata)
-    if routed_metadata != original_metadata:
-        object.__setattr__(task, "metadata", routed_metadata)
-        mcp_patch = {key: routed_metadata[key] for key in MCP_OUTPUT_KEYS if key in routed_metadata}
-        if mcp_patch:
-            await manager.update_task_metadata(task.id, mcp_patch, merge=True)
+    await _apply_task_mcp_routing(task, manager)
 
     agent_clean = task.agent.replace("@", "")
     strategic_agents = (AGENT_MAVERICK, AGENT_PESQUISADOR, AGENT_ARCHITECT)
@@ -152,23 +185,19 @@ async def process_agent_task(task: Task, manager: QueueManager, timing_metrics: 
 
     timing_metrics = timing_metrics or {}
 
-    if web_ms > 0:
-        timing_metrics["web_search_ms"] = web_ms
-    if rag_ms > 0:
-        timing_metrics["rag_query_ms"] = rag_ms
+    _record_positive_timing(timing_metrics, "web_search_ms", web_ms)
+    _record_positive_timing(timing_metrics, "rag_query_ms", rag_ms)
     _escalate_security_cognition(task)
 
     # SOTA: Bypass de compressao (LLM) onerosa para operacionais. Truncamento linear direto no array de chars.
-    if task.agent in operational_agents and len(project_context) > 6000:
-        project_context = (
-            project_context[:6000] + "\n\n[TRUNCADO SOTA: AGENTE OPERACIONAL PRESCINDE DE CONTEXTO MASSIVO]"
-        )
-    elif task.agent not in operational_agents:
-        project_context, agent_memory, comp_ms = await cb._apply_context_compression(
-            project_context, agent_memory, task, manager
-        )
-        if comp_ms > 0:
-            timing_metrics["context_compression_ms"] = comp_ms
+    project_context, agent_memory = await _compress_agent_context(
+        task,
+        manager,
+        operational_agents,
+        project_context,
+        agent_memory,
+        timing_metrics,
+    )
 
     autonomy_mode = await get_autonomy_mode(manager)
     system_prompt, user_prompt = await cb._assemble_prompt(
