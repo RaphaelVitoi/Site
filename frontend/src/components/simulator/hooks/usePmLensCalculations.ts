@@ -27,6 +27,7 @@ interface PmLensCalculationsParams {
 	aggFactor?: number; // SOTA v7.0 GOLD Harmony
 }
 
+/** Computes per-street PM lens metrics from the current simulator inputs. */
 export function usePmLensCalculations({
 	initialStacks,
 	initialPrizes,
@@ -106,7 +107,7 @@ export function usePmLensCalculations({
 
 			const sunkCost =
 				streetIdx > 0
-					? (streetProgression.at(streetIdx - 1)?.cumulative ?? 0)
+					? (streetProgression[streetIdx - 1]?.cumulative ?? 0)
 					: Math.abs(heroInvested);
 
 			// SOTA v7.0 GOLD: Dinamização das Equidades pós-flop (Range Condensation)
