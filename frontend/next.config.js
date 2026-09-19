@@ -42,10 +42,10 @@ const nextConfig = {
               "img-src 'self' data: blob: https:",
               "connect-src 'self' https: http://127.0.0.1:* ws: wss:",
               "worker-src 'self' blob:",
-              "object-src 'none'",
+              "object-src 'self' data: blob:",
               "base-uri 'self'",
               "form-action 'self'",
-              "frame-ancestors 'none'",
+              "frame-ancestors 'self'",
             ].join('; '),
           },
           {
@@ -54,7 +54,7 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
           {
             key: 'Referrer-Policy',

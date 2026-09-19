@@ -805,16 +805,23 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
 
     ext = file_path.suffix.lower()
     if raw_param:
-        # `CSP: sandbox` impede script ativo no conteudo servido na origem da API:
-        # um .svg aberto no navegador executava JavaScript aqui (BK-19).
-        return web.FileResponse(
-            file_path,
-            headers={
-                "Content-Type": _get_raw_content_type(ext),
-                "Content-Security-Policy": "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'",
-                "X-Content-Type-Options": "nosniff",
-            },
-        )
+        headers = {
+            "Content-Type": _get_raw_content_type(ext),
+            "X-Content-Type-Options": "nosniff",
+        }
+        if ext == ".pdf":
+            # PDF nativo em navegadores exige politica de objetos/plugins sem sandbox bloqueante
+            headers["Content-Security-Policy"] = (
+                "default-src 'self' data: blob:; object-src 'self' data: blob:; script-src 'none'; style-src 'unsafe-inline';"
+            )
+            headers["Content-Disposition"] = f'inline; filename="{file_path.name}"'
+        elif ext == ".svg":
+            # SVG requer sandbox estrito para mitigar execucao de script arbitrario (BK-19)
+            headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src 'self' data:;"
+        else:
+            headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self';"
+
+        return web.FileResponse(file_path, headers=headers)
 
     try:
         if ext in SPREADSHEET_EXTS:
@@ -849,7 +856,16 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
         if ext in (".pdf", ".docx", ".odt", ".doc", ".ppt", ".pptx", ".odp"):
             rag = await _te.get_rag_async()
             extracted_text = await rag._extract_text_from_file(file_path)  # pyright: ignore[reportPrivateUsage] # pylint: disable=protected-access
-            return web.json_response({"type": "document", "content": extracted_text})
+            words_count = len(extracted_text.split()) if extracted_text else 0
+            return web.json_response(
+                {
+                    "type": "document",
+                    "content": extracted_text,
+                    "format": ext.lstrip("."),
+                    "words": words_count,
+                    "chars": len(extracted_text) if extracted_text else 0,
+                }
+            )
 
         # Safeguard: Prevent reading huge files as plain text to avoid memory spikes
         file_size = file_path.stat().st_size
@@ -865,7 +881,14 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
             return file_path.read_text(encoding="utf-8", errors="ignore")
 
         text_content = await asyncio.to_thread(_read_text)
-        return web.json_response({"type": "text", "content": text_content})
+        return web.json_response(
+            {
+                "type": "text",
+                "content": text_content,
+                "format": ext.lstrip("."),
+                "lines": text_content.count("\n") + 1 if text_content else 0,
+            }
+        )
     except Exception as e:
         return _internal_error(e, "handle_view_file")
 

@@ -44,7 +44,7 @@ export async function encaminharGetDeOperador(
 
 	// O corpo segue em stream; só cabeçalhos de conteúdo e de isolamento atravessam.
 	const headers = new Headers({ 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
-	for (const nome of ['content-type', 'content-length', 'content-security-policy']) {
+	for (const nome of ['content-type', 'content-length', 'content-security-policy', 'content-disposition']) {
 		const valor = upstream.headers.get(nome);
 		if (valor) headers.set(nome, valor);
 	}
