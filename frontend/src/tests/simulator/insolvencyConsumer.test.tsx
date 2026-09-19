@@ -9,7 +9,7 @@ test('the context used by panels receives and updates worker output', () => {
     safeActivePlayers: 2, anteSize: 12.5, blindsRisingSoon: false,
     effectiveIpRp: 0, effectiveOopRp: 0, quantumPerspectiva: null, apiQuantumMetrics: null,
     nativeRangeMetric: { equity: 50, isCalculating: false }, insolvencyMatrixData: metrics,
-    isCalculatingInsolvency: false, dispatchInsolvencyMatrix: jest.fn(), dispatchIcmDistortion: jest.fn(),
+    isCalculatingInsolvency: false, dispatchInsolvencyMatrix: jest.fn(),
     nashResults: null, bayesianWinProb: null, predictiveProfile: null, predictiveTelemetry: null,
     setNativeRangeMetric: jest.fn(), pkoValue: 0, aggFactor: 1,
   };

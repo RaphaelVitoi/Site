@@ -10,6 +10,8 @@ criado_em: 2026-08-28T10:20:39-03:00
 commit: 9c211901
 classes: [interno, auditavel, configuracao-local, runtime-parcial]
 estado: concluido-com-limites-explicitos
+referencias_nao_resolviveis:
+  - scripts/ops/Set-ClaudePluginProfile.ps1
 verificado:
   - perfis de plugins, Browser Use local e Prisma MCP declarados na configuracao ativa do projeto
   - npm run sota:full aprovado com 508 testes Python; npm test aprovado com 18 suites e 95 testes

@@ -51,8 +51,10 @@ export function solveIcmDistortion(
 	streetIdx = 0,
 	activePlayers = 2,
 ): IcmDistortionResult {
-	const safeIp = Math.max(0, Math.min(100, Number(ipRp) || 0));
-	const safeOop = Math.max(0, Math.min(100, Number(oopRp) || 0));
+	// RP negativo é legítimo (Teorema 2: bluffcatcher obrigatório no river). Até 2026-09-17 o piso era 0; para
+	// RP >= 0 nada muda, e com RP < 0 a pressão negativa reduz o fold do defensor.
+	const safeIp = Math.max(-100, Math.min(100, Number(ipRp) || 0));
+	const safeOop = Math.max(-100, Math.min(100, Number(oopRp) || 0));
 
 	// SOTA v4.6.1 GOLD: Gravidade do Pote (Inércia Estratégica)
 	// A inércia estratégica (G) reduz a elasticidade da resposta ao desvio do oponente.

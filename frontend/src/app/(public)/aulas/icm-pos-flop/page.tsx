@@ -189,7 +189,7 @@ export default function IcmPosFlopPage() {
 				step="EXP"
 				label="Evidência"
 				title="O Downward Drift em Dados"
-				description="Contraste empírico entre ChipEV e ICMev baseado em 93 nodes de simulação em Mesa Final."
+				description="Contraste empírico entre ChipEV e ICMev baseado em 97 nós pareados da Aula 1.2 (HRC Pós-Flop vs. GTO Wizard)."
 			/>
 
 			<div className="sota-container mb-24">

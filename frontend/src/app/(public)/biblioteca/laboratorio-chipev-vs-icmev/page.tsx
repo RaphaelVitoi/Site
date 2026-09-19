@@ -1,14 +1,24 @@
 /**
- * IDENTITY: Laboratório ChipEV vs ICMev GOLD (Artigo Interativo)
- * PATH: src/app/biblioteca/laboratorio-chipev-vs-icmev/page.tsx
+ * IDENTITY: Laboratório ChipEV vs ICMev (Artigo Interativo SOTA v8.0 GOLD)
+ * PATH: src/app/(public)/biblioteca/laboratorio-chipev-vs-icmev/page.tsx
  * ROLE: Artigo técnico demonstrando a diferença prática entre valor esperado de fichas e valor esperado monetário.
- * VERSION: v7.0 GOLD
+ * VERSION: v8.0 GOLD
  */
 
+'use client';
+
+import dynamic from 'next/dynamic';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
-import EquityCalculator from '@/components/simulator/panels/EquityCalculator';
+import ContentFooter from '@/components/ui/layout/ContentFooter';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import { ROUTES } from '@/constants/routes';
+import { SITE_CONFIG } from '@/constants/site';
+
+const EquityCalculator = dynamic(
+	() => import('@/components/simulator/panels/EquityCalculator'),
+	{ ssr: false }
+);
 
 const content = `
 # Laboratório: ChipEV vs ICMev
@@ -62,6 +72,13 @@ export default function ChipEvVsIcmEvPage() {
 					</div>
 				</div>
 			</div>
+
+			<ContentFooter
+				shareTitle={`Laboratório ChipEV vs ICMev | ${SITE_CONFIG.author}`}
+				shareUrl={`${SITE_CONFIG.baseUrl}${ROUTES.LIBRARY.LAB_CHIPEV_ICMEV}`}
+				backLinkHref={ROUTES.BIBLIOTECA}
+				backLinkText="Voltar para Biblioteca"
+			/>
 		</div>
 	);
 }

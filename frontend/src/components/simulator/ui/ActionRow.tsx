@@ -6,8 +6,8 @@
 
 'use client';
 
+import { motion } from 'framer-motion';
 import type { ChipEvFreqs, FreqResult } from '@/components/simulator/solver/types';
-import { formatDelta, getDeltaColor } from '@/components/simulator/solver/utils';
 import AnimatedNumber from '../ui/AnimatedNumber';
 import { FreqInput } from './FreqInput';
 import { InfoTooltip } from './InfoTooltip';
@@ -33,42 +33,142 @@ export const ActionRow = ({
 	freqs,
 	onChange,
 }: Readonly<ActionRowProps>) => {
-	const deltaColorValue = getDeltaColor(result.delta);
+	// Frequência de Entrada e Alvo Nash GTO
+	const userFreq = Number(chipEv) || 0;
+	const userFreqPct = Math.max(0, Math.min(100, userFreq));
+	const gtoTarget = result.center;
+	const gtoTargetPct = Math.max(0, Math.min(100, gtoTarget));
 
-	// SOTA: Fill proportional to absolute delta
-	const fillPercentage = Math.min(100, Math.abs(result.delta));
+	// Desvio real do usuário em relação ao GTO:
+	// Aumentar acima do GTO = Excesso (+ com ▲)
+	// Diminuir abaixo do GTO = Déficit (- com ▼)
+	// Na margem de ±1% = Equilíbrio (0% com ●)
+	const deviation = userFreq - gtoTarget;
+	const absDeviation = Math.abs(deviation);
+	const isEquilibrium = absDeviation <= 1.0;
+	const isExcesso = deviation > 1.0;
+	const isDeficit = deviation < -1.0;
+
+	let deltaLabel = 'Déficit';
+	let deltaBadgeColor = '#f59e0b';
+	let deltaIcon = '▼';
+	let deltaSign = '';
+
+	if (isEquilibrium) {
+		deltaLabel = 'Equilíbrio';
+		deltaBadgeColor = '#10b981';
+		deltaIcon = '●';
+	} else if (isExcesso) {
+		deltaLabel = 'Excesso';
+		deltaBadgeColor = '#f43f5e';
+		deltaIcon = '▲';
+		deltaSign = '+';
+	}
+
+	const formattedDelta = isEquilibrium ? '0%' : `${deltaSign}${deviation.toFixed(0)}%`;
 
 	return (
-		<div className="grid grid-cols-[80px_90px_25px_1fr_80px] items-center gap-4 py-3 border-b border-white/5 last:border-none group/row transition-colors hover:bg-white/2">
-			<span
-				className="text-[0.65rem] font-black uppercase tracking-widest flex items-center gap-2 group-hover/row:scale-105 transition-transform"
-				style={{ color: accent }}
-			>
-				{label} {labelTooltip && <InfoTooltip text={labelTooltip} />}
-			</span>
-			<FreqInput value={chipEv} field={field} freqs={freqs} onChange={onChange} />
-			<span className="text-[0.7rem] text-text-darker text-center opacity-40 group-hover/row:opacity-100 transition-opacity">→</span>
-			<div className="flex items-baseline gap-2 overflow-hidden">
-				<span className="text-[1rem] font-black font-mono tabular-nums text-white shrink-0 tracking-tighter">
-					<AnimatedNumber value={result.center} suffix="%" />
-				</span>
-				<span className="text-[0.6rem] text-text-darker font-mono tabular-nums font-black opacity-60">
-					±{result.spread.toFixed(1)}
-				</span>
-			</div>
-			<div className="flex flex-col items-end gap-2 shrink-0 w-full">
+		<div className="group/row flex flex-col gap-2 rounded-2xl border border-white/6 bg-slate-950/45 p-3 hover:border-white/15 hover:bg-slate-950/75 transition-all duration-300">
+			{/* Andar 1: Identificação da Ação e Diagnóstico de Divergência com Status */}
+			<div className="flex items-center justify-between gap-2">
 				<span
-					className="text-[0.75rem] font-black font-mono tabular-nums tracking-tighter"
-					style={{ color: deltaColorValue }}
+					className="text-[0.72rem] sm:text-[0.76rem] font-black uppercase tracking-wider flex items-center gap-1.5"
+					style={{ color: accent }}
 				>
-					{formatDelta(result.delta)}
+					{label} {labelTooltip && <InfoTooltip text={labelTooltip} />}
 				</span>
-				<div className="w-full h-1.5 bg-black/60 rounded-full relative overflow-hidden border border-white/5 shadow-inner">
-					<div
-						className="absolute left-0 top-0 bottom-0 transition-all duration-700 ease-out shadow-[0_0_12px_rgba(244,63,94,0.4)]"
-						style={{ width: `${fillPercentage}%`, backgroundColor: deltaColorValue }}
-					/>
+
+				{/* Badge Didático do Delta (Divergência) + Status */}
+				<div
+					className="flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[0.66rem] sm:text-[0.7rem] font-mono font-black tabular-nums tracking-tight shadow-sm shrink-0"
+					style={{
+						color: deltaBadgeColor,
+						borderColor: `${deltaBadgeColor}44`,
+						backgroundColor: `${deltaBadgeColor}15`,
+					}}
+					title={`Divergência da ação ${label}: ${formattedDelta} em relação ao equilíbrio Nash GTO`}
+				>
+					<span className="text-[0.58rem] opacity-80">{deltaIcon}</span>
+					<span>{formattedDelta}</span>
+					<span className="text-[0.55rem] font-sans uppercase font-bold tracking-wider opacity-85 ml-0.5">
+						&middot; {deltaLabel}
+					</span>
 				</div>
+			</div>
+
+			{/* Andar 2: Comparativo Direto (Frequência -> Alvo GTO) - SEM "SUA:" */}
+			<div className="flex items-center justify-between gap-2 rounded-xl bg-black/35 px-2.5 py-1.5 border border-white/3">
+				{/* Frequência de Entrada */}
+				<div className="flex items-center gap-1">
+					<FreqInput value={chipEv} field={field} freqs={freqs} onChange={onChange} />
+				</div>
+
+				{/* Divisor Visual Minimalista */}
+				<span className="text-[0.65rem] text-text-darker opacity-35 select-none font-mono">
+					→
+				</span>
+
+				{/* Alvo Nash GTO */}
+				<div className="flex items-baseline gap-1">
+					<span className="text-[0.58rem] font-black uppercase tracking-wider text-text-darker select-none">
+						GTO:
+					</span>
+					<span className="text-[0.84rem] sm:text-[0.88rem] font-black font-mono tabular-nums text-white tracking-tight">
+						<AnimatedNumber value={result.center} suffix="%" />
+					</span>
+					<span className="text-[0.55rem] text-text-darker font-mono tabular-nums font-bold opacity-60">
+						±{result.spread.toFixed(1)}
+					</span>
+				</div>
+			</div>
+
+			{/* Andar 3: Barra de Frequência Inferior (Preenche ao aumentar, esvazia ao diminuir) */}
+			<div
+				className="relative w-full h-2.5 bg-black/80 rounded-full overflow-hidden border border-white/10 shadow-inner mt-0.5 cursor-default"
+				title={`Frequência: ${userFreq}% | Alvo GTO: ${gtoTarget.toFixed(1)}% | Desvio: ${formattedDelta} (${deltaLabel})`}
+			>
+				{/* Zona de Déficit (sombra sutil até o alvo GTO) */}
+				{isDeficit && (
+					<div
+						className="absolute top-0 bottom-0 bg-amber-500/20"
+						style={{
+							left: `${userFreqPct}%`,
+							width: `${Math.max(0, gtoTargetPct - userFreqPct)}%`,
+						}}
+					/>
+				)}
+
+				{/* Preenchimento da Frequência do Jogador */}
+				<motion.div
+					initial={false}
+					animate={{ width: `${userFreqPct}%` }}
+					transition={{ duration: 0.25, ease: 'easeOut' }}
+					className="h-full rounded-full relative z-10"
+					style={{
+						backgroundColor: accent,
+						boxShadow: `0 0 10px ${accent}`,
+					}}
+				/>
+
+				{/* Zona de Excesso (destaque rose de ultrapassagem além do alvo GTO) */}
+				{isExcesso && (
+					<motion.div
+						initial={false}
+						animate={{
+							left: `${gtoTargetPct}%`,
+							width: `${Math.max(0, userFreqPct - gtoTargetPct)}%`,
+						}}
+						transition={{ duration: 0.25, ease: 'easeOut' }}
+						className="absolute top-0 bottom-0 bg-rose-500/80 rounded-r-full z-15 shadow-[0_0_10px_#f43f5e]"
+					/>
+				)}
+
+				{/* Marcador Vertical do Alvo Nash GTO (Sempre visível sobre a barra) */}
+				<div
+					className="absolute top-0 bottom-0 w-1 bg-white rounded-full z-20 shadow-[0_0_8px_rgba(255,255,255,0.95)] pointer-events-none"
+					style={{ left: `calc(${gtoTargetPct}% - 2px)` }}
+					title={`Alvo Nash GTO: ${gtoTarget.toFixed(1)}% ±${result.spread.toFixed(1)}%`}
+				/>
 			</div>
 		</div>
 	);

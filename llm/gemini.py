@@ -13,6 +13,8 @@ import aiohttp
 from llm.budget import get_rate_limiter_for_model
 from llm.session import _sync_fallback_request, get_api_semaphore
 
+GEMINI_API_KEY_HEADER = "x-goog-api-key"
+
 logger = logging.getLogger(__name__)
 
 APP_JSON = "application/json"
@@ -88,11 +90,11 @@ def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bo
 
 
 async def _execute_native_fallback(
-    url: str, data: dict, client_timeout: aiohttp.ClientTimeout | None
+    url: str, data: dict, client_timeout: aiohttp.ClientTimeout | None, api_key: str
 ) -> tuple[str, dict]:
     """Mecanismo de fallback sincronizado rodando isolado para neutralizar TCP Drops."""
     logger.warning("[MOTOR DUAL] Aiohttp interceptado. Orbitando para Bypass Nativo (urllib)...")
-    fallback_headers = {"Content-Type": APP_JSON}
+    fallback_headers = {"Content-Type": APP_JSON, GEMINI_API_KEY_HEADER: api_key}
     timeout_seconds = client_timeout.total if client_timeout and client_timeout.total else 60.0
     loop = asyncio.get_running_loop()
     status, raw_text = await loop.run_in_executor(
@@ -162,8 +164,11 @@ async def call_gemini(
     await rate_limiter.consume()
     model = _normalize_gemini_model(model)
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-    headers = {"Content-Type": APP_JSON}
+    # BK-21 (auditoria 2026-09-16): a chave ia na query string. URL aparece em log
+    # de proxy e em `str(aiohttp.ClientResponseError)` -- medido: `url=...?key=...`.
+    # O header e o canal documentado pelo Google para a mesma autenticacao.
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    headers = {"Content-Type": APP_JSON, GEMINI_API_KEY_HEADER: api_key}
     data = _build_gemini_payload(system_prompt, user_prompt, require_json, **kwargs)
     request_kwargs: dict = {"timeout": client_timeout} if client_timeout is not None else {}
     timeout_val = client_timeout.total if client_timeout and client_timeout.total else 60.0
@@ -179,4 +184,4 @@ async def call_gemini(
             raise
         except (aiohttp.ClientError, TimeoutError, ConnectionResetError):
             # Exaustao da pilha aiohttp leva ao bypass nativo via urllib thread
-            return await _execute_native_fallback(url, data, client_timeout)
+            return await _execute_native_fallback(url, data, client_timeout, api_key)

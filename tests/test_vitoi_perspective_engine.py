@@ -10,6 +10,7 @@ from engine.vitoi_perspective_engine import (
     PerspectiveActionEvaluator,
     ProspectRiskEngine,
     RiskContext,
+    StochasticCorridorResult,
     TableState,
     VitoiPerspectiveEngine,
 )
@@ -433,3 +434,77 @@ class TestVitoiPerspectiveEngine:
         req_low = ProspectRiskEngine(ctx_low_edge).evaluate_required_equilibrium_equity(raw_pot_odds=0.33)
 
         assert req_high < req_low
+
+    def test_stochastic_corridor_evaluation_and_anchors(self):
+        """[Etapa 4] Valida o corredor estocastico (mu +- sigma) e as ancoras canonicas."""
+        # Ancora Deep Stack IP: SPR alto, em posicao, relogio calmo
+        ctx_deep_ip = RiskContext(
+            delta_win_dollars=300.0,
+            delta_lose_dollars=300.0,
+            hero_edge=0.6,
+            time_to_blind_increase=30,
+            is_in_position=True,
+            loss_aversion_lambda=2.25,
+        )
+        engine_deep = ProspectRiskEngine(ctx_deep_ip)
+        res_deep = engine_deep.evaluate_stochastic_corridor(
+            raw_equity=0.55,
+            spr=7.0,
+            num_opponents=1,
+            playability=1.2,
+            raw_pot_odds=0.33,
+        )
+        assert isinstance(res_deep, StochasticCorridorResult)
+        assert res_deep.active_anchor_id == "convex_leverage_ip"
+        assert res_deep.realization_factor > 1.0  # R > 1 pela posicao e jogabilidade
+        assert res_deep.psi_factor < 1.0  # Psi favoravel pela edge e tempo
+        assert (
+            res_deep.band_2s_lower
+            <= res_deep.band_1s_lower
+            <= res_deep.mu
+            <= res_deep.band_1s_upper
+            <= res_deep.band_2s_upper
+        )
+        assert 0.0 <= res_deep.solvency_probability <= 1.0
+
+        # Ancora Multiway Hidra: 3 oponentes, OOP
+        ctx_mw = RiskContext(
+            delta_win_dollars=200.0,
+            delta_lose_dollars=200.0,
+            hero_edge=0.0,
+            time_to_blind_increase=15,
+            is_in_position=False,
+            loss_aversion_lambda=2.25,
+        )
+        engine_mw = ProspectRiskEngine(ctx_mw)
+        res_mw = engine_mw.evaluate_stochastic_corridor(
+            raw_equity=0.50,
+            spr=3.0,
+            num_opponents=3,
+            playability=1.0,
+            raw_pot_odds=0.33,
+        )
+        assert res_mw.active_anchor_id == "multiway_hydra"
+        assert res_mw.realization_factor < 0.85  # Realizacao comprimida pela hidra
+        # A dispersao multiway e ampliada
+        assert res_mw.sigma > 0.0
+
+        # Ancora Bolha FT: lambda alto e perda assimetrica
+        ctx_bubble = RiskContext(
+            delta_win_dollars=100.0,
+            delta_lose_dollars=350.0,
+            hero_edge=0.0,
+            time_to_blind_increase=10,
+            is_in_position=False,
+            loss_aversion_lambda=3.0,
+        )
+        engine_bubble = ProspectRiskEngine(ctx_bubble)
+        res_bubble = engine_bubble.evaluate_stochastic_corridor(
+            raw_equity=0.45,
+            spr=1.5,
+            num_opponents=1,
+            playability=1.0,
+            raw_pot_odds=0.33,
+        )
+        assert res_bubble.active_anchor_id == "ft_bubble"
+        assert res_bubble.band_2s_lower < res_bubble.band_1s_lower < res_bubble.mu

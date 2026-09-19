@@ -32,7 +32,7 @@ export default function MotorPage() {
 								Simulador Mestre ICM
 							</h1>
 							<p className="text-[0.55rem] font-mono text-text-dim uppercase tracking-wider m-0">
-								Poker Racional · SOTA v7.0 GOLD
+								Poker Racional · SOTA v8.0 GOLD
 							</p>
 						</div>
 					</div>

@@ -1,6 +1,7 @@
 {
+    "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
     "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
-    "python.languageServer": "Default",
+    "python.languageServer": "None",
     "python.terminal.activateEnvironment": true,
     "python.analysis.diagnosticMode": "workspace",
     "python.analysis.inlayHints.functionReturnTypes": true,

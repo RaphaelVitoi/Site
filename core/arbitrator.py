@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime
 import json
 import logging
@@ -60,9 +61,7 @@ class UniversalArbitrator:
             }
         task_ids = set(graph.keys())
         for task in pending_tasks:
-            deps_raw = task.metadata.get("depends_on", []) if task.metadata else []
-            deps = [str(d) for d in deps_raw] if isinstance(deps_raw, list) else []
-            for dep_id in deps:
+            for dep_id in cls.dependency_ids(task):
                 if dep_id in task_ids:
                     graph[dep_id]["out_edges"].append(task.id)
                     graph[task.id]["in_degree"] += 1
@@ -161,13 +160,79 @@ class UniversalArbitrator:
 
         return base_prio + time_bonus
 
+    #: Estados em que uma dependencia libera quem depende dela. Mesma regra de
+    #: `QueueManager.get_next_task`, que ja a aplicava em SQL.
+    DEPENDENCY_SATISFIED_STATES: ClassVar[frozenset[str]] = frozenset({"completed", "cancelled"})
+
+    @staticmethod
+    def dependency_ids(task: Task) -> list[str]:
+        """Dependencias declaradas em `metadata.depends_on`, normalizadas para str."""
+        deps_raw = task.metadata.get("depends_on", []) if task.metadata else []
+        return [str(d) for d in deps_raw] if isinstance(deps_raw, list) else []
+
     @classmethod
-    def extract_optimal_task(cls, pending_tasks: list[Task]) -> Task | None:
+    def external_dependency_ids(cls, pending_tasks: list[Task]) -> set[str]:
+        """Dependencias que NAO estao na lista pendente -- o status delas tem de vir do banco."""
+        pending_ids = {t.id for t in pending_tasks}
+        return {dep for t in pending_tasks for dep in cls.dependency_ids(t) if dep not in pending_ids}
+
+    @classmethod
+    def _is_ready(cls, task: Task, pending_ids: set[str], dependency_status: Mapping[str, str | None]) -> bool:
+        """Pronta so se toda dependencia fora da fila pendente estiver concluida ou cancelada.
+
+        BK-04 (auditoria 2026-09-16): `_build_graph` so enxergava dependencias
+        DENTRO da lista pendente. Dependencia running, failed ou inexistente era
+        ignorada, e a tarefa saia com in_degree 0 -- rodando antes da predecessora.
+        Status desconhecido falha FECHADO: esperar e reversivel, executar nao e.
+        """
+        for dep in cls.dependency_ids(task):
+            if dep in pending_ids:
+                continue  # coberta por in_degree
+            if dependency_status.get(dep) not in cls.DEPENDENCY_SATISFIED_STATES:
+                return False
+        return True
+
+    @classmethod
+    def upstream_failed_tasks(
+        cls, pending_tasks: list[Task], dependency_status: Mapping[str, str | None]
+    ) -> list[Task]:
+        """Tarefas pendentes que dependem de uma tarefa `failed` -- nunca ficarao prontas."""
+        return [t for t in pending_tasks if any(dependency_status.get(d) == "failed" for d in cls.dependency_ids(t))]
+
+    @classmethod
+    def has_dependency_cycle(cls, pending_tasks: list[Task]) -> bool:
+        """Kahn: sobra no grafo pendente algum no que nunca chega a in_degree 0?"""
+        graph = cls._build_graph(pending_tasks)
+        in_degree = {tid: data["in_degree"] for tid, data in graph.items()}
+        queue = [tid for tid, deg in in_degree.items() if deg == 0]
+        visited = 0
+        while queue:
+            tid = queue.pop()
+            visited += 1
+            for child in graph[tid]["out_edges"]:
+                in_degree[child] -= 1
+                if in_degree[child] == 0:
+                    queue.append(child)
+        return visited < len(graph)
+
+    @classmethod
+    def extract_optimal_task(
+        cls,
+        pending_tasks: list[Task],
+        dependency_status: Mapping[str, str | None] | None = None,
+    ) -> Task | None:
         """
         Orquestra a fila priorizada. Complexidade de tempo estrita O(V).
+
+        `dependency_status` mapeia o id de cada dependencia EXTERNA a lista
+        pendente para o status dela no banco. Ausente, toda dependencia externa
+        conta como nao satisfeita.
         """
         if not pending_tasks:
             return None
+
+        statuses: Mapping[str, str | None] = dependency_status or {}
+        pending_ids = {t.id for t in pending_tasks}
 
         # SOTA: Aceleracao Speedforce (Rust)
         if RUST_CORE_AVAILABLE and nexus_core_rust is not None:
@@ -178,7 +243,10 @@ class UniversalArbitrator:
                     tasks_json, scalars_json, cls.TIME_DECAY_ALPHA, cls.PROPAGATION_GAMMA
                 )
                 if result_json:
-                    return Task(**json.loads(result_json))
+                    candidate = Task(**json.loads(result_json))
+                    # O core Rust nao conhece o status das dependencias externas.
+                    if cls._is_ready(candidate, pending_ids, statuses):
+                        return candidate
             except Exception as e:
                 logger.warning(f"[SPEEDFORCE] Falha no core Rust, acionando fallback Python: {e}")
 
@@ -192,12 +260,18 @@ class UniversalArbitrator:
         max_utility = -float("inf")
 
         for data in dag_map.values():
-            if data["in_degree"] == 0 and data["total_utility"] > max_utility:
+            if (
+                data["in_degree"] == 0
+                and data["total_utility"] > max_utility
+                and cls._is_ready(data["task"], pending_ids, statuses)
+            ):
                 max_utility = data["total_utility"]
                 optimal_task = data["task"]
 
         if not optimal_task:
-            logger.warning("[NEXUS ORCHESTRATOR] Deadlock Operacional: Nenhuma tarefa possui in_degree=0.")
+            # Sem tarefa pronta nao e deadlock por si: pode ser espera legitima por
+            # dependencia em execucao. Quem distingue e `has_dependency_cycle`.
+            logger.debug("[NEXUS ORCHESTRATOR] Nenhuma tarefa pronta para despacho neste ciclo.")
             return None
 
         return optimal_task

@@ -4,6 +4,7 @@ import { ROUTES } from '@/constants/routes';
 import BrandMark from '@/components/ui/layout/BrandMark';
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { HeaderAuthAction } from '@/components/ui/layout/HeaderAuthAction';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -565,6 +566,7 @@ export const Header: React.FC = () => {
           />
 
           <div className="flex shrink-0 items-center justify-end gap-4 justify-self-end">
+            <HeaderAuthAction isLightPage={isLightPage} />
             {!isSimulatorPage && (
               <Link href="/simulador" className={actionButtonClass}>
                 <span

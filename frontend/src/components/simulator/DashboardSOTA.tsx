@@ -59,7 +59,20 @@ interface HudViewProps {
   readonly topLeaks: [string, number][];
 }
 
+function PerfilNaoMedido() {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-black/30 p-8 text-center">
+      <p className="m-0 text-xs font-black tracking-widest text-white uppercase">Perfil preditivo não medido</p>
+      <p className="text-text-muted mx-auto mt-3 mb-0 max-w-md text-xs leading-relaxed">
+        Não existe modelo individual para esta conta. O diagnóstico de vieses aparece aqui quando houver
+        medição — nenhum valor de referência é exibido como se fosse seu.
+      </p>
+    </div>
+  );
+}
+
 function HudView({ radarData, topLeaks }: HudViewProps) {
+  if (radarData.length === 0) return <PerfilNaoMedido />;
   return (
     <div className="animate-sota-in flex flex-col gap-10">
       <div className="glass-panel group/hud-dash relative overflow-hidden border-white/5 p-8! shadow-2xl lg:p-10!">
@@ -269,14 +282,10 @@ export default function DashboardSOTA({
   const simulatedActivePlayers = spotContext?.activePlayers ?? 2;
   const absoluteHeroPos = spotContext?.heroPosition ?? 'IP';
   const blindsRisingSoon = spotContext?.blindsRisingSoon ?? false;
-  const pkoValue = 0;
   const aggFactor = spotContext?.aggFactor ?? 1;
 
-  const rawGpuEquity = wasmContext?.insolvencyMatrixData?.winRate
-    ? wasmContext.insolvencyMatrixData.winRate * 100
-    : undefined;
-  const equity =
-    rawGpuEquity === undefined ? (wasmContext?.nativeRangeMetric?.equity ?? 50) : Number(rawGpuEquity.toFixed(1));
+  // Fonte única da equity, a mesma da Lente PM (SIM-02, SIM-07).
+  const equity = wasmContext?.nativeRangeMetric?.equity ?? 50;
 
   const isHeroIP = absoluteHeroPos === 'IP';
   const posBaseline = isHeroIP ? 1 : 0.85;
@@ -292,7 +301,6 @@ export default function DashboardSOTA({
     equity,
     realizationFactor,
     deltaHabilidade: 50,
-    pkoValue,
     kappa: 0.5,
     simulatedActivePlayers,
     absoluteHeroPos,
@@ -305,25 +313,14 @@ export default function DashboardSOTA({
   const { data: session } = useSession();
   const userName = session?.user?.name || 'Operador Autônomo';
 
-  const defaultProfile = useMemo(
-    () => ({
-      'Aversão ao Risco': 0.85,
-      'Pot Entrapment': 0.65,
-      'Miopia de Payjump': 0.9,
-      'Excesso de Agressão': 0.3,
-      'Passivo Estrutural (RIO)': 0.75,
-      'Desvio de Nash': 0.45,
-    }),
-    [],
-  );
-
-  const rawProfile = initialData?.profile || metricsContext?.predictiveProfile || defaultProfile;
-
-  const activeProfile = useMemo(() => {
-    return typeof rawProfile === 'object' && rawProfile !== null && !Array.isArray(rawProfile)
-      ? (rawProfile as Record<string, number>)
-      : defaultProfile;
-  }, [rawProfile, defaultProfile]);
+  // FE-03 (auditoria 2026-09-17): sem perfil medido, NÃO há perfil. Até esta data o componente caía
+  // num perfil fixo ('Aversão ao Risco': 0.85, …) e o exibia como "Diagnóstico" e "Top Leaks" do usuário.
+  const activeProfile = useMemo<Record<string, number> | null>(() => {
+    const raw = initialData?.profile ?? metricsContext?.predictiveProfile ?? null;
+    return typeof raw === 'object' && raw !== null && !Array.isArray(raw) && Object.keys(raw).length > 0
+      ? (raw as Record<string, number>)
+      : null;
+  }, [initialData?.profile, metricsContext?.predictiveProfile]);
 
   const ipRp = spotContext?.effectiveIpRp ?? 21.4;
   const oopRp = spotContext?.effectiveOopRp ?? 12.9;
@@ -348,13 +345,15 @@ export default function DashboardSOTA({
   );
 
   const radarData = useMemo(() => {
+    if (!activeProfile) return [];
     return Object.entries(activeProfile).map(([key, val]) => ({
       subject: key,
       Deficiencia: Number((val * 100).toFixed(1)),
     }));
   }, [activeProfile]);
 
-  const topLeaks = useMemo(() => {
+  const topLeaks = useMemo<[string, number][]>(() => {
+    if (!activeProfile) return [];
     return Object.entries(activeProfile)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 3);
@@ -372,11 +371,9 @@ export default function DashboardSOTA({
         createdAt: new Date(t.createdAt),
       }));
     }
-    return [
-      { evLoss: 1.2, isCorrect: false, createdAt: new Date(Date.now() - 7200000), position: 'IP', stackDepthBb: 22 },
-      { evLoss: 0.3, isCorrect: true, createdAt: new Date(Date.now() - 3600000), position: 'OOP', stackDepthBb: 18 },
-      { evLoss: 0, isCorrect: true, createdAt: new Date(), position: 'IP', stackDepthBb: 40 },
-    ];
+    // Sem telemetria gravada, a curva fica vazia. Até 2026-09-17 entravam aqui 3 eventos inventados,
+    // datados de "agora", exibidos como histórico do usuário (FE-03).
+    return [];
   }, [initialData?.telemetry, metricsContext?.predictiveTelemetry]);
 
   // HUD Minimalista (se ativado)
@@ -432,7 +429,7 @@ export default function DashboardSOTA({
                   : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
               }`}
             >
-              <i className="fa-solid fa-radar text-xs" />
+              <i className="fa-solid fa-satellite-dish text-xs" />
               <span>Insolvência & Mesa</span>
             </button>
 
@@ -549,7 +546,8 @@ export default function DashboardSOTA({
             </div>
           )}
 
-          {radarStudioMode === 'vulnerabilities' && (
+          {radarStudioMode === 'vulnerabilities' && radarData.length === 0 && <PerfilNaoMedido />}
+          {radarStudioMode === 'vulnerabilities' && radarData.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-sota-in">
               <div className="lg:col-span-7 h-96 w-full flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
@@ -752,7 +750,16 @@ export default function DashboardSOTA({
           <i className="fa-solid fa-chart-line text-accent-emerald text-base" />
         </div>
         <div className="relative z-10 w-full">
-          <TelemetryCharts data={activeTelemetry} />
+          {activeTelemetry.length > 0 ? (
+            <TelemetryCharts data={activeTelemetry} />
+          ) : (
+            <div className="rounded-3xl border border-white/10 bg-black/30 p-8 text-center">
+              <p className="m-0 text-xs font-black tracking-widest text-white uppercase">Nenhuma decisão gravada</p>
+              <p className="text-text-muted mx-auto mt-3 mb-0 max-w-md text-xs leading-relaxed">
+                A curva de performance é montada a partir das suas decisões registradas com sessão ativa.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

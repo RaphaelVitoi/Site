@@ -44,11 +44,18 @@ class SOTACache:
                 oldest_key = next(iter(self.memory_cache))
                 del self.memory_cache[oldest_key]
 
-    def set(self, key: str, value: Any, ttl: int | None = None):
+    def set(self, key: str, value: Any, ttl: int | None = None, persist: bool = True):
+        """Grava no tier de memoria e, com `persist=True`, tambem no de disco.
+
+        O disco nao tem eviccao propria: chave derivada de entrada do usuario deve
+        usar `persist=False`, ou cada valor distinto deixa um arquivo para sempre.
+        """
         expiry = time.time() + (ttl or self.ttl)
         with self._lock:
             self._evict_if_needed()
             self.memory_cache[key] = (expiry, value)
+        if not persist:
+            return
         try:
             os.makedirs(self.cache_dir, exist_ok=True)
             hashed_key = self._get_hash(key)

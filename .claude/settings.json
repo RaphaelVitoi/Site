@@ -20,10 +20,6 @@
       "C:\\Users\\rapha\\.gemini\\Site\\"
     ]
   },
-  "enabledPlugins": {
-    "ralph-loop@claude-plugins-official": false,
-    "neon@claude-plugins-official": true,
-    "zapier@claude-plugins-official": true
-  },
+  "enabledPlugins": {},
   "claudeCode.allowDangerouslySkipPermissions": true
 }

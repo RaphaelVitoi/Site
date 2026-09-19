@@ -5,7 +5,7 @@
  *       com particionamento de sementes e fallback resiliente Single-Thread.
  */
 
-import { calculateIcmMonteCarlo, type MonteCarloIcmResult } from './montecarlo';
+import { calculateIcmMonteCarlo, deriveSeed, type MonteCarloIcmResult } from './montecarlo';
 
 export interface IcmSimulationOptions {
 	stacks: number[];
@@ -18,27 +18,30 @@ export interface IcmSimulationOptions {
 
 export type IcmParallelismMode = 'WORKER_POOL' | 'SINGLE_THREAD_FALLBACK';
 
+/**
+ * Resultado de uma corrida paralela.
+ *
+ * REPLAY: reproduzir uma corrida do pool exige TRES campos, nao so a semente —
+ * `seed`, `iterations` e `concurrency`. O pool particiona as iteracoes entre os
+ * workers e da a cada um uma semente derivada da base, entao o numero de workers
+ * faz parte do experimento: a mesma `seed` em uma maquina de 4 nucleos e em uma
+ * de 8 produz particoes diferentes e, portanto, numeros diferentes. Por isso
+ * `concurrency` volta no resultado; para replay exato, passe-o de volta em
+ * `maxConcurrency`. O caminho single-thread (`calculateIcmMonteCarlo`) nao tem
+ * essa dependencia: la a semente basta.
+ */
 export interface IcmSimulationResult {
 	equities: number[];
 	stdErrorPerPlayer: number[];
 	iterations: number;
-	seed: number | null;
+	/** Semente efetivamente usada — nunca nula. Ver nota de replay abaixo. */
+	seed: number;
 	latencyMs: number;
 	throughputIps: number;
 	concurrency: number;
 	mode: IcmParallelismMode;
 	simulationId: string;
-}
-
-function getHighEntropyUint32(): number {
-	if (typeof globalThis.crypto?.getRandomValues === 'function') {
-		const buf = new Uint32Array(1);
-		globalThis.crypto.getRandomValues(buf);
-		const val = buf.at(0);
-		if (val !== undefined) return val >>> 0;
-	}
-	const perfTime = typeof performance !== 'undefined' ? performance.now() * 1000 : 0;
-	return ((Date.now() ^ Math.floor(perfTime)) >>> 0) || 0xdeadbeef;
+	placementDistribution?: number[][] | undefined;
 }
 
 export class IcmWorkerPool {
@@ -104,7 +107,7 @@ export class IcmWorkerPool {
 		} = options;
 
 		const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
-		const simulationId = `icm_${Date.now()}_${getHighEntropyUint32().toString(36).slice(2, 7)}`;
+		const simulationId = `icm_${Date.now()}_${deriveSeed().toString(36).slice(2, 7)}`;
 
 		if (!this.isInitialized) {
 			await this.init();
@@ -118,11 +121,12 @@ export class IcmWorkerPool {
 		}
 
 		const iterationsPerWorker = Math.ceil(iterations / activeWorkers);
-		const baseSeed = seed ?? (getHighEntropyUint32() & 0x7fffffff);
+		const baseSeed = seed ?? (deriveSeed() & 0x7fffffff);
 
 		const promises: Promise<{
 			equities: number[];
 			stdErrorPerPlayer: number[];
+			placementDistribution?: number[][];
 			iterations: number;
 		}>[] = [];
 
@@ -134,6 +138,7 @@ export class IcmWorkerPool {
 			const taskPromise = new Promise<{
 				equities: number[];
 				stdErrorPerPlayer: number[];
+				placementDistribution?: number[][];
 				iterations: number;
 			}>((resolve, reject) => {
 				const timer = setTimeout(() => {
@@ -147,6 +152,7 @@ export class IcmWorkerPool {
 						resolve({
 							equities: e.data.equities ?? [],
 							stdErrorPerPlayer: e.data.stdErrorPerPlayer ?? [],
+							placementDistribution: e.data.placementDistribution,
 							iterations: e.data.iterations || iterationsPerWorker,
 						});
 					} else if (e.data?.simulationId === simulationId && e.data?.type === 'ERROR') {
@@ -177,18 +183,37 @@ export class IcmWorkerPool {
 			let totalIterations = 0;
 			const numPlayers = stacks.length;
 			const weightedEquitySum = new Array<number>(numPlayers).fill(0);
+			const weightedVarianceSum = new Array<number>(numPlayers).fill(0);
+			const k = Math.min(numPlayers, prizes.length);
+			const weightedPlacementSum: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
+			let hasPlacements = false;
 
 			for (const r of results) {
-				totalIterations += r.iterations;
+				const nW = r.iterations;
+				totalIterations += nW;
 				for (let p = 0; p < numPlayers; p++) {
-					weightedEquitySum[p] = (weightedEquitySum[p] ?? 0) + (r.equities[p] ?? 0) * r.iterations;
+					weightedEquitySum[p] = (weightedEquitySum[p] ?? 0) + (r.equities[p] ?? 0) * nW;
+					const seW = r.stdErrorPerPlayer[p] ?? 0;
+					// Var(X_comb) = sum(n_w^2 * se_w^2) / n_total^2
+					weightedVarianceSum[p] = (weightedVarianceSum[p] ?? 0) + (nW * nW * seW * seW);
+
+					if (r.placementDistribution?.[p]) {
+						hasPlacements = true;
+						for (let j = 0; j < k; j++) {
+							weightedPlacementSum[p]![j] = (weightedPlacementSum[p]![j] ?? 0) + (r.placementDistribution[p]![j] ?? 0) * nW;
+						}
+					}
 				}
 			}
 
 			const meanEquities = weightedEquitySum.map((sum) => (totalIterations > 0 ? sum / totalIterations : 0));
-			const stdErrorPerPlayer = meanEquities.map((p) =>
-				Math.sqrt((p * (1 - p)) / Math.max(totalIterations, 1)),
-			);
+			const stdErrorPerPlayer = weightedVarianceSum.map((wVar) => {
+				if (totalIterations <= 0) return 0;
+				return Number(Math.sqrt(wVar / (totalIterations * totalIterations)).toFixed(4));
+			});
+			const placementDistribution = hasPlacements && totalIterations > 0
+				? weightedPlacementSum.map((row) => row.map((sum) => sum / totalIterations))
+				: undefined;
 
 			const latencyMs = Number(
 				((typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0).toFixed(2),
@@ -198,6 +223,7 @@ export class IcmWorkerPool {
 			return {
 				equities: meanEquities,
 				stdErrorPerPlayer,
+				placementDistribution,
 				iterations: totalIterations,
 				seed: baseSeed,
 				latencyMs,
@@ -233,6 +259,7 @@ export class IcmWorkerPool {
 		return {
 			equities: result.equities,
 			stdErrorPerPlayer: result.stdErrorPerPlayer,
+			placementDistribution: result.placementDistribution,
 			iterations: result.iterations,
 			seed: result.seed,
 			latencyMs,

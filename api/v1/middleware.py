@@ -9,6 +9,7 @@ import hmac
 import json
 import math
 import os
+import re
 import secrets
 import time
 
@@ -270,8 +271,23 @@ async def _handle_jwt_token_auth(token: str, request, handler):
     payload = verify_hs256_jwt(token, secret)
     if payload is None:
         return web.json_response({"error": "Token JWT do Supabase invalido ou expirado."}, status=403)
-    request["user_id"] = payload.get("sub")
-    request["user_role"] = payload.get("role", "authenticated")
+
+    # BK-03 (auditoria 2026-09-16). A anon key e a service_role key do Supabase
+    # sao JWTs HS256 assinados com o MESMO segredo, sem `sub`, com exp de anos --
+    # e a anon key e publica (NEXT_PUBLIC_SUPABASE_ANON_KEY). Assinatura valida
+    # prova so que o token veio do projeto, nao que ha um usuario. A identidade
+    # de produto exige as duas coisas que so a sessao de um usuario carrega.
+    subject = payload.get("sub")
+    role = payload.get("role")
+    if not isinstance(subject, str) or not subject.strip() or role != "authenticated":
+        return web.json_response(
+            {
+                "error": "Token JWT nao identifica um usuario autenticado (sub ausente ou role diferente de authenticated)."
+            },
+            status=403,
+        )
+    request["user_id"] = subject
+    request["user_role"] = role
 
     # A identidade extraida acima passa a ter consumidor: ela DELIMITA o alcance,
     # em vez de ser lida e descartada.
@@ -291,12 +307,48 @@ async def _handle_jwt_token_auth(token: str, request, handler):
     return await handler(request)
 
 
+#: Cabecalho pelo qual o gateway Next.js identifica o visitante em nome de quem
+#: chama. So e lido quando a propria requisicao traz a credencial de servico.
+CLIENT_ID_HEADER = "X-Nexus-Client-Id"
+_CLIENT_ID_RE = re.compile(r"^[A-Za-z0-9._:@-]{1,128}$")
+
+
+def _rate_limit_key(request) -> str:
+    """Chave de contagem do rate limit.
+
+    BK-06 (auditoria 2026-09-16): o gateway Next chama de 127.0.0.1 em nome de
+    TODOS os visitantes, entao contar por IP punha o site inteiro num balde so.
+
+    1. Credencial de servico valida + `X-Nexus-Client-Id` -> conta por visitante.
+       Sem a credencial o cabecalho e ignorado: quem nao e o gateway nao escolhe
+       o proprio balde.
+    2. Remoto loopback com `X-Forwarded-For` -> ultimo salto, o que o proxy local
+       ANEXOU. O primeiro salto e o que o cliente escreveu, e era o lido antes.
+    3. Caso geral -> IP remoto.
+    """
+    remote_ip = getattr(request, "remote", None) or "127.0.0.1"
+    client_id = request.headers.get(CLIENT_ID_HEADER, "").strip()
+    auth_header = request.headers.get("Authorization", "")
+    if (
+        client_id
+        and API_SECRET_TOKEN
+        and auth_header.startswith("Bearer ")
+        and _CLIENT_ID_RE.fullmatch(client_id)
+        and secrets.compare_digest(auth_header[7:], API_SECRET_TOKEN)
+    ):
+        return f"client:{client_id}"
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded and _is_loopback(remote_ip):
+        hops = [hop.strip() for hop in forwarded.split(",") if hop.strip()]
+        if hops:
+            return hops[-1]
+    return remote_ip
+
+
 @web.middleware
 async def rate_limit_middleware(request, handler):
-    """Aplica limite de requisicoes por IP na janela de tempo definida."""
-    remote_ip = request.remote or "127.0.0.1"
-    forwarded = request.headers.get("X-Forwarded-For")
-    ip = forwarded.split(",")[0].strip() if forwarded and _is_loopback(remote_ip) else remote_ip
+    """Aplica limite de requisicoes por cliente na janela de tempo definida."""
+    ip = _rate_limit_key(request)
 
     current_time = time.time()
     _purge_expired_ips(current_time)
@@ -377,16 +429,24 @@ async def security_headers_middleware(request, handler):
     """
     try:
         response = await handler(request)
-        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
-        # Hardening Adicional
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
+        _apply_security_headers(response.headers)
         return response
     except web.HTTPException as ex:
-        ex.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-        ex.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+        _apply_security_headers(ex.headers)
         raise
+
+
+SECURITY_HEADERS: dict[str, str] = {
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+}
+
+
+def _apply_security_headers(headers) -> None:
+    for name, value in SECURITY_HEADERS.items():
+        headers.setdefault(name, value)
 
 
 @web.middleware

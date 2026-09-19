@@ -131,36 +131,29 @@ async def test_forge_files_validation_checks(tmp_path: Path) -> None:
     res = await autonomy._forge_files("Path: `../../foo.txt````hello```", "partial", "@implementor")
     assert res == []
 
-    # Escrita fora da raiz
-    with patch("agents.autonomy.Path.parent") as mock_parent:
-        # Forca absolute/parent de forma que target nao fique abaixo da raiz
-        mock_parent.parent.absolute.return_value = tmp_path / "root"
+    # A raiz do projeto e derivada de `__file__`; aponta-la para tmp_path da uma
+    # raiz real, sem mock de pathlib (o mock anterior prendia o teste a `.absolute()`).
+    root = tmp_path / "root"
+    (root / "agents").mkdir(parents=True)
+    with patch("agents.autonomy.__file__", str(root / "agents" / "autonomy.py")):
+        # Escrita fora da raiz
         res = await autonomy._forge_files(
-            "Path: `C:\\windows\\system32\\cmd.exe````hello```", "partial", "@implementor"
+            f"Path: `{tmp_path / 'fora.txt'}`\n```text\nhello\n```", "partial", "@implementor"
+        )
+        assert res == []
+        assert not (tmp_path / "fora.txt").exists()
+
+        # Caminho protegido do Kernel - Rejeicao para nao-god
+        protected_file = str(root / "task_executor.py")
+        res = await autonomy._forge_files(
+            f"Path: `{protected_file}`\n```python\nprint(1)\n```", "partial", "@implementor"
         )
         assert res == []
 
-    # Caminho protegido do Kernel - Rejeicao para nao-god
-    protected_file = str(tmp_path / "task_executor.py")
-    with patch("agents.autonomy.__file__", str(tmp_path / "agents" / "autonomy.py")):
-        # Mock raiz do projeto
-        base_path = tmp_path
-        with patch("agents.autonomy.Path.parent") as mock_parent:
-            mock_parent.parent.absolute.return_value = base_path
-
-            # Agente nao privilegiado nao escreve em kernel path
-            res = await autonomy._forge_files(
-                f"Path: `{protected_file}`\n```python\nprint(1)\n```", "partial", "@implementor"
-            )
-            assert res == []
-
-            # Agente privilegiado em Tier 1 (full) re-escreve kernel path
-            with patch("aiofiles.open", MagicMock()):
-                res = await autonomy._forge_files(
-                    f"Path: `{protected_file}`\n```python\nprint(1)\n```", "full", "@chico"
-                )
-                assert len(res) == 1
-                assert res[0] == "task_executor.py"
+        # Agente privilegiado em Tier 1 (full) re-escreve kernel path
+        res = await autonomy._forge_files(f"Path: `{protected_file}`\n```python\nprint(1)\n```", "full", "@chico")
+        assert res == ["task_executor.py"]
+        assert (root / "task_executor.py").read_text(encoding="utf-8") == "print(1)\n"
 
 
 @pytest.mark.asyncio

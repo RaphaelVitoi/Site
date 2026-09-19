@@ -16,6 +16,31 @@ EPSILON: Final[float] = 1e-12
 DEFAULT_ALPHA: Final[float] = 0.88
 DEFAULT_BETA: Final[float] = 0.88
 DEFAULT_LAMBDA: Final[float] = 2.25
+# Piso numerico do BF: 0.5 equivale a RP -100% na grandeza (BF-1)/BF. Limite de engenharia, nao dos autos --
+# o Teorema 2 exige BF < 1 representavel, e o caso canonico (residual 4 BB, pote 36 BB) mede BF 0.812.
+BF_PISO_NUMERICO: Final[float] = 0.5
+RP_PISO_NUMERICO: Final[float] = -100.0
+
+
+def premio_de_risco_canonico(bf: float, pot_odds: float = 0.5) -> float:
+    """Grandeza Canonica do Risk Premium (Teorema Vitoi / PMev Master).
+
+    RP = (E* - a) / (1 - a) = a * (BF - 1) / (a * BF + 1 - a)
+
+    Para a = 0.5 (all-in even money), reduz-se algebricamente a (BF - 1) / (BF + 1).
+    Devolve o valor em percentual (-100.0 a 100.0).
+    """
+    if not math.isfinite(bf):
+        return 0.0
+    if bf <= 0.0:
+        return RP_PISO_NUMERICO
+    a = min(max(pot_odds, 1e-6), 1.0 - 1e-6)
+    denom = a * bf + 1.0 - a
+    if denom <= 0.0:
+        return RP_PISO_NUMERICO
+    rp = (100.0 * (a * (bf - 1.0))) / denom
+    return max(RP_PISO_NUMERICO, rp)
+
 
 type StackVector = list[float]
 type PayoutVector = list[float]
@@ -172,6 +197,27 @@ class RiskContext:
     loss_aversion_lambda: float = DEFAULT_LAMBDA
 
 
+@dataclass(frozen=True, slots=True)
+class StochasticCorridorResult:
+    """Resultado da modelagem estocastica de realizacao de equidade e perspectiva.
+
+    Combina Fator Psi (modulador psicotemporal), Realizacao de Equidade (R)
+    e a Curva de Utilidade S-Shape (Kahneman & Tversky) em um corredor estocastico
+    de media (tendencia central mu) e desvios-padrao (dispersao sigma).
+    """
+
+    mu: float
+    sigma: float
+    band_1s_lower: float
+    band_1s_upper: float
+    band_2s_lower: float
+    band_2s_upper: float
+    realization_factor: float
+    psi_factor: float
+    solvency_probability: float
+    active_anchor_id: str
+
+
 class ProspectRiskEngine:
     """Motor de calculo de Utilidade S-Shape e Bubble Factor Dinamico."""
 
@@ -189,7 +235,9 @@ class ProspectRiskEngine:
 
         if u_win <= EPSILON:
             return 10.0
-        return max(1.0, u_lose / u_win)
+        # Teorema 2 (docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md): BF < 1 e legitimo e produz RP negativo.
+        # Ate 2026-09-17 o piso era 1.0, e o teorema nao tinha como aparecer.
+        return max(BF_PISO_NUMERICO, u_lose / u_win)
 
     def calculate_edge_time_modulator(self) -> float:
         time_factor = min(2.0, self._ctx.time_to_blind_increase / 20.0)
@@ -198,27 +246,113 @@ class ProspectRiskEngine:
         return math.exp(edge_discount + pos_bonus)
 
     def evaluate_required_equilibrium_equity(self, raw_pot_odds: float) -> float:
-        """Equidade requerida sob pressao de bolha.
+        """Equidade requerida sob pressao de bolha, pela formula exata dos autos.
 
-        LIMITE DECLARADO (B06/F07, medido em 2026-09-08). Esta e a grandeza B do
-        par documentado em frontend/src/lib/rpDeriver.ts: `(bf-1)/bf` recomposta
-        por `(a + rp) / (1 + rp)`. Ela nao reproduz a equidade requerida exata,
-        que e `bf*a / (bf*a + 1 - a)`; coincide em bf=2 e diverge ate -11.11
-        pontos percentuais em bf=5 com a=0.5, sempre para MENOS -- ou seja,
-        subestima o preco justamente onde a bolha aperta.
+        Teorema 6 do tratado canonico (docs/PERSPECTIVA_MATEMATICA_PMEV_MASTER.md), com
+        `a = B / (P + 2B)` as pot odds cruas: `E* = BF*a / (BF*a + 1 - a)`. E a mesma
+        equidade exata medida no LIMITE DECLARADO B06/F07 (frontend/src/lib/rpDeriver.ts).
 
-        Mantida sem alteracao de comportamento: trocar a formula desloca numeros
-        que o produto ja exibe, e a escolha entre as duas grandezas e decisao de
-        dominio do Tier 0. A grandeza A, `(bf-1)/(bf+1)`, vive em
-        engine/icm_matrix.py:124 e e exata no all-in even money.
+        Ate 2026-09-17 esta funcao recompunha `(a + rp) / (1 + rp)` a partir da grandeza
+        B, `(bf-1)/bf`, que os autos mediram como inexata: subestimava o preco em ate
+        11.11 pontos percentuais em BF=5, a=0.5. E o piso `max(a, ...)` apagava o
+        Teorema 2, em que a equidade requerida fica ABAIXO das pot odds (BF < 1).
+
+        O modulador `psi` continua escalando o premio de risco, agora na forma relativa
+        `(E* - a) / (1 - a)`, que com psi = 1 devolve exatamente E* e em a = 0.5 vale a
+        grandeza A, `(bf-1)/(bf+1)`.
         """
+        a = min(max(raw_pot_odds, 0.0), 1.0 - EPSILON)
         bf = self.calculate_dynamic_bubble_factor()
-        raw_risk_premium = (bf - 1.0) / bf
+        premio_relativo = premio_de_risco_canonico(bf, a) / 100.0
         psi = self.calculate_edge_time_modulator()
-        rp_dynamic = raw_risk_premium * psi
+        req_equity = a + premio_relativo * psi * (1.0 - a)
+        return min(0.95, max(0.0, req_equity))
 
-        req_equity = (raw_pot_odds + rp_dynamic) / (1.0 + rp_dynamic)
-        return min(0.95, max(raw_pot_odds, req_equity))
+    def evaluate_stochastic_corridor(
+        self,
+        raw_equity: float,
+        spr: float = 1.0,
+        num_opponents: int = 1,
+        playability: float = 1.0,
+        raw_pot_odds: float = 0.33,
+    ) -> StochasticCorridorResult:
+        """Modela o corredor estocastico de perspectiva (mu +- sigma).
+
+        Integra o Fator Psi com a Realizacao de Equidade (R) e a Curva de Utilidade S-Shape,
+        gerando uma distribuicao com tendencia central (mu) e bandas de dispersao (1s e 2s).
+        """
+        psi = self.calculate_edge_time_modulator()
+
+        # Realizacao posicional e estrutural (R)
+        pos_base = 1.15 if self._ctx.is_in_position else 0.85
+        if spr <= 0.1:
+            r = 1.0
+        else:
+            spr_modifier = math.tanh(0.35 * spr)
+            r = pos_base * (1.0 + (spr_modifier * (playability - 1.0)))
+
+        # Damping multiway na realizacao (Teorema 7)
+        n = max(1, num_opponents)
+        if n > 1:
+            r *= max(0.40, 1.0 - 0.12 * (n - 1))
+        r = max(0.30, min(1.60, r))
+
+        # Equidade realizada efetiva
+        eff_equity = min(0.99, max(0.01, raw_equity * r))
+
+        # Equidade de equilibrio requerida sob pressao de bolha
+        req_eq = self.evaluate_required_equilibrium_equity(raw_pot_odds)
+
+        # Tendencia central mu (margem percentual sobre o equilibrio)
+        mu = round((eff_equity - req_eq) * 100.0, 2)
+
+        # Dispersao / Desvio-padrao sigma
+        # A volatilidade escala com SPR, numero de oponentes e aversao ao risco (lambda)
+        vol_spr = math.sqrt(max(0.2, spr / 2.0))
+        vol_mw = math.sqrt(float(n))
+        vol_lambda = math.sqrt(max(0.5, self._ctx.loss_aversion_lambda / 2.25))
+        vol_scale = vol_spr * vol_mw * vol_lambda * psi
+
+        # Base binomial de desvio de equidade
+        base_std = math.sqrt(max(0.01, raw_equity * (1.0 - raw_equity)))
+        sigma_raw = base_std * 32.0 * vol_scale / math.sqrt(8.0)
+        sigma = round(max(1.5, min(40.0, sigma_raw)), 2)
+
+        band_1s_lower = round(mu - sigma, 2)
+        band_1s_upper = round(mu + sigma, 2)
+        band_2s_lower = round(mu - 2.0 * sigma, 2)
+        band_2s_upper = round(mu + 2.0 * sigma, 2)
+
+        # Probabilidade de solvencia aproximada via Funcao Erro (Gaussiana)
+        z = mu / max(EPSILON, sigma)
+        solvency_prob = round(0.5 * (1.0 + math.erf(z / math.sqrt(2.0))), 4)
+
+        # Deteccao da ancora canonica mais compativel
+        if n >= 3 and not self._ctx.is_in_position:
+            active_anchor = "multiway_hydra"
+        elif self._ctx.loss_aversion_lambda >= 2.8 or self._ctx.delta_lose_dollars >= 2.0 * self._ctx.delta_win_dollars:
+            active_anchor = "ft_bubble"
+        elif spr >= 5.0 and self._ctx.is_in_position and playability >= 1.1:
+            active_anchor = "convex_leverage_ip"
+        elif spr <= 0.25:
+            active_anchor = "river_bluffcatcher"
+        elif self._ctx.time_to_blind_increase <= 4:
+            active_anchor = "orbital_inertia_fold"
+        else:
+            active_anchor = "custom"
+
+        return StochasticCorridorResult(
+            mu=mu,
+            sigma=sigma,
+            band_1s_lower=band_1s_lower,
+            band_1s_upper=band_1s_upper,
+            band_2s_lower=band_2s_lower,
+            band_2s_upper=band_2s_upper,
+            realization_factor=round(r, 3),
+            psi_factor=round(psi, 3),
+            solvency_probability=solvency_prob,
+            active_anchor_id=active_anchor,
+        )
 
 
 try:
@@ -348,12 +482,13 @@ class VitoiPerspectiveEngine:
         denom = pot_size + bet_size + (bet_size * bf)
         e_pmev = (bet_size * bf) / denom if denom > 0 else 0.0
         mdf_pmev = (pot_size + bet_size) / denom if denom > 0 else 0.0
-        rp_pp = max(0.0, e_pmev - e_chipev)
+        delta_eq_pp = max(0.0, e_pmev - e_chipev)
 
         return {
             "equity_required_pmev": round(e_pmev, 4),
             "equity_required_chipev": round(e_chipev, 4),
-            "risk_premium_pp": round(rp_pp, 4),
+            "delta_equidade_pp": round(delta_eq_pp, 4),
+            "risk_premium_pp": round(delta_eq_pp, 4),
             "mdf_pmev": round(mdf_pmev, 4),
             "mdf_chipev": round(mdf_chipev, 4),
         }
@@ -603,13 +738,14 @@ class VitoiPerspectiveEngine:
             fold_survival_prob = 1e-6
         relative_survival_ratio = fold_survival_prob / max(call_win_survival_prob, 1e-6)
         pmev_required_equity = chipev_equity * relative_survival_ratio
-        risk_premium = pmev_required_equity - chipev_equity
-        is_negative_rp = risk_premium < 0.0 or residual_stack_bb <= 4.0
+        delta_equidade = pmev_required_equity - chipev_equity
+        is_negative_rp = delta_equidade < 0.0 or residual_stack_bb <= 4.0
 
         return {
             "chipev_equity": round(chipev_equity, 4),
             "pmev_required_equity": round(pmev_required_equity, 4),
-            "risk_premium": round(risk_premium, 4),
+            "delta_equidade_pp": round(delta_equidade, 4),
+            "risk_premium": round(delta_equidade, 4),
             "is_negative_rp": 1.0 if is_negative_rp else 0.0,
             "bluffcatcher_call_mandatory": 1.0 if (is_negative_rp or pmev_required_equity <= chipev_equity) else 0.0,
         }
