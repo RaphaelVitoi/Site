@@ -8,7 +8,9 @@ Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
+import sqlite3
 from unittest.mock import patch
 
 from typer.testing import CliRunner
@@ -22,13 +24,33 @@ from scripts.cli.nexus import app
 runner = CliRunner()
 
 
-def test_notifications_engine_evaluation_on_real_repo() -> None:
-    """Verifica avaliacao das arvores do Dream-RSI, token budget e recomendacoes."""
-    engine = DashboardNotificationsEngine()
-    report = engine.evaluate()
+def _create_discovery_db(tmp_path: Path) -> Path:
+    """Cria um banco Dream-RSI minimo com contagens deterministicas."""
+    database_path = tmp_path / "discovery_tree.db"
+    payloads = [
+        {"nodes": {"root": {}, "child": {}}},
+        {"nodes": {"root": {}}},
+    ]
+    with sqlite3.connect(database_path) as connection:
+        connection.execute("CREATE TABLE discovery_trees (payload_json TEXT NOT NULL)")
+        connection.executemany(
+            "INSERT INTO discovery_trees (payload_json) VALUES (?)",
+            [(json.dumps(payload),) for payload in payloads],
+        )
+    return database_path
 
-    assert report.dream_trees_count >= 364
-    assert report.dream_nodes_count >= 664
+
+def test_notifications_engine_evaluation_with_seeded_db(tmp_path: Path) -> None:
+    """Verifica Dream-RSI e recomendacoes sem depender do estado local."""
+    engine = DashboardNotificationsEngine(
+        discovery_db_path=_create_discovery_db(tmp_path),
+        ledger_path=tmp_path / "missing-ledger.jsonl",
+    )
+    with patch.object(engine, "_inspect_calibration_ledger", return_value=(4, 0.0, 0.0)):
+        report = engine.evaluate()
+
+    assert report.dream_trees_count == 2
+    assert report.dream_nodes_count == 3
     assert report.token_budget_consumed <= 15000
     assert report.token_headroom_percent >= 50.0
     assert report.overall_health == 100.0
@@ -76,7 +98,11 @@ def test_notifications_engine_token_budget_warning(tmp_path: Path) -> None:
 
 def test_cli_dashboard_notify_flag() -> None:
     """Valida saida sintetizada da flag --notify para automacoes periodicas."""
-    result = runner.invoke(app, ["dashboard", "--notify"])
+    with (
+        patch.object(DashboardNotificationsEngine, "_inspect_discovery_db", return_value=(2, 3)),
+        patch.object(DashboardNotificationsEngine, "_inspect_calibration_ledger", return_value=(4, 0.0, 0.0)),
+    ):
+        result = runner.invoke(app, ["dashboard", "--notify"])
     assert result.exit_code == 0
     assert "NOTIFICACOES, STATUS DINAMICO & RECOMENDACOES" in result.stdout
     assert "Dream-RSI:" in result.stdout
