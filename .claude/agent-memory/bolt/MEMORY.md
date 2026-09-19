@@ -72,3 +72,10 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+### 2026-10-27 -- Erradicando overhead de coalescencia nula em TypedArrays
+
+Origem: sessao Jules, 2026-10-27.
+
+- ``#aprendizado`` **Uso do operador de coalescência nula (`?? 0`) em acessos indexados dentro dos limites de um `TypedArray` (como `Float32Array`) causa lentidão massiva na hot loop.** Acessos a índices válidos em TypedArrays sempre retornam um número primitivo e nunca `undefined`. O motor JavaScript é forçado a incluir type-checks desnecessários a cada iteração que quebram a otimização no JIT.
+  **Ação:** Nunca utilizar o fallback `?? 0` ao acessar TypedArrays em trechos críticos de performance desde que os limites do array estejam respeitados. Remover todos do `cfr.worker.ts` e de `engine`.
