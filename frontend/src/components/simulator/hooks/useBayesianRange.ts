@@ -26,7 +26,7 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 	const [baseBelief] = useState<BeliefVector>(generateUniformBelief());
 	const [heroBelief] = useState<BeliefVector>(generateUniformBelief());
 
-	const currentBelief = history.at(-1) ?? baseBelief;
+	const currentBelief = history[history.length - 1] ?? baseBelief;
 
 	const maxBelief = useMemo(() => {
 		return Math.max(...Object.values(currentBelief));
@@ -43,7 +43,7 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 	const applyAction = useCallback(
 		(likelihood: ActionLikelihood) => {
 			setHistory((prev) => {
-				const prior = prev.at(-1) ?? baseBelief;
+				const prior = prev[prev.length - 1] ?? baseBelief;
 				const posterior = updateBelief(prior, likelihood);
 				return [...prev, posterior];
 			});
