@@ -554,16 +554,17 @@ export default function FilesDashboardPage() {
         const res = await fetch('/api/vitoi/files/list');
         if (!res.ok) {
           const errPayload = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(errPayload?.error || `Serviço temporariamente indisponível (HTTP ${res.status}).`);
+          setError(errPayload?.error || `Serviço temporariamente indisponível (HTTP ${res.status}).`);
+          setLoading(false);
+          return;
         }
         const data = (await res.json()) as { status: string; tree: SourceTree[]; error?: string };
         if (data.status === 'SUCCESS') {
           setTree(data.tree);
         } else {
-          throw new Error(data.error || 'Falha ao obter lista de arquivos.');
+          setError(data.error || 'Falha ao obter lista de arquivos.');
         }
       } catch (err: unknown) {
-        console.error('[Files DB] Tree load failed:', err);
         setError((err as Error).message || 'Falha na conexão com a API de arquivos.');
       } finally {
         setLoading(false);
@@ -589,12 +590,17 @@ export default function FilesDashboardPage() {
         const res = await fetch(`/api/vitoi/files/view?path=${encPath}`);
         if (!res.ok) {
           const errPayload = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(errPayload?.error || `Erro ao ler arquivo (HTTP ${res.status}).`);
+          if (ativo) {
+            setFileContent({
+              type: 'text',
+              error: errPayload?.error || `Erro ao ler arquivo (HTTP ${res.status}).`,
+            });
+          }
+          return;
         }
         const data = (await res.json()) as FileContent;
         if (ativo) setFileContent(data);
       } catch (err: unknown) {
-        console.error('[Files DB] File view failed:', err);
         if (ativo)
           setFileContent({
             type: 'text',
