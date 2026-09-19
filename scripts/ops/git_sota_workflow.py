@@ -25,7 +25,7 @@ class GitSotaWorkflow:
     """Gerenciador canonico de ciclo de vida Git SOTA."""
 
     COMMIT_PATTERN: Final[re.Pattern[str]] = re.compile(
-        r"^(feat|fix|refactor|chore|audit|docs|test|perf|ci)(\([a-zA-Z0-9_\-.]+\))?:\s+.+",
+        r"^(feat|fix|refactor|chore|audit|docs|test|perf|ci)(\((?a:[\w.-]+)\))?:\s+.+",
         re.IGNORECASE,
     )
 

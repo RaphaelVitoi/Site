@@ -172,7 +172,7 @@ def silencio(extra: list[str]) -> list[str]:
 
 def rodar_suite(extra: list[str]) -> int:
     """Executa a suite e, se verde E a arvore continuar limpa, grava o marcador."""
-    base = str(Path(tempfile.gettempdir()) / "pytest-sota")  # noqa: S108 - basetemp do pytest, recriado a cada corrida  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
+    base = str(Path(tempfile.gettempdir()) / "pytest-sota")
     cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *paralelismo(extra), *silencio(extra), *extra]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)

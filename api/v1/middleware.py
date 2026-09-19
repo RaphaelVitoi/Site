@@ -109,6 +109,42 @@ def _verify_hs256_signature(header_segment: str, payload_segment: str, crypto_se
     return hmac.compare_digest(signature, raw_crypto)
 
 
+def _valid_numeric_time_claims(payload: dict) -> bool:
+    """Exige exp e aceita nbf/iat apenas quando sao numeros finitos."""
+    for claim_name in ("exp", "nbf", "iat"):
+        value = payload.get(claim_name)
+        if value is None:
+            if claim_name == "exp":
+                return False
+            continue
+        try:
+            if not math.isfinite(float(value)):
+                return False
+        except (ValueError, TypeError):
+            return False
+    return True
+
+
+def _time_claims_are_current(payload: dict, now: float) -> bool:
+    """Confere exp, nbf e iat dentro da tolerancia de relogio declarada."""
+    if now > float(payload["exp"]) + JWT_CLOCK_SKEW_SECONDS:
+        return False
+    nbf = payload.get("nbf")
+    if nbf is not None and now < float(nbf) - JWT_CLOCK_SKEW_SECONDS:
+        return False
+    iat = payload.get("iat")
+    return iat is None or now >= float(iat) - JWT_CLOCK_SKEW_SECONDS
+
+
+def _optional_claims_match(payload: dict) -> bool:
+    """Confere emissor e audiencia somente quando o ambiente os exige."""
+    expected_iss = _expected_claim("SUPABASE_JWT_ISSUER")
+    if expected_iss and payload.get("iss") != expected_iss:
+        return False
+    expected_aud = _expected_claim("SUPABASE_JWT_AUDIENCE")
+    return not expected_aud or _audience_matches(payload.get("aud"), expected_aud)
+
+
 def verify_hs256_jwt(token: str, secret: str) -> dict | None:
     """
     Decodifica e verifica a assinatura HS256 de um JWT do Supabase usando apenas a stdlib do Python.
@@ -135,40 +171,12 @@ def verify_hs256_jwt(token: str, secret: str) -> dict | None:
         if not isinstance(payload, dict):
             return None
 
-        # 4. Janela temporal (exp / nbf / iat)
-        now = time.time()
-        for claim_name in ("exp", "nbf", "iat"):
-            val = payload.get(claim_name)
-            if val is None:
-                if claim_name == "exp":
-                    return None  # Token sem expiracao declarada ou expirado
-                continue
-            try:
-                # Garante que o valor e um numero finito (evita NaN/Inf)
-                fval = float(val)
-                if not math.isfinite(fval):
-                    return None
-            except (ValueError, TypeError):
-                return None
-
-        exp = float(payload["exp"])
-        if now > exp + JWT_CLOCK_SKEW_SECONDS:
-            return None  # Expirado
-
-        nbf = payload.get("nbf")
-        if nbf is not None and now < float(nbf) - JWT_CLOCK_SKEW_SECONDS:
-            return None  # Token ainda nao valido
-
-        iat = payload.get("iat")
-        if iat is not None and now < float(iat) - JWT_CLOCK_SKEW_SECONDS:
-            return None  # Emitido no futuro
-
-        # 5. Emissor e audiencia, quando declarados no ambiente
-        expected_iss = _expected_claim("SUPABASE_JWT_ISSUER")
-        if expected_iss and payload.get("iss") != expected_iss:
+        # 4. Janela temporal (exp / nbf / iat) e 5. claims opcionais.
+        if not _valid_numeric_time_claims(payload):
             return None
-        expected_aud = _expected_claim("SUPABASE_JWT_AUDIENCE")
-        if expected_aud and not _audience_matches(payload.get("aud"), expected_aud):
+        if not _time_claims_are_current(payload, time.time()):
+            return None
+        if not _optional_claims_match(payload):
             return None
 
         return payload

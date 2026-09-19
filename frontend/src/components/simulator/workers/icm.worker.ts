@@ -34,22 +34,26 @@ export interface IcmWorkerResponse {
 	error?: string | undefined;
 }
 
+function handleTableIcmRequest(data: object): void {
+	try {
+		const response: IcmTableResponse = processTableIcmRequest(data);
+		(self as unknown as Worker).postMessage(response, [response.payload.buffer]);
+	} catch (error: unknown) {
+		const id = 'id' in data && typeof data.id === 'string' ? data.id : undefined;
+		(self as unknown as Worker).postMessage({
+			id,
+			error: error instanceof Error ? error.message : 'Falha no cálculo ICM.',
+		});
+	}
+}
+
 self.onmessage = (e: MessageEvent<unknown>) => {
 	const data = e.data;
 	if (typeof data !== 'object' || data === null) return;
 
 	// Ramo 1: IcmTableRequest da UI (useIcmCalculations / EquityCalculator)
 	if ('players' in data && 'selection' in data) {
-		try {
-			const response: IcmTableResponse = processTableIcmRequest(data);
-			(self as unknown as Worker).postMessage(response, [response.payload.buffer]);
-		} catch (error: unknown) {
-			const id = 'id' in data && typeof data.id === 'string' ? data.id : undefined;
-			(self as unknown as Worker).postMessage({
-				id,
-				error: error instanceof Error ? error.message : 'Falha no cálculo ICM.',
-			});
-		}
+		handleTableIcmRequest(data);
 		return;
 	}
 

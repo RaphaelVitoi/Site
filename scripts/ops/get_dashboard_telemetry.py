@@ -74,6 +74,17 @@ def get_model_status() -> dict:
     }
 
 
+def _parse_metadata(metadata_raw: str | dict | None) -> dict:
+    if isinstance(metadata_raw, dict):
+        return metadata_raw
+    if not isinstance(metadata_raw, str):
+        return {}
+    try:
+        return json.loads(metadata_raw)
+    except Exception:
+        return {}
+
+
 def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tuple[str, str]:
     """
     Mapeia os 5 estados de operacao estritos:
@@ -84,15 +95,7 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
     5. 'prevista e engatilhada' (pending / queued / triggered)
     """
     s = (raw_status or "").lower().strip()
-    meta = {}
-    if metadata_raw:
-        if isinstance(metadata_raw, str):
-            try:
-                meta = json.loads(metadata_raw)
-            except Exception:
-                meta = {}
-        elif isinstance(metadata_raw, dict):
-            meta = metadata_raw
+    meta = _parse_metadata(metadata_raw)
 
     if s == "completed_with_errors" or (
         s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))
@@ -113,16 +116,17 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
     return "unknown", s.capitalize()
 
 
-def collect_telemetry() -> dict:
-    models_info = get_model_status()
-    ports_info = {
+def _ports_status() -> dict[str, bool]:
+    return {
         "ollama_11434": is_port_open(11434),
         "gemma_server_17043": is_port_open(17043),
         "backend_8000": is_port_open(8000),
         "vulkan_8080": is_port_open(8080),
     }
 
-    counts: dict[str, Any] = {
+
+def _empty_counts() -> dict[str, Any]:
+    return {
         "completed": 0,
         "running": 0,
         "pending": 0,
@@ -134,6 +138,56 @@ def collect_telemetry() -> dict:
         "total": 0,
     }
 
+
+def _row_dict(row: sqlite3.Row) -> dict[str, Any]:
+    return {key: row[key] for key in row.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
+
+
+def _collect_task_counts(cursor: sqlite3.Cursor, counts: dict[str, Any]) -> None:
+    cursor.execute("SELECT status, metadata FROM tasks")
+    for row in cursor.fetchall():
+        counts["total"] += 1
+        category, _ = classify_task_status(row["status"], row["metadata"])
+        if category in counts:
+            counts[category] += 1
+        if row["status"] in ("completed", "running", "pending", "failed"):
+            counts[row["status"]] += 1
+
+
+def _collect_running_tasks(cursor: sqlite3.Cursor) -> list[dict[str, Any]]:
+    cursor.execute(
+        "SELECT id, agent, description, timestamp, metadata FROM tasks WHERE status = 'running' ORDER BY timestamp ASC LIMIT 5"
+    )
+    now = datetime.now(UTC)
+    tasks = []
+    for row in cursor.fetchall():
+        task = _row_dict(row)
+        try:
+            started_at = (
+                datetime.fromisoformat(task["timestamp"].replace("Z", "+00:00")) if task.get("timestamp") else now
+            )
+            elapsed = max(0.0, (now - started_at).total_seconds())
+        except Exception:
+            elapsed = 0.0
+        remaining = max(2.0, 45.0 - elapsed)
+        tasks.append(
+            {
+                "id": task.get("id"),
+                "agent": task.get("agent", "@chico"),
+                "description": (task.get("description") or "")[:60].replace("\n", " "),
+                "elapsed_sec": round(elapsed, 1),
+                "eta_remaining_sec": round(remaining, 1),
+                "progress_pct": min(98, int(elapsed / (elapsed + remaining) * 100)),
+            }
+        )
+    return tasks
+
+
+def collect_telemetry() -> dict:
+    models_info = get_model_status()
+    ports_info = _ports_status()
+    counts = _empty_counts()
+
     running_tasks = []
     last_5_tasks = []
     forecast_tasks = []
@@ -144,52 +198,8 @@ def collect_telemetry() -> dict:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
 
-            # Coletar estatisticas
-            cur.execute("SELECT status, metadata FROM tasks")
-            for row in cur.fetchall():
-                counts["total"] += 1
-                cat_key, _ = classify_task_status(row["status"], row["metadata"])
-                if cat_key in counts:
-                    counts[cat_key] += 1
-                if row["status"] in ("completed", "running", "pending", "failed"):
-                    counts[row["status"]] += 1
-
-            # Tarefas em execucao com ETA
-            cur.execute(
-                """
-                SELECT id, agent, description, timestamp, metadata
-                FROM tasks
-                WHERE status = 'running'
-                ORDER BY timestamp ASC
-                LIMIT 5
-                """
-            )
-            now_ts = datetime.now(UTC)
-            for r in cur.fetchall():
-                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
-                elapsed_sec = 0.0
-                if t_dict.get("timestamp"):
-                    try:
-                        t_dt = datetime.fromisoformat(t_dict["timestamp"].replace("Z", "+00:00"))
-                        elapsed_sec = max(0.0, (now_ts - t_dt).total_seconds())
-                    except Exception:
-                        elapsed_sec = 0.0
-
-                # Estimativa de duracao padrao SOTA: ~45s
-                avg_dur_sec = 45.0
-                remaining_sec = max(2.0, avg_dur_sec - elapsed_sec)
-                eta_pct = min(98, int((elapsed_sec / (elapsed_sec + remaining_sec)) * 100))
-
-                running_tasks.append(
-                    {
-                        "id": t_dict.get("id"),
-                        "agent": t_dict.get("agent", "@chico"),
-                        "description": (t_dict.get("description") or "")[:60].replace("\n", " "),
-                        "elapsed_sec": round(elapsed_sec, 1),
-                        "eta_remaining_sec": round(remaining_sec, 1),
-                        "progress_pct": eta_pct,
-                    }
-                )
+            _collect_task_counts(cur, counts)
+            running_tasks = _collect_running_tasks(cur)
 
             # Ultimas 5 tarefas com status detalhado
             cur.execute(
@@ -201,7 +211,7 @@ def collect_telemetry() -> dict:
                 """
             )
             for r in cur.fetchall():
-                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
+                t_dict = _row_dict(r)
                 status_code, status_label = classify_task_status(t_dict["status"], t_dict.get("metadata"))
                 last_5_tasks.append(
                     {
@@ -227,7 +237,7 @@ def collect_telemetry() -> dict:
                 """
             )
             for r in cur.fetchall():
-                t_dict: dict[str, Any] = {k: r[k] for k in r.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
+                t_dict = _row_dict(r)
                 forecast_tasks.append(
                     {
                         "id": t_dict.get("id"),

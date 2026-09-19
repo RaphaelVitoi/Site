@@ -74,28 +74,41 @@ def _linha(veiculo, origem, inicio, chamadas, erros, metodo):
     }
 
 
+def _registros_jsonl(fh):
+    for linha in fh:
+        try:
+            yield json.loads(linha)
+        except ValueError:
+            continue
+
+
+def _resultados_claude(registro):
+    conteudo = (registro.get("message") or {}).get("content")
+    if not isinstance(conteudo, list):
+        return
+    for bloco in conteudo:
+        if isinstance(bloco, dict) and bloco.get("type") == "tool_result":
+            yield bloco
+
+
+def _contar_claude(fh):
+    total = erros = 0
+    inicio = None
+    for registro in _registros_jsonl(fh):
+        marca = registro.get("timestamp")
+        if marca and (inicio is None or marca < inicio):
+            inicio = marca
+        for bloco in _resultados_claude(registro):
+            total += 1
+            if bloco.get("is_error") is True:
+                erros += 1
+    return total, erros, inicio
+
+
 def de_claude_code(diretorio, corte):
     for caminho in sorted(glob.glob(os.path.join(diretorio, "*.jsonl"))):
-        total = erros = 0
-        inicio = None
         with open(caminho, encoding="utf-8", errors="replace") as fh:
-            for linha in fh:
-                try:
-                    registro = json.loads(linha)
-                except ValueError:
-                    continue
-                marca = registro.get("timestamp")
-                if marca and (inicio is None or marca < inicio):
-                    inicio = marca
-                conteudo = (registro.get("message") or {}).get("content")
-                if not isinstance(conteudo, list):
-                    continue
-                for bloco in conteudo:
-                    if not isinstance(bloco, dict) or bloco.get("type") != "tool_result":
-                        continue
-                    total += 1
-                    if bloco.get("is_error") is True:
-                        erros += 1
+            total, erros, inicio = _contar_claude(fh)
         if total and inicio and inicio[:10] >= corte:
             yield _linha("claude-code", os.path.basename(caminho)[:8], inicio, total, erros, "is_error")
 
@@ -134,34 +147,37 @@ def de_antigravity(diretorio, corte):
         )
 
 
+def _texto_saida_codex(saida):
+    if isinstance(saida, list) and saida and isinstance(saida[0], dict):
+        return saida[0].get("text") or ""
+    if isinstance(saida, str):
+        return saida
+    return ""
+
+
+def _contar_codex(fh):
+    total = erros = 0
+    for registro in _registros_jsonl(fh):
+        carga = registro.get("payload")
+        if not isinstance(carga, dict):
+            continue
+        if carga.get("type") not in ("custom_tool_call_output", "function_call_output"):
+            continue
+        total += 1
+        texto = _texto_saida_codex(carga.get("output"))
+        if texto.lstrip().startswith(CODEX_SENTINELA_FALHA):
+            erros += 1
+    return total, erros
+
+
 def de_codex(diretorio, corte):
     limite = _dt.datetime.fromisoformat(corte).timestamp()
     padrao = os.path.join(diretorio, "**", "rollout-*.jsonl")
     for caminho in sorted(glob.glob(padrao, recursive=True)):
         if os.path.getmtime(caminho) < limite:
             continue
-        total = erros = 0
         with open(caminho, encoding="utf-8", errors="replace") as fh:
-            for linha in fh:
-                try:
-                    registro = json.loads(linha)
-                except ValueError:
-                    continue
-                carga = registro.get("payload")
-                if not isinstance(carga, dict):
-                    continue
-                if carga.get("type") not in ("custom_tool_call_output", "function_call_output"):
-                    continue
-                total += 1
-                saida = carga.get("output")
-                if isinstance(saida, list) and saida and isinstance(saida[0], dict):
-                    texto = saida[0].get("text") or ""
-                elif isinstance(saida, str):
-                    texto = saida
-                else:
-                    texto = ""
-                if texto.lstrip().startswith(CODEX_SENTINELA_FALHA):
-                    erros += 1
+            total, erros = _contar_codex(fh)
         if total:
             yield _linha(
                 "codex", os.path.basename(caminho)[8:24], _iso(os.path.getmtime(caminho)), total, erros, "sentinela"
@@ -172,13 +188,7 @@ def do_ledger(caminho):
     if not os.path.exists(caminho):
         return
     with open(caminho, encoding="utf-8") as fh:
-        for linha in fh:
-            if not linha.strip():
-                continue
-            try:
-                registro = json.loads(linha)
-            except ValueError:
-                continue
+        for registro in _registros_jsonl(fh):
             if registro.get("record_type") != "feedback":
                 continue
             if "tool_calls" not in registro or "tool_errors" not in registro:
