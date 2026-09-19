@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * IDENTITY: Telemetry & EV Loss Risk Zone Density Analytics v7.0 GOLD
+ * IDENTITY: Telemetry & EV Loss Risk Zone Density Analytics v8.0 GOLD
  * PATH: src/components/analytics/TelemetryCharts.tsx
  * ROLE: Visualizar a densidade estocástica de perdas de EV, classificar decisões
  *       nas 4 zonas de risco ICM, correlacionar Posição (IP/OOP) com Stack Depth
@@ -539,7 +539,7 @@ export function TelemetryCharts({ data }: Readonly<{ data: TelemetryPoint[] }>) 
 			.map((z) => `| **${z.name}** | ${z.count} | ${z.pct}% | -${z.totalLoss} bb | ${z.desc} |`)
 			.join('\n');
 
-		const md = `# RELATÓRIO DE TELEMETRIA E DIAGNÓSTICO SOTA v7.0 GOLD
+		const md = `# RELATÓRIO DE TELEMETRIA E DIAGNÓSTICO SOTA v8.0 GOLD
 > "A correção matemática, a elegância algorítmica e o rigor analítico são tratados como uma única e indissociável propriedade geométrica."
 
 - **Data de Emissão:** ${formattedDate}
@@ -579,7 +579,7 @@ ${zoneRows}
 - **Vetor de Correção:** Calibrar a defesa estrita pela fórmula ${String.raw`$ReqEq_{ICM} = \frac{BF}{1 + BF}$`} e evitar calls marginais em cenários de alta assimetria de ICM.
 
 ---
-*Relatório gerado automaticamente pelo Ecossistema SOTA v7.0 GOLD para Raphael Vitoi.*
+*Relatório gerado automaticamente pelo Ecossistema SOTA v8.0 GOLD para Raphael Vitoi.*
 `;
 
 		const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });

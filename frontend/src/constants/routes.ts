@@ -11,6 +11,7 @@ export const ROUTES = {
 	SIMULADOR_DISTORCOES: '/simulador/distorcoes',
 	SIMULADOR_GTO: '/simulador/gto-cfr',
 	DASHBOARD: '/dashboard',
+	DASHBOARD_FILES: '/dashboard/files',
 	QUIZ: '/quiz',
 	O_AUTOR: '/quem-sou',
 	TEMPLO: {

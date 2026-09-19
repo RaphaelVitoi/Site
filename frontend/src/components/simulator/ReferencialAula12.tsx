@@ -3,7 +3,7 @@
  * IDENTITY: Referencial Visual — Âncora Empírica Aula 1.2
  * PATH: src/components/simulator/ReferencialAula12.tsx
  * ROLE: Seção colapsável com representação visual dos dados de calibração do motor ICM.
- *       SOTA v7.0 GOLD: Soberania Matemática e Purificação de Damping.
+ *       SOTA v8.0 GOLD: Soberania Matemática e Purificação de Damping.
  */
 
 import { useMemo, useState } from 'react';
@@ -758,7 +758,7 @@ export default function ReferencialAula12() {
                 Reference Layer 01
               </span>
               <h3 className="m-0 text-xl font-black tracking-tight text-white uppercase sm:text-2xl">
-                Âncora Científica SOTA v7.0 GOLD
+                Âncora Científica SOTA v8.0 GOLD
               </h3>
             </div>
           </div>
@@ -908,7 +908,7 @@ export default function ReferencialAula12() {
                 <div className="mb-16 flex items-center gap-6">
                   <div className="bg-accent-indigo h-4 w-4 rounded-full shadow-[0_0_25px_var(--accent-indigo)]" />
                   <h3 className="m-0 text-3xl font-black tracking-tight text-white uppercase sm:text-4xl">
-                    Audit Protocol SOTA v7.0 GOLD
+                    Audit Protocol SOTA v8.0 GOLD
                   </h3>
                 </div>
 

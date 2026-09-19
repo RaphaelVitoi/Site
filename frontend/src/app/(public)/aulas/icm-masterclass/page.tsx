@@ -3,7 +3,7 @@
  * PATH: src/app/aulas/icm-masterclass/page.tsx
  * ROLE: Framework matemático do ICM pós-flop. Teoria densa e colapso da MDF.
  * PRINCIPLE: Excelência Teórica & Fluidez Sofisticada.
- * VERSION: v7.0 GOLD
+ * VERSION: v8.0 GOLD
  */
 
 import ContentFooter from '@/components/ui/layout/ContentFooter';
@@ -15,7 +15,7 @@ import { SectionHeader } from '@/components/ui/layout/SectionHeader';
 export const metadata = {
 	title: 'Geometria do Risco GOLD | Raphael Vitoi',
 	description:
-		'O framework matemático do ICM pós-flop v7.0 GOLD: Risk Premium, ΔRP, Perspectiva Matemática e o colapso da MDF.',
+		'O framework matemático do ICM pós-flop v8.0 GOLD: Risk Premium, ΔRP, Perspectiva Matemática e o colapso da MDF.',
 };
 
 const articleSchema = {

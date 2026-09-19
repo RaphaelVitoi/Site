@@ -46,7 +46,7 @@ export default function TeoriaICMPage() {
 							Antes de mergulhar na Perspectiva, é essencial distinguir a régua ICM
 							da evidência que a sustenta. BF e RP descrevem um confronto condicionado
 							a stacks e payouts; qualquer extensão pós-flop precisa declarar ranges,
-							ações, nó e fonte do solver antes de ser tratada como validação. Os 93
+							ações, nó e fonte do solver antes de ser tratada como validação. Os 97
 							nós registrados no projeto são material de reprodução em curadoria, não
 							uma certificação genérica do motor.
 						</p>

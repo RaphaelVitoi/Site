@@ -65,7 +65,7 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 							{LABELS.title} <span className="text-text-darker ml-1">{LABELS.wasm}</span>
 						</h3>
 						<p className="text-text-darker text-[0.6rem] font-black tracking-[0.4em] uppercase mt-1.5 m-0">
-							Motor de Observabilidade SOTA v7.0 GOLD
+							Motor de Observabilidade SOTA v8.0 GOLD
 						</p>
 					</div>
 				</div>
