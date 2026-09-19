@@ -55,6 +55,7 @@ const ACTION_STREET_MAP: Record<TacticalActionType, number> = {
 	call_condensed: 2,
 };
 
+/** Tracks Bayesian range beliefs and exposes actions that update the current state. */
 export function useBayesianRange(options?: UseBayesianRangeOptions) {
 	const initialTexture = options?.initialBoardTexture ?? 'aula1_2';
 	const [boardTexture, setBoardTexture] = useState<BoardTextureId>(initialTexture);
@@ -198,5 +199,3 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 		resetBelief,
 	};
 }
-
-
