@@ -37,7 +37,6 @@ describe('BayesianPokerTable', () => {
 				streetStep={0}
 				heroPosition="BTN"
 				villainPosition="BB"
-				onSelectBoardTexture={onSelectBoardTexture}
 				onSelectVillainPosition={onSelectVillainPosition}
 				onSelectHeroPosition={onSelectHeroPosition}
 				currentPot={15.0}
