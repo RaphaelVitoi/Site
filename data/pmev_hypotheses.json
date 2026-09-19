@@ -81,7 +81,7 @@
       "id": "H8",
       "enunciado": "Downward Drift de Sizings",
       "baseline": "Árvores ChipEV",
-      "criterio_falsificacao": "Frequência de apostas $\\ge 50\\%$ inalterada",
+      "criterio_falsificacao": "Em nós de aposta livre, frequência de apostas $\\ge 50\\%$ inalterada ou crescente",
       "onde_testar": "`pmev_h8_drift.py`",
       "estado_evidencia": "evidencia_transcrita_nao_reproduzivel",
       "implementacoes": [
@@ -90,7 +90,7 @@
         "scripts/validation/testar_h8_downward_drift.py",
         "frontend/src/tests/simulator/contrasteIcmevChipev.test.ts"
       ],
-      "nota": "Direção de contração de sizing médio observada no contraste de 2026-09-08 (3 de 3 nós); medição literal da frequência de apostas >= 50% tornada reproduzível via testar_h8_downward_drift.py (H8 falsificada no limiar absoluto de 50% por abertura de ramo intermediário a 50.4% do pote; observação segue 0 de 7 pares reproduzíveis)."
+      "nota": "Arbitragem Tier 0 (2026-09-19): domínio formal restrito a nós de aposta livre (onde check é legal), excluindo nós de aumento pela distorção dimensional entre convenção de raise-by (sobre pote pós-call) e fração do pote. Medição tornada reproduzível e determinística em engine/pmev_h8_drift.py (16 testes verdes); no recorte da Aula 1.2 o limiar estrito de 50% refuta a hipótese pelo ramo intermediário a 50.4% do pote; observação bruta dos solvers segue pendente de re-execução externa (0 de 7 pares reproduzíveis)."
     },
     {
       "id": "H9",

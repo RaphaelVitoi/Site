@@ -1,7 +1,7 @@
 {
   "descricao": "Espelho JSON dos sete pares transcritos da Aula 1.2 para consumo do motor Python. Fonte curada: frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts. frontend/src/tests/simulator/aula12PairsJson.test.ts reprova se divergirem. Nao editar a mao.",
   "geradoDe": "frontend/src/components/simulator/solver/evidencia/aula12Pairs.ts",
-  "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+  "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
   "atribuicaoAmbiguaNodelock": [
     "PAR_5_IP_VS_XR_FLOP",
     "PAR_6_BB_TURN_APOS_CALL",
@@ -12,7 +12,7 @@
       "chave": "PAR_1_BB_LEADING",
       "par": {
         "source": {
-          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
           "figureIndex": 7,
           "nodeLabel": "2 Leading (ChipEV) / 39 Leading (IcmEV)"
         },
@@ -134,7 +134,7 @@
       "chave": "PAR_2_IP_APOS_CHECK",
       "par": {
         "source": {
-          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
           "figureIndex": 8,
           "nodeLabel": "3 IP action após BB check / 41 IP action após BB check"
         },
@@ -316,7 +316,7 @@
       "chave": "PAR_7_BB_VS_CBET_SMALL",
       "par": {
         "source": {
-          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
           "figureIndex": 18,
           "nodeLabel": "13 BB X-R vs IP cbet size small / 42 idem (ATRIBUIÇÃO AMBÍGUA: image7.png tem 4 inserções; todas do MESMO nó, mas em blocos de nodelock possivelmente distintos)"
         },
@@ -479,7 +479,7 @@
       "chave": "PAR_5_IP_VS_XR_FLOP",
       "par": {
         "source": {
-          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
           "figureIndex": 19,
           "nodeLabel": "14 IP reaction vs XR after cbet small flop / 43 IP reaction vs XR (ATRIBUIÇÃO AMBÍGUA: image55.png também legendada `Range de defesa IP vs BB xR`)"
         },
@@ -642,7 +642,7 @@
       "chave": "PAR_6_BB_TURN_APOS_CALL",
       "par": {
         "source": {
-          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
           "figureIndex": 20,
           "nodeLabel": "15 BB XR and betting turn after IP calls (2d) / 44 idem (ATRIBUIÇÃO AMBÍGUA: image45.png também legendada `21 Action BB turn after IP calls no XR (2d)`)"
         },
@@ -809,7 +809,7 @@
       "chave": "PAR_3_IP_VS_CBET_TURN",
       "par": {
         "source": {
-          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
           "figureIndex": 33,
           "nodeLabel": "28 IP reaction vs cbet turn OOP after xR flop (2d) / 45 idem"
         },
@@ -972,7 +972,7 @@
       "chave": "PAR_4_OOP_RIVER",
       "par": {
         "source": {
-          "documentSha256": "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769",
+          "documentSha256": "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930",
           "figureIndex": 34,
           "nodeLabel": "29 OOP action river after IP calls turn (river 3h) / 46 idem"
         },

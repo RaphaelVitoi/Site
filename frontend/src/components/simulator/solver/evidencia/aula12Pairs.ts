@@ -60,7 +60,7 @@ import {
 
 /** SHA-256 do `Aula 1.2.docx`, minúsculo conforme o contrato. */
 export const AULA_1_2_SHA256 =
-  '7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769';
+  'b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930';
 
 /**
  * ATENÇÃO À REDAÇÃO: o HRC **expõe** combos e stacks. O que falta é o RECORTE.
