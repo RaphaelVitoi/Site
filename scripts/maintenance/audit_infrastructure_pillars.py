@@ -25,12 +25,33 @@ BRAIN_DIR = BASE_DIR.parent / "antigravity" / "brain"
 
 # Regex para deteccao de segredos em logs
 SECRET_PATTERNS = [
-    re.compile(r"(?:AIzaSy[A-Za-z0-9-_]{33})"),  # Google Gemini / Firebase API Key
-    re.compile(r"(?:sk-[A-Za-z0-9-_]{32,})"),  # OpenAI / Anthropic Secret Key
-    re.compile(r"(?:gh[pousr]_[A-Za-z0-9]{36,})"),  # GitHub Personal Token (Classic)
-    re.compile(r"(?:github_pat_[A-Za-z0-9_]{82,})"),  # GitHub Fine-Grained Personal Access Token
-    re.compile(r"(?:Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*)"),  # JWT
+    re.compile(r"AIzaSy[A-Za-z0-9-_]{33}"),  # Google Gemini / Firebase API Key
+    re.compile(r"sk-[A-Za-z0-9-_]{32,}"),  # OpenAI / Anthropic Secret Key
+    re.compile(r"gh[pousr]_[A-Za-z0-9]{36}"),  # GitHub Personal Token (Classic)
+    re.compile(r"github_pat_\w{82}"),  # GitHub Fine-Grained Personal Access Token
+    re.compile(r"Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*"),  # JWT
 ]
+
+
+def _audit_log_file(path: Path, errors: list[str], warnings: list[str], stats: dict) -> None:
+    """Acumula tamanho e sinais de segredo de um unico arquivo de log."""
+    stats["files_scanned"] += 1
+    size = path.stat().st_size
+    stats["bytes_total"] += size
+    if size > 20 * 1024 * 1024:
+        errors.append(
+            f"[LOGS-EXCESS] Arquivo {path.relative_to(BASE_DIR)} excede limite de rotacao (Tamanho: {size / (1024 * 1024):.2f}MB > 20MB)."
+        )
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+        for pattern in SECRET_PATTERNS:
+            if pattern.search(content):
+                errors.append(
+                    f"[LOGS-SECRET-LEAK] Possivel credencial vazada detectada em {path.relative_to(BASE_DIR)}."
+                )
+                stats["leaks_detected"] += 1
+    except Exception as error:
+        warnings.append(f"[LOGS-READ-WARN] Falha ao inspecionar {path.relative_to(BASE_DIR)}: {error}")
 
 
 def audit_logs_pillar() -> tuple[list[str], list[str], dict]:
@@ -45,29 +66,27 @@ def audit_logs_pillar() -> tuple[list[str], list[str], dict]:
         return errors, warnings, stats
 
     for root, _, files in os.walk(logs_dir):
-        for f in files:
-            p = Path(root) / f
-            stats["files_scanned"] += 1
-            sz = p.stat().st_size
-            stats["bytes_total"] += sz
-
-            if sz > 20 * 1024 * 1024:  # > 20MB
-                errors.append(
-                    f"[LOGS-EXCESS] Arquivo {p.relative_to(BASE_DIR)} excede limite de rotacao (Tamanho: {sz / (1024 * 1024):.2f}MB > 20MB)."
-                )
-
-            try:
-                content = p.read_text(encoding="utf-8", errors="ignore")
-                for pattern in SECRET_PATTERNS:
-                    if pattern.search(content):
-                        errors.append(
-                            f"[LOGS-SECRET-LEAK] Possivel credencial vazada detectada em {p.relative_to(BASE_DIR)}."
-                        )
-                        stats["leaks_detected"] += 1
-            except Exception as e:
-                warnings.append(f"[LOGS-READ-WARN] Falha ao inspecionar {p.relative_to(BASE_DIR)}: {e}")
+        for filename in files:
+            _audit_log_file(Path(root) / filename, errors, warnings, stats)
 
     return errors, warnings, stats
+
+
+def _purge_expired_pytest_dir(item: Path, now: float, warnings: list[str]) -> bool:
+    """Remove um diretorio pytest vencido e informa se a purga ocorreu."""
+    try:
+        if now - item.stat().st_mtime <= 86400:
+            return False
+        for root, directories, files in os.walk(item, topdown=False):
+            for filename in files:
+                (Path(root) / filename).unlink(missing_ok=True)
+            for directory in directories:
+                (Path(root) / directory).rmdir()
+        item.rmdir()
+        return True
+    except Exception as error:
+        warnings.append(f"[TEMPS-WARN] Falha ao purificar pasta temporaria de teste {item.name}: {error}")
+        return False
 
 
 def audit_temps_pillar() -> tuple[list[str], list[str], dict]:
@@ -80,28 +99,14 @@ def audit_temps_pillar() -> tuple[list[str], list[str], dict]:
         return errors, warnings, stats
 
     now = time.time()
-    max_age = 86400  # > 24h
-
     # Varredura de diretorios orfaos do pytest
     for item in NEXUS_ZONE.iterdir():
-        if item.is_dir():
-            stats["temp_folders"] += 1
-            if item.name.startswith("pytest_"):
-                stats["pytest_dirs"] += 1
-                try:
-                    # Remove diretorios de teste antigos ou vazios
-                    mtime = item.stat().st_mtime
-                    if now - mtime > max_age:
-                        # Purge recursivo seguro
-                        for root, dirs, files in os.walk(item, topdown=False):
-                            for f in files:
-                                (Path(root) / f).unlink(missing_ok=True)
-                            for d in dirs:
-                                (Path(root) / d).rmdir()
-                        item.rmdir()
-                        stats["empty_purged"] += 1
-                except Exception as e:
-                    warnings.append(f"[TEMPS-WARN] Falha ao purificar pasta temporaria de teste {item.name}: {e}")
+        if not item.is_dir():
+            continue
+        stats["temp_folders"] += 1
+        if item.name.startswith("pytest_"):
+            stats["pytest_dirs"] += 1
+            stats["empty_purged"] += _purge_expired_pytest_dir(item, now, warnings)
 
     # Checar por arquivos temporarios soltos na raiz do projeto
     for item in BASE_DIR.iterdir():

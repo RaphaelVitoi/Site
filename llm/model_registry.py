@@ -238,6 +238,9 @@ class ModelCapability(BaseModel):
 # REGISTRO
 # ==============================================================================
 
+GPT_5_6_SOL = "gpt-5.6-sol"
+
+
 MODEL_REGISTRY: dict[str, ModelCapability] = {
     #  ANTHROPIC  Geracao 5
     "claude-opus-5": ModelCapability(
@@ -332,9 +335,9 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         ),
     ),
     #  OPENAI  GPT-5.6
-    "gpt-5.6-sol": ModelCapability(
+    GPT_5_6_SOL: ModelCapability(
         adapter=AdapterType.OPENAI,
-        model_name="gpt-5.6-sol",
+        model_name=GPT_5_6_SOL,
         cota_por_assinatura=True,
         context_window_in=1_050_000,
         max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 65_536
@@ -466,7 +469,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     ),
     "chatgpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
-        model_name="gpt-5.6-sol",
+        model_name=GPT_5_6_SOL,
         cota_por_assinatura=True,
         context_window_in=1_050_000,
         max_output_tokens=131_072,

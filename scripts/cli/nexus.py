@@ -104,6 +104,14 @@ app.add_typer(voice_app)
 app.add_typer(audit_app)
 app.add_typer(routine_app)
 
+MARKUP_BOLD_CYAN = "[bold cyan]"
+STYLE_BOLD_CYAN = "bold cyan"
+STYLE_BOLD_MAGENTA = "bold magenta"
+STYLE_WHITE = "bold white"
+DIR_CEREBRO_NAME = ".cerebro"
+GLOBAL_INSTRUCTIONS_NAME = "GLOBAL_INSTRUCTIONS.md"
+ARCHITECTURAL_INVARIANTS_NAME = "ARCHITECTURAL_INVARIANTS.md"
+
 DIR_CLAUDE_NAME = ".claude"
 DIR_CLAUDE = BASE_DIR / DIR_CLAUDE_NAME
 
@@ -208,7 +216,7 @@ def _imprimir_resumo_tri_state(
         )
     if erros == 0 and total_w == 0 and not mudas:
         console.print(f"[bold green] Homeostase Total:  {homeostase}[/]")
-    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+    console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
     return tri_state
 
 
@@ -729,12 +737,15 @@ def _build_metrics_panel() -> Panel:
     )
 
 
-def _build_calibration_panel() -> Panel:
-    """Painel Executivo de Calibracao de Agentes & Projecao Temporal TimesFM."""
-    ledger_path = BASE_DIR / "reports" / "agent-calibration" / "feedback-ledger.jsonl"
-    scores: list[float] = []
-    distinct_sessions: set[str] = set()
+def _adicionar_nota_painel(entry: dict, scores: list[float], distinct_sessions: set[str]) -> None:
+    if entry.get("record_type") == "feedback" and entry.get("score") is not None:
+        scores.append(float(entry["score"]))
+        sess = entry.get("session_id")
+        if sess:
+            distinct_sessions.add(sess)
 
+
+def _ler_notas_painel(ledger_path: Path, scores: list[float], distinct_sessions: set[str]) -> None:
     if ledger_path.exists():
         try:
             with open(ledger_path, encoding="utf-8") as f:
@@ -743,13 +754,180 @@ def _build_calibration_panel() -> Panel:
                     if not line_str:
                         continue
                     entry = json.loads(line_str)
-                    if entry.get("record_type") == "feedback" and entry.get("score") is not None:
-                        scores.append(float(entry["score"]))
-                        sess = entry.get("session_id")
-                        if sess:
-                            distinct_sessions.add(sess)
+                    _adicionar_nota_painel(entry, scores, distinct_sessions)
         except Exception:
             pass
+
+
+def _cor_deriva(direcao: str, expansao: str, estavel: str, retracao: str) -> str:
+    if direcao == "EXPANSAO":
+        return expansao
+    if direcao == "ESTAVEL":
+        return estavel
+    return retracao
+
+
+def _higienizar_sob_pressao() -> None:
+    agir, motivo = _pressao_justifica_higienizacao()
+    if not agir:
+        logger.info("[MEMORY-GUARD] Ciclo sem acao -- %s", motivo)
+    else:
+        antes = _commit_charge_pct()
+        _execute_ram_cleanse(verbose=False)
+        depois = _commit_charge_pct()
+        # O efeito e declarado em commit, e nao em `percent`: o
+        # trim derruba `percent` mesmo quando nao liberou nada,
+        # entao "melhorou" lido ali seria a acao se auto-elogiando.
+        efeito = (
+            f"{antes[0]:.1f}% -> {depois[0]:.1f}% ({depois[0] - antes[0]:+.1f} pontos)"
+            if antes and depois
+            else "nao medido"
+        )
+        logger.info("[MEMORY-GUARD] Higienizacao por %s. Commit %s", motivo, efeito)
+
+
+def _warnings_da_fase(name: str, texto_unificado: str, linhas: list[str]) -> int:
+    # Fallback semantico deterministico para ferramentas que nao emitem o banner nativo
+    if "eslint" in name.lower() or "lint" in name.lower():
+        w_match = re.search(r"(?<!\d)(\d+)\s+warning", texto_unificado, re.IGNORECASE)
+        warnings_count = int(w_match.group(1)) if w_match else 0
+    elif "build" in name.lower() or "next" in name.lower():
+        warn_lines = [
+            line
+            for line in linhas
+            if re.search(r"\bwarn(?:ing)?\b", line, re.IGNORECASE)
+            and not line.strip().startswith(("\u2713", "[OK]", "v"))
+        ]
+        warnings_count = len(warn_lines)
+    else:
+        warnings_count = 0
+    return warnings_count
+
+
+def _adicionar_nota_serie(
+    entry: dict, conductor: str | None, scores: list[float], series_by_model: dict[str, list[float]]
+) -> None:
+    if entry.get("record_type") == "feedback" and entry.get("score") is not None:
+        sc = float(entry["score"])
+        cm = entry.get("conductor_model") or "unspecified"
+        series_by_model.setdefault(cm, []).append(sc)
+        if not conductor or cm == conductor:
+            scores.append(sc)
+
+
+def _ler_series_calibracao(
+    ledger_path: Path, conductor: str | None, scores: list[float], series_by_model: dict[str, list[float]]
+) -> None:
+    with open(ledger_path, encoding="utf-8") as f:
+        for line in f:
+            line_str = line.strip()
+            if not line_str:
+                continue
+            try:
+                entry = json.loads(line_str)
+                _adicionar_nota_serie(entry, conductor, scores, series_by_model)
+            except Exception:
+                continue
+
+
+def _imprimir_calibracao_multimodelo(results: dict, horizon: int) -> None:
+    table = Table(
+        title=f"[bold #50fa7b]ESCALONAMENTO MULTIVARIADO TIMESFM - CALIBRACAO DE AGENTES (H={horizon})[/]",
+        box=box.ROUNDED,
+    )
+    table.add_column("Modelo Condutor", style=STYLE_BOLD_CYAN)
+    table.add_column("Amostras (N)", style=STYLE_WHITE, justify="right")
+    table.add_column("Trajetoria Prevista", style=STYLE_BOLD_YELLOW, justify="center")
+    table.add_column("Deriva/Sessao", style=STYLE_BOLD_MAGENTA, justify="right")
+    table.add_column("Direcao", style=STYLE_BOLD_GREEN, justify="center")
+    table.add_column("Risco Degradacao", style=STYLE_BOLD_RED, justify="right")
+    table.add_column("Status", style=STYLE_WHITE, justify="center")
+
+    for m_name, res in results.items():
+        traj_str = ", ".join(f"{v:.2f}" for v in res.mean_trajectory) if res.mean_trajectory else "-"
+        dir_color = _cor_deriva(res.drift_direction, "green", "yellow", "red")
+        risk_color = "green" if not res.risk_of_degradation else "red"
+        status_color = "green" if res.status == "PROJECTION_ACTIVE" else "yellow"
+
+        table.add_row(
+            m_name,
+            str(res.history_points),
+            traj_str,
+            f"{res.drift_per_session:+.3f}",
+            f"[{dir_color}]{res.drift_direction}[/]",
+            f"[{risk_color}]{res.risk_of_degradation * 100:.1f}%[/]",
+            f"[{status_color}]{res.status}[/]",
+        )
+    console.print(table)
+
+
+def _status_previsao(m_val: float) -> str:
+    if m_val >= 9.0:
+        gate_status = "[bold green]EXCELENTE (>=9.0)[/]"
+    elif m_val >= 8.5:
+        gate_status = "[green]APROVADO (>=8.5)[/]"
+    elif m_val >= 8.0:
+        gate_status = "[yellow]ATENCAO (<8.5)[/]"
+    else:
+        gate_status = "[bold red]DEGRADADO (<8.0)[/]"
+    return gate_status
+
+
+def _imprimir_calibracao_unificada(res: Any, horizon: int) -> None:
+    table = Table(
+        title=f"[bold #50fa7b]PROJECAO TEMPORAL DE CALIBRACAO - GOOGLE TIMESFM ({res.intended_model or 'TimesFM'}) (H={horizon})[/]",
+        box=box.ROUNDED,
+    )
+    table.add_column("Sessao Futura", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column("Previsao Media", style=STYLE_BOLD_YELLOW, justify="right")
+    table.add_column("Quantil 10% (Pior Caso)", style=STYLE_BOLD_RED, justify="right")
+    table.add_column("Quantil 90% (Melhor Caso)", style=STYLE_BOLD_GREEN, justify="right")
+    table.add_column("Limiar do Portao (8.5)", style=STYLE_WHITE, justify="center")
+
+    for i in range(res.horizon_sessions):
+        m_val = res.mean_trajectory[i] if i < len(res.mean_trajectory) else 0.0
+        q10 = res.quantile_10[i] if i < len(res.quantile_10) else 0.0
+        q90 = res.quantile_90[i] if i < len(res.quantile_90) else 0.0
+        gate_status = _status_previsao(m_val)
+        table.add_row(
+            f"Sessao t+{i + 1}",
+            f"{m_val:.2f}",
+            f"{q10:.2f}",
+            f"{q90:.2f}",
+            gate_status,
+        )
+
+    console.print(table)
+
+    drift_color = _cor_deriva(res.drift_direction, "green", "yellow", "red")
+    if res.risk_of_degradation <= 0.05:
+        risk_color = "green"
+    elif res.risk_of_degradation <= 0.20:
+        risk_color = "yellow"
+    else:
+        risk_color = "red"
+
+    summary_panel = Panel(
+        f"[bold #50fa7b]* Amostras Analisadas:[/] [white]{res.history_points} sessoes registradas no ledger[/]\n"
+        f"[bold #50fa7b]* Taxa de Deriva Temporal:[/] [{drift_color}]{res.drift_per_session:+.4f} pontos/sessao ({res.drift_direction})[/]\n"
+        f"[bold #8be9fd]* Risco Estocastico de Degradacao (< 8.5):[/] [{risk_color}]{res.risk_of_degradation * 100:.1f}%[/]\n"
+        f"[bold #bd93f9]* Modelo & Licenca:[/] [magenta]{res.model_used} ({res.license_tier})[/]\n"
+        f"[bold #f1fa8c]* Modelo Condutor:[/] [cyan]{res.conductor_model or 'Consolidado Geral (Multimodel Default)'}[/]\n"
+        f"[dim #6272a4]* Dominio da Metrica:[/] [white]Escala estrita [0.0, 10.0] governada pelo Tier 0 (Raphael Vitoi)[/]",
+        title="[bold #f1fa8c]DIAGNOSTICO QUANTITATIVO DO MOTOR TEMPORAL[/]",
+        border_style="#50fa7b",
+        box=box.ROUNDED,
+    )
+    console.print(summary_panel)
+
+
+def _build_calibration_panel() -> Panel:
+    """Painel Executivo de Calibracao de Agentes & Projecao Temporal TimesFM."""
+    ledger_path = BASE_DIR / "reports" / "agent-calibration" / "feedback-ledger.jsonl"
+    scores: list[float] = []
+    distinct_sessions: set[str] = set()
+
+    _ler_notas_painel(ledger_path, scores, distinct_sessions)
 
     table = Table.grid(expand=True, padding=(0, 2))
     table.add_column(style=STYLE_BOLD_WHITE, ratio=1)
@@ -769,12 +947,8 @@ def _build_calibration_panel() -> Panel:
     if len(scores) >= 4:
         fc = forecast_agent_calibration_trajectory(scores, horizon_sessions=3)
         traj_str = " -> ".join(f"{v:.2f}" for v in fc.mean_trajectory)
-        drift_color = (
-            "#50fa7b"
-            if fc.drift_direction == "EXPANSAO"
-            else ("#f1fa8c" if fc.drift_direction == "ESTAVEL" else "#ff5555")
-        )
-        risk_color = "#50fa7b" if fc.risk_of_degradation == 0.0 else "#ff5555"
+        drift_color = _cor_deriva(fc.drift_direction, "#50fa7b", "#f1fa8c", "#ff5555")
+        risk_color = "#50fa7b" if not fc.risk_of_degradation else "#ff5555"
 
         c1 = (
             f"[bold #8be9fd]Portao de Calibracao:[/] {gate_status}\n"
@@ -822,7 +996,12 @@ def _build_notifications_panel() -> Panel:
 
     recs_lines: list[str] = []
     for rec in report.recommendations[:3]:
-        urg_color = "#ff5555" if rec.urgency == "CRITICA" else ("#f1fa8c" if rec.urgency == "ALTA" else "#50fa7b")
+        if rec.urgency == "CRITICA":
+            urg_color = "#ff5555"
+        elif rec.urgency == "ALTA":
+            urg_color = "#f1fa8c"
+        else:
+            urg_color = "#50fa7b"
         recs_lines.append(
             f"[bold {urg_color}][{rec.shortcut_key}][/] [bold white]{rec.action_name}:[/] {rec.description} [dim]({rec.impact})[/]"
         )
@@ -1078,8 +1257,8 @@ def graph_rag(
             nodes = engine.list_nodes()
 
         table = Table(title=" GRAFO CAUSAL SOTA  NOS DE CONHECIMENTO & PMev", box=box.ROUNDED)
-        table.add_column("ID", style="bold cyan")
-        table.add_column("Categoria", style="bold magenta")
+        table.add_column("ID", style=STYLE_BOLD_CYAN)
+        table.add_column("Categoria", style=STYLE_BOLD_MAGENTA)
         table.add_column("Conceito / Axioma", style="white")
         table.add_column("Propriedades", style="dim")
 
@@ -1096,7 +1275,7 @@ def graph_rag(
         effects = result.get("effects", [])
 
         grid = Table.grid(expand=True, padding=(0, 2))
-        grid.add_column(style="bold white", ratio=1)
+        grid.add_column(style=STYLE_WHITE, ratio=1)
         grid.add_column(ratio=2)
 
         causes_str = (
@@ -1435,8 +1614,8 @@ def stats_timesfm(
     )
 
     table_br = Table(title="[bold #50fa7b]Trajetoria de Bankroll Estocastico (H Passos)[/]", box=box.ROUNDED)
-    table_br.add_column("Passo", style="bold cyan", justify="center")
-    table_br.add_column("Previsao Media u", style="bold green", justify="right")
+    table_br.add_column("Passo", style=STYLE_BOLD_CYAN, justify="center")
+    table_br.add_column("Previsao Media u", style=STYLE_BOLD_GREEN, justify="right")
     table_br.add_column("Quantil q10 (Pessimista)", style="yellow", justify="right")
     table_br.add_column("Quantil q90 (Otimista)", style="cyan", justify="right")
     table_br.add_column("Largura Envelope", style="dim", justify="right")
@@ -1460,11 +1639,11 @@ def stats_timesfm(
     )
 
     table_pmev = Table(title="[bold #bd93f9]Dinamica Conjunta dos Tensores de Risco PMev[/]", box=box.ROUNDED)
-    table_pmev.add_column("Passo", style="bold cyan", justify="center")
-    table_pmev.add_column("Fator Psi (u)", style="bold green", justify="right")
-    table_pmev.add_column("Divida RIO (u)", style="bold yellow", justify="right")
-    table_pmev.add_column("Pressao ICM (u)", style="bold magenta", justify="right")
-    table_pmev.add_column("Diagnostico", style="bold white", justify="center")
+    table_pmev.add_column("Passo", style=STYLE_BOLD_CYAN, justify="center")
+    table_pmev.add_column("Fator Psi (u)", style=STYLE_BOLD_GREEN, justify="right")
+    table_pmev.add_column("Divida RIO (u)", style=STYLE_BOLD_YELLOW, justify="right")
+    table_pmev.add_column("Pressao ICM (u)", style=STYLE_BOLD_MAGENTA, justify="right")
+    table_pmev.add_column("Diagnostico", style=STYLE_WHITE, justify="center")
 
     for k in range(steps):
         psi_val = pmev_fc["Fator_Psi"].mean_prediction[k]
@@ -1612,7 +1791,7 @@ def _is_ignored_dir(name: str) -> bool:
         "triage",
         ".git",
         DIR_CLAUDE_NAME,
-        ".cerebro",
+        DIR_CEREBRO_NAME,
         "target",
         ".next",
         "dist",
@@ -1668,7 +1847,7 @@ def check_ascii_mandate():
     warnings_ascii = len(non_ascii_files)
     console.print(f"* Total de Warnings: {warnings_ascii} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
     console.print("* Status da Bateria: [bold green][SUCESSO (VERDE)][/] Blindagem ASCII 100% integra.")
-    console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+    console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
 
 
 @ops_app.command("lint")
@@ -2201,22 +2380,7 @@ def optimize_ram(
                 #    O relogio marca quando OLHAR; quem decide se AGE e o commit.
                 if now - last_periodic >= interval:
                     last_periodic = now
-                    agir, motivo = _pressao_justifica_higienizacao()
-                    if not agir:
-                        logger.info("[MEMORY-GUARD] Ciclo sem acao -- %s", motivo)
-                    else:
-                        antes = _commit_charge_pct()
-                        _execute_ram_cleanse(verbose=False)
-                        depois = _commit_charge_pct()
-                        # O efeito e declarado em commit, e nao em `percent`: o
-                        # trim derruba `percent` mesmo quando nao liberou nada,
-                        # entao "melhorou" lido ali seria a acao se auto-elogiando.
-                        efeito = (
-                            f"{antes[0]:.1f}% -> {depois[0]:.1f}% ({depois[0] - antes[0]:+.1f} pontos)"
-                            if antes and depois
-                            else "nao medido"
-                        )
-                        logger.info("[MEMORY-GUARD] Higienizacao por %s. Commit %s", motivo, efeito)
+                    _higienizar_sob_pressao()
 
                 time.sleep(3.0)
         except KeyboardInterrupt:
@@ -2408,8 +2572,8 @@ def chat_gemma(
         installed = discover_ollama_models()
         console.print("\n[bold magenta]=== [NEXUS] CATALOGO DINAMICO DE MODELOS INSTALADOS ===[/]")
         table = Table(box=box.ROUNDED, show_header=True)
-        table.add_column("#", style="bold cyan", width=4, justify="right")
-        table.add_column("Tag / Modelo", style="bold white")
+        table.add_column("#", style=STYLE_BOLD_CYAN, width=4, justify="right")
+        table.add_column("Tag / Modelo", style=STYLE_WHITE)
         table.add_column("Tier", style="yellow", justify="center")
         table.add_column("Tamanho", style="green", justify="right")
 
@@ -2497,20 +2661,7 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
         texto_unificado = "\n".join(linhas)
         warnings_count = _warnings_declarados(texto_unificado)
         if warnings_count is None:
-            # Fallback semantico deterministico para ferramentas que nao emitem o banner nativo
-            if "eslint" in name.lower() or "lint" in name.lower():
-                w_match = re.search(r"(\d+)\s+warning", texto_unificado, re.IGNORECASE)
-                warnings_count = int(w_match.group(1)) if w_match else 0
-            elif "build" in name.lower() or "next" in name.lower():
-                warn_lines = [
-                    line
-                    for line in linhas
-                    if re.search(r"\bwarn(?:ing)?\b", line, re.IGNORECASE)
-                    and not line.strip().startswith(("\u2713", "[OK]", "v"))
-                ]
-                warnings_count = len(warn_lines)
-            else:
-                warnings_count = 0
+            warnings_count = _warnings_da_fase(name, texto_unificado, linhas)
 
             console.print(
                 f"\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD - PROTOCOLO CHICO v8.0 GOLD ({name.upper()}) ==========[/]"
@@ -2523,7 +2674,7 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
                 "[bold green][SUCESSO (VERDE)][/]" if warnings_count == 0 else "[bold yellow][FRAGIL (AMARELO)][/]"
             )
             console.print(f" * Status da Bateria: {status_badge} Integridade formalmente verificada.")
-            console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+            console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
 
         return warnings_count
     except typer.Exit:
@@ -2648,7 +2799,7 @@ def security_audit(
         console.print(
             " * Status da Bateria: [bold green][SUCESSO (VERDE)][/] Blindagem de Seguranca 100% integra. Zero CVEs ativas."
         )
-        console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+        console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
     else:
         console.print(
             f"[bold yellow][AVISO] {tot_count} vulnerabilidade(s) detectada(s) ({crit_count} criticas, {high_count} altas). Modo Nao-Estrito.[/]"
@@ -2661,7 +2812,7 @@ def security_audit(
         console.print(
             f" * Status da Bateria: [bold red][FALHOU (VERMELHO)][/] Vulnerabilidades detectadas: {tot_count} ({crit_count} criticas, {high_count} altas)."
         )
-        console.print("[bold cyan]" + "=" * 80 + "[/]\n")
+        console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
 
 
 @ops_app.command("verify-integrity")
@@ -3076,9 +3227,9 @@ def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], li
             BASE_DIR / "MODUS_OPERANDI.md",
         ],
         "INSTRUCOES GLOBAIS": [
-            claude_dir / "GOVERNANCA" / "GLOBAL_INSTRUCTIONS.md",
-            BASE_DIR / "GLOBAL_INSTRUCTIONS.md",
-            claude_dir / "GLOBAL_INSTRUCTIONS.md",
+            claude_dir / "GOVERNANCA" / GLOBAL_INSTRUCTIONS_NAME,
+            BASE_DIR / GLOBAL_INSTRUCTIONS_NAME,
+            claude_dir / GLOBAL_INSTRUCTIONS_NAME,
         ],
         "COSMOVISAO": [
             claude_dir / "GOVERNANCA" / "COSMOVISAO.md",
@@ -3086,9 +3237,9 @@ def _coletar_fontes_handoff(claude_dir: Path, agent: str) -> tuple[list[str], li
             claude_dir / "COSMOVISAO.md",
         ],
         "INVARIANTES ARQUITETURAIS": [
-            claude_dir / "ARQUITETURA" / "ARCHITECTURAL_INVARIANTS.md",
-            claude_dir / "ARCHITECTURAL_INVARIANTS.md",
-            BASE_DIR / "ARCHITECTURAL_INVARIANTS.md",
+            claude_dir / "ARQUITETURA" / ARCHITECTURAL_INVARIANTS_NAME,
+            claude_dir / ARCHITECTURAL_INVARIANTS_NAME,
+            BASE_DIR / ARCHITECTURAL_INVARIANTS_NAME,
         ],
         "GOVERNANCA CANONICA (CLAUDE.md)": [
             BASE_DIR / "CLAUDE.md",
@@ -3190,7 +3341,7 @@ def execute_handoff(
     mode_desc = "Web Clipboard (Claude/Gemini Pro)" if web else "Padrao SOTA"
     console.print(f"\n[bold cyan]=== [PROTOCOLO DE HANDOFF COGNITIVO SOTA v8.0 GOLD ({mode_desc})] ===[/]\n")
 
-    claude_dir = BASE_DIR / ".claude" if (BASE_DIR / ".claude").exists() else BASE_DIR / ".cerebro"
+    claude_dir = BASE_DIR / DIR_CLAUDE_NAME if (BASE_DIR / DIR_CLAUDE_NAME).exists() else BASE_DIR / DIR_CEREBRO_NAME
     context, ausentes, total_fontes = _coletar_fontes_handoff(claude_dir, agent)
 
     if not context:
@@ -3223,7 +3374,7 @@ def execute_clippy_copy(
     agent: str = typer.Option("chico", "--agent", help="Agente do handoff"),
 ):
     """Copia o ultimo Handoff e Prompt de Continuacao diretamente para o Clipboard."""
-    claude_dir = BASE_DIR / ".claude" if (BASE_DIR / ".claude").exists() else BASE_DIR / ".cerebro"
+    claude_dir = BASE_DIR / DIR_CLAUDE_NAME if (BASE_DIR / DIR_CLAUDE_NAME).exists() else BASE_DIR / DIR_CEREBRO_NAME
     handoff_file = claude_dir / "agent-memory" / agent / "HANDOFF_LATEST.md"
 
     if not handoff_file.exists() or handoff_file.stat().st_size == 0:
@@ -3342,21 +3493,7 @@ def agent_calibration_forecast(
     scores: list[float] = []
     series_by_model: dict[str, list[float]] = {}
 
-    with open(ledger_path, encoding="utf-8") as f:
-        for line in f:
-            line_str = line.strip()
-            if not line_str:
-                continue
-            try:
-                entry = json.loads(line_str)
-                if entry.get("record_type") == "feedback" and entry.get("score") is not None:
-                    sc = float(entry["score"])
-                    cm = entry.get("conductor_model") or "unspecified"
-                    series_by_model.setdefault(cm, []).append(sc)
-                    if not conductor or cm == conductor:
-                        scores.append(sc)
-            except Exception:
-                continue
+    _ler_series_calibracao(ledger_path, conductor, scores, series_by_model)
 
     if multimodel:
         results = forecast_multimodel_calibration(
@@ -3367,38 +3504,7 @@ def agent_calibration_forecast(
             print(json.dumps(out_dict, indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
             return
 
-        table = Table(
-            title=f"[bold #50fa7b]ESCALONAMENTO MULTIVARIADO TIMESFM - CALIBRACAO DE AGENTES (H={horizon})[/]",
-            box=box.ROUNDED,
-        )
-        table.add_column("Modelo Condutor", style="bold cyan")
-        table.add_column("Amostras (N)", style="bold white", justify="right")
-        table.add_column("Trajetoria Prevista", style="bold yellow", justify="center")
-        table.add_column("Deriva/Sessao", style="bold magenta", justify="right")
-        table.add_column("Direcao", style="bold green", justify="center")
-        table.add_column("Risco Degradacao", style="bold red", justify="right")
-        table.add_column("Status", style="bold white", justify="center")
-
-        for m_name, res in results.items():
-            traj_str = ", ".join(f"{v:.2f}" for v in res.mean_trajectory) if res.mean_trajectory else "-"
-            dir_color = (
-                "green"
-                if res.drift_direction == "EXPANSAO"
-                else ("yellow" if res.drift_direction == "ESTAVEL" else "red")
-            )
-            risk_color = "green" if res.risk_of_degradation == 0.0 else "red"
-            status_color = "green" if res.status == "PROJECTION_ACTIVE" else "yellow"
-
-            table.add_row(
-                m_name,
-                str(res.history_points),
-                traj_str,
-                f"{res.drift_per_session:+.3f}",
-                f"[{dir_color}]{res.drift_direction}[/]",
-                f"[{risk_color}]{res.risk_of_degradation * 100:.1f}%[/]",
-                f"[{status_color}]{res.status}[/]",
-            )
-        console.print(table)
+        _imprimir_calibracao_multimodelo(results, horizon)
         return
 
     # Modo unificado / modelo especifico
@@ -3419,57 +3525,7 @@ def agent_calibration_forecast(
         print(res.model_dump_json(indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
         return
 
-    table = Table(
-        title=f"[bold #50fa7b]PROJECAO TEMPORAL DE CALIBRACAO - GOOGLE TIMESFM ({res.intended_model or 'TimesFM'}) (H={horizon})[/]",
-        box=box.ROUNDED,
-    )
-    table.add_column("Sessao Futura", style="bold cyan", justify="center")
-    table.add_column("Previsao Media", style="bold yellow", justify="right")
-    table.add_column("Quantil 10% (Pior Caso)", style="bold red", justify="right")
-    table.add_column("Quantil 90% (Melhor Caso)", style="bold green", justify="right")
-    table.add_column("Limiar do Portao (8.5)", style="bold white", justify="center")
-
-    for i in range(res.horizon_sessions):
-        m_val = res.mean_trajectory[i] if i < len(res.mean_trajectory) else 0.0
-        q10 = res.quantile_10[i] if i < len(res.quantile_10) else 0.0
-        q90 = res.quantile_90[i] if i < len(res.quantile_90) else 0.0
-        if m_val >= 9.0:
-            gate_status = "[bold green]EXCELENTE (>=9.0)[/]"
-        elif m_val >= 8.5:
-            gate_status = "[green]APROVADO (>=8.5)[/]"
-        elif m_val >= 8.0:
-            gate_status = "[yellow]ATENCAO (<8.5)[/]"
-        else:
-            gate_status = "[bold red]DEGRADADO (<8.0)[/]"
-        table.add_row(
-            f"Sessao t+{i + 1}",
-            f"{m_val:.2f}",
-            f"{q10:.2f}",
-            f"{q90:.2f}",
-            gate_status,
-        )
-
-    console.print(table)
-
-    drift_color = (
-        "green" if res.drift_direction == "EXPANSAO" else ("yellow" if res.drift_direction == "ESTAVEL" else "red")
-    )
-    risk_color = (
-        "green" if res.risk_of_degradation <= 0.05 else ("yellow" if res.risk_of_degradation <= 0.20 else "red")
-    )
-
-    summary_panel = Panel(
-        f"[bold #50fa7b]* Amostras Analisadas:[/] [white]{res.history_points} sessoes registradas no ledger[/]\n"
-        f"[bold #50fa7b]* Taxa de Deriva Temporal:[/] [{drift_color}]{res.drift_per_session:+.4f} pontos/sessao ({res.drift_direction})[/]\n"
-        f"[bold #8be9fd]* Risco Estocastico de Degradacao (< 8.5):[/] [{risk_color}]{res.risk_of_degradation * 100:.1f}%[/]\n"
-        f"[bold #bd93f9]* Modelo & Licenca:[/] [magenta]{res.model_used} ({res.license_tier})[/]\n"
-        f"[bold #f1fa8c]* Modelo Condutor:[/] [cyan]{res.conductor_model or 'Consolidado Geral (Multimodel Default)'}[/]\n"
-        f"[dim #6272a4]* Dominio da Metrica:[/] [white]Escala estrita [0.0, 10.0] governada pelo Tier 0 (Raphael Vitoi)[/]",
-        title="[bold #f1fa8c]DIAGNOSTICO QUANTITATIVO DO MOTOR TEMPORAL[/]",
-        border_style="#50fa7b",
-        box=box.ROUNDED,
-    )
-    console.print(summary_panel)
+    _imprimir_calibracao_unificada(res, horizon)
 
 
 # ==========================================
@@ -3544,7 +3600,7 @@ def agent_dream_optimize(
         return
 
     table = Table(title=f"[bold #50fa7b]FASE DE SONHO DREAM-RSI -- {len(historico)} arvore(s)[/]", box=box.ROUNDED)
-    table.add_column("Politica", style="bold cyan")
+    table.add_column("Politica", style=STYLE_BOLD_CYAN)
     table.add_column("Score", justify="right")
     table.add_column("Nos avaliados", justify="right")
     table.add_column("Podados", justify="right")
@@ -3736,9 +3792,9 @@ def triad_status():
 
     console.print("\n[bold cyan]=== [SOTA TRIAD MESH: STATUS & CONECTIVIDADE] ===[/]\n")
     tabela = Table(title="Componentes da Triade SOTA", box=box.ROUNDED)
-    tabela.add_column("Pilar", style="bold yellow", justify="left")
+    tabela.add_column("Pilar", style=STYLE_BOLD_YELLOW, justify="left")
     tabela.add_column("Especializacao", style="cyan", justify="left")
-    tabela.add_column("Status Operacional", style="bold green", justify="center")
+    tabela.add_column("Status Operacional", style=STYLE_BOLD_GREEN, justify="center")
 
     raw_comp = health.get("triad_components")
     comp: dict[str, str] = raw_comp if isinstance(raw_comp, dict) else {}
@@ -3884,10 +3940,10 @@ def web_audit(limit: int = typer.Option(5, "--limit", "-n", help="Numero de regi
     console.print(f"\n[bold cyan]=== [SOTA WEB AUDIT LOG] (Ultimos {len(audits)} registros) ===[/]\n")
     tabela = Table(title="Auditoria de Requisicoes Web", box=box.ROUNDED)
     tabela.add_column("Audit ID", style="dim", justify="left")
-    tabela.add_column("Tier", style="bold yellow", justify="center")
+    tabela.add_column("Tier", style=STYLE_BOLD_YELLOW, justify="center")
     tabela.add_column("Modo", style="cyan", justify="left")
     tabela.add_column("Prompt / URL", style="white", justify="left")
-    tabela.add_column("Status", style="bold green", justify="center")
+    tabela.add_column("Status", style=STYLE_BOLD_GREEN, justify="center")
     tabela.add_column("Latencia", style="magenta", justify="right")
 
     for a in audits:

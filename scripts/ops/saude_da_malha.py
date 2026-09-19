@@ -79,7 +79,7 @@ def _ultimo_lastro() -> tuple[date | None, dict | None]:
     for arquivo in candidatos:
         try:
             return date.fromisoformat(arquivo.stem), json.loads(arquivo.read_text(encoding="utf-8"))
-        except (ValueError, json.JSONDecodeError, OSError):
+        except (ValueError, OSError):
             continue
     return None, None
 

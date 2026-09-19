@@ -60,6 +60,8 @@ import sys
 
 RAIZ = Path(__file__).resolve().parents[2]
 
+ARQUIVO_MEMORIA = "MEMORY.md"
+
 CANONICA = RAIZ / ".claude" / "agent-memory"
 ORIGENS = (
     RAIZ / ".cerebro" / "agent-memory",
@@ -109,13 +111,13 @@ def _sem_secao_consolidada(texto: str) -> str:
 
 def consolidar_agente(agente: str) -> Resultado:
     res = Resultado(agente=agente)
-    destino = CANONICA / agente / "MEMORY.md"
+    destino = CANONICA / agente / ARQUIVO_MEMORIA
     base = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else f"# MEMORIA -- @{agente}\n"
     base = _sem_secao_consolidada(base)
 
     blocos: list[str] = []
     for origem in ORIGENS:
-        f = origem / agente / "MEMORY.md"
+        f = origem / agente / ARQUIVO_MEMORIA
         if not f.exists():
             continue
         conteudo = f.read_text(encoding="utf-8", errors="replace")
@@ -163,6 +165,51 @@ def marcador_superseded(origem: Path) -> str:
     )
 
 
+def _consolidar_agentes(agentes: list[str], aplicar: bool) -> list[Resultado]:
+    resultados = []
+    for ag in agentes:
+        r = consolidar_agente(ag)
+        resultados.append(r)
+        marca = "ja consolidado" if r.ja_consolidado else ", ".join(o.split("/")[0] for o in r.origens_usadas)
+        print(f"{ag:<16}{r.bytes_canonica:>9}{r.bytes_absorvidos:>11}  {marca}")
+
+        if aplicar and not r.ja_consolidado:
+            destino = CANONICA / ag / ARQUIVO_MEMORIA
+            destino.parent.mkdir(parents=True, exist_ok=True)
+            destino.write_text(r.texto_final, encoding="utf-8")
+    return resultados
+
+
+def _origens_ausentes(ag: str, referencia: str) -> list[str]:
+    perdidos: list[str] = []
+    for origem in ORIGENS:
+        f = origem / ag / ARQUIVO_MEMORIA
+        if f.exists():
+            c = f.read_text(encoding="utf-8", errors="replace")
+            if _normalizar(c) and not _corpo_ja_presente(referencia, c):
+                perdidos.append(f.relative_to(RAIZ).as_posix())
+    return perdidos
+
+
+def _conferir_continencia(agentes: list[str], resultados: list[Resultado], aplicar: bool) -> list[str]:
+    perdidos = []
+    for ag in agentes:
+        destino = CANONICA / ag / ARQUIVO_MEMORIA
+        atual = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else ""
+        previsto = next((r.texto_final for r in resultados if r.agente == ag and r.texto_final), None)
+        referencia = atual if aplicar or previsto is None else previsto
+        perdidos.extend(_origens_ausentes(ag, referencia))
+    return perdidos
+
+
+def _contar_entrada() -> int:
+    entrada_total = 0
+    for base in (CANONICA, *ORIGENS):
+        for f in base.glob("*/MEMORY.md"):
+            entrada_total += len(_normalizar(f.read_text(encoding="utf-8", errors="replace")))
+    return entrada_total
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--aplicar", action="store_true", help="escreve; sem isto, so mostra o plano")
@@ -182,10 +229,7 @@ def main() -> int:
         }
     )
 
-    entrada_total = 0
-    for base in (CANONICA, *ORIGENS):
-        for f in base.glob("*/MEMORY.md"):
-            entrada_total += len(_normalizar(f.read_text(encoding="utf-8", errors="replace")))
+    entrada_total = _contar_entrada()
 
     modo = "APLICANDO" if args.aplicar else "PLANO (dry-run)"
     print(f"=== Consolidacao da memoria agentica -- {modo} ===")
@@ -194,17 +238,7 @@ def main() -> int:
     print()
     print(f"{'agente':<16}{'saida':>9}{'absorvido':>11}  origens")
 
-    resultados = []
-    for ag in agentes:
-        r = consolidar_agente(ag)
-        resultados.append(r)
-        marca = "ja consolidado" if r.ja_consolidado else ", ".join(o.split("/")[0] for o in r.origens_usadas)
-        print(f"{ag:<16}{r.bytes_canonica:>9}{r.bytes_absorvidos:>11}  {marca}")
-
-        if args.aplicar and not r.ja_consolidado:
-            destino = CANONICA / ag / "MEMORY.md"
-            destino.parent.mkdir(parents=True, exist_ok=True)
-            destino.write_text(r.texto_final, encoding="utf-8")
+    resultados = _consolidar_agentes(agentes, args.aplicar)
 
     saida_total = sum(r.bytes_canonica for r in resultados)
     print()
@@ -222,18 +256,7 @@ def main() -> int:
 
     # Conferencia de conteudo, nao so de contagem: cada origem tem de estar
     # contida na canonica correspondente. Contagem sozinha nao prova continencia.
-    perdidos = []
-    for ag in agentes:
-        destino = CANONICA / ag / "MEMORY.md"
-        atual = destino.read_text(encoding="utf-8", errors="replace") if destino.exists() else ""
-        previsto = next((r.texto_final for r in resultados if r.agente == ag and r.texto_final), None)
-        referencia = atual if args.aplicar or previsto is None else previsto
-        for origem in ORIGENS:
-            f = origem / ag / "MEMORY.md"
-            if f.exists():
-                c = f.read_text(encoding="utf-8", errors="replace")
-                if _normalizar(c) and not _corpo_ja_presente(referencia, c):
-                    perdidos.append(f.relative_to(RAIZ).as_posix())
+    perdidos = _conferir_continencia(agentes, resultados, args.aplicar)
 
     if perdidos:
         print()

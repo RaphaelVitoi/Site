@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # W0 (stop) \u2282 W1 (default) \u2282 W2 (partial - Tier 3)
 # \u2282 W2.5 (full_restricted - Tier 2) \u2282 W3 (full - Tier 1)
 VALID_AUTONOMY_MODES = {"stop", "default", "partial", "full", "sandbox"}
+AUTONOMY_CONFIG_FILENAME = "autonomy.json"
 
 # BK-02 (auditoria 2026-09-16). A lista anterior era comparada por SUBSTRING do
 # caminho absoluto e protegia `autonomy.py`, mas nao `autonomy.json` -- o arquivo
@@ -43,7 +44,7 @@ PROTECTED_FILE_NAMES = frozenset(
         "do.ps1",
         "_env.ps1",
         "autonomy.py",
-        "autonomy.json",
+        AUTONOMY_CONFIG_FILENAME,
         "conftest.py",
         "package.json",
         "pyproject.toml",
@@ -85,7 +86,7 @@ _AUTONOMY_CACHE = {"mode": "stop", "timestamp": 0.0}
 def _read_legacy_autonomy_config() -> str:
     """Le a configuracao mitigando o aninhamento de tratamento de erro.
     (SOTA v6: Diretorios legados do Claude desligados)."""
-    config_path = Path("autonomy.json")
+    config_path = Path(AUTONOMY_CONFIG_FILENAME)
     if config_path.exists():
         try:
             with open(config_path, encoding="utf-8-sig") as f:
@@ -377,7 +378,7 @@ async def _read_autonomy_levers() -> tuple[list[str], bool]:
     """Extrai alavancas do autonomy.json de forma assincrona e segura."""
     god_mode_agents = [AGENT_CHICO, "@gemma4"]
     sandbox_default = True
-    config_path = Path("autonomy.json")
+    config_path = Path(AUTONOMY_CONFIG_FILENAME)
     if config_path.exists():  # noqa: ASYNC240
         try:
             async with aiofiles.open(config_path, encoding="utf-8-sig") as f:

@@ -25,6 +25,7 @@ A11Y_RULES = {
     "NON_COMPOSITED_ANIM": 0,  # Animacoes CSS fora da GPU (fill/color/box-shadow)
     "V8_UNSAFE_OPTIONAL_CHAIN": 0,  # Acesso inseguro a propriedades sem optional chaining
 }
+DEFAULT_TARGET_URL = "http://localhost:3000"
 
 
 def get_live_metrics(cdp_port: int = 9222) -> dict:
@@ -82,7 +83,7 @@ def _audit_a11y(a11y: dict) -> list[str]:
 
 
 def run_gate_audit(
-    target_url: str = "http://localhost:3000", sample_metrics: dict | None = None, sample_a11y: dict | None = None
+    target_url: str = DEFAULT_TARGET_URL, sample_metrics: dict | None = None, sample_a11y: dict | None = None
 ) -> int:
     """Refuse the retired synthetic implementation.
 
@@ -101,7 +102,7 @@ def run_gate_audit(
 
 
 def _retired_synthetic_gate(
-    target_url: str = "http://localhost:3000", sample_metrics: dict | None = None, sample_a11y: dict | None = None
+    target_url: str = DEFAULT_TARGET_URL, sample_metrics: dict | None = None, sample_a11y: dict | None = None
 ) -> int:
     """Implementacao historica mantida fora do caminho vivo para referencia."""
     print("\n" + "=" * 70)
@@ -142,7 +143,7 @@ def _retired_synthetic_gate(
 
 
 def main() -> int:
-    target = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:3000"
+    target = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_TARGET_URL
     return run_gate_audit(target)
 
 

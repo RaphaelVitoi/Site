@@ -23,6 +23,7 @@ divida preexistente e portao que se desliga na primeira semana.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 import contextlib
 from datetime import date
 
@@ -57,6 +58,7 @@ from scripts.ops.record_index import (  # noqa: E402
 from scripts.ops.saude_da_malha import imprimir as imprimir_saude_da_malha  # noqa: E402
 
 CAMPOS_OBRIGATORIOS = ("id", "tipo", "escopo", "autor", "criado_em", "verificado", "nao_verificado")
+DIFF_FILTER_ACM = "--diff-filter=ACM"
 
 # Caminho citado em crase, link markdown ou parenteses.
 # A alternancia vai da extensao MAIS LONGA para a mais curta, e isso nao e
@@ -68,7 +70,7 @@ CAMPOS_OBRIGATORIOS = ("id", "tipo", "escopo", "autor", "criado_em", "verificado
 # tests/test_record_index.py guarda a ordem, inclusive contra extensao NOVA
 # acrescentada no lugar errado.
 RE_CAMINHO_CITADO = re.compile(
-    r"[`\(\[]([A-Za-z0-9_][A-Za-z0-9_./\\-]*\.(?:psm1|jsonl|json|yaml|toml|tsx|jsx|ps1|yml|cmd|py|md|ts|js|sh))"
+    r"[`\(\[]([\w][\w./\\-]*\.(?:psm1|jsonl|json|yaml|toml|tsx|jsx|ps1|yml|cmd|py|md|ts|js|sh))"
 )
 EXTENSOES_DE_CODIGO = re.compile(r"\.(py|ps1|psm1|js|jsx|ts|tsx|go|rs|rb|java|cs|sh)$")
 
@@ -181,7 +183,7 @@ def _corpus_do_indice() -> list[tuple[str, str]]:
 
 
 def arquivos_em_stage() -> list[str]:
-    saida = _git("diff", "--cached", "--name-only", "--diff-filter=ACM")
+    saida = _git("diff", "--cached", "--name-only", DIFF_FILTER_ACM)
     return [linha for linha in saida.splitlines() if linha.strip()]
 
 
@@ -267,7 +269,7 @@ def caminhos_herdados_de_merge() -> set[str]:
 
 
 def linhas_adicionadas(arquivo: str) -> list[str]:
-    saida = _git("diff", "--cached", "--unified=0", "--diff-filter=ACM", "--", arquivo)
+    saida = _git("diff", "--cached", "--unified=0", DIFF_FILTER_ACM, "--", arquivo)
     return [line[1:] for line in saida.splitlines() if line.startswith("+") and not line.startswith("+++")]
 
 
@@ -280,7 +282,7 @@ def linhas_adicionadas_numeradas(arquivo: str) -> list[tuple[int, str]]:
     Sem ele nao da para saber se a linha esta dentro de um bloco de comentario:
     o diff entrega linhas soltas, e estado de bloco nao se deduz de linha solta.
     """
-    saida = _git("diff", "--cached", "--unified=0", "--diff-filter=ACM", "--", arquivo)
+    saida = _git("diff", "--cached", "--unified=0", DIFF_FILTER_ACM, "--", arquivo)
     numeradas: list[tuple[int, str]] = []
     atual = 0
     for line in saida.splitlines():
@@ -308,32 +310,44 @@ def linhas_em_bloco_de_comentario(rel: str, texto: str | None = None) -> set[int
         texto = texto_como_vai_ao_commit(rel)
     if texto is None:
         return set()
+    if rel.endswith((".ps1", ".psm1")):
+        return _linhas_comentario_powershell(texto)
+    if rel.endswith(".py"):
+        return _linhas_comentario_python(texto)
+    return set()
+
+
+def _linhas_comentario_powershell(texto: str) -> set[int]:
     dentro: set[int] = set()
     em_bloco = False
+    for n, linha in enumerate(texto.splitlines(), start=1):
+        if em_bloco:
+            dentro.add(n)
+            if "#>" in linha:
+                em_bloco = False
+        elif "<#" in linha:
+            em_bloco = True
+            dentro.add(n)
+            if "#>" in linha.split("<#", 1)[1]:
+                em_bloco = False
+    return dentro
+
+
+def _linhas_comentario_python(texto: str) -> set[int]:
+    dentro: set[int] = set()
     delim_py: str | None = None
     for n, linha in enumerate(texto.splitlines(), start=1):
-        if rel.endswith((".ps1", ".psm1")):
-            if em_bloco:
+        if delim_py:
+            dentro.add(n)
+            if delim_py in linha:
+                delim_py = None
+            continue
+        for d in ('"""', "'''"):
+            if d in linha:
                 dentro.add(n)
-                if "#>" in linha:
-                    em_bloco = False
-            elif "<#" in linha:
-                em_bloco = True
-                dentro.add(n)
-                if "#>" in linha.split("<#", 1)[1]:
-                    em_bloco = False
-        elif rel.endswith(".py"):
-            if delim_py:
-                dentro.add(n)
-                if delim_py in linha:
-                    delim_py = None
-            else:
-                for d in ('"""', "'''"):
-                    if d in linha:
-                        dentro.add(n)
-                        if linha.count(d) == 1:
-                            delim_py = d
-                        break
+                if linha.count(d) == 1:
+                    delim_py = d
+                break
     return dentro
 
 
@@ -462,17 +476,7 @@ def referencias_mortas(rel: str) -> list[str]:
         historicas = [historicas]
     historicas = set(historicas)
 
-    # Submodulo declarado e nao materializado: endereco valido, conteudo ausente.
-    # As duas grafias entram -- `skills/x/` e `<repo>/skills/x/` -- porque um
-    # registro multiprojeto cita a partir da raiz de cima.
-    prefixos: list[str] = []
-    for sub in submodulos_declarados():
-        pasta = RAIZ / sub
-        materializado = pasta.is_dir() and any(pasta.iterdir())
-        if not materializado:
-            prefixos.append(f"{sub}/")
-            prefixos.append(f"{RAIZ.name}/{sub}/")
-    prefixos_de_submodulo_vazio = tuple(prefixos)
+    prefixos_de_submodulo_vazio = _prefixos_submodulos_vazios()
     escopos = raizes_de_escopo()
 
     mortas = []
@@ -481,28 +485,8 @@ def referencias_mortas(rel: str) -> list[str]:
             continue
         for m in RE_CAMINHO_CITADO.finditer(linha):
             citado = m.group(1)
-            if "/" not in citado and "\\" not in citado:
-                continue  # nome solto e nome, nao endereco
-            if citado in historicas:
+            if not _referencia_morta(citado, historicas, prefixos_de_submodulo_vazio, escopos, caminho):
                 continue
-            limpo = citado.replace("\\_", "_").replace("\\", "/")
-            if prefixos_de_submodulo_vazio and limpo.startswith(prefixos_de_submodulo_vazio):
-                continue
-            variantes = [limpo]
-            if limpo.endswith(".ts"):
-                variantes.append(limpo + "x")
-            elif limpo.endswith(".js"):
-                variantes.append(limpo[:-3] + ".jsx")
-            achou = any((raiz / var).exists() for var in variantes for raiz in (RAIZ, caminho.parent, RAIZ.parent))
-            if achou:
-                continue
-            # Nao resolveu. Antes de chamar de MORTA, separar o que este
-            # repositorio simplesmente nao tem como verificar.
-            primeiro = limpo.split("/", 1)[0]
-            if primeiro in escopos:
-                continue  # endereco de projeto irmao ou espelho
-            if any(_e_derivado(v) for v in _grafias_a_partir_da_raiz(limpo, caminho)):
-                continue  # artefato gerado, ausente por desenho
             mortas.append(citado)
     return mortas
 
@@ -561,138 +545,87 @@ def coletar_pendencias(hoje: date | None = None) -> tuple[list[dict], list[str]]
     for pid, item in declaradas.items():
         if pid in resolvidas:
             continue
-        prazo = str(item.get("prazo") or "")
-        vencida = False
-        if prazo:
-            try:
-                vencida = date.fromisoformat(prazo) < hoje
-            except ValueError:
-                vencida = False
+        vencida = _pendencia_vencida(item, hoje)
         abertas.append({**item, "vencida": vencida})
     abertas.sort(key=lambda i: (not i["vencida"], str(i.get("prazo") or "9999-12-31"), i["id"]))
     orfas = sorted(resolvidas - set(declaradas))
     return abertas, orfas
 
 
-def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
-    """Devolve (erros, avisos)."""
-    hoje = hoje or date.today()
-    erros: list[str] = []
-    avisos: list[str] = []
-    em_stage = arquivos_em_stage()
-    ambiente = resolvedores_de_ambiente(RAIZ)
+def _prefixos_submodulos_vazios() -> tuple[str, ...]:
+    # Submodulo declarado e nao materializado: endereco valido, conteudo ausente.
+    # As duas grafias entram -- `skills/x/` e `<repo>/skills/x/` -- porque um
+    # registro multiprojeto cita a partir da raiz de cima.
+    prefixos: list[str] = []
+    for sub in submodulos_declarados():
+        pasta = RAIZ / sub
+        materializado = pasta.is_dir() and any(pasta.iterdir())
+        if not materializado:
+            prefixos.append(f"{sub}/")
+            prefixos.append(f"{RAIZ.name}/{sub}/")
+    return tuple(prefixos)
 
-    registros_em_stage = [r for r in em_stage if _e_registro(r)]
 
-    for rel in registros_em_stage:
-        texto = texto_como_vai_ao_commit(rel)
-        if texto is None:
-            continue
-        if not texto.startswith("---"):
-            continue  # ausencia de frontmatter e AVISO do outro portao; nao duplicar
+def _referencia_existe(limpo: str, caminho: Path) -> bool:
+    variantes = [limpo]
+    if limpo.endswith(".ts"):
+        variantes.append(limpo + "x")
+    elif limpo.endswith(".js"):
+        variantes.append(limpo[:-3] + ".jsx")
+    return any((raiz / var).exists() for var in variantes for raiz in (RAIZ, caminho.parent, RAIZ.parent))
 
-        # --- G1. o bloco tem de ser YAML de verdade ---------------------------
-        bruto = texto.split("\n---", 2)[0][3:]
+
+def _referencia_morta(
+    citado: str, historicas: set[str], prefixos_de_submodulo_vazio: tuple[str, ...], escopos: set[str], caminho: Path
+) -> bool:
+    if "/" not in citado and "\\" not in citado:
+        return False  # nome solto e nome, nao endereco
+    if citado in historicas:
+        return False
+    limpo = citado.replace("\\_", "_").replace("\\", "/")
+    if prefixos_de_submodulo_vazio and limpo.startswith(prefixos_de_submodulo_vazio):
+        return False
+    if _referencia_existe(limpo, caminho):
+        return False
+    # Nao resolveu. Antes de chamar de MORTA, separar o que este
+    # repositorio simplesmente nao tem como verificar.
+    primeiro = limpo.split("/", 1)[0]
+    if primeiro in escopos:
+        return False  # endereco de projeto irmao ou espelho
+    # artefato gerado, ausente por desenho
+    return not any(_e_derivado(v) for v in _grafias_a_partir_da_raiz(limpo, caminho))
+
+
+def _pendencia_vencida(item: dict, hoje: date) -> bool:
+    prazo = str(item.get("prazo") or "")
+    vencida = False
+    if prazo:
         try:
-            fm = yaml.safe_load(bruto)
-        except yaml.YAMLError as e:
-            marca = getattr(e, "problem_mark", None)
-            onde = f" (linha {marca.line + 1} do frontmatter)" if marca else ""
-            erros.append(f"Frontmatter nao e YAML valido{onde}: {rel} -- {getattr(e, 'problem', e)}")
-            continue
-        if not isinstance(fm, dict):
-            erros.append(f"Frontmatter nao produz um mapa: {rel}")
-            continue
+            vencida = date.fromisoformat(prazo) < hoje
+        except ValueError:
+            vencida = False
+    return vencida
 
-        for campo in ("verificado", "nao_verificado"):
-            itens = fm.get(campo) or []
-            if isinstance(itens, list) and any(not isinstance(x, str) for x in itens):
-                erros.append(
-                    f"'{campo}' tem item que nao e texto em {rel}. Item de lista com ': ' vira mapa: troque por ' -- '."
-                )
 
-        # --- G1c. chave duplicada no frontmatter ------------------------------
-        # `yaml.safe_load` aceita chave repetida em SILENCIO: a ultima vence e a
-        # primeira some sem erro. E a mesma colisao que ja fez uma auditoria
-        # desta casa descartar o manual canonico de 40 KB e exibir os dados do
-        # arquivo de 12 KB como se fossem dele. Achado real: duas sessoes
-        # editando este repositorio acrescentaram `referencias_nao_resolviveis` ao
-        # mesmo frontmatter, e nada acusou.
-        chaves = [line.split(":", 1)[0] for line in bruto.splitlines() if re.match(r"^[A-Za-z_][A-Za-z0-9_]*:", line)]
-        repetidas = sorted({c for c in chaves if chaves.count(c) > 1})
-        if repetidas:
-            erros.append(
-                f"Chave duplicada no frontmatter de {rel}: {repetidas}. "
-                "O parser aceita em silencio e a ultima vence -- a primeira some sem erro."
-            )
+def _verificar_frontmatters(registros_em_stage: list[str], hoje: date, ambiente: dict, erros: list[str]) -> None:
+    for rel in registros_em_stage:
+        _verificar_frontmatter(rel, hoje, ambiente, erros)
 
-        # --- G3. TTL externo vencido -----------------------------------------
-        motivo = ttl_vencido(fm, hoje)
-        if motivo:
-            erros.append(f"{rel}: {motivo}. Reconsulte a fonte ou rebaixe a classe explicitamente.")
 
-        # --- G4. config_medida divergente do ambiente ------------------------
-        divergencias, _ = conferir_config_medida(fm.get("config_medida"), ambiente)
-        for d in divergencias:
-            erros.append(f"{rel}: config_medida divergente -- {d}. Remeca ou marque o registro.")
-
-    # --- G2. ancora interna: caminho DECLARADO que o commit toca --------------
-    # Ancora e o campo `caminhos:`, nunca a prosa. Inferir da prosa travaria o
-    # repositorio: os handoffs citam nexus.py, e todo commit em nexus.py
-    # exigiria superseder o handoff.
-    #
-    # Uma auditoria central pode declarar `revisoes_de_ancora` para reconciliar
-    # diversos registros historicos sem reescreve-los. Nao e uma dispensa: cada
-    # item precisa apontar o id existente, cobrir somente caminhos que aquele
-    # registro declarou e explicar o parecer. A cobertura continua limitada aos
-    # caminhos efetivamente tocados neste commit.
-    #
-    # Num merge, "tocado neste commit" exclui o que veio pronto de um dos pais:
-    # ver `caminhos_herdados_de_merge`. Fora de um merge o conjunto e vazio e
-    # esta linha nao muda nada.
-    tocados = set(em_stage) - caminhos_herdados_de_merge()
+def _revisoes_em_stage(
+    registros_em_stage: list[str], erros: list[str]
+) -> tuple[set[str], list[tuple[str, str, set[str], str]]]:
     supersedidos_em_stage: set[str] = set()
     revisoes_candidatas: list[tuple[str, str, set[str], str]] = []
     for rel in registros_em_stage:
         texto = texto_como_vai_ao_commit(rel)
         if texto:
-            fm_stg, _ = ler_frontmatter_de_texto(texto)
-            if fm_stg and fm_stg.get("supersede"):
-                sup = fm_stg.get("supersede")
-                if isinstance(sup, list):
-                    supersedidos_em_stage.update(str(s) for s in sup)
-                elif isinstance(sup, str) and sup.lower() not in {"null", "none"}:
-                    supersedidos_em_stage.add(sup)
-            if not fm_stg or not fm_stg.get("revisoes_de_ancora"):
-                continue
-            revisoes = fm_stg["revisoes_de_ancora"]
-            if not isinstance(revisoes, list):
-                erros.append(f"{rel}: revisoes_de_ancora deve ser uma lista de mapas.")
-                continue
-            for indice, revisao in enumerate(revisoes, start=1):
-                if not isinstance(revisao, dict):
-                    erros.append(f"{rel}: revisoes_de_ancora[{indice}] deve ser um mapa.")
-                    continue
-                registro = revisao.get("registro")
-                caminhos = revisao.get("caminhos")
-                parecer = revisao.get("parecer")
-                if not isinstance(registro, str) or not registro.strip():
-                    erros.append(f"{rel}: revisoes_de_ancora[{indice}].registro deve ser um id nao vazio.")
-                    continue
-                if (
-                    not isinstance(caminhos, list)
-                    or not caminhos
-                    or any(not isinstance(caminho, str) or not caminho.strip() for caminho in caminhos)
-                ):
-                    erros.append(
-                        f"{rel}: revisoes_de_ancora[{indice}].caminhos deve ser uma lista nao vazia de caminhos."
-                    )
-                    continue
-                if not isinstance(parecer, str) or not parecer.strip():
-                    erros.append(f"{rel}: revisoes_de_ancora[{indice}].parecer deve explicar a revisao.")
-                    continue
-                revisoes_candidatas.append((rel, registro.strip(), set(caminhos), parecer.strip()))
+            _revisoes_do_registro(rel, texto, supersedidos_em_stage, revisoes_candidatas, erros)
 
+    return supersedidos_em_stage, revisoes_candidatas
+
+
+def _ler_registros_ancorados() -> tuple[dict[str, tuple[str, dict]], list[tuple[str, dict]]]:
     registros_por_id: dict[str, tuple[str, dict]] = {}
     registros_lidos: list[tuple[str, dict]] = []
     for rel, texto in _corpus_do_indice():
@@ -703,7 +636,14 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
         doc_id = str(fm.get("id") or "")
         if doc_id:
             registros_por_id[doc_id] = (rel, fm)
+    return registros_por_id, registros_lidos
 
+
+def _aceitar_revisoes(
+    revisoes_candidatas: list[tuple[str, str, set[str], str]],
+    registros_por_id: dict[str, tuple[str, dict]],
+    erros: list[str],
+) -> dict[str, set[str]]:
     revisoes_aceitas: dict[str, set[str]] = {}
     for origem, registro_id, caminhos_revisados, _parecer in revisoes_candidatas:
         alvo = registros_por_id.get(registro_id)
@@ -722,23 +662,22 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
             )
             continue
         revisoes_aceitas.setdefault(registro_id, set()).update(caminhos_revisados)
+    return revisoes_aceitas
 
-    # G2 so BLOQUEIA registro VIGENTE (Tier 0, 2026-09-13). SUSPEITO e OBSOLETO ja
-    # nao sao fonte confiavel pelo proprio indice: viram AVISO. Medido antes: 34
-    # revisoes obrigatorias num dia, 1 delas sobre registro VIGENTE.
+
+def _registros_aposentados(registros_lidos: list[tuple[str, dict]]) -> set[str]:
     aposentados: set[str] = set()
     for _rel, fm_ap in registros_lidos:
         sup = fm_ap.get("supersede")
         for item in sup if isinstance(sup, list) else [sup]:
             if item and str(item).lower() not in {"null", "none"}:
                 aposentados.add(str(item).strip())
+    return aposentados
 
-    ancorados: set[str] = set()
-    for _rel, fm_anc in registros_lidos:
-        dec = fm_anc.get("caminhos") or []
-        ancorados.update(str(c) for c in ([dec] if isinstance(dec, str) else dec))
-    so_cresceram = jsonl_que_so_cresceram(sorted(ancorados & tocados))
 
+def _ancoras_atingidas(
+    registros_lidos: list[tuple[str, dict]], supersedidos_em_stage: set[str], tocados: set[str]
+) -> Iterator[tuple[str, dict, str, list[str]]]:
     for rel, fm in registros_lidos:
         if fm.get("supersede") and str(fm.get("supersede")).lower() not in {"null", "none"}:
             continue
@@ -750,34 +689,10 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
             declarados = [declarados]
         atingidos = sorted(set(declarados) & tocados)
         if atingidos and rel not in tocados:
-            pendentes = sorted(set(atingidos) - revisoes_aceitas.get(doc_id, set()))
-            if not pendentes:
-                continue
-            crescidos = [p for p in pendentes if p in so_cresceram]
-            if crescidos:
-                avisos.append(
-                    f"{rel} ancora {crescidos}: so ganharam linhas no fim. Nao bloqueia: o atestado segue intacto."
-                )
-                pendentes = [p for p in pendentes if p not in so_cresceram]
-                if not pendentes:
-                    continue
-            motivos, ancestral, _ = avaliar_registro(fm, RAIZ, hoje, ambiente)
-            estado = estado_de(motivos, ancestral, doc_id in aposentados)
-            if estado != VIGENTE:
-                motivo = motivos[0] if motivos else "superseded por registro mais novo"
-                avisos.append(f"{rel} ({estado}, {motivo}) ancora {pendentes}. Nao bloqueia: registro nao vigente.")
-                continue
-            erros.append(
-                f"{rel} declara ancora em {pendentes} e esses caminhos mudaram neste commit, "
-                "mas o registro nao foi revisado. Atualize-o, declare `supersede` ou registre "
-                "revisoes_de_ancora valida no mesmo commit."
-            )
+            yield rel, fm, doc_id, atingidos
 
-    # --- G6. referencia morta em documento que PRESCREVE ----------------------
-    # Tres precedentes nesta base, nenhum detectado por nada: a secao 1 do
-    # CLAUDE.md canonico declarava um AGENTS.md inexistente; o README do
-    # hybrid_router apontava para a copia da raiz e para o .venv errado; o fork
-    # do AGENTS.md dizia que os agentes moram em .Codex/agents.
+
+def _verificar_referencias(em_stage: list[str], erros: list[str]) -> None:
     for rel in em_stage:
         if not _e_prescritivo(rel):
             continue
@@ -788,30 +703,16 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
                 "nao pode apontar para o vazio."
             )
 
-    # --- G6b. o commit apaga ou move o que um documento prescritivo cita ------
-    erros.extend(citacoes_ao_que_o_commit_remove(em_stage))
 
-    # --- G5b. ampliacao de ACL/CORS/origem ------------------------------------
+def _verificar_ampliacoes(em_stage: list[str], erros: list[str]) -> None:
     for rel in em_stage:
         if not EXTENSOES_DE_CODIGO.search(rel):
             continue
         em_comentario = linhas_em_bloco_de_comentario(rel)
-        for numero, linha in linhas_adicionadas_numeradas(rel):
-            if re.match(r"^\s*(#|//)", linha):
-                continue  # linha que e so comentario nao amplia nada
-            if numero in em_comentario:
-                continue  # e prosa dentro de <# #> ou docstring, nao diretiva
-            for nome, padrao in PADROES_DE_AMPLIACAO.items():
-                if padrao.search(linha):
-                    erros.append(
-                        f"Ampliacao de origem detectada em {rel} ({nome}): {linha.strip()[:90]}. "
-                        "A governanca proibe ampliar ACL/CORS/firewall -- nao ha excecao por registro."
-                    )
+        _verificar_ampliacao_arquivo(rel, em_comentario, erros)
 
-    # --- G8. pendencia declarada tem de ser LEGIVEL --------------------------
-    # Existir pendencia aberta nunca bloqueia -- ver coletar_pendencias. O que
-    # bloqueia e declaracao que o portao nao consegue exibir, porque pendencia
-    # invisivel e exatamente o defeito que o campo existe para corrigir.
+
+def _verificar_pendencias(registros_em_stage: list[str], erros: list[str]) -> None:
     for rel in registros_em_stage:
         texto = texto_como_vai_ao_commit(rel)
         if not texto or not texto.startswith("---"):
@@ -823,26 +724,272 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
         if bruto is not None and not isinstance(bruto, list):
             erros.append(f"{rel}: `pendencias` tem de ser uma lista de itens, nao {type(bruto).__name__}.")
             continue
-        for indice, item in enumerate(bruto or []):
-            onde = f"{rel}: pendencias[{indice}]"
-            if not isinstance(item, dict):
-                erros.append(f"{onde} tem de ser um mapa com id, o_que e dono.")
-                continue
-            pid = str(item.get("id") or "").strip()
-            if not RE_ID_PENDENCIA.match(pid):
-                erros.append(f"{onde}.id invalido: '{pid}'. Use minusculas, digitos e hifen, de 5 a 80 caracteres.")
-            for campo in ("o_que", "dono"):
-                if not str(item.get(campo) or "").strip():
-                    erros.append(f"{onde}.{campo} e obrigatorio: pendencia sem {campo} e observacao, nao tarefa.")
-            prazo = str(item.get("prazo") or "").strip()
-            if prazo:
-                try:
-                    date.fromisoformat(prazo)
-                except ValueError:
-                    erros.append(f"{onde}.prazo tem de ser uma data ISO YYYY-MM-DD, e veio '{prazo}'.")
+        _verificar_itens_pendencias(rel, bruto, erros)
         cru_resolvidas = fm.get("pendencias_resolvidas")
         if cru_resolvidas is not None and not isinstance(cru_resolvidas, (list, str)):
             erros.append(f"{rel}: `pendencias_resolvidas` tem de ser uma lista de ids.")
+
+
+def _verificar_itens_frontmatter(fm: dict, rel: str, erros: list[str]) -> None:
+    for campo in ("verificado", "nao_verificado"):
+        itens = fm.get(campo) or []
+        if isinstance(itens, list) and any(not isinstance(x, str) for x in itens):
+            erros.append(
+                f"'{campo}' tem item que nao e texto em {rel}. Item de lista com ': ' vira mapa: troque por ' -- '."
+            )
+
+
+def _verificar_frontmatter(rel: str, hoje: date, ambiente: dict, erros: list[str]) -> None:
+    texto = texto_como_vai_ao_commit(rel)
+    if texto is None:
+        return
+    if not texto.startswith("---"):
+        return  # ausencia de frontmatter e AVISO do outro portao; nao duplicar
+
+    # --- G1. o bloco tem de ser YAML de verdade ---------------------------
+    bruto = texto.split("\n---", 2)[0][3:]
+    try:
+        fm = yaml.safe_load(bruto)
+    except yaml.YAMLError as e:
+        marca = getattr(e, "problem_mark", None)
+        onde = f" (linha {marca.line + 1} do frontmatter)" if marca else ""
+        erros.append(f"Frontmatter nao e YAML valido{onde}: {rel} -- {getattr(e, 'problem', e)}")
+        return
+    if not isinstance(fm, dict):
+        erros.append(f"Frontmatter nao produz um mapa: {rel}")
+        return
+
+    _verificar_itens_frontmatter(fm, rel, erros)
+
+    # --- G1c. chave duplicada no frontmatter ------------------------------
+    # `yaml.safe_load` aceita chave repetida em SILENCIO: a ultima vence e a
+    # primeira some sem erro. E a mesma colisao que ja fez uma auditoria
+    # desta casa descartar o manual canonico de 40 KB e exibir os dados do
+    # arquivo de 12 KB como se fossem dele. Achado real: duas sessoes
+    # editando este repositorio acrescentaram `referencias_nao_resolviveis` ao
+    # mesmo frontmatter, e nada acusou.
+    chaves = [line.split(":", 1)[0] for line in bruto.splitlines() if re.match(r"^[A-Za-z_]\w*:", line)]
+    repetidas = sorted({c for c in chaves if chaves.count(c) > 1})
+    if repetidas:
+        erros.append(
+            f"Chave duplicada no frontmatter de {rel}: {repetidas}. "
+            "O parser aceita em silencio e a ultima vence -- a primeira some sem erro."
+        )
+
+    # --- G3. TTL externo vencido -----------------------------------------
+    motivo = ttl_vencido(fm, hoje)
+    if motivo:
+        erros.append(f"{rel}: {motivo}. Reconsulte a fonte ou rebaixe a classe explicitamente.")
+
+    # --- G4. config_medida divergente do ambiente ------------------------
+    divergencias, _ = conferir_config_medida(fm.get("config_medida"), ambiente)
+    for d in divergencias:
+        erros.append(f"{rel}: config_medida divergente -- {d}. Remeca ou marque o registro.")
+
+
+def _coletar_revisao(
+    rel: str, indice: int, revisao: object, revisoes_candidatas: list[tuple[str, str, set[str], str]], erros: list[str]
+) -> None:
+    if not isinstance(revisao, dict):
+        erros.append(f"{rel}: revisoes_de_ancora[{indice}] deve ser um mapa.")
+        return
+    registro = revisao.get("registro")
+    caminhos = revisao.get("caminhos")
+    parecer = revisao.get("parecer")
+    if not isinstance(registro, str) or not registro.strip():
+        erros.append(f"{rel}: revisoes_de_ancora[{indice}].registro deve ser um id nao vazio.")
+        return
+    if (
+        not isinstance(caminhos, list)
+        or not caminhos
+        or any(not isinstance(caminho, str) or not caminho.strip() for caminho in caminhos)
+    ):
+        erros.append(f"{rel}: revisoes_de_ancora[{indice}].caminhos deve ser uma lista nao vazia de caminhos.")
+        return
+    if not isinstance(parecer, str) or not parecer.strip():
+        erros.append(f"{rel}: revisoes_de_ancora[{indice}].parecer deve explicar a revisao.")
+        return
+    revisoes_candidatas.append((rel, registro.strip(), set(caminhos), parecer.strip()))
+
+
+def _coletar_revisoes(
+    rel: str, revisoes: list, revisoes_candidatas: list[tuple[str, str, set[str], str]], erros: list[str]
+) -> None:
+    for indice, revisao in enumerate(revisoes, start=1):
+        _coletar_revisao(rel, indice, revisao, revisoes_candidatas, erros)
+
+
+def _revisoes_do_registro(
+    rel: str,
+    texto: str,
+    supersedidos_em_stage: set[str],
+    revisoes_candidatas: list[tuple[str, str, set[str], str]],
+    erros: list[str],
+) -> None:
+    fm_stg, _ = ler_frontmatter_de_texto(texto)
+    if fm_stg and fm_stg.get("supersede"):
+        sup = fm_stg.get("supersede")
+        if isinstance(sup, list):
+            supersedidos_em_stage.update(str(s) for s in sup)
+        elif isinstance(sup, str) and sup.lower() not in {"null", "none"}:
+            supersedidos_em_stage.add(sup)
+    if not fm_stg or not fm_stg.get("revisoes_de_ancora"):
+        return
+    revisoes = fm_stg["revisoes_de_ancora"]
+    if not isinstance(revisoes, list):
+        erros.append(f"{rel}: revisoes_de_ancora deve ser uma lista de mapas.")
+        return
+    _coletar_revisoes(rel, revisoes, revisoes_candidatas, erros)
+
+
+def _ancoras_pendentes(
+    rel: str,
+    doc_id: str,
+    atingidos: list[str],
+    revisoes_aceitas: dict[str, set[str]],
+    so_cresceram: set[str],
+    avisos: list[str],
+) -> list[str]:
+    pendentes = sorted(set(atingidos) - revisoes_aceitas.get(doc_id, set()))
+    if not pendentes:
+        return pendentes
+    crescidos = [p for p in pendentes if p in so_cresceram]
+    if crescidos:
+        avisos.append(f"{rel} ancora {crescidos}: so ganharam linhas no fim. Nao bloqueia: o atestado segue intacto.")
+        pendentes = [p for p in pendentes if p not in so_cresceram]
+    return pendentes
+
+
+def _verificar_estado_ancora(
+    rel: str,
+    fm: dict,
+    pendentes: list[str],
+    aposentado: bool,
+    hoje: date,
+    ambiente: dict,
+    avisos: list[str],
+) -> str | None:
+    motivos, ancestral, _ = avaliar_registro(fm, RAIZ, hoje, ambiente)
+    estado = estado_de(motivos, ancestral, aposentado)
+    if estado != VIGENTE:
+        motivo = motivos[0] if motivos else "superseded por registro mais novo"
+        avisos.append(f"{rel} ({estado}, {motivo}) ancora {pendentes}. Nao bloqueia: registro nao vigente.")
+        return None
+    return (
+        f"{rel} declara ancora em {pendentes} e esses caminhos mudaram neste commit, "
+        "mas o registro nao foi revisado. Atualize-o, declare `supersede` ou registre "
+        "revisoes_de_ancora valida no mesmo commit."
+    )
+
+
+def _verificar_ampliacao_arquivo(rel: str, em_comentario: set[int], erros: list[str]) -> None:
+    for numero, linha in linhas_adicionadas_numeradas(rel):
+        if re.match(r"^\s*(#|//)", linha):
+            continue  # linha que e so comentario nao amplia nada
+        if numero in em_comentario:
+            continue  # e prosa dentro de <# #> ou docstring, nao diretiva
+        for nome, padrao in PADROES_DE_AMPLIACAO.items():
+            if padrao.search(linha):
+                erros.append(
+                    f"Ampliacao de origem detectada em {rel} ({nome}): {linha.strip()[:90]}. "
+                    "A governanca proibe ampliar ACL/CORS/firewall -- nao ha excecao por registro."
+                )
+
+
+def _verificar_item_pendencia(rel: str, indice: int, item: object, erros: list[str]) -> None:
+    onde = f"{rel}: pendencias[{indice}]"
+    if not isinstance(item, dict):
+        erros.append(f"{onde} tem de ser um mapa com id, o_que e dono.")
+        return
+    pid = str(item.get("id") or "").strip()
+    if not RE_ID_PENDENCIA.match(pid):
+        erros.append(f"{onde}.id invalido: '{pid}'. Use minusculas, digitos e hifen, de 5 a 80 caracteres.")
+    for campo in ("o_que", "dono"):
+        if not str(item.get(campo) or "").strip():
+            erros.append(f"{onde}.{campo} e obrigatorio: pendencia sem {campo} e observacao, nao tarefa.")
+    prazo = str(item.get("prazo") or "").strip()
+    if prazo:
+        try:
+            date.fromisoformat(prazo)
+        except ValueError:
+            erros.append(f"{onde}.prazo tem de ser uma data ISO YYYY-MM-DD, e veio '{prazo}'.")
+
+
+def _verificar_itens_pendencias(rel: str, bruto: list | None, erros: list[str]) -> None:
+    for indice, item in enumerate(bruto or []):
+        _verificar_item_pendencia(rel, indice, item, erros)
+
+
+def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
+    """Devolve (erros, avisos)."""
+    hoje = hoje or date.today()
+    erros: list[str] = []
+    avisos: list[str] = []
+    em_stage = arquivos_em_stage()
+    ambiente = resolvedores_de_ambiente(RAIZ)
+
+    registros_em_stage = [r for r in em_stage if _e_registro(r)]
+
+    _verificar_frontmatters(registros_em_stage, hoje, ambiente, erros)
+
+    # --- G2. ancora interna: caminho DECLARADO que o commit toca --------------
+    # Ancora e o campo `caminhos:`, nunca a prosa. Inferir da prosa travaria o
+    # repositorio: os handoffs citam nexus.py, e todo commit em nexus.py
+    # exigiria superseder o handoff.
+    #
+    # Uma auditoria central pode declarar `revisoes_de_ancora` para reconciliar
+    # diversos registros historicos sem reescreve-los. Nao e uma dispensa: cada
+    # item precisa apontar o id existente, cobrir somente caminhos que aquele
+    # registro declarou e explicar o parecer. A cobertura continua limitada aos
+    # caminhos efetivamente tocados neste commit.
+    #
+    # Num merge, "tocado neste commit" exclui o que veio pronto de um dos pais:
+    # ver `caminhos_herdados_de_merge`. Fora de um merge o conjunto e vazio e
+    # esta linha nao muda nada.
+    tocados = set(em_stage) - caminhos_herdados_de_merge()
+    supersedidos_em_stage, revisoes_candidatas = _revisoes_em_stage(registros_em_stage, erros)
+
+    registros_por_id, registros_lidos = _ler_registros_ancorados()
+
+    revisoes_aceitas = _aceitar_revisoes(revisoes_candidatas, registros_por_id, erros)
+
+    # G2 so BLOQUEIA registro VIGENTE (Tier 0, 2026-09-13). SUSPEITO e OBSOLETO ja
+    # nao sao fonte confiavel pelo proprio indice: viram AVISO. Medido antes: 34
+    # revisoes obrigatorias num dia, 1 delas sobre registro VIGENTE.
+    aposentados = _registros_aposentados(registros_lidos)
+
+    ancorados: set[str] = set()
+    for _rel, fm_anc in registros_lidos:
+        dec = fm_anc.get("caminhos") or []
+        ancorados.update(str(c) for c in ([dec] if isinstance(dec, str) else dec))
+    so_cresceram = jsonl_que_so_cresceram(sorted(ancorados & tocados))
+
+    for rel, fm, doc_id, atingidos in _ancoras_atingidas(registros_lidos, supersedidos_em_stage, tocados):
+        pendentes = _ancoras_pendentes(rel, doc_id, atingidos, revisoes_aceitas, so_cresceram, avisos)
+        if not pendentes:
+            continue
+        erro = _verificar_estado_ancora(rel, fm, pendentes, doc_id in aposentados, hoje, ambiente, avisos)
+        if erro:
+            erros.append(erro)
+
+    # --- G6. referencia morta em documento que PRESCREVE ----------------------
+    # Tres precedentes nesta base, nenhum detectado por nada: a secao 1 do
+    # CLAUDE.md canonico declarava um AGENTS.md inexistente; o README do
+    # hybrid_router apontava para a copia da raiz e para o .venv errado; o fork
+    # do AGENTS.md dizia que os agentes moram em .Codex/agents.
+    _verificar_referencias(em_stage, erros)
+
+    # --- G6b. o commit apaga ou move o que um documento prescritivo cita ------
+    erros.extend(citacoes_ao_que_o_commit_remove(em_stage))
+
+    # --- G5b. ampliacao de ACL/CORS/origem ------------------------------------
+    _verificar_ampliacoes(em_stage, erros)
+
+    # --- G8. pendencia declarada tem de ser LEGIVEL --------------------------
+    # Existir pendencia aberta nunca bloqueia -- ver coletar_pendencias. O que
+    # bloqueia e declaracao que o portao nao consegue exibir, porque pendencia
+    # invisivel e exatamente o defeito que o campo existe para corrigir.
+    _verificar_pendencias(registros_em_stage, erros)
 
     _, orfas = coletar_pendencias(hoje)
     if orfas:

@@ -22,6 +22,7 @@ REPORTS_DIR: Final[Path] = BASE_DIR / "reports"
 LOG_FILE: Final[Path] = LOGS_DIR / "jules_execution_latest.log"
 JSONL_STREAM_FILE: Final[Path] = LOGS_DIR / "jules_stream.jsonl"
 REPORT_FILE: Final[Path] = REPORTS_DIR / "REGISTRO-2026-08-29-jules-auditoria-pure-ascii-e-tipagem.md"
+SEPARATOR: Final[str] = "================================================================="
 
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -79,10 +80,8 @@ def check_typing_conformance(py_path: Path) -> dict[str, object]:
 
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom) and node.module == "__future__":
-            for alias in node.names:
-                if alias.name == "annotations":
-                    has_future_annotations = True
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            has_future_annotations = has_future_annotations or any(alias.name == "annotations" for alias in node.names)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             func_count += 1
             has_return = node.returns is not None
             has_args = all(arg.annotation is not None for arg in node.args.args if arg.arg not in ("self", "cls"))
@@ -98,14 +97,55 @@ def check_typing_conformance(py_path: Path) -> dict[str, object]:
     }
 
 
+def _discover_python_files(target_dirs: list[str]) -> list[Path]:
+    py_files: list[Path] = []
+    for directory in target_dirs:
+        path = BASE_DIR / directory
+        if path.exists():
+            py_files.extend(file for file in path.rglob("*.py") if "__pycache__" not in file.parts)
+    return py_files
+
+
+def _audit_ascii_files(py_files: list[Path]) -> tuple[list[dict[str, object]], int]:
+    violations: list[dict[str, object]] = []
+    passed = 0
+    for py_file in py_files:
+        is_clean, non_ascii = is_pure_ascii(py_file.read_text(encoding="utf-8", errors="ignore"))
+        relative_path = py_file.relative_to(BASE_DIR).as_posix()
+        if is_clean:
+            passed += 1
+            emit_stream_event("FILE_ASCII_AUDITED", {"file": relative_path, "status": "PASS"})
+        else:
+            violations.append({"file": relative_path, "count": len(non_ascii), "samples": non_ascii[:3]})
+            emit_stream_event(
+                "FILE_ASCII_AUDITED", {"file": relative_path, "status": "NON_ASCII_DETECTED", "count": len(non_ascii)}
+            )
+    return violations, passed
+
+
+def _audit_typing_files(py_files: list[Path]) -> tuple[list[dict[str, object]], int, int]:
+    results: list[dict[str, object]] = []
+    total_functions = 0
+    total_annotated = 0
+    for py_file in py_files:
+        result = check_typing_conformance(py_file)
+        results.append(result)
+        function_count = result.get("func_count")
+        annotated_count = result.get("annotated_func_count")
+        total_functions += function_count if isinstance(function_count, int) else 0
+        total_annotated += annotated_count if isinstance(annotated_count, int) else 0
+        emit_stream_event("FILE_TYPING_AUDITED", result)
+    return results, total_functions, total_annotated
+
+
 def run_jules_audit() -> None:
     """Executa a rotina supervisionada de auditoria do Google Jules."""
-    logger.info("=================================================================")
+    logger.info(SEPARATOR)
     logger.info("INICIALIZANDO SESSAO DE SUPERVISAO JULES -- PROTOCOLO CHICO v8.0 GOLD")
     logger.info("Alvo: Auditoria Pure ASCII & Tipagem PEP 585/604 em Site/ (PMev Engine)")
     logger.info("Logs persistentes em: %s", LOG_FILE)
     logger.info("Stream JSONL em: %s", JSONL_STREAM_FILE)
-    logger.info("=================================================================")
+    logger.info(SEPARATOR)
 
     # Limpar stream anterior
     JSONL_STREAM_FILE.write_text("", encoding="utf-8")
@@ -125,12 +165,7 @@ def run_jules_audit() -> None:
     # 1. Varredura de Fontes Python
     logger.info("[FASE 1/3] Identificando modulos Python prioritarios em engine/, core/, api/, math/, utils/...")
     target_dirs = ["engine", "core", "api", "math", "utils", "mcp-bridge"]
-    py_files: list[Path] = []
-
-    for d in target_dirs:
-        dir_path = BASE_DIR / d
-        if dir_path.exists():
-            py_files.extend([p for p in dir_path.rglob("*.py") if "__pycache__" not in p.parts])
+    py_files = _discover_python_files(target_dirs)
 
     logger.info("Total de arquivos Python mapeados para analise: %d", len(py_files))
     emit_stream_event("TARGETS_DISCOVERED", {"file_count": len(py_files), "directories": target_dirs})
@@ -139,22 +174,7 @@ def run_jules_audit() -> None:
 
     # 2. Auditoria Pure ASCII
     logger.info("[FASE 2/3] Executando auditoria do protocolo Pure ASCII em todos os modulos...")
-    ascii_violations: list[dict[str, object]] = []
-    ascii_passed = 0
-
-    for py_file in py_files:
-        content = py_file.read_text(encoding="utf-8", errors="ignore")
-        is_clean, non_ascii = is_pure_ascii(content)
-        rel_path = py_file.relative_to(BASE_DIR).as_posix()
-
-        if is_clean:
-            ascii_passed += 1
-            emit_stream_event("FILE_ASCII_AUDITED", {"file": rel_path, "status": "PASS"})
-        else:
-            ascii_violations.append({"file": rel_path, "count": len(non_ascii), "samples": non_ascii[:3]})
-            emit_stream_event(
-                "FILE_ASCII_AUDITED", {"file": rel_path, "status": "NON_ASCII_DETECTED", "count": len(non_ascii)}
-            )
+    ascii_violations, ascii_passed = _audit_ascii_files(py_files)
 
     logger.info("Conformidade Pure ASCII: %d/%d arquivos em conformidade absoluta.", ascii_passed, len(py_files))
     if ascii_violations:
@@ -164,18 +184,7 @@ def run_jules_audit() -> None:
 
     # 3. Auditoria de Tipagem Estrita
     logger.info("[FASE 3/3] Inspecionando conformidade de tipagem (PEP 585/604, __future__ annotations)...")
-    typing_results: list[dict[str, object]] = []
-    total_funcs = 0
-    total_annotated = 0
-
-    for py_file in py_files:
-        res = check_typing_conformance(py_file)
-        typing_results.append(res)
-        f_cnt = res.get("func_count")
-        a_cnt = res.get("annotated_func_count")
-        total_funcs += int(f_cnt) if isinstance(f_cnt, int) else 0
-        total_annotated += int(a_cnt) if isinstance(a_cnt, int) else 0
-        emit_stream_event("FILE_TYPING_AUDITED", res)
+    typing_results, total_funcs, total_annotated = _audit_typing_files(py_files)
 
     overall_coverage = round((total_annotated / total_funcs * 100) if total_funcs > 0 else 100.0, 1)
     logger.info(
@@ -224,7 +233,7 @@ def run_jules_audit() -> None:
 """
 
     for r in sorted(typing_results, key=lambda x: str(x.get("file", ""))):
-        report_content += f"| `{r.get('file')}` | {r.get('func_count')} | {r.get('annotated_func_count')} | {r.get('coverage_pct')}% | {'' if r.get('has_future_annotations') else ''} |\n"
+        report_content += f"| `{r.get('file')}` | {r.get('func_count')} | {r.get('annotated_func_count')} | {r.get('coverage_pct')}% |  |\n"
 
     report_content += """
 ---
@@ -242,9 +251,9 @@ def run_jules_audit() -> None:
         },
     )
 
-    logger.info("=================================================================")
+    logger.info(SEPARATOR)
     logger.info("SESSAO CONCLUIDA COM SUCESSO! Relatorio e Logs gravados.")
-    logger.info("=================================================================")
+    logger.info(SEPARATOR)
 
 
 if __name__ == "__main__":

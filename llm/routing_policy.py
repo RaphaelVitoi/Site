@@ -72,6 +72,8 @@ def _carregar_modelos_locais() -> frozenset[str]:
 
 
 MODELOS_LOCAIS: frozenset[str] = _carregar_modelos_locais()
+GPT_5_6_SOL = "gpt-5.6-sol"
+GEMINI_3_8_FLASH = "gemini-3.8-flash"
 
 
 def e_local(alias: str) -> bool:
@@ -160,7 +162,7 @@ class Rota:
 ROTAS: dict[ClasseTarefa, Rota] = {
     ClasseTarefa.GOVERNANCA: Rota(
         primario="claude-opus-5",
-        fallback="gpt-5.6-sol",
+        fallback=GPT_5_6_SOL,
         faixa=Faixa.API_PAGA,
         justificativa=(
             "Mediacao de conflito e decisao final exigem julgamento com "
@@ -172,10 +174,10 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "comparacao que deixou de valer."
         ),
         ancorado_em="2026-09-07",
-        modelos_citados=("claude-opus-5", "gpt-5.6-sol"),
+        modelos_citados=("claude-opus-5", GPT_5_6_SOL),
     ),
     ClasseTarefa.ESTRATEGIA: Rota(
-        primario="gpt-5.6-sol",
+        primario=GPT_5_6_SOL,
         fallback="claude-opus-5",
         faixa=Faixa.API_PAGA,
         justificativa=(
@@ -183,11 +185,11 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "onde o Sol lidera. Inverso da governanca, de proposito."
         ),
         ancorado_em="2026-08-27",
-        modelos_citados=("gpt-5.6-sol", "claude-opus-5"),
+        modelos_citados=(GPT_5_6_SOL, "claude-opus-5"),
     ),
     ClasseTarefa.CONSTRUCAO: Rota(
         primario="claude-sonnet-5",
-        fallback="gemini-3.8-flash",
+        fallback=GEMINI_3_8_FLASH,
         faixa=Faixa.API_PAGA,
         escalona_para="claude-opus-5",
         justificativa=(
@@ -200,7 +202,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "Sonnet resolve numa passada."
         ),
         ancorado_em="2026-09-07",
-        modelos_citados=("claude-sonnet-5", "gemini-3.8-flash", "claude-opus-5"),
+        modelos_citados=("claude-sonnet-5", GEMINI_3_8_FLASH, "claude-opus-5"),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
         primario="gemini-3.6-flash",
@@ -246,7 +248,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         modelos_citados=("gemini-3.5-flash-lite", "gpt-5.6-luna"),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
-        primario="gpt-5.6-sol",
+        primario=GPT_5_6_SOL,
         fallback="claude-opus-5",
         faixa=Faixa.API_PAGA,
         escalona_para="gpt-6-astra",
@@ -257,11 +259,11 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "segue primario porque cobre a classe a $4/$20."
         ),
         ancorado_em="2026-09-07",
-        modelos_citados=("gpt-5.6-sol", "claude-opus-5", "gpt-6-astra"),
+        modelos_citados=(GPT_5_6_SOL, "claude-opus-5", "gpt-6-astra"),
     ),
     ClasseTarefa.SESSAO_MULTI_DIA: Rota(
         primario="claude-opus-5",
-        fallback="gpt-5.6-sol",
+        fallback=GPT_5_6_SOL,
         faixa=Faixa.API_PAGA,
         escalona_para="gpt-6-astra",
         justificativa=(
@@ -274,19 +276,19 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "esta classe ganha de volta e horizonte longo, nao aquele recurso."
         ),
         ancorado_em="2026-09-07",
-        modelos_citados=("claude-opus-5", "gpt-5.6-sol", "gpt-6-astra"),
+        modelos_citados=("claude-opus-5", GPT_5_6_SOL, "gpt-6-astra"),
     ),
     ClasseTarefa.LOCAL: Rota(
         primario="gemma4:12b",
         fallback="gemma4:e4b",
         faixa=Faixa.LOCAL,
-        escalona_para="gemini-3.8-flash",
+        escalona_para=GEMINI_3_8_FLASH,
         justificativa=(
             "Inferencia de borda: nenhum custo por uso e nenhuma dependencia de "
             "rede. Pesos ja provisionados; ver data/ollama_models.json."
         ),
         ancorado_em="2026-08-27",
-        modelos_citados=("gemma4:12b", "gemma4:e4b", "gemini-3.8-flash"),
+        modelos_citados=("gemma4:12b", "gemma4:e4b", GEMINI_3_8_FLASH),
     ),
 }
 
@@ -709,11 +711,11 @@ def avaliar_uso_condicional_pro(
     superar CONCRETAMENTE o diferencial de custo/tokens. Caso contrario, o
     Gemini 3.7 Flash prevalece.
     """
-    custo_flash = custo("gemini-3.8-flash", tokens_in, tokens_out)
+    custo_flash = custo(GEMINI_3_8_FLASH, tokens_in, tokens_out)
     custo_pro = custo("chatgpt-5.6-sol", tokens_in, tokens_out)
 
     aprovado = complexidade_formal and (ganho_qualidade_esperado_pct >= 25.0)
-    modelo_escolhido = "chatgpt-5.6-sol" if aprovado else "gemini-3.8-flash"
+    modelo_escolhido = "chatgpt-5.6-sol" if aprovado else GEMINI_3_8_FLASH
 
     motivo = (
         f"Alta complexidade matematica/axiomatica com ganho concreto de {ganho_qualidade_esperado_pct:.1f}% justificando o custo."

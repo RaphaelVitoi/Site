@@ -25,7 +25,6 @@
 
 ---
 
-
 ---
 
 ## Hipóteses de Trabalho

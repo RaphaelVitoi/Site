@@ -62,6 +62,10 @@ OLLAMA_MODEL_MAP: dict[str, str] = {
     "31b": "gemma4:31b-cloud",
     "31b_cloud": "gemma4:31b-cloud",
 }
+APPLICATION_JSON = "application/json"
+OPEN_SOURCE_MODEL_PATTERN = r"open-source [^,]+,"
+POKER_MODE_LABEL = "[1] Modo Poker SOTA (Agentico Otimizado)"
+CONVERSATIONAL_MODE_LABEL = "[2] Modo Conversacional / Tema Customizado (LLM Otimizado)"
 
 
 def _carregar_manifesto_ollama() -> dict[str, str]:
@@ -94,7 +98,7 @@ def discover_ollama_models() -> list[dict[str, Any]]:
     """Descobre em tempo real os modelos instalados consultando a API do Ollama."""
     url = "http://127.0.0.1:11434/api/tags"
     try:
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
+        req = urllib.request.Request(url, headers={"Accept": APPLICATION_JSON})
         with urllib.request.urlopen(req, timeout=3) as resp:  # noqa: S310 - Ollama em loopback fixo  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
             data = json.loads(resp.read().decode("utf-8"))
             raw_models = data.get("models", [])
@@ -172,13 +176,13 @@ def clean_terminal_output(text: str) -> str:
 
         t = part
         # 1. Flechas e direcionadores LaTeX
-        t = re.sub(r"\\xrightarrow\[(.*?)\]\{(.*?)\}", r" -[ \1 | \2 ]-> ", t)
-        t = re.sub(r"\\xrightarrow\{(.*?)\}", r" -[ \1 ]-> ", t)
-        t = re.sub(r"\s*\\(rightarrow|to)\s*", " -> ", t)
-        t = re.sub(r"\s*\\leftarrow\s*", " <- ", t)
-        t = re.sub(r"\s*\\Rightarrow\s*", " => ", t)
-        t = re.sub(r"\s*\\Leftarrow\s*", " <= ", t)
-        t = re.sub(r"\s*\\leftrightarrow\s*", " <-> ", t)
+        t = re.sub(r"\\xrightarrow\[([^\]]*)\]\{([^}]*)\}", r" -[ \1 | \2 ]-> ", t)
+        t = re.sub(r"\\xrightarrow\{([^}]*)\}", r" -[ \1 ]-> ", t)
+        t = re.sub(r"\\(?:rightarrow|to)", " -> ", t)
+        t = t.replace(r"\leftarrow", " <- ")
+        t = t.replace(r"\Rightarrow", " => ")
+        t = t.replace(r"\Leftarrow", " <= ")
+        t = t.replace(r"\leftrightarrow", " <-> ")
 
         # 2. Operadores matematicos
         t = re.sub(r"\\sum\b", "Soma", t)
@@ -325,7 +329,7 @@ def query_ollama_direct(
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": APPLICATION_JSON},
         method="POST",
     )
 
@@ -363,7 +367,7 @@ def query_gemma_proxy(
     if not auth_token:
         console.print("[bold red][ERRO] API_SECRET_TOKEN nao configurada para o proxy de inferencia.[/]")
         return ""
-    headers = {"Content-Type": "application/json", "X-Vitoi-Auth": auth_token}
+    headers = {"Content-Type": APPLICATION_JSON, "X-Vitoi-Auth": auth_token}
 
     payload: dict = {"prompt": prompt, "model": model_key, "max_tokens": max_tokens}
     if system_prompt:
@@ -408,7 +412,7 @@ def _compact_conversation(
         if msg.get("role") == "system":
             content = msg.get("content", "")
             if new_model_tag and "open-source" in content:
-                content = re.sub(r"open-source [^,]+,", f"open-source {new_model_tag},", content)
+                content = re.sub(OPEN_SOURCE_MODEL_PATTERN, f"open-source {new_model_tag},", content)
             system_msgs.append({"role": "system", "content": content})
         else:
             dialogue_msgs.append(msg.copy())
@@ -483,6 +487,138 @@ def _configure_chat_session(ollama_tag: str) -> tuple[str | None, list[dict[str,
     return system_prompt, conversation, max_tokens
 
 
+def _chat_dialogue_count(conversation: list[dict[str, str]]) -> int:
+    return sum(message.get("role") in ("user", "assistant") for message in conversation)
+
+
+def _print_chat_modes() -> None:
+    console.print(POKER_MODE_LABEL)
+    console.print(CONVERSATIONAL_MODE_LABEL)
+
+
+def _update_system_model_tag(conversation: list[dict[str, str]], model_tag: str) -> None:
+    for message in conversation:
+        if message.get("role") == "system":
+            message["content"] = re.sub(
+                OPEN_SOURCE_MODEL_PATTERN, f"open-source {model_tag},", message.get("content", "")
+            )
+
+
+def _resolve_requested_model(user_input: str) -> str | None:
+    parts = user_input.split(maxsplit=1)
+    command = parts[0].lower()
+    argument = parts[1].strip() if len(parts) > 1 else ""
+    installed = discover_ollama_models()
+    if command == "/models" and not argument:
+        _select_model_interactively(installed)
+        return None
+    selectable = [model for model in installed if model.get("tier") == "local"] + [
+        model for model in installed if model.get("tier") == "cloud"
+    ]
+    if not argument:
+        return _select_model_interactively(installed)
+    if argument.isdecimal() and 1 <= int(argument) <= len(selectable):
+        return str(selectable[int(argument) - 1]["tag"])
+    return OLLAMA_MODEL_MAP.get(argument, argument)
+
+
+def _switch_chat_model(
+    model_tag: str, system_prompt: str | None, conversation: list[dict[str, str]], max_tokens: int, user_input: str
+) -> tuple[str, str | None, list[dict[str, str]], int]:
+    new_model_tag = _resolve_requested_model(user_input)
+    if not new_model_tag or new_model_tag == model_tag:
+        if new_model_tag:
+            console.print(f"[yellow]O modelo '{model_tag}' ja e o modelo ativo nesta sessao.[/]")
+        return model_tag, system_prompt, conversation, max_tokens
+    console.print(f"\n[bold magenta]=== TRANSICAO DE MODELO: {model_tag} -> {new_model_tag} ===[/]")
+    console.print("  [1] Hot-swap: Manter 10% do contexto recente (/compact) [Padrao]")
+    console.print("  [2] Nova Sessao: Limpar historico e iniciar conversa do zero")
+    if (input("\nEscolha a opcao (1-2) [1]: ").strip() or "1") != "2":
+        before_count = _chat_dialogue_count(conversation)
+        conversation = _compact_conversation(conversation, keep_ratio=0.10, new_model_tag=new_model_tag)
+        system_prompt = (
+            re.sub(OPEN_SOURCE_MODEL_PATTERN, f"open-source {new_model_tag},", system_prompt) if system_prompt else None
+        )
+        console.print(
+            f"[bold green][HOT-SWAP SOTA] Modelo alternado para {new_model_tag}. Contexto compactado: {before_count} -> {_chat_dialogue_count(conversation)} mensagens (~10% retido).[/]\n"
+        )
+        return new_model_tag, system_prompt, conversation, max_tokens
+    if input(f"Deseja reconfigurar tema/persona para {new_model_tag}? [s/N]: ").strip().lower() == "s":
+        _print_chat_modes()
+        system_prompt, conversation, max_tokens = _configure_chat_session(new_model_tag)
+    else:
+        conversation = [message for message in conversation if message.get("role") == "system"]
+        system_prompt = (
+            re.sub(OPEN_SOURCE_MODEL_PATTERN, f"open-source {new_model_tag},", system_prompt) if system_prompt else None
+        )
+        _update_system_model_tag(conversation, new_model_tag)
+    console.print(f"[bold yellow][NOVA SESSAO INICIADA] Modelo ativo: {new_model_tag}. Historico zerado.[/]\n")
+    return new_model_tag, system_prompt, conversation, max_tokens
+
+
+def _handle_chat_command(
+    user_input: str,
+    model_tag: str,
+    system_prompt: str | None,
+    conversation: list[dict[str, str]],
+    max_tokens: int,
+    use_proxy: bool,
+) -> tuple[bool, str, str | None, list[dict[str, str]], int]:
+    command = user_input.lower()
+    if command in {"/help", "/?"}:
+        console.print("\n[bold cyan]=== COMANDOS DISPONIVEIS NO CHAT SOTA ===[/]")
+        console.print(
+            "  [bold green]/model [tag|#][/]    : Seletor de modelos e hot-swap (mantem 10% do contexto ou nova sessao)"
+        )
+        console.print("  [bold green]/switch [tag|#][/]   : Alias direto para /model")
+        console.print("  [bold green]/models[/]           : Lista catalogo dinamico de modelos instalados")
+        console.print(
+            "  [bold green]/compact[/]          : Reduz historico a ~10% das mensagens recentes preservando persona"
+        )
+        console.print(
+            "  [bold green]/new[/]              : Encerra sessao atual e inicia nova do zero com o mesmo modelo"
+        )
+        console.print(
+            "  [bold green]/reset[/] ou [bold green]/clear[/]  : Limpa historico de mensagens preservando persona"
+        )
+        console.print("  [bold green]/status[/]           : Exibe telemetria da sessao (modelo, mensagens, tokens)")
+        console.print("  [bold green]/exit[/] ou [bold green]/quit[/]     : Encerra o chat e retorna ao terminal\n")
+    elif command == "/status":
+        systems = sum(message.get("role") == "system" for message in conversation)
+        family = model_tag.split(":")[0].split("/")[-1].capitalize()
+        connection = "Proxy 17043" if use_proxy else "Ollama Nativo 11434"
+        console.print(
+            f"\n[bold cyan][STATUS DA SESSAO][/]\n  * Modelo Ativo:    [bold green]{model_tag}[/] (Familia: {family})\n  * Mensagens:       [bold white]{_chat_dialogue_count(conversation)}[/] dialogos (+ {systems} sistema)\n  * Teto de Tokens:  [yellow]{max_tokens}[/] (num_predict)\n  * Modo de Conexao: [cyan]{connection}[/]\n"
+        )
+    elif command == "/compact":
+        before_count = _chat_dialogue_count(conversation)
+        if before_count <= 2:
+            console.print("[yellow][COMPACT] Historico muito curto para compactacao (<= 2 mensagens).[/]")
+        else:
+            conversation = _compact_conversation(conversation, keep_ratio=0.10, new_model_tag=model_tag)
+            console.print(
+                f"[bold cyan][COMPACT SOTA] Contexto compactado com sucesso: {before_count} -> {_chat_dialogue_count(conversation)} mensagens (~10% mais recentes preservadas). Persona intacta.[/]"
+            )
+    elif command == "/new":
+        console.print(f"\n[bold yellow]=== NOVA SESSAO ({model_tag}) ===[/]")
+        if input("Deseja reconfigurar modo e tema? [s/N]: ").strip().lower() == "s":
+            _print_chat_modes()
+            system_prompt, conversation, max_tokens = _configure_chat_session(model_tag)
+        else:
+            conversation = [message for message in conversation if message.get("role") == "system"]
+            console.print(f"[yellow]Historico reiniciado. Persona preservada para {model_tag}.[/]\n")
+    elif command in {"/reset", "/clear"}:
+        conversation = [message for message in conversation if message.get("role") == "system"]
+        console.print("[yellow]Historico limpo. Persona preservada.[/]")
+    elif user_input.startswith(("/model", "/switch", "/models")):
+        model_tag, system_prompt, conversation, max_tokens = _switch_chat_model(
+            model_tag, system_prompt, conversation, max_tokens, user_input
+        )
+    else:
+        return False, model_tag, system_prompt, conversation, max_tokens
+    return True, model_tag, system_prompt, conversation, max_tokens
+
+
 def _run_chat_loop(
     model_tag: str,
     system_prompt: str | None,
@@ -490,185 +626,31 @@ def _run_chat_loop(
     max_tokens: int,
     use_proxy: bool = False,
 ) -> None:
-    model_family = model_tag.split(":")[0].split("/")[-1].capitalize()
     console.print(
         "\n[dim]Comandos: /model [tag|#] (trocar modelo) | /compact (reter 10%) | /new (nova sessao) | /status | /help | /exit[/]\n"
     )
-
     while True:
         try:
             user_input = input("Hero > ").strip()
             if not user_input:
                 continue
-
-            # Comandos de encerramento
             if user_input.lower() in {"/exit", "/quit"}:
                 console.print("[bold cyan]Sessao encerrada.[/]")
                 break
-
-            # Help
-            if user_input.lower() in {"/help", "/?"}:
-                console.print("\n[bold cyan]=== COMANDOS DISPONIVEIS NO CHAT SOTA ===[/]")
-                console.print(
-                    "  [bold green]/model [tag|#][/]    : Seletor de modelos e hot-swap (mantem 10% do contexto ou nova sessao)"
-                )
-                console.print("  [bold green]/switch [tag|#][/]   : Alias direto para /model")
-                console.print("  [bold green]/models[/]           : Lista catalogo dinamico de modelos instalados")
-                console.print(
-                    "  [bold green]/compact[/]          : Reduz historico a ~10% das mensagens recentes preservando persona"
-                )
-                console.print(
-                    "  [bold green]/new[/]              : Encerra sessao atual e inicia nova do zero com o mesmo modelo"
-                )
-                console.print(
-                    "  [bold green]/reset[/] ou [bold green]/clear[/]  : Limpa historico de mensagens preservando persona"
-                )
-                console.print(
-                    "  [bold green]/status[/]           : Exibe telemetria da sessao (modelo, mensagens, tokens)"
-                )
-                console.print(
-                    "  [bold green]/exit[/] ou [bold green]/quit[/]     : Encerra o chat e retorna ao terminal\n"
-                )
+            handled, model_tag, system_prompt, conversation, max_tokens = _handle_chat_command(
+                user_input, model_tag, system_prompt, conversation, max_tokens, use_proxy
+            )
+            if handled:
                 continue
-
-            # Status da sessao
-            if user_input.lower() == "/status":
-                system_cnt = len([m for m in conversation if m.get("role") == "system"])
-                dialogue_cnt = len([m for m in conversation if m.get("role") in ("user", "assistant")])
-                console.print(
-                    f"\n[bold cyan][STATUS DA SESSAO][/]\n"
-                    f"  * Modelo Ativo:    [bold green]{model_tag}[/] (Familia: {model_family})\n"
-                    f"  * Mensagens:       [bold white]{dialogue_cnt}[/] dialogos (+ {system_cnt} sistema)\n"
-                    f"  * Teto de Tokens:  [yellow]{max_tokens}[/] (num_predict)\n"
-                    f"  * Modo de Conexao: [cyan]{'Proxy 17043' if use_proxy else 'Ollama Nativo 11434'}[/]\n"
-                )
-                continue
-
-            # Compactar contexto explicitamente (/compact)
-            if user_input.lower() == "/compact":
-                dialogue_cnt = len([m for m in conversation if m.get("role") in ("user", "assistant")])
-                if dialogue_cnt <= 2:
-                    console.print("[yellow][COMPACT] Historico muito curto para compactacao (<= 2 mensagens).[/]")
-                else:
-                    conversation = _compact_conversation(conversation, keep_ratio=0.10, new_model_tag=model_tag)
-                    after_cnt = len([m for m in conversation if m.get("role") in ("user", "assistant")])
-                    console.print(
-                        f"[bold cyan][COMPACT SOTA] Contexto compactado com sucesso: "
-                        f"{dialogue_cnt} -> {after_cnt} mensagens (~10% mais recentes preservadas). Persona intacta.[/]"
-                    )
-                continue
-
-            # Nova sessao do zero com o mesmo modelo
-            if user_input.lower() == "/new":
-                console.print(f"\n[bold yellow]=== NOVA SESSAO ({model_tag}) ===[/]")
-                reconfig = input("Deseja reconfigurar modo e tema? [s/N]: ").strip().lower()
-                if reconfig == "s":
-                    console.print("[1] Modo Poker SOTA (Agentico Otimizado)")
-                    console.print("[2] Modo Conversacional / Tema Customizado (LLM Otimizado)")
-                    system_prompt, conversation, max_tokens = _configure_chat_session(model_tag)
-                else:
-                    conversation = [m for m in conversation if m.get("role") == "system"]
-                    console.print(f"[yellow]Historico reiniciado. Persona preservada para {model_tag}.[/]\n")
-                continue
-
-            # Reset simples de historico
-            if user_input.lower() in {"/reset", "/clear"}:
-                conversation = [m for m in conversation if m.get("role") == "system"]
-                console.print("[yellow]Historico limpo. Persona preservada.[/]")
-                continue
-
-            # Seletor e troca de modelos (Hot-swap ou Nova Sessao)
-            if user_input.startswith(("/model", "/switch", "/models")):
-                parts = user_input.split(maxsplit=1)
-                cmd = parts[0].lower()
-                arg = parts[1].strip() if len(parts) > 1 else ""
-
-                installed = discover_ollama_models()
-                all_selectable = [m for m in installed if m.get("tier") == "local"] + [
-                    m for m in installed if m.get("tier") == "cloud"
-                ]
-
-                if cmd == "/models" and not arg:
-                    _select_model_interactively(installed)
-                    continue
-
-                new_model_tag: str = ""
-                if arg:
-                    if arg.isdecimal() and 1 <= int(arg) <= len(all_selectable):
-                        new_model_tag = str(all_selectable[int(arg) - 1]["tag"])
-                    else:
-                        new_model_tag = OLLAMA_MODEL_MAP.get(arg, arg)
-                else:
-                    new_model_tag = _select_model_interactively(installed)
-
-                if new_model_tag == model_tag:
-                    console.print(f"[yellow]O modelo '{model_tag}' ja e o modelo ativo nesta sessao.[/]")
-                    continue
-
-                console.print(f"\n[bold magenta]=== TRANSICAO DE MODELO: {model_tag} -> {new_model_tag} ===[/]")
-                console.print("  [1] Hot-swap: Manter 10% do contexto recente (/compact) [Padrao]")
-                console.print("  [2] Nova Sessao: Limpar historico e iniciar conversa do zero")
-                mode_opt = input("\nEscolha a opcao (1-2) [1]: ").strip() or "1"
-
-                if mode_opt == "2":
-                    reconfig = input(f"Deseja reconfigurar tema/persona para {new_model_tag}? [s/N]: ").strip().lower()
-                    if reconfig == "s":
-                        console.print("[1] Modo Poker SOTA (Agentico Otimizado)")
-                        console.print("[2] Modo Conversacional / Tema Customizado (LLM Otimizado)")
-                        system_prompt, conversation, max_tokens = _configure_chat_session(new_model_tag)
-                    else:
-                        conversation = [m for m in conversation if m.get("role") == "system"]
-                        if system_prompt:
-                            system_prompt = re.sub(
-                                r"open-source [^,]+,", f"open-source {new_model_tag},", system_prompt
-                            )
-                        for m in conversation:
-                            if m.get("role") == "system":
-                                m["content"] = re.sub(
-                                    r"open-source [^,]+,", f"open-source {new_model_tag},", m.get("content", "")
-                                )
-                    model_tag = new_model_tag
-                    model_family = model_tag.split(":")[0].split("/")[-1].capitalize()
-                    console.print(
-                        f"[bold yellow][NOVA SESSAO INICIADA] Modelo ativo: {model_tag}. Historico zerado.[/]\n"
-                    )
-                else:
-                    before_cnt = len([m for m in conversation if m.get("role") in ("user", "assistant")])
-                    conversation = _compact_conversation(conversation, keep_ratio=0.10, new_model_tag=new_model_tag)
-                    if system_prompt:
-                        system_prompt = re.sub(r"open-source [^,]+,", f"open-source {new_model_tag},", system_prompt)
-                    model_tag = new_model_tag
-                    model_family = model_tag.split(":")[0].split("/")[-1].capitalize()
-                    after_cnt = len([m for m in conversation if m.get("role") in ("user", "assistant")])
-                    console.print(
-                        f"[bold green][HOT-SWAP SOTA] Modelo alternado para {model_tag}. "
-                        f"Contexto compactado: {before_cnt} -> {after_cnt} mensagens (~10% retido).[/]\n"
-                    )
-                continue
-
             conversation.append({"role": "user", "content": user_input})
-            print(f"{model_family} > ", end="", flush=True)
-
-            if use_proxy:
-                response = query_gemma_proxy(
-                    model_tag,
-                    user_input,
-                    system_prompt,
-                    conversation,
-                    max_tokens=max_tokens,
-                )
-            else:
-                response = query_ollama_direct(
-                    model_tag,
-                    user_input,
-                    system_prompt,
-                    conversation,
-                    max_tokens=max_tokens,
-                )
-
+            print(f"{model_tag.split(':')[0].split('/')[-1].capitalize()} > ", end="", flush=True)
+            response = (
+                query_gemma_proxy(model_tag, user_input, system_prompt, conversation, max_tokens=max_tokens)
+                if use_proxy
+                else query_ollama_direct(model_tag, user_input, system_prompt, conversation, max_tokens=max_tokens)
+            )
             if response:
                 conversation.append({"role": "assistant", "content": response})
-
         except KeyboardInterrupt:
             console.print("\n[bold cyan]Sessao encerrada.[/]")
             break
@@ -683,8 +665,8 @@ def start_interactive_chat(model_key: str | None = None, use_proxy: bool = False
         model_tag = OLLAMA_MODEL_MAP.get(model_key, model_key)
 
     console.print(f"\n[bold magenta]=== Chat SOTA | {model_tag} ===[/]")
-    console.print("[1] Modo Poker SOTA (Agentico Otimizado)")
-    console.print("[2] Modo Conversacional / Tema Customizado (LLM Otimizado)")
+    console.print(POKER_MODE_LABEL)
+    console.print(CONVERSATIONAL_MODE_LABEL)
 
     system_prompt, conversation, max_tokens = _configure_chat_session(model_tag)
     _run_chat_loop(model_tag, system_prompt, conversation, max_tokens, use_proxy=use_proxy)

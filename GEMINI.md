@@ -23,6 +23,7 @@ $$\text{Task List (task.md)} \longrightarrow \text{Implementation Plan (implemen
 1. **Indexação Zero-Token:** Conformidade com Seção 10 do `MODUS_OPERANDI.md`.
 2. **Diagramação Mermaid Validada:** Proibição de `gantt` e `xychart-beta`. Uso de `flowchart`, `stateDiagram-v2`, `sequenceDiagram`, `classDiagram`.
 3. **KaTeX Blindado:** Fórmulas matemáticas com `$..$` ou `$$..$$` e escape de valores monetários com `\$`.
+
 ---
 
 ## V. DELEGAÇÃO ASSÍNCRONA EM NUVEM (GOOGLE JULES VIA MCP)
