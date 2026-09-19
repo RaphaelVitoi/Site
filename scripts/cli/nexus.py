@@ -786,11 +786,25 @@ def _higienizar_sob_pressao() -> None:
         logger.info("[MEMORY-GUARD] Higienizacao por %s. Commit %s", motivo, efeito)
 
 
+def _contagem_antes_de_warning(texto: str) -> int:
+    for ocorrencia in re.finditer("warning", texto, re.IGNORECASE):
+        fim = ocorrencia.start()
+        while fim > 0 and texto[fim - 1].isspace():
+            fim -= 1
+        if fim == ocorrencia.start():
+            continue
+        inicio = fim
+        while inicio > 0 and texto[inicio - 1].isdecimal():
+            inicio -= 1
+        if inicio < fim:
+            return int(texto[inicio:fim])
+    return 0
+
+
 def _warnings_da_fase(name: str, texto_unificado: str, linhas: list[str]) -> int:
     # Fallback semantico deterministico para ferramentas que nao emitem o banner nativo
     if "eslint" in name.lower() or "lint" in name.lower():
-        w_match = re.search(r"(?<!\d)(\d+)\s+warning", texto_unificado, re.IGNORECASE)
-        warnings_count = int(w_match.group(1)) if w_match else 0
+        warnings_count = _contagem_antes_de_warning(texto_unificado)
     elif "build" in name.lower() or "next" in name.lower():
         warn_lines = [
             line

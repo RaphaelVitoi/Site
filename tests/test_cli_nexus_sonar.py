@@ -29,6 +29,21 @@ def test_fallback_warnings_preserva_contagem(nome: str, saida: str, esperado: in
 
 
 @pytest.mark.parametrize(
+    ("saida", "esperado"),
+    [
+        ("12warning; 3 warnings; 7 warnings", 3),
+        ("warning sem contagem; 12 erros; warning; 5\n\tWaRnInGs", 5),
+        ("² warnings; ٠ warnings; 9 warnings", 0),
+        ("9" * 30000 + " " * 30000 + "sem aviso", 0),
+        (("7 " + " " * 1000 + "sem aviso warning ") * 1000 + "4 warnings", 4),
+    ],
+    ids=["primeiro-valido", "multilinha", "decimal-zero", "sem-sufixo", "candidatos-invalidos"],
+)
+def test_contagem_linear_de_warnings(saida: str, esperado: int) -> None:
+    assert nexus._warnings_da_fase("lint", saida, saida.splitlines()) == esperado
+
+
+@pytest.mark.parametrize(
     ("codigo", "saida", "esperado"), [(0, "Total de Warnings: 2", 2), (0, "3 warnings", 3), (7, "", 7)]
 )
 def test_passo_preserva_warnings_e_codigo_de_falha(monkeypatch, codigo: int, saida: str, esperado: int) -> None:
