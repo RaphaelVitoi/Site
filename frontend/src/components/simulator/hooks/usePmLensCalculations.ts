@@ -27,6 +27,7 @@ interface PmLensCalculationsParams {
 	aggFactor?: number; // SOTA v7.0 GOLD Harmony
 }
 
+/** Computes per-street PM lens metrics from the current simulator inputs. */
 export function usePmLensCalculations({
 	initialStacks,
 	initialPrizes,
