@@ -41,7 +41,7 @@ from engine.pmev_scenario import (
 RAIZ: Final[Path] = Path(__file__).resolve().parents[1]
 DATA_PATH: Final[Path] = RAIZ / "data" / "aula12_pairs.json"
 
-AULA_1_2_SHA256: Final[str] = "7ca7c89f52c1a4173ee404f1bc4059cabd564fddfb62129a6cd34789b86e4769"
+AULA_1_2_SHA256: Final[str] = "b3fc15ba0b22ae2e15e38b5ea1aa59e1356b168d866bba2a1516958a5c23f930"
 EXPECTED_PAIR_COUNT: Final[int] = 7
 
 # Literal de docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md, linha "Payouts da FT".

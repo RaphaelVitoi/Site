@@ -25,8 +25,8 @@ nao_verificado:
 | Campo | Valor |
 | --- | --- |
 | Autor e fonte primária | Raphael Vitoi, `C:\Users\rapha\Downloads\Aula 1.2.docx` |
-| SHA-256 | `7CA7C89F52C1A4173EE404F1BC4059CABD564FDDFB62129A6CD34789B86E4769` |
-| Estrutura lida | 311 parágrafos, 97 figuras incorporadas, 0 tabelas Word |
+| SHA-256 | `B3FC15BA0B22AE2E15E38B5EA1AA59E1356B168D866BBA2A1516958A5C23F930` (versão 2026-09-02; versão 2026-09-01 tinha hash `7CA7C89F...`) |
+| Estrutura lida | 329 parágrafos, 97 figuras incorporadas, 0 tabelas Word |
 | Natureza | Estudo próprio comparando pós-flop ChipEV (GTO Wizard) e ICMev (HRC Pós-Flop) |
 
 O DOCX original permanece fora do repositório. Este registro conserva apenas
