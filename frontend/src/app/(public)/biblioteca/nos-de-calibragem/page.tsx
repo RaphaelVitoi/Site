@@ -1,7 +1,7 @@
 /**
  * IDENTITY: Nós de Calibração GOLD (Artigo Interativo & Referencial Aula 1.2)
  * PATH: src/app/biblioteca/nos-de-calibragem/page.tsx
- * ROLE: Artigo técnico demonstrando a calibração empírica dos 93 nós da Aula 1.2 e o referencial visual interativo.
+ * ROLE: Artigo técnico demonstrando a calibração empírica dos 97 nós da Aula 1.2 e o referencial visual interativo.
  * VERSION: v8.0 GOLD
  */
 
@@ -25,7 +25,7 @@ const ReferencialAula12 = dynamic(() => import('@/components/simulator/Referenci
 });
 
 const content = String.raw`
-# 🔍 Registro de Calibração: 93 Nodes (Aula 1.2 — SOTA v8.0 GOLD)
+# 🔍 Registro de Calibração: 97 Nós (Aula 1.2 — SOTA v8.0 GOLD)
 
 > **Estado de evidência:** Acervo empírico e analítico de calibração em curadoria.
 > O registro estabelece a ancoragem matemática do Motor ICM contra dados de solvers (HRC Pós-Flop e GTO Wizard),

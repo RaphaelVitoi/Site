@@ -3,6 +3,8 @@ import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { buildNexusServerUrl } from '@/lib/api-contract';
 import { shouldQueryDashboardOrchestrator } from '@/lib/server/dashboard-orchestrator';
+import Link from 'next/link';
+import { ROUTES } from '@/constants/routes';
 
 // Painel privado: telemetria e predição dependem da sessão e do relay local.
 // Nunca pré-renderizar durante o build sem esse contexto operacional.
@@ -209,6 +211,50 @@ export default async function DashboardPage() {
 							{predictive.available ? (predictive.topVazamento ?? '—') : '—'}
 						</div>
 					</GlassPanel>
+				</div>
+
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<Link href={ROUTES.DASHBOARD_FILES} className="group block focus:outline-none">
+						<GlassPanel className="p-6 border-white/10 hover:border-accent-indigo/40 hover:bg-slate-900/60 transition-all duration-300">
+							<div className="flex items-center justify-between gap-4">
+								<div className="flex items-center gap-4">
+									<div className="w-11 h-11 rounded-xl bg-accent-indigo/20 border border-accent-indigo/30 flex items-center justify-center text-accent-indigo shrink-0">
+										<i className="fa-solid fa-folder-open text-lg" />
+									</div>
+									<div>
+										<h3 className="text-base font-bold text-white group-hover:text-accent-indigo-light transition-colors m-0">
+											Explorador de Arquivos & Dados
+										</h3>
+										<p className="text-xs text-text-muted m-0 mt-1">
+											Visualizador seguro de hand histories, relatórios e acervos do operador
+										</p>
+									</div>
+								</div>
+								<i className="fa-solid fa-arrow-right text-xs text-accent-indigo-light transition-transform group-hover:translate-x-1" />
+							</div>
+						</GlassPanel>
+					</Link>
+
+					<Link href={ROUTES.TEMPLO.ANALYTICS} className="group block focus:outline-none">
+						<GlassPanel className="p-6 border-white/10 hover:border-accent-emerald/40 hover:bg-slate-900/60 transition-all duration-300">
+							<div className="flex items-center justify-between gap-4">
+								<div className="flex items-center gap-4">
+									<div className="w-11 h-11 rounded-xl bg-accent-emerald/20 border border-accent-emerald/30 flex items-center justify-center text-accent-emerald shrink-0">
+										<i className="fa-solid fa-chart-pie text-lg" />
+									</div>
+									<div>
+										<h3 className="text-base font-bold text-white group-hover:text-accent-emerald-light transition-colors m-0">
+											Laboratório Quântico (EV)
+										</h3>
+										<p className="text-xs text-text-muted m-0 mt-1">
+											Panóptico de telemetria de perspectiva e distorções ICM em tempo real
+										</p>
+									</div>
+								</div>
+								<i className="fa-solid fa-arrow-right text-xs text-accent-emerald-light transition-transform group-hover:translate-x-1" />
+							</div>
+						</GlassPanel>
+					</Link>
 				</div>
 			</div>
 		</div>

@@ -82,7 +82,7 @@ O framework rejeita alegações dogmáticas: cada tese central é formalizada co
 | **$H_5$** | Amortização de Edge por Stack | Edge Constante | $\Delta \text{ROI}(10\text{bb}) \approx \Delta \text{ROI}(100\text{bb})$ | sem evidência |
 | **$H_6$** | Exploitabilidade via AQRE | Nash Inexplorável | Política AQRE apresenta regret superior | sem evidência |
 | **$H_7$** | Opcionalidade do SPR $\Omega(s)$ | $\Omega(s) \equiv 0$ | $\Omega(s) \le 0$ para $S_{\text{eff}} \ge 40\text{bb}$ | sem evidência |
-| **$H_8$** | Downward Drift de Sizings | Árvores ChipEV | Frequência de apostas $\ge 50\%$ inalterada | transcrita, em validação |
+| **$H_8$** | Downward Drift de Sizings | Árvores ChipEV | Em nós de aposta livre ($\text{Check} \in \text{Ações}(n)$), frequência de apostas $\ge 50\%$ do pote em ICMev não é estritamente menor que em ChipEV | transcrita, em validação |
 | **$H_9$** | Conservação em Late Reg | Valor Nulo | $\sum \Delta V_i + B_{\text{entry}} \neq 0$ | sem evidência |
 | **$H_{10}$** | Pacto Silencioso em FT | ChipEV | Frequência de 3-bet CL vs Vice inalterada | sem evidência |
 | **$H_{11}$** | Insolvência de Pot Odds | Decisão Linear | Decisões puras por Odds têm desempenho idêntico | sem evidência |

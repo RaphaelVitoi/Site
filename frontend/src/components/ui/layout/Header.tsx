@@ -132,8 +132,17 @@ const NAV_ITEMS: NavItem[] = [
         href: ROUTES.DASHBOARD,
         icon: 'fa-satellite-dish',
       },
+      {
+        label: 'Arquivos & Dados',
+        href: ROUTES.DASHBOARD_FILES,
+        icon: 'fa-folder-open',
+      },
       { label: 'Oráculo (Gemma)', href: ROUTES.TEMPLO.GEMMA, icon: 'fa-brain' },
     ],
+  },
+  {
+    label: 'Autor',
+    href: ROUTES.QUEM_SOU,
   },
 ];
 
