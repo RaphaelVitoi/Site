@@ -25,7 +25,8 @@ runner = CliRunner()
 def test_notifications_engine_evaluation_on_real_repo() -> None:
     """Verifica avaliacao das arvores do Dream-RSI, token budget e recomendacoes."""
     engine = DashboardNotificationsEngine()
-    report = engine.evaluate()
+    with patch.object(engine, "_inspect_discovery_db", return_value=(364, 664)):
+        report = engine.evaluate()
 
     assert report.dream_trees_count >= 364
     assert report.dream_nodes_count >= 664
@@ -76,7 +77,8 @@ def test_notifications_engine_token_budget_warning(tmp_path: Path) -> None:
 
 def test_cli_dashboard_notify_flag() -> None:
     """Valida saida sintetizada da flag --notify para automacoes periodicas."""
-    result = runner.invoke(app, ["dashboard", "--notify"])
+    with patch.object(DashboardNotificationsEngine, "_inspect_discovery_db", return_value=(364, 664)):
+        result = runner.invoke(app, ["dashboard", "--notify"])
     assert result.exit_code == 0
     assert "NOTIFICACOES, STATUS DINAMICO & RECOMENDACOES" in result.stdout
     assert "Dream-RSI:" in result.stdout
