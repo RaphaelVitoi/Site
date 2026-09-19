@@ -24,6 +24,8 @@ import { safeRedirectPath } from '@/app/(auth)/callback/redirect';
 const ICONE_DO_PROVEDOR: Record<string, string> = {
 	google: 'fa-brands fa-google',
 	discord: 'fa-brands fa-discord',
+	'dev-operator': 'fa-solid fa-terminal text-accent-indigo-light',
+	credentials: 'fa-solid fa-terminal text-accent-indigo-light',
 };
 
 type ProvedorCliente = NonNullable<Awaited<ReturnType<typeof getProviders>>>[string];

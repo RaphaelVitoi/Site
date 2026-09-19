@@ -552,16 +552,19 @@ export default function FilesDashboardPage() {
     async function fetchFiles() {
       try {
         const res = await fetch('/api/vitoi/files/list');
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          const errPayload = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(errPayload?.error || `Serviço temporariamente indisponível (HTTP ${res.status}).`);
+        }
         const data = (await res.json()) as { status: string; tree: SourceTree[]; error?: string };
         if (data.status === 'SUCCESS') {
           setTree(data.tree);
         } else {
-          throw new Error(data.error || 'Failed to retrieve file tree.');
+          throw new Error(data.error || 'Falha ao obter lista de arquivos.');
         }
       } catch (err: unknown) {
         console.error('[Files DB] Tree load failed:', err);
-        setError((err as Error).message || 'API connection failed.');
+        setError((err as Error).message || 'Falha na conexão com a API de arquivos.');
       } finally {
         setLoading(false);
       }
@@ -584,7 +587,10 @@ export default function FilesDashboardPage() {
       try {
         const encPath = encodeURIComponent(file.path);
         const res = await fetch(`/api/vitoi/files/view?path=${encPath}`);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          const errPayload = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(errPayload?.error || `Erro ao ler arquivo (HTTP ${res.status}).`);
+        }
         const data = (await res.json()) as FileContent;
         if (ativo) setFileContent(data);
       } catch (err: unknown) {
@@ -592,7 +598,7 @@ export default function FilesDashboardPage() {
         if (ativo)
           setFileContent({
             type: 'text',
-            error: (err as Error).message || 'Failed to read file.',
+            error: (err as Error).message || 'Falha ao ler arquivo.',
           });
       } finally {
         if (ativo) setLoadingContent(false);

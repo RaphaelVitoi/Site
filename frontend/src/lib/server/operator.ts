@@ -12,13 +12,19 @@ import 'server-only';
  * A lista vem de `NEXUS_OPERATOR_EMAILS` (separada por vírgula). Lista vazia falha FECHADO:
  * ninguém é operador até que o ambiente declare alguém.
  */
+export const DEV_OPERATOR_EMAIL = 'operador@local.nexus';
+
 export function operatorEmails(environment: Partial<NodeJS.ProcessEnv> = process.env): Set<string> {
-	return new Set(
+	const emails = new Set(
 		(environment['NEXUS_OPERATOR_EMAILS'] ?? '')
 			.split(',')
 			.map((email) => email.trim().toLowerCase())
 			.filter((email) => email.includes('@')),
 	);
+	if (environment['NODE_ENV'] === 'development') {
+		emails.add(DEV_OPERATOR_EMAIL);
+	}
+	return emails;
 }
 
 export function isOperatorEmail(

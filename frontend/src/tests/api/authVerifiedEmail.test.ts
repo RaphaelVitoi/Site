@@ -8,6 +8,7 @@ const capturado: { signIn?: SignIn | undefined } = {};
 jest.mock('server-only', () => ({}));
 jest.mock('next-auth/providers/discord', () => ({ __esModule: true, default: { id: 'discord' } }));
 jest.mock('next-auth/providers/google', () => ({ __esModule: true, default: { id: 'google' } }));
+jest.mock('next-auth/providers/credentials', () => ({ __esModule: true, default: jest.fn(() => ({ id: 'dev-operator' })) }));
 jest.mock('next-auth', () => ({
 	__esModule: true,
 	default: (config: { callbacks?: { signIn?: SignIn } }) => {
