@@ -478,6 +478,20 @@ class GoogleGenAIAdapter:
         return payload
 
     @staticmethod
+    def _extrair_de_parte(p: Any) -> str | None:
+        """Extrai texto de uma parte se nao for thought block."""
+        if isinstance(p, dict):
+            if p.get("thought", False):
+                return None
+            return p.get("text") or None
+        txt = getattr(p, "text", "")
+        if not txt:
+            return None
+        if getattr(p, "thought", False):
+            return None
+        return txt
+
+    @staticmethod
     def extrair_texto(resposta: Any) -> str:
         """Extrai partes de texto candidatas, ignorando thought blocks e assinaturas."""
         candidates = resposta.get("candidates") if isinstance(resposta, dict) else getattr(resposta, "candidates", None)
@@ -490,16 +504,9 @@ class GoogleGenAIAdapter:
         parts = content.get("parts") if isinstance(content, dict) else getattr(content, "parts", None)
         textos: list[str] = []
         for p in parts or []:
-            if isinstance(p, dict):
-                if p.get("thought", False):
-                    continue
-                if "text" in p and p["text"]:
-                    textos.append(p["text"])
-            else:
-                txt = getattr(p, "text", "")
-                is_thought = getattr(p, "thought", False)
-                if txt and not is_thought:
-                    textos.append(txt)
+            txt = GoogleGenAIAdapter._extrair_de_parte(p)
+            if txt:
+                textos.append(txt)
         return "".join(textos)
 
     @staticmethod
