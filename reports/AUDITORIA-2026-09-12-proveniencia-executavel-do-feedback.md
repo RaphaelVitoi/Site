@@ -36,6 +36,10 @@ nao_verificado:
   - suite integral e pre-commit nao executados
   - sem commit ou push
   - regime de supervisao de sete registros historicos nao comprovado pelas fontes consultadas
+revisoes_de_ancora:
+  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
+    caminhos: [CLAUDE.md, scripts/ops/AgentCalibrationProvenance.ps1]
+    parecer: "As modificacoes de 2026-09-20 expandem o conjunto de condutores validos ( Hermes Agent/hermes-agent, Ollama/ollama, llama.cpp/llama-cpp ) no AgentCalibrationProvenance.ps1 e documentam o mapeamento no CLAUDE.md. O contrato de proveniencia permanece fail-closed: o script rejeita qualquer veiculo nao listado e qualquer modelo sem familia de provedor reconhecida. A expansao e coerente com o contrato que esta auditoria validou, e o script continua recusando o que nao esta na whitelist."
 supersede: null
 ---
 

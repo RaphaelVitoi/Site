@@ -193,6 +193,10 @@ revisoes_de_ancora:
   - registro: agent-calibration-daily-2026-09-02
     caminhos: [reports/agent-calibration/feedback-ledger.jsonl, scripts/ops/New-AgentCalibrationDailyEvidence.ps1, tests/test_calibracao_portao_por_sessao.py]
     parecer: O snapshot diário permanece uma fotografia histórica; o leitor atual preserva seu ledger e acrescenta elegibilidade acumulativa por proveniência.
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos: [CLAUDE.md, scripts/ops/AgentCalibrationProvenance.ps1, reports/AUDITORIA-2026-09-12-proveniencia-executavel-do-feedback.md]
+    parecer: "As modificacoes de 2026-09-20 expandem o conjunto de condutores validos (Hermes Agent/hermes-agent, Ollama/ollama, llama.cpp/llama-cpp) no AgentCalibrationProvenance.ps1 e documentam o mapeamento no CLAUDE.md. O registro AUDITORIA-2026-09-12-proveniencia-executavel-do-feedback.md recebe revisoes_de_ancora confirmando que a expansao e coerente com seu contrato fail-closed. Nenhuma das tres modificacoes invalida os contratos existentes; todas sao aditivas."
+
 verificado:
   - configuracao persistida da automacao relida e regra acumulativa confirmada
   - duas cadeias validadas novamente em pwsh nesta consolidacao

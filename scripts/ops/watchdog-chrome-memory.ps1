@@ -30,32 +30,11 @@ Write-Host "--------------------------------------------------------------------
 
 if ($totalMemGB -gt $MaxMemoryThresholdGb -or $AutoPurgeCaches) {
     Write-Host "[ALERTA] Uso de memória ($totalMemGB GB) atingiu o limiar de $MaxMemoryThresholdGb GB." -ForegroundColor Yellow
-    Write-Host "[AÇÃO] Disparando compactação de memória e expurgo de caches transitórios..." -ForegroundColor Cyan
-    
-    # 1. Compactação de WorkingSet via EmptyWorkingSet API do Windows
-    Add-Type -TypeDefinition @"
-        using System;
-        using System.Runtime.InteropServices;
-        public class Win32Mem {
-            [DllImport("psapi.dll")]
-            public static extern int EmptyWorkingSet(IntPtr hwProc);
-        }
-"@
-    
-    foreach ($proc in $chromeProcs) {
-        try {
-            [Win32Mem]::EmptyWorkingSet($proc.Handle) | Out-Null
-        } catch {}
-    }
-    
-    Start-Sleep -Seconds 1
-    $afterProcs = Get-Process -Name 'chrome' -ErrorAction SilentlyContinue
-    $afterMemBytes = ($afterProcs | Measure-Object -Property WorkingSet64 -Sum).Sum
-    $afterMemGB = [math]::Round($afterMemBytes / 1GB, 3)
-    $afterMemMB = [math]::Round($afterMemBytes / 1MB, 2)
-    $savedMB = [math]::Round($totalMemMB - $afterMemMB, 2)
-    
-    Write-Host "[RESULTADO] Memória reduzida para $afterMemMB MB ($afterMemGB GB). Economia de $savedMB MB." -ForegroundColor Green
+    # Expulsar paginas do working set nao libera a memoria comprometida.
+    # O watchdog observa sem forcar paginacao em todos os navegadores do usuario.
+    $privateMB = [math]::Round(($chromeProcs | Measure-Object PrivateMemorySize64 -Sum).Sum / 1MB, 2)
+    Write-Warning "Working set: $totalMemMB MB; memoria privada: $privateMB MB. Identifique abas/extensoes pelo consumidor."
+    if ($AutoPurgeCaches) { Write-Warning 'AutoPurgeCaches aposentado: nenhuma pagina de memoria foi expulsa.' }
 } else {
     Write-Host "[STATUS] Memória perfeitamente balanceada dentro dos parâmetros SOTA (< $MaxMemoryThresholdGb GB)." -ForegroundColor Green
 }

@@ -25,6 +25,10 @@ verificado:
   - esquemas de frontmatter validados e compatíveis com pre-commit gate
 nao_verificado:
   - nenhuma modificacao destrutiva em arquivos legados
+revisoes_de_ancora:
+  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+    caminhos: [CLAUDE.md]
+    parecer: "As modificacoes de 2026-09-20 a CLAUDE.md (adicionar Hermes Agent, Ollama e llama.cpp como condutores validos no AgentCalibrationProvenance.ps1, ChatGPT 6 Astra como integrante do Tier 1, e Solar-Pro4 como condutor Hermes Agent no Tier 2) sao aditivas ao contrato existente e nao alteram a estrutura de diretorios, papéis ou esquema documental definidos pela taxonomia. A taxonomia permanece vigente."
 supersede: null
 ---
 

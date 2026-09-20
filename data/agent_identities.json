@@ -67,7 +67,8 @@
       "email": "noreply@openai.com",
       "veiculo": "codex",
       "modelo": "gpt-6-astra",
-      "tier": "1"
+      "tier": "1",
+      "nota": "Tier 1 e integrante do coletivo Chico. Acionado em momentos pontuais de alto reasoning complexo, admitido apenas em low e medium. Tem as duas faixas (cota de assinatura e pay-as-you-go); dentro da cota o custo marginal e zero. O teto de esforco existe para preservar a cota. Entra por escalonamento pontual, nunca como primario. Pode ser o condutor do Chico quando condicoes de sessao assistida e demanda explicita de Raphael Vitoi (Tier 0) se conciliam (ver regra de excecao em CLAUDE.md secao 7). Sessao assistida e demanda explicita sao condicao, nao direito."
     },
     {
       "nome": "google-labs-jules[bot]",
@@ -76,6 +77,14 @@
       "modelo": "indeterminado",
       "tier": "2",
       "nota": "A SS10.6(b) mede que este campo NAO e configuravel: vem da integracao GitHub App, que commita sob a conta que autorizou a instalacao. Consta aqui como fato, nao como escolha -- por isso o rodape de atribuicao no corpo e obrigatorio."
+    },
+    {
+      "nome": "Solar-Pro4",
+      "email": "solar@users.noreply.github.com",
+      "veiculo": "hermes-agent",
+      "modelo": "solar-pro4",
+      "tier": "2",
+      "nota": "Condutor Hermes Agent. Atua como Tier 2 por padrao; integra Tier 1 quando autorizado explicitamente por Raphael Vitoi (Tier 0, arbitro maior). Sessao assistida."
     }
   ],
   "nunca": [

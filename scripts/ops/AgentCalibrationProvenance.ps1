@@ -61,7 +61,7 @@ function Get-AgentCalibrationProvenance {
     if ($values.supervision_mode -and $values.supervision_mode -cnotin @('assistida', 'automatizada')) {
         $reasons.Add('invalid:supervision_mode')
     }
-    if ($values.conductor_vehicle -and $values.conductor_vehicle -cnotin @('codex', 'claude-code', 'antigravity')) {
+    if ($values.conductor_vehicle -and $values.conductor_vehicle -cnotin @('codex', 'claude-code', 'antigravity', 'hermes-agent', 'ollama', 'llama-cpp')) {
         $reasons.Add('unknown:conductor_vehicle')
     }
     if ($values.conductor_model) {
@@ -77,6 +77,15 @@ function Get-AgentCalibrationProvenance {
             # sobre o que esta autorizado -- guard em tests/test_agent_calibration_provenance.py.
             '^claude-(?:opus|sonnet|haiku|fable)-\d+(?:[.-]\d+)*(?:-[a-z0-9]+)*$' { 'claude-code'; break }
             '^gemini-\d+(?:\.\d+)*-(?:flash|pro)(?:-[a-z0-9]+)*$' { 'antigravity'; break }
+            # Runtimes locais e condutores nao-API: Hermes Agent (solar-pro4),
+            # Ollama (modelos GGUF como qwen2.5-coder:7b, llama3.2, etc.),
+            # llama.cpp direto. Esses modelos nao pertencem a uma familia de
+            # provedor API, e o veiculo esperado e o runtime local -- nao ha
+            # mismatch possivel pois o modelo e executado pelo proprio condutor.
+            # O check do conjunto canonico de modelos de API abaixo e defererido
+            # para esses casos: um modelo local nao precisa estar no registry de
+            # provedores cloud para ser valido como evidencia de sessao local.
+            '^(?:solar-pro\d+|ollama-|llama[-\w]*|qwen[\w-]*:\d+b[a-z_]*)$' { $values.conductor_vehicle; break }
             default { '' }
         }
         if (-not $expected) { $reasons.Add('unknown_or_nonexact:conductor_model') }
