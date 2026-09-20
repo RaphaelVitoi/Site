@@ -130,9 +130,8 @@ class ClippyClipboard:
             text = enforce_pure_ascii(text)
 
         # 1. Metodo primario: PowerShell Set-Clipboard nativo (Windows)
-        if sys.platform == "win32":
-            if cls._copy_via_powershell(text):
-                return True
+        if sys.platform == "win32" and cls._copy_via_powershell(text):
+            return True
 
         # 2. Metodo secundario: pyperclip (se instalado)
         if cls._copy_via_pyperclip(text):
