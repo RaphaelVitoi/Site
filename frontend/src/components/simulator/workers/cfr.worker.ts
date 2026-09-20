@@ -54,9 +54,9 @@ function computeNodeCfr(
   const idx1 = offset + 1;
   const idx2 = offset + 2;
 
-  const r0 = Math.max(localRegret[idx0] ?? 0, 0);
-  const r1 = Math.max(localRegret[idx1] ?? 0, 0);
-  const r2 = Math.max(localRegret[idx2] ?? 0, 0);
+  const r0 = Math.max(localRegret[idx0]!, 0);
+  const r1 = Math.max(localRegret[idx1]!, 0);
+  const r2 = Math.max(localRegret[idx2]!, 0);
 
   const normalizingSum = r0 + r1 + r2;
   const s0 = normalizingSum > 0 ? r0 / normalizingSum : 1 / ACTIONS;
@@ -64,21 +64,21 @@ function computeNodeCfr(
   const s2 = normalizingSum > 0 ? r2 / normalizingSum : 1 / ACTIONS;
 
   // SOTA BOLT: Unrolling `.set([a, b, c])` into flat index assignments to avoid micro-array heap allocations and GC pauses inside the hot loop.
-  currentStrategy[idx0] = s0;
-  currentStrategy[idx1] = s1;
-  currentStrategy[idx2] = s2;
+  currentStrategy[idx0]! = s0;
+  currentStrategy[idx1]! = s1;
+  currentStrategy[idx2]! = s2;
 
-  localStrategy[idx0] = (localStrategy[idx0] ?? 0) + s0;
-  localStrategy[idx1] = (localStrategy[idx1] ?? 0) + s1;
-  localStrategy[idx2] = (localStrategy[idx2] ?? 0) + s2;
+  localStrategy[idx0]! = localStrategy[idx0]! + s0;
+  localStrategy[idx1]! = localStrategy[idx1]! + s1;
+  localStrategy[idx2]! = localStrategy[idx2]! + s2;
 
   // 3. Node Utility (EV da estratégia mista)
   const nodeUtil = s0 * evFold + s1 * evCall + s2 * evRaise;
 
   // 4. Atualizar Arrependimentos (Regrets) com Fator de Diluição (Kappa)
-  localRegret[idx0] = ((localRegret[idx0] ?? 0) + (evFold - nodeUtil)) * kappa;
-  localRegret[idx1] = ((localRegret[idx1] ?? 0) + (evCall - nodeUtil)) * kappa;
-  localRegret[idx2] = ((localRegret[idx2] ?? 0) + (evRaise - nodeUtil)) * kappa;
+  localRegret[idx0]! = (localRegret[idx0]! + (evFold - nodeUtil)) * kappa;
+  localRegret[idx1]! = (localRegret[idx1]! + (evCall - nodeUtil)) * kappa;
+  localRegret[idx2]! = (localRegret[idx2]! + (evRaise - nodeUtil)) * kappa;
 
   // Heurística de Exibição (Probabilidade agregada de agressão: Call/Raise)
   renderMatrix[i] = s1 + s2;
