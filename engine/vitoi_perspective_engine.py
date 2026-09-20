@@ -358,10 +358,10 @@ class ProspectRiskEngine:
 try:
     import numpy as np
 
-    NUMPY_AVAILABLE: bool = True
+    NUMPY_AVAILABLE = True
 except ImportError:
     np = None  # type: ignore
-    NUMPY_AVAILABLE: bool = False
+    NUMPY_AVAILABLE = False
 
 # SOTA: Bootstrap de Aceleracao Nativa C++ (AVX2 / Quantum Tensor Engine)
 TENSOR_ENGINE_AVAILABLE: bool = False

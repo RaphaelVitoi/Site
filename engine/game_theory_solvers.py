@@ -70,7 +70,12 @@ class PotentialAwareAbstraction:
         if is_paired:
             draw_score += 1
 
-        texture = "wet" if draw_score >= 2 else ("paired" if is_paired else "dry")
+        if draw_score >= 2:
+            texture = "wet"
+        elif is_paired:
+            texture = "paired"
+        else:
+            texture = "dry"
         potential_var = min(1.0, 0.15 * draw_score + (0.25 if is_monotone else 0.0))
 
         return cls(

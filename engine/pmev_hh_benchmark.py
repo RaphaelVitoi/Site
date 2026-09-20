@@ -34,7 +34,13 @@ from typing import Final
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
 from engine.pmev_baselines import chip_ev_dollars
-from engine.pmev_hh_canon import CanonicalStructure, is_complete_field, match_structure, parse_pokerstars_hands
+from engine.pmev_hh_canon import (
+    CanonicalStructure,
+    HandState,
+    is_complete_field,
+    match_structure,
+    parse_pokerstars_hands,
+)
 
 __all__ = [
     "BenchmarkReport",
@@ -67,13 +73,9 @@ class HeroObservation:
         return len(self.stacks)
 
 
-def hero_observations(text: str, structure: CanonicalStructure) -> Iterator[HeroObservation]:
-    """Estados completos da familia com o lugar final do heroi observado na propria HH."""
-    texto = text.replace("\r\n", "\n")
-    cabecalhos = list(_CABECALHO.finditer(texto))
+def _extract_final_placements(texto: str, cabecalhos: list[re.Match]) -> dict[tuple[str, str], int]:
+    """Extrai os lugares finais dos jogadores dos blocos de texto."""
     lugares: dict[tuple[str, str], int] = {}
-    heroi_da_mao: dict[int, str] = {}
-    assentos_da_mao: dict[int, list[str]] = {}
     for i, cab in enumerate(cabecalhos):
         fim = cabecalhos[i + 1].start() if i + 1 < len(cabecalhos) else len(texto)
         bloco = texto[cab.start() : fim]
@@ -82,31 +84,67 @@ def hero_observations(text: str, structure: CanonicalStructure) -> Iterator[Hero
             lugares[(tid, nome)] = int(lugar)
         for nome in _CAMPEAO.findall(bloco):
             lugares[(tid, nome)] = 1
+    return lugares
+
+
+def _extract_hero_and_seats(texto: str, cabecalhos: list[re.Match]) -> tuple[dict[int, str], dict[int, list[str]]]:
+    """Extrai o herói e os assentos de cada mão."""
+    heroi_da_mao: dict[int, str] = {}
+    assentos_da_mao: dict[int, list[str]] = {}
+    for cab in cabecalhos:
+        hand_id = int(cab.group(1))
+        fim = (
+            cabecalhos[cabecalhos.index(cab) + 1].start() if cabecalhos.index(cab) + 1 < len(cabecalhos) else len(texto)
+        )
+        bloco = texto[cab.start() : fim]
         pre = bloco.split("*** HOLE CARDS ***", 1)
         if len(pre) == 2:
             dealt = _DEALT.search(pre[1])
             if dealt:
-                heroi_da_mao[int(cab.group(1))] = dealt.group(1)
-        assentos_da_mao[int(cab.group(1))] = re.findall(r"^Seat \d+: (.+?) \(\d+ in chips", pre[0], re.MULTILINE)
+                heroi_da_mao[hand_id] = dealt.group(1)
+        assentos_da_mao[hand_id] = re.findall(r"^Seat \d+: (.+?) \(\d+ in chips", pre[0], re.MULTILINE)
+    return heroi_da_mao, assentos_da_mao
+
+
+def _validate_observation(
+    mao: HandState,
+    heroi: str | None,
+    nomes: list[str],
+    lugar: int | None,
+    structure: CanonicalStructure,
+) -> bool:
+    """Valida se a observação é válida e completa."""
+    return (
+        heroi is not None
+        and heroi in nomes
+        and len(nomes) == len(mao.stacks)
+        and lugar is not None
+        and 1 <= lugar <= len(mao.stacks)
+        and match_structure(mao, [structure]) is structure
+        and is_complete_field(mao, structure)
+    )
+
+
+def hero_observations(text: str, structure: CanonicalStructure) -> Iterator[HeroObservation]:
+    """Estados completos da familia com o lugar final do heroi observado na propria HH."""
+    texto = text.replace("\r\n", "\n")
+    cabecalhos = list(_CABECALHO.finditer(texto))
+    lugares = _extract_final_placements(texto, cabecalhos)
+    heroi_da_mao, assentos_da_mao = _extract_hero_and_seats(texto, cabecalhos)
 
     for mao in parse_pokerstars_hands(texto):
-        if match_structure(mao, [structure]) is not structure or not is_complete_field(mao, structure):
-            continue
         heroi = heroi_da_mao.get(mao.hand_id)
         nomes = assentos_da_mao.get(mao.hand_id, [])
-        if heroi is None or heroi not in nomes or len(nomes) != len(mao.stacks):
-            continue
-        lugar = lugares.get((mao.tournament_id, heroi))
-        if lugar is None or not 1 <= lugar <= len(mao.stacks):
-            continue  # lugar ausente ou incoerente com os vivos: fora, nunca completado
-        yield HeroObservation(
-            tournament_id=mao.tournament_id,
-            hand_id=mao.hand_id,
-            level=mao.level,
-            stacks=tuple(f for _, f in mao.stacks),
-            hero_index=nomes.index(heroi),
-            hero_place=lugar,
-        )
+        lugar = lugares.get((mao.tournament_id, heroi)) if heroi else None
+        if _validate_observation(mao, heroi, nomes, lugar, structure):
+            yield HeroObservation(
+                tournament_id=mao.tournament_id,
+                hand_id=mao.hand_id,
+                level=mao.level,
+                stacks=tuple(f for _, f in mao.stacks),
+                hero_index=nomes.index(heroi) if heroi else 0,
+                hero_place=lugar if lugar else 0,
+            )
 
 
 def place_probabilities(stacks: tuple[int, ...], player: int) -> list[float]:
@@ -188,7 +226,7 @@ def run_benchmark(
     notas = [score_observation(o, structure) for o in observations]
     if not notas:
         raise ValueError("benchmark sem observacoes: nada medido nao e resultado.")
-    rng = random.Random(seed)  # noqa: S311 - bootstrap reprodutivel por seed, nao criptografia  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
+    rng = random.Random(seed)  # noqa: S311 - PRNG deterministimo para bootstrap de metricas, nao criptografia  # Record-Id: registro-2026-09-20-hh-benchmark-bootstrap
     metricas: dict[str, dict[str, list[tuple[float, float]]]] = defaultdict(lambda: defaultdict(list))
     for n in notas:
         metricas["brier"][n.tournament_id].append((n.brier_icm, n.brier_uniforme))

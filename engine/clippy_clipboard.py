@@ -26,10 +26,98 @@ if not logger.handlers:
 MAX_PREVIEW_LEN: Final[int] = 120
 _GMEM_MOVEABLE: Final[int] = 0x0002
 _CF_UNICODETEXT: Final[int] = 13
+_SEPARATOR_LINE: Final[str] = "================================================================================"
 
 
 class ClippyClipboard:
     """Mecanismo universal SOTA para manipulacao da Area de Transferencia."""
+
+    @classmethod
+    def _copy_via_powershell(cls, text: str) -> bool:
+        """Copia texto usando PowerShell Set-Clipboard nativo (Windows)."""
+        try:
+            ps_cmd = [
+                "powershell.exe",
+                "-NoProfile",
+                "-Command",
+                "Set-Clipboard -Value ([Console]::In.ReadToEnd())",
+            ]
+            proc = subprocess.Popen(
+                ps_cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                text=True,
+                encoding="utf-8",
+            )
+            proc.communicate(input=text)
+            if proc.returncode == 0:
+                logger.info("[CLIPPY] Texto copiado com sucesso via PowerShell (%d chars).", len(text))
+                return True
+        except Exception as e:
+            logger.debug("[CLIPPY] Falha no Set-Clipboard via PowerShell: %s", e)
+        return False
+
+    @classmethod
+    def _copy_via_pyperclip(cls, text: str) -> bool:
+        """Copia texto usando pyperclip (se instalado)."""
+        if pyperclip is None:
+            return False
+        try:
+            pyperclip.copy(text)
+            logger.info("[CLIPPY] Texto copiado com sucesso via pyperclip (%d chars).", len(text))
+            return True
+        except Exception as e:
+            logger.debug("[CLIPPY] Falha no pyperclip: %s", e)
+        return False
+
+    @classmethod
+    def _copy_via_win32_ctypes(cls, text: str) -> bool:
+        """Copia texto usando ctypes OpenClipboard (Windows)."""
+        if not (sys.platform == "win32" and hasattr(ctypes, "windll")):
+            return False
+        try:
+            user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
+
+            # Configuracao de assinaturas para compatibilidade 64-bit / 32-bit
+            kernel32.GlobalAlloc.argtypes = [ctypes.c_uint, ctypes.c_size_t]
+            kernel32.GlobalAlloc.restype = ctypes.c_void_p
+
+            kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
+            kernel32.GlobalLock.restype = ctypes.c_void_p
+
+            kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
+            kernel32.GlobalUnlock.restype = ctypes.c_bool
+
+            user32.OpenClipboard.argtypes = [ctypes.c_void_p]
+            user32.OpenClipboard.restype = ctypes.c_bool
+
+            user32.EmptyClipboard.argtypes = []
+            user32.EmptyClipboard.restype = ctypes.c_bool
+
+            user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
+            user32.SetClipboardData.restype = ctypes.c_void_p
+
+            user32.CloseClipboard.argtypes = []
+            user32.CloseClipboard.restype = ctypes.c_bool
+
+            data_bytes = text.encode("utf-16-le") + b"\x00\x00"
+            h_mem = kernel32.GlobalAlloc(_GMEM_MOVEABLE, len(data_bytes))
+            if h_mem:
+                p_mem = kernel32.GlobalLock(h_mem)
+                if p_mem:
+                    ctypes.memmove(p_mem, data_bytes, len(data_bytes))
+                    kernel32.GlobalUnlock(h_mem)
+                    if user32.OpenClipboard(None):
+                        user32.EmptyClipboard()
+                        user32.SetClipboardData(_CF_UNICODETEXT, h_mem)
+                        user32.CloseClipboard()
+                        logger.info("[CLIPPY] Texto copiado com sucesso via Win32 ctypes (%d chars).", len(text))
+                        return True
+        except Exception as e:
+            logger.warning("[CLIPPY] Falha no Win32 ctypes clipboard: %s", e)
+        return False
 
     @classmethod
     def copy(cls, text: str, pure_ascii: bool = True) -> bool:
@@ -43,80 +131,16 @@ class ClippyClipboard:
 
         # 1. Metodo primario: PowerShell Set-Clipboard nativo (Windows)
         if sys.platform == "win32":
-            try:
-                ps_cmd = [
-                    "powershell.exe",
-                    "-NoProfile",
-                    "-Command",
-                    "Set-Clipboard -Value ([Console]::In.ReadToEnd())",
-                ]
-                proc = subprocess.Popen(
-                    ps_cmd,
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    text=True,
-                    encoding="utf-8",
-                )
-                proc.communicate(input=text)
-                if proc.returncode == 0:
-                    logger.info("[CLIPPY] Texto copiado com sucesso via PowerShell (%d chars).", len(text))
-                    return True
-            except Exception as e:
-                logger.debug("[CLIPPY] Falha no Set-Clipboard via PowerShell: %s", e)
+            if cls._copy_via_powershell(text):
+                return True
 
         # 2. Metodo secundario: pyperclip (se instalado)
-        if pyperclip is not None:
-            try:
-                pyperclip.copy(text)
-                logger.info("[CLIPPY] Texto copiado com sucesso via pyperclip (%d chars).", len(text))
-                return True
-            except Exception as e:
-                logger.debug("[CLIPPY] Falha no pyperclip: %s", e)
+        if cls._copy_via_pyperclip(text):
+            return True
 
         # 3. Metodo terciario no Windows: ctypes OpenClipboard
-        if sys.platform == "win32" and hasattr(ctypes, "windll"):
-            try:
-                user32 = ctypes.windll.user32
-                kernel32 = ctypes.windll.kernel32
-
-                # Configuracao de assinaturas para compatibilidade 64-bit / 32-bit (sem truncamento de ponteiros/handles)
-                kernel32.GlobalAlloc.argtypes = [ctypes.c_uint, ctypes.c_size_t]
-                kernel32.GlobalAlloc.restype = ctypes.c_void_p
-
-                kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
-                kernel32.GlobalLock.restype = ctypes.c_void_p
-
-                kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
-                kernel32.GlobalUnlock.restype = ctypes.c_bool
-
-                user32.OpenClipboard.argtypes = [ctypes.c_void_p]
-                user32.OpenClipboard.restype = ctypes.c_bool
-
-                user32.EmptyClipboard.argtypes = []
-                user32.EmptyClipboard.restype = ctypes.c_bool
-
-                user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
-                user32.SetClipboardData.restype = ctypes.c_void_p
-
-                user32.CloseClipboard.argtypes = []
-                user32.CloseClipboard.restype = ctypes.c_bool
-
-                data_bytes = text.encode("utf-16-le") + b"\x00\x00"
-                h_mem = kernel32.GlobalAlloc(_GMEM_MOVEABLE, len(data_bytes))
-                if h_mem:
-                    p_mem = kernel32.GlobalLock(h_mem)
-                    if p_mem:
-                        ctypes.memmove(p_mem, data_bytes, len(data_bytes))
-                        kernel32.GlobalUnlock(h_mem)
-                        if user32.OpenClipboard(None):
-                            user32.EmptyClipboard()
-                            user32.SetClipboardData(_CF_UNICODETEXT, h_mem)
-                            user32.CloseClipboard()
-                            logger.info("[CLIPPY] Texto copiado com sucesso via Win32 ctypes (%d chars).", len(text))
-                            return True
-            except Exception as e:
-                logger.warning("[CLIPPY] Falha no Win32 ctypes clipboard: %s", e)
+        if cls._copy_via_win32_ctypes(text):
+            return True
 
         logger.error("[CLIPPY] Todos os mecanismos de copia para o Clipboard falharam.")
         return False
@@ -153,9 +177,9 @@ class ClippyClipboard:
     ) -> dict[str, str | int | bool]:
         """Monta o payload canonico de Handoff e o copia para a Area de Transferencia."""
         lines = [
-            "================================================================================",
+            _SEPARATOR_LINE,
             f"=== PROTOCOLO DE HANDOFF SOTA v8.0 GOLD -> [{target_llm.upper()}] ===",
-            "================================================================================",
+            _SEPARATOR_LINE,
             "SOBERANO: Raphael Vitoi (AHSD QI 136, PMev Game Theory)",
             "GOVERNANCA: Protocolo Chico SOTA v8.0 GOLD, Zero-Any, Target Lock, Pure ASCII",
             "--------------------------------------------------------------------------------",
@@ -189,11 +213,11 @@ class ClippyClipboard:
 
         lines.extend(
             [
-                "================================================================================",
+                _SEPARATOR_LINE,
                 "=== PROMPT DE CONTINUACAO IMEDIATA (COLE DIRETAMENTE NO CHAT SEGUINTE) ===",
-                "================================================================================",
+                _SEPARATOR_LINE,
                 continuity_prompt,
-                "================================================================================",
+                _SEPARATOR_LINE,
                 "INSTRUCAO: RESPONDA DIRETAMENTE O PRODUTO FINAL EM ALTA DENSIDADE SEM METALINGUAGEM.",
             ]
         )

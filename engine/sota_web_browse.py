@@ -30,8 +30,10 @@ LOGS_DIR: Final[Path] = BASE_DIR / "logs"
 AUDIT_LOG_FILE: Final[Path] = LOGS_DIR / "web_browsing_audit.jsonl"
 CDP_ADMIN_PORT: Final[int] = 9223
 CDP_STANDARD_PORT: Final[int] = 9222
+HTTP_PREFIX: Final[str] = "http://"  # noqa: S508 - constante de prefixo para validacao de esquema, nao URL hardcoded de abertura  # Record-Id: registro-2026-09-20-sota-web-browse-http-prefix-constant
+HTTPS_PREFIX: Final[str] = "https://"
 # urllib abre file: e esquemas custom; o modo CDP_BROWSER explicito aceita qualquer texto.
-ALLOWED_FETCH_SCHEMES: Final[tuple[str, ...]] = ("http://", "https://")
+ALLOWED_FETCH_SCHEMES: Final[tuple[str, ...]] = (HTTP_PREFIX, HTTPS_PREFIX)
 
 _CDP_LOCK = asyncio.Lock()
 
@@ -87,7 +89,7 @@ class TierPolicyEngine:
         if tier.value >= AgentTier.TIER_3_CUSTOM_FLEET.value:
             return True
         # Tiers 0, 1, 2 only ground when explicit URL or search triggers appear
-        triggers = ["http://", "https://", "search:", "pesquise:", "doc:", "paper:", "release:"]
+        triggers = [HTTP_PREFIX, HTTPS_PREFIX, "search:", "pesquise:", "doc:", "paper:", "release:"]
         return any(query.lower().startswith(t) or t in query.lower() for t in triggers)
 
     @staticmethod
@@ -95,7 +97,7 @@ class TierPolicyEngine:
         if request.mode != WebBrowseMode.AUTO_DETECT:
             return request.mode
         q = request.query_or_url.strip()
-        if q.startswith(("http://", "https://")):
+        if q.startswith((HTTP_PREFIX, HTTPS_PREFIX)):
             return WebBrowseMode.CDP_BROWSER
         if request.target_llm or "handoff" in q.lower():
             return WebBrowseMode.CLIPBOARD_HANDOFF
@@ -139,7 +141,7 @@ class CDPBrowserBridge:
 
     async def fetch_page_content(self, url: str, timeout_sec: float = 10.0) -> dict[str, str | None]:
         if not url.strip().lower().startswith(ALLOWED_FETCH_SCHEMES):
-            return {"error": "Esquema de URL recusado: somente http:// e https://", "url": url}
+            return {"error": f"Esquema de URL recusado: somente {HTTP_PREFIX} e {HTTPS_PREFIX}", "url": url}
         port = self.get_active_port()
         if not port:
             return {"error": "Nenhuma instancia do Google Chrome Dev (CDP) ativa nas portas 9222/9223"}
@@ -232,8 +234,8 @@ class SotaWebBrowseOrchestrator:
         try:
             with AUDIT_LOG_FILE.open("a", encoding="utf-8") as f:
                 f.write(json.dumps(record, ensure_ascii=True) + "\n")
-        except Exception as e:
-            logger.error("[AUDIT] Falha ao registrar log de browsing: %s", e)
+        except Exception:
+            logger.exception("[AUDIT] Falha ao registrar log de browsing")
 
     async def execute_query(self, req: WebQueryRequest) -> WebQueryResponse:
         start_time = time.perf_counter()

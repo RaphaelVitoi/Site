@@ -27,6 +27,9 @@ from llm.model_registry import (
 # Anthropic (geracao 5), OpenAI (GPT-5.6) e Google (Gemini 3) retornam 400.
 SAMPLING_LEGADO: frozenset[str] = frozenset({"temperature", "top_p", "top_k", "presence_penalty", "frequency_penalty"})
 
+# MIME type para payloads JSON estritos
+JSON_MIME_TYPE = "application/json"
+
 # Removido da API Anthropic. Se aparecer, e sinal de codigo escrito contra a
 # geracao anterior  ou de alguem seguindo o estudo de fronteira sem verificar.
 ANTHROPIC_REMOVIDOS: frozenset[str] = frozenset({"budget_tokens", "thinking_budget"})
@@ -411,8 +414,8 @@ class GoogleGenAIAdapter:
         is_json_payload = (
             "response_schema" in gen
             or "response_schema" in req
-            or gen.get("response_mime_type") == "application/json"
-            or req.get("response_mime_type") == "application/json"
+            or gen.get("response_mime_type") == JSON_MIME_TYPE
+            or req.get("response_mime_type") == JSON_MIME_TYPE
         )
         default_ceiling = 2048 if is_json_payload else 16_000
         gen["max_output_tokens"] = min(max_output_tokens or default_ceiling, cap.max_output_tokens)
@@ -422,6 +425,26 @@ class GoogleGenAIAdapter:
             req["tools"] = tools
 
         return req
+
+    @staticmethod
+    def _build_thinking_config(gen: dict[str, Any], kwargs: dict[str, Any]) -> dict[str, Any]:
+        """Constrói configuração de Extended Thinking para a API REST."""
+        thinking_cfg: dict[str, Any] = {}
+        if "thinking_level" in gen:
+            thinking_cfg["thinkingLevel"] = gen.pop("thinking_level").upper()
+        if "thinking_config" in gen:
+            tc = gen.pop("thinking_config")
+            if "thinking_budget" in tc:
+                thinking_cfg["thinkingBudget"] = tc["thinking_budget"]
+        if "thinking_budget" in kwargs:
+            thinking_cfg["thinkingBudget"] = kwargs["thinking_budget"]
+        return thinking_cfg
+
+    @staticmethod
+    def _apply_max_output_tokens(gen: dict[str, Any]) -> None:
+        """Aplica e converte max_output_tokens para formato REST."""
+        if "max_output_tokens" in gen:
+            gen["maxOutputTokens"] = gen.pop("max_output_tokens")
 
     @classmethod
     def build_http(
@@ -438,22 +461,13 @@ class GoogleGenAIAdapter:
         req = cls.build(alias, contents, max_output_tokens=max_output_tokens, **kwargs)
         gen = dict(req.get("generation_config", {}))
         if require_json:
-            gen["responseMimeType"] = "application/json"
+            gen["responseMimeType"] = JSON_MIME_TYPE
 
-        thinking_cfg: dict[str, Any] = {}
-        if "thinking_level" in gen:
-            thinking_cfg["thinkingLevel"] = gen.pop("thinking_level").upper()
-        if "thinking_config" in gen:
-            tc = gen.pop("thinking_config")
-            if "thinking_budget" in tc:
-                thinking_cfg["thinkingBudget"] = tc["thinking_budget"]
-        if "thinking_budget" in kwargs:
-            thinking_cfg["thinkingBudget"] = kwargs["thinking_budget"]
+        thinking_cfg = cls._build_thinking_config(gen, kwargs)
         if thinking_cfg:
             gen["thinkingConfig"] = thinking_cfg
 
-        if "max_output_tokens" in gen:
-            gen["maxOutputTokens"] = gen.pop("max_output_tokens")
+        cls._apply_max_output_tokens(gen)
 
         payload: dict[str, Any] = {
             "contents": req["contents"],

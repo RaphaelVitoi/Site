@@ -17,6 +17,8 @@ import urllib.request
 logger = logging.getLogger(__name__)
 
 JULES_API_BASE: Final[str] = "https://jules.googleapis.com/v1alpha"
+JULES_ERROR_NOT_CONFIGURED: Final[str] = "JulesClient nao configurado: JULES_API_KEY ausente."
+JULES_DEFAULT_SOURCE: Final[str] = "sources/github/RaphaelVitoi/Site"
 
 # NAO HA CONSTANTE DE MODELO AQUI, E ISSO E DELIBERADO.
 #
@@ -158,14 +160,14 @@ class JulesClient:
             err_msg = e.read().decode("utf-8", errors="replace")
             logger.error("[JULES] Erro HTTP %d ao criar sessao: %s", e.code, err_msg)
             raise RuntimeError(f"Erro na API do Jules ({e.code}): {err_msg}") from e
-        except Exception as e:
-            logger.error("[JULES] Falha de conexao com a API do Jules: %s", e)
+        except Exception:
+            logger.exception("[JULES] Falha de conexao com a API do Jules")
             raise
 
     def get_session_status(self, session_id: str, include_activities: bool = True) -> JulesSessionStatus:
         """Consulta o status e o progresso atual de uma sessao."""
         if not self.is_configured:
-            raise ValueError("JulesClient nao configurado: JULES_API_KEY ausente.")
+            raise ValueError(JULES_ERROR_NOT_CONFIGURED)
 
         url = f"{JULES_API_BASE}/sessions/{session_id}"
         req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
@@ -185,11 +187,14 @@ class JulesClient:
             err_msg = e.read().decode("utf-8", errors="replace")
             logger.error("[JULES] Erro HTTP %d ao consultar sessao %s: %s", e.code, session_id, err_msg)
             raise RuntimeError(f"Erro na consulta do Jules ({e.code}): {err_msg}") from e
+        except Exception:
+            logger.exception("[JULES] Falha ao consultar sessao %s", session_id)
+            raise
 
     def approve_plan(self, session_id: str, activity_id: str, action: str = "APPROVE") -> bool:
         """Aprova ou rejeita uma atividade de planejamento do Jules."""
         if not self.is_configured:
-            raise ValueError("JulesClient nao configurado: JULES_API_KEY ausente.")
+            raise ValueError(JULES_ERROR_NOT_CONFIGURED)
 
         url = f"{JULES_API_BASE}/sessions/{session_id}/activities/{activity_id}:action"
         payload = json.dumps({"action": action}).encode("utf-8")
@@ -201,11 +206,14 @@ class JulesClient:
         except urllib.error.HTTPError as e:
             logger.error("[JULES] Erro HTTP %d ao aprovar plano %s: %s", e.code, activity_id, e.reason)
             return False
+        except Exception:
+            logger.exception("[JULES] Falha ao aprovar plano %s", activity_id)
+            return False
 
     def get_diff(self, session_id: str) -> JulesDiffResult:
         """Coleta o diff unificado gerado pela sessao do Jules."""
         if not self.is_configured:
-            raise ValueError("JulesClient nao configurado: JULES_API_KEY ausente.")
+            raise ValueError(JULES_ERROR_NOT_CONFIGURED)
 
         url = f"{JULES_API_BASE}/sessions/{session_id}/diff"
         req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
@@ -222,11 +230,14 @@ class JulesClient:
             err_msg = e.read().decode("utf-8", errors="replace")
             logger.error("[JULES] Erro HTTP %d ao obter diff: %s", e.code, err_msg)
             raise RuntimeError(f"Erro ao obter diff do Jules ({e.code}): {err_msg}") from e
+        except Exception:
+            logger.exception("[JULES] Falha ao obter diff da sessao %s", session_id)
+            raise
 
     def list_sources(self, page_size: int = 10, page_token: str = "") -> list[dict[str, object]]:
         """Lista repositorios e fontes conectadas ao Jules via GitHub App."""
         if not self.is_configured:
-            return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
+            return [{"name": JULES_DEFAULT_SOURCE, "type": "GITHUB_REPO"}]
 
         url = f"{JULES_API_BASE}/sources?pageSize={page_size}"
         if page_token:
@@ -239,10 +250,10 @@ class JulesClient:
                 sources = data.get("sources")
                 if isinstance(sources, list):
                     return sources
-                return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
+                return [{"name": JULES_DEFAULT_SOURCE, "type": "GITHUB_REPO"}]
         except Exception as e:
             logger.warning("[JULES] list_sources retornou excecao: %s", e)
-            return [{"name": "sources/github/RaphaelVitoi/Site", "type": "GITHUB_REPO"}]
+            return [{"name": JULES_DEFAULT_SOURCE, "type": "GITHUB_REPO"}]
 
     def list_sessions(self, page_size: int = 20, page_token: str = "") -> list[dict[str, object]]:
         """Lista todas as sessoes registradas na nuvem no Google Jules."""

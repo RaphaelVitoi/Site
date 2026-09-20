@@ -100,7 +100,8 @@ class HandState:
     @property
     def fingerprint(self) -> str:
         """Identidade estavel do estado real, para declarar a origem de um estado gerado."""
-        return hashlib.sha256(f"{self.tournament_id}:{self.hand_id}".encode()).hexdigest()[:16]
+        payload = f"{self.hand_id}|{self.tournament_id}|{self.level}|{self.table}|{self.stacks}"
+        return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
 def parse_pokerstars_hands(text: str) -> Iterator[HandState]:
@@ -285,7 +286,7 @@ class CoherentStateGenerator:
         self.structure = structure
         self.seed = seed
         self.concentration = concentration
-        self._rng = random.Random(seed)  # noqa: S311 - amostragem reprodutivel por seed, nao criptografia  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
+        self._rng = random.Random(seed)  # noqa: S311 - PRNG deterministimo para geracao de estados, nao criptografia  # Record-Id: registro-2026-09-20-hh-canon-coherent-state-rng
         self._reais = [
             h
             for h in real_states

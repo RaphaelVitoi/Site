@@ -315,7 +315,8 @@
         "**/.claude/**/*.bin": "default",
         "**/CMakeFiles/**/*.bin": "default",
         "**/.chroma_db/**/*.bin": "default",
-        "*.bin": "default"
+        "*.bin": "default",
+        "*.svg": "cweijan.officeViewer"
     },
     "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
     "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,

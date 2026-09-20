@@ -335,7 +335,7 @@ def measure_h8(
     deltas = [d.delta_pp for d in drifts]
 
     media = fmean(deltas)
-    rng = random.Random(seed)  # noqa: S311 - bootstrap reprodutivel por semente, nao criptografia
+    rng = random.Random(seed)  # noqa: S311 - PRNG deterministico para bootstrap de IC, nao criptografia  # Record-Id: registro-2026-09-20-h8-bootstrap-ic95
     ic_baixo, ic_alto = _bootstrap_por_no(deltas, n_boot, rng)
 
     n_negativos = sum(1 for d in deltas if d < 0)

@@ -38,11 +38,45 @@ def _normalize_gemini_model(model: str) -> str:
     return model
 
 
+def _is_gemini_3x(model_str: str) -> bool:
+    """Verifica se o modelo pertence à série Gemini 3.x."""
+    return any(v in model_str for v in ("3.8", "3.7", "3.6", "3.5"))
+
+
+def _is_thinking_capable(model_str: str, thinking_kwarg: bool) -> bool:
+    """Verifica se o modelo suporta Dynamic Thinking."""
+    return any(v in model_str for v in ("3.8", "3.7")) or thinking_kwarg
+
+
+def _build_thinking_config(kwargs: dict[str, Any], model_str: str) -> dict[str, Any]:
+    """Constrói configuração de Extended Thinking."""
+    budget = kwargs.get("thinking_budget")
+    if budget is None and _is_thinking_capable(model_str, kwargs.get("thinking", False)):
+        budget = 4096
+    thinking_level = kwargs.get("thinking_level")
+    thinking_config: dict[str, Any] = {}
+    if budget:
+        thinking_config["thinkingBudget"] = budget
+    if thinking_level:
+        thinking_config["thinkingLevel"] = str(thinking_level).upper()
+    return thinking_config
+
+
+def _extract_text_from_parts(parts: list[dict[str, Any]]) -> str:
+    """Extrai texto das partes da resposta, ignorando thought blocks."""
+    texts = [p.get("text", "") for p in parts if "text" in p and not p.get("thought", False)]
+    if texts:
+        return "".join(texts)
+    if parts:
+        return parts[0].get("text", "")
+    return ""
+
+
 def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bool, **kwargs: Any) -> dict[str, Any]:
     """Constroi a carga util da API absorvendo a prevencao de falhas de chaves Free-Tier e suporte a Thinking."""
     final_user_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}" if system_prompt else user_prompt
     model_str = str(kwargs.get("model", "")).lower()
-    is_gemini_3x = any(v in model_str for v in ("3.8", "3.7", "3.6", "3.5"))
+    is_gemini_3x = _is_gemini_3x(model_str)
 
     gen_config: dict[str, Any] = {
         "maxOutputTokens": kwargs.get("max_tokens", 8192),
@@ -57,16 +91,8 @@ def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bo
         gen_config["responseMimeType"] = APP_JSON
 
     # SOTA: Habilita Dynamic Thinking / Test-Time Compute para Gemini 3.8 Flash e 3.7 Flash
-    if any(v in model_str for v in ("3.8", "3.7")) or kwargs.get("thinking", False):
-        budget = kwargs.get("thinking_budget")
-        if budget is None and (any(v in model_str for v in ("3.8", "3.7")) or kwargs.get("thinking", False)):
-            budget = 4096
-        thinking_level = kwargs.get("thinking_level")
-        thinking_config: dict[str, Any] = {}
-        if budget:
-            thinking_config["thinkingBudget"] = budget
-        if thinking_level:
-            thinking_config["thinkingLevel"] = str(thinking_level).upper()
+    if _is_thinking_capable(model_str, kwargs.get("thinking", False)):
+        thinking_config = _build_thinking_config(kwargs, model_str)
         if thinking_config:
             gen_config["thinkingConfig"] = thinking_config
 
@@ -104,8 +130,7 @@ async def _execute_native_fallback(
     if status == 200:
         result = json.loads(raw_text)
         parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-        texts = [p.get("text", "") for p in parts if "text" in p and not p.get("thought", False)]
-        text = "".join(texts) if texts else (parts[0].get("text", "") if parts else "")
+        text = _extract_text_from_parts(parts)
         usage = result.get("usageMetadata", {})
         return text, usage
     raise RuntimeError(f"HTTP {status} (Fallback Nativo): {raw_text}")
@@ -135,8 +160,7 @@ async def _execute_primary_request(
             response.raise_for_status()
             result = await response.json()
             parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-            texts = [p.get("text", "") for p in parts if "text" in p and not p.get("thought", False)]
-            text = "".join(texts) if texts else (parts[0].get("text", "") if parts else "")
+            text = _extract_text_from_parts(parts)
             usage = result.get("usageMetadata", {})
             return text, usage
     except aiohttp.ClientResponseError as e:
