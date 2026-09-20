@@ -1,0 +1,364 @@
+{
+  "schema_version": "agent-calibration-evidence/v4",
+  "date": "2026-09-19",
+  "gate_metric": "distinct_sessions_with_feedback",
+  "gate_definition": "Sessao = do inicio ao fim de um trabalho; compactacao de contexto NAO encerra sessao. A metrica que autoriza avaliacao e o numero de SESSOES DISTINTAS com feedback, acumulado desde a ultima calibracao e sem prazo de validade. Densidade intra-sessao (varios feedbacks numa mesma sessao) e dado retido, nao gatilho.",
+  "evaluated_at_policy": "Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.",
+  "session_filter": "",
+  "ultima_calibracao": "2026-09-17T21:11:10-03:00",
+  "timesfm_forecast": {
+    "status": "INSUFFICIENT_HISTORY",
+    "required_points": 4,
+    "available_points": 1,
+    "reason": "TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica."
+  },
+  "sessoes_com_feedback": [
+    "01a0ba03-5e1a-7cb2-8127-1356fe6e105a"
+  ],
+  "sessoes_com_feedback_count": 1,
+  "sessoes_faltantes": 2,
+  "sessoes_com_inicio_inconsistente": [],
+  "sessoes_com_densidade_relevante": [],
+  "sessoes_ativas_no_dia": [
+    "01a0ba03-5e1a-7cb2-8127-1356fe6e105a"
+  ],
+  "feedback_count_acumulado": 1,
+  "eligible_feedback_count": 1,
+  "eligible_feedback": [
+    {
+      "event_id": "4e8de6cd-d20a-4cbe-94c2-9545d0869e65",
+      "session_id": "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
+      "eligible": true,
+      "reasons": []
+    }
+  ],
+  "excluded_feedback_count": 0,
+  "excluded_feedback": [],
+  "historical_provenance_audit": [
+    {
+      "event_id": "c2c4cb6f-f864-4be5-9d77-bc8e28d51dfa",
+      "sequence": 1,
+      "session_id": "codex-site-2026-09-01-prioridade",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "dcf7d9d2-eec7-4ce8-9f6c-b5c4f69a7933",
+      "sequence": 2,
+      "session_id": "claude-opus5-site-2026-09-02-integridade",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "ca8346a2-bea7-4930-a562-277bba6b77d3",
+      "sequence": 3,
+      "session_id": "claude-opus5-site-2026-09-02-pmev",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "15b9a610-70d5-449e-8192-bf1ad3b09565",
+      "sequence": 5,
+      "session_id": "gemini-flash-site-2026-09-02-mcp-curation",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "06a2ae1d-0330-40fe-8b3b-33012e682772",
+      "sequence": 7,
+      "session_id": "claude-opus5-site-2026-09-02-guarda",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "55e7caae-f0ca-4702-a890-e299213c78c3",
+      "sequence": 8,
+      "session_id": "claude-opus5-site-2026-09-03-procedencia",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "701d6e3c-7daf-4c2d-b3c6-16624946aada",
+      "sequence": 9,
+      "session_id": "claude-opus5-site-2026-09-03-procedencia",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "48443d06-2119-4ab9-9c36-6ba72d35c056",
+      "sequence": 10,
+      "session_id": "gemini-3.8-flash-site-2026-09-03-saneamento",
+      "provenance_complete": false,
+      "reasons": [
+        "completed_handoff_not_declared"
+      ]
+    },
+    {
+      "event_id": "2b589f4c-f59e-451a-9e44-ba7d1cc1ef5c",
+      "sequence": 11,
+      "session_id": "2026-09-03-sota-v8-gold-governance",
+      "provenance_complete": false,
+      "reasons": [
+        "completed_handoff_not_declared"
+      ]
+    },
+    {
+      "event_id": "92d8d9f0-b4a8-46be-8ba8-1ac744215d94",
+      "sequence": 12,
+      "session_id": "gemini-3.8-flash-site-2026-09-04-refinamento-sota",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "f5672732-d12b-42b9-a677-07d5070bca76",
+      "sequence": 13,
+      "session_id": "claude-opus5-site-2026-09-04-credenciais-e-submodulos",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "fb4f444f-9021-47c0-9c44-807bc6e70381",
+      "sequence": 14,
+      "session_id": "claude-opus5-site-2026-09-05-fechamento-do-ciclo",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "6356f1e5-de70-4af8-bfa5-5cbc52274905",
+      "sequence": 15,
+      "session_id": "gemini-3.8-flash-site-2026-09-05-nexus-ollama-chat",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "0b30eafd-b57f-47dc-bf28-9822a0f36769",
+      "sequence": 16,
+      "session_id": "01a07276-1d55-7fe0-960b-dad779b641f1",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "c133f342-0ca1-45ec-9dbf-6403b57896ce",
+      "sequence": 17,
+      "session_id": "claude-opus5-site-2026-09-07-astra",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "c6179ef9-527e-4790-a848-a92baf8991d5",
+      "sequence": 18,
+      "session_id": "gemini-3.8-flash-site-2026-09-07-api-keys-free",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "c649f81b-3775-40b1-9d6e-6d041be20d1a",
+      "sequence": 19,
+      "session_id": "claude-opus5-site-2026-09-08-pmev",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "97b5c71a-c223-4a09-b728-16f04f54552d",
+      "sequence": 20,
+      "session_id": "claude-opus5-site-2026-09-08-contraste",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "277d4f23-4cd7-4400-8995-aee97905b500",
+      "sequence": 21,
+      "session_id": "gemini-3.8-flash-site-2026-09-10-multimodal-sota",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "6d4a8598-627d-44d5-9f63-29c6412aecfa",
+      "sequence": 22,
+      "session_id": "claude-opus5-raiz-e-site-2026-09-10",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "2d217894-15f9-4693-a861-19cf96568cea",
+      "sequence": 26,
+      "session_id": "gemini-3.8-flash-site-2026-09-11-teoria-sota",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "19deef69-53f2-4676-884f-b0d14570781a",
+      "sequence": 55,
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "f381ed8b-5bee-4498-a1fb-540314ecb0f1",
+      "sequence": 58,
+      "session_id": "01a09547-c8df-7641-87b5-83723b4b645d",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "3aa96c94-65e0-4b79-bc8f-613c0acd2049",
+      "sequence": 66,
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "7dccd2ab-9c74-4a47-ac6a-b3e678cec13f",
+      "sequence": 67,
+      "session_id": "claude-opus5-site-2026-09-12-preludio",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "596f2029-24bb-4906-9330-1f12af458ebc",
+      "sequence": 68,
+      "session_id": "codex-gpt-5-6-sol-site-2026-09-13-engines-pmev-wasm",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "4d280d5b-63a4-4bf3-8fd1-01c5602d4a87",
+      "sequence": 69,
+      "session_id": "47da3bfc-7b48-46c4-9c3e-7cf05a33765e",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "766817aa-2d25-4c7d-beb9-bf54d53c696e",
+      "sequence": 70,
+      "session_id": "186abdd7-d9aa-481f-bbe0-143b0d27bcff",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "e60b5131-cbc0-4425-bd56-232ec64dbe67",
+      "sequence": 71,
+      "session_id": "a8cdbcc6-2c9c-46e5-8ef5-a0d4c5d69400",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "af2d439f-bd53-45e7-b235-dcee38fb618d",
+      "sequence": 72,
+      "session_id": "2e4e2bd0-7571-49e4-bd33-1a04752a1609",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "83b2dd83-fac1-43fe-bd52-503e56d1150d",
+      "sequence": 73,
+      "session_id": "2e4e2bd0-7571-49e4-bd33-1a04752a1609",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "256a9335-fbe7-43c7-97fd-2ad199d38b0f",
+      "sequence": 74,
+      "session_id": "5b136c4c-9182-4227-9bfc-d883a25c2a77",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "353e8caf-7855-42d1-92c0-68453bb973e6",
+      "sequence": 76,
+      "session_id": "4501a68a-534a-447f-86ae-49119b1109cb",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "dd007252-08f5-4bc3-b127-9949f77430df",
+      "sequence": 77,
+      "session_id": "95a82259-5359-4f5a-9069-eae2ce651a3d",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "4e8de6cd-d20a-4cbe-94c2-9545d0869e65",
+      "sequence": 79,
+      "session_id": "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
+      "provenance_complete": true,
+      "reasons": []
+    }
+  ],
+  "historical_excluded_count": 2,
+  "provenance_policy": "Incomplete historical evidence is retained in records, excluded from structural gate and corroboration. Scope must explicitly declare handoff; model, connector and supervision are independent required fields. Score statistics describe retained history, not an eligible calibration sample.",
+  "correcoes_no_ledger": 42,
+  "correcoes_aplicadas": 42,
+  "feedback_count_no_dia": 1,
+  "feedback_sem_sessao": 0,
+  "por_sessao": [
+    {
+      "session_id": "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-19T12:16:59-03:00",
+      "ultimo_feedback": "2026-09-19T12:16:59-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/19/2026 11:12:58"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gpt-5.6-sol"
+      ],
+      "conductor_vehicles": [
+        "codex"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    }
+  ],
+  "score_mean": 9.8,
+  "score_min": 9.8,
+  "score_max": 9.8,
+  "score_mean_no_dia": 9.8,
+  "evidence_gate": {
+    "metric": "distinct_sessions_with_feedback",
+    "minimum_distinct_sessions": 3,
+    "minimum_feedback_records": 3,
+    "structural_gate_passed": false,
+    "reason": "1 de 3 sessoes com feedback; faltam 2. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
+    "intra_session_density_is_data_not_trigger": "Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.",
+    "accumulation_never_expires": "Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.",
+    "unsessioned_feedback_ignored": "Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.",
+    "split_session_not_counted": "session_id com mais de um session_started_at indica sessao partida. Sob contagem por sessao isso inflaria o portao, entao a sessao nao conta ate a origem ser reconciliada.",
+    "pattern_confirmation_required": "At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency."
+  },
+  "calibration_planning_permitted": false,
+  "records": [
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 79,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-19T12:16:59.1179059-03:00",
+      "previous_hash": "9a135990d8530851fed29ea1daee85aa46703e404b8791f562f9462abd459be0",
+      "event_id": "4e8de6cd-d20a-4cbe-94c2-9545d0869e65",
+      "session_id": "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
+      "score": 9.8,
+      "feedback": "Excelente sessão. tiro 0.2 porque, por mais que tenha achado eficiente, foi burocrático. Faltou proatividade e sugestões de evolução.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-19T11:12:58.126-03:00",
+      "conductor_model": "gpt-5.6-sol",
+      "conductor_vehicle": "codex",
+      "supervision_mode": "assistida",
+      "record_hash": "fa7eec6abd6b3748cb9d494cf31ac69a0915d00f889f7f3b106b5bbf55870d51"
+    }
+  ],
+  "outlier_evidence": {
+    "ledger_path": "C:\\Users\\rapha\\.gemini\\Site\\reports\\agent-calibration\\outlier-evidence-ledger.jsonl",
+    "count": 0,
+    "records": [],
+    "disposition": "retained separately; excluded from pattern indexing and calibration sample until deterministic posterior review",
+    "automatic_pattern_indexing": false,
+    "low_sample_origin_rule": "A low-sample outlier may indicate an origin-specific pattern. Retain it and require deterministic posterior analysis; do not promote it from frequency alone."
+  },
+  "reconstruido": true,
+  "reconstruido_em": "2026-09-20T02:49:09.0243102-03:00",
+  "reconstruido_motivo": "Dia sem captura contemporanea; gerado por -BackfillMissing a partir do ledger append-only. Os numeros valem para o dia; o instante de medicao nao."
+}

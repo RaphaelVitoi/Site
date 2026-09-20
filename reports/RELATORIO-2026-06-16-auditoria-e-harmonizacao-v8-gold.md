@@ -15,6 +15,10 @@ verificado:
   - estado de infraestrutura consolidado em relatorio historico
 nao_verificado:
   - checagem fisica de controladores sata no momento atual
+revisoes_de_ancora:
+  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
+    caminhos: [CLAUDE.md]
+    parecer: "As modificacoes de 2026-09-20 a CLAUDE.md (condutores, tiers, ChatGPT 6 Astra, Solar-Pro4) sao de governanca e composicao de modelo, nao de infraestrutura fisica ou de harmonizacao de components. O relatorio de auditoria de 2026-06-16 permanece vigente como registro historico; suas conclusões de estado do ecossistema, hardware e banco de dados nao foram alteradas."
 supersede: null
 ---
 

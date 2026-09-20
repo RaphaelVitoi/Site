@@ -2,7 +2,7 @@
 
 ## LEI 0: A ONTOLOGIA SOTA Absoluto (CORTEX SHIELD DA IDE)
 
-Abaixo esta a estruturacao do payload em formato JSON, desenhado para ser injetado diretamente no arquivo settings.json do VSCode (nivel de Usuario ou Workspace).
+Abaixo esta a estrutura do payload em formato JSON, desenhado para ser injetado diretamente no arquivo settings.json da IDE canonica (Antigravity IDE) ou de um adaptador VSCode (opcional).
 
 Este bloco condensa a ontologia do SOTA Absoluto em instrucoes de sistema puras, garantindo que a extensao do Gemini opere sob as diretrizes de Antevisao Semantica, Invariancia Modular e Honestidade Intelectual.
 
