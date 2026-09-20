@@ -83,7 +83,7 @@ class HRCProImporter(BaseSolverImporter):
             for line in trimmed.splitlines():
                 line_str = line.strip()
                 # Procurar acoes como PUSH / FOLD / CALL / RAISE com frequencias
-                m_act = re.search(r"\b(PUSH|SHOVE|ALLIN|FOLD|CALL|RAISE)\b.*?([\d\.]+)\s*%", line_str, re.IGNORECASE)
+                m_act = re.search(r"\b(PUSH|SHOVE|ALLIN|FOLD|CALL|RAISE)\b.*?([\d.]+)\s*%", line_str, re.IGNORECASE)
                 if m_act:
                     act_name = self.sanitize_action_name(m_act.group(1))
                     try:
@@ -93,7 +93,7 @@ class HRCProImporter(BaseSolverImporter):
                         pass
 
                 # Extrair stacks se presentes: "SB: 15.0bb, BB: 20.0bb"
-                st_matches = re.findall(r"([A-Z]+)\s*:\s*([\d\.]+)\s*bb", line_str, re.IGNORECASE)
+                st_matches = re.findall(r"([A-Z]+)\s*:\s*([\d.]+)\s*bb", line_str, re.IGNORECASE)
                 if st_matches:
                     for pos_name, stack_val in st_matches:
                         with contextlib.suppress(ValueError):
@@ -129,9 +129,6 @@ class HRCProImporter(BaseSolverImporter):
         )
 
     #: Rotulos nativos da distancia ao equilibrio, por solver. O conceito e um so;
-    #  o nome NEM SEMPRE mede a mesma coisa, e por isso o rotulo lido e guardado.
-    #
-    #  - `CI` (HRC): Convergence Indicator, parte dos calculos de Monte Carlo do
     #    HRC. A documentacao publica o lista entre os essenciais do calculo por
     #    amostragem; a formula exata nao foi obtida.
     #  - `Nash Distance` / `dEV` (GTO Wizard): maxima perda de EV potencial da
@@ -148,6 +145,15 @@ class HRCProImporter(BaseSolverImporter):
 
     #: Unidades que um export pode declarar explicitamente.
     UNIDADES_DECLARAVEIS = ("pct", "pctOfPot", "bb", "bbPer100", "chips")
+
+    @staticmethod
+    def _get_combo_weight(r: int, c: int) -> float:
+        """Calcula o peso de combos: pares=6, suited=4, offsuit=12."""
+        if r == c:
+            return 6.0
+        if r < c:
+            return 4.0
+        return 12.0
 
     @staticmethod
     def extrair_procedencia(raw_content: str, data: dict[str, Any] | None = None) -> SolverProvenance:
@@ -337,7 +343,7 @@ class HRCProImporter(BaseSolverImporter):
                 delta = round(pmev_freq - hrc_freq, 4)
                 delta_matrix[r][c] = delta
 
-                combo_weight = 6.0 if r == c else (4.0 if r < c else 12.0)
+                combo_weight = self._get_combo_weight(r, c)
                 total_hrc_combos += hrc_freq * combo_weight
                 total_pmev_combos += pmev_freq * combo_weight
 

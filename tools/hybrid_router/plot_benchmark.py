@@ -110,6 +110,46 @@ def generate_synthetic_data(samples: int = 60) -> pd.DataFrame:
     return pd.DataFrame(records).sample(frac=1.0, random_state=42).reset_index(drop=True)
 
 
+def _load_json_dataset(file_path: str, meta: dict[str, Any]) -> pd.DataFrame:
+    """Carrega dataset JSON e extrai metadados."""
+    with open(file_path, encoding="utf-8") as f:
+        data = json.load(f)
+    if isinstance(data, dict):
+        meta["modo"] = data.get("modo", "desconhecido")
+        meta["gerado_em"] = data.get("gerado_em")
+        data = data.get("resultados", [])
+    return pd.DataFrame(data)
+
+
+def _load_csv_dataset(file_path: str) -> pd.DataFrame:
+    """Carrega dataset CSV."""
+    return pd.read_csv(file_path)
+
+
+def _determine_mode_from_simulated(simulados: list[bool]) -> str:
+    """Determina o modo dos dados com base na lista de simulados."""
+    if all(simulados):
+        return "simulado"
+    if not any(simulados):
+        return "real"
+    return "misto"
+
+
+def _detect_data_mode(df: pd.DataFrame, meta: dict[str, Any]) -> None:
+    """Detecta o modo dos dados (simulado, real, misto)."""
+    if meta["modo"] == "desconhecido" and "simulado" in df.columns:
+        simulados = [bool(v) for v in df["simulado"].tolist()]
+        meta["modo"] = _determine_mode_from_simulated(simulados)
+    meta["total"] = len(df)
+
+
+def _filter_successful_requests(df: pd.DataFrame, meta: dict[str, Any]) -> None:
+    """Filtra apenas requisições bem-sucedidas e atualiza metadados."""
+    if "is_success" in df.columns:
+        df = cast("pd.DataFrame", df[df["is_success"]]).copy().reset_index(drop=True)
+        meta["sucesso"] = len(df)
+
+
 def load_dataset(file_path: str | None, permitir_sintetico: bool = False) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Carrega resultados e devolve (sucessos, metadados de origem).
 
@@ -120,15 +160,9 @@ def load_dataset(file_path: str | None, permitir_sintetico: bool = False) -> tup
     meta: dict[str, Any] = {"origem": "arquivo", "modo": "desconhecido"}
     if file_path and os.path.exists(file_path):
         if file_path.endswith(".json"):
-            with open(file_path, encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, dict):
-                meta["modo"] = data.get("modo", "desconhecido")
-                meta["gerado_em"] = data.get("gerado_em")
-                data = data.get("resultados", [])
-            df = pd.DataFrame(data)
+            df = _load_json_dataset(file_path, meta)
         elif file_path.endswith(".csv"):
-            df = pd.read_csv(file_path)
+            df = _load_csv_dataset(file_path)
         else:
             raise ValueError("Formato nao suportado. Utilize .json ou .csv")
     elif permitir_sintetico:
@@ -140,17 +174,8 @@ def load_dataset(file_path: str | None, permitir_sintetico: bool = False) -> tup
             f"[ERRO] Dataset nao encontrado: {file_path}. Rode benchmark.py ou passe --sintetico para um preview rotulado."
         )
 
-    if meta["modo"] == "desconhecido" and "simulado" in df.columns:
-        simulados = [bool(v) for v in df["simulado"].tolist()]
-        meta["modo"] = "simulado" if all(simulados) else ("real" if not any(simulados) else "misto")
-    meta["total"] = len(df)
-
-    if "is_success" in df.columns:
-        # pandas 3.0 nao anota DataFrame.__getitem__; o Pyright infere a uniao
-        # DataFrame | Series | ndarray lendo o corpo. A mascara booleana sempre
-        # devolve DataFrame -- o cast declara isso sem custo em runtime.
-        df = cast("pd.DataFrame", df[df["is_success"]]).copy().reset_index(drop=True)
-    meta["sucesso"] = len(df)
+    _detect_data_mode(df, meta)
+    _filter_successful_requests(df, meta)
     return df, meta
 
 

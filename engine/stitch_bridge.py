@@ -18,6 +18,8 @@ import urllib.request
 logger = logging.getLogger(__name__)
 
 STITCH_MCP_URL: Final[str] = "https://stitch.googleapis.com/mcp"
+STITCH_ERROR_NOT_CONFIGURED: Final[str] = "StitchClient nao configurado: STITCH_API_KEY ausente."
+STITCH_PROJECTS_PREFIX: Final[str] = "projects/"
 
 # NAO HA CHAVE PADRAO AQUI, E NUNCA PODE VOLTAR A HAVER.
 #
@@ -109,7 +111,7 @@ class StitchClient:
     def _call_tool(self, tool_name: str, arguments: dict[str, object] | None = None) -> dict[str, object]:
         """Executa uma chamada MCP tools/call para o Stitch."""
         if not self.is_configured:
-            raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
 
         payload = {
             "jsonrpc": "2.0",
@@ -155,16 +157,16 @@ class StitchClient:
                 return {}
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
-            logger.error("[STITCH] Erro HTTP %d na chamada %s: %s", e.code, tool_name, err_msg)
+            logger.error("[STITCH] Erro HTTP %d na chamada %s: %s", e.code, tool_name, err_msg)  # noqa: TRY200 - HTTPError específico com resposta personalizada
             raise RuntimeError(f"Erro HTTP ({e.code}) no Stitch MCP: {err_msg}") from e
-        except Exception as e:
-            logger.error("[STITCH] Falha de conexao com Stitch MCP: %s", e)
+        except Exception:
+            logger.exception("[STITCH] Falha de conexao com Stitch MCP")
             raise
 
     def list_projects(self, filter_view: str = "owned") -> list[dict[str, object]]:
         """Lista os projetos Stitch disponiveis."""
         if not self.is_configured:
-            raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
         res = self._call_tool("list_projects", {"filter": f"view={filter_view}"})
         projects = res.get("projects")
         if isinstance(projects, list):
@@ -174,24 +176,28 @@ class StitchClient:
     def get_project(self, project_name_or_id: str) -> dict[str, object]:
         """Recupera detalhes de um projeto Stitch."""
         if not self.is_configured:
-            raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
         formatted_name = (
-            project_name_or_id if project_name_or_id.startswith("projects/") else f"projects/{project_name_or_id}"
+            project_name_or_id
+            if project_name_or_id.startswith(STITCH_PROJECTS_PREFIX)
+            else f"{STITCH_PROJECTS_PREFIX}{project_name_or_id}"
         )
         return self._call_tool("get_project", {"name": formatted_name})
 
     def create_project(self, title: str) -> dict[str, object]:
         """Cria um novo projeto Stitch."""
         if not self.is_configured:
-            raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
         return self._call_tool("create_project", {"title": title})
 
     def delete_project(self, project_name_or_id: str) -> bool:
         """Exclui um projeto Stitch."""
         if not self.is_configured:
-            raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
         formatted_name = (
-            project_name_or_id if project_name_or_id.startswith("projects/") else f"projects/{project_name_or_id}"
+            project_name_or_id
+            if project_name_or_id.startswith(STITCH_PROJECTS_PREFIX)
+            else f"{STITCH_PROJECTS_PREFIX}{project_name_or_id}"
         )
         try:
             self._call_tool("delete_project", {"name": formatted_name})
@@ -203,8 +209,8 @@ class StitchClient:
     def list_screens(self, project_id: str) -> list[dict[str, object]]:
         """Lista todas as telas criadas dentro de um projeto Stitch."""
         if not self.is_configured:
-            raise ValueError("StitchClient nao configurado: STITCH_API_KEY ausente.")
-        clean_id = project_id.replace("projects/", "")
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
         res = self._call_tool("list_screens", {"projectId": clean_id})
         screens = res.get("screens")
         if isinstance(screens, list):
@@ -243,7 +249,7 @@ class StitchClient:
         contrario. Para alternar entre `Speed` e `Balanced`, use o seletor da
         propria interface do Stitch.
         """
-        clean_id = project_id.replace("projects/", "")
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
         args: dict[str, object] = {
             "projectId": clean_id,
             "prompt": prompt,
@@ -258,7 +264,7 @@ class StitchClient:
 
     def list_design_systems(self, project_id: str) -> list[dict[str, object]]:
         """Lista sistemas de design associados ao projeto."""
-        clean_id = project_id.replace("projects/", "")
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
         try:
             res = self._call_tool("list_design_systems", {"projectId": clean_id})
             ds = res.get("designSystems")
@@ -271,7 +277,7 @@ class StitchClient:
 
     def upload_design_md(self, project_id: str, design_md_text: str) -> dict[str, object]:
         """Faz o upload base64 de um documento DESIGN.md para o projeto Stitch."""
-        clean_id = project_id.replace("projects/", "")
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
         b64_content = base64.b64encode(design_md_text.encode("utf-8")).decode("utf-8")
         return self._call_tool(
             "upload_design_md",

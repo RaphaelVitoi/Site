@@ -16,7 +16,7 @@ import os
 import re
 import sys
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -187,9 +187,10 @@ class ComplexityAnalyzer:
             rationale = "Requisicao com Tool Calling delegada ao Gemini Cloud."
         elif overall_complexity >= self.complexity_threshold:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_THINKING
-            thinking_budget = (
-                thinking_override if thinking_override is not None else (4096 if overall_complexity < 0.75 else 16384)
-            )
+            if thinking_override is not None:
+                thinking_budget = thinking_override
+            else:
+                thinking_budget = 4096 if overall_complexity < 0.75 else 16384
             rationale = f"Alta complexidade analitica ({overall_complexity:.2f}). Ativacao de Extended Thinking."
         elif estimated_tokens > self.local_max_tokens:
             selected_target = ExecutionTarget.GEMINI_37_FLASH_STANDARD
@@ -234,7 +235,7 @@ class LocalLlamaVulkanClient:
         self.probe_ttl_s = probe_ttl_s
         self._probe_cache: tuple[float, bool] | None = None
 
-    async def start(self) -> None:
+    def start(self) -> None:
         self._client = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=5.0))
 
     async def close(self) -> None:
@@ -303,6 +304,25 @@ class GeminiCloudClient:
     def is_configured(self) -> bool:
         return self._client is not None
 
+    def _find_thinking_token_in_details(self, details: list[Any]) -> int:
+        """Busca tokens de Extended Thinking na lista de detalhes de candidatos."""
+        for item in details:
+            if getattr(item, "modality", "") == "THINKING":
+                return getattr(item, "token_count", 0)
+        return 0
+
+    def _extract_thinking_tokens(self, response: Any) -> int:
+        """Extrai a contagem de tokens de Extended Thinking dos metadados da resposta."""
+        thinking_tokens = 0
+        if hasattr(response, "usage_metadata") and response.usage_metadata:
+            meta = response.usage_metadata
+            thinking_tokens = getattr(meta, "thinking_token_count", 0)
+            if thinking_tokens == 0 and hasattr(meta, "candidates_tokens_details"):
+                details = getattr(meta, "candidates_tokens_details", [])
+                if isinstance(details, list):
+                    thinking_tokens = self._find_thinking_token_in_details(details)
+        return thinking_tokens
+
     async def generate(
         self,
         prompt: str,
@@ -334,17 +354,7 @@ class GeminiCloudClient:
             config=config,
         )
 
-        thinking_tokens = 0
-        if hasattr(response, "usage_metadata") and response.usage_metadata:
-            meta = response.usage_metadata
-            thinking_tokens = getattr(meta, "thinking_token_count", 0)
-            if thinking_tokens == 0 and hasattr(meta, "candidates_tokens_details"):
-                details = getattr(meta, "candidates_tokens_details", [])
-                if isinstance(details, list):
-                    for item in details:
-                        if getattr(item, "modality", "") == "THINKING":
-                            thinking_tokens = getattr(item, "token_count", 0)
-
+        thinking_tokens = self._extract_thinking_tokens(response)
         return response.text or "", thinking_tokens
 
 
@@ -405,11 +415,12 @@ class HybridOrchestrator:
         if not self.cloud.is_configured:
             # Modo de simulacao offline opcional para testes de infraestrutura
             if os.getenv("SIMULATE_INFERENCE", "false").lower() in ("true", "1", "yes"):
-                sim_latency = (
-                    120.0
-                    if target == ExecutionTarget.LOCAL_LLAMA_VULKAN
-                    else (450.0 if target == ExecutionTarget.GEMINI_37_FLASH_STANDARD else 1200.0)
-                )
+                if target == ExecutionTarget.LOCAL_LLAMA_VULKAN:
+                    sim_latency = 120.0
+                elif target == ExecutionTarget.GEMINI_37_FLASH_STANDARD:
+                    sim_latency = 450.0
+                else:
+                    sim_latency = 1200.0
                 await asyncio.sleep(sim_latency / 1000.0)
                 latency = (time.perf_counter() - start_time) * 1000.0
                 return GenerateResponse(
@@ -465,7 +476,7 @@ orchestrator = HybridOrchestrator(local_llama_client, gemini_cloud_client, analy
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
-    await local_llama_client.start()
+    local_llama_client.start()
     yield
     await local_llama_client.close()
 
@@ -486,7 +497,7 @@ app.add_middleware(
 )
 
 
-@app.get("/health", response_model=HealthCheckResponse, tags=["Infraestrutura"])
+@app.get("/health", tags=["Infraestrutura"])
 async def health_check() -> HealthCheckResponse:
     local_alive = await local_llama_client.is_available()
     return HealthCheckResponse(
@@ -498,7 +509,7 @@ async def health_check() -> HealthCheckResponse:
     )
 
 
-@app.post("/v1/router/analyze", response_model=RouteMetrics, tags=["Roteamento"])
+@app.post("/v1/router/analyze", tags=["Roteamento"])
 async def analyze_prompt(request: GenerateRequest) -> RouteMetrics:
     return analyzer.compute_metrics(
         prompt=request.prompt,
@@ -509,7 +520,7 @@ async def analyze_prompt(request: GenerateRequest) -> RouteMetrics:
     )
 
 
-@app.post("/v1/chat/generate", response_model=GenerateResponse, tags=["Inferencia"])
+@app.post("/v1/chat/generate", tags=["Inferencia"])
 async def generate_completion(request: GenerateRequest) -> GenerateResponse:
     try:
         return await orchestrator.dispatch(request)

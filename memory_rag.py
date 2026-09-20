@@ -52,6 +52,7 @@ CHUNK_SIZE = 1200
 CHUNK_OVERLAP = 300
 HYBRID_SEARCH_N_RESULTS_MULTIPLIER = 5
 HYBRID_SEARCH_LEXICAL_WEIGHT = 0.4
+WORD_PATTERN = r"\b\w{3,}\b"  # Padrão regex para extração de palavras com 3+ caracteres
 
 LANCEDB_DIR = "data/lancedb"
 LANCEDB_PATH = RAIZ_DO_PROJETO / LANCEDB_DIR
@@ -129,9 +130,9 @@ class LanceDBBackend:
         """Busca hibrida vetorial + lexical BM25 no LanceDB."""
         vec_results = self.table.search(query_vector).limit(limit * 2).to_list()
         scored_docs = []
-        query_terms = set(re.findall(r"\b\w{3,}\b", query_text.lower()))
+        query_terms = set(re.findall(WORD_PATTERN, query_text.lower()))
         for r in vec_results:
-            doc_terms = set(re.findall(r"\b\w{3,}\b", r["text"].lower()))
+            doc_terms = set(re.findall(WORD_PATTERN, r["text"].lower()))
             intersection = len(query_terms.intersection(doc_terms))
             lexical_score = intersection / len(query_terms) if query_terms else 0
             dist = r.get("_distance", 0.0)
@@ -870,11 +871,11 @@ class MemoryRAG:
         n_results: int,
     ) -> list[dict]:
         # 2. Reranking com Busca Lexical SOTA (BM25-lite / Keyword Boost)
-        query_terms = set(re.findall(r"\b\w{3,}\b", question.lower()))
+        query_terms = set(re.findall(WORD_PATTERN, question.lower()))
 
         scored_docs = []
         for i, doc in enumerate(documents):
-            doc_terms = set(re.findall(r"\b\w{3,}\b", doc.lower()))
+            doc_terms = set(re.findall(WORD_PATTERN, doc.lower()))
 
             intersection = len(query_terms.intersection(doc_terms))
             # SOTA: Cobertura da Query ao inves de Jaccard para nao penalizar chunks longos e densos
@@ -958,7 +959,7 @@ class MemoryRAG:
             "autopoiese",
             "termodinamica",
         }
-        words = set(re.findall(r"\b\w{3,}\b", question.lower()))
+        words = set(re.findall(WORD_PATTERN, question.lower()))
         return bool(words & complex_keywords) or len(question) > 150
 
     async def query_lancedb(self, question: str, n_results: int = 3) -> list[dict]:
@@ -1021,6 +1022,33 @@ class MemoryRAG:
         fused.sort(key=lambda x: x.get("rrf_score", 0.0), reverse=True)
         return fused[:n_results]
 
+    def _select_target_engine(self, question: str, engine: str) -> str:
+        """Seleciona o engine de busca baseado na complexidade da query e configuração."""
+        if engine == "auto":
+            return "lance" if (self._is_high_complexity_query(question) and self.lance_backend) else "chroma"
+        return engine
+
+    def _format_hybrid_federated_results(self, top_docs: list[dict]) -> str:
+        """Formata resultados da busca federada híbrida."""
+        output_parts = [f"\n=== MENTE COLETIVA (FUSAO FEDERADA SOTA: {len(top_docs)} fragmentos) ==="]
+        for i, item in enumerate(top_docs):
+            src = Path(item.get("source", "N/A")).name
+            engine_tag = item.get("engine", "federated")
+            output_parts.append(
+                f"--- Fragmento #{i + 1} de @{item.get('agent', 'Unknown')} [{engine_tag}] (Fonte: {src}) ---\n{item['doc']}\n"
+            )
+        return "\n".join(output_parts)
+
+    def _format_lance_results(self, lance_docs: list[dict]) -> str:
+        """Formata resultados da busca LanceDB."""
+        output_parts = [f"\n=== MENTE COLETIVA LANCEDB (ALTA COMPLEXIDADE SOTA: {len(lance_docs)} fragmentos) ==="]
+        for i, item in enumerate(lance_docs):
+            src = Path(item.get("source", "N/A")).name
+            output_parts.append(
+                f"--- Fragmento #{i + 1} de @{item.get('agent', 'Unknown')} (Fonte: {src}) ---\n{item['doc']}\n"
+            )
+        return "\n".join(output_parts)
+
     async def query_memory(
         self,
         question: str,
@@ -1029,36 +1057,17 @@ class MemoryRAG:
         engine: str = "auto",
     ) -> str:
         try:
-            target_engine = engine
-            if target_engine == "auto":
-                target_engine = (
-                    "lance" if (self._is_high_complexity_query(question) and self.lance_backend) else "chroma"
-                )
+            target_engine = self._select_target_engine(question, engine)
 
             if target_engine == "hybrid_federated" and self.lance_backend:
                 top_docs = await self.hybrid_federated_search(question, n_results=n_results)
                 if top_docs:
-                    output_parts = [f"\n=== MENTE COLETIVA (FUSAO FEDERADA SOTA: {len(top_docs)} fragmentos) ==="]
-                    for i, item in enumerate(top_docs):
-                        src = Path(item.get("source", "N/A")).name
-                        engine_tag = item.get("engine", "federated")
-                        output_parts.append(
-                            f"--- Fragmento #{i + 1} de @{item.get('agent', 'Unknown')} [{engine_tag}] (Fonte: {src}) ---\n{item['doc']}\n"
-                        )
-                    return "\n".join(output_parts)
+                    return self._format_hybrid_federated_results(top_docs)
 
             if target_engine == "lance" and self.lance_backend:
                 lance_docs = await self.query_lancedb(question, n_results=n_results)
                 if lance_docs:
-                    output_parts = [
-                        f"\n=== MENTE COLETIVA LANCEDB (ALTA COMPLEXIDADE SOTA: {len(lance_docs)} fragmentos) ==="
-                    ]
-                    for i, item in enumerate(lance_docs):
-                        src = Path(item.get("source", "N/A")).name
-                        output_parts.append(
-                            f"--- Fragmento #{i + 1} de @{item.get('agent', 'Unknown')} (Fonte: {src}) ---\n{item['doc']}\n"
-                        )
-                    return "\n".join(output_parts)
+                    return self._format_lance_results(lance_docs)
 
             # 1. Expansao da Query com IA para Recall Semantico Superior (ChromaDB Padrao)
             expanded_queries = [question] if local_only else await self._expand_query(question)

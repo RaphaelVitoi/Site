@@ -34,6 +34,55 @@ class DeepSolverImporter(BaseSolverImporter):
             return False
         return False
 
+    def _process_list_nodes(self, raw_nodes: list[dict[str, Any]], starting_pot: float) -> dict[str, SolverNode]:
+        """Processa nós no formato de lista."""
+        nodes_dict: dict[str, SolverNode] = {}
+        for item in raw_nodes:
+            nid = str(item.get("id", item.get("node_id", f"node_{len(nodes_dict)}")))
+            strategy = {self.sanitize_action_name(a): float(f) for a, f in item.get("strategy", {}).items()}
+            ev = {self.sanitize_action_name(a): float(e) for a, e in item.get("ev", {}).items()}
+            node = SolverNode(
+                node_id=nid,
+                player=str(item.get("player", "IP")),
+                street=str(item.get("street", "flop")).lower(),
+                pot=float(item.get("pot", starting_pot)),
+                actions=list(strategy.keys()) if strategy else item.get("actions", []),
+                strategy=strategy,
+                ev=ev,
+                range_equity=item.get("equity", item.get("range_equity")),
+                children=[str(c) for c in item.get("children", [])],
+            )
+            nodes_dict[nid] = node
+        return nodes_dict
+
+    def _process_dict_nodes(self, raw_nodes: dict[str, Any], starting_pot: float) -> dict[str, SolverNode]:
+        """Processa nós no formato de dicionário."""
+        nodes_dict: dict[str, SolverNode] = {}
+        for nid, item in raw_nodes.items():
+            strategy = {self.sanitize_action_name(a): float(f) for a, f in item.get("strategy", {}).items()}
+            ev = {self.sanitize_action_name(a): float(e) for a, e in item.get("ev", {}).items()}
+            node = SolverNode(
+                node_id=str(nid),
+                player=str(item.get("player", "IP")),
+                street=str(item.get("street", "flop")).lower(),
+                pot=float(item.get("pot", starting_pot)),
+                actions=list(strategy.keys()) if strategy else item.get("actions", []),
+                strategy=strategy,
+                ev=ev,
+                range_equity=item.get("equity", item.get("range_equity")),
+                children=[str(c) for c in item.get("children", [])],
+            )
+            nodes_dict[str(nid)] = node
+        return nodes_dict
+
+    def _determine_root_id(self, nodes_dict: dict[str, SolverNode]) -> str:
+        """Determina o ID do nó raiz."""
+        if "root" in nodes_dict:
+            return "root"
+        if nodes_dict:
+            return next(iter(nodes_dict))
+        return "root"
+
     def parse_tree(self, raw_content: str, tournament_context: dict[str, Any] | None = None) -> NormalizedGameTree:
         """Processa a arvore JSON do DeepSolver para a estrutura normalizada."""
         data = json.loads(raw_content)
@@ -45,44 +94,16 @@ class DeepSolverImporter(BaseSolverImporter):
         stacks = {k: float(v) for k, v in data.get("stacks", {"IP": 100.0, "OOP": 100.0}).items()}
         num_players = len(stacks) if stacks else 2
 
-        nodes_dict: dict[str, SolverNode] = {}
         raw_nodes = data.get("nodes", data.get("tree", {}))
 
         if isinstance(raw_nodes, list):
-            for item in raw_nodes:
-                nid = str(item.get("id", item.get("node_id", f"node_{len(nodes_dict)}")))
-                strategy = {self.sanitize_action_name(a): float(f) for a, f in item.get("strategy", {}).items()}
-                ev = {self.sanitize_action_name(a): float(e) for a, e in item.get("ev", {}).items()}
-                node = SolverNode(
-                    node_id=nid,
-                    player=str(item.get("player", "IP")),
-                    street=str(item.get("street", "flop")).lower(),
-                    pot=float(item.get("pot", starting_pot)),
-                    actions=list(strategy.keys()) if strategy else item.get("actions", []),
-                    strategy=strategy,
-                    ev=ev,
-                    range_equity=item.get("equity", item.get("range_equity")),
-                    children=[str(c) for c in item.get("children", [])],
-                )
-                nodes_dict[nid] = node
+            nodes_dict = self._process_list_nodes(raw_nodes, starting_pot)
         elif isinstance(raw_nodes, dict):
-            for nid, item in raw_nodes.items():
-                strategy = {self.sanitize_action_name(a): float(f) for a, f in item.get("strategy", {}).items()}
-                ev = {self.sanitize_action_name(a): float(e) for a, e in item.get("ev", {}).items()}
-                node = SolverNode(
-                    node_id=str(nid),
-                    player=str(item.get("player", "IP")),
-                    street=str(item.get("street", "flop")).lower(),
-                    pot=float(item.get("pot", starting_pot)),
-                    actions=list(strategy.keys()) if strategy else item.get("actions", []),
-                    strategy=strategy,
-                    ev=ev,
-                    range_equity=item.get("equity", item.get("range_equity")),
-                    children=[str(c) for c in item.get("children", [])],
-                )
-                nodes_dict[str(nid)] = node
+            nodes_dict = self._process_dict_nodes(raw_nodes, starting_pot)
+        else:
+            nodes_dict = {}
 
-        root_id = "root" if "root" in nodes_dict else (next(iter(nodes_dict)) if nodes_dict else "root")
+        root_id = self._determine_root_id(nodes_dict)
 
         return NormalizedGameTree(
             solver_type="deep_solver",
@@ -105,30 +126,42 @@ class DeepSolverImporter(BaseSolverImporter):
             return f"{RANKS[r]}{RANKS[c]}s"
         return f"{RANKS[c]}{RANKS[r]}o"
 
+    def _parse_2d_list(self, raw_data: list[list[float]]) -> list[list[float]]:
+        """Processa lista 2D 13x13."""
+        return [[round(float(v), 4) for v in row] for row in raw_data]
+
+    def _parse_1d_list(self, raw_data: list[float]) -> list[list[float]]:
+        """Processa lista 1D de 169 elementos."""
+        matrix = [[0.0 for _ in range(13)] for _ in range(13)]
+        for idx, val in enumerate(raw_data):
+            r = idx // 13
+            c = idx % 13
+            matrix[r][c] = round(float(val), 4)
+        return matrix
+
+    def _parse_dict(self, raw_data: dict[str, float]) -> list[list[float]]:
+        """Processa dicionário com labels de mãos."""
+        matrix = [[0.0 for _ in range(13)] for _ in range(13)]
+        for r in range(13):
+            for c in range(13):
+                label = self.get_hand_label(r, c)
+                val = raw_data.get(label)
+                if val is None:
+                    val = raw_data.get(label.lower(), 0.0)
+                matrix[r][c] = round(float(val) if val is not None else 0.0, 4)
+        return matrix
+
     def parse_range_matrix(self, raw_data: Any) -> list[list[float]]:
         """Converte formatos variados do DeepSolver (2D list, 1D 169, dict) em matriz 13x13."""
-        matrix = [[0.0 for _ in range(13)] for _ in range(13)]
-
         if isinstance(raw_data, list):
             if len(raw_data) == 13 and all(isinstance(row, list) and len(row) == 13 for row in raw_data):
-                return [[round(float(v), 4) for v in row] for row in raw_data]
+                return self._parse_2d_list(raw_data)
             if len(raw_data) == 169:
-                for idx, val in enumerate(raw_data):
-                    r = idx // 13
-                    c = idx % 13
-                    matrix[r][c] = round(float(val), 4)
-                return matrix
+                return self._parse_1d_list(raw_data)
         elif isinstance(raw_data, dict):
-            for r in range(13):
-                for c in range(13):
-                    label = self.get_hand_label(r, c)
-                    val = raw_data.get(label)
-                    if val is None:
-                        val = raw_data.get(label.lower(), 0.0)
-                    matrix[r][c] = round(float(val) if val is not None else 0.0, 4)
-            return matrix
+            return self._parse_dict(raw_data)
 
-        return matrix
+        return [[0.0 for _ in range(13)] for _ in range(13)]
 
     def generate_pmev_heatmap(
         self,
@@ -162,7 +195,12 @@ class DeepSolverImporter(BaseSolverImporter):
                 delta_matrix[r][c] = delta
 
                 # Combos ponderados: pares=6, suited=4, offsuit=12
-                combo_weight = 6.0 if r == c else (4.0 if r < c else 12.0)
+                if r == c:
+                    combo_weight = 6.0
+                elif r < c:
+                    combo_weight = 4.0
+                else:
+                    combo_weight = 12.0
                 total_ds_combos += ds_freq * combo_weight
                 total_pmev_combos += pmev_freq * combo_weight
 
