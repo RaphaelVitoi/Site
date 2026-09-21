@@ -73,7 +73,8 @@ def _carregar_modelos_locais() -> frozenset[str]:
 
 MODELOS_LOCAIS: frozenset[str] = _carregar_modelos_locais()
 GPT_5_6_SOL = "gpt-5.6-sol"
-GEMINI_3_8_FLASH = "gemini-3.8-flash"
+GEMINI_3_5_FLASH_LITE = "gemini-3.5-flash-lite"
+GEMINI_3_6_FLASH = "gemini-3.6-flash"  # failover para 3.5-flash-lite
 
 
 def e_local(alias: str) -> bool:
@@ -189,7 +190,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
     ),
     ClasseTarefa.CONSTRUCAO: Rota(
         primario="claude-sonnet-5",
-        fallback=GEMINI_3_8_FLASH,
+        fallback=GEMINI_3_6_FLASH,
         faixa=Faixa.API_PAGA,
         escalona_para="claude-opus-5",
         justificativa=(
@@ -202,10 +203,10 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "Sonnet resolve numa passada."
         ),
         ancorado_em="2026-09-07",
-        modelos_citados=("claude-sonnet-5", GEMINI_3_8_FLASH, "claude-opus-5"),
+        modelos_citados=("claude-sonnet-5", GEMINI_3_6_FLASH, "claude-opus-5"),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
-        primario="gemini-3.6-flash",
+        primario=GEMINI_3_6_FLASH,
         fallback="gpt-5.6-terra",
         faixa=Faixa.GRATUITA,
         escalona_para="claude-opus-5",
@@ -220,10 +221,10 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "verificado, e continua primario onde a faixa e paga."
         ),
         ancorado_em="2026-09-07",
-        modelos_citados=("gemini-3.6-flash", "gpt-5.6-terra", "claude-opus-5"),
+        modelos_citados=(GEMINI_3_6_FLASH, "gpt-5.6-terra", "claude-opus-5"),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
-        primario="gemini-3.5-flash-lite",
+        primario=GEMINI_3_5_FLASH_LITE,
         fallback="gpt-5.6-luna",
         faixa=Faixa.GRATUITA,
         justificativa=(
@@ -245,7 +246,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "A Luna continua fallback pago."
         ),
         ancorado_em="2026-09-07",
-        modelos_citados=("gemini-3.5-flash-lite", "gpt-5.6-luna"),
+        modelos_citados=(GEMINI_3_5_FLASH_LITE, "gpt-5.6-luna"),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
         primario=GPT_5_6_SOL,
@@ -279,16 +280,16 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         modelos_citados=("claude-opus-5", GPT_5_6_SOL, "gpt-6-astra"),
     ),
     ClasseTarefa.LOCAL: Rota(
-        primario="gemma4:12b",
-        fallback="gemma4:e4b",
+        primario="gemma4:e4b",
+        fallback="gemma4:e2b",
         faixa=Faixa.LOCAL,
-        escalona_para=GEMINI_3_8_FLASH,
+        escalona_para=GEMINI_3_6_FLASH,
         justificativa=(
             "Inferencia de borda: nenhum custo por uso e nenhuma dependencia de "
             "rede. Pesos ja provisionados; ver data/ollama_models.json."
         ),
         ancorado_em="2026-08-27",
-        modelos_citados=("gemma4:12b", "gemma4:e4b", GEMINI_3_8_FLASH),
+        modelos_citados=("gemma4:e4b", "gemma4:e2b", GEMINI_3_6_FLASH),
     ),
 }
 
@@ -704,23 +705,23 @@ def avaliar_uso_condicional_pro(
     tokens_in: int = 4000,
     tokens_out: int = 1000,
 ) -> dict[str, Any]:
-    """Avalia se o Chat GPT 5.6-Sol deve ser utilizado no lugar do Gemini 3.8/3.7 Flash.
+    """Avalia se o Chat GPT 5.6-Sol deve ser utilizado no lugar do Gemini 3.5/3.6 Flash.
 
     Regra de Ouro do Operador:
     Chat GPT 5.6-Sol so deve ser acionado EVENTUALMENTE se o ganho de qualidade
     superar CONCRETAMENTE o diferencial de custo/tokens. Caso contrario, o
-    Gemini 3.7 Flash prevalece.
+    Gemini 3.6 Flash prevalece.
     """
-    custo_flash = custo(GEMINI_3_8_FLASH, tokens_in, tokens_out)
+    custo_flash = custo(GEMINI_3_5_FLASH_LITE, tokens_in, tokens_out)
     custo_pro = custo("chatgpt-5.6-sol", tokens_in, tokens_out)
 
     aprovado = complexidade_formal and (ganho_qualidade_esperado_pct >= 25.0)
-    modelo_escolhido = "chatgpt-5.6-sol" if aprovado else GEMINI_3_8_FLASH
+    modelo_escolhido = "chatgpt-5.6-sol" if aprovado else GEMINI_3_5_FLASH_LITE
 
     motivo = (
         f"Alta complexidade matematica/axiomatica com ganho concreto de {ganho_qualidade_esperado_pct:.1f}% justificando o custo."
         if aprovado
-        else f"Eficiencia de custo x beneficio: Gemini 3.8 Flash supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao justifica o overhead)."
+        else f"Eficiencia de custo x beneficio: Gemini 3.5 Flash-Lite supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao justifica o overhead)."
     )
 
     return {

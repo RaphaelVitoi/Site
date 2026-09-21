@@ -230,7 +230,7 @@ class InferenceRequest(BaseModel):
     messages: list[dict[str, str]] | None = None
     # Raciocinar e decisao POR REQUISICAO, nao configuracao de servidor. "ola" e
     # "analise este stack trace" nao querem o mesmo regime: medido no app do
-    # Ollama, o gemma4:12b gastou 19,5 s deliberando sobre qual de tres saudacoes
+    # Ollama, o gemma4:e4b gastou 19,5 s deliberando sobre qual de tres saudacoes
     # equivalentes usar. Custo pago onde nao muda a resposta.
     #   None   segue o padrao do servidor (SOTA_THINK, hoje desligado)
     #   False  responde direto
@@ -295,9 +295,10 @@ CLOUD_MODEL_MAP = {
 # logo abaixo. Este literal so entra em uso se o manifesto estiver ausente ou
 # ilegivel, para que o servidor nunca deixe de subir por causa de um arquivo
 # de configuracao.
+GEMMA4_E4B = "gemma4:e4b"
 OLLAMA_MODEL_MAP = {
-    "12b": "gemma4:12b",
-    "e4b": "gemma4:e4b",
+    "12b": GEMMA4_E4B,
+    "e4b": GEMMA4_E4B,
     "e2b": "gemma4:e2b",
     "4b": "gemma4:latest",
     "llama3_8b": "llama3.1:8b",
@@ -414,6 +415,27 @@ MODEL_INFERENCE_PARAMS = {
 }
 
 
+def _resolve_heuristica(model_name_lower: str) -> str | None:
+    """Resolve pedidos vagos via heuristica de substring (fallback)."""
+    if "31b" in model_name_lower or "cloud" in model_name_lower:
+        return "31b_cloud"
+    if "26b" in model_name_lower or "12b" in model_name_lower:
+        return "12b"  # SOTA: 26b desviado estrategicamente para o cavalo-de-batalha local 12b
+    if "e2b" in model_name_lower or "2b" in model_name_lower:
+        return "e2b"
+    if "4b" in model_name_lower or "latest" in model_name_lower or "e4b" in model_name_lower:
+        return "e4b"
+    if "llama" in model_name_lower:
+        return "llama3_8b"
+    if "qwen" in model_name_lower:
+        return "qwen"
+    if "granite" in model_name_lower:
+        return "granite"
+    if "deepseek" in model_name_lower:
+        return "deepseek"
+    return None
+
+
 def normalize_model(model_name: str | None) -> str:
     """Resolve o nome pedido para um alias do manifesto.
 
@@ -440,7 +462,7 @@ def normalize_model(model_name: str | None) -> str:
       3. heuristica de substring         -> so entao, para pedidos vagos
     """
     if not model_name:
-        return "12b"
+        return "e4b"
     bruto = model_name.strip()
     model_name_lower = bruto.lower()
 
@@ -456,24 +478,10 @@ def normalize_model(model_name: str | None) -> str:
         if tag.lower() == model_name_lower:
             return alias
 
-    if "31b" in model_name_lower or "cloud" in model_name_lower:
-        return "31b_cloud"
-    if "26b" in model_name_lower:
-        return "12b"  # SOTA: 26b desviado estrategicamente para o cavalo-de-batalha local 12b
-    if "12b" in model_name_lower:
-        return "12b"
-    if "e2b" in model_name_lower or "2b" in model_name_lower:
-        return "e2b"
-    if "4b" in model_name_lower or "latest" in model_name_lower or "e4b" in model_name_lower:
-        return "e4b"
-    if "llama" in model_name_lower:
-        return "llama3_8b"
-    if "qwen" in model_name_lower:
-        return "qwen"
-    if "granite" in model_name_lower:
-        return "granite"
-    if "deepseek" in model_name_lower:
-        return "deepseek"
+    # 3) Heuristica de substring (para pedidos vagos)
+    resultado = _resolve_heuristica(model_name_lower)
+    if resultado is not None:
+        return resultado
     return "12b"
 
 
@@ -975,7 +983,7 @@ async def _stream_local(
     """SOTA: Streaming via Ollama nativo com NDJSON e controle granular de contexto."""
     logger.info("[ROTEAMENTO LOCAL] Direcionando %s para Ollama nativo...", target_model)
     logger.info("[SISTEMA] Malha Ativa: 19 Agentes SOTA (Gemma 4 inclusive) | Entidade 20 (CEO Raphael Vitoi).")
-    ollama_model = OLLAMA_MODEL_MAP.get(target_model, "gemma4:12b")
+    ollama_model = OLLAMA_MODEL_MAP.get(target_model, GEMMA4_E4B)
 
     await _check_vram_offload(target_model)
 
@@ -1153,11 +1161,12 @@ async def _orchestrate_streams(
             return
 
     # 3. Fallback Cloud Secundario (OpenRouter)
-    if openrouter_key:
-        async for chunk in _stream_openrouter(req, request, messages, openrouter_key, cloud_model):
-            yield chunk
-    else:
+    if not openrouter_key:
         yield "[ENTROPIA CRITICA]: Nenhum motor (local ou cloud) esta disponivel para atender esta requisicao."
+        return
+
+    async for chunk in _stream_openrouter(req, request, messages, openrouter_key, cloud_model):
+        yield chunk
 
 
 @app.post("/generate", response_model=None)

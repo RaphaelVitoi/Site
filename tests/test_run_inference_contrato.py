@@ -118,7 +118,7 @@ def test_compact_conversation_preserva_persona_e_reduz_a_dez_porcento():
 def test_compact_conversation_atualiza_tag_de_modelo_quando_fornecida():
     """Garante que a persona tem sua referencia de modelo atualizada no hot-swap."""
     conversa = [
-        {"role": "system", "content": "Voce e o modelo open-source gemma4:12b, rodando localmente."},
+        {"role": "system", "content": "Voce e o modelo open-source gemma4:e4b, rodando localmente."},
         {"role": "user", "content": "pergunta"},
         {"role": "assistant", "content": "resposta"},
     ]
@@ -141,7 +141,7 @@ def test_compact_conversation_curta_permanece_inalterada():
 def test_select_model_interactively_por_numero_e_alias():
     """Valida selecao interativa por numero de indice e por alias/tag."""
     mock_models = [
-        {"tag": "gemma4:12b", "tier": "local", "size_str": "7.3 GB"},
+        {"tag": "gemma4:e4b", "tier": "local", "size_str": "7.3 GB"},
         {"tag": "qwen2.5-coder:7b", "tier": "local", "size_str": "4.7 GB"},
     ]
     with patch("builtins.input", return_value="2"):
@@ -150,7 +150,7 @@ def test_select_model_interactively_por_numero_e_alias():
 
     with patch("builtins.input", return_value="1"):
         tag_selecionada = ri._select_model_interactively(mock_models)
-        assert tag_selecionada == "gemma4:12b"
+        assert tag_selecionada == "gemma4:e4b"
 
 
 def test_run_chat_loop_comandos_in_chat():
@@ -164,18 +164,18 @@ def test_run_chat_loop_comandos_in_chat():
         patch("builtins.input", side_effect=inputs),
         patch.object(ri.console, "print") as mock_print,
     ):
-        ri._run_chat_loop("gemma4:12b", "Persona", conversa, max_tokens=2048)
+        ri._run_chat_loop("gemma4:e4b", "Persona", conversa, max_tokens=2048)
         assert mock_print.called
 
 
 def test_run_chat_loop_hot_swap_troca_de_modelo():
     """Valida a troca de modelo a quente via /model retendo 10% do contexto."""
-    conversa = [{"role": "system", "content": "Persona SOTA open-source gemma4:12b,"}]
+    conversa = [{"role": "system", "content": "Persona SOTA open-source gemma4:e4b,"}]
     for i in range(20):
         conversa.append({"role": "user" if i % 2 == 0 else "assistant", "content": f"msg {i}"})
 
     mock_installed = [
-        {"tag": "gemma4:12b", "tier": "local", "size_str": "7.3 GB"},
+        {"tag": "gemma4:e4b", "tier": "local", "size_str": "7.3 GB"},
         {"tag": "qwen2.5-coder:7b", "tier": "local", "size_str": "4.7 GB"},
     ]
 
@@ -190,7 +190,7 @@ def test_run_chat_loop_hot_swap_troca_de_modelo():
         patch.object(ri, "discover_ollama_models", return_value=mock_installed),
         patch.object(ri.console, "print") as mock_print,
     ):
-        ri._run_chat_loop("gemma4:12b", "Persona SOTA open-source gemma4:12b,", conversa, max_tokens=2048)
+        ri._run_chat_loop("gemma4:e4b", "Persona SOTA open-source gemma4:e4b,", conversa, max_tokens=2048)
         assert mock_print.called
 
 

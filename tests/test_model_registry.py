@@ -217,10 +217,11 @@ def test_gemini_38_flash_nao_aceita_minimal():
         GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO, thinking_level="minimal")
 
 
-def test_gemini_35_flash_lite_aceita_minimal():
-    """gemini-3.5-flash-lite aceita 'minimal' para extracao JSON de baixa latencia."""
-    req = GoogleGenAIAdapter.build("gemini-3.5-flash-lite", USUARIO, thinking_level="minimal")
-    assert req["generation_config"]["thinking_level"] == "minimal"
+def test_gemini_35_flash_lite_nao_aceita_minimal():
+    """gemini-3.5-flash-lite rejeita 'minimal' como todos os modelos Gemini."""
+    assert get("gemini-3.5-flash-lite").thinking_level in {"low", "medium", "high"}
+    with pytest.raises(ParametroRejeitadoError, match="minimal"):
+        GoogleGenAIAdapter.build("gemini-3.5-flash-lite", USUARIO, thinking_level="minimal")
 
 
 #  Cruzados

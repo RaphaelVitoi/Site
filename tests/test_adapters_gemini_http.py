@@ -4,7 +4,7 @@ Verifica a conformidade dos modelos da familia Gemini 3.x com as diretrizes
 tecnicas atualizadas em 2026-09-08:
   - Eliminacao de amostragem tradicional (temperature, top_p, top_k) e rejeicao de penalidades;
   - Rejeicao de historico de conversa com trailing role 'model';
-  - Validacao estrita de thinking_level por variante (minimal permitido apenas em 3.5 Flash-Lite);
+  - Validacao estrita de thinking_level por variante (minimal rejeitado em todos os modelos Gemini);
   - Montagem cirurgica de payloads REST v1beta sem parametros obsoletos;
   - Extracao de texto resiliente contra blocos de pensamento (thought blocks).
 """
@@ -27,7 +27,7 @@ USUARIO = [{"role": "user", "parts": [{"text": "ping"}]}]
 
 
 def test_reconhece_modelos_gemini_ativos() -> None:
-    assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.8-flash")
+    assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.5-flash-lite")
     assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.7-flash")
     assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.6-flash")
     assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.5-flash-lite")
@@ -39,7 +39,7 @@ def test_modelo_estranho_nao_reconhecido_como_google() -> None:
 
 
 def test_normalize_gemini_model_preserva_38() -> None:
-    assert _normalize_gemini_model("gemini-3.8-flash") == "gemini-3.8-flash"
+    assert _normalize_gemini_model("gemini-3.5-flash-lite") == "gemini-3.5-flash-lite"
     assert _normalize_gemini_model("GEMINI-3.8-FLASH") == "GEMINI-3.8-FLASH"
 
 
@@ -55,7 +55,7 @@ def test_normalize_gemini_model_preserva_38() -> None:
 def test_google_rejeita_amostragem_legada_em_build(param: str) -> None:
     kw: dict[str, Any] = {param: 0.5}
     with pytest.raises(ParametroRejeitadoError, match=param):
-        GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO, **kw)
+        GoogleGenAIAdapter.build("gemini-3.5-flash-lite", USUARIO, **kw)
 
 
 # ==============================================================================
@@ -72,7 +72,7 @@ def test_historico_com_trailing_model_e_rejeitado() -> None:
         GoogleGenAIAdapter.validar_historico(historico_invalido)
 
     with pytest.raises(ParametroRejeitadoError, match="role 'model'"):
-        GoogleGenAIAdapter.build("gemini-3.8-flash", historico_invalido)
+        GoogleGenAIAdapter.build("gemini-3.5-flash-lite", historico_invalido)
 
 
 def test_historico_com_trailing_model_output_e_rejeitado() -> None:
@@ -109,7 +109,7 @@ def test_build_gemini_payload_rejeita_trailing_model() -> None:
 
 def test_build_http_gemini_38_flash_thinking_config() -> None:
     payload = GoogleGenAIAdapter.build_http(
-        "gemini-3.8-flash",
+        "gemini-3.5-flash-lite",
         USUARIO,
         system_instruction="Instrucao SOTA",
         thinking_budget=4096,
@@ -137,9 +137,9 @@ def test_build_http_gemini_36_flash_respeita_teto_8k() -> None:
 
 
 def test_build_gemini_payload_omite_temperature_em_3x() -> None:
-    payload_38 = _build_gemini_payload("sys", "prompt", False, model="gemini-3.8-flash", temperature=0.5)
+    payload_38 = _build_gemini_payload("sys", "prompt", False, model="gemini-3.5-flash-lite", temperature=0.5)
     assert "temperature" not in payload_38["generationConfig"]
-    assert payload_38["generationConfig"]["thinkingConfig"]["thinkingBudget"] == 4096
+    assert "thinkingConfig" not in payload_38["generationConfig"]
 
     payload_legado = _build_gemini_payload("sys", "prompt", False, model="gemini-1.5-pro", temperature=0.5)
     assert payload_legado["generationConfig"]["temperature"] == 0.5

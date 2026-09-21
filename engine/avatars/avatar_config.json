@@ -141,9 +141,9 @@
     },
     "gemma4": {
       "name": "Gemma4",
-      "model_path": "gemma4:12b",
-      "model_file": "gemma4-12b.gguf",
-      "ollama_model": "gemma4:12b",
+      "model_path": "gemma4:e4b",
+      "model_file": "gemma4-e4b.gguf",
+      "ollama_model": "gemma4:e4b",
       "vulkan_port": 8080,
       "temperature": 0.2,
       "top_p": 0.9,

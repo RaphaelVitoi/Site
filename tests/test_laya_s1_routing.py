@@ -5,7 +5,7 @@ populada por core/arbitrator::_registrar_intencao_s1) atua como fator ADVISORY d
 reordenacao em llm.orchestrator._prepare_routing_pipeline -- "Ponto unico de
 entrada da Cognicao SOTA":
 
-  * texto NAO-LATINO (devanagari/han/non-latin) -> laya reordena gemma4:12b
+  * texto NAO-LATINO (devanagari/han/non-latin) -> laya reordena gemma4:e4b
     (modelo LOCAL multi-script, zero $) para o inicio da fila, evitando cloud $$$
     para scripts que o modelo primario nao domina.
   * texto LATINO (PT/ES) ou sem intencao_s1 -> o pipeline segue a politica de
@@ -48,7 +48,7 @@ def _resolve(task):
 
 
 def test_laya_s1_nao_latin_reordena_para_gemma_local():
-    # Devanagari (nao-latino): laya forca gemma4:12b LOCAL (multi-script, zero $)
+    # Devanagari (nao-latino): laya forca gemma4:e4b LOCAL (multi-script, zero $)
     # na frente do designado -- evita cloud $$$ para scripts nao-latinos.
     task = _mk_task(
         metadata={
@@ -63,7 +63,7 @@ def test_laya_s1_nao_latin_reordena_para_gemma_local():
         }
     )
     models, _agent_type, _designated = _resolve(task)
-    assert models[0] == "gemma4:12b"
+    assert models[0] == "gemma4:e4b"
 
 
 def test_laya_s1_latin_preserva_designado_da_fonte_unica():
@@ -84,7 +84,7 @@ def test_laya_s1_latin_preserva_designado_da_fonte_unica():
     models, _agent_type, designated = _resolve(task)
     assert models[0] == "claude-opus-5"
     assert designated == "claude-opus-5"
-    assert models[0] != "gemma4:12b"
+    assert models[0] != "gemma4:e4b"
 
 
 def test_laya_s1_ausente_preserva_politica_fonte_unica():

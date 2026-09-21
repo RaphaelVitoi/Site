@@ -148,11 +148,11 @@ def _aplicar_reordenacao_laya_s1(models_to_try: list[str], intencao_s1: dict) ->
     """Reordena models_to_try pela classificacao zero-download S1 (laya).
 
     Texto nao-latino (devanagari/han/non-latin) tenta primeiro o modelo local
-    multi-script gemma4:12b (zero $) antes do cloud.
+    multi-script gemma4:e4b (zero $) antes do cloud.
     """
     _script = str(intencao_s1.get("script", "") or "")
-    if _script in {"devanagari", "han", "non-latin"} and "gemma4:12b" not in models_to_try:
-        models_to_try.insert(0, "gemma4:12b")
+    if _script in {"devanagari", "han", "non-latin"} and "gemma4:e4b" not in models_to_try:
+        models_to_try.insert(0, "gemma4:e4b")
     return models_to_try
 
 
@@ -197,7 +197,7 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     # candidatos. Backward-compatible: sem intenciao_s1, o pipeline segue a politica
     # original (zero regressions em routing_policy / mcp_addon / agents_sota).
     # ROI: texto nao-latino (devanagari/han/non-latin) -> tenta primeiro o modelo local
-    # multi-script gemma4:12b (zero $) antes do cloud; PT/ES (latin, nao ingles) ficam
+    # multi-script gemma4:e4b (zero $) antes do cloud; PT/ES (latin, nao ingles) ficam
     # para o primario (claude/gemini). Se o local falhar, call_llm_api faz fallback ao
     # proximo candidato (graceful).
     _intencao_s1 = cast(dict, (task.metadata or {}).get("intencao_s1") or {})

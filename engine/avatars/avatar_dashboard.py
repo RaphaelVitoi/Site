@@ -70,7 +70,7 @@ AVATARS = [
     (
         "gemma4",
         "GEMMA4 (Oraculo de Borda)",
-        "gemma4:12b",
+        "gemma4:e4b",
         "RAG ChromaDB, Memoria Vetorial e Baixa Latencia",
     ),
     (
@@ -116,6 +116,20 @@ def _fmt_ts(iso: str | None) -> str:
         return iso[:11]
 
 
+def _parse_metadata(metadata_raw: str | dict | None) -> dict:
+    """Extrai dict de metadata, tolerando string JSON ou dict direto."""
+    if not metadata_raw:
+        return {}
+    if isinstance(metadata_raw, str):
+        try:
+            return json.loads(metadata_raw)
+        except Exception:
+            return {}
+    if isinstance(metadata_raw, dict):
+        return metadata_raw
+    return {}
+
+
 def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tuple[str, str, str]:
     """
     Mapeia os 5 estados de operacao:
@@ -126,15 +140,7 @@ def classify_task_status(raw_status: str, metadata_raw: str | dict | None) -> tu
     5. 'prevista e engatilhada' (pending / queued / triggered)
     """
     s = (raw_status or "").lower().strip()
-    meta = {}
-    if metadata_raw:
-        if isinstance(metadata_raw, str):
-            try:
-                meta = json.loads(metadata_raw)
-            except Exception:
-                meta = {}
-        elif isinstance(metadata_raw, dict):
-            meta = metadata_raw
+    meta = _parse_metadata(metadata_raw)
 
     if s == "completed_with_errors" or (
         s == "completed" and (meta.get("soft_failure") or meta.get("last_error_class"))
@@ -205,16 +211,7 @@ def get_db_snapshot() -> dict:
                 snap["counts"][s] += 1
 
         # Per-agent counts
-        cur.execute("SELECT agent, status, COUNT(*) as n FROM tasks GROUP BY agent, status")
-        for row in cur.fetchall():
-            ag = (row["agent"] or "").replace("@", "").lower().strip()
-            if not ag:
-                continue
-            if ag not in snap["by_agent"]:
-                snap["by_agent"][ag] = {"completed": 0, "running": 0, "pending": 0, "failed": 0}
-            s = row["status"].lower().strip()
-            if s in snap["by_agent"][ag]:
-                snap["by_agent"][ag][s] = row["n"]
+        _build_by_agent(cur, snap)
 
         # History: last 20 tasks
         cur.execute(
@@ -228,51 +225,10 @@ def get_db_snapshot() -> dict:
         snap["history"] = [dict(r) for r in cur.fetchall()]
 
         # Last 5 detailed tasks
-        cur.execute(
-            """
-            SELECT id, agent, status, description, timestamp, completedAt, metadata
-            FROM tasks
-            ORDER BY rowid DESC
-            LIMIT 5
-            """
-        )
-        for r in cur.fetchall():
-            t_dict = dict(r)
-            cat_code, badge, label = classify_task_status(t_dict["status"], t_dict.get("metadata"))
-            t_dict["status_category"] = cat_code
-            t_dict["status_badge"] = badge
-            t_dict["status_label"] = label
-            snap["last_5_detailed"].append(t_dict)
+        _build_detailed_rows(cur, snap)
 
         # Tasks running right now with ETA calculation
-        cur.execute(
-            """
-            SELECT id, agent, description, timestamp, metadata
-            FROM tasks
-            WHERE status = 'running'
-            ORDER BY timestamp ASC
-            LIMIT 8
-            """
-        )
-        now_ts = datetime.now(UTC)
-        for r in cur.fetchall():
-            t_dict = dict(r)
-            elapsed_sec = 0.0
-            if t_dict.get("timestamp"):
-                try:
-                    t_dt = datetime.fromisoformat(t_dict["timestamp"].replace("Z", "+00:00"))
-                    elapsed_sec = max(0.0, (now_ts - t_dt).total_seconds())
-                except Exception:
-                    elapsed_sec = 0.0
-
-            avg_dur_sec = 45.0
-            remaining_sec = max(2.0, avg_dur_sec - elapsed_sec)
-            progress_pct = min(98, int((elapsed_sec / (elapsed_sec + remaining_sec)) * 100))
-
-            t_dict["elapsed_sec"] = round(elapsed_sec, 1)
-            t_dict["eta_remaining_sec"] = round(remaining_sec, 1)
-            t_dict["progress_pct"] = progress_pct
-            snap["running_now"].append(t_dict)
+        _build_running_now(cur, snap)
 
         # Forecasted / Queued Tasks
         cur.execute(
@@ -315,6 +271,71 @@ def get_db_snapshot() -> dict:
     except Exception as e:
         logger.warning("Could not get DB snapshot for dashboard: %s", e)
     return snap
+
+
+def _build_by_agent(cur: sqlite3.Cursor, snap: dict) -> None:
+    """Popula snap['by_agent'] com contagens agrupadas por agente."""
+    cur.execute("SELECT agent, status, COUNT(*) as n FROM tasks GROUP BY agent, status")
+    for row in cur.fetchall():
+        ag = (row["agent"] or "").replace("@", "").lower().strip()
+        if not ag:
+            continue
+        if ag not in snap["by_agent"]:
+            snap["by_agent"][ag] = {"completed": 0, "running": 0, "pending": 0, "failed": 0}
+        s = row["status"].lower().strip()
+        if s in snap["by_agent"][ag]:
+            snap["by_agent"][ag][s] = row["n"]
+
+
+def _build_detailed_rows(cur: sqlite3.Cursor, snap: dict) -> None:
+    """Popula snap['last_5_detailed'] com as 5 ultimas tasks classificadas."""
+    cur.execute(
+        """
+        SELECT id, agent, status, description, timestamp, completedAt, metadata
+        FROM tasks
+        ORDER BY rowid DESC
+        LIMIT 5
+        """
+    )
+    for r in cur.fetchall():
+        t_dict = dict(r)
+        cat_code, badge, label = classify_task_status(t_dict["status"], t_dict.get("metadata"))
+        t_dict["status_category"] = cat_code
+        t_dict["status_badge"] = badge
+        t_dict["status_label"] = label
+        snap["last_5_detailed"].append(t_dict)
+
+
+def _build_running_now(cur: sqlite3.Cursor, snap: dict) -> None:
+    """Popula snap['running_now'] com tasks em execucao e calculo de ETA."""
+    cur.execute(
+        """
+        SELECT id, agent, description, timestamp, metadata
+        FROM tasks
+        WHERE status = 'running'
+        ORDER BY timestamp ASC
+        LIMIT 8
+        """
+    )
+    now_ts = datetime.now(UTC)
+    for r in cur.fetchall():
+        t_dict = dict(r)
+        elapsed_sec = 0.0
+        if t_dict.get("timestamp"):
+            try:
+                t_dt = datetime.fromisoformat(t_dict["timestamp"].replace("Z", "+00:00"))
+                elapsed_sec = max(0.0, (now_ts - t_dt).total_seconds())
+            except Exception:
+                elapsed_sec = 0.0
+
+        avg_dur_sec = 45.0
+        remaining_sec = max(2.0, avg_dur_sec - elapsed_sec)
+        progress_pct = min(98, int((elapsed_sec / (elapsed_sec + remaining_sec)) * 100))
+
+        t_dict["elapsed_sec"] = round(elapsed_sec, 1)
+        t_dict["eta_remaining_sec"] = round(remaining_sec, 1)
+        t_dict["progress_pct"] = progress_pct
+        snap["running_now"].append(t_dict)
 
 
 #

@@ -556,7 +556,7 @@ async def _test_single_gemini_key(
 
 
 async def _cmd_run_gemini_health(manager: QueueManager, window_minutes: int) -> dict:
-    flash_model = os.environ.get("GEMINI_HEALTH_FLASH_MODEL", "gemini-3.8-flash")
+    flash_model = os.environ.get("GEMINI_HEALTH_FLASH_MODEL", "gemini-3.5-flash-lite")
     pro_model = os.environ.get("GEMINI_HEALTH_PRO_MODEL", "gemini-3.7-flash")
     health_prompt = "Responda apenas OK."
     system_prompt = "Voce e um verificador tecnico. Responda apenas com OK."

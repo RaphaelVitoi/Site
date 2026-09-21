@@ -55,7 +55,7 @@ def test_vram_single_active_slot_and_keepalive_unpin():
         mock_get.return_value.json.return_value = {
             "models": [
                 {"name": "qwen2.5-coder:7b-instruct-q5_K_M", "size_vram": 5841879040},
-                {"name": "gemma4:12b", "size_vram": 7924514816},
+                {"name": "gemma4:e4b", "size_vram": 7924514816},
             ]
         }
         mock_post.return_value.status_code = 200
@@ -130,7 +130,7 @@ def test_sota_cache_lru_eviction_under_stress(memory_cache: SOTACache):
         ("gemini-3.7-flash", "gemini"),
         ("gemini-3.6-flash", "gemini"),
         ("gemini-3.5-flash-lite", "gemini"),
-        ("gemma4:12b", "local"),
+        ("gemma4:e4b", "local"),
         ("gemma4:31b-cloud", "local"),
         ("qwen2.5-coder:7b-instruct-q5_K_M", "local"),
         ("qwen2.5-coder:1.5b", "local"),

@@ -46,7 +46,7 @@ except ImportError:
 # ==============================================================================
 
 OLLAMA_MODEL_MAP: dict[str, str] = {
-    "12b": "gemma4:12b",
+    "12b": "gemma4:e4b",
     "12b_qat": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
     "e4b": "gemma4:e4b",
     "4b": "gemma4:latest",
