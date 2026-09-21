@@ -46,7 +46,7 @@
 		"remark-gfm": "4.0.1",
 		"remark-math": "6.0.0",
 		"swr": "2.5.1",
-		"zod": "3.25.76",
+		"zod": "4.6.5",
 		"zustand": "5.0.15"
 	},
 	"devDependencies": {
@@ -85,7 +85,7 @@
 		"sharp": "^0.35.4",
 		"mermaid": "11.16.1",
 		"esbuild": "^0.28.0",
-		"zod": "3.25.76",
+		"zod": "4.6.5",
 		"ws": "^8.18.3",
 		"linkify-it": "^6.1.0",
 		"markdown-it": "^14.1.2",
