@@ -21,7 +21,7 @@ MODEL_QWEN_25_7B_Q5 = "qwen2.5-coder:7b-instruct-q5_K_M"
 MODEL_GEMMA_31B_CLOUD = "gemma4:31b-cloud"
 MODEL_GEMINI_36_FLASH = "gemini-3.6-flash"
 MODEL_GEMINI_37_FLASH = "gemini-3.7-flash"
-MODEL_GEMINI_38_FLASH = "gemini-3.8-flash"
+MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
 MODEL_CHATGPT_56_SOL = "chatgpt-5.6-sol"
 MODEL_CLAUDE_OPUS_5 = "claude-opus-5"
 
@@ -51,7 +51,7 @@ class AgentClusteringMesh:
                 name="Cluster Alpha (Deep Reasoning & Architecture)",
                 description="Governanca, planejamento estrategico, resolucao matematica de PMev/ICM e arquitetura de sistemas.",
                 primary_models=[
-                    MODEL_GEMINI_38_FLASH,
+                    MODEL_GEMINI_35_FLASH_LITE,
                     MODEL_GEMINI_37_FLASH,
                     MODEL_GEMINI_36_FLASH,
                     MODEL_GEMINI_35_FLASH_LITE,

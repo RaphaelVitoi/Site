@@ -17,7 +17,7 @@
     "data": "2026-08-28",
     "superficie_agentes": "a POLITICA e a autoridade; o caminho quente resolve por core.config.modelo_do_agente",
     "superficie_subagentes": "a tabela LOCAL de core/subagents_mesh.py e a autoridade, e o invariante e custo zero",
-    "gemma4": "alias do manifesto corrigido de google/gemma-4-e2b-it para gemma4:12b",
+    "gemma4": "alias do manifesto corrigido de google/gemma-4-e2b-it para gemma4:e4b",
     "por_que_nao_se_sincroniza": [
       "Em cada superficie havia duas fontes para o mesmo fato, e duas fontes",
       "divergem por construcao. A saida foi apagar a segunda, nao mante-las em",
@@ -181,7 +181,7 @@
     "corrigido_em_2026_08_28": [
       {
         "de": "google/gemma-4-e2b-it",
-        "para": "gemma4:12b",
+        "para": "gemma4:e4b",
         "agente": "gemma4",
         "por_que": [
           "O alias antigo nao estava em registro nenhum, e os dois modulos",

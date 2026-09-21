@@ -587,7 +587,7 @@ def _build_models_to_try(task: Task, agent_type: str, openrouter_keys: list[str]
             else [
                 "google/gemini-3.5-flash-lite",
                 "google/gemini-3.6-flash",
-                "google/gemini-3.8-flash",
+                "google/gemini-3.5-flash-lite",
                 "meta-llama/llama-3.1-8b-instruct",
             ]
         )

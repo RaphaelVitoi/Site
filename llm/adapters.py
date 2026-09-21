@@ -367,7 +367,10 @@ class GoogleGenAIAdapter:
         if not thinking_level:
             return
         level_l = thinking_level.lower()
-        if alias in ("gemini-3.7-flash", "gemini-3.8-flash") and level_l == "minimal":
+        if (
+            alias in ("gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.8-flash")
+            and level_l == "minimal"
+        ):
             raise ParametroRejeitadoError(
                 f"{alias} nao aceita thinking_level 'minimal'. Use 'low', 'medium' ou 'high'."
             )

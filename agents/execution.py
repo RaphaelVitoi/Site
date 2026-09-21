@@ -91,10 +91,10 @@ def _escalate_security_cognition(task: Task) -> None:
     if task.agent == AGENT_SECURITYCHIEF and priority in ["high", "critical"]:
         # SOTA: model_copy e o padrao correto do Pydantic v2 para mutacao segura.
         # Evita falha silenciosa em models frozen e AttributeError em v2 strict.
-        new_metadata = {**(task.metadata or {}), "model_override": "gemini-3.8-flash"}
+        new_metadata = {**(task.metadata or {}), "model_override": "gemini-3.5-flash-lite"}
         object.__setattr__(task, "metadata", new_metadata)
         logger.info(
-            f"[[{te._c(task.agent)}]{task.agent}[/]] [bold red]CRITICAL SEC[/]: Escalando cognicao de seguranca para gemini-3.8-flash."
+            f"[[{te._c(task.agent)}]{task.agent}[/]] [bold red]CRITICAL SEC[/]: Escalando cognicao de seguranca para gemini-3.5-flash-lite."
         )
 
 

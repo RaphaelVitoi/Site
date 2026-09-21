@@ -101,7 +101,7 @@ def test_operacional_usa_faixa_gratuita_e_nao_o_menor_preco():
     gratuita. Custo marginal zero vence barato.
 
     A REGRESSAO PROTEGIDA CONTINUA A MESMA -- a Luna nao volta a ser primaria --,
-    mas o ARGUMENTO mudou em 2026-09-07. Com o gemini-3.8-flash primario, esta
+    mas o ARGUMENTO mudou em 2026-09-07. Com o gemini-3.5-flash-lite primario, esta
     rota era o exemplo canonico da tensao: a Luna custava menos por token e ainda
     assim perdia para a faixa. Promovido o gemini-3.5-flash-lite ($0.15/$0.60), o
     primario passou a ganhar nos DOIS eixos e a tensao sumiu daqui.
@@ -139,8 +139,8 @@ def test_ordem_de_consumo_respeita_a_economia_generalizada():
     [
         ("chico", "claude-opus-5", "gpt-5.6-sol"),
         ("maverick", "gpt-5.6-sol", "claude-opus-5"),
-        ("architect", "claude-sonnet-5", "gemini-3.8-flash"),
-        ("implementor", "claude-sonnet-5", "gemini-3.8-flash"),
+        ("architect", "claude-sonnet-5", "gemini-3.6-flash"),
+        ("implementor", "claude-sonnet-5", "gemini-3.6-flash"),
         ("auditor", "gemini-3.6-flash", "gpt-5.6-terra"),
         ("verifier", "gemini-3.6-flash", "gpt-5.6-terra"),
         ("securitychief", "gemini-3.6-flash", "gpt-5.6-terra"),
@@ -365,7 +365,7 @@ def test_core_config_expoe_modelo_concreto_por_agente():
     assert len(set(mapa.values())) >= 3, f"roteamento colapsou: {set(mapa.values())}"
     assert mapa["@chico"] == "claude-opus-5"
     assert mapa["@dispatcher"] == "gemini-3.5-flash-lite"
-    assert mapa["@gemma4"] == "gemma4:12b"
+    assert mapa["@gemma4"] == "gemma4:e4b"
 
 
 def test_nenhum_agente_fica_sem_modelo():
@@ -390,14 +390,14 @@ def test_hierarquia_de_tiers_cobre_governanca_e_execucao():
 
 
 def test_avaliar_uso_condicional_pro():
-    # 1. Tarefa de baixa complexidade ou ganho marginal -> Gemini 3.7 Flash
+    # 1. Tarefa de baixa complexidade ou ganho marginal -> Gemini 3.5 Flash-Lite
     res_flash = avaliar_uso_condicional_pro(
         complexidade_formal=False,
         ganho_qualidade_esperado_pct=10.0,
     )
-    assert res_flash["modelo_escolhido"] == "gemini-3.8-flash"
+    assert res_flash["modelo_escolhido"] == "gemini-3.5-flash-lite"
     assert res_flash["aprovado_pro"] is False
-    assert "Gemini 3.8 Flash supre a tarefa" in res_flash["motivo"]
+    assert "Gemini 3.5 Flash-Lite supre a tarefa" in res_flash["motivo"]
 
     # 2. Tarefa de alta complexidade matematica e ganho expressivo -> Chat GPT 5.6-Sol
     res_pro = avaliar_uso_condicional_pro(
@@ -559,16 +559,17 @@ def test_nenhuma_rota_local_nova_estoura_a_vram_declarada():
     }
     estouram = {c: v for c, v in estouram.items() if v}
 
-    assert estouram == {"local": ["gemma4:12b", "gemma4:e4b"]}, (
+    assert estouram == {"local": ["gemma4:e4b"]}, (
         f"o conjunto de rotas LOCAL que estouram a VRAM mudou: {estouram}. "
         f"Teto declarado: {teto_gib} GiB. Se uma rota foi corrigida, atualize o "
-        "registro no mesmo commit; se uma rota nova entrou quebrada, ela nao passa."
+        "registro no mesmo commit; se uma rota nova entrou quebrado, ela nao passa."
     )
 
-    # A inversao que o nome esconde: 'e4b' soa menor que '12b' e e 2 GB maior.
+    # O primario e4b (9.6 GB) e maior que o fallback e2b (7.2 GB) -- design
+    # invertido em relacao a gemma4:12b/e4b, onde primario era menor.
     local = ROTAS[ClasseTarefa.LOCAL]
-    assert tamanho[local.fallback] > tamanho[local.primario], (
-        "o fallback LOCAL deixou de ser maior que o primario -- se foi decisao, "
+    assert tamanho[local.primario] > tamanho[local.fallback], (
+        "o primario LOCAL deixou de ser maior que o fallback -- se foi decisao, "
         "esta assercao e o lugar de registra-la, junto do registro."
     )
 

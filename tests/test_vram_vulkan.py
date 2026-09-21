@@ -149,7 +149,7 @@ def test_servidor_fora_do_ar_e_none_nao_zero(nx, tmp_path):
 
 def test_size_vram_ausente_conta_como_zero_e_nao_quebra(nx, tmp_path):
     """Modelo 100% em CPU nao traz `size_vram`. Isso e ocupacao zero de VRAM,
-    nao erro -- e e justamente o caso que o gemma4:12b produz aqui."""
+    nao erro -- e e justamente o caso que o gemma4:e4b produz aqui."""
     with _com_log(nx, tmp_path, LINHA_DO_LOG), _com_api_ps(nx, [{"name": "so-cpu"}]):
         pct, usado, _ = nx._fetch_vulkan_ollama_vram()
     assert (pct, usado) == (0.0, 0.0)

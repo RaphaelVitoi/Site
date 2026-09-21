@@ -22,7 +22,7 @@ liam `primary_model` do manifesto direto. Divergencia: **19 de 19 agentes**, e
 - **Subagentes:** a tabela local de `core/subagents_mesh.py` e a autoridade, e o
   invariante e **custo zero**. A politica deixou de atribuir modelo a subagente
   e levanta `ForaDaAutoridadeDaPolitica`.
-- **`gemma4`:** alias do manifesto corrigido para `gemma4:12b`.
+- **`gemma4`:** alias do manifesto corrigido para `gemma4:e4b`.
 
 Em cada superficie havia duas fontes para o mesmo fato. A saida foi **apagar a
 segunda**, nunca mante-las em acordo -- duas fontes divergem por construcao.
@@ -127,7 +127,7 @@ def test_o_reordenador_nunca_inventa_modelo():
     ser uma segunda politica: nao ha nada nele que possa nomear um modelo que
     nao lhe tenham dado. `_inject_openrouter_alternatives` acrescenta -- por
     isso nao esta aqui, e por isso a fonte dele e configuracao declarada."""
-    entrada = ["gemini-3.5-flash-lite", "claude-sonnet-5", "gemma4:12b"]
+    entrada = ["gemini-3.5-flash-lite", "claude-sonnet-5", "gemma4:e4b"]
     saida = _reorder_models_for_economy(list(entrada), prefer_local=True)
     assert set(saida) <= set(entrada), f"o reordenador inventou {set(saida) - set(entrada)}"
 

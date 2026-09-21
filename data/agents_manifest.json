@@ -9,7 +9,7 @@
     "routing_pattern": "estrategi|inova|sentinela|ideia|analise|risco|filosofia|reflexao|disrup|meta|dilema|paradoxo|cosmovisao|principios|visao|futuro|diagnostico|bayes|antevisao",
     "model_preference": "deep_thinking",
     "color": "deep_pink3",
-    "primary_model": "gemini-3.8-flash",
+    "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "pmev-game-theory-engine",
       "bigquery-sql",
@@ -35,7 +35,7 @@
     "routing_pattern": "sintese|consenso|democrat|harmonia|mediacao|conflito|orquestra|gerenc|infraestrutura|automacao|log|monitoramento|api|sistema|admin|auto-coracao|debug",
     "model_preference": "deep_thinking",
     "color": "dodger_blue2",
-    "primary_model": "gemini-3.8-flash",
+    "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "sota-quality-gate",
@@ -74,7 +74,7 @@
       "core/arbitrator.py",
       "core/sota_context_engine.py"
     ],
-    "fallback_model": "gemini-3.8-flash",
+    "fallback_model": "gemini-3.5-flash-lite",
     "tier": "Tier 3: System Design & Topology (Pipeline)",
     "memory_affinity": "RAM_CACHE & ISOMORPHISM"
   },
@@ -88,7 +88,7 @@
     "routing_pattern": "planej|prd|spec|especifica|passo a passo|roadmap|milestone|etapas|dependencia|impacto",
     "model_preference": "deep_thinking",
     "color": "orange3",
-    "primary_model": "gemini-3.8-flash",
+    "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "enforcing-resource-attribution"
@@ -134,7 +134,7 @@
     "routing_pattern": "pesquis|busc|mercado|quem|referencia|concorrent|web|internet|sota|tendencia|analise|hipotese|validacao",
     "model_preference": "deep_thinking",
     "color": "medium_orchid",
-    "primary_model": "gemma4:12b",
+    "primary_model": "gemma4:e4b",
     "skills": [
       "literature-search-arxiv",
       "literature-search-europepmc",
@@ -223,7 +223,7 @@
       "engine/llama_cpp/start_vulkan_daemon.ps1",
       "engine/avatars/run_avatar.py"
     ],
-    "fallback_model": "gemini-3.8-flash",
+    "fallback_model": "gemini-3.5-flash-lite",
     "tier": "Tier 3: Surgical Coding (Vulkan)",
     "memory_affinity": "VRAM_HOT & TARGET_LOCK"
   },
@@ -272,7 +272,7 @@
     "specialized_scripts": [
       "engine/avatars/avatar_dashboard.py"
     ],
-    "fallback_model": "gemini-3.8-flash",
+    "fallback_model": "gemini-3.5-flash-lite",
     "tier": "Tier 3: Epistemic Curation (Cloud)",
     "memory_affinity": "CLOUD_ZERO_VRAM"
   },
@@ -295,7 +295,7 @@
     "specialized_scripts": [
       "tests/test_desambiguacao.py"
     ],
-    "fallback_model": "gemini-3.8-flash",
+    "fallback_model": "gemini-3.5-flash-lite",
     "tier": "Tier 3: Mathematical Formalism (Vulkan)",
     "memory_affinity": "VRAM_HOT & NUMPY_SIMD"
   },
@@ -379,7 +379,7 @@
     "routing_pattern": "rag|memori|historic|lembr|chroma|vetor|conhecimento|dados|informacao|contexto|documentos|autopoiese|ciclo",
     "model_preference": "fast_operations",
     "color": "light_sea_green",
-    "primary_model": "gemma4:12b",
+    "primary_model": "gemma4:e4b",
     "skills": [
       "sota-consciousness-memory-rag",
       "literature-search-arxiv",
@@ -440,7 +440,7 @@
       "engine/avatars/run_avatar.py",
       "scripts/ops/Start-NexusDashboard.ps1"
     ],
-    "fallback_model": "gemini-3.8-flash",
+    "fallback_model": "gemini-3.5-flash-lite",
     "tier": "Tier 3: Epistemic Memory & Poetics (Pipeline)",
     "memory_affinity": "RAM_CACHE & REPLAY_BUFFER"
   },
@@ -454,7 +454,7 @@
     "routing_pattern": "gemma|local|inferencia|borda|latencia|tatica|calibracao|sentinela|directml|ollama|nash-ia|ponto de ruptura|multimodal",
     "model_preference": "fast_operations",
     "color": "light_salmon3",
-    "primary_model": "gemma4:12b",
+    "primary_model": "gemma4:e4b",
     "skills": [
       "pmev-game-theory-engine",
       "sota-consciousness-memory-rag",

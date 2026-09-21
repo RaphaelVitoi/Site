@@ -305,6 +305,7 @@ revisoes_de_ancora:
       regra existente. Ampliacao, nao substituicao.
   - registro: registro-2026-08-29-o-fallback-que-nao-carrega
     caminhos:
+      - data/ESTADO_DE_ROTEAMENTO.json
       - tests/test_routing_policy.py
     parecer: >-
       Revisado e mantido valido. As assercoes acompanharam a renomeacao de
@@ -495,6 +496,16 @@ revisoes_de_ancora:
       Revisado e mantido valido. Alteracao de acompanhamento da renomeacao de
       modelo e da atualizacao de governanca; nenhuma regra que este registro
       publicou foi revertida.
+  - registro: registro-2026-09-19-refatoracao-sonar-python-e-icm
+    caminhos:
+      - llm/routing_policy.py
+      - scripts/llm_inference/run_inference.py
+    parecer: >-
+      Revisado e mantido valido. As alteracoes neste commit substituem literais
+      "gemini-3.5/3.6-flash" por referencias as constantes GEMINI_3_5_FLASH_LITE
+      e GEMINI_3_6_FLASH (S1192) e trocam o fallback da 3.5 para a 3.6 Flash
+      (sem reasoning na 3.5-lite, low quando necessario). Nenhuma rota ou
+      contrato publico publicado foi revertido. Suite 234 aprovados, 0 erros.
 verificado:
   - suite completa em 852 aprovados, 1 pulado, 2 reprovados sob PowerShell, apos destravar o Temp
   - as 2 reprovacoes estao em tests/test_cwv_gate_truthfulness.py, arquivo AUSENTE deste diff

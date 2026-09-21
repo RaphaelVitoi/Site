@@ -117,11 +117,11 @@ def test_historian_capabilities(avatar_config):
 def test_gemma4_capabilities(avatar_config):
     """
     PROVA DE CAPACIDADE EXCLUSIVA: Gemma4 (Sentinela de Inferencia Local e Baixa Latencia).
-    Valida que Gemma4 usa o modelo local gemma4:12b (otimizado para processamento em hardware local)
+    Valida que Gemma4 usa o modelo local gemma4:e4b (otimizado para processamento em hardware local)
     e possui o prompt focado em calibracao e execucao de borda.
     """
     gemma4 = avatar_config["personas"]["gemma4"]
-    assert gemma4["ollama_model"] == "gemma4:12b"
+    assert gemma4["ollama_model"] == "gemma4:e4b"
 
     prompt = gemma4["system_prompt"].lower()
     assert "gemma4" in prompt

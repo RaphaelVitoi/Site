@@ -35,7 +35,7 @@ if (Test-Path $ManifestoModelos) {
 if ($OllamaTags.Count -eq 0) {
     # Fallback minimo - mantido em paridade com o manifesto.
     $OllamaTags = @{
-        "12b"       = "gemma4:12b"
+        "12b"       = "gemma4:e4b"
         "e4b"       = "gemma4:e4b"
         "e2b"       = "gemma4:e2b"
         "4b"        = "gemma4:latest"
