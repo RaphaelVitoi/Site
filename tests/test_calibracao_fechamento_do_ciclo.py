@@ -31,7 +31,7 @@ distintas. Regra que nao e executavel nao e regra.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 # pylint: disable=redefined-outer-name
 import hashlib
@@ -176,7 +176,7 @@ def _calibrar(
 @pytest.fixture
 def cenario(tmp_path: Path):
     """Tres sessoes distintas num dia: portao aberto, pronto para fechar."""
-    dia = "2026-09-21"
+    dia = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
     ledger = tmp_path / "feedback-ledger.jsonl"
     outliers = tmp_path / "outlier-evidence-ledger.jsonl"
     _ledger(ledger, _tres_sessoes(dia))
@@ -249,7 +249,7 @@ def test_feedback_posterior_a_calibracao_volta_a_contar(cenario) -> None:
 
 def test_calibracao_exige_portao_aberto(tmp_path: Path) -> None:
     """Falha fechado: duas sessoes nao autorizam calibracao."""
-    dia = "2026-09-22"
+    dia = (datetime.now() + timedelta(days=2)).strftime("%Y-%m-%d")
     ledger = tmp_path / "feedback-ledger.jsonl"
     _ledger(ledger, _tres_sessoes(dia)[:2])
     _ledger(tmp_path / "outlier-evidence-ledger.jsonl", [])
@@ -261,7 +261,7 @@ def test_calibracao_exige_portao_aberto(tmp_path: Path) -> None:
 
 def test_excecao_ao_limiar_exige_motivo_e_fica_gravada(tmp_path: Path) -> None:
     """SS8.3: excecao existe por instrucao explicita, e consta do relatorio."""
-    dia = "2026-09-23"
+    dia = (datetime.now() + timedelta(days=3)).strftime("%Y-%m-%d")
     ledger = tmp_path / "feedback-ledger.jsonl"
     _ledger(ledger, _tres_sessoes(dia)[:2])
     _ledger(tmp_path / "outlier-evidence-ledger.jsonl", [])

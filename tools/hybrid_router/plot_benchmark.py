@@ -143,11 +143,12 @@ def _detect_data_mode(df: pd.DataFrame, meta: dict[str, Any]) -> None:
     meta["total"] = len(df)
 
 
-def _filter_successful_requests(df: pd.DataFrame, meta: dict[str, Any]) -> None:
+def _filter_successful_requests(df: pd.DataFrame, meta: dict[str, Any]) -> pd.DataFrame:
     """Filtra apenas requisições bem-sucedidas e atualiza metadados."""
     if "is_success" in df.columns:
         df = cast("pd.DataFrame", df[df["is_success"]]).copy().reset_index(drop=True)
         meta["sucesso"] = len(df)
+    return df
 
 
 def load_dataset(file_path: str | None, permitir_sintetico: bool = False) -> tuple[pd.DataFrame, dict[str, Any]]:
@@ -175,7 +176,7 @@ def load_dataset(file_path: str | None, permitir_sintetico: bool = False) -> tup
         )
 
     _detect_data_mode(df, meta)
-    _filter_successful_requests(df, meta)
+    df = _filter_successful_requests(df, meta)
     return df, meta
 
 

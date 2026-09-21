@@ -96,6 +96,7 @@ from llm.budget import (
     _RATE_LIMITERS,  # pyright: ignore[reportPrivateUsage]
     DAILY_API_BUDGET,
 )
+from llm.laya_bridge import ruin_priority_from_intencao
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
 from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
@@ -1057,7 +1058,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
         )
 
         inicio = time.perf_counter()
-        tree_res = VitoiPerspectiveEngine.simulate_decision_tree(
+        tree_res: dict[str, Any] = VitoiPerspectiveEngine.simulate_decision_tree(
             equity=req.equity,
             pot_size=req.pot_size,
             stack_eff=req.stack_eff,
@@ -1076,6 +1077,23 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
             fold_equity=req.fold_equity,
         )
         runtime_ms = (time.perf_counter() - inicio) * 1000.0
+
+        # Etapa 0 (laya S1): prior de ruína sobre a barreira de ruína (Teorema 2, BF<1).
+        # intencao_s1 (Task.metadata['n']) -> ruin_priority via llm.laya_bridge.
+        # Prefiltro: o premium de ruína é calculado apenas quando o input é incerto
+        # (nao_latin>0 -> ruin_priority>1). S1 não decide os 10 teoremas (§3); modula
+        # o prior de sobrevivência. Proveniância: 's1_ruin_prior'.
+        ruin_prior_s1 = ruin_priority_from_intencao(req.intencao_s1)
+        if ruin_prior_s1 != 1.0:
+            tree_res["s1_ruin_prior"] = ruin_prior_s1
+            tree_res["negative_risk_premium"] = VitoiPerspectiveEngine.calculate_negative_risk_premium_river(
+                pot_size=req.pot_size,
+                bet_size=min(req.pot_size * 0.5, req.stack_eff),
+                residual_stack_bb=req.stack_eff,
+                fold_survival_prob=0.05,
+                call_win_survival_prob=0.40,
+                ruin_prior=ruin_prior_s1,
+            )
 
         resp = PerspectiveTreeResponse(
             status="SUCCESS",

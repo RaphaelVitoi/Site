@@ -241,6 +241,26 @@
       ],
       "api_routes": ["/api/v1/timesfm/forecast", "/api/sota/timesfm-forecast"],
       "fallback_engine_id": "analytic-linear-forecast"
+    },
+    {
+      "engine_id": "laya-s1-router",
+      "display_name": "Laya System-1 Typed-Decisions Router (zero-download)",
+      "family": "adapter",
+      "implementation_level": "primitive",
+      "runtime_availability": "code-available",
+      "runtimes": ["python"],
+      "source_lineage": ["Laya", "Chico SOTA"],
+      "safe_label": "Classificacao System-1 zero-download (script/lingua/familia-de-modelo); roteamento semantico e priorizacao observacional da intencao",
+      "claims_allowed": ["script-detection", "language-detection", "model-family-suggestion", "zero-download-inference"],
+      "causal_parameters": ["script", "language", "is_english", "non_latin_fraction", "modelo_sugerido"],
+      "reserved_parameters": ["trained-checkpoint", "cuda-context", "choice", "score", "noul"],
+      "units": ["script", "language", "probability"],
+      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
+      "assumptions": ["laya-route-is-zero-download", "script-language-detection-is-deterministic", "heuristic-fallback-when-laya-unavailable"],
+      "limitations": ["predict-trained-model-path-is-gpu-gated-fase4", "zero-download-route-does-not-emit-choice-or-noul", "primeira-classificacao-paga-warmup-torch-1.5s"],
+      "consumer_paths": ["llm/laya_bridge.py", "core/arbitrator.py", "llm/routing_policy.py", "frontend/src/lib/rpDeriver.ts", "frontend/src/components/simulator/hooks/useQuantumEngine.ts"],
+      "api_routes": [],
+      "fallback_engine_id": null
     }
   ]
 }

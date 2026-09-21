@@ -246,6 +246,7 @@ class UniversalArbitrator:
                     candidate = Task(**json.loads(result_json))
                     # O core Rust nao conhece o status das dependencias externas.
                     if cls._is_ready(candidate, pending_ids, statuses):
+                        cls._registrar_intencao_s1(candidate)
                         return candidate
             except Exception as e:
                 logger.warning(f"[SPEEDFORCE] Falha no core Rust, acionando fallback Python: {e}")
@@ -274,7 +275,37 @@ class UniversalArbitrator:
             logger.debug("[NEXUS ORCHESTRATOR] Nenhuma tarefa pronta para despacho neste ciclo.")
             return None
 
+        cls._registrar_intencao_s1(optimal_task)
         return optimal_task
+
+    @classmethod
+    def _registrar_intencao_s1(cls, task: Task) -> None:
+        """Enriquece Task.metadata com a classificacao System-1 zero-download da Laya.
+
+        CONSUMIDOR REAL de laya (invariante de antientropia): llm.laya_bridge.
+        Aditivo e observacional: NUNCA altera o despacho (o core Rust decide;
+        aqui apenas anexa provenia S1 ao metadata para telemetria/teoria de
+        sistemas). Nao afeta modelo ou custo $ (fonte-unica
+        llm/routing_policy.py::avaliacao_uso_condicional_pro, Tier 0).
+        Fallback HeuristicRouter preserva a funcionalidade; em caso de falha a
+        classificacao e ignorada (passthrough). Desativavel via CHICO_S1_LAYA=0.
+        """
+        import os  # noqa: PLC0415
+
+        if os.environ.get("CHICO_S1_LAYA", "1") != "1":
+            return
+        try:
+            if not getattr(task, "description", None):
+                return
+            meta = getattr(task, "metadata", None)
+            if not isinstance(meta, dict):
+                return
+            from llm.laya_bridge import classificar_intencao  # noqa: PLC0415
+
+            intent = classificar_intencao(task.description)
+            meta["intencao_s1"] = intent.metadados_s1()
+        except Exception:  # pylint: disable=broad-exception-caught
+            logger.debug("[laya-s1] falha ao enriquecer intencao; ignora (passthrough).")
 
     @staticmethod
     async def get_search_provider(query: str) -> str:

@@ -4,6 +4,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 import logging
 import time
+from typing import cast
 
 import aiohttp
 
@@ -176,6 +177,23 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     models_to_try = _inject_openrouter_alternatives(models_to_try)
     models_to_try = await _apply_model_health_gate(models_to_try, manager, task)
 
+    # [CAMADA S1 -- Laya | CLAUDE.md §6.5 consumidor real | §3 fonte-unica preservada]
+    # Uma unica classificacao zero-download (core/arbitrator::_registrar_intencao_s1,
+    # em Task.metadata["intencao_s1"]) vira telemetry + fator de reordencao no caminho
+    # quente de call_llm_api ("Ponto unico de entrada da Cognicao SOTA"). A fonte-unica
+    # (modelo_do_agente/decidir/rotear) NAO e alterada: laya apenas reordena a lista de
+    # candidatos. Backward-compatible: sem intenciao_s1, o pipeline segue a politica
+    # original (zero regressions em routing_policy / mcp_addon / agents_sota).
+    # ROI: texto nao-latino (devanagari/han/non-latin) -> tenta primeiro o modelo local
+    # multi-script gemma4:12b (zero $) antes do cloud; PT/ES (latin, nao ingles) ficam
+    # para o primario (claude/gemini). Se o local falhar, call_llm_api faz fallback ao
+    # proximo candidato (graceful).
+    _intencao_s1 = cast(dict, (task.metadata or {}).get("intencao_s1") or {})
+    if _intencao_s1:
+        _script = str(_intencao_s1.get("script", "") or "")
+        if _script in {"devanagari", "han", "non-latin"} and "gemma4:12b" not in models_to_try:
+            models_to_try.insert(0, "gemma4:12b")
+
     return models_to_try, agent_type, designated_model
 
 
@@ -339,6 +357,14 @@ async def call_llm_api(
                 "latency_ms": response.get("latency_ms"),
                 "retry_count": response.get("retry_count", 0),
             }
+            # Proveniancia S1 (laya): registra a classificacao zero-download que
+            # influenciou este roteamento (advisory -- nao altera o resultado, apenas
+            # a telemetry; contrato §4 de proveniancia).
+            _s1 = cast(dict, (task.metadata or {}).get("intencao_s1") or {})
+            if _s1:
+                route_selected["reason_codes"].append(
+                    f"s1:{_s1.get('modelo_sugerido', 'multilingual')}|{_s1.get('script', 'unknown')}"
+                )
             await manager.update_task_metadata(task.id, route_selected, merge=True)
             return response["text"]
 
