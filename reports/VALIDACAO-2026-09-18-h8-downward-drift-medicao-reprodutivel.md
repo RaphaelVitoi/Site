@@ -99,7 +99,7 @@ pedir mesa —, e é o mesmo de `classifyActionNoCenario` no TypeScript.
 A exclusão dos nós de aumento é **medida, não preferida**. O rótulo do GTO Wizard mede raise-by sobre o
 pote-após-call: `Raise 5 (50%)` com pote 6,73 dá 74% por sizing/pote. O lado HRC não expõe percentual algum
 para calibrar a conversão, então os dois regimes ficariam sobre bases diferentes.
-`test_a_mesma_convencao_NAO_vale_nos_nos_de_aumento_e_e_por_isso_que_eles_ficam_fora` reprova se alguém
+`test_a_mesma_convencao_nao_vale_nos_nos_de_aumento_e_e_por_isso_que_eles_ficam_fora` reprova se alguém
 resolver a conversão sem declarar.
 
 Estatística: `F≥50` = soma das frequências dos ramos de aposta com `sizing_bb / pote_bb ≥ 0,50`; e
