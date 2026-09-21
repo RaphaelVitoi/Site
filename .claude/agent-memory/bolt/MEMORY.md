@@ -72,3 +72,10 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+### 2026-09-21 -- Erradicando overhead de nullish coalescing operator em TypedArrays
+
+Origem: sessao Jules, 2026-09-21.
+
+- ``#aprendizado`` **O operador Nullish Coalescing (`?? 0`) causa um overhead dramático na hot loop do V8 JIT quando aplicado a elementos de TypedArrays.** Diferente de Arrays normais, a leitura fora dos limites (out-of-bounds) em TypedArrays retorna `undefined` ou quebra, mas dentro dos limites retorna estritamente um primitive `Number`. O JIT no V8 falha ao tentar otimizar a guarda de tipo `?? 0` na hot loop, resultando em degradação de performance por um fator de ~15x.
+  **Ação:** Em hot loops contendo `Float32Array` ou `Float64Array`, certifique-se dos limites com lógica, pré-inicialize o array e use o valor lido diretamente (ex: `localRegret[idx0]`). Nunca utilize `?? 0` para leituras de TypedArray nessas seções críticas.

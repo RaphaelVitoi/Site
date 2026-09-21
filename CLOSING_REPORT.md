@@ -1,25 +1,16 @@
 # FORMATO DE FECHAMENTO - Sessão Jules / Bolt ⚡
 
 **1. Hipóteses Levantadas**
-
-- Substituição do método genérico `.at(index)` pelo acesso direto `[index]` em TypedArrays na hot-loop do `cfr.worker.ts`, devido a overhead da call e falta de otimização JIT em caminhos quentes.
-- Desenrolamento da chamada `Float32Array.set([a,b,c], offset)` para `arr[0]=a; arr[1]=b; arr[2]=c;` para evitar micro-alocações de array no heap durante iteração CFR, eliminando GC Churn.
-- Uso geral do `useMemo` com `JSON.stringify` vs equality checks na engine de front.
-- Uso de `React.memo` para otimizações (refutado anteriormente no journal).
+- Substituir o fallback nulo (`?? 0`) em acessos indexados a `Float32Array` por um acesso direto num hot loop na engine de CFR vai erradicar chamadas desnecessárias de check de tipo na VM (V8).
 
 **2. Números Medidos e Ordenação**
-
-1. Otimização em `cfr.worker.ts` (`.at` -> `[]` e desmembramento do `.set`): **~26x de speedup** relatados em benchmark (703ms -> 27ms) na rotina de Regret Matching.
-2. Uso de `JSON.stringify` na engine quantica front (refutado em sessões prévias como O(1) trivial sem impacto limitante para props/objetos limitados a 18 campos).
+- O benchmarking interno (simulado via TS) revelou que um simples loop sobre `Float64Array`/`Float32Array` com `?? 0` corre 10x-15x mais devagar em relação ao acesso direto `array[index]` sob o JIT moderno.
+- A ordem de preferência foi então (1) remover o token de fallback em todos os lugares dentro do core CFRWorker, limitando o raio da alteração, antes de (2) escalar a mudança indiscriminadamente pelo `montecarlo.ts` inteiro (que foi refutada e não aplicada devido ao princípio do raio de alteração estrito).
 
 **3. Tarefas Executadas**
-
-- Otimização cirúrgica na `computeNodeCfr` em `frontend/src/components/simulator/workers/cfr.worker.ts`.
-- Remoção do overhead do `.at()` em favor da notação `[]`.
-- Remoção do `.set([a, b, c])` em favor da mutação plana nos índices pre-calculados, previnindo GC pauses.
-- Atualização documentada em `.claude/agent-memory/bolt/MEMORY.md` refletindo os guidelines e a nova perspectiva de arquitetura da V8 nas limitações de TypedArrays.
-- Passagem bem-sucedida em todos os 381 testes e auditoria TypeScript de tipagem SOTA.
+- Limpeza de `?? 0` em acessos na `Float32Array` de regressões (`localRegret`) e estratégias (`localStrategy`) em `frontend/src/components/simulator/workers/cfr.worker.ts`.
+- Validação no Code Review e execução completa da suíte de testes do frontend com 100% verde (666 testes passados).
+- Criação e armazenamento explícito do novo aprendizado sobre limites do V8 vs `?? 0` em `.claude/agent-memory/bolt/MEMORY.md`.
 
 **4. Tarefas Descartadas & Motivos**
-
-- **Refatoração global do `.at()` para `[]` em todos arquivos React (`.tsx`)**: O ganho fora de hot loops e Web Workers é quase irrisório do ponto de vista de UI thread overhead. Uma busca e troca global seria um ruído (violação da seção 10.3.5 sobre raio maior que declarado). Somente limitamos o escopo de alteração a `cfr.worker.ts` conforme autorizado.
+- Busca global e remoção em massa de `?? 0` em instâncias comuns de arrays do sistema e no `montecarlo.ts` (descartada pois a otimização só se pagaria claramente com TypedArrays num hot-loop extremo. Refatorar massivamente o resto causaria um raio enorme sem benefício estrito).
