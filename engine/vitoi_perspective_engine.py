@@ -727,16 +727,26 @@ class VitoiPerspectiveEngine:
         residual_stack_bb: float,
         fold_survival_prob: float,
         call_win_survival_prob: float,
+        ruin_prior: float = 1.0,
     ) -> dict[str, float]:
         """
         Teorema 2 (Vitoi): Inversao de Valuation e Risk Premium Negativo (RP menor que 0) no River.
         Quando a stack residual encolhe para zona de morte (<= 4bb) e o pote infla,
         a probabilidade de ressurgir com o Bluffcatcher supera a morte por inanicao com micro-stack.
+
+        Etapa 0 (laya S1): ``ruin_prior`` modula a barreira de ruína (Teorema 2, BF<1).
+        1.0 = desativado (backward-compat). nao_latin>0 (via
+        llm.laya_bridge.ruin_priority_from_intencao sobre Task.metadata['n']) ->
+        ruin_prior>1 infla o prior de sobrevivência (fold_survival/call_win_survival)
+        -> exige mais equidade para chamar -> Cautela (aniquila variância) para input
+        incerto. S1 não altera os 10 teoremas (invariante §3): apenas o prior de
+        sobrevivência é modulado, nunca a estrutura de decisão dos teoremas.
         """
         chipev_equity = bet_size / (pot_size + 2.0 * bet_size)
         if fold_survival_prob <= 0:
             fold_survival_prob = 1e-6
         relative_survival_ratio = fold_survival_prob / max(call_win_survival_prob, 1e-6)
+        relative_survival_ratio *= ruin_prior
         pmev_required_equity = chipev_equity * relative_survival_ratio
         delta_equidade = pmev_required_equity - chipev_equity
         is_negative_rp = delta_equidade < 0.0 or residual_stack_bb <= 4.0
@@ -918,10 +928,14 @@ class VitoiPerspectiveEngine:
         payjump_proximity: float = 0.5,
         base_rio: float = 1.0,
         board_connectedness: float = 0.5,
+        ruin_prior: float = 1.0,
     ) -> dict[str, Any]:
         """
         SOTA: Sintese Unificada dos 10 Teoremas Canonicos da Perspectiva Matematica (PMev).
         Executa uma auditoria multidimensional diacronica do cenario em tempo real.
+
+        Etapa 0 (laya S1): ``ruin_prior`` modula a barreira de ruína do Teorema 2
+        (relative_survival_ratio). 1.0 = desativado (backward-compat); >1 conservador.
         """
         ev_fold = cls.calculate_dynamic_ev_fold(
             base_antes=1.0,
@@ -936,6 +950,7 @@ class VitoiPerspectiveEngine:
             residual_stack_bb=stack_eff_bb,
             fold_survival_prob=0.05,
             call_win_survival_prob=0.40,
+            ruin_prior=ruin_prior,
         )
 
         t3_dissipation = cls.calculate_symmetric_dissipation_vector(

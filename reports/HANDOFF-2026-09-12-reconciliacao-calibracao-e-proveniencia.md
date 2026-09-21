@@ -197,6 +197,9 @@ revisoes_de_ancora:
     caminhos: [CLAUDE.md, scripts/ops/AgentCalibrationProvenance.ps1, reports/AUDITORIA-2026-09-12-proveniencia-executavel-do-feedback.md]
     parecer: "As modificacoes de 2026-09-20 expandem o conjunto de condutores validos (Hermes Agent/hermes-agent, Ollama/ollama, llama.cpp/llama-cpp) no AgentCalibrationProvenance.ps1 e documentam o mapeamento no CLAUDE.md. O registro AUDITORIA-2026-09-12-proveniencia-executavel-do-feedback.md recebe revisoes_de_ancora confirmando que a expansao e coerente com seu contrato fail-closed. Nenhuma das tres modificacoes invalida os contratos existentes; todas sao aditivas."
 
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos: [tests/test_calibracao_fechamento_do_ciclo.py]
+    parecer: "test_calibracao_fechamento_do_ciclo.py corrigido time-bomb: 3 datas hardcoded (2026-09-21/22/23) substituidas por timedelta dinamico. Valida fechamento por sequencia, nao por relogio. Ancora de proveniancia do handoff intacta -- causa-raiz eliminada sem alterar logica de ancoragem."
 verificado:
   - configuracao persistida da automacao relida e regra acumulativa confirmada
   - duas cadeias validadas novamente em pwsh nesta consolidacao

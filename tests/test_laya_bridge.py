@@ -1,0 +1,141 @@
+"""Testes do adaptador System-1 da Laya (llm/laya_bridge.py).
+
+Cobrem: (1) a classificacao zero-download real de laya vs. o contrato README
+(en -> english/latin; devanagari/han -> multilingual/non-latin), (2) provenia
+sempre presente, (3) fallback HeuristicRouter quando laya e indisponivel,
+(4) entradas negativas (None/""), (5) determinismo, (6) serializacao.
+"""
+
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from llm.laya_bridge import (
+    FAMILIA_MODELO_POR_LAYA,
+    LayaIntent,
+    LayaRouter,
+    classificar_intencao,
+)
+
+LAYA_DISP = LayaRouter.disponivel()
+
+
+@pytest.mark.skipif(not LAYA_DISP, reason="laya nao disponivel neste ambiente")
+class TestLayaReal:
+    def test_route_ingles_verificado(self):
+        # Saida verificada via REPL: model=english, script=latin, non_latin=0.0
+        i = classificar_intencao("Hello world deployment error")
+        assert i.idioma == "english"
+        assert i.script == "latin"
+        assert i.is_english is True
+        assert i.nao_latin_fraction_pct == 0.0
+        assert i.modelo_sugerido == "small-english"
+        assert i.provenia.fallback_used is False
+        assert i.provenia.weights_loaded is False
+        assert i.provenia.engine_id == "laya-s1"
+
+    def test_route_multilingual_devanagari(self):
+        # Saida verificada: model=multilingual, script=devanagari, non_latin=1.0
+        i = classificar_intencao("नमस्ते मार्केट सेवा अस्ति")
+        assert i.idioma == "multilingual"
+        assert i.script == "devanagari"
+        assert i.is_english is False
+        assert i.nao_latin_fraction_pct == pytest.approx(100.0)
+        assert i.modelo_sugerido == "multilingual"
+
+    def test_route_multilingual_han(self):
+        i = classificar_intencao("下一步实施计划实施")
+        assert i.idioma == "multilingual"
+        assert i.script == "han"
+        assert i.is_english is False
+        assert i.nao_latin_fraction_pct == pytest.approx(100.0)
+
+
+class TestProvenia:
+    def test_provenia_sempre_presente(self):
+        i = classificar_intencao("Hello world deployment error")
+        for attr in (
+            "engine_id",
+            "implementation_level",
+            "runtime_used",
+            "model_used",
+            "intended_model",
+            "weights_loaded",
+            "fallback_used",
+            "assumptions",
+            "limitations",
+            "units",
+        ):
+            assert getattr(i.provenia, attr) is not None
+        assert i.provenia.engine_id in ("laya-s1", "heuristic-script-detector")
+
+
+class TestFallback:
+    def test_fallback_heuristico_quando_laya_indisponivel(self, monkeypatch):
+        # Forca o caminho fallback (sem tocar torch).
+        monkeypatch.setattr(LayaRouter, "_router", None)
+        monkeypatch.setattr(LayaRouter, "_tentado", True)
+        i = classificar_intencao("Hello world deployment error")
+        assert i.provenia.fallback_used is True
+        assert i.provenia.engine_id == "heuristic-script-detector"
+        assert i.idioma == "english"
+        assert i.script == "latin"
+        assert i.is_english is True
+
+    def test_fallback_detecta_non_latin(self, monkeypatch):
+        monkeypatch.setattr(LayaRouter, "_router", None)
+        monkeypatch.setattr(LayaRouter, "_tentado", True)
+        i = classificar_intencao("नमस्ते")
+        assert i.idioma == "multilingual"
+        assert i.is_english is False
+        assert i.nao_latin_fraction_pct == pytest.approx(100.0)
+
+
+class TestNegativo:
+    def test_entrada_none_nao_quebra(self):
+        i = classificar_intencao(None)  # type: ignore[arg-type]
+        assert isinstance(i, LayaIntent)
+        assert i.provenia.fallback_used is True
+
+    def test_entrada_vazia_nao_quebra(self):
+        i = classificar_intencao("")
+        assert isinstance(i, LayaIntent)
+        # HeuristicRouter sem texto: nao_latin 0.0, is_english False -> multilingual
+        assert i.nao_latin_fraction_pct == 0.0
+
+
+class TestDeterminismo:
+    def test_mesma_entrada_mesma_saida(self):
+        a = classificar_intencao("Hello world deployment error")
+        b = classificar_intencao("Hello world deployment error")
+        assert a.idioma == b.idioma
+        assert a.script == b.script
+        assert a.modelo_sugerido == b.modelo_sugerido
+        assert a.provenia.fallback_used == b.provenia.fallback_used
+
+
+class TestSerializacao:
+    def test_metadados_s1_json_serializavel(self):
+        i = classificar_intencao("Hello world deployment error")
+        meta = i.metadados_s1()
+        assert set(meta) >= {
+            "idioma",
+            "script",
+            "is_english",
+            "modelo_sugerido",
+            "nao_latin_fraction_pct",
+            "reason",
+            "provenia",
+        }
+        # json.dumps nao pode serializar dataclasses aninhados -> verifica a pista:
+        assert isinstance(meta["provenia"], dict)
+        json.dumps(meta)  # nao deve levantar
+
+
+class TestFamiliaModelo:
+    def test_mapeamento_verificado(self):
+        assert FAMILIA_MODELO_POR_LAYA["english"] == "small-english"
+        assert FAMILIA_MODELO_POR_LAYA["multilingual"] == "multilingual"
+        assert FAMILIA_MODELO_POR_LAYA["typed-decisions"] == "multilingual"
