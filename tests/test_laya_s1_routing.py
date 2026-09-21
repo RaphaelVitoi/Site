@@ -21,10 +21,11 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 from core.schemas import Task
+from llm.laya_bridge import HeuristicRouter, LayaRouter
 from llm.orchestrator import _prepare_routing_pipeline
 
 
-async def _health_gate_passthrough(models, manager, task):
+async def _health_gate_passthrough(models, _manager, _task):
     """Desacopla o teste do SQLite: health-gate devolve a lista inalterada."""
     return models
 
@@ -61,7 +62,7 @@ def test_laya_s1_nao_latin_reordena_para_gemma_local():
             "priority": 1,
         }
     )
-    models, _agent_type, designated = _resolve(task)
+    models, _agent_type, _designated = _resolve(task)
     assert models[0] == "gemma4:12b"
 
 
@@ -102,8 +103,6 @@ def test_laya_s1_proveniancia_registrada_no_reason_codes():
     # Reaproveita a classe LayaIntent do bridge: a proveniancia fluindo do
     # arbitrator -> Task.metadata -> reason_codes e a mesma estrutura que
     # metadados_s1() produz (garante contrato §4 end-to-end).
-    from llm.laya_bridge import HeuristicRouter, LayaRouter
-
     intencao = LayaRouter.classificar_intencao("namaste deployment error")
     md = intencao.metadados_s1()
     # Proveniancia SEMPRE carrega os campos do contrato §4.
