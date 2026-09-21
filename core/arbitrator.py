@@ -216,6 +216,28 @@ class UniversalArbitrator:
         return visited < len(graph)
 
     @classmethod
+    def _try_rust_core(
+        cls, pending_tasks: list[Task], pending_ids: set[str], statuses: Mapping[str, str | None]
+    ) -> Task | None:
+        """Tenta extrair via core Rust (Speedforce). Retorna Task ou None."""
+        if not RUST_CORE_AVAILABLE or nexus_core_rust is None:
+            return None
+        try:
+            tasks_json = json.dumps([t.model_dump() for t in pending_tasks])
+            scalars_json = json.dumps(cls.PRIORITY_SCALARS)
+            result_json = nexus_core_rust.extract_optimal_task_py(
+                tasks_json, scalars_json, cls.TIME_DECAY_ALPHA, cls.PROPAGATION_GAMMA
+            )
+            if result_json:
+                candidate = Task(**json.loads(result_json))
+                if cls._is_ready(candidate, pending_ids, statuses):
+                    cls._registrar_intencao_s1(candidate)
+                    return candidate
+        except Exception as e:
+            logger.warning(f"[SPEEDFORCE] Falha no core Rust, acionando fallback Python: {e}")
+        return None
+
+    @classmethod
     def extract_optimal_task(
         cls,
         pending_tasks: list[Task],
@@ -235,21 +257,9 @@ class UniversalArbitrator:
         pending_ids = {t.id for t in pending_tasks}
 
         # SOTA: Aceleracao Speedforce (Rust)
-        if RUST_CORE_AVAILABLE and nexus_core_rust is not None:
-            try:
-                tasks_json = json.dumps([t.model_dump() for t in pending_tasks])
-                scalars_json = json.dumps(cls.PRIORITY_SCALARS)
-                result_json = nexus_core_rust.extract_optimal_task_py(
-                    tasks_json, scalars_json, cls.TIME_DECAY_ALPHA, cls.PROPAGATION_GAMMA
-                )
-                if result_json:
-                    candidate = Task(**json.loads(result_json))
-                    # O core Rust nao conhece o status das dependencias externas.
-                    if cls._is_ready(candidate, pending_ids, statuses):
-                        cls._registrar_intencao_s1(candidate)
-                        return candidate
-            except Exception as e:
-                logger.warning(f"[SPEEDFORCE] Falha no core Rust, acionando fallback Python: {e}")
+        rust_candidate = cls._try_rust_core(pending_tasks, pending_ids, statuses)
+        if rust_candidate is not None:
+            return rust_candidate
 
         try:
             dag_map = cls.build_dependency_map(pending_tasks)
@@ -290,7 +300,7 @@ class UniversalArbitrator:
         Fallback HeuristicRouter preserva a funcionalidade; em caso de falha a
         classificacao e ignorada (passthrough). Desativavel via CHICO_S1_LAYA=0.
         """
-        import os  # noqa: PLC0415
+        import os  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
         if os.environ.get("CHICO_S1_LAYA", "1") != "1":
             return
@@ -300,7 +310,7 @@ class UniversalArbitrator:
             meta = getattr(task, "metadata", None)
             if not isinstance(meta, dict):
                 return
-            from llm.laya_bridge import classificar_intencao  # noqa: PLC0415
+            from llm.laya_bridge import classificar_intencao  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
             intent = classificar_intencao(task.description)
             meta["intencao_s1"] = intent.metadados_s1()

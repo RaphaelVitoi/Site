@@ -4,7 +4,7 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 import logging
 import time
-from typing import cast
+from typing import Any, cast
 
 import aiohttp
 
@@ -144,6 +144,18 @@ async def _try_compress_openrouter(
     return None
 
 
+def _aplicar_reordenacao_laya_s1(models_to_try: list[str], intencao_s1: dict) -> list[str]:
+    """Reordena models_to_try pela classificacao zero-download S1 (laya).
+
+    Texto nao-latino (devanagari/han/non-latin) tenta primeiro o modelo local
+    multi-script gemma4:12b (zero $) antes do cloud.
+    """
+    _script = str(intencao_s1.get("script", "") or "")
+    if _script in {"devanagari", "han", "non-latin"} and "gemma4:12b" not in models_to_try:
+        models_to_try.insert(0, "gemma4:12b")
+    return models_to_try
+
+
 async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[list[str], str, str | None]:
     agent_type = te.AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
     models_to_try = list(te.DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(te.FAST_OPERATIONS_MODELS)
@@ -190,9 +202,7 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     # proximo candidato (graceful).
     _intencao_s1 = cast(dict, (task.metadata or {}).get("intencao_s1") or {})
     if _intencao_s1:
-        _script = str(_intencao_s1.get("script", "") or "")
-        if _script in {"devanagari", "han", "non-latin"} and "gemma4:12b" not in models_to_try:
-            models_to_try.insert(0, "gemma4:12b")
+        models_to_try = _aplicar_reordenacao_laya_s1(models_to_try, _intencao_s1)
 
     return models_to_try, agent_type, designated_model
 
@@ -249,6 +259,51 @@ async def _compress_context(
         return text
 
 
+async def _dispatch_llm_provider(
+    session: Any,
+    provider: str | None,
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    task: Task,
+    manager: QueueManager,
+    provider_retries: int,
+    request_timeout: Any,
+    require_json: bool = False,
+    **kwargs,
+) -> dict | None:
+    """Resolve a pool de keys do provider e delega para _try_provider.
+
+    Abstrai o dispatch if/elif de providers (gemini/openrouter/anthropic/local)
+    para manter call_llm_api dentro do teto de complexidade cognitiva SOTA GOLD.
+    """
+    if provider == "gemini":
+        keys = _gemini_key_pool_for_model(model)
+    elif provider == "openrouter":
+        keys = OPENROUTER_KEYS
+    elif provider == "anthropic":
+        keys = ANTHROPIC_KEYS
+    elif provider == "local":
+        keys = ["local-dummy-key"]
+    else:
+        return None
+    retries = 1 if provider == "local" else provider_retries
+    return await _try_provider(
+        session,
+        provider,
+        model,
+        system_prompt,
+        user_prompt,
+        keys,
+        task,
+        manager,
+        retries,
+        request_timeout,
+        require_json=require_json,
+        **kwargs,
+    )
+
+
 # Funcao para chamar a API da LLM, tratando diferentes modelos e chaves de API.
 async def call_llm_api(
     task: Task,
@@ -281,67 +336,19 @@ async def call_llm_api(
             )
             continue
 
-        if provider == "gemini":
-            gemini_keys = _gemini_key_pool_for_model(model)
-            response = await _try_provider(
-                session,
-                "gemini",
-                model,
-                system_prompt,
-                user_prompt,
-                gemini_keys,
-                task,
-                manager,
-                provider_retries,
-                request_timeout,
-                require_json=require_json,
-                **kwargs,
-            )
-        elif provider == "openrouter":
-            response = await _try_provider(
-                session,
-                "openrouter",
-                model,
-                system_prompt,
-                user_prompt,
-                OPENROUTER_KEYS,
-                task,
-                manager,
-                provider_retries,
-                request_timeout,
-                require_json=require_json,
-                **kwargs,
-            )
-        elif provider == "anthropic":
-            response = await _try_provider(
-                session,
-                "anthropic",
-                model,
-                system_prompt,
-                user_prompt,
-                ANTHROPIC_KEYS,
-                task,
-                manager,
-                provider_retries,
-                request_timeout,
-                require_json=require_json,
-                **kwargs,
-            )
-        elif provider == "local":
-            response = await _try_provider(
-                session,
-                "local",
-                model,
-                system_prompt,
-                user_prompt,
-                ["local-dummy-key"],
-                task,
-                manager,
-                1,  # Retries minimos para local
-                request_timeout,
-                require_json=require_json,
-                **kwargs,
-            )
+        response = await _dispatch_llm_provider(
+            session,
+            provider,
+            model,
+            system_prompt,
+            user_prompt,
+            task,
+            manager,
+            provider_retries,
+            request_timeout,
+            require_json=require_json,
+            **kwargs,
+        )
 
         if response:
             route_selected = {

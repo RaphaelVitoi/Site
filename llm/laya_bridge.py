@@ -167,7 +167,7 @@ class LayaRouter:
             cls._tentado = True
             try:
                 # lazy: from laya.router evita importar laya/__init__ (torch).
-                from laya.router import Router as _Router  # noqa: PLC0415
+                from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
                 cls._router = _Router()
                 logger.debug("[laya-s1] Router carregado (lazy).")

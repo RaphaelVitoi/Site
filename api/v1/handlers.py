@@ -1084,7 +1084,7 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
         # (nao_latin>0 -> ruin_priority>1). S1 não decide os 10 teoremas (§3); modula
         # o prior de sobrevivência. Proveniância: 's1_ruin_prior'.
         ruin_prior_s1 = ruin_priority_from_intencao(req.intencao_s1)
-        if ruin_prior_s1 != 1.0:
+        if not math.isclose(ruin_prior_s1, 1.0):
             tree_res["s1_ruin_prior"] = ruin_prior_s1
             tree_res["negative_risk_premium"] = VitoiPerspectiveEngine.calculate_negative_risk_premium_river(
                 pot_size=req.pot_size,

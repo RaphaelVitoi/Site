@@ -1,4 +1,4 @@
-# pylint: disable=invalid-name, too-many-locals, too-many-statements, too-many-positional-arguments
+# pylint: disable=invalid-name, too-many-locals, too-many-statements, too-many-positional-arguments, too-many-lines
 """Modulo de Perspectiva Matematica VITOI (PMev Engine v8.0 GOLD)."""
 
 from __future__ import annotations
@@ -42,9 +42,9 @@ def premio_de_risco_canonico(bf: float, pot_odds: float = 0.5) -> float:
     return max(RP_PISO_NUMERICO, rp)
 
 
-type StackVector = list[float]
-type PayoutVector = list[float]
-type PlayerIndex = int
+StackVector = list[float]
+PayoutVector = list[float]
+PlayerIndex = int
 
 
 # ==============================================================================
