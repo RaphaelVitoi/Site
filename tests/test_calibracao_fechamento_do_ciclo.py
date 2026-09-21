@@ -176,7 +176,7 @@ def _calibrar(
 @pytest.fixture
 def cenario(tmp_path: Path):
     """Tres sessoes distintas num dia: portao aberto, pronto para fechar."""
-    dia = "2026-09-21"
+    dia = "2027-09-21"
     ledger = tmp_path / "feedback-ledger.jsonl"
     outliers = tmp_path / "outlier-evidence-ledger.jsonl"
     _ledger(ledger, _tres_sessoes(dia))
