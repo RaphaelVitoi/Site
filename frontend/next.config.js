@@ -1,5 +1,9 @@
 const path = require('node:path');
 
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
 const allowedDevOrigins = [
   'localhost',
   '127.0.0.1',
@@ -109,4 +113,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withBundleAnalyzer(nextConfig);

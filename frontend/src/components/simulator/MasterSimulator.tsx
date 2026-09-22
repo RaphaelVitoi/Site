@@ -569,7 +569,7 @@ export default function MasterSimulator() {
             <CfrRegretPanel
               key={`cfr-${scenario.id}`}
               initialPot={safeCurrentPot}
-              initialStack={Math.min(heroUpdatedStack, villainUpdatedStack)}
+              initialStack={Math.max(0.1, Math.min(heroUpdatedStack, villainUpdatedStack) || 0.1)}
               initialEquity={nativeRangeMetric.equity}
             />
           </div>
