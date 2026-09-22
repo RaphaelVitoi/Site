@@ -45,6 +45,7 @@
     "dev:all": "concurrently -n \"NEXT,RUFF,TEST\" -c \"cyan,yellow,green\" \"npm run dev\" \"npm run python:watch\" \"npm run python:test:watch\""
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.3.5",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "concurrently": "10.0.5",
