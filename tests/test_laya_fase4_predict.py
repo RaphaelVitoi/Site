@@ -8,26 +8,22 @@ Cubrem:
   - Lazy import: torch NO carrega em import-level (Fase 0 invariant).
 """
 
-import importlib
-import sys
-
 import pytest
 
 from llm.laya_bridge import (
+    LAYA_DEFAULT_QUESTIONS,
+    LayaIntent,
     LayaPrediction,
     LayaRouter,
-    LayaIntent,
-    LAYA_DEFAULT_QUESTIONS,
     laya_predict,
     ruin_priority_from_intencao,
 )
-from llm.laya_bridge import Provenia
 
 
 def _cuda_disponivel() -> bool:
     """Detecta CUDA (para skip de testes GPU-gated)."""
     try:
-        import torch  # noqa: PLC0415
+        import torch  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
         return torch.cuda.is_available()
     except Exception:  # pylint: disable=broad-except
@@ -36,7 +32,7 @@ def _cuda_disponivel() -> bool:
 
 def _allow_cpu_override() -> bool:
     """True quando o arbitro Tier-0 ativou CHICO_LAYA_PREDICT_ALLOW_CPU=1."""
-    import os
+    import os  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
 
     return os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
 
@@ -46,7 +42,7 @@ class TestLayaPredictionContract:
 
     def test_prediction_tem_campos_obrigatorios(self):
         """LayaPrediction deve ter todos os campos do contrato do Teorema 1."""
-        fields = {f.name for f in LayaPrediction.__dataclass_fields__.values()}
+        fields = {f.name for f in LayaPrediction.__dataclass_fields__.values()}  # pylint: disable=no-member
         obrigatorios = {
             "answers",
             "model_used",
@@ -88,7 +84,7 @@ class TestLayaPredictionContract:
 class TestLayaPredictFallback:
     """No host CPU, laya.predict() caminha para HeuristicRouter."""
 
-    def test_retorna_LayaPrediction_valida(self):
+    def test_retorna_laya_prediction_valida(self):
         """laya_predict() sempre retorna LayaPrediction, nunca levanta."""
         pred = laya_predict("Input de teste em portugues para fallback.")
         assert isinstance(pred, LayaPrediction)
@@ -186,16 +182,15 @@ class TestLazyImportInvariant:
         """Importar llm.laya_bridge não deve carregar torch no namespace de módulo."""
         # NÃO fazer importlib.reload — quebra isinstance de LayaIntent em testes
         # subsequentes (redefine o objeto classe). Verificacao estatica de source.
-        import llm.laya_bridge as mod
+        import llm.laya_bridge as mod  # pylint: disable=import-outside-toplevel
 
         # torch não deve aparecer como atributo top-level
         assert not hasattr(mod, "torch")
         # Nenhuma chamada a import(torch) no nível de módulo (apenas dentro de funções/métodos)
-        source = open(mod.__file__, encoding="utf-8").read()
+        with open(mod.__file__, encoding="utf-8") as f:
+            source = f.read()
         # 'import torch' deve estar apenas dentro de funções/métodos, nunca no nível módulo
         import_lines = [
-            line.strip()
-            for line in source.split("\n")
-            if "import torch" in line and not (line.startswith(" ") or line.startswith("\t"))
+            line.strip() for line in source.split("\n") if "import torch" in line and not line.startswith((" ", "\t"))
         ]
         assert len(import_lines) == 0, f"import torch no nível módulo detectado: {import_lines}"

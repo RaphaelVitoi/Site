@@ -7,8 +7,6 @@ Cubrem:
   - Comportamento robusto com fallback heurístico.
 """
 
-import pytest
-
 from llm.laya_solver_adapter import LayaSolverAdapter, LayaSolverBridgeResult
 
 
