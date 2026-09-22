@@ -25,6 +25,7 @@ Invariantes:
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 import logging
 import re
@@ -37,6 +38,9 @@ __all__ = [
     "HeuristicRouter",
     "classificar_intencao",
     "ruin_priority_from_intencao",
+    "LayaPrediction",
+    "laya_predict",
+    "LAYA_DEFAULT_QUESTIONS",
 ]
 
 logger = logging.getLogger(__name__)
@@ -230,6 +234,283 @@ class LayaRouter:
 
 # API de modulo: consumidor real de LayaRouter (evita instancia a cada chamada).
 classificar_intencao = LayaRouter.classificar_intencao
+
+
+# =============================================================================
+# CAMADA S1-TRAINED: predict() (Fase 4 — GPU-gated)
+# =============================================================================
+
+
+@dataclass
+class LayaPrediction:
+    """Resultado de laya.predict() (single forward pass).
+
+    Carrega as tres grandezas do System-1 treinado:
+      - choice: opcao selecionada (indice + label)
+      - score:  pontuacao numerica calibrada
+      - noul:   probabilidade calibrada (escala [0, 1])
+    Sempre acompanhado de provenia §4.
+    """
+
+    answers: dict[str, Any]
+    model_used: str
+    device: str
+    n_tokens: int
+    latency_ms: float
+    noul: float | None
+    choice: str | None
+    score: float | None
+    provenia: Provenia
+
+
+# Presets reutilizáveis (conforme documentacao laya): tipos question/choice/score/noul.
+# Cada preset e um conjunto de questoes tipadas para o forward pass unico.
+LAYA_DEFAULT_QUESTIONS: dict[str, dict[str, Any]] = {
+    "guard": {
+        "type": "noul",
+        "instructions": (
+            "Assess the input for operational risk, unsafe instructions, or content "
+            "that falls outside safe policy boundaries."
+        ),
+    },
+    "triage": {
+        "type": "choice",
+        "instructions": "Classify the complexity tier of the input.",
+        "criteria": {
+            "simple": "Trivial, factual, single-step lookup or calculation.",
+            "moderate": "Multi-step reasoning, requires synthesis or comparison.",
+            "complex": "Open-ended analysis, creative synthesis, or strategic planning.",
+        },
+    },
+    "router": {
+        "type": "score",
+        "instructions": "Rate the linguistic uncertainty of this input (0.0 = certain Latin/script known, 1.0 = highly uncertain/non-Latin).",
+        "criteria": ["low", "medium", "high"],
+    },
+}
+
+
+def _detect_device() -> str:
+    """Detecta o device disponivel sem forcar torch a carregar no import.
+
+    CPU host -> 'cpu'. GPU host (Tier 6 Edge AI) -> 'cuda'.
+    """
+    import os  # noqa: PLC0415
+
+    force_cpu = os.environ.get("CHICO_FORCE_CPU_LAYA", "0") == "1"
+    if force_cpu:
+        return "cpu"
+    try:
+        import torch  # noqa: PLC0415
+
+        if torch.cuda.is_available():
+            return "cuda"
+    except Exception:  # pylint: disable=broad-except
+        pass
+    return "cpu"
+
+
+def _allow_cpu_predict() -> bool:
+    """Override Tier-0: permite tentar laya.predict() em host CPU.
+
+    Demoroso (download 421M + forward ~464ms/CPU). Apenas para validação
+    ou quando o arbitro Tier 0 autoriza explicitamente.
+    """
+    return os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
+
+
+def laya_predict(
+    state: str | dict[str, Any],
+    questions: dict[str, dict[str, Any]] | None = None,
+    model_override: str | None = None,
+) -> LayaPrediction:
+    """Executa laya.predict() (full System-1 forward pass).
+
+    IMPORT LAZY: carrega torch apenas aqui. Respecta o device detectado —
+    CPU host nunca tenta CUDA. Perguntas sobreescrevem os presets default.
+
+    Parameters
+    ----------
+    state : str | dict
+        Texto ou estado a classificar.
+    questions : dict | None
+        Dicionario de perguntas tipadas (choice/score/noul). Default: LAYA_DEFAULT_QUESTIONS.
+    model_override : str | None
+        Família de modelo a forçar (english/multilingual/typed-decisions).
+
+    Returns
+    -------
+    LayaPrediction com provenia §4. Se torch/cuda indisponível, retorna
+    predição heurística com fallback_used=True.
+    """
+    import time  # noqa: PLC0415
+    from llm.laya_bridge import ruin_priority_from_intencao  # noqa: PLC0415, self-import safety
+
+    inicio = time.perf_counter()
+    device_str = _detect_device()
+    qs = questions if questions is not None else LAYA_DEFAULT_QUESTIONS
+
+    # GPU-GATE CONTROLÁVEL:
+    # - CPU host (default): fallback heurístico, NUNCA baixa checkpoint (421M). Produração-safe.
+    # - GPU host (CUDA): tenta forward pass full automático.
+    # - Override via env CHICO_LAYA_PREDICT_ALLOW_CPU=1: força tentativa em CPU
+    #   (demoroso — apenas para validação/arbitragem Tier 0).
+    cpu_force_block = device_str == "cpu" and not _allow_cpu_predict()
+    if cpu_force_block:
+        logger.debug("[laya-s1] CPU only; predict() fallback heuristico (no checkpoint).")
+        intent = LayaRouter.classificar_intencao(state)
+        rp = ruin_priority_from_intencao(intent.metadados_s1())
+        noul_proxy = round(1.0 - (rp - 1.0) / 0.30, 4) if rp > 1.0 else 0.95
+        noul_proxy = max(0.0, min(1.0, noul_proxy))
+        latency_ms = (time.perf_counter() - inicio) * 1000.0
+        return LayaPrediction(
+            answers={},
+            model_used="",
+            device=device_str,
+            n_tokens=0,
+            latency_ms=round(latency_ms, 2),
+            noul=noul_proxy,
+            choice="fallback-heuristic",
+            score=noul_proxy,
+            provenia=Provenia(
+                engine_id="laya-s1-predict-fallback",
+                implementation_level="primitive",
+                runtime_used=f"python (fallback, device={device_str})",
+                model_used="",
+                intended_model=intent.idioma,
+                weights_loaded=False,
+                fallback_used=True,
+                assumptions=[
+                    "laya-predict-cpu-gated-skipped",
+                    "noul-proxy-from-ruin-priority",
+                    "zero-download-route-is-deterministic",
+                ],
+                limitations=[
+                    "predict-requires-gpu-tier6-edge-ai",
+                    "no-trained-checkpoint-loaded-on-cpu",
+                    "noul-is-proxy-not-calibrated",
+                ],
+                units=["ms", "probability"],
+            ),
+        )
+
+    try:
+        from laya.router import Router as _Router  # noqa: PLC0415
+
+        router = _Router()
+        # Detecta idioma/script via route() (zero-download) antes do forward pass.
+        intent = LayaRouter.classificar_intencao(state)
+
+        # Seleciona o modelo baseado na intencao S1 ou override.
+        model_name = model_override or intent.idioma
+        result = router.predict(
+            state=state,
+            questions=qs,
+            model=model_name,
+        )
+
+        latency_ms = (time.perf_counter() - inicio) * 1000.0
+
+        # Extrai as tres grandezas do System-1 treinado.
+        noul = None
+        choice = None
+        score = None
+
+        for qid, qdef in qs.items():
+            qtype = qdef.get("type")
+            if qid in result:
+                resp = result[qid]
+                if qtype == "noul":
+                    noul = float(resp.get("probability", resp.get("value", 0.0)))
+                elif qtype == "choice":
+                    choice = str(resp.get("answer", resp.get("choice", "")))
+                elif qtype == "score":
+                    score = float(resp.get("score", resp.get("value", 0.0)))
+
+        # Se nao extrair, tenta campos canonicos do sistema_one output.
+        if noul is None:
+            noul = float(result.get("noul", result.get("calibrated_probability", 0.0)))
+        if choice is None:
+            choice = str(result.get("choice", result.get("selected", "")))
+        if score is None:
+            score = float(result.get("score", result.get("value", 0.0)))
+
+        model_used = result.get("routing", {}).get("model", model_name or "multilingual")
+
+        return LayaPrediction(
+            answers=result,
+            model_used=model_used,
+            device=device_str,
+            n_tokens=int(result.get("token_usage", {}).get("total_tokens", 0))
+            if isinstance(result.get("token_usage"), dict)
+            else 0,
+            latency_ms=round(latency_ms, 2),
+            noul=round(noul, 6) if noul is not None else None,
+            choice=choice if choice else None,
+            score=round(score, 6) if score is not None else None,
+            provenia=Provenia(
+                engine_id="laya-s1-trained",
+                implementation_level="trained-model",
+                runtime_used=f"transformers+torch ({device_str})",
+                model_used=model_used,
+                intended_model=model_name or intent.idioma,
+                weights_loaded=True,
+                fallback_used=False,
+                assumptions=[
+                    "laya-predict-single-forward-pass",
+                    f"device={device_str}",
+                    "questions=" + ("default" if questions is None else "custom"),
+                ],
+                limitations=[
+                    "predict-requires-checkpoint-download-gpu-preferred",
+                    "cpu-inference-latency-higher",
+                    "noul-scale-0-to-1",
+                ],
+                units=["ms", "n_tokens", "probability", "score"],
+            ),
+        )
+    except Exception as e:  # pylint: disable=broad-except
+        latency_ms = (time.perf_counter() - inicio) * 1000.0
+        logger.debug("[laya-s1] predict() falhou (%s); fallback heuristico.", e)
+
+        # Fallback: usa a classificacao zero-download + ruin_priority como noul proxy.
+        intent = LayaRouter.classificar_intencao(state)
+        rp = ruin_priority_from_intencao(intent.metadados_s1())
+        # noul proxy: mapeia ruin_prior [1.0, 1.30] -> [0.0, 1.0] invertido.
+        # higher ruin_prior -> lower confidence (mais incerto).
+        noul_proxy = round(1.0 - (rp - 1.0) / 0.30, 4) if rp > 1.0 else 0.95
+        noul_proxy = max(0.0, min(1.0, noul_proxy))
+
+        return LayaPrediction(
+            answers={},
+            model_used="",
+            device=device_str,
+            n_tokens=0,
+            latency_ms=round(latency_ms, 2),
+            noul=noul_proxy,
+            choice="fallback-heuristic",
+            score=noul_proxy,
+            provenia=Provenia(
+                engine_id="laya-s1-predict-fallback",
+                implementation_level="primitive",
+                runtime_used=f"python (fallback, device={device_str})",
+                model_used="",
+                intended_model=intent.idioma,
+                weights_loaded=False,
+                fallback_used=True,
+                assumptions=[
+                    "laya-predict-unavailable-or-failed",
+                    "noul-proxy-from-ruin-priority",
+                    "zero-download-route-is-deterministic",
+                ],
+                limitations=[
+                    str(e),
+                    "no-trained-checkpoint-loaded",
+                    "noul-is-proxy-not-calibrated",
+                ],
+                units=["ms", "probability"],
+            ),
+        )
 
 
 def ruin_priority_from_intencao(intencao_s1: dict[str, Any] | None = None) -> float:

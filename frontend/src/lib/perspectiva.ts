@@ -50,6 +50,7 @@ export interface PerspectivaResult {
 	perspectivaPct: number;  // PM Final
 	amortizedEdge: number;
 	riskAdvantage: number;   // [v8.0] Risk Premium do Hero (BF canônico, %)
+	ruinPrior?: number;    // [laya S1] Prior de ruína modulador (1.0=off, >1 conservador)
 	ci: number;              // Coeficiente de Insolvência (PM / PotOdds)
 	marginInstability: number; // Incerteza % baseada no stack efetivo
 	threshEq: number;        // Equidade Limite Projetada
@@ -93,6 +94,7 @@ export interface PerspectivaInput {
 	investidoAcumulado?: number;
 	blindCost?: number;
 	referenceStatus?: ReferencePointStatus; // [v8.0] Estado de referência para Teoria do Prospecto
+	ruinPrior?: number; // [laya S1] Prior de ruína (1.0=off, >1 conservador). Modula risco no Teorema 2.
 }
 
 // === MOTOR ICM (Malmuth-Harville / Monte Carlo Estocástico) ===
@@ -697,6 +699,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 		perspectivaPct,
 		amortizedEdge,
 		riskAdvantage,    // [v8.0] Exportado no resultado core
+		ruinPrior: input.ruinPrior ?? 1.0, // [laya S1]
 		ci,
 		marginInstability,
 		threshEq,
@@ -829,7 +832,10 @@ export function computeQuantumMetrics(quantumPerspectiva: PerspectivaResult | nu
 		threshEq: quantumPerspectiva.threshEq,
 		ci: quantumPerspectiva.ci,
 		marginInstability: quantumPerspectiva.marginInstability,
-		riskAdvantage: quantumPerspectiva.riskAdvantage, // [v8.0]
+		// [v8.0 + laya S1] riskAdvantage modulado pelo ruinPrior (Teorema 2).
+		// ruinPrior > 1 (input não-latim/incerto) infla o RP -> mais equidade requerida ->
+		// aniquila variância (SOTA GOLD). ruinPrior=1.0 = desativado (backward-compat).
+		riskAdvantage: quantumPerspectiva.riskAdvantage * (quantumPerspectiva.ruinPrior ?? 1.0),
 		isSolvent: quantumPerspectiva.ci >= 1,
 		isActionable: quantumPerspectiva.perspectivaPct > 0,
 	};

@@ -6,7 +6,7 @@ Protocolo Chico SOTA v8.0 GOLD.
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -55,6 +55,14 @@ class PluribusSolveRequest(BaseModel):
     hero_position: str = Field("BTN", description="Posicao do Hero (ex: BTN, CO, MP, UTG, SB, BB).")
     depth_streets: int = Field(1, ge=1, le=4, description="Profundidade do horizonte de busca em streets.")
     iterations: int = Field(50, ge=1, le=1000, description="Numero de iteracoes do self-play CFR+.")
+    prompt: str | None = Field(
+        default=None,
+        description="Prompt textual opcional; ativa adaptacao S1 (Laya) para modular iteracoes e lambda_factor.",
+    )
+    intencao_s1: dict[str, Any] | None = Field(
+        default=None,
+        description="Classificacao System-1 (Laya) pre-registrada; quando presente, modulo prior de ruinha no solver.",
+    )
 
     @model_validator(mode="after")
     def validate_street_horizon(self) -> PluribusSolveRequest:
@@ -118,6 +126,14 @@ class DeepStackResolveRequest(BaseModel):
         description="Contra-valores esperados do oponente (CBV) vindos da arvore mestre.",
     )
     iterations: int = Field(100, ge=1, le=2000, description="Numero de iteracoes de amortecimento/resolucao.")
+    prompt: str | None = Field(
+        default=None,
+        description="Prompt textual opcional; ativa adaptacao S1 (Laya) para modular iteracoes e tolerance.",
+    )
+    intencao_s1: dict[str, Any] | None = Field(
+        default=None,
+        description="Classificacao System-1 (Laya) pre-registrada; quando presente, modulo prior de ruinha no solver.",
+    )
 
 
 class DeepStackResolveResponse(BaseModel):
