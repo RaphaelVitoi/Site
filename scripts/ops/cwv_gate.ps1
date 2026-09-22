@@ -551,6 +551,13 @@ if ($cwvManualReview.Recorded) {
 }
 
 Write-Host ("`n[2] ACCESSIBILITY & BEST PRACTICE QUALITY AUDIT") -ForegroundColor Yellow
+if ($lighthouseProductionAudit.Measured -and $null -ne $lighthouseProductionAudit.Artifact.accessibility_score) {
+    $lhA11yScore = $lighthouseProductionAudit.Artifact.accessibility_score
+    if ($null -ne $lhA11yScore) {
+        $lhA11yPct = [int]([double]$lhA11yScore * 100)
+        Write-Host "    [LHCI A11Y] Lighthouse accessibility score: $($lhA11yPct)/100 (axe-core automatizado pelo Lighthouse)" -ForegroundColor Cyan
+    }
+}
 if (-not $FASE2_MEDE) {
     Write-Host "    NAO MEDIDO - axe-core nao executou contra um DOM renderizado." -ForegroundColor Yellow
 }
@@ -1302,6 +1309,7 @@ $lighthouseAuditSummary = [ordered]@{
             TargetUrl = $lighthouseProductionAudit.Artifact.target_url
             Metrics = $lighthouseProductionAudit.Artifact.metrics
             PerformanceScore = $lighthouseProductionAudit.Artifact.performance_score
+            AccessibilityScore = $lighthouseProductionAudit.Artifact.accessibility_score
         }
     } else {
         $null
@@ -1412,6 +1420,7 @@ $lighthouseProductionMarkdown = if ($lighthouseProductionAudit.Measured) {
 - **TBT:** $($perfMetrics['TBT_MS'].Val) ms (limite <= $TbtThreshold ms)
 - **LCP no Lighthouse:** $($lighthouseProductionAudit.Artifact.metrics.lcpMs) ms
 - **CLS no Lighthouse:** $($lighthouseProductionAudit.Artifact.metrics.cls)
+- **Accessibility score no Lighthouse:** $([int]([double]$lighthouseProductionAudit.Artifact.accessibility_score * 100))/100
 - **Fingerprint SHA-256:** $($lighthouseProductionAudit.ObservedFingerprint)
 
 "@

@@ -171,7 +171,7 @@ async function collect() {
 
   const result = await lighthouse(targetUrl, {
     port,
-    onlyCategories: ['performance'],
+    onlyCategories: ['performance', 'accessibility'],
     formFactor: 'desktop',
     throttlingMethod: 'provided',
     screenEmulation: { disabled: true },
@@ -194,6 +194,7 @@ async function collect() {
     input_fingerprint_sha256: inputFingerprintSha256,
     metrics,
     performance_score: lhr.categories?.performance?.score ?? null,
+    accessibility_score: lhr.categories?.accessibility?.score ?? null,
     lighthouse_report: lhr,
   };
 

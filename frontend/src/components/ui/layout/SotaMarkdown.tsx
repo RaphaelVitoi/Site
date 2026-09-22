@@ -1,6 +1,5 @@
 'use client';
 
-import 'katex/dist/katex.min.css';
 import dynamic from 'next/dynamic';
 import type { ElementType, ReactNode, ReactElement } from 'react';
 import { useEffect, useId, useState } from 'react';
@@ -241,6 +240,12 @@ const markdownComponents: Components = {
 };
 
 export function SotaMarkdown({ content }: Readonly<SotaMarkdownProps>) {
+  useEffect(() => {
+    // SOTA v8.0 GOLD: KaTeX CSS lazy-loaded via dynamic import para não inflar o bundle
+    // de páginas que não renderizam matemática. A importação é idempotente e cacheada.
+    import('katex/dist/katex.min.css');
+  }, []);
+
   if (!content) return null;
 
   return (

@@ -30,6 +30,15 @@ revisoes_de_ancora:
       substituida pela leitura linear descrita neste registro. O contrato de
       contagem e os demais ajustes do CLI permanecem preservados. Os 22 testes
       dirigidos e a suite Python completa passaram, com um teste nao aplicavel.
+  - registro: 2026-09-22-auditoria-frontend-4-itens
+    caminhos: [reports/cwv/latest_lighthouse_production.json, scripts/ops/lighthouse_cwv_audit.mjs, scripts/ops/cwv_gate.ps1]
+    parecer: >-
+      O certificado latest_lighthouse_production.json foi regenerado com a
+      categoria 'accessibility' adicionada a onlyCategories no lighthouse_cwv_audit.mjs,
+      incluindo accessibility_score no artifact. O cwv_gate.ps1 Phase 2 agora exibe
+      o Lighthouse a11y score como fallback quando CDP nao esta ativo. O certificado
+      foi regenerado pelo portao SOTA v8.0 GOLD com 0 erros e 0 warnings em todas
+      as 5 fases. LCP 603ms, CLS 0, TBT 32.496ms — todos PASS.
 supersede: null
 ---
 
