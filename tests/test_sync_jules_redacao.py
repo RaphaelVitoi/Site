@@ -119,7 +119,7 @@ def test_o_relatorio_publicado_nao_contem_chave_em_texto_claro():
     Este teste falha se alguem reintroduzir a chave no arquivo versionado --
     por sincronizacao sem redacao, por edicao manual ou por revert.
     """
-    relatorio = RAIZ / "JULES_REPORT.md"
+    relatorio = RAIZ / "reports" / "integrations" / "JULES_REPORT.md"
     if not relatorio.exists():
         return
 
@@ -127,6 +127,6 @@ def test_o_relatorio_publicado_nao_contem_chave_em_texto_claro():
     achados = _mod.CHAVES_SUSPEITAS.findall(texto)
 
     assert not achados, (
-        f"{len(achados)} credencial(is) em texto claro em JULES_REPORT.md. "
+        f"{len(achados)} credencial(is) em texto claro em reports/integrations/JULES_REPORT.md. "
         "Sanear o arquivo NAO basta: verifique se redigir_segredos roda no gerador."
     )

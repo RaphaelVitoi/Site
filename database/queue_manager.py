@@ -64,25 +64,28 @@ class QueueManager:
     def _validate_path_traversal(self) -> None:
         """Blindagem de Seguranca SOTA: Aniquila vetores de Path Traversal (LFI)."""
         if not self._is_memory and isinstance(self.db_path, Path):
-            is_safe = False
+            db_path_resolved = self.db_path.resolve(strict=False)
             try:
-                self.db_path.absolute().relative_to(self.base_path.absolute())
-                is_safe = True
-            except ValueError:
-                pass
+                db_path_resolved.relative_to(self.base_path.resolve())
+            except ValueError as e:
+                logger.critical(
+                    "[SEC] Tentativa de Path Traversal bloqueada: '%s' fora da raiz.",
+                    self.db_path,
+                )
+                raise PermissionError("Database path is outside the project root.") from e
+            self.db_path = db_path_resolved
 
-            if not is_safe:
-                base_path = self.base_path.resolve()
-                db_path_resolved = self.db_path.resolve(strict=False)
-                try:
-                    db_path_resolved.relative_to(base_path)
-                except ValueError as e:
-                    if not str(db_path_resolved).lower().startswith(str(base_path).lower()):
-                        logger.critical(
-                            "[SEC] Tentativa de Path Traversal bloqueada: '%s' fora da raiz.",
-                            self.db_path,
-                        )
-                        raise PermissionError("Database path is outside the project root.") from e
+    def _resolve_fallback_db_path(self, name: str) -> Path:
+        """Resolve fallback dentro do projeto antes de criar qualquer diretório."""
+        fallback = (_core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / name).resolve(strict=False)
+        try:
+            fallback.relative_to(self.base_path.resolve())
+        except ValueError as e:
+            logger.critical("[SEC] Caminho fallback do banco escapa da raiz: '%s'.", fallback)
+            raise PermissionError("Fallback database path is outside the project root.") from e
+        fallback.parent.mkdir(parents=True, exist_ok=True)
+        logger.warning("[DB] Caminho padrao indisponivel ou fora da raiz. Usando fallback local: %s", fallback)
+        return fallback
 
     def _ensure_writable_db_path(self, desired_path: Path) -> Path:
         """
@@ -91,44 +94,28 @@ class QueueManager:
         """
         base_resolved = self.base_path.resolve()
 
-        is_safe = False
+        desired_resolved = desired_path.resolve(strict=False)
         try:
-            desired_path.absolute().relative_to(self.base_path.absolute())
-            is_safe = True
+            desired_resolved.relative_to(base_resolved)
         except ValueError:
-            pass
+            return self._resolve_fallback_db_path(desired_path.name)
 
-        if not is_safe:
-            desired_resolved = desired_path.resolve(strict=False)
-            try:
-                desired_resolved.relative_to(base_resolved)
-            except ValueError:
-                if not str(desired_resolved).lower().startswith(str(base_resolved).lower()):
-                    fallback = _core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / desired_path.name
-                    fallback.parent.mkdir(parents=True, exist_ok=True)
-                    logger.warning(
-                        "[DB] Caminho padrao resolve fora da raiz. Usando fallback local: %s",
-                        fallback,
-                    )
-                    return fallback
-
-        desired_path.parent.mkdir(parents=True, exist_ok=True)
-        probe = desired_path.parent / ".write_probe"
+        desired_resolved.parent.mkdir(parents=True, exist_ok=True)
+        probe = desired_resolved.parent / f".write_probe_{uuid.uuid4().hex}"
         try:
-            probe.write_text("ok", encoding="ascii")
+            with probe.open("x", encoding="ascii") as probe_file:
+                probe_file.write("ok")
             probe.unlink(missing_ok=True)
-            return desired_path
+            return desired_resolved
         except OSError:
-            fallback = _core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / desired_path.name
+            fallback = self._resolve_fallback_db_path(desired_path.name)
 
-            fallback.parent.mkdir(parents=True, exist_ok=True)
-            fallback_probe = fallback.parent / ".write_probe"
-            fallback_probe.write_text("ok", encoding="ascii")
-            fallback_probe.unlink(missing_ok=True)
-            logger.warning(
-                "[DB] Caminho padrao sem permissao de escrita. Usando fallback local: %s",
-                fallback,
-            )
+            fallback_probe = fallback.parent / f".write_probe_{uuid.uuid4().hex}"
+            try:
+                with fallback_probe.open("x", encoding="ascii") as probe_file:
+                    probe_file.write("ok")
+            finally:
+                fallback_probe.unlink(missing_ok=True)
             return fallback
 
     async def _connect_raw(self) -> aiosqlite.Connection:
@@ -703,7 +690,9 @@ class QueueManager:
             await db.commit()
         return len(promoted_rows)
 
-    async def get_tasks(self, status: str | None = None, since_hours: int | None = None) -> list[Task]:
+    async def get_tasks(
+        self, status: str | None = None, since_hours: int | None = None, limit: int | None = None
+    ) -> list[Task]:
         """Varredura historica da fila com filtros de estado e temporalidade."""
         async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
@@ -719,10 +708,16 @@ class QueueManager:
                 conditions.append("timestamp >= ?")
                 params.append(cutoff)
 
+            if limit is not None and not 1 <= limit <= 500:
+                raise ValueError("limit deve estar entre 1 e 500.")
+
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)
 
             query += " ORDER BY timestamp DESC"
+            if limit is not None:
+                query += " LIMIT ?"
+                params.append(limit)
             async with db.execute(query, params) as cursor:
                 rows = await cursor.fetchall()
             return [self._row_to_task(row) for row in rows]

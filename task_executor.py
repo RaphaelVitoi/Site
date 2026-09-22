@@ -487,6 +487,7 @@ async def _generate_historian_reports_async(qm: Any) -> None:
         print(json.dumps({"profile": profile, "telemetry": telemetry}))
     except Exception as e:
         logger.exception(f"[HISTORIAN] Falha ao gerar relatorio: {e}")
+        raise
 
 
 def _cli_historian_reports() -> None:
@@ -530,6 +531,7 @@ def _cli_daily_stats() -> None:
             print(json.dumps(stats, indent=2))
         except Exception as e:
             logger.exception(f"[CLI] Falha ao gerar estatisticas diarias: {e}")
+            raise
 
     async def _run() -> None:
         qm = QueueManager()

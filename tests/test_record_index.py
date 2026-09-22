@@ -500,15 +500,14 @@ def test_o_corpus_prescritivo_nao_tem_referencia_morta():
     )
 
 
-def test_o_detector_de_referencia_nao_confunde_latex_com_caminho():
+def test_o_detector_de_referencia_nao_confunde_latex_com_caminho(monkeypatch):
     """Falso positivo medido: o GEMINI.md descreve um ciclo de artefatos em
     `$$\\text{...(implementation\\_plan.md)}$$`. Nao e referencia a arquivo, e o
     nome de uma etapa num diagrama -- e o primeiro rascunho o acusou."""
-    gemini = RAIZ / "GEMINI.md"
-    if not gemini.is_file():
-        pytest.skip("GEMINI.md ausente do projeto")
-    assert "implementation" in gemini.read_text(encoding="utf-8-sig"), (
-        "o caso que motivou a regra sumiu do arquivo; reavaliar se a excecao de bloco matematico ainda tem lastro"
+    monkeypatch.setattr(
+        record_gate,
+        "texto_como_vai_ao_commit",
+        lambda _rel: "$$\\text{...(implementation\\_plan.md)}$$\n",
     )
     assert not record_gate.referencias_mortas("GEMINI.md"), "o detector voltou a ler bloco LaTeX como caminho"
 
@@ -646,7 +645,7 @@ def test_o_portao_esta_no_pre_commit():
 
 def test_nexus_index_esta_na_lista_de_roteamento():
     """`nexus index` sem isto viraria descricao de tarefa no do.ps1."""
-    perfil = (RAIZ / "Microsoft.PowerShell_profile.ps1").read_text(encoding="utf-8-sig")
+    perfil = (RAIZ / "tests" / "fixtures" / "nexus_profile_template.ps1").read_text(encoding="utf-8-sig")
     assert "'index'" in perfil, "o comando index nao entrou na lista de comandos do Typer"
 
 

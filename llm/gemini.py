@@ -179,6 +179,9 @@ async def call_gemini(
     **kwargs,
 ) -> tuple[str, dict]:
     """Cortex de Execucao da API Gemini SOTA."""
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     # SOTA: Multi-Bucket Rate Limiter (Lei de Shannon). Respeita as cotas individuais (Pro vs Flash).
     rate_limiter = get_rate_limiter_for_model(model)
     if rate_limiter.tokens < 1:

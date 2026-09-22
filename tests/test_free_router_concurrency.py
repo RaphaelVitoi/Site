@@ -79,7 +79,10 @@ def test_free_router_multi_key_scaling() -> None:
 async def test_free_router_local_cache_deduplication() -> None:
     """Verifica que consultas identicas sao atendidas pelo cache SHA-256 local com 0 tokens de API."""
     router = SOTAUnifiedFreeRouter(google_api_keys=["mock-key"])
-    ckey = router._cache_key("teste prompt duplicado", "sys instruction")
+    from llm.laya_bridge import compor_advisory_s1
+
+    system_instruction, _ = compor_advisory_s1("sys instruction", "teste prompt duplicado")
+    ckey = router._cache_key("teste prompt duplicado", system_instruction)
     await router._store_cache(ckey, {"output": "Resposta cacheada perfeitamente"})
 
     # Segunda chamada com os mesmos parametros deve vir diretamente do cache local

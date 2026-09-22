@@ -71,6 +71,14 @@
       "nota": "Tier 1 e integrante do coletivo Chico. Acionado em momentos pontuais de alto reasoning complexo, admitido apenas em low e medium. Tem as duas faixas (cota de assinatura e pay-as-you-go); dentro da cota o custo marginal e zero. O teto de esforco existe para preservar a cota. Entra por escalonamento pontual, nunca como primario. Pode ser o condutor do Chico quando condicoes de sessao assistida e demanda explicita de Raphael Vitoi (Tier 0) se conciliam (ver regra de excecao em CLAUDE.md secao 7). Sessao assistida e demanda explicita sao condicao, nao direito."
     },
     {
+      "nome": "Codex GPT-6 Luna",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-6-luna",
+      "tier": "1",
+      "nota": "Identidade do condutor Codex informada pelo Tier 0 em 2026-09-22. Sessao assistida. Modelo de condutor da plataforma Codex; esta identidade nao declara disponibilidade como modelo de inferencia do produto."
+    },
+    {
       "nome": "google-labs-jules[bot]",
       "email": "161369871+google-labs-jules[bot]@users.noreply.github.com",
       "veiculo": "jules",

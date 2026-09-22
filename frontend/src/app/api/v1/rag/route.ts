@@ -35,7 +35,14 @@ Entregue a informação de forma fluida, mastigada e conclusiva. Não repita os 
 Mantenha a resposta focada, utilizando no máximo 3 parágrafos curtos.`;
 }
 
-async function fetchRagContext(prompt: string): Promise<string> {
+type LayaSignal = {
+	idioma?: string;
+	script?: string;
+	nao_latin_fraction_pct?: number;
+	provenia?: { engine_id?: string; implementation_level?: string; weights_loaded?: boolean; fallback_used?: boolean };
+};
+
+async function fetchRagContext(prompt: string): Promise<{ context: string; system1: LayaSignal | null }> {
 	try {
 		const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 		if (process.env['API_SECRET_TOKEN']) {
@@ -50,7 +57,12 @@ async function fetchRagContext(prompt: string): Promise<string> {
 
 		if (oracleRes.ok) {
 			const oracleData = await oracleRes.json();
-			if (oracleData.status === 'SUCCESS') return oracleData.answer || '';
+			if (oracleData.status === 'SUCCESS') {
+				return {
+					context: typeof oracleData.answer === 'string' ? oracleData.answer : '',
+					system1: typeof oracleData.system1 === 'object' && oracleData.system1 !== null ? oracleData.system1 : null,
+				};
+			}
 		} else {
 			console.warn(`[API RAG] Oráculo retornou status: ${oracleRes.status}`);
 		}
@@ -60,7 +72,7 @@ async function fetchRagContext(prompt: string): Promise<string> {
 			`[API RAG] Oráculo local offline ou inacessível (${msg}). Prosseguindo sem contexto RAG.`,
 		);
 	}
-	return '';
+	return { context: '', system1: null };
 }
 
 export async function POST(request: Request) {
@@ -84,18 +96,34 @@ export async function POST(request: Request) {
 		}
 
 		logger.info('RAG', 'Consultando a Mente Coletiva via API do Orquestrador...');
-		const ragContext = await fetchRagContext(prompt);
+		const { context: ragContext, system1 } = await fetchRagContext(prompt);
 
 		const apiKey = getGeminiKey();
 
 		// Se não tiver chave da API, retorna o texto bruto como fallback
 		if (!apiKey) {
 			logger.info('RAG', 'Chave Gemini não encontrada. Retornando Fallback RAW.');
-			return NextResponse.json({ success: true, context: ragContext });
+			return NextResponse.json({ success: true, context: ragContext, system1 });
+		}
+
+		if (!system1) {
+			logger.warn('RAG', 'Sinal System-1 local indisponível; síntese LLM suspensa e contexto RAG preservado.');
+			return NextResponse.json({ success: true, context: ragContext, system1: null });
 		}
 
 		logger.info('RAG', 'Sintetizando resposta com RAG e Contexto...');
-		const systemPrompt = getSystemPrompt(mode);
+		const provenance = system1.provenia ?? {};
+		const system1Advisory = [
+			'\n\n[System-1 advisory — Laya; signal composed with the LLM, not a final answer]',
+			`script=${typeof system1.script === 'string' ? system1.script.slice(0, 32) : 'unknown'}`,
+			`language_family=${typeof system1.idioma === 'string' ? system1.idioma.slice(0, 32) : 'unknown'}`,
+			`non_latin_fraction_pct=${typeof system1.nao_latin_fraction_pct === 'number' && Number.isFinite(system1.nao_latin_fraction_pct) ? Math.max(0, Math.min(100, system1.nao_latin_fraction_pct)) : 0}`,
+			`engine=${typeof provenance.engine_id === 'string' ? provenance.engine_id.slice(0, 64) : 'unknown'}`,
+			`implementation_level=${typeof provenance.implementation_level === 'string' ? provenance.implementation_level.slice(0, 32) : 'unknown'}`,
+			`weights_loaded=${provenance.weights_loaded === true}`,
+			'Advisory only: reason from the original request and evidence.',
+		].join('; ');
+		const systemPrompt = `${getSystemPrompt(mode)}${system1Advisory}`;
 
 		const userContent = `== CENÁRIO ATIVO NA TELA DO USUÁRIO ==\n${scenarioContext || 'Nenhum'}\n\n== MENTE COLETIVA (RAG) ==\n${ragContext}\n\n== PERGUNTA DO USUÁRIO ==\n${prompt}`;
 
@@ -127,7 +155,7 @@ export async function POST(request: Request) {
 			throw new Error('Resposta vazia ou inválida recebida do oráculo neural.');
 		}
 
-		return NextResponse.json({ success: true, answer: finalAnswer });
+		return NextResponse.json({ success: true, answer: finalAnswer, system1 });
 	} catch (error: unknown) {
 		// SOTA: Proteção contra vazamento de stack traces e dados sensíveis para o cliente
 		const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';

@@ -134,7 +134,7 @@ function Convert-DeepJsonStringSOTA {
 # --- Comandos Core do Ecossistema ---
 
 # A Membrana de Entrada (Inteligencia SOTA v8.0 GOLD)
-# Ver a nota gemea em Microsoft.PowerShell_profile.ps1. Esta lista e esta funcao
+# Ver a fixture gemea em tests/fixtures/nexus_profile_template.ps1. Esta lista e esta funcao
 # estao DUPLICADAS entre os dois arquivos -- item 1.3 do plano 2-B, fonte unica
 # ainda por declarar. Enquanto durar a duplicacao, tests/test_roteamento_perfil.py
 # compara AMBAS as copias com os comandos que o Typer registra: a duplicacao

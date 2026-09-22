@@ -47,7 +47,7 @@ def test_forecast_agent_calibration_trajectory_active() -> None:
     # o id do Google incondicionalmente (finding B04 da auditoria do Astra), e a
     # SS8.3 do CLAUDE.md consumia esse rotulo na evidencia de calibracao.
     assert forecast.weights_loaded is False
-    assert forecast.intended_model == "google/timesfm-2.0-500m-pytorch"
+    assert forecast.intended_model == "google/timesfm-2.5-200m-pytorch"
     assert forecast.model_used.startswith("analytic-linear-extrapolation")
     assert forecast.model_used != forecast.intended_model
 
@@ -146,7 +146,7 @@ def test_invoke_quantitative_support_timesfm() -> None:
     )
     payload = json.loads(result.stdout)
     assert payload["schema_version"] == "agent-calibration-quantitative-support/v2"
-    assert payload["engine"] == "google-timesfm-2.0"
+    assert payload["engine"] == "google-timesfm-2.5"
     assert payload["output"]["status"] == "PROJECTION_ACTIVE"
     assert len(payload["output"]["mean_trajectory"]) == 3
 
@@ -244,7 +244,7 @@ def test_new_agent_calibration_daily_evidence_includes_timesfm(tmp_path: Path) -
         f"forecast completo: {payload['timesfm_forecast']}"
     )
     forecast = payload["timesfm_forecast"]
-    assert forecast["intended_model"] == "google/timesfm-2.0-500m-pytorch"
+    assert forecast["intended_model"] == "google/timesfm-2.5-200m-pytorch"
     assert forecast["weights_loaded"] is False
     # A evidencia de calibracao NAO pode atribuir a projecao ao modelo do Google
     # enquanto nenhum peso for carregado: e ela que alimenta a hipotese da SS8.3.

@@ -64,6 +64,9 @@ async def call_anthropic(
     client_timeout: aiohttp.ClientTimeout | None = None,
     **kwargs,
 ) -> tuple[str, dict]:
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     url = "https://api.anthropic.com/v1/messages"
     data, headers_extra = _montar(model, system_prompt, user_prompt, kwargs)
     headers = {

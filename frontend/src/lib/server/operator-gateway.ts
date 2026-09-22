@@ -50,3 +50,38 @@ export async function encaminharGetDeOperador(
 	}
 	return new Response(upstream.body, { status: upstream.status, headers });
 }
+
+export async function encaminharPostJsonDeOperador(
+	caminho: string,
+	corpo: unknown,
+	obterSessao: () => Promise<unknown> = auth,
+): Promise<Response> {
+	const sessao = (await obterSessao()) as { user?: { email?: unknown } } | null;
+	if (!sessao) return NextResponse.json({ status: 'ERROR', error: 'Sessão exigida.' }, { status: 401 });
+	if (!isOperatorEmail(sessao.user?.email)) {
+		return NextResponse.json({ status: 'ERROR', error: 'Área restrita ao operador.' }, { status: 403 });
+	}
+
+	const credencial = process.env['API_SECRET_TOKEN'];
+	if (!credencial) return NextResponse.json({ status: 'ERROR', error: 'Gateway não configurado.' }, { status: 503 });
+
+	let upstream: Response;
+	try {
+		upstream = await fetch(new URL(buildNexusServerUrl(caminho)), {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${credencial}`, 'Content-Type': 'application/json' },
+			body: JSON.stringify(corpo),
+			cache: 'no-store',
+		});
+	} catch (error) {
+		console.warn('[operator-gateway] backend inalcançável', error);
+		return NextResponse.json({ status: 'ERROR', error: 'Backend inalcançável.' }, { status: 503 });
+	}
+
+	const headers = new Headers({ 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+	for (const nome of ['content-type', 'content-length']) {
+		const valor = upstream.headers.get(nome);
+		if (valor) headers.set(nome, valor);
+	}
+	return new Response(upstream.body, { status: upstream.status, headers });
+}

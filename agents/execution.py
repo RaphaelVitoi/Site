@@ -454,7 +454,7 @@ async def _trigger_sync_consciousness(task: Task) -> None:
         # SOTA: O motor RAG e carregado em background para nao degradar o Kernel
         rag = await te.get_rag_async()
         # Ingestao asincrona disparada via pool de threads
-        await asyncio.to_thread(rag.ingest_all_memories)
+        await rag.ingest_all_memories()
         logger.info(f"[{te._c(task.agent)}]{task.agent}[/] [cyan]SYNC[/]: Consciencia Harmonizada com a nova producao.")
     except Exception as e:
         logger.warning(f"[SYNC FAIL] Falha ao sincronizar consciencia: {e}")

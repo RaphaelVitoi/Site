@@ -5,13 +5,13 @@
 
 ## Stack
 
-- Next.js 14 (App Router)
+- Next.js 16.3.5 (App Router; versão declarada em `frontend/package.json`)
 - Cada rota = pasta com `page.tsx` dentro de `frontend/src/app/`
 - Rotas dinâmicas usam `[slug]`. O consumo de conteúdo dinâmico só pode ser
   declarado quando o provedor de API e seu contrato de publicação estiverem
   efetivamente registrados.
 
-## Arvore de Rotas (Next.js 16.2 App Router)
+## Arvore de Rotas (Next.js 16.3.5 App Router)
 
 ```text
 /                              Landing page (home)

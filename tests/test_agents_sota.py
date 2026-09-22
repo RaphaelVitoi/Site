@@ -20,6 +20,20 @@ from database.queue_manager import QueueManager
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_trigger_sync_consciousness_awaits_rag_ingestion() -> None:
+    """O sucesso da sincronizacao exige que a coroutine de ingestao termine."""
+    task = Task(id="T_RAG_SYNC", description="desc", agent="@maverick", timestamp="2026-05-26", metadata={})
+    rag = MagicMock()
+    rag.ingest_all_memories = AsyncMock()
+
+    with patch("agents.execution.te.get_rag_async", new_callable=AsyncMock, return_value=rag):
+        await execution._trigger_sync_consciousness(task)
+
+    rag.ingest_all_memories.assert_awaited_once_with()
+
+
 @pytest.fixture(autouse=True)
 def patch_valid_agents_sota(monkeypatch: pytest.MonkeyPatch) -> None:
     """Garante allowlist SOTA de agentes para testes."""

@@ -115,13 +115,13 @@ def execute_autopoietic_cycle() -> dict[str, Any]:
         "duration_seconds": round(elapsed, 2),
         "jules": {
             "status": "OK" if jules_ok else "ERROR",
-            "report": "JULES_REPORT.md",
+            "report": "reports/integrations/JULES_REPORT.md",
             "active_model": "Gemini 3.6 Flash (Default)",
             "deep_model": "Gemini 3.1 Pro",
         },
         "stitch": {
             "status": "OK" if stitch_ok else "ERROR",
-            "report": "STITCH_REPORT.md",
+            "report": "reports/integrations/STITCH_REPORT.md",
             "balanced_model": "Gemini 3.8 Flash (Default)",
             "speed_model": "Gemini 3.5 Flash-Lite",
             "design_system": "Obsidian Analytics",

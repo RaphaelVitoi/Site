@@ -53,7 +53,12 @@ def test_missing_provenance_rejected_before_writing(tmp_path, field, value):
 
 @pytest.mark.parametrize(
     ("model", "vehicle"),
-    [("gpt-5.6-terra", "codex"), ("claude-opus-5", "claude-code"), ("gemini-3.8-flash", "antigravity")],
+    [
+        ("gpt-5.6-terra", "codex"),
+        ("gpt-6-luna", "codex"),
+        ("claude-opus-5", "claude-code"),
+        ("gemini-3.8-flash", "antigravity"),
+    ],
 )
 def test_known_connectors_are_recorded_independently(tmp_path, model, vehicle):
     ledger = tmp_path / "feedback-ledger.jsonl"
@@ -138,11 +143,22 @@ def test_append_only_correction_restores_effective_eligibility(tmp_path):
 
 
 def _canonicos() -> list[str]:
-    """Le a fonte unica, nunca uma copia. Se ela mudar, o teste muda junto."""
-    return sorted(set(MODEL_REGISTRY) | set(MODELOS_RETIRADOS))
+    """Combina fonte de modelos de produto com a fonte canonica de condutores."""
+    identities = json.loads((ROOT / "data" / "agent_identities.json").read_text(encoding="utf-8"))
+    vehicles = {"codex", "claude-code", "antigravity", "hermes-agent", "ollama", "llama-cpp"}
+    conductors = {
+        entry["modelo"] for entry in identities["canonicas"] if entry.get("modelo") and entry.get("veiculo") in vehicles
+    }
+    return sorted(set(MODEL_REGISTRY) | set(MODELOS_RETIRADOS) | conductors)
 
 
-_VEICULO_POR_FAMILIA = {"gpt": "codex", "chatgpt": "codex", "claude": "claude-code", "gemini": "antigravity"}
+_VEICULO_POR_FAMILIA = {
+    "gpt": "codex",
+    "chatgpt": "codex",
+    "claude": "claude-code",
+    "gemini": "antigravity",
+    "solar": "hermes-agent",
+}
 
 
 @pytest.mark.parametrize("model", _canonicos())

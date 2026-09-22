@@ -780,14 +780,28 @@ if ($Description) {
         }
         else {
             $client = [System.Net.Http.HttpClient]::new()
-            $client.Timeout = [System.TimeSpan]::FromSeconds(2)
-            if ($env:API_SECRET_TOKEN) {
-                $client.DefaultRequestHeaders.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', $env:API_SECRET_TOKEN)
+            try {
+                $client.Timeout = [System.TimeSpan]::FromSeconds(2)
+                if ($env:API_SECRET_TOKEN) {
+                    $client.DefaultRequestHeaders.Authorization = [System.Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', $env:API_SECRET_TOKEN)
+                }
+                $httpContent = [System.Net.Http.StringContent]::new($taskJson, [System.Text.Encoding]::UTF8, 'application/json')
+                try {
+                    $response = $client.PostAsync($apiUrl, $httpContent).GetAwaiter().GetResult()
+                    try {
+                        $response.EnsureSuccessStatusCode() | Out-Null
+                    }
+                    finally {
+                        if ($null -ne $response) { $response.Dispose() }
+                    }
+                }
+                finally {
+                    $httpContent.Dispose()
+                }
             }
-            $httpContent = [System.Net.Http.StringContent]::new($taskJson, [System.Text.Encoding]::UTF8, 'application/json')
-            $response = $client.PostAsync($apiUrl, $httpContent).GetAwaiter().GetResult()
-            $response.EnsureSuccessStatusCode() | Out-Null
-            $client.Dispose()
+            finally {
+                $client.Dispose()
+            }
         }
 
         Write-Host "[TAREFA ENFILEIRADA SOTA] ID: $($NewTask.id) (API Sincronizado)" -ForegroundColor Green
@@ -801,6 +815,7 @@ if ($Description) {
         }
         else {
             Write-Error "Falha critica ao injetar tarefa no Kernel (DAL): $output"
+            exit 1
         }
     }
     exit 0

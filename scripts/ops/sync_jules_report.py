@@ -16,7 +16,7 @@ from typing import Any, Final
 from engine.jules_bridge import JulesClient
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent.parent
-JULES_REPORT_FILE: Final[Path] = BASE_DIR / "JULES_REPORT.md"
+JULES_REPORT_FILE: Final[Path] = BASE_DIR / "reports" / "integrations" / "JULES_REPORT.md"
 
 # ---------------------------------------------------------------------------
 # Redacao de segredo -- a fronteira entre texto de terceiro e arquivo versionado
@@ -319,7 +319,7 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
 def main() -> None:
     """Ponto de entrada do script."""
     parser = argparse.ArgumentParser(description="Sincroniza relatorios do Google Jules Cloud.")
-    parser.add_argument("--write", action="store_true", help="Sobrescreve o arquivo JULES_REPORT.md no disco")
+    parser.add_argument("--write", action="store_true", help="Sobrescreve reports/integrations/JULES_REPORT.md")
     parser.add_argument("--output", type=str, default="", help="Caminho alternativo de saida")
     args = parser.parse_args()
 
@@ -331,6 +331,7 @@ def main() -> None:
 
     if args.write:
         target_path = Path(args.output) if args.output else JULES_REPORT_FILE
+        target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_text(markdown_content, encoding="utf-8")
         print(f"[SUCCESS] Relatorio gravado em: {target_path}")
     else:

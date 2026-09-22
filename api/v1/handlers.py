@@ -213,7 +213,25 @@ async def handle_get_status(request: web.Request) -> web.Response:
         status = request.rel_url.query.get("status", None)
         if status == "all":
             status = None
-        tasks = await manager.get_tasks(status)
+        since_hours_raw = request.rel_url.query.get("since_hours")
+        since_hours: int | None = None
+        if since_hours_raw is not None:
+            try:
+                since_hours = int(since_hours_raw)
+            except ValueError:
+                return web.json_response({"error": "since_hours deve ser inteiro."}, status=400)
+            if not 1 <= since_hours <= 24 * 365:
+                return web.json_response({"error": "since_hours deve estar entre 1 e 8760."}, status=400)
+        limit_raw = request.rel_url.query.get("limit")
+        limit: int | None = None
+        if limit_raw is not None:
+            try:
+                limit = int(limit_raw)
+            except ValueError:
+                return web.json_response({"error": "limit deve ser inteiro."}, status=400)
+            if not 1 <= limit <= 500:
+                return web.json_response({"error": "limit deve estar entre 1 e 500."}, status=400)
+        tasks = await manager.get_tasks(status, since_hours=since_hours, limit=limit)
         return web.json_response([t.model_dump() for t in tasks])
     except Exception as e:  # noqa: BLE001
         return _internal_error(e, "handle_get_status")
@@ -347,10 +365,18 @@ async def handle_ask_oracle(request: web.Request) -> web.Response:
         if not 1 <= n_results <= 50:
             return web.json_response({"error": "Parametro 'n_results' deve estar entre 1 e 50."}, status=400)
 
+        system1: dict[str, Any] | None = None
+        try:
+            from llm.laya_bridge import classificar_intencao  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+            system1 = classificar_intencao(question).metadados_s1()
+        except Exception as laya_error:  # noqa: BLE001
+            logger.debug("Laya System-1 indisponivel para /ask-oracle: %s", laya_error)
+
         rag = await _te.get_rag_async()
         # SOTA BYOK: Bloqueio estrito de vazamento de tokens. Retrieval 100% local (CPU/SQLite).
         answer = await rag.query_memory(question, n_results=n_results, local_only=True)
-        return web.json_response({"status": "SUCCESS", "answer": answer})
+        return web.json_response({"status": "SUCCESS", "answer": answer, "system1": system1})
     except Exception as e:  # noqa: BLE001
         return _internal_error(e, "handle_ask_oracle")
 
@@ -1677,8 +1703,27 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
             preferred_model_key=req.preferred_model_key,
         )
 
+        if not engine.metadata.is_commercial_allowed:
+            return web.json_response(
+                {
+                    "status": "FORBIDDEN",
+                    "error": "Pesos TimesFM não comerciais não podem ser servidos pela API do produto.",
+                    "license_tier": engine.metadata.license_tier.value,
+                },
+                status=403,
+            )
+
+        if req.use_pretrained_weights:
+            try:
+                await asyncio.to_thread(engine.load_pretrained_weights, local_files_only=True)
+            except RuntimeError as e:
+                return web.json_response({"status": "NOT_IMPLEMENTED", "error": str(e)}, status=501)
+            except Exception as e:  # noqa: BLE001
+                logger.warning("TimesFM pretrained weights unavailable; using explicit analytic fallback: %s", e)
+
         if req.series_dict is not None:
-            multi_results = engine.forecast_multivariate(
+            multi_results = await asyncio.to_thread(
+                engine.forecast_multivariate,
                 series_dict=req.series_dict,
                 horizon=req.horizon,
             )
@@ -1694,7 +1739,8 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
             )
         else:
             series = cast(list[float], req.series)
-            result = engine.forecast_univariate(
+            result = await asyncio.to_thread(
+                engine.forecast_univariate,
                 series=series,
                 horizon=req.horizon,
                 frequency_indicator=req.frequency_indicator,
