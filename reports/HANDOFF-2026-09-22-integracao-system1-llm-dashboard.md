@@ -16,7 +16,7 @@ config_medida:
   modelo_condutor: gpt-6-luna
   veiculo_condutor: codex
   supervisao: assistida
-  commit_alvo: nao publicado
+  commit_alvo: '4e607c6f local; pre-push pendente'
 caminhos:
   - api/v1/handlers.py
   - CLAUDE.md
@@ -207,9 +207,9 @@ apontado no feedback final.
   violações (um item incompleto com revisão humana aprovada), CVE/SRI/higiene
   aprovados e RuffFormat 0. Isto não é smoke autenticado do painel nem prova de
   CI remoto.
-- Não executado nesta formalização: CI remoto, smoke visual autenticado e
-  execução real do worker. Commit e push ainda dependem da suíte final e dos
-  hooks de publicação.
+- Commit local criado em `4e607c6f` após pre-commit aprovado. No instante deste
+  handoff, o pre-push ainda está pendente; CI remoto, smoke visual autenticado e
+  execução real do worker não foram executados.
 
 ## Feedback do administrador
 
