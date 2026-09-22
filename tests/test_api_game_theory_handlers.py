@@ -108,6 +108,7 @@ async def test_handle_pluribus_solve_with_laya_s1_prompt_adaptation():
 
     resp = await handle_pluribus_solve(req)
     assert resp.status == 200
+    assert resp.text is not None
     data = json.loads(resp.text)
     assert data["status"] == "SUCCESS"
     assert "laya_s1_adaptation" in data
