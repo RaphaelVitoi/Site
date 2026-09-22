@@ -317,6 +317,20 @@ async def call_llm_api(
     te._maybe_reload_config()
     _c = te._c
 
+    # System-1 Laya acompanha a chamada canônica, registra procedência e compõe
+    # o advisory com o LLM sem substituir a fonte única de roteamento.
+    if task.metadata is None:
+        task.metadata = {}
+    try:
+        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        system_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
+        if laya_metadata:
+            task.metadata["intencao_s1"] = laya_metadata
+            await manager.update_task_metadata(task.id, {"intencao_s1": laya_metadata}, merge=True)
+    except Exception as laya_error:  # pylint: disable=broad-exception-caught
+        logger.debug("[laya-s1] advisory unavailable for task %s: %s", task.id, laya_error)
+
     models_to_try, agent_type, designated_model = await _prepare_routing_pipeline(task, manager)
 
     logger.info(f"[[{_c(task.agent)}]{task.agent}[/]] Rota de modelos selecionada: {agent_type} -> {models_to_try}")

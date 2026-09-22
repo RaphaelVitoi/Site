@@ -4,7 +4,7 @@
 jest.mock('server-only', () => ({}));
 jest.mock('@/auth', () => ({ auth: jest.fn() }));
 
-import { encaminharGetDeOperador } from './operator-gateway';
+import { encaminharGetDeOperador, encaminharPostJsonDeOperador } from './operator-gateway';
 
 describe('gateway de operador (FE-06)', () => {
 	const originalFetch = globalThis.fetch;
@@ -60,5 +60,27 @@ describe('gateway de operador (FE-06)', () => {
 		const res = await encaminharGetDeOperador('/api/files/list', {}, operador);
 		expect(res.status).toBe(503);
 		expect(await res.text()).not.toContain('ECONNREFUSED');
+	});
+
+	it('POST de operador envia JSON ao destino fixo com credencial de serviço', async () => {
+		globalThis.fetch = jest.fn().mockResolvedValue(new Response('{"status":"SUCCESS","id":"DASH-1"}', {
+			status: 200,
+			headers: { 'content-type': 'application/json' },
+		}));
+		const body = { id: 'DASH-1', description: 'Operar tarefa', status: 'pending' };
+		const res = await encaminharPostJsonDeOperador('/add', body, operador);
+		const [url, init] = (globalThis.fetch as jest.Mock).mock.calls[0] as [URL, RequestInit];
+		expect(url.pathname).toBe('/add');
+		expect(init.method).toBe('POST');
+		expect(JSON.parse(String(init.body))).toEqual(body);
+		expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer token-de-teste');
+		expect(res.status).toBe(200);
+	});
+
+	it('POST sem identidade de operador não alcança o backend', async () => {
+		globalThis.fetch = jest.fn();
+		const res = await encaminharPostJsonDeOperador('/add', {}, () => Promise.resolve({ user: { email: 'aluno@gmail.com' } }));
+		expect(res.status).toBe(403);
+		expect(globalThis.fetch).not.toHaveBeenCalled();
 	});
 });

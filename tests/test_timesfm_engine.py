@@ -112,6 +112,35 @@ def test_timesfm_forecast_univariate_success():
         assert q10 < mean < q90
 
 
+def test_timesfm_loaded_weights_use_model_quantiles():
+    class LoadedModel:
+        def forecast(self, horizon, inputs):
+            assert horizon == 2
+            assert len(inputs) == 1
+            return [[11.0, 12.0]], [[[9.0] * 9, [10.0] * 9]]
+
+    engine = TimesFMEngine(
+        mode=ExecutionMode.COMMERCIAL_PRODUCTION,
+        preferred_model_key="timesfm-2.5-200m",
+    )
+    engine._model = LoadedModel()
+
+    result = engine.forecast_univariate([1.0, 2.0, 3.0, 4.0], horizon=2)
+
+    assert result.weights_loaded is True
+    assert result.model_used == "google/timesfm-2.5-200m-pytorch"
+    assert result.mean_prediction == [11.0, 12.0]
+    assert result.quantile_10 == [9.0, 10.0]
+    assert result.quantile_90 == [9.0, 10.0]
+
+
+def test_timesfm_weight_loader_fails_closed_for_unintegrated_legacy_model():
+    engine = TimesFMEngine(preferred_model_key="timesfm-2.0-500m")
+
+    with pytest.raises(RuntimeError, match="apenas para TimesFM 2.5"):
+        engine.load_pretrained_weights()
+
+
 def test_timesfm_forecast_univariate_insufficient_history():
     """Valida que serie historica com menos de 4 pontos eh rejeitada."""
     engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION)
@@ -178,6 +207,36 @@ async def test_timesfm_api_handler_univariate_success():
 
 
 @pytest.mark.asyncio
+async def test_timesfm_api_opt_in_uses_pretrained_weights(monkeypatch):
+    class LoadedModel:
+        def forecast(self, horizon, _inputs):
+            return [[20.0] * horizon], [[[19.0] * 9 for _ in range(horizon)]]
+
+    def load_weights(engine, *, local_files_only):
+        assert local_files_only is True
+        engine._model = LoadedModel()
+        return True
+
+    monkeypatch.setattr(TimesFMEngine, "load_pretrained_weights", load_weights)
+    payload = {
+        "series": [10.0, 12.0, 11.5, 14.0],
+        "horizon": 2,
+        "preferred_model_key": "timesfm-2.5-200m",
+        "use_pretrained_weights": True,
+    }
+    req = make_mocked_request("POST", "/api/v1/timesfm/forecast", app=web.Application())
+    req._read_bytes = json.dumps(payload).encode("utf-8")
+
+    response = await handle_timesfm_forecast(req)
+
+    data = json.loads(response.text)
+    assert response.status == 200
+    assert data["weights_loaded"] is True
+    assert data["model_used"] == "google/timesfm-2.5-200m-pytorch"
+    assert data["results"]["metric"]["mean_prediction"] == [20.0, 20.0]
+
+
+@pytest.mark.asyncio
 async def test_timesfm_api_handler_multivariate_success():
     """Valida o endpoint POST /api/v1/timesfm/forecast com payload multivariado."""
     app = web.Application()
@@ -239,6 +298,24 @@ async def test_timesfm_api_handler_governance_block_403():
     data = json.loads(resp.text)
     assert data["status"] == "FORBIDDEN"
     assert "VIOLA\u00c7\u00c3O DE LICEN\u00c7A" in data["error"]
+
+
+@pytest.mark.asyncio
+async def test_timesfm_3_research_mode_is_not_served_by_product_api():
+    app = web.Application()
+    app.router.add_post("/api/v1/timesfm/forecast", handle_timesfm_forecast)
+    payload = {
+        "series": [1.0, 2.0, 3.0, 4.0],
+        "mode": "research_benchmark",
+        "preferred_model_key": "timesfm-3.0-330m",
+    }
+    req = make_mocked_request("POST", "/api/v1/timesfm/forecast", app=app)
+    req._read_bytes = json.dumps(payload).encode("utf-8")
+
+    response = await handle_timesfm_forecast(req)
+
+    assert response.status == 403
+    assert "não comerciais" in json.loads(response.text)["error"]
 
 
 @pytest.mark.asyncio

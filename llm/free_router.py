@@ -249,6 +249,9 @@ class SOTAUnifiedFreeRouter:
         complexity_score: int = 1,
     ) -> dict[str, str]:
         """Executa a tarefa roteando pela complexidade (1 a 5) com fallback em cascata."""
+        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        system_instruction, _ = compor_advisory_s1(system_instruction or "", prompt)
         ckey = self._cache_key(prompt, system_instruction)
         async with self._cache_lock:
             if ckey in self._local_cache:

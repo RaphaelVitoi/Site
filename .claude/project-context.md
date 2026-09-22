@@ -1,138 +1,64 @@
-# Poker Racional: Contexto do Projeto (SOTA v7.0 GOLD)
+# Contexto atual do projeto Site
 
-> Atualizado por Chico em 2026-05-29 | Versão v7.0.0-GOLD
+> Atualizado em 2026-09-22 a partir do checkout local. Este arquivo e contexto
+> operacional consumido pelo backend; governanca e configuracao permanecem em
+> suas fontes canonicas.
 
-## Visão Geral
+## Produto e dominio
 
-Repositório central do ecossistema **Poker Racional**, operando sob o **Paradigma Vitoi**. Integra um motor quântico de decisão (Python/Rust/WASM) a uma interface de elite (Next.js 16/React 19).
+Poker Racional e a plataforma de Raphael Vitoi para conteudo, educacao e
+ferramentas de poker, com foco teorico em ICM e Perspectiva Matematica (PMev).
+PMev e um programa autoral de pesquisa e desenvolvimento para ampliar a analise
+economica e decisoria em MTTs. O repositorio contem teoria, contratos
+executaveis, simulacoes e interfaces; codigo ou simulacao nao provam por si
+superioridade empirica.
 
----
+## Arquitetura observada
 
-## Dominio
+- Frontend: Next.js, React e TypeScript.
+- API principal: `main.py` inicia `api.v1.server.start_api_server` (aiohttp).
+- Persistencia/fila: `database/queue_manager.py`, SQLite e aiosqlite;
+  `QueueManager.claim_task` estabelece a posse atomica de uma tarefa.
+- Workers: `worker/`; agentes e motores: `agents/`, `engine/`, `core/` e `llm/`.
+- Existem servicos auxiliares, incluindo `tools/hybrid_router/app.py`; nao
+  assumir atividade sem launcher e consumidor comprovados.
+- Contrato de capacidade e proveniencia: `docs/architecture/ENGINE_CAPABILITY_INTEGRATION_PLAN.md`.
 
-O projeto abrange a criação e manutenção de um ecossistema digital complexo para Raphael Vitoi, focando em suas áreas de expertise (Poker, Teoria dos Jogos, Psicologia, BDSM, Filosofia, escrita). O domínio é multidisciplinar, exigindo alta precisão, profundidade intelectual, e uma apresentação esteticamente refinada. O objetivo final é criar uma plataforma educacional e de conteúdo que transcenda o trivial, oferecendo insights únicos e baseados em evidências.
+## Interpretacao de estado
 
----
+- Capacidade integrada requer consumidor real no fluxo executado; manifest,
+  import opcional ou endpoint declarado isoladamente nao bastam.
+- Separar fonte de configuracao, codigo consumidor e evidencia de runtime.
+- Dados de fila, credenciais, processos e portas sao estado local: medir quando
+  a tarefa depender deles.
+- Telemetria observacional nao entra no calculo principal sem contrato explicito.
+- Preservar autoria e proveniencia dos materiais de Raphael. Diferenciar
+  corpus, derivacao, adaptador, simulacao e validacao empirica.
 
-## Público-alvo
+## Ambiente Python e estado das auditorias
 
-O público-alvo é composto por alunos, leitores e entusiastas das áreas de Raphael Vitoi, variando de iniciantes a profissionais avançados que buscam aprofundamento estratégico, ético e psicológico. A interface deve ser didática, mas sem infantilizar o usuário, mantendo um tom "dark" e sofisticado que reforce a seriedade e profundidade do conteúdo.
+`pyproject.toml` declara `requires-python = ">=3.12"`; `uv.lock` e o lockfile
+associado. Auditoria feita com outra versao deve declarar a divergencia e nao
+comprova conformidade com o requisito do projeto.
 
----
+O ultimo relatorio de backend disponivel nesta atualizacao e
+`reports/AUDITORIA-2026-09-21-backend-padrao-ouro.md`: registra commit-base
+`5e14c63e` e Python 3.11.16. O checkout observado esta em `3505fed4` e o
+manifesto exige Python 3.12+. Portanto, os resultados do relatorio sao
+historicos, nao verificacao do estado atual. O mesmo relatorio informa 80%
+overall e aproximadamente 64% para o core; os escopos precisam ser reconciliados
+antes de comparar ou declarar um percentual unico.
 
-## Ecossistema de Execução (Identidades)
+## Fontes canonicas
 
-- **Gemini CLI (Chico)**: Arquiteto Proativo e Guardião Matemático (Super-Admin).
-- **Antigravity**: Córtex Visual SOTA e interface de execução paralela via MCP.
-- **Gemini Code Assist**: Braço Executor para Refatoração de Alta Fidelidade.
+- Governanca do projeto: `CLAUDE.md`; multiprojeto: `../CLAUDE.md`.
+- Contexto injetado no runtime: este arquivo e
+  `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md`.
+- Roteamento: `data/agents_manifest.json`, `data/system_config.json`,
+  `llm/routing_policy.py` e `llm/model_registry.py`.
+- Especificacoes, arquitetura e pesquisa: `docs/`.
+- Auditorias e handoffs datados: `reports/`.
 
----
-
-## Núcleo Matemático (v7.0 GOLD)
-
-- **Perspectiva Matemática (PM)**: A métrica soberana de ação.
-- **Risk Advantage**: Disparidade de vulnerabilidade ($\Delta RP = VillainRP - HeroRP_{eff}$).
-- **Bounty Offset**: O PKO como seguro de colisão e redutor de Risk Premium.
-- **RIO Exponencial**: Passivo estrutural multiway em taxa quadrática $x^{2+f}$.
-
----
-
-## Fontes Autorizadas
-
-* Livros e artigos acadêmicos em Teoria dos Jogos, Psicologia Cognitiva, Filosofia Existencialista.
-* Solvers de Poker (ex: GTO Wizard, DeepSolver) para referência técnica.
-* Experiência de 20+ anos de Raphael Vitoi em Poker Profissional e Educação.
-* Documentação oficial de frameworks e bibliotecas (Next.js, React, Tailwind CSS, PowerShell).
-* `.claude/GOVERNANCA/COSMOVISAO.md` (fonte ética e filosófica suprema).
-* `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` (fonte de verdade para operação).
-
----
-
-## Terminologia Confirmada
-
-* **ICM:** Independent Chip Model (Poker).
-* **Risk Premium:** Conceito avançado em Poker (Custo de Vida).
-* **GTO:** Game Theory Optimal (Poker).
-* **SOTA:** State of the Art (Estado da Arte).
-* **BDSM:** Bondage, Discipline, Dominance, Submission, Sadism, Masochism (Usado como metáfora ética para consentimento e negociação).
-* **Autopoiese:** Capacidade de um sistema de se auto-produzir e manter.
-* **Fractalidade:** O todo se reflete na parte (cada agente reflete o sistema).
-* **Economia Generalizada:** Otimização não apenas financeira, mas de tempo, latência, tokens, contexto e energia.
-* **Perspectiva Matemática:** Métrica SOTA que subjuga o ICM puro, integrando o Vetor de Manutenção de Monopólio e a Instabilidade de EVs (Mutação da Margem).
-* **Table Draw:** O impacto das posições relativas e stacks no ecossistema da mesa, fundamental para a Antevisão.
-* **Blindagem ASCII:** Mandato de purificação de strings no backend para integridade de logs.
-
----
-
-## Decisões Tomadas (SOTA GOLD)
-
-* **Organização Geométrica:** Implementado o sistema de *Route Groups* no Next.js 16.2 (`(auth)`, `(public)`, `(lab)`, `(user)`), reduzindo a profundidade cognitiva.
-* **Versionamento de API (v1):** Estabelecido o contrato soberano `/api/v1` em toda a stack, centralizado em `api/v1/`.
-* **Stack Técnico Principal:** Next.js (App Router), React 19, TypeScript, Tailwind CSS 4.
-* **Ambiente de Desenvolvimento:** VS Code otimizado (Sticky Scroll, Auto-fix, Venv Isolado).
-* **Gerenciamento de Workflow:** Sistema de agentes (20 entidades) com fila de tarefas em SQLite (`queue/tasks.db`).
-* **Paridade Isomórfica:** Unificação total de schemas em `core/schemas.py` (Pydantic) e `lib/schemas.ts` (Zod).
-
----
-
-## Mandatos Soberanos
-
-1. **Soberania Visual**: Estética high-end, glassmorphism 3xl e precisão geométrica.
-2. **Zero-Any / Zero-Debt**: Integridade total de tipos e erradicação de entropia.
-3. **Paridade Full-Stack**: Sincronia absoluta entre os núcleos Python e TypeScript.
-4. **Blindagem ASCII**: Backend e logs em ASCII puro; UTF-8 reservado ao Front.
-
----
-
-## Diretórios Chave (Estrutura Fundida `.claude`)
-
-- `/frontend`: Interface reativa de alta fidelidade e WebWorkers WASM.
-- `/engine`: Motor matemático central em Python (`math_sota.py`).
-- `/docs`: Registro Akáshico e Manifestos (ver `VITOI_PARADIGM_MANIFESTO_v7.md`).
-- `/reports`: Auditorias, validações, handoffs e registros datados.
-- `/.claude/agents/`: Definições dos 19 agentes do sistema.
-- `/.claude/agent-memory/`: Memórias individuais de trabalho (árvore canônica).
-- `/.claude/GOVERNANCA/`: Cosmovisão, instruções globais, liderança, coerência e ética.
-- `/.claude/ARQUITETURA/`: Cérebro híbrido, invariantes, roteamento holográfico e persona.
-- `/.claude/MATEMATICA/`: Formulações matemáticas SOTA e planos de validação.
-- `/.claude/DEPLOY/`: Manuais operacionais, índice mestre e scripts de deploy.
-- `/.claude/RELATORIOS/`: Inventários e trilhas de auditoria.
-
-> Fusão de 2026-09-01: a árvore `.cerebro` foi absorvida por `.claude`, que passou
-> a ser canônica. Caminhos `.cerebro/` em qualquer documento ou código são
-> referência morta.
-
----
-
-## Estado Atual (v7.0.0-GOLD)
-
-* **Ecossistema Integrado:** 20 entidades (Raphael + 19 Agentes IA) em harmonia total.
-* **Quality Gate:** Pipeline de auditoria automatizada (`scripts/quality-gate.ps1`) validando 100% dos testes e builds.
-* **Motor Matemático v4.6:** Unificação da física de RIO/ICM e Colapso de Edge concluída.
-* **Conectividade:** MCP Bridge dinâmica operacional; integrações cloud blindadas contra vazamento de segredos.
-* **Soberania Documental:** Todas as memórias e instruções sincronizadas com a nova topologia geométrica.
-
----
-
-## Handoff Log (Histórico Recente)
-
-| Agente | Status | Data | Notas |
-| --- | --- | --- | --- |
-| CHICO | Auditoria SOTA Concluida | 2026-03-20 | Infraestrutura legada aniquilada. Motor SQLite SOTA. |
-| CHICO | Expurgacao SOTA | 2026-04-09 | Remocao de alucinacoes de API; consolidação teórica. |
-| CHICO | Otimização SOTA v8.0 / Razor | 2026-05-06 | Restauração MCP; venvs isolados; motor Nash restaurado. |
-| CHICO | **ASCENSÃO SOTA v7 GOLD** | 2026-05-25 | Reestruturação total em Route Groups; API v1; Paridade Isomórfica total. |
-| @pesquisador | Concluido | 2026-03-07 | 5 fontes validadas. |
-| @prompter | Concluido | 2026-03-07 | Prompt confirmado pelo usuario. |
-| @validador | FALHA_POR_AUSENCIA_DE_ARTEFATO | 2026-03-20 | A tarefa original falhou; o caminho do arquivo de conteudo nao foi fornecido. |
-| @curator | ARTEFATO_GERADO_E_REVISADO | 2026-03-20 | Artefato `docs/sales_letter_icm_draft.md` gerado autonomamente. |
-
-*Consagrado em 2026-05-25. Referência definitiva para a Ascensão SOTA.*
-
-> Fundido em 2026-09-01 a partir das quatro versões que a fusão `.cerebro` ->
-> `.claude` removeu: `.cerebro/context/` (6.576 b, base por ser a mais recente),
-> `.claude/MODUSOPERANDI/` (4.282 b, de onde vieram os caminhos atualizados de
-> Fontes Autorizadas), `.claude/PROPOSITOS/` (1.609 b) e
-> `.claude/.ARQUIVE/legacy_root/` (1.113 b, de onde vieram as quatro linhas de
-> handoff de março). As três menores diferiam da maior sobretudo por
-> acentuação — o conteúdo único somava sete linhas, todas preservadas aqui.
+Nao manter aqui contagens de agentes, versoes comerciais de modelos, status de
+deploy, disponibilidade de credenciais ou resultados de testes sem medicao
+atual e escopo identificado.

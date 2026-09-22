@@ -61,6 +61,20 @@ def test_memory_rag_complexity_detection():
     assert rag._is_high_complexity_query("listar tarefas pendentes") is False
 
 
+def test_non_latin_query_uses_federated_retrieval_when_laya_detects_script(monkeypatch):
+    from llm import laya_bridge
+
+    rag = MemoryRAG.__new__(MemoryRAG)
+    rag.lance_backend = object()
+    monkeypatch.setattr(
+        laya_bridge,
+        "classificar_intencao",
+        lambda _question: type("Intent", (), {"script": "non-latin"})(),
+    )
+
+    assert rag._select_target_engine("質問の検索", "auto") == "hybrid_federated"
+
+
 @pytest.mark.asyncio
 async def test_memory_rag_dual_engine_routing(temp_lance_dir: Path):
     rag = MemoryRAG()
@@ -78,3 +92,113 @@ async def test_memory_rag_dual_engine_routing(temp_lance_dir: Path):
 
     out_federated = await rag.query_memory("Qual o axioma PMev de Vitoi?", engine="hybrid_federated", local_only=True)
     assert "FUSAO FEDERADA" in out_federated or "MENTE COLETIVA" in out_federated
+
+
+@pytest.mark.asyncio
+async def test_chroma_empty_fails_over_to_lance():
+    class EmptyCollection:
+        def query(self, **_kwargs):
+            return {"documents": [[]], "metadatas": [[]], "distances": [[]]}
+
+    class LanceFallback:
+        async def search(self, _question, n_results):
+            return [{"doc": "resultado Lance", "agent": "test", "source": "fixture", "score": 1.0}]
+
+    rag = MemoryRAG.__new__(MemoryRAG)
+    rag.collection = EmptyCollection()
+    rag.lance_backend = LanceFallback()
+    rag.emb_fn = lambda _texts: [[0.1] * 384]
+    rag.query_lancedb = LanceFallback.search.__get__(rag.lance_backend, LanceFallback)
+
+    result = await rag.query_memory("consulta simples", local_only=True, engine="chroma")
+
+    assert "LANCEDB" in result
+    assert "resultado Lance" in result
+
+
+@pytest.mark.asyncio
+async def test_lance_failure_fails_over_to_chroma():
+    class ChromaCollection:
+        def query(self, **_kwargs):
+            return {
+                "documents": [["resultado Chroma"]],
+                "metadatas": [[{"agent": "test", "source": "fixture"}]],
+                "distances": [[0.1]],
+            }
+
+    rag = MemoryRAG.__new__(MemoryRAG)
+    rag.collection = ChromaCollection()
+    rag.lance_backend = object()
+    rag.query_lancedb = lambda *_args, **_kwargs: None
+
+    async def no_lance(*_args, **_kwargs):
+        return []
+
+    rag.query_lancedb = no_lance
+
+    result = await rag.query_memory("consulta complexa PMev", local_only=True, engine="lance")
+
+    assert "CHROMADB" in result
+    assert "resultado Chroma" in result
+
+
+@pytest.mark.asyncio
+async def test_sync_lance_to_chroma_upserts_vectors_in_batches():
+    class ArrowRows:
+        def to_pylist(self):
+            return [{"id": "doc-1", "text": "conteudo", "vector": [0.25] * 384, "agent": "test", "source": "a.md"}]
+
+    class LanceTable:
+        def to_arrow(self):
+            return ArrowRows()
+
+    class ChromaCollection:
+        def __init__(self):
+            self.rows = []
+
+        def upsert(self, **kwargs):
+            self.rows.extend(kwargs["ids"])
+
+        def count(self):
+            return len(self.rows)
+
+    rag = MemoryRAG.__new__(MemoryRAG)
+    rag.lance_backend = type("Lance", (), {"table": LanceTable()})()
+    rag.collection = ChromaCollection()
+
+    result = await rag.sync_lance_to_chroma(batch_size=1)
+
+    assert result == {"source_rows": 1, "unique_ids": 1, "chroma_count": 1}
+    assert rag.collection.rows == ["doc-1"]
+
+
+@pytest.mark.asyncio
+async def test_storage_health_records_local_snapshot_without_forecasting_early(monkeypatch, tmp_path):
+    import memory_rag
+
+    class ChromaCollection:
+        def get(self, **_kwargs):
+            return {"ids": ["doc-1"]}
+
+    class LanceRows:
+        def select(self, _columns):
+            return self
+
+        def to_pylist(self):
+            return [{"id": "doc-1"}]
+
+    class LanceTable:
+        def to_arrow(self):
+            return LanceRows()
+
+    monkeypatch.setattr(memory_rag, "RAG_HEALTH_DB_PATH", tmp_path / "health.sqlite3")
+    rag = MemoryRAG.__new__(MemoryRAG)
+    rag.collection = ChromaCollection()
+    rag.lance_backend = type("Lance", (), {"table": LanceTable()})()
+
+    result = await rag.storage_health()
+
+    assert result["ids_match"] is True
+    assert result["chroma_count"] == result["lance_count"] == 1
+    assert result["history_days"] == 1
+    assert result["forecast_status"] == "insufficient_history"

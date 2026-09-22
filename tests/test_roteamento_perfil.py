@@ -27,7 +27,7 @@ from scripts.cli.nexus import app
 
 RAIZ = Path(__file__).resolve().parent.parent
 ARQUIVOS_COM_A_LISTA = [
-    RAIZ / "Microsoft.PowerShell_profile.ps1",
+    RAIZ / "tests" / "fixtures" / "nexus_profile_template.ps1",
     RAIZ / "scripts" / "setup" / "Setup-NexusProfile.ps1",
 ]
 

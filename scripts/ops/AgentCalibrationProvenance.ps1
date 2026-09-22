@@ -1,9 +1,10 @@
 ﻿# Shared eligibility policy; validation never fills or derives provenance fields.
 
-# Conjunto canonico de modelos, LIDO de llm/model_registry.py -- nunca copiado.
-# A SS3 do CLAUDE.md do projeto define aquele modulo como fonte unica de "qual
-# modelo esta autorizado a rodar aqui", e MODELOS_RETIRADOS preserva os recusados
-# COM o motivo, justamente para que registro historico nao precise de heuristica.
+# Conjunto canonico de modelos condutores: modelos de inferencia lidos de
+# llm/model_registry.py e identidades de agentes lidas de data/agent_identities.json.
+# As fontes mantem papeis distintos: registro de inferencia nao habilita a
+# identidade Codex a ser modelo de produto, e catalogo de identidade nao autoriza
+# um modelo a entrar no roteamento de produto.
 # Ate 2026-09-12 este arquivo decidia por expressao regular apenas: um nome com
 # sintaxe valida e existencia nenhuma -- 'gpt-9.9-inexistente' -- passava e ainda
 # mapeava para codex. Medido no mesmo dia: registry + retirados = 16 entradas, e
@@ -26,7 +27,11 @@ function Get-AgentCalibrationModelosCanonicos {
     }
     if (-not $py) { return $null }
     $code = 'import json,sys; sys.path.insert(0, sys.argv[1]); from llm.model_registry import MODEL_REGISTRY as R; ' +
-    'from llm.model_registry import MODELOS_RETIRADOS as T; print(json.dumps(sorted(set(R) | set(T))))'
+    'from llm.model_registry import MODELOS_RETIRADOS as T; ' +
+    'I=json.load(open(sys.argv[1]+"/data/agent_identities.json", encoding="utf-8")); ' +
+    'V={"codex","claude-code","antigravity","hermes-agent","ollama","llama-cpp"}; ' +
+    'A={x["modelo"] for x in I["canonicas"] if x.get("modelo") and x.get("veiculo") in V}; ' +
+    'print(json.dumps(sorted(set(R) | set(T) | A)))'
     try {
         $saida = & $py -c $code $raiz 2>$null
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($saida)) { return $null }

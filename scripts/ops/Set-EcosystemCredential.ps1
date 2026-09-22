@@ -20,7 +20,7 @@
 
     MOTIVO IMEDIATO (2026-09-04): tres credenciais foram encontradas em texto
     claro em arquivos versionados e ja empurrados -- uma literal em
-    engine/stitch_bridge.py e duas republicadas em JULES_REPORT.md a partir do
+    engine/stitch_bridge.py e duas republicadas em reports/integrations/JULES_REPORT.md a partir do
     prompt de uma sessao do Jules. As tres exigem revogacao; este script existe
     para que a substituta nao repita o caminho.
 

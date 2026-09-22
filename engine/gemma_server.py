@@ -1262,6 +1262,22 @@ async def openai_chat_completions(
     rag_context = await _get_rag_context_async(inference_req.prompt, local_only=is_local)
     final_messages = _build_messages(inference_req, rag_context)
 
+    # O servidor compatível OpenAI é um ponto de entrada independente do
+    # orquestrador Python; compõe o mesmo advisory Laya antes de local ou cloud.
+    try:
+        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        user_message = next((item["content"] for item in reversed(final_messages) if item.get("role") == "user"), "")
+        system_index = next((index for index, item in enumerate(final_messages) if item.get("role") == "system"), None)
+        system_message = final_messages[system_index]["content"] if system_index is not None else ""
+        composed_system, _ = compor_advisory_s1(system_message, user_message)
+        if system_index is None:
+            final_messages.insert(0, {"role": "system", "content": composed_system})
+        else:
+            final_messages[system_index] = {"role": "system", "content": composed_system}
+    except Exception as laya_error:  # noqa: BLE001
+        logger.debug("Laya advisory indisponível no gateway de inferência: %s", laya_error)
+
     target_model = _determine_optimal_model(inference_req.prompt, inference_req.model, bool(rag_context))
     gemini_key, openrouter_key = _resolve_api_keys()
     cloud_model = CLOUD_MODEL_MAP.get(target_model, "gemma-4-31b-it")

@@ -18,7 +18,7 @@ from engine.stitch_bridge import StitchClient
 logger = logging.getLogger(__name__)
 
 BASE_DIR: Final[Path] = Path(__file__).resolve().parent.parent.parent
-STITCH_REPORT_FILE: Final[Path] = BASE_DIR / "STITCH_REPORT.md"
+STITCH_REPORT_FILE: Final[Path] = BASE_DIR / "reports" / "integrations" / "STITCH_REPORT.md"
 
 
 def fetch_all_stitch_data() -> dict[str, Any]:
@@ -233,7 +233,7 @@ def format_markdown_report(data: dict[str, Any]) -> str:
 def main() -> None:
     """Ponto de entrada do sincronizador."""
     parser = argparse.ArgumentParser(description="Sincroniza relatorios do Google Cloud Stitch MCP.")
-    parser.add_argument("--write", action="store_true", help="Sobrescreve o arquivo STITCH_REPORT.md")
+    parser.add_argument("--write", action="store_true", help="Sobrescreve reports/integrations/STITCH_REPORT.md")
     parser.add_argument("--output", type=str, default="", help="Caminho alternativo de saida")
     args = parser.parse_args()
 
@@ -245,6 +245,7 @@ def main() -> None:
 
     if args.write:
         target_path = Path(args.output) if args.output else STITCH_REPORT_FILE
+        target_path.parent.mkdir(parents=True, exist_ok=True)
         target_path.write_text(content, encoding="utf-8")
         print(f"[SUCCESS] Relatorio Stitch gravado com sucesso em: {target_path}")
     else:

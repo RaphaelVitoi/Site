@@ -1,6 +1,7 @@
 import { SniperAdvisor } from '@/components/analytics/SniperAdvisor';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { NexusOperationsPanel } from '@/components/analytics/NexusOperationsPanel';
 import { buildNexusServerUrl } from '@/lib/api-contract';
 import { shouldQueryDashboardOrchestrator } from '@/lib/server/dashboard-orchestrator';
 import Link from 'next/link';
@@ -155,6 +156,8 @@ export default async function DashboardPage() {
 			/>
 
 			<div className="sota-container -mt-12 relative z-10">
+				<NexusOperationsPanel />
+
 				{!telemetry.available || !predictive.available ? (
 					<GlassPanel className="mb-6 border-amber-400/30 p-4 text-sm text-text-muted">
 						Dados operacionais indisponíveis: o relay autenticado do orquestrador não está

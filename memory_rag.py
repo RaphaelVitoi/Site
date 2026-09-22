@@ -5,14 +5,17 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Sequence
+from datetime import UTC, date, datetime
 import json
 import logging
 import os
 from pathlib import Path
 import re
+import sqlite3
 import sys
 import time
 from typing import Any
+import unicodedata
 
 import aiofiles
 
@@ -57,6 +60,7 @@ WORD_PATTERN = r"\b\w{3,}\b"  # Padrão regex para extração de palavras com 3+
 LANCEDB_DIR = "data/lancedb"
 LANCEDB_PATH = RAIZ_DO_PROJETO / LANCEDB_DIR
 LANCEDB_TABLE_NAME = "nexus_knowledge"
+RAG_HEALTH_DB_PATH = RAIZ_DO_PROJETO / "data" / "rag_health.sqlite3"
 
 
 class LanceDBBackend:
@@ -200,9 +204,9 @@ class MemoryRAG:
         try:
             import chromadb  # noqa: PLC0415
             from chromadb.utils import embedding_functions  # noqa: PLC0415
-        except ImportError:
+        except ImportError as exc:
             logger.error("[ERRO CRITICO] ChromaDB nao instalado. O RAG ficara inoperante.")
-            return
+            raise RuntimeError("MemoryRAG requer o pacote chromadb.") from exc
 
         self.memory_dir = Path(memory_dir)
         db_path = str(self.memory_dir / CHROMA_DB_DIR)
@@ -980,6 +984,127 @@ class MemoryRAG:
             logger.debug("[RAG] Falha na consulta direta ao LanceDB: %s", e)
             return []
 
+    async def sync_lance_to_chroma(self, batch_size: int = 500) -> dict[str, int]:
+        """Reidrata Chroma a partir dos IDs e vetores persistidos no LanceDB.
+
+        Usa upsert em lotes e não apaga registros do Chroma que não estejam no
+        LanceDB; isso mantém a operação repetível e reversível.
+        """
+        if not self.lance_backend:
+            raise RuntimeError("LanceDB indisponível; não há fonte para sincronização.")
+        if batch_size < 1:
+            raise ValueError("batch_size deve ser maior que zero.")
+
+        arrow_table = await asyncio.to_thread(self.lance_backend.table.to_arrow)
+        rows = await asyncio.to_thread(arrow_table.to_pylist)
+        records_by_id = {str(row["id"]): row for row in rows if row.get("id") and row.get("text")}
+        records = list(records_by_id.values())
+
+        for row in records:
+            vector = row.get("vector")
+            if vector is None or len(vector) != 384:
+                raise ValueError(f"Vetor inválido no LanceDB para id {row['id']}.")
+
+        for offset in range(0, len(records), batch_size):
+            batch = records[offset : offset + batch_size]
+            await asyncio.to_thread(
+                self.collection.upsert,
+                ids=[str(row["id"]) for row in batch],
+                documents=[str(row["text"]) for row in batch],
+                embeddings=[row["vector"] for row in batch],
+                metadatas=[
+                    {"agent": str(row.get("agent") or "Unknown"), "source": str(row.get("source") or "N/A")}
+                    for row in batch
+                ],
+            )
+
+        chroma_count = await asyncio.to_thread(self.collection.count)
+        return {"source_rows": len(rows), "unique_ids": len(records), "chroma_count": chroma_count}
+
+    def _persist_storage_snapshot(self, observed_on: str, chroma_count: int, lance_count: int, ids_match: bool) -> None:
+        RAG_HEALTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(RAG_HEALTH_DB_PATH, timeout=5.0) as db:
+            db.execute(
+                "CREATE TABLE IF NOT EXISTS daily_snapshots ("
+                "observed_on TEXT PRIMARY KEY, chroma_count INTEGER NOT NULL, "
+                "lance_count INTEGER NOT NULL, ids_match INTEGER NOT NULL)"
+            )
+            db.execute(
+                "INSERT INTO daily_snapshots(observed_on, chroma_count, lance_count, ids_match) "
+                "VALUES (?, ?, ?, ?) ON CONFLICT(observed_on) DO UPDATE SET "
+                "chroma_count=excluded.chroma_count, lance_count=excluded.lance_count, ids_match=excluded.ids_match",
+                (observed_on, chroma_count, lance_count, int(ids_match)),
+            )
+            db.commit()
+
+    async def storage_health(self) -> dict[str, Any]:
+        """Audita paridade local e acumula snapshots diários para forecast TimesFM."""
+        chroma_ids_result = await asyncio.to_thread(self.collection.get, include=[])
+        chroma_ids = set(chroma_ids_result.get("ids", []))
+
+        lance_rows = []
+        lance_count = 0
+        if self.lance_backend:
+            lance_table = await asyncio.to_thread(self.lance_backend.table.to_arrow)
+            lance_rows = await asyncio.to_thread(lance_table.select, ["id"])
+            lance_rows = await asyncio.to_thread(lance_rows.to_pylist)
+            lance_count = len(lance_rows)
+        lance_ids = {str(row["id"]) for row in lance_rows}
+        ids_match = chroma_ids == lance_ids
+        chroma_count = len(chroma_ids)
+        observed_on = datetime.now(UTC).date().isoformat()
+        await asyncio.to_thread(self._persist_storage_snapshot, observed_on, chroma_count, lance_count, ids_match)
+
+        def _read_history() -> list[tuple[str, int]]:
+            with sqlite3.connect(RAG_HEALTH_DB_PATH, timeout=5.0) as db:
+                return db.execute(
+                    "SELECT observed_on, lance_count FROM daily_snapshots ORDER BY observed_on DESC LIMIT 30"
+                ).fetchall()
+
+        history_rows = await asyncio.to_thread(_read_history)
+        history_rows.reverse()
+        series: list[float] = []
+        last_day: date | None = None
+        last_value: int | None = None
+        for day_text, value in history_rows:
+            current_day = date.fromisoformat(day_text)
+            if last_day is not None and last_value is not None:
+                gap = min((current_day - last_day).days - 1, 30)
+                series.extend([float(last_value)] * max(0, gap))
+            series.append(float(value))
+            last_day, last_value = current_day, value
+
+        result: dict[str, Any] = {
+            "snapshot_date": observed_on,
+            "chroma_count": chroma_count,
+            "lance_count": lance_count,
+            "ids_match": ids_match,
+            "forecast_status": "insufficient_history",
+            "history_days": len(history_rows),
+        }
+        if len(series) >= 4:
+            from engine.timesfm_engine import TIMESFM_25_200M, ExecutionMode, TimesFMEngine  # noqa: PLC0415
+
+            engine = TimesFMEngine(
+                mode=ExecutionMode.COMMERCIAL_PRODUCTION,
+                preferred_model_key=TIMESFM_25_200M,
+            )
+            try:
+                await asyncio.to_thread(engine.load_pretrained_weights, local_files_only=True)
+            except Exception as e:  # noqa: BLE001
+                logger.info(
+                    "[RAG] TimesFM 2.5 weights unavailable locally; health forecast will be marked analytic: %s", e
+                )
+            forecast = await asyncio.to_thread(
+                engine.forecast_univariate,
+                series=series,
+                horizon=7,
+                target_name="rag_lance_record_count",
+            )
+            result["forecast_status"] = "forecast_available"
+            result["forecast"] = forecast.to_item().model_dump()
+        return result
+
     async def hybrid_federated_search(self, question: str, n_results: int = 3) -> list[dict]:
         """Fusao federada (Reciprocal Rank Fusion) combinando ChromaDB e LanceDB."""
         lance_results = await self.query_lancedb(question, n_results=n_results * 2)
@@ -1025,6 +1150,18 @@ class MemoryRAG:
     def _select_target_engine(self, question: str, engine: str) -> str:
         """Seleciona o engine de busca baseado na complexidade da query e configuração."""
         if engine == "auto":
+            if self.lance_backend and any(
+                char.isalpha() and not unicodedata.name(char, "").startswith("LATIN") for char in question
+            ):
+                try:
+                    from llm.laya_bridge import classificar_intencao  # noqa: PLC0415
+
+                    intent = classificar_intencao(question)
+                    if intent.script != "latin":
+                        logger.info("[RAG] Laya sinalizou script %s; habilitando busca federada.", intent.script)
+                        return "hybrid_federated"
+                except Exception as e:  # noqa: BLE001
+                    logger.debug("[RAG] Sinal contextual Laya indisponível; mantendo roteamento base: %s", e)
             return "lance" if (self._is_high_complexity_query(question) and self.lance_backend) else "chroma"
         return engine
 
@@ -1071,20 +1208,29 @@ class MemoryRAG:
 
             # 1. Expansao da Query com IA para Recall Semantico Superior (ChromaDB Padrao)
             expanded_queries = [question] if local_only else await self._expand_query(question)
-            results = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: self.collection.query(
-                    query_texts=expanded_queries,
-                    n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
-                    include=["documents", "metadatas", "distances"],
-                ),
-            )
-
-            documents, metadatas, distances = self._flatten_and_deduplicate_results(results)
-            if not documents:
-                logger.warning(
-                    "[RAG] Busca vetorial nao retornou resultados. Acionando Fallback Lexical (I/O Direto)..."
+            try:
+                results = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: self.collection.query(
+                        query_texts=expanded_queries,
+                        n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
+                        include=["documents", "metadatas", "distances"],
+                    ),
                 )
+            except Exception as e:
+                logger.warning("[CHROMA] Consulta indisponivel; tentando LanceDB: %s", e)
+                results = None
+
+            documents, metadatas, distances = (
+                self._flatten_and_deduplicate_results(results) if results else ([], [], [])
+            )
+            if not documents:
+                if target_engine != "lance" and self.lance_backend:
+                    lance_docs = await self.query_lancedb(question, n_results=n_results)
+                    if lance_docs:
+                        logger.info("[RAG] Chroma indisponivel/vazio; failover para LanceDB.")
+                        return self._format_lance_results(lance_docs)
+                logger.warning("[RAG] Ambos os motores vetoriais sem resultados. Acionando fallback lexical...")
                 return await self._zero_latency_lexical_fallback()
 
             top_docs = self._rank_documents(question, documents, metadatas, distances, n_results)
@@ -1187,32 +1333,39 @@ if __name__ == "__main__":
     # silencia os logs (nivel INFO) e gera a ilusao de congelamento.
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
-    rag = MemoryRAG()
     if len(sys.argv) > 1:
         cmd = sys.argv[1]
+        if cmd not in {"ingest", "sync", "health", "query", "graph", "ingest_drive"}:
+            logger.error("Subcomando desconhecido: %s", cmd)
+            logger.error("Uso: python memory_rag.py [ingest | ingest_drive | query 'pergunta' | graph 'pergunta']")
+            sys.exit(2)
+        if cmd in {"query", "graph"} and len(sys.argv) <= 2:
+            logger.error("O subcomando %s requer uma pergunta.", cmd)
+            logger.error("Uso: python memory_rag.py [ingest | ingest_drive | query 'pergunta' | graph 'pergunta']")
+            sys.exit(2)
+        rag = MemoryRAG() if cmd != "ingest_drive" else None
         if cmd == "ingest":
+            assert rag is not None
             asyncio.run(rag.ingest_all_memories())
+        elif cmd == "sync":
+            assert rag is not None
+            print(asyncio.run(rag.sync_lance_to_chroma()))
+        elif cmd == "health":
+            assert rag is not None
+            print(json.dumps(asyncio.run(rag.storage_health()), ensure_ascii=False, indent=2))
         elif cmd == "query" and len(sys.argv) > 2:
+            assert rag is not None
             question = sys.argv[2]
             result = asyncio.run(rag.query_memory(question))
             print(result)
         elif cmd == "graph" and len(sys.argv) > 2:
+            assert rag is not None
             question = sys.argv[2]
             result = asyncio.run(rag.query_causal_graph(question))
             print(result)
         elif cmd == "ingest_drive":
             target_dir = os.environ.get("GDRIVE_PDF_PATH", r"C:\Users\rapha\Google Drive\Poker_PDFs")
             ingest_drive_pdfs(target_dir)
-        else:
-            # Exit 2, nao 0. Este ramo imprimia o uso e saia com sucesso, entao
-            # `subprocess.run(..., check=True)` nao tinha como perceber um
-            # subcomando inexistente. O passo 5 do `nexus ops maintenance`
-            # invocava `memory_rag.py optimize` -- subcomando que nunca existiu
-            # -- e a manutencao reportava a etapa como concluida. Medido em
-            # 2026-08-28: EXIT=0 com "Uso: ..." na saida.
-            logger.error("Subcomando desconhecido: %s", cmd)
-            logger.error("Uso: python memory_rag.py [ingest | ingest_drive | query 'pergunta' | graph 'pergunta']")
-            sys.exit(2)
     else:
-        logger.info("Uso SOTA: python memory_rag.py [ingest | ingest_drive | query | graph]")
+        logger.info("Uso SOTA: python memory_rag.py [ingest | sync | health | ingest_drive | query | graph]")
         sys.exit(2)

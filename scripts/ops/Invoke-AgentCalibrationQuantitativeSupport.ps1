@@ -353,7 +353,7 @@ print(fc.model_dump_json())
 
     [pscustomobject]@{
         schema_version = 'agent-calibration-quantitative-support/v2'
-        engine         = 'google-timesfm-2.0'
+        engine         = 'google-timesfm-2.5'
         source         = 'engine/timesfm_engine.py::forecast_agent_calibration_trajectory'
         inputs         = [ordered]@{
             scores_count    = $numericScores.Count
@@ -362,8 +362,8 @@ print(fc.model_dump_json())
         }
         output         = $result
         limitations    = @(
-            'Google Research TimesFM 2.0 (Apache 2.0) zero-shot foundation model estimates score drift, predictive mean trajectory and degradation risks over upcoming sessions.',
-            'It is an inductive statistical prior and bounded quantitative support layer; it does not replace empirical session evaluation or gate criteria.',
+            'TimesFM 2.5 is the intended Apache 2.0 model. The returned trajectory identifies whether local weights were actually loaded; otherwise it is an analytic linear extrapolation, not model inference.',
+            'It is bounded quantitative support and does not replace empirical session evaluation or gate criteria.',
             'Degradation detection triggers when 10th percentile crosses the gate threshold (8.5) or mean trajectory slopes downwards.'
         )
     } | ConvertTo-Json -Depth 8

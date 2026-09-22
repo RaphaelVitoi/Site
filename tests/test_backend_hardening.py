@@ -190,6 +190,66 @@ def _cliente_local(local_tmp_dir: Path, monkeypatch, nome_db: str):
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+async def test_status_accepta_janela_limitada_para_dashboard(local_tmp_dir: Path, monkeypatch) -> None:
+    """O painel restringe a listagem à janela pedida sem aceitar filtros inválidos."""
+    async with _cliente_local(local_tmp_dir, monkeypatch, "status-window.db") as cliente:
+        recente = await cliente.get("/status", params={"status": "all", "since_hours": "168"})
+        assert recente.status == 200
+        assert await recente.json() == []
+
+        invalido = await cliente.get("/status", params={"since_hours": "0"})
+        assert invalido.status == 400
+
+        limite_invalido = await cliente.get("/status", params={"limit": "501"})
+        assert limite_invalido.status == 400
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_queue_manager_aplica_limite_na_consulta(local_tmp_dir: Path) -> None:
+    """A listagem do dashboard aplica LIMIT no SQLite, sem carregar o histórico inteiro."""
+    manager = QueueManager(queue_path=str(local_tmp_dir / "bounded-tasks.db"))
+    now = datetime.now(UTC).isoformat()
+    for task_id in ("bounded-1", "bounded-2"):
+        await manager.add_task(
+            Task(id=task_id, description=task_id, status="pending", timestamp=now, agent="@chico", metadata={})
+        )
+    tasks = await manager.get_tasks(since_hours=1, limit=1)
+    assert len(tasks) == 1
+    assert tasks[0].id in {"bounded-1", "bounded-2"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_ask_oracle_retorna_contexto_e_proveniencia_system1(monkeypatch) -> None:
+    """A retrieval local entrega o sinal Laya para composição pelo consumidor LLM."""
+    import json
+
+    from api.v1 import handlers
+
+    class RagStub:
+        async def query_memory(self, question: str, n_results: int, local_only: bool) -> str:
+            assert question == "Como calibrar?"
+            assert n_results == 3
+            assert local_only is True
+            return "fragmento local"
+
+    async def get_rag_async():
+        return RagStub()
+
+    async def read_body():
+        return b'{"question":"Como calibrar?","n_results":3}'
+
+    monkeypatch.setattr(handlers._te, "get_rag_async", get_rag_async)
+    response = await handlers.handle_ask_oracle(SimpleNamespace(read=read_body))
+    payload = json.loads(response.text or "{}")
+    assert response.status == 200
+    assert payload["answer"] == "fragmento local"
+    assert payload["system1"]["provenia"]["engine_id"] in {"laya-s1", "heuristic-script-detector"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
 async def test_view_file_recusa_caminho_fora_das_fronteiras(local_tmp_dir: Path, monkeypatch) -> None:
     """Path traversal e ausencia de 'path' respondem 403/400, nunca conteudo."""
     async with _cliente_local(local_tmp_dir, monkeypatch, "traversal.db") as cliente:

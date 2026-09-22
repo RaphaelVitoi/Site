@@ -10,11 +10,13 @@ core.runtime nao importa de task_executor -- sem circularidade.
 """
 
 import asyncio
+import threading
 from typing import Any
 
 import core.config as _config
 
 _RAG_INSTANCE = None
+_RAG_INIT_LOCK = threading.Lock()
 
 
 def __getattr__(name: str) -> Any:
@@ -37,9 +39,11 @@ def get_rag() -> Any:
     # pylint: disable=global-statement
     global _RAG_INSTANCE
     if _RAG_INSTANCE is None:
-        from memory_rag import MemoryRAG  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+        with _RAG_INIT_LOCK:
+            if _RAG_INSTANCE is None:
+                from memory_rag import MemoryRAG  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
-        _RAG_INSTANCE = MemoryRAG()
+                _RAG_INSTANCE = MemoryRAG()
     return _RAG_INSTANCE
 
 

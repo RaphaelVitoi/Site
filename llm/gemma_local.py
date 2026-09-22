@@ -22,6 +22,9 @@ async def call_gemma_local(
     """
     Consome o motor de inferencia local @gemma4 (Gemma 2/4 FastAPI Server).
     """
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     url = "http://127.0.0.1:17043/generate"
 
     payload = {

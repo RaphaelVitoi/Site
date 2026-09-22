@@ -17,6 +17,7 @@ from llm.laya_bridge import (
     LayaIntent,
     LayaRouter,
     classificar_intencao,
+    compor_advisory_s1,
 )
 
 LAYA_DISP = LayaRouter.disponivel()
@@ -132,6 +133,23 @@ class TestSerializacao:
         # json.dumps nao pode serializar dataclasses aninhados -> verifica a pista:
         assert isinstance(meta["provenia"], dict)
         json.dumps(meta)  # nao deve levantar
+
+    def test_compoe_sinal_system1_sem_repetir_ou_ecoar_entrada(self):
+        prompt = "segredo que nao deve ser repetido"
+        composed, metadata = compor_advisory_s1("Use evidence.", prompt)
+        assert metadata is not None
+        assert "System-1 advisory" in composed
+        assert "weights_loaded=False" in composed or "weights_loaded=True" in composed
+        assert prompt not in composed
+
+        repeated, repeated_metadata = compor_advisory_s1(composed, prompt)
+        assert repeated == composed
+        assert repeated_metadata is None
+
+    def test_advisory_vazio_nao_altera_prompt(self):
+        prompt, metadata = compor_advisory_s1("Use evidence.", "")
+        assert prompt == "Use evidence."
+        assert metadata is None
 
 
 class TestFamiliaModelo:

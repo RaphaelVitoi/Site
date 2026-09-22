@@ -24,22 +24,21 @@ Describe 'do.ps1 - A Membrana Inteligente SOTA' -Tags 'Unit' {
         function global:Invoke-WebRequest { param($Uri, $Body) return @{ StatusCode = 200 } }
         function global:Write-Warning { param($Message) }
         function global:Set-Clipboard { param($Value) }
-        function global:Get-Help { param() }
         function global:Invoke-NexusScript { param($ScriptName, $Message, $Arguments) }
 
         # Configurar Mock Pester para espionar os Stubs já declarados
         Mock -CommandName Invoke-WebRequest
         Mock -CommandName Write-Warning
         Mock -CommandName Set-Clipboard
-        Mock -CommandName Get-Help
+        Mock -CommandName Read-Host { return '' }
         Mock -CommandName Invoke-NexusScript
     }
 
     Context 'Roteamento de Parametros Core' {
 
-        It 'Deve chamar Get-Help quando nenhum parametro e fornecido' {
+        It 'Deve encerrar a sessao interativa quando a entrada estiver vazia' {
             & $scriptFile
-            Assert-MockCalled Get-Help -Times 1 -Exactly
+            Assert-MockCalled Read-Host -Times 1 -Exactly
         }
 
         It 'Deve enfileirar uma tarefa via API com o parametro -Description' {

@@ -103,6 +103,7 @@ dependencies = [
     # accelerate enables the cuda/multi-gpu device path via transformers.
     "laya>=0.3.4",
     "accelerate>=1.15.0",
+    "timesfm[torch]==3.0.2",
 ]
 
 [project.scripts]

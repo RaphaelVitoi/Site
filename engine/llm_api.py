@@ -65,6 +65,9 @@ async def call_gemini(
     response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invoca o provedor Gemini via REST API."""
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     # BK-14 (auditoria 2026-09-16): sem chave, este ramo usava API_SECRET_TOKEN --
     # a credencial de servico do backend -- como chave Gemini, e a enviava ao
     # Google na query string. Nenhum chamador atual cai aqui; a armadilha sai.
@@ -114,6 +117,9 @@ async def call_anthropic(
     response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invoca o provedor Anthropic (Claude) via REST API."""
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     url = "https://api.anthropic.com/v1/messages"
     headers = {
         "Content-Type": CONTENT_TYPE_JSON,
@@ -157,6 +163,9 @@ async def call_openrouter(
     response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invoca o provedor OpenRouter via REST API."""
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {"Content-Type": CONTENT_TYPE_JSON, "Authorization": f"Bearer {api_key}"}
     data: dict[str, Any] = {
@@ -190,6 +199,9 @@ async def call_gemma_local(
     response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
     """Invocacao do Oraculo de Borda (Gemma 4 Local Server) usando aiohttp."""
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     if not api_key:
         api_key = os.environ.get("API_SECRET_TOKEN") or os.environ.get("VITOI_AUTH_TOKEN")
     if not api_key:

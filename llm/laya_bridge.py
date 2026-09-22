@@ -38,6 +38,7 @@ __all__ = [
     "LayaRouter",
     "HeuristicRouter",
     "classificar_intencao",
+    "compor_advisory_s1",
     "ruin_priority_from_intencao",
     "LayaPrediction",
     "laya_predict",
@@ -235,6 +236,34 @@ class LayaRouter:
 
 # API de modulo: consumidor real de LayaRouter (evita instancia a cada chamada).
 classificar_intencao = LayaRouter.classificar_intencao
+
+
+def compor_advisory_s1(system_prompt: str, user_prompt: str) -> tuple[str, dict[str, Any] | None]:
+    """Compõe o sinal System-1 da Laya com qualquer backend LLM, sem autoridade.
+
+    O contrato é deliberadamente compacto: não injeta texto livre derivado da
+    entrada, não troca modelo/provedor e informa quando a rota é fallback.
+    """
+    marcador = "[System-1 advisory — Laya; input-side signal, not an answer or authority]"
+    if not user_prompt or marcador in system_prompt:
+        return system_prompt, None
+    try:
+        metadata = classificar_intencao(user_prompt).metadados_s1()
+        provenance = metadata.get("provenia", {})
+        advisory = (
+            f"{marcador}\n"
+            f"script={metadata.get('script', 'unknown')}; "
+            f"language_family={metadata.get('idioma', 'unknown')}; "
+            f"non_latin_fraction_pct={metadata.get('nao_latin_fraction_pct', 0)}; "
+            f"engine={provenance.get('engine_id', 'unknown')}; "
+            f"implementation_level={provenance.get('implementation_level', 'unknown')}; "
+            f"weights_loaded={bool(provenance.get('weights_loaded', False))}. "
+            "Advisory only: reason from the original request and evidence."
+        )
+        return f"{system_prompt}\n\n{advisory}", metadata
+    except Exception as error:  # pylint: disable=broad-exception-caught
+        logger.debug("[laya-s1] composition unavailable: %s", error)
+        return system_prompt, None
 
 
 # =============================================================================

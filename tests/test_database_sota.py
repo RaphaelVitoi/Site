@@ -138,6 +138,33 @@ def test_queue_manager_path_traversal_detection() -> None:
         manager._validate_path_traversal()
 
 
+@pytest.mark.unit
+def test_queue_manager_prefix_sibling_uses_local_fallback() -> None:
+    """Prefixo textual de pasta nao torna um caminho descendente da raiz."""
+    manager = QueueManager(queue_path=":memory:")
+    sibling_path = manager.base_path.with_name(f"{manager.base_path.name}-escape") / "tasks.db"
+
+    resolved = manager._ensure_writable_db_path(sibling_path)
+
+    assert resolved == core.config.PATH_NEXUS_ZONE / "runtime" / "queue" / "tasks.db"
+
+
+@pytest.mark.unit
+def test_queue_manager_write_probe_preserves_existing_file(tmp_path: Path) -> None:
+    """A sonda de permissao nao sobrescreve nem remove arquivo de mesmo nome."""
+    manager = QueueManager(queue_path=":memory:")
+    manager.base_path = tmp_path
+    parent = tmp_path / "queue"
+    parent.mkdir()
+    existing_probe = parent / ".write_probe"
+    existing_probe.write_text("preservar", encoding="ascii")
+
+    resolved = manager._ensure_writable_db_path(parent / "tasks.db")
+
+    assert resolved == parent / "tasks.db"
+    assert existing_probe.read_text(encoding="ascii") == "preservar"
+
+
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_queue_manager_cache_and_usage() -> None:

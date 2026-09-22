@@ -109,8 +109,14 @@ def test_laya_s1_proveniancia_registrada_no_reason_codes():
     assert md["idioma"] in ("english", "multilingual")
     assert md["script"] in {"latin", "devanagari", "han", "non-latin", "unknown"}
     assert isinstance(md["nao_latin_fraction_pct"], float)
-    assert md["provenia"]["engine_id"] == "laya-s1"
-    assert md["provenia"]["implementation_level"] == "primitive"
+    # O pacote Laya pode estar ausente no runtime; nesse caso o bridge declara
+    # explicitamente o fallback determinista, em vez de fingir engine ativo.
+    if md["provenia"]["engine_id"] == "laya-s1":
+        assert md["provenia"]["implementation_level"] == "primitive"
+        assert md["provenia"]["fallback_used"] is False
+    else:
+        assert md["provenia"]["engine_id"] == "heuristic-script-detector"
+        assert md["provenia"]["fallback_used"] is True
     # Reacao do fallback: HeuristicRouter tem proveniancia alternativa.
     fb = HeuristicRouter.classificar("hello world deployment error")
     fb_md = fb.metadados_s1()

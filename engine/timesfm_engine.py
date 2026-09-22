@@ -14,7 +14,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 import logging
 import math
-from typing import Literal
+import threading
+from typing import Any, Literal
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -86,6 +87,9 @@ TIMESFM_ALIASES: dict[str, str] = {
     "timesfm-2.0": TIMESFM_20_500M,
     "500m": TIMESFM_20_500M,
 }
+
+_PRETRAINED_MODEL_CACHE: dict[str, Any] = {}
+_PRETRAINED_MODEL_LOCK = threading.Lock()
 
 
 # Procedencia declarada quando NENHUM peso do TimesFM foi carregado. `model_used`
@@ -160,7 +164,11 @@ class TimesFMForecastRequest(BaseModel):
         ExecutionMode.COMMERCIAL_PRODUCTION,
         description="Modo de execucao (commercial_production ou research_benchmark)",
     )
-    preferred_model_key: str = Field(TIMESFM_20_500M, description="Chave do modelo no catalogo TimesFM")
+    preferred_model_key: str = Field(TIMESFM_25_200M, description="Chave do modelo no catalogo TimesFM")
+    use_pretrained_weights: bool = Field(
+        False,
+        description="Carrega pesos locais já baixados; não baixa arquivos durante a chamada da API.",
+    )
 
 
 class TimesFMForecastResponse(BaseModel):
@@ -186,13 +194,54 @@ class TimesFMEngine:
     def __init__(
         self,
         mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-        preferred_model_key: str = TIMESFM_20_500M,
+        preferred_model_key: str = TIMESFM_25_200M,
     ) -> None:
         self.mode = mode
         canonical_key = TIMESFM_ALIASES.get(preferred_model_key.strip().lower(), preferred_model_key)
         self.preferred_model_key = canonical_key
         self.metadata = self._validate_and_resolve_model(mode, canonical_key)
         self._model = None
+
+    def load_pretrained_weights(
+        self,
+        *,
+        cache_dir: str | None = None,
+        local_files_only: bool = False,
+    ) -> bool:
+        """Carrega TimesFM 2.5 localmente; download ocorre apenas por chamada explícita."""
+        if self.preferred_model_key != TIMESFM_25_200M:
+            raise RuntimeError(
+                "Carregamento integrado disponível apenas para TimesFM 2.5; "
+                "TimesFM 2.0/3.0 exigem adaptadores isolados por versão e licença."
+            )
+        if self._model is not None:
+            return True
+
+        with _PRETRAINED_MODEL_LOCK:
+            model = _PRETRAINED_MODEL_CACHE.get(self.preferred_model_key)
+            if model is None:
+                from timesfm.configs import ForecastConfig  # noqa: PLC0415
+                from timesfm.timesfm_2p5.timesfm_2p5_torch import TimesFM_2p5_200M_torch  # noqa: PLC0415
+
+                model = TimesFM_2p5_200M_torch.from_pretrained(
+                    self.metadata.model_id,
+                    cache_dir=cache_dir,
+                    local_files_only=local_files_only,
+                    torch_compile=False,
+                )
+                model.compile(
+                    ForecastConfig(
+                        max_context=2048,
+                        max_horizon=128,
+                        per_core_batch_size=1,
+                        normalize_inputs=True,
+                        infer_is_positive=False,
+                    )
+                )
+                _PRETRAINED_MODEL_CACHE[self.preferred_model_key] = model
+            self._model = model
+        logger.info("TimesFM 2.5 carregado com pesos: %s", self.metadata.model_id)
+        return True
 
     @property
     def is_research_mode(self) -> bool:
@@ -201,7 +250,7 @@ class TimesFMEngine:
 
     @property
     def weights_loaded(self) -> bool:
-        """Ha pesos do TimesFM carregados? Hoje: nunca -- `_model` fica em None."""
+        """Indica se a inferência usa pesos carregados em memória."""
         return self._model is not None
 
     @property
@@ -259,6 +308,23 @@ class TimesFMEngine:
         if len(history) < 4:
             raise ValueError("A s\u00e9rie hist\u00f3rica deve possuir ao menos 4 pontos para infer\u00eancia.")
 
+        if self._model is not None:
+            points, quantiles = self._model.forecast(horizon, [history.astype(np.float32)])
+            forecast = np.asarray(points[0], dtype=np.float64)[:horizon]
+            forecast_quantiles = np.asarray(quantiles[0], dtype=np.float64)[:horizon]
+            return ForecastResult(
+                target_name=target_name,
+                history_length=len(history),
+                forecast_horizon=horizon,
+                mean_prediction=forecast.tolist(),
+                quantile_10=forecast_quantiles[:, 0].tolist(),
+                quantile_90=forecast_quantiles[:, 8].tolist(),
+                model_used=self.metadata.model_id,
+                license_tier=self.metadata.license_tier.value,
+                intended_model=self.metadata.model_id,
+                weights_loaded=True,
+            )
+
         # Simulacao analitica com decaimento/drift bayesiano para fallback zero-token ou inferencia direta
         last_val = float(history[-1])
         window = min(len(history), 10)
@@ -303,7 +369,7 @@ def forecast_bankroll_trajectory(
     history_bb: list[float],
     horizon_tournaments: int = 12,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = TIMESFM_20_500M,
+    preferred_model_key: str = TIMESFM_25_200M,
 ) -> ForecastResult:
     """Funcao de dominio SOTA: Projeta a trajetoria estocastica de Bankroll (em BB).
 
@@ -323,7 +389,7 @@ def forecast_pmev_risk_dynamics(
     history_icm: list[float],
     horizon_steps: int = 10,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = TIMESFM_20_500M,
+    preferred_model_key: str = TIMESFM_25_200M,
 ) -> dict[str, ForecastResult]:
     """Funcao de dominio SOTA: Projeta a evolucao conjunta dos tensores de risco PMev.
 
@@ -365,14 +431,14 @@ def forecast_agent_calibration_trajectory(
     horizon_sessions: int = 3,
     conductor_model: str | None = None,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = TIMESFM_20_500M,
+    preferred_model_key: str = TIMESFM_25_200M,
 ) -> AgentCalibrationForecast:
     """Funcao de Dominio: Projeta a trajetoria e volatilidade de notas de calibracao dos agentes.
 
     Utiliza TimesFM 2.0 (Apache 2.0) para antecipar desvios de performance, quantis e downward drift.
     """
     if len(history_scores) < 4:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_25_200M])
         return AgentCalibrationForecast(
             status="INSUFFICIENT_HISTORY",
             history_points=len(history_scores),
@@ -457,7 +523,7 @@ def forecast_multimodel_calibration(
     series_by_model: dict[str, list[float]],
     horizon_sessions: int = 3,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = TIMESFM_20_500M,
+    preferred_model_key: str = TIMESFM_25_200M,
 ) -> dict[str, AgentCalibrationForecast]:
     """Escalonamento Multivariado: Projeta series temporais segmentadas por modelo condutor."""
     return {
@@ -495,7 +561,7 @@ def forecast_cfr_convergence(
     horizon_iterations: int = 10,
     target_epsilon: float = 0.001,
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = TIMESFM_20_500M,
+    preferred_model_key: str = TIMESFM_25_200M,
 ) -> CfrConvergenceForecast:
     """Projeta a trajetoria de decaimento do arrependimento medio ou explorabilidade no CFR+.
 
@@ -503,7 +569,7 @@ def forecast_cfr_convergence(
     ou quando a variacao entre iteracoes indica convergencia assintotica ou plato.
     """
     if len(regret_history) < 4:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_25_200M])
         return CfrConvergenceForecast(
             status="INSUFFICIENT_HISTORY",
             current_exploitability=float(regret_history[-1]) if regret_history else 1.0,
@@ -522,7 +588,7 @@ def forecast_cfr_convergence(
 
     current_val = float(regret_history[-1])
     if current_val <= target_epsilon:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_25_200M])
         return CfrConvergenceForecast(
             status="CONVERGED",
             current_exploitability=current_val,
@@ -616,11 +682,11 @@ def forecast_opponent_drift(
     canonical_benchmark: float = 0.5,
     metric_name: str = "vpip",
     mode: ExecutionMode = ExecutionMode.COMMERCIAL_PRODUCTION,
-    preferred_model_key: str = TIMESFM_20_500M,
+    preferred_model_key: str = TIMESFM_25_200M,
 ) -> OpponentDriftForecast:
     """Projeta a deriva de tendencias do vilao (VPIP, 3-bet, fold to c-bet) vs limiares GTO."""
     if len(history_frequencies) < 4:
-        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_20_500M])
+        meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_25_200M])
         return OpponentDriftForecast(
             status="INSUFFICIENT_HISTORY",
             metric_name=metric_name,

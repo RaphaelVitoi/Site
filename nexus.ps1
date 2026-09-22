@@ -4,4 +4,12 @@ param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
 # importar aqui porque o roteamento novo do profile manda o caso sem hifen
 # para este wrapper, tornando-o a porta de entrada principal do ecossistema.
 Push-Location $PSScriptRoot
-try { uv run nexus @Args } finally { Pop-Location }
+$ExitCode = 1
+try {
+    uv run nexus @Args
+    if ($null -ne $LASTEXITCODE) { $ExitCode = $LASTEXITCODE }
+}
+finally {
+    Pop-Location
+}
+exit $ExitCode

@@ -22,6 +22,9 @@ async def call_openrouter(
     **kwargs,
 ) -> tuple[str, dict]:
     """Executes the OpenRouter API call with resiliency."""
+    from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     url = "https://openrouter.ai/api/v1/chat/completions"
     headers = {
         "Content-Type": "application/json",

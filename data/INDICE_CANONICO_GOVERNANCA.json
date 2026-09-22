@@ -70,6 +70,12 @@
             "codigo: antigravity/task_executor.py:604"
           ],
           "no_corpus_do_rag": false
+        },
+        {
+          "caminho": "Site/.claude/.ARQUIVE/contexto-2026-09-22/MODUS_OPERANDI.md",
+          "papel": "copia historica arquivada; sem autoridade operacional",
+          "consumidores": [],
+          "no_corpus_do_rag": false
         }
       ]
     },
@@ -172,6 +178,12 @@
           "consumidores": [
             "convencao"
           ],
+          "no_corpus_do_rag": false
+        },
+        {
+          "caminho": "Site/.claude/.ARQUIVE/contexto-2026-09-22/GEMINI.md",
+          "papel": "copia historica arquivada; sem autoridade operacional",
+          "consumidores": [],
           "no_corpus_do_rag": false
         }
       ]
