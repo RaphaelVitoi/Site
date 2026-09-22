@@ -75,4 +75,8 @@ Origem: sessao Jules, 2026-09-06.
 
 ## 2025-01-20 - [TypedArray Branching Overhead via Nullish Coalescing]
 **Learning:** Using the nullish coalescing operator (`?? 0`) on bounded `TypedArray` accesses (like `Float32Array`) in JavaScript causes significant performance degradation in hot loops due to unnecessary branching and type-checks. Bounded access always returns a primitive number, never `undefined`.
-**Action:** When accessing elements within valid bounds on TypedArrays in performance-critical code, use direct index access (e.g., `arr[idx]`) instead of coalescing.
+**Action:** When accessing elements within valid bounds on TypedArrays in performance-critical code, use direct index access (e.g., `arr[idx]`) instead of coalescing. Also, cast the retrieved array element using `as number` if strict typing expects it.
+
+## 2025-01-20 - [Avoid for...of over TypedArrays]
+**Learning:** `for...of` iterator structures in hot loops on TypedArrays trigger overhead, preventing effective loop unrolling by the JIT.
+**Action:** Use primitive `for` loops (e.g., `for (let i = 0; i < arr.length; i++)`) to maximize iteration speed.
