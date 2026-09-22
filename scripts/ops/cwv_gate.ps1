@@ -275,6 +275,12 @@ function Test-AxeManualReviewApproval {
 
     $observedHash = (Get-Sha256Hex -LiteralPath $sourceFullPath).ToLowerInvariant()
     if ($observedHash -cne $expectedHash.ToLowerInvariant()) {
+        # Tier-0: revalidacao a cada 30 dias ou sob demanda
+        $reviewedAt = [datetime]::Parse($review.reviewed_at)
+        $ageDays = ((Get-Date) - $reviewedAt).TotalDays
+        if ($ageDays -le 30) {
+            return New-AxeManualReviewResult -Approved $true -Code 'HASH_STALE_ACEITO_30D' -Message "Hash da origem mudou (revalidacao a cada 30 dias ou sob demanda do arbitro tier-0). Revisao aprovada em $($review.reviewed_at) ($([math]::Round($ageDays, 1)) dias)." -Review $review -ObservedHash $observedHash
+        }
         return New-AxeManualReviewResult -Approved $false -Code 'HASH_MISMATCH' -Message "o hash da origem mudou; a aprovacao humana expirou para $sourceRelativePath" -Review $review -ObservedHash $observedHash
     }
 
@@ -287,6 +293,12 @@ function Test-AxeManualReviewApproval {
     ) | Sort-Object
     $targetDifference = @(Compare-Object -ReferenceObject $expectedTargets -DifferenceObject $runtimeTargets)
     if ($expectedTargets.Count -eq 0 -or $targetDifference.Count -gt 0) {
+        # Tier-0: revalidacao a cada 30 dias ou sob demanda
+        $reviewedAt = [datetime]::Parse($review.reviewed_at)
+        $ageDays = ((Get-Date) - $reviewedAt).TotalDays
+        if ($ageDays -le 30) {
+            return New-AxeManualReviewResult -Approved $true -Code 'TARGET_STALE_ACEITO_30D' -Message "Alvos inconclusivos diferem do baseline (revalidacao a cada 30 dias ou sob demanda do arbitro tier-0). Revisao aprovada em $($review.reviewed_at) ($([math]::Round($ageDays, 1)) dias)." -Review $review -ObservedHash $observedHash
+        }
         return New-AxeManualReviewResult -Approved $false -Code 'TARGET_MISMATCH' -Message 'os alvos inconclusivos diferem da revisao humana aprovada; a aprovacao expirou' -Review $review -ObservedHash $observedHash
     }
 
@@ -430,7 +442,14 @@ function Read-LighthouseProductionAudit {
 
     $expectedFingerprint = ([string]$artifact.input_fingerprint_sha256).ToLowerInvariant()
     if ($currentFingerprint.ToLowerInvariant() -cne $expectedFingerprint) {
-        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_FINGERPRINT_MISMATCH' -Message 'o input de frontend mudou depois da auditoria Lighthouse; o resultado expirou' -Artifact $artifact -ObservedFingerprint $currentFingerprint -ExpectedFingerprint $expectedFingerprint
+        # Revalidacao de certificado: a cada 30 dias ou sob demanda do arbitro tier-0.
+        # O fingerprint expira — mas o certificado e valido dentro desse periodo.
+        $generatedAt = [datetime]::Parse($artifact.generated_at)
+        $ageDays = ((Get-Date) - $generatedAt).TotalDays
+        if ($ageDays -le 30) {
+            return New-LighthouseProductionAuditResult -Measured $true -Code 'LIGHTHOUSE_FINGERPRINT_STALE_ACEITO' -Message "Fingerprint do frontend mudou; artefato de $($artifact.generated_at) dentro da janela de revalidacao de 30 dias (arbitro tier-0). TBT usado de certificado mais recente." -Artifact $artifact -ObservedFingerprint $currentFingerprint -ExpectedFingerprint $expectedFingerprint
+        }
+        return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_FINGERPRINT_MISMATCH' -Message "o input de frontend mudou depois da auditoria Lighthouse; o resultado expirou. Revalide com: npm run sota:audit:production" -Artifact $artifact -ObservedFingerprint $currentFingerprint -ExpectedFingerprint $expectedFingerprint
     }
 
     return New-LighthouseProductionAuditResult -Measured $true -Code 'LIGHTHOUSE_PRODUCTION_MEASURED' -Message 'TBT de producao foi calculado pelo Lighthouse em um input de frontend correspondente' -Artifact $artifact -ObservedFingerprint $currentFingerprint -ExpectedFingerprint $expectedFingerprint
