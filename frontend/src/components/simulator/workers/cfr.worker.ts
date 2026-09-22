@@ -49,14 +49,15 @@ function computeNodeCfr(
 
   // 2. Regret Matching -> Obter estratégia proporcional atual
   // SOTA BOLT: Using direct bracket notation `[]` over `.at()` for 15-30x speedup in hot loops on TypedArrays.
+  // ⚡ Bolt: Removed unnecessary `?? 0` on TypedArray bounds to avoid branching overhead.
   const offset = i * ACTIONS;
   const idx0 = offset;
   const idx1 = offset + 1;
   const idx2 = offset + 2;
 
-  const r0 = Math.max(localRegret[idx0] ?? 0, 0);
-  const r1 = Math.max(localRegret[idx1] ?? 0, 0);
-  const r2 = Math.max(localRegret[idx2] ?? 0, 0);
+  const r0 = Math.max(localRegret[idx0] as number, 0);
+  const r1 = Math.max(localRegret[idx1] as number, 0);
+  const r2 = Math.max(localRegret[idx2] as number, 0);
 
   const normalizingSum = r0 + r1 + r2;
   const s0 = normalizingSum > 0 ? r0 / normalizingSum : 1 / ACTIONS;
@@ -68,17 +69,17 @@ function computeNodeCfr(
   currentStrategy[idx1] = s1;
   currentStrategy[idx2] = s2;
 
-  localStrategy[idx0] = (localStrategy[idx0] ?? 0) + s0;
-  localStrategy[idx1] = (localStrategy[idx1] ?? 0) + s1;
-  localStrategy[idx2] = (localStrategy[idx2] ?? 0) + s2;
+  localStrategy[idx0] = (localStrategy[idx0] as number) + s0;
+  localStrategy[idx1] = (localStrategy[idx1] as number) + s1;
+  localStrategy[idx2] = (localStrategy[idx2] as number) + s2;
 
   // 3. Node Utility (EV da estratégia mista)
   const nodeUtil = s0 * evFold + s1 * evCall + s2 * evRaise;
 
   // 4. Atualizar Arrependimentos (Regrets) com Fator de Diluição (Kappa)
-  localRegret[idx0] = ((localRegret[idx0] ?? 0) + (evFold - nodeUtil)) * kappa;
-  localRegret[idx1] = ((localRegret[idx1] ?? 0) + (evCall - nodeUtil)) * kappa;
-  localRegret[idx2] = ((localRegret[idx2] ?? 0) + (evRaise - nodeUtil)) * kappa;
+  localRegret[idx0] = ((localRegret[idx0] as number) + (evFold - nodeUtil)) * kappa;
+  localRegret[idx1] = ((localRegret[idx1] as number) + (evCall - nodeUtil)) * kappa;
+  localRegret[idx2] = ((localRegret[idx2] as number) + (evRaise - nodeUtil)) * kappa;
 
   // Heurística de Exibição (Probabilidade agregada de agressão: Call/Raise)
   renderMatrix[i] = s1 + s2;
@@ -133,8 +134,12 @@ globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
 
     iterationCount += 1;
     let positiveRegretTotal = 0;
-    for (const regret of regretSum ?? []) {
-      positiveRegretTotal += Math.max(0, regret);
+    // ⚡ Bolt: Replaced `for...of` iterator overhead with primitive for-loop.
+    if (regretSum) {
+      for (let j = 0; j < regretSum.length; j++) {
+        const regret = regretSum[j] as number;
+        if (regret > 0) positiveRegretTotal += regret;
+      }
     }
     const regretScale = Math.max(Math.abs(pot), Math.abs(stack), 1);
     const meanPositiveRegret = positiveRegretTotal / Math.max(1, regretSum?.length ?? 0) / regretScale;
