@@ -704,6 +704,8 @@ def avaliar_uso_condicional_pro(
     ganho_qualidade_esperado_pct: float,
     tokens_in: int = 4000,
     tokens_out: int = 1000,
+    intencao_s1: dict[str, Any] | None = None,
+    prompt: str | None = None,
 ) -> dict[str, Any]:
     """Avalia se o Chat GPT 5.6-Sol deve ser utilizado no lugar do Gemini 3.5/3.6 Flash.
 
@@ -711,20 +713,49 @@ def avaliar_uso_condicional_pro(
     Chat GPT 5.6-Sol so deve ser acionado EVENTUALMENTE se o ganho de qualidade
     superar CONCRETAMENTE o diferencial de custo/tokens. Caso contrario, o
     Gemini 3.6 Flash prevalece.
+
+    Integracao Tier-0 (Laya S1):
+    Se `intencao_s1` ou `prompt` forem fornecidos, o sinal System-1 da Laya
+    modula o limiar de ganho necessario (ex: alta incerteza nao-latina/noul
+    ajusta o threshold para evitar falsos positivos na escalacao custosa).
     """
     custo_flash = custo(GEMINI_3_5_FLASH_LITE, tokens_in, tokens_out)
     custo_pro = custo("chatgpt-5.6-sol", tokens_in, tokens_out)
 
-    aprovado = complexidade_formal and (ganho_qualidade_esperado_pct >= 25.0)
+    # Modulacao Laya S1 (advisory Tier-0)
+    threshold_ganho = 25.0
+    s1_meta: dict[str, Any] = {}
+    if intencao_s1 or prompt:
+        try:
+            from llm.laya_bridge import (  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
+                classificar_intencao,
+                ruin_priority_from_intencao,
+            )
+
+            sig = intencao_s1 if intencao_s1 else classificar_intencao(prompt or "").metadados_s1()
+            rp = ruin_priority_from_intencao(sig)
+            # ruin_priority [1.0, 1.30] modula o threshold de ganho (1.0 -> 25.0%, 1.30 -> até 32.5% mais exigente)
+            threshold_ganho = round(25.0 * rp, 2)
+            s1_meta = {
+                "laya_adapted": True,
+                "ruin_priority": rp,
+                "threshold_ganho_ajustado": threshold_ganho,
+                "nao_latin_fraction_pct": sig.get("nao_latin_fraction_pct", 0.0),
+            }
+        except Exception:  # noqa: S110, SIM110  # Record-Id: auditoria-2026-09-21-backend-padrao-ouro
+            # Fail-open: se Laya S1 falhar, threshold volta ao default de 25%.0
+            logger.debug("[routing_policy] Laya S1 modulacao falhou (prompt=%s)", bool(prompt or intencao_s1))
+
+    aprovado = complexidade_formal and (ganho_qualidade_esperado_pct >= threshold_ganho)
     modelo_escolhido = "chatgpt-5.6-sol" if aprovado else GEMINI_3_5_FLASH_LITE
 
     motivo = (
-        f"Alta complexidade matematica/axiomatica com ganho concreto de {ganho_qualidade_esperado_pct:.1f}% justificando o custo."
+        f"Alta complexidade matematica/axiomatica com ganho concreto de {ganho_qualidade_esperado_pct:.1f}% (limiar Laya S1: {threshold_ganho:.1f}%) justificando o custo."
         if aprovado
-        else f"Eficiencia de custo x beneficio: Gemini 3.5 Flash-Lite supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao justifica o overhead)."
+        else f"Eficiencia de custo x beneficio: Gemini 3.5 Flash-Lite supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao atinge o limiar Laya de {threshold_ganho:.1f}%)."
     )
 
-    return {
+    result = {
         "modelo_escolhido": modelo_escolhido,
         "aprovado_pro": aprovado,
         "beneficio_estimado_pct": ganho_qualidade_esperado_pct if aprovado else 0.0,
@@ -732,6 +763,9 @@ def avaliar_uso_condicional_pro(
         "custo_flash": round(custo_flash, 6),
         "custo_pro": round(custo_pro, 6),
     }
+    if s1_meta:
+        result["laya_s1_modulation"] = s1_meta
+    return result
 
 
 __all__ = [

@@ -97,6 +97,7 @@ from llm.budget import (
     DAILY_API_BUDGET,
 )
 from llm.laya_bridge import ruin_priority_from_intencao
+from llm.laya_solver_adapter import LayaSolverAdapter
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
 from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
@@ -1206,24 +1207,45 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
 
-    def _execute_pluribus() -> dict[str, Any]:
+    def _execute_pluribus() -> tuple[dict[str, Any], dict[str, Any]]:
+        # Adaptação S1 (Laya) para Pluribus se request trouxer prompt ou metadata
+        adapted_iters = req.iterations
+        adapted_lambda = req.state.lambda_factor
+        laya_meta: dict[str, Any] = {}
+        if getattr(req, "prompt", None) or getattr(req, "intencao_s1", None):
+            query_text = getattr(req, "prompt", "") or str(getattr(req, "intencao_s1", ""))
+            bridge_res = LayaSolverAdapter.adapt_for_solver(
+                "pluribus",
+                query_text,
+                {"iterations": req.iterations, "lambda_factor": req.state.lambda_factor},
+            )
+            adapted_iters = int(bridge_res.adapted_parameters.get("iterations", req.iterations))
+            adapted_lambda = float(bridge_res.adapted_parameters.get("lambda_factor", req.state.lambda_factor))
+            laya_meta = {
+                "laya_adapted": True,
+                "engine_id": bridge_res.provenia.engine_id,
+                "ruin_priority": bridge_res.ruin_priority,
+                "framework_signals": bridge_res.framework_signals,
+            }
+
         state = PluribusMultiwayState(
             pot=req.state.pot,
             num_players=req.state.num_players,
             street=Street(req.state.street.value),
             active_stacks=req.state.active_stacks,
-            lambda_factor=req.state.lambda_factor,
+            lambda_factor=adapted_lambda,
         )
         solver = PluribusDepthLimitedSolver(state)
-        return solver.solve_depth_limited(
+        res_solve = solver.solve_depth_limited(
             equity=req.equity,
             hero_position=req.hero_position,
             depth_streets=req.depth_streets,
-            iterations=req.iterations,
+            iterations=adapted_iters,
         )
+        return res_solve, laya_meta
 
     try:
-        solve_result = await asyncio.to_thread(_execute_pluribus)
+        solve_result, laya_meta = await asyncio.to_thread(_execute_pluribus)
         elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
         resp = PluribusSolveResponse(
@@ -1245,9 +1267,32 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
             iterations_run=req.iterations,
             execution_time_ms=elapsed_ms,
         )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "pluribus-multiway-adapter"))
+        payload = resp.model_dump()
+        if laya_meta:
+            payload["laya_s1_adaptation"] = laya_meta
+        return web.json_response(_with_execution_provenance(payload, "pluribus-multiway-adapter"))
     except Exception as e:
         return _internal_error(e, "handle_pluribus_solve", status="ERROR")
+
+
+def _aggregate_action_frequencies(
+    raw_strategy: dict[str, dict[str, float]],
+    ranges_ip: dict[str, float],
+) -> dict[str, float]:
+    """Agrega frequências de ações do raw strategy ponderadas pela range IP.
+
+    Extraído de handle_deepstack_resolve para reduzir complexidade cognitiva (S3776).
+    """
+    actions = ["CHECK", "BET_HALF_POT", "BET_POT", "ALL_IN"]
+    agg_freqs: dict[str, float] = dict.fromkeys(actions, 0.0)
+    total_weight = sum(ranges_ip.values())
+    if total_weight <= 1e-9:
+        return {a: 1.0 / len(actions) for a in actions}
+    for hand, strat in raw_strategy.items():
+        hand_prob = ranges_ip.get(hand, 0.0) / total_weight
+        for a, prob in strat.items():
+            agg_freqs[a] += prob * hand_prob
+    return agg_freqs
 
 
 async def handle_deepstack_resolve(request: web.Request) -> web.Response:
@@ -1263,7 +1308,30 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
 
-    def _execute_deepstack() -> tuple[dict[str, float], dict[str, dict[str, float]], dict[str, float]]:
+    def _execute_deepstack() -> tuple[dict[str, float], dict[str, dict[str, float]], dict[str, float], dict[str, Any]]:
+        # Adaptação S1 (Laya) para DeepStack se request trouxer prompt ou metadata
+        adapted_iters = req.iterations
+        laya_meta: dict[str, Any] = {}
+        if getattr(req, "prompt", None) or getattr(req, "intencao_s1", None):
+            query_text = getattr(req, "prompt", "") or str(getattr(req, "intencao_s1", ""))
+            bridge_res = LayaSolverAdapter.adapt_for_solver(
+                "deepstack",
+                query_text,
+                {"tolerance": float(getattr(req, "tolerance", 0.01))},
+            )
+            adapted_iters = (
+                int(req.iterations * (1.0 - bridge_res.s1_prediction.noul * 0.2))
+                if bridge_res.s1_prediction.noul
+                else req.iterations
+            )
+            adapted_iters = max(1, adapted_iters)
+            laya_meta = {
+                "laya_adapted": True,
+                "engine_id": bridge_res.provenia.engine_id,
+                "ruin_priority": bridge_res.ruin_priority,
+                "framework_signals": bridge_res.framework_signals,
+            }
+
         subgame = DeepStackSubgame(
             street=Street(req.street.value),
             pot=req.pot,
@@ -1272,23 +1340,13 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
             opponent_cfvs=req.opponent_cfvs,
         )
         gadget_bounds = subgame.compute_gadget_game_bounds()
-        raw_strategy = ContinualResolvingEngine.resolve_subgame(subgame, iterations=req.iterations)
+        raw_strategy = ContinualResolvingEngine.resolve_subgame(subgame, iterations=adapted_iters)
 
-        actions = ["CHECK", "BET_HALF_POT", "BET_POT", "ALL_IN"]
-        agg_freqs: dict[str, float] = dict.fromkeys(actions, 0.0)
-        total_weight = sum(req.ranges_ip.values())
-        if total_weight > 1e-9:
-            for hand, strat in raw_strategy.items():
-                hand_prob = req.ranges_ip.get(hand, 0.0) / total_weight
-                for a, prob in strat.items():
-                    agg_freqs[a] += prob * hand_prob
-        else:
-            agg_freqs = {a: 1.0 / len(actions) for a in actions}
-
-        return gadget_bounds, raw_strategy, {k: round(v, 4) for k, v in agg_freqs.items()}
+        agg_freqs = _aggregate_action_frequencies(raw_strategy, req.ranges_ip)
+        return gadget_bounds, raw_strategy, {k: round(v, 4) for k, v in agg_freqs.items()}, laya_meta
 
     try:
-        gadget_bounds, strategy, agg_freqs = await asyncio.to_thread(_execute_deepstack)
+        gadget_bounds, strategy, agg_freqs, laya_meta = await asyncio.to_thread(_execute_deepstack)
         elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
         resp = DeepStackResolveResponse(
@@ -1301,7 +1359,10 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
             iterations_run=req.iterations,
             execution_time_ms=elapsed_ms,
         )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "deepstack-continual-resolving-adapter"))
+        payload = resp.model_dump()
+        if laya_meta:
+            payload["laya_s1_adaptation"] = laya_meta
+        return web.json_response(_with_execution_provenance(payload, "deepstack-continual-resolving-adapter"))
     except Exception as e:
         return _internal_error(e, "handle_deepstack_resolve", status="ERROR")
 

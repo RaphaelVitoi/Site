@@ -80,6 +80,43 @@ async def test_handle_pluribus_solve_success():
 
 
 @pytest.mark.asyncio
+async def test_handle_pluribus_solve_with_laya_s1_prompt_adaptation():
+    """Valida que o prompt opcional ativa a adaptacao S1 (Laya) no Pluribus."""
+    app = web.Application()
+    payload = {
+        "state": {
+            "pot": 100.0,
+            "num_players": 3,
+            "street": "turn",
+            "active_stacks": [100.0, 100.0, 100.0],
+            "lambda_factor": 2.0,
+        },
+        "equity": 0.65,
+        "hero_position": "CO",
+        "depth_streets": 1,
+        "iterations": 40,
+        "prompt": "Analise complexa multiway em turn com bordo monótono.",
+    }
+
+    req = make_mocked_request(
+        "POST",
+        "/api/v1/game-theory/pluribus/solve",
+        headers={"Content-Type": "application/json"},
+        app=app,
+    )
+    req._read_bytes = json.dumps(payload).encode("utf-8")
+
+    resp = await handle_pluribus_solve(req)
+    assert resp.status == 200
+    data = json.loads(resp.text)
+    assert data["status"] == "SUCCESS"
+    assert "laya_s1_adaptation" in data
+    assert data["laya_s1_adaptation"]["laya_adapted"] is True
+    assert "ruin_priority" in data["laya_s1_adaptation"]
+    assert data["execution_provenance"]["engine_id"] == "pluribus-multiway-adapter"
+
+
+@pytest.mark.asyncio
 async def test_handle_pluribus_solve_validation_error():
     """Valida rejeicao 400 em caso de payload invalido."""
     app = web.Application()
