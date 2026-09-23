@@ -3,7 +3,7 @@
     {
       "path": ".agents/skills",
       "include_only": [
-        "^(pmev-game-theory-engine|sota-quality-gate|sota-triad-mesh)$"
+        "^(pmev-game-theory-engine|site-session-handoff|sota-quality-gate|sota-triad-mesh)$"
       ]
     }
   ]

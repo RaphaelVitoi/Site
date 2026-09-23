@@ -15,9 +15,8 @@ param(
     [ValidateRange(0, 10)]
     [decimal]$Score,
 
-    [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
-    [string]$Feedback,
+    [AllowEmptyString()]
+    [string]$Feedback = '',
 
     [string]$Scope = 'handoff',
 
@@ -165,8 +164,10 @@ try {
         event_id   = [guid]::NewGuid().ToString()
         session_id = $SessionId
         score      = $Score
-        feedback   = $Feedback.Trim()
         scope      = $Scope.Trim()
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Feedback)) {
+        $campos['feedback'] = $Feedback.Trim()
     }
     # Ancora temporal da sessao. Sessao vai do inicio ao fim de um trabalho e
     # compactacao de contexto NAO a encerra; sem esta marca, uma sessao partida

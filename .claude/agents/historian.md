@@ -11,6 +11,7 @@ Analise de dados temporais, agregacao de logs, visualizacao de dados (Markdown/M
 - `sota-consciousness-memory-rag`
 - `bigquery-sql`
 - `neuropsychology-high-performance`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `engine/avatars/run_avatar.py`

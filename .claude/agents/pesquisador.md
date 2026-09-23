@@ -14,6 +14,7 @@ Analise competitiva profunda, OSINT, sintese de dados brutos, mapeamento de assi
 - `opentargets-database`
 - `sota-consciousness-memory-rag`
 - `timesfm-forecasting`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `memory_rag.py`

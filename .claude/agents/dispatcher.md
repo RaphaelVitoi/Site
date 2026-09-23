@@ -11,6 +11,7 @@ Quebra de problemas massivos (Grafo Aciclico Direcionado), mapeamento de depende
 - `sota-tactical-orchestrator-nanostack`
 - `enforcing-resource-attribution`
 - `google-jules-cloud`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `core/arbitrator.py`

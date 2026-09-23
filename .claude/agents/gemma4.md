@@ -11,6 +11,7 @@ Inferencia Local (DirectML/Ollama), Analise de Borda, Calibracao de Heuristicas 
 - `pmev-game-theory-engine`
 - `sota-consciousness-memory-rag`
 - `uv`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `engine/llama_cpp/start_vulkan_daemon.ps1`

@@ -12,6 +12,7 @@ Analise de seguranca estrutural, Auditoria ASCII-only, Deteccao de edge cases, P
 - `firebase-security-rules-auditor`
 - `credentials`
 - `windows-system-maintenance`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `scripts/ops/cwv_gate.ps1`

@@ -12,6 +12,7 @@ Desconstrucao estrategica, Teoria dos Jogos avancada, Analise Bayesiana, Maieuti
 - `bigquery-sql`
 - `bigquery-ai-ml`
 - `neuropsychology-high-performance`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `scripts/ops/Start-LlamaVulkanEngine.ps1`
