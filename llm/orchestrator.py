@@ -221,7 +221,7 @@ async def _apply_s1_advisory(
     if task.metadata is None:
         task.metadata = {}
     try:
-        from llm.laya_bridge import compor_advisory_s1
+        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415,I001 — importo sob demanda para evitar import circular
 
         system_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
         if laya_metadata:

@@ -48,6 +48,15 @@ revisoes_de_ancora:
       a leitura do indice Git, os campos YAML e a reconciliacao de ancoras.
       Os testes de frontmatter, referencias, merges e pendencias passaram.
       A taxonomia e seus contratos permanecem aplicaveis sem alteracao.
+  - registro: handoff-2026-09-23-ci-ram-e-rustfmt-staged
+    caminhos: [scripts/ops/suite_verde.py]
+    parecer: >-
+      Revisado. As correcoes neste commit sao PURELY DE LINTING (B904 raise-from,
+      I001 import sort) e nao alteram a logica de chaveamento de conteudo,
+      paralelismo ou cache. O contrato VERSAO_DO_CONTRATO, arvore_de_conteudo e
+      comportamento de marcador permanecem inalterados. A auditoria original
+      (funcoes decompostas, AST igualdade verificada, testes dirigidos) segue
+      integralmente valida.
 supersede: null
 ---
 

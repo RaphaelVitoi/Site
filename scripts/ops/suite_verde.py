@@ -75,11 +75,12 @@ import importlib.util
 import json
 import os
 from pathlib import Path
-import psutil
 import subprocess
 import sys
 import tempfile
 import time
+
+import psutil
 
 RAIZ = Path(__file__).resolve().parents[2]
 MARCADOR = RAIZ / ".git" / "sota-suite-verde"
@@ -156,7 +157,7 @@ def trava_suite():
                     raise
                 decorrido = time.monotonic() - inicio
                 if decorrido >= 600:
-                    raise TimeoutError("outra suite ainda ocupa o gate apos 10 minutos")
+                    raise TimeoutError("outra suite ainda ocupa o gate apos 10 minutos") from erro
                 if decorrido >= proximo_aviso:
                     print("[SUITE] aguardando a verificacao em curso", flush=True)
                     proximo_aviso += 30

@@ -151,6 +151,7 @@ def test_suite_reprovada_apaga_o_marcador(monkeypatch, tmp_path):
     marcador = tmp_path / "marca"
     marcador.write_text(json.dumps({"contrato": sv.VERSAO_DO_CONTRATO, "arvore": "cafe"}), encoding="utf-8")
     monkeypatch.setattr(sv, "MARCADOR", marcador)
+    monkeypatch.setattr(sv.psutil, "virtual_memory", lambda: type("Memoria", (), {"available": 14 * 1024**3})())
     monkeypatch.setattr(sv.subprocess, "run", lambda *a, **k: subprocess.CompletedProcess(a, 1))
     assert sv.rodar_suite([]) == 1
     assert not marcador.exists(), "a reprovacao deixou o marcador anterior no lugar"
@@ -160,6 +161,7 @@ def _comando_da_suite(monkeypatch, tmp_path, extra: list[str], tem_xdist: bool) 
     visto: list[list[str]] = []
     monkeypatch.setattr(sv, "MARCADOR", tmp_path / "marca")
     monkeypatch.setattr(sv, "_tem_xdist", lambda: tem_xdist)
+    monkeypatch.setattr(sv.psutil, "virtual_memory", lambda: type("Memoria", (), {"available": 14 * 1024**3})())
     monkeypatch.setattr(sv.subprocess, "run", lambda cmd, **k: visto.append(cmd) or subprocess.CompletedProcess(cmd, 1))
     sv.rodar_suite(extra)
     return visto[0]
