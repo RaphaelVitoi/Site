@@ -33,7 +33,7 @@ function GtoCfrContentInner({
 					<button
 						type="button"
 						onClick={() => setSolverMode('heads_up')}
-						className={`flex min-h-12 min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 ${
+						className={`flex min-h-12 min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-center text-[0.62rem] font-mono font-black uppercase tracking-wide transition-all sm:px-4 sm:tracking-wider ${
 							solverMode === 'heads_up'
 								? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.35)]'
 								: 'text-text-dim hover:text-white hover:bg-white/5'
@@ -46,7 +46,7 @@ function GtoCfrContentInner({
 					<button
 						type="button"
 						onClick={() => setSolverMode('multiway')}
-						className={`flex min-h-12 min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 ${
+						className={`flex min-h-12 min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-center text-[0.62rem] font-mono font-black uppercase tracking-wide transition-all sm:px-4 sm:tracking-wider ${
 							solverMode === 'multiway'
 								? 'bg-accent-emerald text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.35)]'
 								: 'text-text-dim hover:text-white hover:bg-white/5'
@@ -54,7 +54,7 @@ function GtoCfrContentInner({
 					>
 						<i className="fa-solid fa-users text-xs" />
 						<span className="leading-snug">Multiway PMev (Pluribus 6-Max)</span>
-						<span className="text-xs px-1.5 py-0.5 rounded-full bg-white/20 text-white font-bold">
+						<span className="text-[0.5rem] font-sans px-1.5 py-0.2 rounded-full bg-white/20 text-white font-bold">
 							SOTA
 						</span>
 					</button>
@@ -90,14 +90,14 @@ function GtoCfrContentInner({
 						<div className="absolute top-0 right-0 p-6 opacity-5">
 							<i className="fa-solid fa-quote-left text-7xl text-white"></i>
 						</div>
-						<p className="text-base text-indigo-100/70 leading-relaxed m-0 font-medium italic relative z-10">
+						<p className="text-[0.8rem] text-indigo-100/70 leading-loose m-0 font-medium italic relative z-10">
 							&quot;A inteligência artificial não substitui a intuição humana; ela a
 							calibra. O CFR minimiza o arrependimento teórico para que você possa
 							focar no colapso psicológico do oponente.&quot;
 						</p>
 						<div className="mt-6 flex items-center gap-3 relative z-10">
 							<div className="w-1 h-px bg-accent-indigo" />
-							<span className="text-xs font-black text-accent-indigo-light uppercase tracking-wide">
+							<span className="text-[0.6rem] font-black text-accent-indigo-light uppercase tracking-widest">
 								Doutrina SOTA v35
 							</span>
 						</div>

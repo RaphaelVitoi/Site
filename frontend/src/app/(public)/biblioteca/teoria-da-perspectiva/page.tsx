@@ -15,8 +15,6 @@ import { PmevRangeViewer } from '@/components/simulator/PmevRangeViewer';
 import { ROUTES } from '@/constants/routes';
 import { SITE_CONFIG } from '@/constants/site';
 
-const mermaidFence = '```';
-
 const content = String.raw`
 # Teoria da Perspectiva e a Arquitetura Estratégica PMev
 
@@ -39,14 +37,14 @@ No Poker de Torneios (MTT), essa assimetria ganha respaldo físico no ICM:
 
 O arcabouço unificado de Poker e PMev organiza o conhecimento em seis camadas estruturais hierárquicas:
 
-${mermaidFence}mermaid
+\`\`\`mermaid
 flowchart TD
     C1["1. Camada Epistemológica & Axiomática (Tratados e Dossiês)"] --> C2["2. Camada Formal-Matemática (Modelos PMev-0 a PMev-F)"]
     C2 --> C3["3. Camada de Engenharia & Contratos (engine/pmev_spec.py)"]
     C3 --> C4["4. Camada de Solvers & Bancadas (CFR e Benchmarks)"]
     C4 --> C5["5. Camada Pedagógica & Evidência Pós-Flop (Aula 1.2, 97 nós)"]
     C5 --> C6["6. Camada de Dados Brutos (Data Lake e Hand Histories)"]
-${mermaidFence}
+\`\`\`
 
 ---
 

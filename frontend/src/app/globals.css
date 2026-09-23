@@ -115,11 +115,6 @@
     --container-width: 1600px;
   }
 
-  body {
-    --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-    font-family: var(--font-body);
-  }
-
   html,
   body,
   div,
@@ -162,10 +157,8 @@
   /* Reset global de inputs e selects para Fricção Zero */
   select,
   input,
-  button,
-  textarea {
+  button {
     @apply transition duration-200 outline-none;
-    font-family: inherit;
   }
 
   /* SOTA A11y: Foco Quântico Visível (Padrão Ouro) */
@@ -206,7 +199,7 @@ body:has(.simulator-immersive) main.grow {
   }
 
   .sota-header-kicker {
-    @apply text-text-muted flex items-center justify-center gap-3 font-mono text-xs font-black tracking-[0.14em] uppercase;
+    @apply text-text-muted flex items-center justify-center gap-3 font-mono text-[0.62rem] font-black tracking-[0.32em] uppercase;
   }
 
   .sota-header-marker {

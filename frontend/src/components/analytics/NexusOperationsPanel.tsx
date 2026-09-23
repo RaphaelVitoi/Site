@@ -140,7 +140,7 @@ export function NexusOperationsPanel() {
           className="rounded-lg border border-white/15 px-3 py-2 text-sm text-white hover:bg-white/5"
           aria-label="Atualizar fila"
         >
-          <i className="fa-solid fa-rotate-right mr-2" aria-hidden="true" />
+          <i className="fa-solid fa-rotate mr-2" aria-hidden="true" />
           Atualizar
         </button>
       </div>

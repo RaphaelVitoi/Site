@@ -30,9 +30,9 @@ export const FreqInput = ({ value, field, freqs, onChange }: Readonly<FreqInputP
 						[field]: Math.max(0, Math.min(100, Number(e.target.value) || 0)),
 					})
 				}
-				className="w-9 bg-transparent border-none text-white text-sm font-bold font-mono tabular-nums text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+				className="w-8 sm:w-9 bg-transparent border-none text-white text-[0.72rem] font-bold font-mono tabular-nums text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 			/>
-			<span className="text-xs text-text-muted font-mono font-bold select-none">%</span>
+			<span className="text-[0.62rem] text-text-darker font-mono font-bold select-none">%</span>
 		</div>
 	);
 };

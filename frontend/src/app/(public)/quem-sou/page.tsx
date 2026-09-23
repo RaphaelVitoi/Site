@@ -47,7 +47,7 @@ export default function QuemSouPage() {
           {/* Breadcrumb */}
           <nav
             aria-label="Caminho de navegação"
-            className="mb-10 flex items-center gap-3 font-mono text-xs tracking-[0.14em] text-[#625F5A] uppercase sm:mb-14"
+            className="mb-10 flex items-center gap-3 font-mono text-[0.55rem] tracking-[0.45em] text-[#625F5A] uppercase sm:mb-14"
           >
             <Link href="/" className="text-[#625F5A] no-underline transition-colors hover:text-[#0D0C0A]">
               Home
@@ -61,7 +61,7 @@ export default function QuemSouPage() {
             {/* Left — identity label column */}
             <div className="mb-8 space-y-5 lg:mb-0 lg:pr-20">
               <div className="mb-5 h-px w-8 bg-[#B09460]" />
-              <p className="font-mono text-xs tracking-[0.14em] text-[#765421] uppercase">Especialista em ICM</p>
+              <p className="font-mono text-[0.6rem] tracking-[0.5em] text-[#765421] uppercase">Especialista em ICM</p>
               <p className="max-w-75 text-[1.1rem] leading-[1.75] font-normal text-[#262423]">
                 Educador, jogador profissional e escritor. Mais de uma década desconstruindo o jogo.
               </p>
@@ -100,7 +100,7 @@ export default function QuemSouPage() {
                   <p className="font-display text-[2rem] leading-none font-black tracking-[-0.03em] text-[#765421]">
                     {s.value}
                   </p>
-                  <p className="mt-2 font-mono text-xs tracking-[0.14em] text-[#625F5A] uppercase">{s.label}</p>
+                  <p className="mt-2 font-mono text-[0.52rem] tracking-[0.35em] text-[#625F5A] uppercase">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -110,7 +110,7 @@ export default function QuemSouPage() {
               {['ICM e Risk Premium', 'GTO e Equilíbrio', 'Embaixador GTO Wizard', 'Psicologia (UEMG)'].map((tag) => (
                 <span
                   key={tag}
-                  className="font-body rounded-full border border-[#DED9D2] px-3.5 py-1.5 text-sm font-normal tracking-[0.01em] text-[#262423]"
+                  className="font-body rounded-full border border-[#DED9D2] px-3.5 py-1.5 text-[0.65rem] font-normal tracking-[0.01em] text-[#262423]"
                 >
                   {tag}
                 </span>
@@ -177,8 +177,8 @@ export default function QuemSouPage() {
                   color: '#F5F3EE',
                   borderRadius: 8,
                   fontFamily: 'var(--font-mono)',
-                  fontSize: '0.875rem',
-                  letterSpacing: '0.14em',
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.3em',
                   textTransform: 'uppercase',
                   textDecoration: 'none',
                 }}
@@ -191,7 +191,7 @@ export default function QuemSouPage() {
                 href="https://trueicm.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 rounded-lg border border-[#DED9D2] bg-transparent px-7 py-3.25 font-mono text-sm tracking-[0.14em] text-[#262423] uppercase no-underline transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
+                className="flex items-center gap-3 rounded-lg border border-[#DED9D2] bg-transparent px-7 py-3.25 font-mono text-[0.65rem] tracking-[0.3em] text-[#262423] uppercase no-underline transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
               >
                 TrueICM.com <i className="fa-solid fa-arrow-up-right-from-square text-[0.55rem]" />
               </Link>
@@ -217,7 +217,7 @@ export default function QuemSouPage() {
 
           {/* Video — gallery frame aesthetic */}
           <div className="relative overflow-hidden rounded border border-[#DED9D2] bg-[#0D0C0A] shadow-[0_8px_64px_rgba(13,12,10,0.12),0_2px_8px_rgba(13,12,10,0.06)]">
-            <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-5 py-3.5 font-mono text-xs tracking-[0.14em] text-white uppercase">
+            <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-5 py-3.5 font-mono text-[0.52rem] tracking-[0.38em] text-white uppercase">
               <div className="flex items-center gap-2">
                 <span
                   className={`inline-block h-1.25 w-1.25 rounded-full ${isPlaying ? 'bg-white/50' : 'bg-white/15'}`}
@@ -288,10 +288,10 @@ export default function QuemSouPage() {
               />
               <div className="space-y-2.5 transition-all duration-500 group-hover/node:translate-x-1.5">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="rounded border border-[#EDE8E1] px-2.5 py-1 font-mono text-xs tracking-[0.2em] text-[#765421]">
+                  <span className="rounded border border-[#EDE8E1] px-2.5 py-1 font-mono text-[0.62rem] tracking-[0.2em] text-[#765421]">
                     {node.period}
                   </span>
-                  <span className="font-mono text-xs tracking-[0.14em] text-[#625F5A] uppercase">
+                  <span className="font-mono text-[0.52rem] tracking-[0.38em] text-[#625F5A] uppercase">
                     {node.tag}
                   </span>
                 </div>
@@ -375,7 +375,7 @@ function SectionLabel({ children, left }: { readonly children: React.ReactNode; 
   return (
     <div className={`flex items-center gap-4 ${left ? '' : 'justify-center'}`}>
       <div className="h-px w-6 bg-[#B09460]" />
-      <span className="font-mono text-xs tracking-[0.14em] text-[#625F5A] uppercase">{children}</span>
+      <span className="font-mono text-[0.58rem] tracking-[0.48em] text-[#625F5A] uppercase">{children}</span>
     </div>
   );
 }
@@ -468,7 +468,7 @@ function ClassicalSigil() {
       ))}
 
       {/* Status */}
-      <div className="absolute bottom-4 flex items-center gap-1.5 font-mono text-xs tracking-[0.14em] text-[#625F5A] uppercase">
+      <div className="absolute bottom-4 flex items-center gap-1.5 font-mono text-[0.52rem] tracking-[0.32em] text-[#625F5A] uppercase">
         <span className="inline-block h-1.25 w-1.25 animate-[pulse_2.5s_ease-in-out_infinite] rounded-full bg-[#7DC3A0]" />{' '}
         Ativo · Head Coach
       </div>

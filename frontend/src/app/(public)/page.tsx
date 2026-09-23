@@ -125,7 +125,7 @@ export default function Home() {
         {/* Eyebrow */}
         <div className="mb-8 flex items-center gap-5 opacity-75 sm:mb-12">
           <div className="h-px w-8.5 bg-[#1C1B1A]" />
-          <span className="font-mono text-xs tracking-[0.14em] text-[#1C1B1A] uppercase">
+          <span className="font-mono text-[0.6rem] tracking-[0.55em] text-[#1C1B1A] uppercase">
             Poker Racional · Risk Premium Edition
           </span>
           <div className="h-px w-8.5 bg-[#1C1B1A]" />
@@ -166,7 +166,7 @@ export default function Home() {
         </p>
 
         {/* Tertiary line */}
-        <p className="mb-10 font-mono text-xs tracking-[0.14em] text-[#625f5a] uppercase sm:mb-14">
+        <p className="mb-10 font-mono text-[0.62rem] tracking-[0.45em] text-[#625f5a] uppercase sm:mb-14">
           ICM Pós-Flop · Downward Drift · Risk Premium
         </p>
 
@@ -174,19 +174,19 @@ export default function Home() {
         <div className="relative z-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <Link
             href="/simulador"
-            className="flex items-center gap-2.5 rounded-md bg-[#0D0C0A] px-8.5 py-3.75 font-mono text-sm tracking-[0.14em] text-[#F5F3EE] uppercase shadow-[0_4px_16px_rgba(13,12,10,0.05)] transition-all duration-300 hover:bg-[#2A2825] hover:shadow-[0_8px_24px_rgba(13,12,10,0.1)]"
+            className="flex items-center gap-2.5 rounded-md bg-[#0D0C0A] px-8.5 py-3.75 font-mono text-[0.68rem] tracking-[0.28em] text-[#F5F3EE] uppercase shadow-[0_4px_16px_rgba(13,12,10,0.05)] transition-all duration-300 hover:bg-[#2A2825] hover:shadow-[0_8px_24px_rgba(13,12,10,0.1)]"
           >
             <i className="fa-solid fa-scale-unbalanced text-[#B09460]" /> Simulador Mestre
           </Link>
           <Link
             href="/simulador/gto-cfr"
-            className="flex items-center gap-2.5 rounded-md border border-[#DED9D2] bg-transparent px-8.5 py-3.75 font-mono text-sm tracking-[0.14em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
+            className="flex items-center gap-2.5 rounded-md border border-[#DED9D2] bg-transparent px-8.5 py-3.75 font-mono text-[0.68rem] tracking-[0.28em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
           >
             <i className="fa-solid fa-network-wired text-[#B09460]" /> Laboratório CFR
           </Link>
           <Link
             href="/biblioteca"
-            className="flex items-center gap-2.5 rounded-md border border-[#EDE8E1] bg-transparent px-8.5 py-3.75 font-mono text-sm tracking-[0.14em] text-[#625f5a] uppercase transition-all duration-300 hover:border-[#DED9D2] hover:text-[#262423]"
+            className="flex items-center gap-2.5 rounded-md border border-[#EDE8E1] bg-transparent px-8.5 py-3.75 font-mono text-[0.68rem] tracking-[0.28em] text-[#625f5a] uppercase transition-all duration-300 hover:border-[#DED9D2] hover:text-[#262423]"
           >
             <i className="fa-solid fa-book-open" /> Biblioteca
           </Link>
@@ -243,7 +243,7 @@ export default function Home() {
               <br />
               Invisível
             </h2>
-            <p className="font-mono text-xs tracking-[0.14em] text-[#B2B0AB] uppercase">GTO Wizard Data</p>
+            <p className="font-mono text-[0.58rem] tracking-[0.35em] text-[#B2B0AB] uppercase">GTO Wizard Data</p>
           </div>
           <div className="space-y-6 pt-2 text-[1.12rem] leading-[1.85] text-[#262423]">
             <blockquote className="border-l-2 border-[#B09460] pl-6 font-serif text-[1.2rem] leading-[1.75] text-[#1C1B1A] italic">
@@ -283,7 +283,7 @@ export default function Home() {
           <div className="rounded-md border border-[#DED9D2] bg-[#FAFAF8] p-3 shadow-[0_8px_32px_rgba(13,12,10,0.04)]">
             <div className="relative overflow-hidden rounded border border-[#B09460] bg-[#0D0C0A]">
               {/* Overlay label */}
-              <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-6 py-3.5 font-mono text-xs tracking-[0.14em] text-white uppercase">
+              <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-6 py-3.5 font-mono text-[0.55rem] tracking-[0.35em] text-white uppercase">
                 <span>raphaelvitoi.mp4</span>
                 <span>Poker Racional · SOTA</span>
               </div>
@@ -396,14 +396,14 @@ export default function Home() {
                   }}
                   onClick={() => setActiveModule(idx)}
                   onKeyDown={(event) => handleModuleKeyDown(event, idx)}
-                  className={`flex items-center justify-between rounded border px-5 py-4 text-left font-mono text-sm tracking-[0.12em] transition-all duration-300 ${
+                  className={`flex items-center justify-between rounded border px-5 py-4 text-left font-mono text-[0.66rem] tracking-[0.12em] transition-all duration-300 ${
                     activeModule === idx
                       ? 'border-[#0D0C0A] bg-[#0D0C0A] text-[#F5F3EE]'
                       : 'border-[#DED9D2] bg-transparent text-[#5d5a55] hover:border-[#0D0C0A] hover:text-[#0D0C0A]'
                   }`}
                 >
                   <span className="font-bold">MÓDULO 0{m.num}</span>
-                  <span className="max-w-30 text-right text-xs leading-tight">{m.title}</span>
+                  <span className="max-w-30 text-right text-[0.6rem] leading-tight">{m.title}</span>
                 </button>
               ))}
             </div>
@@ -421,7 +421,7 @@ export default function Home() {
                 return (
                   <div className="space-y-8">
                     <div>
-                      <p className="mb-3.5 font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
+                      <p className="mb-3.5 font-mono text-[0.6rem] font-bold tracking-[0.35em] text-[#765421] uppercase">
                         Módulo 0{currentModule.num} · {currentModule.desc}
                       </p>
                       <h3 className="font-display text-[1.8rem] leading-[1.2] tracking-tight text-[#0D0C0A]">
@@ -449,7 +449,7 @@ export default function Home() {
                         <Link
                           key={cta.href}
                           href={cta.href}
-                          className="flex items-center gap-2 rounded border border-[#DED9D2] px-5.5 py-2.5 font-mono text-xs tracking-[0.14em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
+                          className="flex items-center gap-2 rounded border border-[#DED9D2] px-5.5 py-2.5 font-mono text-[0.62rem] tracking-[0.28em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
                         >
                           <i className={`fa-solid ${cta.icon} text-[#B09460]`} /> {cta.label}
                         </Link>
@@ -519,7 +519,7 @@ export default function Home() {
       <Section>
         <div className="flex flex-col items-center justify-between gap-12 rounded-xl border border-[#DED9D2] bg-[#FAFAF8] p-10 shadow-[0_4px_20px_rgba(13,12,10,0.02)] md:flex-row md:p-14">
           <div className="max-w-xl space-y-5">
-            <p className="font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
+            <p className="font-mono text-[0.6rem] font-bold tracking-[0.4em] text-[#765421] uppercase">
               Bônus Exclusivo
             </p>
             <h3 className="font-display text-[clamp(1.6rem,3vw,2.2rem)] leading-tight tracking-tight text-[#0D0C0A]">
@@ -535,7 +535,7 @@ export default function Home() {
           <div className="relative z-10 shrink-0">
             <Link
               href="/biblioteca"
-              className="flex items-center gap-3 rounded-md bg-[#0D0C0A] px-9 py-4 font-mono text-sm tracking-[0.14em] whitespace-nowrap text-[#F5F3EE] uppercase transition-all duration-300 hover:bg-[#2A2825]"
+              className="flex items-center gap-3 rounded-md bg-[#0D0C0A] px-9 py-4 font-mono text-[0.68rem] tracking-[0.28em] whitespace-nowrap text-[#F5F3EE] uppercase transition-all duration-300 hover:bg-[#2A2825]"
             >
               <i className="fa-solid fa-download text-[#B09460]" /> Resgatar na Biblioteca
             </Link>
@@ -559,7 +559,7 @@ export default function Home() {
                 <br />
                 Vitoi
               </h2>
-              <p className="mt-4 font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
+              <p className="mt-4 font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#765421] uppercase">
                 Educador · Profissional · Escritor
               </p>
             </div>
@@ -577,7 +577,7 @@ export default function Home() {
                   <p className="font-display text-[1.8rem] leading-none font-bold tracking-[-0.03em] text-[#765421]">
                     {s.value}
                   </p>
-                  <p className="mt-2 font-mono text-xs tracking-[0.14em] text-[#625f5a] uppercase">{s.label}</p>
+                  <p className="mt-2 font-mono text-[0.52rem] tracking-[0.3em] text-[#625f5a] uppercase">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -587,7 +587,7 @@ export default function Home() {
               {['ICM e Risk Premium', 'GTO e Equilíbrio', 'Embaixador GTO Wizard', 'Psicologia (UEMG)'].map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border border-[#DED9D2] px-3.5 py-1.5 text-sm text-[#262423]"
+                  className="rounded-full border border-[#DED9D2] px-3.5 py-1.5 text-[0.65rem] text-[#262423]"
                 >
                   {tag}
                 </span>
@@ -621,7 +621,7 @@ export default function Home() {
             <div className="h-px bg-[#DED9D2]" />
 
             <div className="space-y-6 font-serif text-[1.15rem] leading-[1.85] text-[#262423]">
-              <p className="font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
+              <p className="font-mono text-[0.62rem] font-bold tracking-[0.4em] text-[#765421] uppercase">
                 A intersecção entre Geometria do Risco, Teoria dos Jogos e Ciência do Comportamento
               </p>
               <p>
@@ -647,7 +647,7 @@ export default function Home() {
             <div className="relative z-10 flex flex-wrap gap-4 pt-3">
               <Link
                 href="/quem-sou"
-                className="flex items-center gap-2 rounded-md bg-[#0D0C0A] px-7 py-3.25 font-mono text-xs tracking-[0.14em] text-[#F5F3EE] uppercase transition-all duration-300 hover:bg-[#2A2825]"
+                className="flex items-center gap-2 rounded-md bg-[#0D0C0A] px-7 py-3.25 font-mono text-[0.63rem] tracking-[0.28em] text-[#F5F3EE] uppercase transition-all duration-300 hover:bg-[#2A2825]"
               >
                 Ver a trilha completa
               </Link>
@@ -655,7 +655,7 @@ export default function Home() {
                 href="https://trueicm.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-md border border-[#DED9D2] px-7 py-3.25 font-mono text-xs tracking-[0.14em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
+                className="flex items-center gap-2 rounded-md border border-[#DED9D2] px-7 py-3.25 font-mono text-[0.63rem] tracking-[0.28em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
               >
                 TrueICM.com <i className="fa-solid fa-arrow-up-right-from-square ml-1 text-[0.52rem]" />
               </Link>
@@ -685,7 +685,7 @@ function Label({ children }: { readonly children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-4">
       <div className="h-px w-6 bg-[#B09460]" />
-      <span className="font-mono text-xs font-bold tracking-[0.14em] text-[#625f5a] uppercase">{children}</span>
+      <span className="font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#625f5a] uppercase">{children}</span>
     </div>
   );
 }
@@ -694,7 +694,7 @@ function EyebrowCentered({ children }: { readonly children: React.ReactNode }) {
   return (
     <div className="flex items-center justify-center gap-5">
       <div className="h-px w-6 bg-[#DED9D2]" />
-      <span className="font-mono text-xs font-bold tracking-[0.14em] text-[#625f5a] uppercase">{children}</span>
+      <span className="font-mono text-[0.6rem] font-bold tracking-[0.45em] text-[#625f5a] uppercase">{children}</span>
       <div className="h-px w-6 bg-[#DED9D2]" />
     </div>
   );
@@ -715,7 +715,7 @@ function PillarCard({
     <div
       className={`group rounded border border-[#DED9D2] bg-[#FAFAF7] px-8 py-7.5 transition-all duration-500 hover:border-[#B09460]/55 hover:shadow-[0_6px_30px_rgba(176,148,96,0.06)] ${wide ? 'md:col-span-2' : ''}`}
     >
-      <p className="mb-4.5 font-mono text-xs font-bold tracking-[0.14em] text-[#765421]">{num}</p>
+      <p className="mb-4.5 font-mono text-[0.58rem] font-bold tracking-[0.35em] text-[#765421]">{num}</p>
       <h3 className="mb-3 text-[0.88rem] font-bold tracking-wider text-[#0D0C0A] uppercase">{title}</h3>
       <p className="font-serif text-[1.05rem] leading-[1.76] text-[#262423]">{desc}</p>
     </div>
@@ -751,10 +751,10 @@ function DownwardDriftWidget() {
   return (
     <div className="relative overflow-hidden rounded-2xl border border-[#DED9D2] bg-[#FAFAF8] p-10 transition-all duration-500 hover:shadow-[0_12px_40px_rgba(13,12,10,0.04)]">
       <div className="flex items-center justify-between border-b border-[#DED9D2] pb-4.5">
-        <span className="font-mono text-xs font-bold tracking-[0.14em] text-[#0D0C0A] uppercase">
+        <span className="font-mono text-[0.62rem] font-bold tracking-[0.3em] text-[#0D0C0A] uppercase">
           Downward Drift Model
         </span>
-        <span className="flex items-center gap-2 font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
+        <span className="flex items-center gap-2 font-mono text-[0.55rem] font-bold tracking-[0.3em] text-[#765421] uppercase">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#765421]" /> Active
         </span>
       </div>
@@ -834,7 +834,7 @@ function DownwardDriftWidget() {
       </div>
 
       <div className="space-y-4">
-        <div className="flex justify-between font-mono text-xs tracking-[0.14em] text-[#625f5a] uppercase">
+        <div className="flex justify-between font-mono text-[0.6rem] tracking-[0.25em] text-[#625f5a] uppercase">
           <span>Risk Premium da Mesa</span>
           <span className="font-bold text-[#0D0C0A]">{rp}%</span>
         </div>
@@ -866,7 +866,7 @@ function DownwardDriftWidget() {
             key={item.label}
             className="rounded-xl border border-[#DED9D2] bg-[#F5F3EE] px-4.5 py-4 transition-all duration-300"
           >
-            <p className="mb-2 font-mono text-xs font-bold tracking-[0.14em] text-[#625f5a] uppercase">
+            <p className="mb-2 font-mono text-[0.56rem] font-bold tracking-[0.25em] text-[#625f5a] uppercase">
               {item.label}
             </p>
             <p className="font-display text-[1.45rem] leading-none font-bold tracking-[-0.02em] text-[#0D0C0A]">
@@ -877,7 +877,7 @@ function DownwardDriftWidget() {
       </div>
 
       <div className="flex items-center justify-between rounded-xl border border-[#DED9D2] bg-[#F5F3EE] px-5 py-4.5 transition-all duration-300">
-        <span className="font-mono text-xs font-bold tracking-[0.14em] text-[#625f5a] uppercase">
+        <span className="font-mono text-[0.58rem] font-bold tracking-[0.25em] text-[#625f5a] uppercase">
           Sizing recomendado
         </span>
         <span className={`font-mono text-[0.72rem] font-bold transition-colors duration-300 ${sizingColorClass}`}>
