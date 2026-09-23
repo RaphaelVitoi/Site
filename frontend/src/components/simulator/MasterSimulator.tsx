@@ -331,7 +331,7 @@ export default function MasterSimulator() {
                       key={sub.id}
                       type="button"
                       onClick={() => setSpotSubView(sub.id as 'nash' | 'insolvency' | 'ranges' | 'theory')}
-                      className={`flex-1 px-3 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-[0.12em] transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                      className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                         isSubActive
                           ? 'bg-accent-indigo/20 text-white border border-accent-indigo/40 shadow-md shadow-indigo-500/10'
                           : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
@@ -443,7 +443,7 @@ export default function MasterSimulator() {
               {/* Telemetria Quântica do Spot */}
               <div className="rounded-3xl border border-white/8 bg-slate-950/60 backdrop-blur-2xl p-5 shadow-xl space-y-3">
                 <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-                  <span className="font-mono text-[0.6rem] font-black uppercase tracking-[0.2em] text-accent-emerald flex items-center gap-2">
+                  <span className="font-mono text-xs font-black uppercase tracking-wide text-accent-emerald flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
                     <span>Física do Spot</span>
                   </span>
@@ -454,7 +454,7 @@ export default function MasterSimulator() {
 
                 <div className="grid grid-cols-2 gap-2.5">
                   <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
                       IP Risk Premium
                     </span>
                     <span className="font-mono text-base font-black text-accent-indigo-light">
@@ -463,7 +463,7 @@ export default function MasterSimulator() {
                   </div>
 
                   <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
                       OOP Risk Premium
                     </span>
                     <span className="font-mono text-base font-black text-accent-rose">
@@ -472,7 +472,7 @@ export default function MasterSimulator() {
                   </div>
 
                   <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
                       Assimetria (ΔRP)
                     </span>
                     <span className="font-mono text-base font-black text-white">
@@ -481,7 +481,7 @@ export default function MasterSimulator() {
                   </div>
 
                   <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.48rem] font-black uppercase tracking-wider text-text-dim block mb-0.5">
+                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
                       Inércia FGS
                     </span>
                     <span className="font-mono text-base font-black text-accent-emerald">

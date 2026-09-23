@@ -417,16 +417,16 @@ export default function CfrRegretPanel({
 						<i className="fa-solid fa-microchip text-accent-indigo-light text-xl mt-1" />
 						<div className="space-y-3 w-full">
 							<div className="flex justify-between items-center flex-wrap gap-2">
-								<h4 className="text-[0.65rem] font-black text-white uppercase tracking-widest m-0">
+								<h4 className="text-base font-black text-white uppercase tracking-wide m-0">
 									Dimensionamento Geométrico (A* & Janda)
 								</h4>
-								<span className="text-[0.55rem] font-mono font-bold text-accent-indigo-light bg-accent-indigo/10 px-2 py-0.5 rounded-full border border-accent-indigo/20">
+								<span className="text-xs font-mono font-bold text-accent-indigo-light bg-accent-indigo/10 px-2 py-0.5 rounded-full border border-accent-indigo/20">
 									{canonicalSizing.potFractionPercentage}% Pot / Street
 								</span>
 							</div>
 							<div className="grid grid-cols-3 gap-3">
 								<div className="text-center">
-									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
 										Flop
 									</span>
 									<div
@@ -437,7 +437,7 @@ export default function CfrRegretPanel({
 									</div>
 								</div>
 								<div className="text-center">
-									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
 										Turn
 									</span>
 									<div
@@ -448,7 +448,7 @@ export default function CfrRegretPanel({
 									</div>
 								</div>
 								<div className="text-center">
-									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
 										River
 									</span>
 									<div
@@ -470,14 +470,14 @@ export default function CfrRegretPanel({
 						<i className="fa-solid fa-chart-line text-accent-indigo-light text-xl mt-1" />
 						<div className="space-y-3 w-full">
 							<div className="flex justify-between items-center flex-wrap gap-2">
-								<h4 className="text-[0.65rem] font-black text-white uppercase tracking-widest m-0 flex items-center gap-2">
+								<h4 className="text-base font-black text-white uppercase tracking-wide m-0 flex items-center gap-2">
 									Projeção de convergência CFR
 								</h4>
 								<div className="flex items-center gap-1.5">
 									<button
 										type="button"
 										onClick={() => setPreferredModel('timesfm-2.5-200m')}
-										className={`text-[0.5rem] font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+										className={`text-xs font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
 											preferredModel === 'timesfm-2.5-200m'
 												? 'bg-accent-emerald/20 border-accent-emerald/40 text-accent-emerald font-bold'
 												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
@@ -489,7 +489,7 @@ export default function CfrRegretPanel({
 									<button
 										type="button"
 										onClick={() => setPreferredModel('timesfm-3.0-330m')}
-										className={`text-[0.5rem] font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
+										className={`text-xs font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
 											preferredModel === 'timesfm-3.0-330m'
 												? 'bg-accent-indigo/20 border-accent-indigo/40 text-accent-indigo-light font-bold'
 												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
@@ -502,7 +502,7 @@ export default function CfrRegretPanel({
 							</div>
 							<div className="grid grid-cols-3 gap-3">
 								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
-									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
 										Regret médio+ ε*
 									</span>
 									<div className="text-[0.7rem] font-mono font-black text-accent-indigo-light">
@@ -510,7 +510,7 @@ export default function CfrRegretPanel({
 									</div>
 								</div>
 								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
-									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
 										Horizonte p/ Meta
 									</span>
 									<div className="text-[0.7rem] font-mono font-black text-accent-emerald">
@@ -518,7 +518,7 @@ export default function CfrRegretPanel({
 									</div>
 								</div>
 								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
-									<span className="text-[0.45rem] text-text-darker uppercase font-black block mb-1">
+									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
 										Early Stop
 									</span>
 									<div
@@ -532,14 +532,14 @@ export default function CfrRegretPanel({
 									</div>
 								</div>
 							</div>
-							<div className="pt-2 border-t border-white/5 flex justify-between items-center text-[0.52rem] font-mono text-text-dim">
+							<div className="pt-2 border-t border-white/5 flex justify-between items-center gap-2 text-xs font-mono text-text-dim">
 								<span>Status: <strong className="text-white">{cfrConvergence.status}</strong></span>
 								<span className="truncate max-w-50 text-right" title={cfrConvergence.license_tier}>
 									{cfrConvergence.license_tier.split(' ')[0]}
 								</span>
 							</div>
 							<p
-								className="m-0 text-[0.5rem] leading-relaxed text-text-darker"
+								className="m-0 text-sm leading-relaxed text-text-muted"
 								title={TIMESFM_CAPABILITY.limitations.join('; ')}
 							>
 								Executado: {cfrConvergence.model_used}. O seletor define o modelo pretendido.

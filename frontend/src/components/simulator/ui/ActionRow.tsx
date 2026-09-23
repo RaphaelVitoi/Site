@@ -70,9 +70,9 @@ export const ActionRow = ({
 	return (
 		<div className="group/row flex flex-col gap-2 rounded-2xl border border-white/6 bg-slate-950/45 p-3 hover:border-white/15 hover:bg-slate-950/75 transition-all duration-300">
 			{/* Andar 1: Identificação da Ação e Diagnóstico de Divergência com Status */}
-			<div className="flex items-center justify-between gap-2">
+			<div className="flex flex-wrap items-center justify-between gap-2">
 				<span
-					className="text-[0.72rem] sm:text-[0.76rem] font-black uppercase tracking-wider flex items-center gap-1.5"
+					className="text-sm font-bold uppercase tracking-wide flex items-center gap-1.5"
 					style={{ color: accent }}
 				>
 					{label} {labelTooltip && <InfoTooltip text={labelTooltip} />}
@@ -80,7 +80,7 @@ export const ActionRow = ({
 
 				{/* Badge Didático do Delta (Divergência) + Status */}
 				<div
-					className="flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[0.66rem] sm:text-[0.7rem] font-mono font-black tabular-nums tracking-tight shadow-sm shrink-0"
+					className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-lg border text-xs font-mono font-bold tabular-nums shadow-sm shrink-0"
 					style={{
 						color: deltaBadgeColor,
 						borderColor: `${deltaBadgeColor}44`,
@@ -88,37 +88,35 @@ export const ActionRow = ({
 					}}
 					title={`Divergência da ação ${label}: ${formattedDelta} em relação ao equilíbrio Nash GTO`}
 				>
-					<span className="text-[0.58rem] opacity-80">{deltaIcon}</span>
+					<span className="text-xs opacity-80">{deltaIcon}</span>
 					<span>{formattedDelta}</span>
-					<span className="text-[0.55rem] font-sans uppercase font-bold tracking-wider opacity-85 ml-0.5">
+					<span className="text-xs uppercase font-bold tracking-normal opacity-85 ml-0.5">
 						&middot; {deltaLabel}
 					</span>
 				</div>
 			</div>
 
 			{/* Andar 2: Comparativo Direto (Frequência -> Alvo GTO) - SEM "SUA:" */}
-			<div className="flex items-center justify-between gap-2 rounded-xl bg-black/35 px-2.5 py-1.5 border border-white/3">
+			<div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-xl bg-black/35 px-2.5 py-2 border border-white/3">
 				{/* Frequência de Entrada */}
-				<div className="flex items-center gap-1">
+				<div className="flex flex-col items-start gap-1">
+					<span className="text-xs font-semibold text-text-muted">Sua freq.</span>
 					<FreqInput value={chipEv} field={field} freqs={freqs} onChange={onChange} />
 				</div>
 
-				{/* Divisor Visual Minimalista */}
-				<span className="text-[0.65rem] text-text-darker opacity-35 select-none font-mono">
-					→
-				</span>
-
 				{/* Alvo Nash GTO */}
-				<div className="flex items-baseline gap-1">
-					<span className="text-[0.58rem] font-black uppercase tracking-wider text-text-darker select-none">
-						GTO:
+				<div className="min-w-0 text-right">
+					<span className="block text-xs font-semibold text-text-muted">
+						Alvo GTO
 					</span>
-					<span className="text-[0.84rem] sm:text-[0.88rem] font-black font-mono tabular-nums text-white tracking-tight">
-						<AnimatedNumber value={result.center} suffix="%" />
-					</span>
-					<span className="text-[0.55rem] text-text-darker font-mono tabular-nums font-bold opacity-60">
-						±{result.spread.toFixed(1)}
-					</span>
+					<div className="flex flex-col items-end leading-tight">
+						<span className="text-base font-bold font-mono tabular-nums text-white tracking-tight whitespace-nowrap">
+							<AnimatedNumber value={result.center} suffix="%" />
+						</span>
+						<span className="text-xs text-text-muted font-mono tabular-nums whitespace-nowrap">
+							±{result.spread.toFixed(1)}%
+						</span>
+					</div>
 				</div>
 			</div>
 

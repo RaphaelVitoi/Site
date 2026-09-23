@@ -201,6 +201,33 @@
       }
     },
     {
+      "label": "Rustfmt: WASM Equity",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["fmt", "--all", "--manifest-path", "${workspaceFolder}/wasm-equity/Cargo.toml"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Rustfmt: Nexus Core",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["fmt", "--all", "--manifest-path", "${workspaceFolder}/core/nexus-core-rust/Cargo.toml"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Rustfmt: Simulator Panel",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["fmt", "--all", "--manifest-path", "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Rustfmt: All Crates (on demand)",
+      "dependsOn": ["Rustfmt: WASM Equity", "Rustfmt: Nexus Core", "Rustfmt: Simulator Panel"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
       "label": "Watchers SOTA: All",
       "dependsOn": [
         "Dev: Frontend (Next.js)",
