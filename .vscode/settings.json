@@ -2,20 +2,14 @@
     "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
     "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
     "python.languageServer": "None",
+    "pylint.enabled": false,
     "python.terminal.activateEnvironment": true,
-    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.diagnosticMode": "openFilesOnly",
     "python.analysis.inlayHints.functionReturnTypes": true,
     "python.analysis.inlayHints.variableTypes": true,
     "python.analysis.inlayHints.parameterNames": true,
     "python.analysis.autoImportCompletions": true,
     "python.analysis.indexing": true,
-    "python.analysis.packageIndexDepths": [
-        {
-            "name": "",
-            "depth": 3,
-            "includeAllSymbols": true
-        }
-    ],
     "python.envFile": "${workspaceFolder}/.env",
     "python.testing.pytestEnabled": true,
     "python.testing.pytestArgs": [
@@ -126,11 +120,8 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[markdown]": {
-        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
         "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-            "source.fixAll.markdownlint": "explicit"
-        },
         "editor.wordWrap": "on"
     },
     "markdownlint.ignoreFileName": ".markdownlintignore",
@@ -231,7 +222,7 @@
     "jupyter.askForKernelRestart": false,
     "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
     "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
-    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**",
+    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**",
     "css.lint.unknownAtRules": "ignore",
     "scss.lint.unknownAtRules": "ignore",
     "vitest.rootConfig": "vitest.config.mjs",
@@ -265,7 +256,7 @@
     "rust-analyzer.diagnostics.styleLints.enable": true,
     "rust-analyzer.diagnostics.previewRustcOutput": true,
     "rust-analyzer.debug.buildBeforeRestart": true,
-    "rust-analyzer.trace.server": "verbose",
+    "rust-analyzer.trace.server": "off",
     "securecoder.enableI18n": false,
     "securecoder.rules.i18n": "off",
     "securecoder.rules.internationalization": "off",
@@ -400,7 +391,6 @@
         "**/scripts/validation/**"
     ],
     "java.errors.incompleteClasspath.severity": "ignore",
-    "sonarlint.exclusions": "**/scripts/validation/**",
     "sqltools.connections": [
         {
             "name": "Site (PostgreSQL Local)",

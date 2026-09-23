@@ -165,10 +165,10 @@ def _comando_da_suite(monkeypatch, tmp_path, extra: list[str], tem_xdist: bool) 
     return visto[0]
 
 
-def test_suite_usa_todos_os_nucleos_quando_ha_xdist(monkeypatch, tmp_path):
-    """Medido em 2026-09-13: 140 s com `-n auto` contra ~420 s em serie."""
+def test_suite_limita_workers_pela_memoria_quando_ha_xdist(monkeypatch, tmp_path):
+    monkeypatch.setattr(sv.psutil, "virtual_memory", lambda: type("Memoria", (), {"available": 14 * 1024**3})())
     cmd = _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=True)
-    assert cmd[cmd.index("-n") + 1] == "auto", cmd
+    assert cmd[cmd.index("-n") + 1] == "5", cmd
 
 
 def test_suite_sem_xdist_roda_em_serie(monkeypatch, tmp_path):

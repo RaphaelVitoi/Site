@@ -29,6 +29,7 @@
     // ── PARIDADE BACKEND (RUFF & RUNTIME SOTA) ──────────────────
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
     "python.languageServer": "Default",
+    "pylint.enabled": false,
     "python-envs.defaultEnvManager": "ms-python.python:venv",
     "python-envs.defaultPackageManager": "ms-python.python:pip",
     "python-envs.pythonProjects": [
@@ -39,7 +40,7 @@
       },
     ],
     "python.terminal.activateEnvironment": true,
-    "python.analysis.diagnosticMode": "workspace",
+    "python.analysis.diagnosticMode": "openFilesOnly",
     "python.analysis.inlayHints.functionReturnTypes": true,
     "python.analysis.inlayHints.variableTypes": true,
     "python.analysis.inlayHints.parameterNames": true,
@@ -156,7 +157,7 @@
       "editor.defaultFormatter": "vscode.json-language-features",
     },
     "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
-    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**",
+    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**",
     "securecoder.enableI18n": false,
     "securecoder.rules.i18n": "off",
     "securecoder.rules.internationalization": "off",
