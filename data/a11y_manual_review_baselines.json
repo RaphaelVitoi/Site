@@ -12,7 +12,7 @@
       "target_url": "http://localhost:3000/",
       "source": {
         "path": "frontend/src/app/(public)/page.tsx",
-        "sha256": "84cf48c58467dd38d70fdfc359bc27679dc6995c94455ce281cfb8d74a5b1716"
+        "sha256": "222ba0ebaf110e641bcaf9b87a8e5eb946222a83a603fe2619039f9fbf56a591"
       },
       "targets": [
         "text[x=\"15\"]",
@@ -34,5 +34,6 @@
         "revisao humana posterior que revogue esta decisao"
       ]
     }
-  ]
+  ],
+  "atualizado_em": "2026-09-23T19:00:00-03:00"
 }
