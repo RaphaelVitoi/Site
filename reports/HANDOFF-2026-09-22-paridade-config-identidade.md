@@ -15,7 +15,7 @@ config_medida:
   modelo_condutor: gpt-6-luna
   veiculo_condutor: codex
   supervisao: assistida
-  commit_alvo: proximo commit autorizado, sujeito aos portoes
+  commit_alvo: 95666a29f68640ba1179d90a29527ebf28f0e5c4
 caminhos:
   - .vscode/settings.json
   - .vscode/extensions.json
@@ -30,10 +30,13 @@ caminhos:
 revisoes_de_ancora: []
 verificado:
   - Alteracoes e testes registrados na auditoria relacionada.
+  - Suite global e pre-push aprovaram com zero erros/warnings e dois skips documentados.
+  - CWV, higiene, portao de ancoras e portao de registros aprovados; hooks oficiais passaram.
+  - Push em origin/master confirmado; HEAD local e remoto coincidem.
 nao_verificado:
   - Inicio exato da sessao nao recuperavel do contexto disponivel.
-  - Gates finais, commit, push e CI remoto ainda pendentes.
-  - Runtime IDE, sincronizacao global do nucleo e limites Gemini nao medidos nesta sessao.
+  - CI remoto; runtime IDE e instalacao efetiva de extensoes nao medidos.
+  - Sincronizacao global do nucleo nao executada, e limite informado de 100 sessoes Gemini nao pesquisado nesta sessao.
 ---
 
 # Handoff — paridade de configuração e identidade
@@ -75,19 +78,18 @@ asserção falhou por comparar escapes literais; a asserção foi corrigida e a
 execução subsequente passou. A verificação de referências relativas e a
 validação estrutural das skills foram aprovadas anteriormente nesta sessão.
 
-Ainda é necessário executar suíte completa, portões de âncora/registros e hooks
-reais. O usuário autorizou explicitamente incluir os dois arquivos Jules/Stitch
-preexistentes unstaged, e pediu commit/push após aprovação dos portões. Nenhuma
-dessas ações de publicação é declarada concluída neste registro.
+Os testes direcionados passaram. O usuário autorizou incluir as duas skills
+Jules/Stitch preexistentes unstaged; os portões locais e hooks oficiais passaram
+e o push foi confirmado com HEAD remoto igual ao local. A suíte global e o
+pre-push tiveram dois skips documentados e zero erros/warnings. CI remoto não foi
+consultado; instalação e runtime do IDE não foram validados.
 
 ## Estado atual e continuidade
 
-Árvore de trabalho local em `master`, antes dos portões finais. Próximo passo:
-revisar o diff completo, rodar `suite_verde.py`, CWV, portão de âncoras,
-`record_gate.py` e hooks oficiais; reconciliar bloqueios sem bypass; então
-estagiar somente os caminhos desta entrega, commitar com assinatura canônica,
-executar pre-push, publicar em `origin/master` e confirmar paridade do HEAD.
-CI remoto permanece uma verificação separada.
+Árvore de trabalho limpa em `master`, sincronizada com `origin/master`. A entrega
+está publicada sob a assinatura canônica Codex GPT-6 Luna. Próximo passo
+opcional: consultar CI remoto e validar instalação e formatter no Antigravity/
+VS Code efetivamente usado pelo operador.
 
 ## Relatório relacionado
 

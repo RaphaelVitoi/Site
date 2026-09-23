@@ -33,10 +33,13 @@ verificado:
   - Skills Jules e Stitch tiveram caminhos absolutos tornados relativos e alegacoes operacionais sem suporte substituidas por limites verificaveis.
   - Gerador e snapshot Jules deixaram de afirmar cota fixa de 100 sessoes ou cron ativo sem evidencia; o snapshot e marcado como historico.
   - Testes direcionados da redacao Jules e configuracao VS Code -- 10 aprovados, zero warnings no guard.
+  - Suite global e pre-push -- zero erros, zero warnings, dois skips documentados.
+  - CWV, higiene, portao de ancoras e portao de registros aprovados; hooks oficiais permitiram o commit.
+  - Push confirmado em origin/master e HEAD local igual ao remoto na verificacao final.
 nao_verificado:
   - Instalacao efetiva de extensoes e formatter no Antigravity/VS Code do operador.
   - Sincronizacao global do nucleo MCP, que nao foi alterado nesta mudanca e cujo sincronizador indicado nao existe neste checkout.
-  - Suite integral, hooks oficiais, portoes de ancoras/registros, commit, push e CI remoto (pendentes nesta fotografia).
+  - CI remoto deste commit; nao foi consultado nesta sessao.
   - Limite de 100 sessoes Gemini informado pelo operador; nao foi pesquisado nem aplicado a cota Jules.
 revisoes_de_ancora:
   - registro: taxonomia-canonica-de-documentacao-e-relatorios
