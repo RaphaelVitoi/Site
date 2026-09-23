@@ -26,6 +26,7 @@ caminhos:
   - .agents/skills/google-stitch-design/SKILL.md
   - tests/test_vscode_editor_config.py
   - tests/test_sync_jules_redacao.py
+  - database/lab_manager.py
 verificado:
   - Erro reproduzido estaticamente na configuracao YAML -- o formatter apontado nao estava na lista de extensoes disponiveis do ambiente.
   - Formatter YAML alinhado ao Prettier ja recomendado; os formatters externos configurados estao recomendados ou sao extensoes built-in.
@@ -36,6 +37,7 @@ verificado:
   - Suite global e pre-push -- zero erros, zero warnings, dois skips documentados.
   - CWV, higiene, portao de ancoras e portao de registros aprovados; hooks oficiais permitiram o commit.
   - Push confirmado em origin/master e HEAD local igual ao remoto na verificacao final.
+  - Alteracao do LabManager revisada com o usuario e suite direcionada database/testes aprovada, 13 testes.
 nao_verificado:
   - Instalacao efetiva de extensoes e formatter no Antigravity/VS Code do operador.
   - Sincronizacao global do nucleo MCP, que nao foi alterado nesta mudanca e cujo sincronizador indicado nao existe neste checkout.

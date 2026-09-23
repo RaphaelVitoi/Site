@@ -69,6 +69,10 @@ não o invento.
 6. Criados relatório de auditoria e este handoff distintos; feedback numérico
    não foi informado para esta sessão, então nenhum evento de calibração foi
    criado.
+7. O usuário confirmou que um diff recém-observado em `database/lab_manager.py`
+   era dele e pediu sua incorporação no escopo. A alteração troca log de exceção
+   sem traceback por `logger.exception`, sem mudar a API; a suíte direcionada
+   `tests/test_database_sota.py` passou com 13 testes.
 
 ## Validação e desafios
 
@@ -86,10 +90,12 @@ consultado; instalação e runtime do IDE não foram validados.
 
 ## Estado atual e continuidade
 
-Árvore de trabalho limpa em `master`, sincronizada com `origin/master`. A entrega
-está publicada sob a assinatura canônica Codex GPT-6 Luna. Próximo passo
-opcional: consultar CI remoto e validar instalação e formatter no Antigravity/
-VS Code efetivamente usado pelo operador.
+O primeiro pacote de configuração e seus registros foi publicado sob a
+assinatura canônica Codex GPT-6 Luna. Na revisão pós-publicação, o usuário
+confirmou autoria de um diff adicional em `database/lab_manager.py`; a mudança
+passou a suíte direcionada e é incluída nesta sequência de retificação e
+publicação. CI remoto e validação do runtime IDE permanecem fora do que foi
+medido.
 
 ## Relatório relacionado
 
