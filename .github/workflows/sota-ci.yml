@@ -76,8 +76,8 @@ jobs:
 
       - name: 🔍 Ruff Linter & Formatter Validation
         run: |
-          uv run ruff check .
-          uv run ruff format --check .
+          uv run --python "${{ matrix.python-version }}" ruff check .
+          uv run --python "${{ matrix.python-version }}" ruff format --check .
 
       # MEDIDO EM 2026-09-08: tests/test_cwv_gate_truthfulness.py invoca
       # `node scripts/ops/lighthouse_cwv_audit.mjs`, e este job so rodava
@@ -101,7 +101,7 @@ jobs:
 
       - name: 🧪 Execute Pytest Suite (239+ Tests)
         run: |
-          uv run pytest --cov=engine --cov-fail-under=10
+          uv run --python "${{ matrix.python-version }}" pytest --cov=engine --cov-fail-under=10
 
   frontend-build-and-typecheck:
     name: ⚛️ Frontend TypeScript & Next.js Build
