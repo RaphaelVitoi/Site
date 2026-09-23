@@ -7,10 +7,14 @@ test.describe('Visual Regression — Homepage (SOTA GOLD)', () => {
     // SOTA GOLD: pausa RAF antes do JS carregar — DownwardDriftWidget
     // usa requestAnimationFrame para animacao continua do SVG.
     await page.addInitScript(() => {
-      (window as any).requestAnimationFrame = () => 0;
-      (window as any).cancelAnimationFrame = () => {};
-      (window as any).webkitRequestAnimationFrame = () => 0;
-      (window as any).webkitCancelAnimationFrame = () => {};
+      const w = window as unknown as Window & {
+        webkitRequestAnimationFrame: (cb: FrameRequestCallback) => number;
+        webkitCancelAnimationFrame: (id: number) => void;
+      };
+      w.requestAnimationFrame = () => 0;
+      w.cancelAnimationFrame = () => {};
+      w.webkitRequestAnimationFrame = () => 0;
+      w.webkitCancelAnimationFrame = () => {};
     });
 
     await page.goto('/');
@@ -31,10 +35,10 @@ test.describe('Visual Regression — Homepage (SOTA GOLD)', () => {
         const s = (el as HTMLElement).style;
         s.animation = 'none';
         s.transition = 'none';
-        (el as HTMLElement).offsetHeight; // force reflow
+        void (el as HTMLElement).offsetHeight; // force reflow
       });
       document.querySelectorAll('animate, animateTransform, animateMotion').forEach(a => {
-        try { (a as any).endElement(); } catch { /* already ended */ }
+        try { (a as Element & { endElement(): void }).endElement(); } catch { /* already ended */ }
       });
     });
     await page.waitForTimeout(500);
