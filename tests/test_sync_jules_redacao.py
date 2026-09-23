@@ -130,3 +130,12 @@ def test_o_relatorio_publicado_nao_contem_chave_em_texto_claro():
         f"{len(achados)} credencial(is) em texto claro em reports/integrations/JULES_REPORT.md. "
         "Sanear o arquivo NAO basta: verifique se redigir_segredos roda no gerador."
     )
+
+
+def test_gerador_nao_inventa_cotas_ou_agendamentos_de_conta():
+    relatorio = _mod.format_markdown_report([])
+
+    assert "100 sessões/dia" not in relatorio
+    assert "Cota: 100" not in relatorio
+    assert "Agendamento externo" in relatorio
+    assert "Não verificado" in relatorio

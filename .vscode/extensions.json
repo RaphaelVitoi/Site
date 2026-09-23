@@ -9,6 +9,9 @@
     "googlecloudtools.datacloud",
     "anthropic.claude-code",
     "esbenp.prettier-vscode",
+    "DavidAnson.vscode-markdownlint",
+    "rust-lang.rust-analyzer",
+    "cweijan.vscode-office",
     "SonarSource.sonarlint-vscode",
     "dbaeumer.vscode-eslint",
     "llvm-vs-code-extensions.lldb-dap",
@@ -17,4 +20,3 @@
     "tamasfe.even-better-toml"
   ]
 }
-
