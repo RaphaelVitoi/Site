@@ -20,7 +20,6 @@ from llm.budget import (
     _is_route_blocked,
     _route_identifier,
 )
-from llm.laya_bridge import compor_advisory_s1
 from llm.providers import _try_provider
 from llm.routing import (
     _apply_model_health_gate,
@@ -222,6 +221,8 @@ async def _apply_s1_advisory(
     if task.metadata is None:
         task.metadata = {}
     try:
+        from llm.laya_bridge import compor_advisory_s1
+
         system_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
         if laya_metadata:
             task.metadata["intencao_s1"] = laya_metadata
@@ -377,6 +378,8 @@ async def call_llm_api(
     if task.metadata is None:
         task.metadata = {}
     try:
+        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
         system_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
         if laya_metadata:
             task.metadata["intencao_s1"] = laya_metadata
