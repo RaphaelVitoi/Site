@@ -53,8 +53,8 @@ interface StreetInfo {
 const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: number; current: StreetInfo }) => (
   <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
     <div className="hover:border-accent-indigo/40 group/ip flex flex-col gap-3 rounded-3xl border border-white/5 bg-slate-900/40 p-5 shadow-inner transition-all duration-500 hover:bg-slate-900/60">
-      <div className="flex items-center justify-between gap-3 px-1">
-        <span className="text-text-muted group-hover/ip:text-accent-indigo-light text-sm font-bold tracking-wide transition-colors">
+      <div className="flex items-center justify-between px-1">
+        <span className="text-text-darker group-hover/ip:text-accent-indigo-light text-[0.6rem] font-black tracking-[0.3em] uppercase transition-colors">
           Pressão Agressor (IP)
         </span>
         <i className="fa-solid fa-bolt text-accent-indigo/20 group-hover/ip:text-accent-indigo/60 text-[0.7rem] transition-colors" />
@@ -65,7 +65,7 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
         >
           {ipRp.toFixed(1)}
         </span>
-        <span className="text-text-muted text-xs font-bold uppercase">{LABELS.rpPct}</span>
+        <span className="text-text-darker text-[0.65rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
       </div>
       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
         <motion.div
@@ -77,20 +77,20 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
       </div>
     </div>
 
-    <div className="hover:border-accent-amber/40 group/oop flex flex-col gap-3 rounded-3xl border border-white/5 bg-slate-900/40 p-5 shadow-inner transition-all duration-500 hover:bg-slate-900/60">
-      <div className="flex w-full items-center justify-between gap-3 px-1">
-        <span className="text-text-muted group-hover/oop:text-accent-amber text-sm font-bold tracking-wide transition-colors">
+    <div className="hover:border-accent-amber/40 group/oop flex flex-col gap-3 rounded-3xl border border-white/5 bg-slate-900/40 p-5 shadow-inner transition-all duration-500 hover:bg-slate-900/60 md:items-end md:text-right">
+      <div className="flex w-full flex-row-reverse items-center justify-between px-1 md:flex-row">
+        <i className="fa-solid fa-shield-halved text-accent-amber/20 group-hover/oop:text-accent-amber/60 text-[0.7rem] transition-colors" />
+        <span className="text-text-darker group-hover/oop:text-accent-amber text-[0.6rem] font-black tracking-[0.3em] uppercase transition-colors">
           Pressão Defensor (OOP)
         </span>
-        <i className="fa-solid fa-shield-halved text-accent-amber/20 group-hover/oop:text-accent-amber/60 text-[0.7rem] transition-colors" />
       </div>
       <div className="flex items-baseline gap-3">
         <span className="text-accent-amber font-mono text-3xl sm:text-4xl font-black tracking-tighter tabular-nums [text-shadow:0_0_25px_rgba(245,158,11,0.3)]">
           {oopRp.toFixed(1)}
         </span>
-        <span className="text-text-muted text-xs font-bold uppercase">{LABELS.rpPct}</span>
+        <span className="text-text-darker text-[0.65rem] font-black tracking-widest uppercase">{LABELS.rpPct}</span>
       </div>
-      <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+      <div className="mt-1 flex h-1.5 w-full justify-end overflow-hidden rounded-full bg-white/5">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(100, oopRp * 2.5)}%` }}
@@ -114,11 +114,14 @@ const ActionStrategies = ({
   <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
     {/* Card IP (Agressor) */}
     <div className="w-full flex flex-col rounded-3xl border border-accent-indigo/20 bg-slate-900/50 p-3.5 sm:p-4 shadow-lg shadow-indigo-950/20 backdrop-blur-md">
-      <div className="text-accent-indigo-light border-accent-indigo/20 mb-3 flex items-center border-b px-1 pb-2.5 text-sm font-bold tracking-wide">
+      <div className="text-accent-indigo-light border-accent-indigo/20 mb-3 flex items-center justify-between border-b px-1 pb-2.5 text-[0.75rem] font-black tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-indigo h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-indigo)]" />
           <span>IP &middot; Agressor</span>
         </div>
+        <span className="text-[0.58rem] font-mono text-text-darker tracking-wider uppercase font-bold opacity-75">
+          Ações &middot; GTO
+        </span>
       </div>
       <div className="flex flex-col gap-2.5">
         <ActionRow
@@ -153,11 +156,14 @@ const ActionStrategies = ({
 
     {/* Card OOP (Defensor) */}
     <div className="w-full flex flex-col rounded-3xl border border-accent-rose/20 bg-slate-900/50 p-3.5 sm:p-4 shadow-lg shadow-rose-950/20 backdrop-blur-md">
-      <div className="text-accent-rose border-accent-rose/20 mb-3 flex items-center border-b px-1 pb-2.5 text-sm font-bold tracking-wide">
+      <div className="text-accent-rose border-accent-rose/20 mb-3 flex items-center justify-between border-b px-1 pb-2.5 text-[0.75rem] font-black tracking-[0.2em] uppercase">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-rose h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-rose)]" />
           <span>OOP &middot; Defensor</span>
         </div>
+        <span className="text-[0.58rem] font-mono text-text-darker tracking-wider uppercase font-bold opacity-75">
+          Ações &middot; GTO
+        </span>
       </div>
       <div className="flex flex-col gap-2.5">
         <ActionRow
@@ -323,15 +329,15 @@ export default function NashPanel({
       <div className="bg-accent-rose/5 pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full blur-[140px]" />
 
       {/* Header com Status do Motor */}
-      <div className="relative z-10 flex flex-col gap-5 border-b border-white/5 pb-6">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
+      <div className="relative z-10 flex flex-col items-start justify-between gap-4 sm:gap-6 border-b border-white/5 pb-6 md:flex-row">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
             <div className="bg-accent-indigo h-2.5 w-2.5 animate-pulse rounded-full shadow-[0_0_20px_var(--color-accent-indigo)]" />
-            <h2 className="group-hover/nash:text-glow-indigo m-0 text-xl font-black tracking-tight text-white transition-all duration-500">
+            <h2 className="group-hover/nash:text-glow-indigo m-0 text-[0.85rem] font-black tracking-[0.4em] text-white uppercase transition-all duration-500">
               Frequências ICM Quantum
             </h2>
           </div>
-          <p className="text-text-dim m-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-snug font-medium tracking-wide uppercase">
+          <p className="text-text-dim m-0 flex items-center gap-3 text-[0.7rem] leading-none font-medium tracking-[0.3em] uppercase">
             <span className="text-accent-indigo-light group-hover/nash:text-glow-indigo font-black transition-all duration-500">
               Motor SOTA v7.0 GOLD
             </span>
@@ -340,15 +346,16 @@ export default function NashPanel({
           </p>
         </div>
 
-        <div className="grid w-full grid-cols-2 gap-4">
-          <div className="flex flex-col">
-            <span className="text-text-muted text-xs font-bold tracking-wide uppercase">
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end">
+            <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
               Instabilidade &delta;
             </span>
             <span className="font-mono text-base font-black text-white">{deltaRp.toFixed(1)}%</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-text-muted text-xs font-bold tracking-wide uppercase">
+          <div className="h-8 w-px bg-white/5" />
+          <div className="flex flex-col items-end">
+            <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
               Agressividade (&Psi;)
             </span>
             <span className="font-mono text-base font-black text-white">{safeAggression.toFixed(1)}x</span>
@@ -363,7 +370,7 @@ export default function NashPanel({
             type="button"
             aria-pressed="true"
             onClick={() => onPayjumpToggle(false)}
-            className="group/btn bg-accent-emerald/10 border-accent-emerald/40 text-accent-emerald flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-4 py-5 text-sm font-bold tracking-wide shadow-2xl shadow-emerald-500/10 transition-all duration-500 active:scale-95"
+            className="group/btn bg-accent-emerald/10 border-accent-emerald/40 text-accent-emerald flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl shadow-emerald-500/10 transition-all duration-500 active:scale-95"
           >
             <div className="bg-accent-emerald h-2 w-2 scale-110 rounded-full shadow-[0_0_15px_var(--accent-emerald)] transition-all duration-500" />
             Payjump Iminente
@@ -373,7 +380,7 @@ export default function NashPanel({
             type="button"
             aria-pressed="false"
             onClick={() => onPayjumpToggle(true)}
-            className="group/btn text-text-muted flex cursor-pointer items-center justify-center gap-4 rounded-2xl border border-white/5 bg-slate-900/40 px-4 py-5 text-sm font-bold tracking-wide shadow-2xl transition-all duration-500 hover:border-white/20 hover:bg-slate-900/60 active:scale-95"
+            className="group/btn text-text-muted flex cursor-pointer items-center justify-center gap-4 rounded-2xl border border-white/5 bg-slate-900/40 px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl transition-all duration-500 hover:border-white/20 hover:bg-slate-900/60 active:scale-95"
           >
             <div className="bg-text-darker group-hover/btn:bg-text-muted h-2 w-2 rounded-full transition-all duration-500" />
             Salto de Prêmios
@@ -385,7 +392,7 @@ export default function NashPanel({
             type="button"
             aria-pressed="true"
             onClick={() => onBlindsToggle(false)}
-            className="group/btn bg-accent-danger/10 border-accent-danger/40 text-accent-danger flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-4 py-5 text-sm font-bold tracking-wide shadow-2xl shadow-rose-500/10 transition-all duration-500 active:scale-95"
+            className="group/btn bg-accent-danger/10 border-accent-danger/40 text-accent-danger flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl shadow-rose-500/10 transition-all duration-500 active:scale-95"
           >
             <div className="bg-accent-danger h-2 w-2 scale-110 animate-pulse rounded-full shadow-[0_0_15px_var(--accent-danger)] transition-all duration-500" />
             Blinds Subindo
@@ -395,7 +402,7 @@ export default function NashPanel({
             type="button"
             aria-pressed="false"
             onClick={() => onBlindsToggle(true)}
-            className="group/btn text-text-muted flex cursor-pointer items-center justify-center gap-4 rounded-2xl border border-white/5 bg-slate-900/40 px-4 py-5 text-sm font-bold tracking-wide shadow-2xl transition-all duration-500 hover:border-white/20 hover:bg-slate-900/60 active:scale-95"
+            className="group/btn text-text-muted flex cursor-pointer items-center justify-center gap-4 rounded-2xl border border-white/5 bg-slate-900/40 px-8 py-5 text-[0.75rem] font-black tracking-[0.3em] uppercase shadow-2xl transition-all duration-500 hover:border-white/20 hover:bg-slate-900/60 active:scale-95"
           >
             <div className="bg-text-darker group-hover/btn:bg-text-muted h-2 w-2 rounded-full transition-all duration-500" />
             Custo de Órbita
