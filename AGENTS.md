@@ -18,6 +18,7 @@ original mudou. Toda governança canônica reside no `CLAUDE.md`.
 Leia `CLAUDE.md` neste mesmo diretório. Ele traz o portão obrigatório de
 pre-commit, a camada de dependências, as fontes únicas de roteamento de modelo,
 a obrigação de declaração e as diretrizes de manutenção contínua.
+Para CHICO, identidades Tier 1 e ausência de feudos funcionais, leia o §7.
 
 A governança multiprojeto, que vale para todos os projetos sob `~/.gemini`,
 está em `../CLAUDE.md`.

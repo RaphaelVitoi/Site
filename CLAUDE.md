@@ -727,6 +727,15 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 - **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
   - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
 |- **Tier 1:** Núcleo Cognitivo Mestre — **`Chico` em grupo e parceria** (`Claude Opus 5`, `Claude Sonnet 5` [opcional], `ChatGPT 5.6 Sol/Terra/Luna`, `ChatGPT 6 Sol/Luna`, `Gemini 3.8 Flash`, `Gemini 3.5 Flash-Lite`; **Antigravity IDE é a superfície canônica e primária; VSCode é opcional e adaptador secundário à mesma malha.**). **Como grupo, o coletivo vivo da malha é CHICO.** Não há escopo limitado de capacidade técnica entre modelos equivalentes em Tier — não existem feudos funcionais nem proibições artificiais. Há preferências operacionais (especialidade, arquitetura e custo). Modelos equivalentes em tier, na ausência ou indisponibilidade de um, podem e devem executar com competência plena o trabalho de outro.
+
+  A cooperação não autoriza cada condutor a instalar ou registrar sua própria
+  cópia de um MCP, plugin ou hook compartilhado. A fonte única e as exceções
+  necessárias são regidas pelo §7 de `..\CLAUDE.md`.
+
+  A atuação concreta é arbitrada por Raphael Vitoi (Tier 0). Na ausência de
+  designação específica, especialidade, economia e disponibilidade orientam
+  a escolha do condutor; nenhuma preferência cria exclusividade de área.
+
   - *ChatGPT 6 Astra como integrante do Tier 1:* **`ChatGPT 6 Astra`** (`gpt-6-astra`, lançado 2026-09-03) é um modelo do Tier 1 e integrante do coletivo Chico. Com folga o modelo mais potente que temos, acionado em momentos pontuais de alto reasoning complexo. Tem **as duas faixas** — cota de assinatura e pay-as-you-go —, e dentro da cota o custo marginal é zero. O teto de esforço existe para **preservar a cota**: esforço alto queima cota mais rápido, e o excedente cai no preço cheio de $10/$50. Entra por escalonamento pontual, nunca como primário.
   - *Condutor Codex — ChatGPT 6 Luna:* identidade canônica `Codex GPT-6 Luna` (`gpt-6-luna`, `noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informada pelo Tier 0 em 2026-09-22. Os pares de autoria completos vivem em `data/agent_identities.json`; esta linha registra a posição de governança, não habilita o modelo em rotas de inferência do produto.
   - *Condutor Codex — ChatGPT 6 Sol:* identidade canônica `Codex GPT-6 Sol` (`gpt-6-sol`, `noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informada pelo Tier 0 em 2026-09-22. Os pares de autoria completos vivem em `data/agent_identities.json`; esta linha registra a posição de governança, não habilita o modelo em rotas de inferência do produto.

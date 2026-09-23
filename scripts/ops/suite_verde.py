@@ -48,10 +48,12 @@ TRES DECISOES DE CORRETUDE, porque cada uma tem uma armadilha conhecida nesta ba
 3. Falha nunca vira marcador, e apaga o anterior. Um verde vencido, descrevendo
    outro estado, e pior que nenhum verde.
 
-TODOS OS NUCLEOS: com o pytest-xdist instalado, a suite roda com `-n auto`.
-Medido em 2026-09-13, nesta forma exata: 1231 verdes em 140 s, contra ~420 s em
-serie. O CI segue em serie e com cobertura -- e la que dependencia de ordem entre
-testes aparece. Passe `-n 0` para medir em serie aqui.
+PARALELISMO COM LIMITE: com pytest-xdist, usa ate oito workers, reservando 4 GiB
+de RAM para os demais aplicativos e 2 GiB por worker. O CI segue em serie e com
+cobertura -- e la que dependencia de ordem entre testes aparece. Passe `-n 0`
+para medir em serie aqui; uma escolha explicita de `-n` prevalece.
+Com menos de 6 GiB disponiveis, nao inicia a suite. Chamadas concorrentes no
+mesmo clone aguardam a primeira e reaproveitam seu marcador quando verde.
 
 SAIDA CURTA: o pyproject liga `log_cli`, que imprime uma linha por teste. No
 pre-push isso chegou a 235 KB -- cerca de 70 mil tokens no contexto de quem faz
@@ -66,17 +68,23 @@ sempre, do zero.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from datetime import UTC, datetime
+import errno
 import importlib.util
 import json
+import os
 from pathlib import Path
+import psutil
 import subprocess
 import sys
 import tempfile
+import time
 
 RAIZ = Path(__file__).resolve().parents[2]
 MARCADOR = RAIZ / ".git" / "sota-suite-verde"
 VERSAO_DO_CONTRATO = 1
+ARQUIVO_TRAVA = RAIZ / ".git" / "sota-suite-verde.lock"
 
 
 def _git(*args: str) -> str:
@@ -125,6 +133,44 @@ def ler_marcador() -> dict:
         return {}
 
 
+@contextmanager
+def trava_suite():
+    """Uma suite por clone; a segunda chamada reavalia o cache ao entrar."""
+    with ARQUIVO_TRAVA.open("a+b") as arquivo:
+        inicio = time.monotonic()
+        proximo_aviso = 0
+        while True:
+            try:
+                arquivo.seek(0)
+                if os.name == "nt":
+                    import msvcrt
+
+                    msvcrt.locking(arquivo.fileno(), msvcrt.LK_NBLCK, 1)
+                else:
+                    import fcntl
+
+                    fcntl.flock(arquivo.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except OSError as erro:
+                if erro.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                    raise
+                decorrido = time.monotonic() - inicio
+                if decorrido >= 600:
+                    raise TimeoutError("outra suite ainda ocupa o gate apos 10 minutos")
+                if decorrido >= proximo_aviso:
+                    print("[SUITE] aguardando a verificacao em curso", flush=True)
+                    proximo_aviso += 30
+                time.sleep(1)
+        try:
+            yield
+        finally:
+            arquivo.seek(0)
+            if os.name == "nt":
+                msvcrt.locking(arquivo.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(arquivo.fileno(), fcntl.LOCK_UN)
+
+
 def cacheavel() -> tuple[bool, str]:
     """Ha estado que se possa representar por uma arvore? Se nao, mede sempre."""
     novos = nao_rastreados()
@@ -159,10 +205,15 @@ def _tem_xdist() -> bool:
 
 
 def paralelismo(extra: list[str]) -> list[str]:
-    """`-n auto` se o xdist existe e quem chamou nao escolheu (`-n ...` ou `-p no:xdist`)."""
+    """Limita workers pela RAM livre se quem chamou nao escolheu `-n`."""
     if any(a.startswith("-n") or a == "no:xdist" for a in extra):
         return []
-    return ["-n", "auto"] if _tem_xdist() else []
+    if not _tem_xdist():
+        return []
+    gib = 1024**3
+    memoria_livre = psutil.virtual_memory().available
+    workers = max(1, min(8, os.cpu_count() or 1, (memoria_livre - 4 * gib) // (2 * gib)))
+    return ["-n", str(workers)]
 
 
 def silencio(extra: list[str]) -> list[str]:
@@ -172,6 +223,14 @@ def silencio(extra: list[str]) -> list[str]:
 
 def rodar_suite(extra: list[str]) -> int:
     """Executa a suite e, se verde E a arvore continuar limpa, grava o marcador."""
+    memoria_livre = psutil.virtual_memory().available
+    if memoria_livre < 6 * 1024**3:
+        print(
+            f"[SUITE] RAM disponivel insuficiente ({memoria_livre / 1024**3:.1f} GiB; minimo 6 GiB); "
+            "libere memoria e tente novamente",
+            file=sys.stderr,
+        )
+        return 2
     base = str(Path(tempfile.gettempdir()) / "pytest-sota")
     cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *paralelismo(extra), *silencio(extra), *extra]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
@@ -212,19 +271,24 @@ def main(argv: list[str]) -> int:
         print("[SUITE] marcador removido; a proxima verificacao mede")
         return 0
 
-    vale, motivo = cache_valido()
-
     if acao == "check":
+        vale, motivo = cache_valido()
         print(f"[SUITE] {'cache valido' if vale else 'cache invalido'}: {motivo}")
         return 0 if vale else 1
 
     if acao in ("ensure", "run"):
-        if acao == "ensure" and vale:
-            print(f"[SUITE] nao remedido: {motivo}")
-            return 0
-        if acao == "ensure":
-            print(f"[SUITE] medindo porque {motivo}")
-        return rodar_suite(extra)
+        try:
+            with trava_suite():
+                vale, motivo = cache_valido()
+                if acao == "ensure" and vale:
+                    print(f"[SUITE] nao remedido: {motivo}")
+                    return 0
+                if acao == "ensure":
+                    print(f"[SUITE] medindo porque {motivo}")
+                return rodar_suite(extra)
+        except TimeoutError as erro:
+            print(f"[SUITE] {erro}", file=sys.stderr)
+            return 2
 
     print(f"acao desconhecida: {acao}. Use ensure (padrao), check, run ou invalidate.", file=sys.stderr)
     return 2

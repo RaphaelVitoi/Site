@@ -25,7 +25,10 @@ runner = CliRunner()
 def test_notifications_engine_evaluation_on_real_repo() -> None:
     """Verifica avaliacao das arvores do Dream-RSI, token budget e recomendacoes."""
     engine = DashboardNotificationsEngine()
-    with patch.object(engine, "_inspect_discovery_db", return_value=(364, 664)):
+    with (
+        patch.object(engine, "_inspect_discovery_db", return_value=(364, 664)),
+        patch.object(engine, "_inspect_calibration_ledger", return_value=(3, 0.0, 0.0)),
+    ):
         report = engine.evaluate()
 
     assert report.dream_trees_count >= 364
