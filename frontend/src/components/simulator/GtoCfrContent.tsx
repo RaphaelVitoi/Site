@@ -28,32 +28,32 @@ function GtoCfrContentInner({
 	return (
 		<main className="sota-container mt-8 space-y-14 animate-sota-in pb-24">
 			{/* SELETOR DE MODO DO SOLVER */}
-			<div className="flex justify-center">
-				<div className="inline-flex p-1.5 rounded-2xl bg-slate-950/80 border border-white/10 backdrop-blur-xl shadow-2xl gap-2">
+			<div className="flex justify-center px-1">
+				<div role="group" aria-label="Modo de simulação" className="grid w-full max-w-2xl grid-cols-1 gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 shadow-2xl backdrop-blur-xl sm:grid-cols-2">
 					<button
 						type="button"
 						onClick={() => setSolverMode('heads_up')}
-						className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[0.65rem] font-mono font-black uppercase tracking-wider transition-all ${
+						className={`flex min-h-12 min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-center text-[0.62rem] font-mono font-black uppercase tracking-wide transition-all sm:px-4 sm:tracking-wider ${
 							solverMode === 'heads_up'
 								? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.35)]'
 								: 'text-text-dim hover:text-white hover:bg-white/5'
 						}`}
 					>
 						<i className="fa-solid fa-user-group text-xs" />
-						<span>Heads-Up CFR+ (2-Way)</span>
+						<span className="leading-snug">Heads-Up CFR+ (2-Way)</span>
 					</button>
 
 					<button
 						type="button"
 						onClick={() => setSolverMode('multiway')}
-						className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-[0.65rem] font-mono font-black uppercase tracking-wider transition-all ${
+						className={`flex min-h-12 min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-center text-[0.62rem] font-mono font-black uppercase tracking-wide transition-all sm:px-4 sm:tracking-wider ${
 							solverMode === 'multiway'
 								? 'bg-accent-emerald text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.35)]'
 								: 'text-text-dim hover:text-white hover:bg-white/5'
 						}`}
 					>
 						<i className="fa-solid fa-users text-xs" />
-						<span>Multiway PMev (Pluribus 6-Max)</span>
+						<span className="leading-snug">Multiway PMev (Pluribus 6-Max)</span>
 						<span className="text-[0.5rem] font-sans px-1.5 py-0.2 rounded-full bg-white/20 text-white font-bold">
 							SOTA
 						</span>

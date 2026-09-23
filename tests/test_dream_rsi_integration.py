@@ -14,6 +14,8 @@ Padrao SOTA: Pure ASCII, Zero-Any, Tipagem Estrita Python 3.12+.
 
 from __future__ import annotations
 
+import contextlib
+
 from conductor.dream_gate import DreamGate
 from core.discovery_tree_schemas import (
     DiscoveryNode,
@@ -561,7 +563,7 @@ def test_review_findings_hardening(tmp_path: object) -> None:
     test_db = str(tmp_path) + "/corrupt_test.db"
     rec = DiscoveryRecorder(db_path=test_db)
     rec.seed_pmev_history(count=5)
-    with sqlite3.connect(test_db) as conn:
+    with contextlib.closing(sqlite3.connect(test_db)) as conn, conn:
         conn.execute(
             "INSERT INTO discovery_trees (tree_id, root_id, domain, created_at, payload_json) VALUES (?, ?, ?, ?, ?)",
             ("bad_1", "r", "code_engineering", "2026-09-18T00:00:00Z", "not-a-json"),

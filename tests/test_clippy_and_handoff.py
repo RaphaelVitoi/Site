@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+import pytest
 from typer.testing import CliRunner
 
 from engine.clippy_clipboard import ClippyClipboard
@@ -18,6 +20,14 @@ from scripts.cli.nexus import app
 from scripts.ops.git_sota_workflow import GitSotaWorkflow
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def isolate_cli_hygiene_spawn(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Nao inicia o processo de higiene nos testes de comando da CLI."""
+    subprocess_proxy = SimpleNamespace(**vars(nexus.subprocess))
+    subprocess_proxy.Popen = MagicMock()
+    monkeypatch.setattr(nexus, "subprocess", subprocess_proxy)
 
 
 def test_clippy_clipboard_copy_and_empty_check():

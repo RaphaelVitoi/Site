@@ -1,6 +1,5 @@
 import { calculateRioTension, type PerspectivaResult as QuantumPerspectiva } from '../../../lib/perspectiva';
 import type { HeroPosition, QuantumMetrics } from './types';
-import type { Step as TourStep } from '../ui/SimulatorTour';
 
 export interface ActionMetricsParams {
 	heroInvested: number;
@@ -164,26 +163,6 @@ export function createSpotData({
 		heroRange,
 		villainRange,
 	};
-}
-
-export function performTourScrollAndHighlight(
-	step: TourStep,
-	setTourSpotlight: (rect: DOMRect | null) => void,
-): ReturnType<typeof setTimeout> {
-	if (step.openDetails) {
-		const detailsEl = document.querySelector(
-			'#anchor-aula12 details',
-		) as HTMLDetailsElement;
-		if (detailsEl) detailsEl.open = true;
-	}
-	return setTimeout(() => {
-		const el = document.getElementById(step.targetId);
-		if (el) {
-			setTourSpotlight(el.getBoundingClientRect());
-			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-			el.classList.add('pulse-border');
-		}
-	}, 150);
 }
 
 // SOTA v4.2: Helpers Visuais para PmLens

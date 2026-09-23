@@ -8,7 +8,7 @@ export const metadata = {
 
 export default function GtoCfrPage() {
 	return (
-		<div className="min-h-screen bg-bg-base pb-20">
+		<div className="simulator-gto min-h-screen bg-bg-base pb-20">
 			<header className="pt-16 pb-8 text-center max-w-4xl mx-auto px-6 animate-sota-in">
 				<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-indigo/10 border border-accent-indigo/20 mb-6">
 					<i className="fa-solid fa-atom text-[0.6rem] text-accent-indigo animate-spin-slow" />
@@ -16,7 +16,7 @@ export default function GtoCfrPage() {
 						Neural Engine v8.0 GOLD
 					</span>
 				</div>
-				<h1 className="text-4xl sm:text-5xl font-black text-white uppercase tracking-tighter mb-6 drop-shadow-2xl">
+				<h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white uppercase tracking-tighter mb-6 drop-shadow-2xl">
 					Laboratório <span className="text-accent-indigo">GTO / CFR</span>
 				</h1>
 				<p className="text-text-muted text-sm sm:text-base font-medium max-w-2xl mx-auto leading-relaxed">

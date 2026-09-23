@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Sequence
+import contextlib
 from datetime import UTC, date, datetime
 import json
 import logging
@@ -1023,7 +1024,7 @@ class MemoryRAG:
 
     def _persist_storage_snapshot(self, observed_on: str, chroma_count: int, lance_count: int, ids_match: bool) -> None:
         RAG_HEALTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(RAG_HEALTH_DB_PATH, timeout=5.0) as db:
+        with contextlib.closing(sqlite3.connect(RAG_HEALTH_DB_PATH, timeout=5.0)) as db, db:
             db.execute(
                 "CREATE TABLE IF NOT EXISTS daily_snapshots ("
                 "observed_on TEXT PRIMARY KEY, chroma_count INTEGER NOT NULL, "
@@ -1056,7 +1057,7 @@ class MemoryRAG:
         await asyncio.to_thread(self._persist_storage_snapshot, observed_on, chroma_count, lance_count, ids_match)
 
         def _read_history() -> list[tuple[str, int]]:
-            with sqlite3.connect(RAG_HEALTH_DB_PATH, timeout=5.0) as db:
+            with contextlib.closing(sqlite3.connect(RAG_HEALTH_DB_PATH, timeout=5.0)) as db, db:
                 return db.execute(
                     "SELECT observed_on, lance_count FROM daily_snapshots ORDER BY observed_on DESC LIMIT 30"
                 ).fetchall()

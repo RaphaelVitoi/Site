@@ -17,8 +17,6 @@ import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from './SotaCont
 import { GuideToolbar } from './ui/GuideToolbar';
 import { NashDistortionViz } from './ui/NashDistortionViz';
 import SimulatorNavigation from './ui/SimulatorNavigation';
-import SimulatorTour from './ui/SimulatorTour';
-import { useSimulatorTour } from './hooks/useSimulatorTour';
 import { useMasterCalculations } from './hooks/useMasterCalculations';
 import { useMasterSpotLogic } from './hooks/useMasterSpotLogic';
 import { useMasterHandlers } from './hooks/useMasterHandlers';
@@ -278,19 +276,17 @@ export default function MasterSimulator() {
     startTransition,
   });
 
-  const { tourSpotlight, tourSpotlightProps, handleTourStep, closeTour } = useSimulatorTour(handleScenarioSelect);
-
   const insolvencyRadarData = useInsolvencyRadar(apiQuantumMetrics);
 
   const activeToolContent = useMemo(() => {
     const toolContents: Record<ActiveTool, React.ReactNode> = {
       scenario: (
         <Suspense fallback={<LoadingFallback />}>
-          {/* Cockpit 2-Colunas · Proporção Áurea (7:5) */}
+          {/* Cockpit 2-Colunas · Proporção Equilibrada (6:6) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-            {/* ═══ COLUNA PRINCIPAL (7/12) · Mesa + Controles + Lentes Modulares ═══ */}
-            <div className="lg:col-span-7 flex flex-col gap-5">
+            {/* ═══ COLUNA PRINCIPAL (6/12) · Mesa + Controles + Lentes Modulares ═══ */}
+            <div className="lg:col-span-6 flex flex-col gap-5">
 
               {/* Mesa Interativa 9P */}
               <div className="w-full">
@@ -433,8 +429,8 @@ export default function MasterSimulator() {
               )}
             </div>
 
-            {/* ═══ COLUNA LATERAL (5/12) · Narrativa + IA + Telemetria ═══ */}
-            <div className="lg:col-span-5 flex flex-col gap-5 lg:sticky lg:top-36">
+            {/* ═══ COLUNA LATERAL (6/12) · Narrativa + IA + Telemetria ═══ */}
+            <div className="lg:col-span-6 flex flex-col gap-5">
 
               {/* Cenário: Narrativa e Medidores de Risco */}
               <ScenarioStage
@@ -653,13 +649,6 @@ export default function MasterSimulator() {
       <SotaMetricsContext value={metricsContextValue}>
         <SotaWasmContext value={wasmContextValue}>
           <div className="w-full flex flex-col min-h-screen">
-            {tourSpotlight && (
-              <div
-                className="tour-spotlight"
-                style={tourSpotlightProps?.style}
-              />
-            )}
-
             {/* Espaços de trabalho do simulador — a identidade está na barra de laboratórios acima. */}
             <nav
               aria-label="Áreas de trabalho do Simulador Mestre"
@@ -787,7 +776,6 @@ export default function MasterSimulator() {
               )}
             </div>
 
-            <SimulatorTour onStepAction={handleTourStep} onClose={closeTour} />
           </div>
         </SotaWasmContext>
       </SotaMetricsContext>

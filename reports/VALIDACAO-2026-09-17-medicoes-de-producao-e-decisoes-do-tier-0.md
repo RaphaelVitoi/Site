@@ -5,8 +5,10 @@ escopo: Site
 ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-17T19:30:00-03:00'
-atualizado_em: '2026-09-17T19:30:00-03:00'
+atualizado_em: '2026-09-23T07:09:13-03:00'
 classes: [interno, medido, frontend]
+referencias_nao_resolviveis:
+  - frontend/src/components/simulator/ui/SimulatorTour.tsx
 caminhos:
   - reports/VALIDACAO-2026-09-17-medicoes-de-producao-e-decisoes-do-tier-0.md
 config_medida:

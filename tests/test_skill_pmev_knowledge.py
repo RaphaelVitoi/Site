@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import importlib
 import json
 from pathlib import Path
@@ -115,7 +116,7 @@ def test_build_usa_cache_por_conteudo_e_registra_falha(tmp_path):
     terceiro = curate_index.build_index(db, workspace, sem_ancoras, roots=(tmp_path,))
     assert terceiro.cache_hits == 1
 
-    with sqlite3.connect(db) as conn:
+    with contextlib.closing(sqlite3.connect(db)) as conn, conn:
         linha = conn.execute(
             "SELECT extraction_error, content_sha256 FROM documents WHERE path='quebrado.pdf'"
         ).fetchone()

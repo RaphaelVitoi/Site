@@ -12,6 +12,8 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 from typer.testing import CliRunner
@@ -25,6 +27,16 @@ from scripts.cli.nexus import app
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SUPPORT_SCRIPT = REPOSITORY_ROOT / "scripts" / "ops" / "Invoke-AgentCalibrationQuantitativeSupport.ps1"
 EVIDENCE_SCRIPT = REPOSITORY_ROOT / "scripts" / "ops" / "New-AgentCalibrationDailyEvidence.ps1"
+
+
+@pytest.fixture(autouse=True)
+def isolate_cli_hygiene_spawn(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Nao inicia o processo de higiene nas invocacoes CLI deste modulo."""
+    import scripts.cli.nexus as nexus_mod
+
+    subprocess_proxy = SimpleNamespace(**vars(subprocess))
+    subprocess_proxy.Popen = MagicMock()
+    monkeypatch.setattr(nexus_mod, "subprocess", subprocess_proxy)
 
 
 def test_forecast_agent_calibration_trajectory_active() -> None:

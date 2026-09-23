@@ -6,6 +6,7 @@ Execution -- Orquestracao central de execucao de tarefas e workflow completo.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from datetime import UTC, datetime, timedelta
 import gc
 import logging
@@ -440,7 +441,7 @@ def _save_task_result_sync(task_id: str, agent: str, response_text: str) -> None
 
 def _set_task_completed_at_sync(db_path: str | os.PathLike[str], task_id: str) -> None:
     is_uri = isinstance(db_path, str) and db_path.startswith("file:")
-    with sqlite3.connect(db_path, uri=is_uri) as db:
+    with contextlib.closing(sqlite3.connect(db_path, uri=is_uri)) as db, db:
         db.execute(
             "UPDATE tasks SET completedAt = ? WHERE id = ?",
             (datetime.now(UTC).isoformat(), task_id),

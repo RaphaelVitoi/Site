@@ -1,6 +1,6 @@
 {
   "schema_version": "agent-calibration-evidence/v4",
-  "date": "2026-09-22",
+  "date": "2026-09-23",
   "gate_metric": "distinct_sessions_with_feedback",
   "gate_definition": "Sessao = do inicio ao fim de um trabalho; compactacao de contexto NAO encerra sessao. A metrica que autoriza avaliacao e o numero de SESSOES DISTINTAS com feedback, acumulado desde a ultima calibracao e sem prazo de validade. Densidade intra-sessao (varios feedbacks numa mesma sessao) e dado retido, nao gatilho.",
   "evaluated_at_policy": "Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.",
@@ -9,7 +9,7 @@
   "timesfm_forecast": {
     "status": "INSUFFICIENT_HISTORY",
     "required_points": 4,
-    "available_points": 2,
+    "available_points": 3,
     "reason": "TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica."
   },
   "sessoes_com_feedback": [
@@ -23,8 +23,8 @@
   "sessoes_ativas_no_dia": [
     "01a0cad2-cb70-7111-95f0-3d080332f420"
   ],
-  "feedback_count_acumulado": 2,
-  "eligible_feedback_count": 2,
+  "feedback_count_acumulado": 3,
+  "eligible_feedback_count": 3,
   "eligible_feedback": [
     {
       "event_id": "4e8de6cd-d20a-4cbe-94c2-9545d0869e65",
@@ -34,6 +34,12 @@
     },
     {
       "event_id": "fb4a4e1a-2d71-4aec-8828-8550c2940807",
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "540b863b-f5e7-4b44-83f0-feab19fbd664",
       "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
       "eligible": true,
       "reasons": []
@@ -297,6 +303,13 @@
       "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
       "provenance_complete": true,
       "reasons": []
+    },
+    {
+      "event_id": "540b863b-f5e7-4b44-83f0-feab19fbd664",
+      "sequence": 81,
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "provenance_complete": true,
+      "reasons": []
     }
   ],
   "historical_excluded_count": 2,
@@ -306,6 +319,27 @@
   "feedback_count_no_dia": 1,
   "feedback_sem_sessao": 0,
   "por_sessao": [
+    {
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "feedback_count": 2,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-22T20:15:45.0000000-03:00",
+      "ultimo_feedback": "2026-09-23T00:55:57.0000000-03:00",
+      "atravessa_meia_noite": true,
+      "session_started_at": [
+        "09/22/2026 17:33:27"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gpt-6-luna"
+      ],
+      "conductor_vehicles": [
+        "codex"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
     {
       "session_id": "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
       "feedback_count": 1,
@@ -326,33 +360,12 @@
       "supervision_modes": [
         "assistida"
       ]
-    },
-    {
-      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
-      "feedback_count": 1,
-      "densidade_relevante": false,
-      "primeiro_feedback": "2026-09-22T20:15:45.0000000-03:00",
-      "ultimo_feedback": "2026-09-22T20:15:45.0000000-03:00",
-      "atravessa_meia_noite": false,
-      "session_started_at": [
-        "09/22/2026 17:33:27"
-      ],
-      "inicio_inconsistente": false,
-      "conductor_models": [
-        "gpt-6-luna"
-      ],
-      "conductor_vehicles": [
-        "codex"
-      ],
-      "supervision_modes": [
-        "assistida"
-      ]
     }
   ],
-  "score_mean": 9.8,
-  "score_min": 9.8,
+  "score_mean": 8.7,
+  "score_min": 6.5,
   "score_max": 9.8,
-  "score_mean_no_dia": 9.8,
+  "score_mean_no_dia": 6.5,
   "evidence_gate": {
     "metric": "distinct_sessions_with_feedback",
     "minimum_distinct_sessions": 3,
@@ -400,6 +413,23 @@
       "conductor_vehicle": "codex",
       "supervision_mode": "assistida",
       "record_hash": "b3e64bc20807f120c3ddbfa3160abf60cbad7e4483134ecc49c935cbc3187c43"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 81,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-23T00:55:57.807567-03:00",
+      "previous_hash": "b3e64bc20807f120c3ddbfa3160abf60cbad7e4483134ecc49c935cbc3187c43",
+      "event_id": "540b863b-f5e7-4b44-83f0-feab19fbd664",
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "score": 6.5,
+      "scope": "handoff",
+      "feedback": "muita lentidão e falta de eficiencia. já antecipo um feedback intrassession. MUITA. fora a erda de tempo com questoes perifericas e delegaveis. petulancia vs o tier 0. repetições infinitas de suites inteiras sem necessidade. rigidez inutil excessiva. desperdicio de tempo, energia cognitiva e tokens. etc.",
+      "session_started_at": "2026-09-22T17:33:27-03:00",
+      "conductor_model": "gpt-6-luna",
+      "conductor_vehicle": "codex",
+      "supervision_mode": "assistida",
+      "record_hash": "951222875bd3bc1c946134f72b64f5ba3d80a2f5489a3e347431ad2ddf8de5fd"
     }
   ],
   "outlier_evidence": {

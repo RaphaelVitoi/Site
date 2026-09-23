@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 from pathlib import Path
@@ -84,7 +85,7 @@ class PredictiveForestEngine:
             return False
 
         try:
-            with self._get_db_connection() as conn:
+            with contextlib.closing(self._get_db_connection()) as conn, conn:
                 cursor = conn.cursor()
                 # Query all events with metadata containing situation metrics
                 cursor.execute("SELECT isCorrect, metadata FROM TelemetryEvent WHERE metadata IS NOT NULL")

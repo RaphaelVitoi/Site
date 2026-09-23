@@ -14,6 +14,12 @@ from core.schemas import Task
 from database.queue_manager import QueueManager
 
 
+@pytest.fixture(autouse=True)
+def disable_desktop_notifications(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mantem os testes de fila isolados do processo externo de notificacao."""
+    monkeypatch.setattr("database.queue_manager.send_toast", lambda *_args: None)
+
+
 @pytest.fixture
 def temp_queue_manager():
     """Fixture que cria uma instancia isolada de QueueManager dentro da arvore do projeto."""

@@ -551,12 +551,10 @@ if ($cwvManualReview.Recorded) {
 }
 
 Write-Host ("`n[2] ACCESSIBILITY & BEST PRACTICE QUALITY AUDIT") -ForegroundColor Yellow
-if ($lighthouseProductionAudit.Measured -and $null -ne $lighthouseProductionAudit.Artifact.accessibility_score) {
-    $lhA11yScore = $lighthouseProductionAudit.Artifact.accessibility_score
-    if ($null -ne $lhA11yScore) {
-        $lhA11yPct = [int]([double]$lhA11yScore * 100)
-        Write-Host "    [LHCI A11Y] Lighthouse accessibility score: $($lhA11yPct)/100 (axe-core automatizado pelo Lighthouse)" -ForegroundColor Cyan
-    }
+$lhA11yScoreProperty = $lighthouseProductionAudit.Artifact.PSObject.Properties['accessibility_score']
+if ($lighthouseProductionAudit.Measured -and $null -ne $lhA11yScoreProperty -and $null -ne $lhA11yScoreProperty.Value) {
+    $lhA11yPct = [int]([double]$lhA11yScoreProperty.Value * 100)
+    Write-Host "    [LHCI A11Y] Lighthouse accessibility score: $($lhA11yPct)/100 (axe-core automatizado pelo Lighthouse)" -ForegroundColor Cyan
 }
 if (-not $FASE2_MEDE) {
     Write-Host "    NAO MEDIDO - axe-core nao executou contra um DOM renderizado." -ForegroundColor Yellow
@@ -1409,6 +1407,11 @@ $($cwvLimitationLines -join "`n")
 "@
 }
 
+$lhA11yScoreLabel = 'NAO MEDIDO'
+$lhA11yScoreProperty = $lighthouseProductionAudit.Artifact.PSObject.Properties['accessibility_score']
+if ($lighthouseProductionAudit.Measured -and $null -ne $lhA11yScoreProperty -and $null -ne $lhA11yScoreProperty.Value) {
+    $lhA11yScoreLabel = "{0}/100" -f [int]([double]$lhA11yScoreProperty.Value * 100)
+}
 $lighthouseProductionMarkdown = if ($lighthouseProductionAudit.Measured) {
 @"
 ## 1.2 Lighthouse de producao isolada
@@ -1420,7 +1423,7 @@ $lighthouseProductionMarkdown = if ($lighthouseProductionAudit.Measured) {
 - **TBT:** $($perfMetrics['TBT_MS'].Val) ms (limite <= $TbtThreshold ms)
 - **LCP no Lighthouse:** $($lighthouseProductionAudit.Artifact.metrics.lcpMs) ms
 - **CLS no Lighthouse:** $($lighthouseProductionAudit.Artifact.metrics.cls)
-- **Accessibility score no Lighthouse:** $([int]([double]$lighthouseProductionAudit.Artifact.accessibility_score * 100))/100
+- **Accessibility score no Lighthouse:** $lhA11yScoreLabel
 - **Fingerprint SHA-256:** $($lighthouseProductionAudit.ObservedFingerprint)
 
 "@

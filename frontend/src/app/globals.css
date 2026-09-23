@@ -718,3 +718,54 @@ body:has(.simulator-immersive) main.grow {
 .grid-item.card-4 {
   grid-area: card-4;
 }
+
+/* Escala comum dos três simuladores; a grade de mãos mantém sua densidade de dados. */
+:is(.simulator-immersive, .simulator-gto, .simulator-distortions) p:not(.simulator-matrix *) {
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+}
+
+:is(.simulator-immersive, .simulator-gto, .simulator-distortions) p[class*="uppercase"]:not(.simulator-matrix *) {
+  font-size: 0.75rem !important;
+  line-height: 1.35 !important;
+}
+
+:is(.simulator-immersive, .simulator-gto, .simulator-distortions) :is(h2, h3):not(.simulator-matrix *) {
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+:is(.simulator-immersive, .simulator-gto, .simulator-distortions) h4:not(.simulator-matrix *) {
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+:is(.simulator-immersive, .simulator-gto, .simulator-distortions) :is(
+  [class*="text-[0.34rem]"],
+  [class*="text-[0.38rem]"],
+  [class*="text-[0.44rem]"],
+  [class*="text-[0.46rem]"],
+  [class*="text-[0.48rem]"],
+  [class*="text-[0.5rem]"],
+  [class*="text-[0.52rem]"],
+  [class*="text-[0.55rem]"],
+  [class*="text-[0.56rem]"],
+  [class*="text-[0.58rem]"],
+  [class*="text-[0.6rem]"],
+  [class*="text-[0.62rem]"],
+  [class*="text-[0.65rem]"],
+  [class*="text-[0.68rem]"],
+  [class*="text-[0.7rem]"]
+):not(p):not(.simulator-matrix *):not(i):not(svg) {
+  font-size: 0.75rem !important;
+  line-height: 1.35;
+}
+
+.simulator-gto header h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.simulator-distortions .sota-page-title--hero {
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.08;
+}

@@ -327,6 +327,8 @@ def test_gate_manual_a11y_approval_is_fail_closed_when_the_runtime_or_source_cha
     assert "MANUAL_REVIEW_APPROVED" in source
     assert "HASH_MISMATCH" in source
     assert "TARGET_MISMATCH" in source
+    assert "$lhA11yScoreLabel = 'NAO MEDIDO'" in source
+    assert "PSObject.Properties['accessibility_score']" in source
 
 
 def test_cwv_human_review_preserves_positive_observation_without_fabricating_inp_or_tbt() -> None:
