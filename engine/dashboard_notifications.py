@@ -9,6 +9,7 @@ Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 
 from __future__ import annotations
 
+import contextlib
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -195,11 +196,38 @@ class DashboardNotificationsEngine:
                     urgency="NORMAL",
                 )
             )
+        elif total_feedbacks >= 3:
+            notifications.append(
+                DashboardNotification(
+                    title="Calibracao em Acumulacao",
+                    message="Tres feedbacks acumulados desde a calibracao; a governanca conta sessoes distintas e TimesFM requer 4 pontos para projetar.",
+                    severity=NotificationSeverity.INFO,
+                    category="CALIBRACAO",
+                )
+            )
+            recommendations.append(
+                DashboardRecommendation(
+                    shortcut_key="K",
+                    action_name="Revisao de Calibracao",
+                    description="Revisar os tres feedbacks acumulados antes da proxima projecao.",
+                    impact="Confirma o padrao observado sem extrapolar uma amostra insuficiente.",
+                    urgency="NORMAL",
+                )
+            )
+            recommendations.append(
+                DashboardRecommendation(
+                    shortcut_key="T",
+                    action_name="Oraculo de Series Temporais",
+                    description="Consultar estatisticas TimesFM; projecoes de calibracao exigem ao menos quatro feedbacks.",
+                    impact="Explicita os limites da previsao com a amostra atual.",
+                    urgency="NORMAL",
+                )
+            )
         else:
             notifications.append(
                 DashboardNotification(
                     title="Calibracao em Acumulacao",
-                    message=f"Aguardando quorum minimo ({total_feedbacks}/4 sessoes com feedback).",
+                    message=f"Aguardando quorum minimo ({total_feedbacks}/3 feedbacks com sessao identificada).",
                     severity=NotificationSeverity.INFO,
                     category="CALIBRACAO",
                 )
@@ -237,7 +265,7 @@ class DashboardNotificationsEngine:
         if not self.discovery_db_path.exists():
             return 0, 0
         try:
-            with sqlite3.connect(self.discovery_db_path, timeout=1.0) as conn:
+            with contextlib.closing(sqlite3.connect(self.discovery_db_path, timeout=1.0)) as conn, conn:
                 cur = conn.cursor()
                 rows = cur.execute("SELECT payload_json FROM discovery_trees").fetchall()
                 trees_count = len(rows)
@@ -261,10 +289,16 @@ class DashboardNotificationsEngine:
                     if not line_str:
                         continue
                     entry = json.loads(line_str)
-                    if entry.get("record_type") == "feedback" and entry.get("score") is not None:
+                    if entry.get("record_type") == "calibration":
+                        scores.clear()
+                    elif (
+                        entry.get("record_type") == "feedback"
+                        and entry.get("score") is not None
+                        and entry.get("session_id")
+                    ):
                         scores.append(float(entry["score"]))
 
-            if len(scores) < 4:
+            if len(scores) < 3:
                 return len(scores), 0.0, 0.0
 
             fc = forecast_agent_calibration_trajectory(scores, horizon_sessions=3)

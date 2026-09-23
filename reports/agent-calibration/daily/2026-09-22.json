@@ -9,23 +9,32 @@
   "timesfm_forecast": {
     "status": "INSUFFICIENT_HISTORY",
     "required_points": 4,
-    "available_points": 1,
+    "available_points": 2,
     "reason": "TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica."
   },
   "sessoes_com_feedback": [
-    "01a0ba03-5e1a-7cb2-8127-1356fe6e105a"
+    "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
+    "01a0cad2-cb70-7111-95f0-3d080332f420"
   ],
-  "sessoes_com_feedback_count": 1,
-  "sessoes_faltantes": 2,
+  "sessoes_com_feedback_count": 2,
+  "sessoes_faltantes": 1,
   "sessoes_com_inicio_inconsistente": [],
   "sessoes_com_densidade_relevante": [],
-  "sessoes_ativas_no_dia": [],
-  "feedback_count_acumulado": 1,
-  "eligible_feedback_count": 1,
+  "sessoes_ativas_no_dia": [
+    "01a0cad2-cb70-7111-95f0-3d080332f420"
+  ],
+  "feedback_count_acumulado": 2,
+  "eligible_feedback_count": 2,
   "eligible_feedback": [
     {
       "event_id": "4e8de6cd-d20a-4cbe-94c2-9545d0869e65",
       "session_id": "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "fb4a4e1a-2d71-4aec-8828-8550c2940807",
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
       "eligible": true,
       "reasons": []
     }
@@ -281,13 +290,20 @@
       "session_id": "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
       "provenance_complete": true,
       "reasons": []
+    },
+    {
+      "event_id": "fb4a4e1a-2d71-4aec-8828-8550c2940807",
+      "sequence": 80,
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "provenance_complete": true,
+      "reasons": []
     }
   ],
   "historical_excluded_count": 2,
   "provenance_policy": "Incomplete historical evidence is retained in records, excluded from structural gate and corroboration. Scope must explicitly declare handoff; model, connector and supervision are independent required fields. Score statistics describe retained history, not an eligible calibration sample.",
   "correcoes_no_ledger": 42,
   "correcoes_aplicadas": 42,
-  "feedback_count_no_dia": 0,
+  "feedback_count_no_dia": 1,
   "feedback_sem_sessao": 0,
   "por_sessao": [
     {
@@ -310,18 +326,39 @@
       "supervision_modes": [
         "assistida"
       ]
+    },
+    {
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-22T20:15:45.0000000-03:00",
+      "ultimo_feedback": "2026-09-22T20:15:45.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/22/2026 17:33:27"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gpt-6-luna"
+      ],
+      "conductor_vehicles": [
+        "codex"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
     }
   ],
   "score_mean": 9.8,
   "score_min": 9.8,
   "score_max": 9.8,
-  "score_mean_no_dia": null,
+  "score_mean_no_dia": 9.8,
   "evidence_gate": {
     "metric": "distinct_sessions_with_feedback",
     "minimum_distinct_sessions": 3,
     "minimum_feedback_records": 3,
     "structural_gate_passed": false,
-    "reason": "1 de 3 sessoes com feedback; faltam 2. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
+    "reason": "2 de 3 sessoes com feedback; faltam 1. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
     "intra_session_density_is_data_not_trigger": "Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.",
     "accumulation_never_expires": "Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.",
     "unsessioned_feedback_ignored": "Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.",
@@ -346,6 +383,23 @@
       "conductor_vehicle": "codex",
       "supervision_mode": "assistida",
       "record_hash": "fa7eec6abd6b3748cb9d494cf31ac69a0915d00f889f7f3b106b5bbf55870d51"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 80,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-22T20:15:45.5701862-03:00",
+      "previous_hash": "fa7eec6abd6b3748cb9d494cf31ac69a0915d00f889f7f3b106b5bbf55870d51",
+      "event_id": "fb4a4e1a-2d71-4aec-8828-8550c2940807",
+      "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "score": 9.8,
+      "feedback": "faltou um pouco de olhar SISTEMICO e antes de tudo, se contextualizar e entender como funciona o ecossistema. é o primeiro passo logico de qlqr processo e está no modus operandi. De resto, otima sessão.",
+      "scope": "handoff",
+      "session_started_at": "2026-09-22T17:33:27-03:00",
+      "conductor_model": "gpt-6-luna",
+      "conductor_vehicle": "codex",
+      "supervision_mode": "assistida",
+      "record_hash": "b3e64bc20807f120c3ddbfa3160abf60cbad7e4483134ecc49c935cbc3187c43"
     }
   ],
   "outlier_evidence": {

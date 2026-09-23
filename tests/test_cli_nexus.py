@@ -6,6 +6,7 @@ import re as _re
 import sqlite3
 import subprocess
 import sys
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -24,6 +25,14 @@ from scripts.llm_inference import run_inference as ri
 import task_executor
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def mock_background_hygiene_process(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Nao inicia o processo de higiene em testes que apenas invocam a CLI."""
+    subprocess_proxy = SimpleNamespace(**vars(subprocess))
+    subprocess_proxy.Popen = MagicMock()
+    monkeypatch.setattr(nexus_mod, "subprocess", subprocess_proxy)
 
 
 def test_nexus_root_help():
@@ -214,7 +223,10 @@ def test_nexus_sync_consciousness():
 
 def test_nexus_dashboard_once():
     """Valida renderizacao do snapshot instantaneo do Dashboard SOTA."""
-    with patch("scripts.cli.nexus.QueueManager") as mock_qm_cls:
+    with (
+        patch("scripts.cli.nexus.QueueManager") as mock_qm_cls,
+        patch("scripts.cli.nexus.subprocess.Popen"),
+    ):
         mock_qm = MagicMock()
         mock_qm.get_task_counts = AsyncMock(return_value={"pending": 0, "running": 0, "completed": 5})
         mock_qm.close = AsyncMock(return_value=None)

@@ -15,6 +15,8 @@ import json
 from pathlib import Path
 import re
 import subprocess
+from types import SimpleNamespace
+from unittest.mock import MagicMock
 
 import pytest
 from typer.testing import CliRunner
@@ -26,6 +28,16 @@ from engine.dream_replay_simulator import DreamReplaySimulator
 
 RAIZ = Path(__file__).resolve().parent.parent
 MODULOS = ("pmev_dream_bridge", "discovery_recorder", "dream_replay_simulator")
+
+
+@pytest.fixture(autouse=True)
+def isolate_cli_hygiene_spawn(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Nao inicia o processo de higiene nas invocacoes CLI deste modulo."""
+    import scripts.cli.nexus as nexus_mod
+
+    subprocess_proxy = SimpleNamespace(**vars(subprocess))
+    subprocess_proxy.Popen = MagicMock()
+    monkeypatch.setattr(nexus_mod, "subprocess", subprocess_proxy)
 
 
 def _tarefa(tid: str) -> Task:

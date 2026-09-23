@@ -34,6 +34,8 @@ def test_notifications_engine_evaluation_on_real_repo() -> None:
     assert report.token_headroom_percent >= 50.0
     assert report.overall_health == 100.0
     assert "HOMEOSTASE TOTAL" in report.health_status
+    assert report.calibration_risk == 0.0
+    assert any("Tres feedbacks" in n.message for n in report.notifications)
 
     # Garante presenca das notificacoes esperadas
     categories = {n.category for n in report.notifications}
@@ -69,7 +71,10 @@ def test_notifications_engine_token_budget_warning(tmp_path: Path) -> None:
     """Garante recomendacao de higiene critica quando tokens estao elevados."""
     engine = DashboardNotificationsEngine()
 
-    with patch.object(engine, "_inspect_discovery_db", return_value=(10, 20)):
+    with (
+        patch.object(engine, "_inspect_discovery_db", return_value=(10, 20)),
+        patch.object(engine, "_inspect_calibration_ledger", return_value=(3, 0.0, 0.0)),
+    ):
         report = engine.evaluate()
         # No estado normal, headroom e seguro
         assert report.overall_health == 100.0
@@ -77,14 +82,18 @@ def test_notifications_engine_token_budget_warning(tmp_path: Path) -> None:
 
 def test_cli_dashboard_notify_flag() -> None:
     """Valida saida sintetizada da flag --notify para automacoes periodicas."""
-    with patch.object(DashboardNotificationsEngine, "_inspect_discovery_db", return_value=(364, 664)):
+    with (
+        patch.object(DashboardNotificationsEngine, "_inspect_discovery_db", return_value=(364, 664)),
+        patch.object(DashboardNotificationsEngine, "_inspect_calibration_ledger", return_value=(3, 0.0, 0.0)),
+        patch("scripts.cli.nexus.subprocess.Popen"),
+    ):
         result = runner.invoke(app, ["dashboard", "--notify"])
     assert result.exit_code == 0
     assert "NOTIFICACOES, STATUS DINAMICO & RECOMENDACOES" in result.stdout
     assert "Dream-RSI:" in result.stdout
     assert "Token Headroom:" in result.stdout
     assert "[D] Otimizacao Dream-RSI:" in result.stdout
-    assert "[K] Projecao de Calibracao:" in result.stdout
+    assert "[K] Revisao de Calibracao:" in result.stdout
 
 
 def test_cli_dashboard_shortcuts_registered() -> None:

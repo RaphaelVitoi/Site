@@ -30,6 +30,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -47,6 +48,9 @@ def nx():
     sys.modules[nome] = m
     try:
         spec.loader.exec_module(m)
+        subprocess_proxy = SimpleNamespace(**vars(m.subprocess))
+        subprocess_proxy.Popen = MagicMock()
+        m.subprocess = subprocess_proxy
         yield m
     except SystemExit:
         yield m

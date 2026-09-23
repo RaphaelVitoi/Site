@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function IcmDistortionsPage() {
 	return (
-		<div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body pb-24">
+		<div className="simulator-distortions min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body pb-24">
 			<ContentPageHeader
 				title="Motor de Distorções ICM"
 				subtitle="O epicentro da física de risco do Poker Racional. Simule e visualize a convexidade do Bubble Factor, o colapso da MDF e a assimetria do Risk Premium em qualquer configuração de mesa final."
