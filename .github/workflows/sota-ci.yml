@@ -72,7 +72,7 @@ jobs:
 
       - name: 📦 Sync Dependencies via uv
         run: |
-          uv sync --frozen --extra dev
+          uv sync --frozen --extra dev --python "${{ matrix.python-version }}"
 
       - name: 🔍 Ruff Linter & Formatter Validation
         run: |
