@@ -28,7 +28,7 @@ export default function MotorPage() {
 							<i className="fa-solid fa-calculator text-accent-indigo text-xs" />
 						</div>
 						<div>
-							<h1 className="text-lg font-black tracking-[0.08em] text-white uppercase m-0">
+							<h1 className="text-xl sm:text-2xl font-black tracking-tight text-white uppercase m-0">
 								Simulador Mestre ICM
 							</h1>
 							<p className="text-xs font-mono text-text-dim uppercase tracking-wider m-0">

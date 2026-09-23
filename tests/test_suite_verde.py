@@ -167,6 +167,7 @@ def _comando_da_suite(monkeypatch, tmp_path, extra: list[str], tem_xdist: bool) 
 
 def test_suite_limita_workers_pela_memoria_quando_ha_xdist(monkeypatch, tmp_path):
     monkeypatch.setattr(sv.psutil, "virtual_memory", lambda: type("Memoria", (), {"available": 14 * 1024**3})())
+    monkeypatch.setattr(sv.os, "cpu_count", lambda: 8)
     cmd = _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=True)
     assert cmd[cmd.index("-n") + 1] == "5", cmd
 

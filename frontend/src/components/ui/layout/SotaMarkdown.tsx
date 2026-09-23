@@ -211,7 +211,9 @@ const markdownComponents: Components = {
   },
   hr: () => <hr className="my-16 border-t border-white/5 opacity-50" />,
   table: ({ children }) => (
-    <div className="my-10 w-full overflow-x-auto rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-md">
+    <div className="relative my-10 w-full overflow-x-auto rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-md">
+      {/* Gradient overlay to indicate scrollability on mobile */}
+      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-r from-black/60 to-transparent opacity-60" />
       <table className="w-full border-collapse text-left text-[0.9rem]">{children}</table>
     </div>
   ),
