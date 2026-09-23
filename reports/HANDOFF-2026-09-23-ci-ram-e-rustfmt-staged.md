@@ -25,6 +25,8 @@ caminhos:
   - frontend/src/components/analytics/NexusOperationsPanel.tsx
   - frontend/src/components/ui/layout/SotaMarkdown.tsx
   - frontend/tests/visual/homepage.spec.ts
+  - scripts/ops/suite_verde.py
+  - tests/test_suite_verde.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
