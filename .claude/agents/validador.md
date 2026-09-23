@@ -11,6 +11,7 @@ Perspectiva Matemática SOTA, EV Fold Dinâmico, Análise RIO Multiway, ICM, GTO
 - `pmev-game-theory-engine`
 - `bigquery-sql`
 - `bigquery-ai-ml`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `tests/test_desambiguacao.py`

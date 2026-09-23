@@ -16,6 +16,7 @@ Dominio absoluto em Next.js, React, Python e PowerShell SOTA. Engenharia de Soft
 - `supabase-postgres-best-practices`
 - `uv`
 - `mcp-toolbox-database`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `engine/llama_cpp/start_vulkan_daemon.ps1`

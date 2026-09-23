@@ -12,6 +12,7 @@ SecOps, intercepcao de Regex destrutivo, Protecao de Permissoes (GDPR/IP), RBAC,
 - `firebase-security-rules-auditor`
 - `sota-quality-gate`
 - `gcloud-auth-verification`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `scripts/ops/cwv_gate.ps1`

@@ -96,7 +96,7 @@ def test_ponte_antigravity_descobre_a_fonte_versionada_sem_copia():
         "entries": [
             {
                 "path": ".agents/skills",
-                "include_only": ["^(pmev-game-theory-engine|sota-quality-gate|sota-triad-mesh)$"],
+                "include_only": ["^(pmev-game-theory-engine|site-session-handoff|sota-quality-gate|sota-triad-mesh)$"],
             }
         ]
     }, (

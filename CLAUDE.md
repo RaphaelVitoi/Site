@@ -411,6 +411,12 @@ e auditada.
 
 ### 8.3 Calibração por feedback do administrador
 
+Em encerramentos formais do projeto, todos os operadores carregam
+`.agents/skills/site-session-handoff/SKILL.md` como fluxo comum de handoff,
+auditoria/aprendizado, memória, identidade, feedback e portões. Esta skill
+operacionaliza as regras abaixo; não substitui nem contradiz a governança
+canônica deste arquivo.
+
 Ao encerrar um handoff, exceto se o administrador adiantar novo comando ou
 dispensar a etapa, solicitar feedback textual e uma nota de `0` a `10`, que
 **aceita decimal**. A nota entra no ledger **literal, sem arredondamento e sem

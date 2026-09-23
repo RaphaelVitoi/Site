@@ -10,6 +10,7 @@ Ordenacao de dependencias (DAG), cadencia de tarefas, prevencao de deadlocks, mo
 ## Skills Especializadas
 - `sota-tactical-orchestrator-nanostack`
 - `gcp-cloud-data-orchestration-master`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `core/arbitrator.py`

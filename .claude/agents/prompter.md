@@ -10,6 +10,7 @@ Engenharia de prompts SOTA, In-context learning, Few-shot de alta densidade, Red
 ## Skills Especializadas
 - `sota-tactical-orchestrator-nanostack`
 - `neuropsychology-high-performance`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `core/sota_context_engine.py`

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Site Session Handoff"
+  short_description: "Official reports, calibration feedback, and safe Git closeout"
+  default_prompt: "Close out this Site session with evidence-bounded reports, memory, feedback, and required Git gates."

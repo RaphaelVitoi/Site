@@ -12,6 +12,7 @@ System Design SOTA, Topologia de Componentes, Engenharia de Requisitos, Visao de
 - `gcp-cloud-data-orchestration-master`
 - `gcp-bigquery-lakehouse-master`
 - `flutter-apply-architecture-best-practices`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `core/arbitrator.py`

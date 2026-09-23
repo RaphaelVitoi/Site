@@ -10,6 +10,7 @@ Engenharia de Requisitos, detalhamento de PRD/SPEC, criacao de milestones, divis
 ## Skills Especializadas
 - `sota-tactical-orchestrator-nanostack`
 - `enforcing-resource-attribution`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `database/queue_manager.py`

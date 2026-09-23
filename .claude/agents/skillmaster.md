@@ -12,6 +12,7 @@ Operacoes CRON agendadas, Cleanup deterministico, Prevencao de perda de entropia
 - `mcp-extension-troubleshooting`
 - `hf-cli-management`
 - `agy-customizations`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `scripts/ops/Ensure-OllamaModels.ps1`

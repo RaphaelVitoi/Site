@@ -51,6 +51,42 @@ def test_feedback_ledger_preserves_fractional_score(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for the PowerShell ledger writer")
+def test_feedback_score_can_be_recorded_without_qualitative_comment(tmp_path: Path) -> None:
+    """Quantitative handoff feedback remains valid when no comment is supplied."""
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    result = subprocess.run(
+        [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            str(WRITER),
+            "-Score",
+            "8.25",
+            "-SessionId",
+            "fixture-score-only-session",
+            "-ConductorModel",
+            "gpt-5.6-terra",
+            "-ConductorVehicle",
+            "codex",
+            "-SupervisionMode",
+            "assistida",
+            "-LedgerPath",
+            str(ledger),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    response = json.loads(result.stdout)
+    rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines()]
+
+    assert response["status"] == "appended"
+    assert rows[-1]["score"] == 8.25
+    assert "feedback" not in rows[-1]
+
+
+@pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for the PowerShell ledger writer")
 def test_feedback_ledger_records_conductor_model_and_supervision_mode(tmp_path: Path) -> None:
     """Every session must be capable of registering its exact conducting model and supervision mode."""
     ledger = tmp_path / "feedback-ledger.jsonl"

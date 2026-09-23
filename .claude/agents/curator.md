@@ -11,6 +11,7 @@ Copywriting de Elite, revisao de UX visceral, alinhamento com a Cosmovisao, SEO 
 - `neuropsychology-high-performance`
 - `windows-visual-tuning`
 - `google-stitch-design`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `engine/avatars/avatar_dashboard.py`

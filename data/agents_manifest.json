@@ -14,7 +14,8 @@
       "pmev-game-theory-engine",
       "bigquery-sql",
       "bigquery-ai-ml",
-      "neuropsychology-high-performance"
+      "neuropsychology-high-performance",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "scripts/ops/Start-LlamaVulkanEngine.ps1",
@@ -41,7 +42,8 @@
       "sota-quality-gate",
       "agy-customizations",
       "windows-system-maintenance",
-      "windows-visual-tuning"
+      "windows-visual-tuning",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -68,7 +70,8 @@
       "sota-tactical-orchestrator-nanostack",
       "gcp-cloud-data-orchestration-master",
       "gcp-bigquery-lakehouse-master",
-      "flutter-apply-architecture-best-practices"
+      "flutter-apply-architecture-best-practices",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "core/arbitrator.py",
@@ -91,7 +94,8 @@
     "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
-      "enforcing-resource-attribution"
+      "enforcing-resource-attribution",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "database/queue_manager.py"
@@ -114,7 +118,8 @@
     "skills": [
       "sota-tactical-orchestrator-nanostack",
       "enforcing-resource-attribution",
-      "google-jules-cloud"
+      "google-jules-cloud",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "core/arbitrator.py",
@@ -141,7 +146,8 @@
       "pubchem-database",
       "opentargets-database",
       "sota-consciousness-memory-rag",
-      "timesfm-forecasting"
+      "timesfm-forecasting",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "memory_rag.py",
@@ -164,7 +170,8 @@
     "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
-      "neuropsychology-high-performance"
+      "neuropsychology-high-performance",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "core/sota_context_engine.py"
@@ -188,7 +195,8 @@
       "sota-quality-gate",
       "firebase-security-rules-auditor",
       "credentials",
-      "windows-system-maintenance"
+      "windows-system-maintenance",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -217,7 +225,8 @@
       "supabase",
       "supabase-postgres-best-practices",
       "uv",
-      "mcp-toolbox-database"
+      "mcp-toolbox-database",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "engine/llama_cpp/start_vulkan_daemon.ps1",
@@ -243,7 +252,8 @@
       "dart-add-unit-test",
       "flutter-add-widget-test",
       "firebase-security-rules-auditor",
-      "chrome-devtools-agent-sota"
+      "chrome-devtools-agent-sota",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -267,7 +277,8 @@
     "skills": [
       "neuropsychology-high-performance",
       "windows-visual-tuning",
-      "google-stitch-design"
+      "google-stitch-design",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "engine/avatars/avatar_dashboard.py"
@@ -290,7 +301,8 @@
     "skills": [
       "pmev-game-theory-engine",
       "bigquery-sql",
-      "bigquery-ai-ml"
+      "bigquery-ai-ml",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "tests/test_desambiguacao.py"
@@ -312,7 +324,8 @@
     "primary_model": "qwen2.5-coder:0.5b",
     "skills": [
       "sota-quality-gate",
-      "data-autocleaning"
+      "data-autocleaning",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "scripts/routines/sync_agents_reality.ps1"
@@ -334,7 +347,8 @@
     "primary_model": "qwen2.5-coder:0.5b",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
-      "gcp-cloud-data-orchestration-master"
+      "gcp-cloud-data-orchestration-master",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "core/arbitrator.py",
@@ -359,7 +373,8 @@
       "credentials",
       "firebase-security-rules-auditor",
       "sota-quality-gate",
-      "gcloud-auth-verification"
+      "gcloud-auth-verification",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -385,7 +400,8 @@
       "literature-search-arxiv",
       "literature-search-europepmc",
       "google-workspace",
-      "poker-pmev-knowledge-engine"
+      "poker-pmev-knowledge-engine",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "memory_rag.py",
@@ -410,7 +426,8 @@
       "skill-repair",
       "mcp-extension-troubleshooting",
       "hf-cli-management",
-      "agy-customizations"
+      "agy-customizations",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "scripts/ops/Ensure-OllamaModels.ps1",
@@ -434,7 +451,8 @@
     "skills": [
       "sota-consciousness-memory-rag",
       "bigquery-sql",
-      "neuropsychology-high-performance"
+      "neuropsychology-high-performance",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "engine/avatars/run_avatar.py",
@@ -458,7 +476,8 @@
     "skills": [
       "pmev-game-theory-engine",
       "sota-consciousness-memory-rag",
-      "uv"
+      "uv",
+      "site-session-handoff"
     ],
     "specialized_scripts": [
       "engine/llama_cpp/start_vulkan_daemon.ps1",

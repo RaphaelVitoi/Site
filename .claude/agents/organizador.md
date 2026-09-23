@@ -10,6 +10,7 @@ Gerenciamento de Diretorios, Sincronizacao de Contexto, Expurgacao de Entropia D
 ## Skills Especializadas
 - `sota-quality-gate`
 - `data-autocleaning`
+- `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
 - `scripts/routines/sync_agents_reality.ps1`
