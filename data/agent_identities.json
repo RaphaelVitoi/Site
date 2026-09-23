@@ -79,6 +79,14 @@
       "nota": "Identidade do condutor Codex informada pelo Tier 0 em 2026-09-22. Sessao assistida. Modelo de condutor da plataforma Codex; esta identidade nao declara disponibilidade como modelo de inferencia do produto."
     },
     {
+      "nome": "Codex GPT-6 Sol",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-6-sol",
+      "tier": "1",
+      "nota": "Identidade de condutor Codex adicionada por solicitacao do Tier 0 em 2026-09-22. Segue o regime assistido da identidade GPT-6 Luna. Modelo de condutor da plataforma Codex; esta identidade nao declara disponibilidade como modelo de inferencia do produto."
+    },
+    {
       "nome": "google-labs-jules[bot]",
       "email": "161369871+google-labs-jules[bot]@users.noreply.github.com",
       "veiculo": "jules",

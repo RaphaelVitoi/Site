@@ -1,15 +1,15 @@
 ---
 name: google-jules-cloud
-description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules.google.com). Use ao despachar tarefas assincronas em VMs descartaveis na nuvem (otimizacoes noturnas Bolt, refatoracoes em massa, geracao de testes), inspecionar sessoes e atividades, aprovar planos via MCP e sincronizar telemetria em JULES_REPORT.md sob o plano Jules in Pro.
+description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules.google.com). Use ao despachar tarefas assincronas em VMs descartaveis na nuvem (otimizacoes noturnas Bolt, refatoracoes em massa, geracao de testes), inspecionar sessoes e atividades, aprovar planos via MCP e sincronizar telemetria em reports/integrations/JULES_REPORT.md.
 ---
 
 # SKILL: Google Jules Cloud — Orquestração Assíncrona & Engenharia em Nuvem
 
 > **Plataforma Oficial:** [jules.google.com](https://jules.google.com/)  
 > **API REST v1alpha:** `https://jules.googleapis.com/v1alpha`  
-> **Módulo Canônico:** [`engine/jules_bridge.py`](file:///c:/Users/rapha/.gemini/Site/engine/jules_bridge.py)  
-> **Relatório Dinâmico:** [`JULES_REPORT.md`](file:///c:/Users/rapha/.gemini/Site/JULES_REPORT.md)  
-> **Sincronizador Oficial:** [`scripts/ops/sync_jules_report.py`](file:///c:/Users/rapha/.gemini/Site/scripts/ops/sync_jules_report.py)  
+> **Módulo Canônico:** [`engine/jules_bridge.py`](../../../engine/jules_bridge.py)
+> **Relatório Dinâmico:** [`JULES_REPORT.md`](../../../reports/integrations/JULES_REPORT.md)
+> **Sincronizador Oficial:** [`scripts/ops/sync_jules_report.py`](../../../scripts/ops/sync_jules_report.py)
 > **Governança:** Protocolo Master Chico SOTA v8.0 GOLD (Seção X — Jules Cloud MCP Bridge)
 
 ---
@@ -39,19 +39,21 @@ description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (
 
 ### Configuração da Conta & Cotas
 - **Assinatura:** `Jules in Pro` (Workflows intensivos contínuos)
-- **Teto Operacional:** Até **100 sessões concorrentes por dia** para o repositório `RaphaelVitoi/Site`.
+- **Cotas:** São próprias da conta e podem mudar; consulte a interface oficial no momento do despacho. O bridge não declara nem garante um teto fixo.
 - **Credenciais:** Chave `JULES_API_KEY` persistida em `HKCU:\Environment:JULES_API_KEY` (Pure ASCII, zero plaintext no Git).
 
 ---
 
-## 2. Topologia Operacional Autopoiética (Ciclo Diário Não-Concorrente)
+## 2. Topologia Operacional: Nuvem, Sincronização e Homologação
 
-O ecossistema opera sob estrita **não-concorrência** e **isolamento térmico**:
+As sessões rodam no serviço do Jules; sincronização e homologação continuam sendo
+responsabilidades locais distintas. A agenda externa não é presumida ativa por
+esta skill:
 
 ```mermaid
 flowchart TD
     subgraph Nuvem["☁️ Google Cloud VM (Jules Assíncrono)"]
-        Cron["⏰ Cron Noturno (03:20 UTC)\nPersona 'Bolt ⚡'"]
+        Cron["⏰ Agendamento externo\n(status a confirmar no relatório)"]
         Task["🎯 Tarefas Sob Demanda"]
         Clone["📦 git clone --recursive\n(Ambiente Hermético /app)"]
         Exec["⚙️ Execução de Otimizações & Testes"]
@@ -62,7 +64,7 @@ flowchart TD
 
     subgraph Rastreamento["📊 Sincronização & Telemetria"]
         Sync["🔄 scripts/ops/sync_jules_report.py --write"]
-        Report["📑 JULES_REPORT.md Atualizado"]
+        Report["📑 reports/integrations/JULES_REPORT.md Atualizado"]
         Diff -.->|Telemetria REST API| Sync --> Report
     end
 
@@ -116,6 +118,6 @@ if current_status.state == "COMPLETED":
 
 ## 4. Retorno de Investimento Diário (ROI Quantitativo & Qualitativo)
 
-1. **Zero Sobrecarga de CPU/RAM Local:** Todas as 100 sessões possíveis rodam em contêineres Google Cloud de alta performance sem interferir no runtime do Next.js local (porta 3000) ou CDP (porta 9222).
-2. **Manutenção Preventiva Autopoiética:** O cron `Bolt ⚡` atua como um sistema imunológico contínuo que poda dependências zumbis, refatora imports e previne regressões durante a noite.
-3. **Auditoria em Malha Fechada:** `JULES_REPORT.md` oferece visibilidade total para auditoria imediata ao início de cada dia de trabalho.
+1. **Execução remota:** O trabalho solicitado ao Jules executa na infraestrutura do provedor; o bridge local ainda faz chamadas de API e a operação não garante consumo local zero.
+2. **Automação:** Use o relatório mais recente para observar atividade atribuída ao cron `Bolt ⚡`; a skill não presume que o cron esteja ativo sem telemetria atual.
+3. **Proveniência:** `reports/integrations/JULES_REPORT.md` é uma fotografia da última sincronização bem-sucedida; confira a data no cabeçalho antes de tratá-la como estado atual.

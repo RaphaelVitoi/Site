@@ -56,6 +56,7 @@ def test_missing_provenance_rejected_before_writing(tmp_path, field, value):
     [
         ("gpt-5.6-terra", "codex"),
         ("gpt-6-luna", "codex"),
+        ("gpt-6-sol", "codex"),
         ("claude-opus-5", "claude-code"),
         ("gemini-3.8-flash", "antigravity"),
     ],

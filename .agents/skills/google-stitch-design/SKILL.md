@@ -1,15 +1,15 @@
 ---
 name: google-stitch-design
-description: Runbook, governanca e esteira de UI generativa para o Google Cloud Stitch MCP (stitch.withgoogle.com / stitch.googleapis.com). Use ao gerar telas a partir de prompts conceituais, criar e sincronizar design systems (Obsidian Analytics), transcrever DESIGN.md em componentes modulares Tailwind CSS 4 / Next.js 16, gerar variantes visuais e rotear modelos (Gemini 3.8 Flash Balanced default vs Gemini 3.5 Flash-Lite Speed).
+description: Runbook e governanca para o Google Cloud Stitch MCP (stitch.withgoogle.com / stitch.googleapis.com). Use ao gerar telas a partir de prompts conceituais, consultar o design system Obsidian Analytics, revisar variantes visuais e integrar resultados em componentes Tailwind CSS 4 / Next.js; a selecao de modelo e feita na interface do Stitch, nao por roteamento desta skill.
 ---
 
 # SKILL: Google Cloud Stitch — UI Generativa & Design Systems SOTA
 
 > **Plataforma Web Oficial:** [stitch.withgoogle.com](https://stitch.withgoogle.com/)  
 > **Servidor MCP Remoto:** `https://stitch.googleapis.com/mcp` (JSON-RPC 2.0)  
-> **Módulo Canônico:** [`engine/stitch_bridge.py`](file:///c:/Users/rapha/.gemini/Site/engine/stitch_bridge.py)  
-> **Relatório Dinâmico:** [`STITCH_REPORT.md`](file:///c:/Users/rapha/.gemini/Site/STITCH_REPORT.md)  
-> **Sincronizador Oficial:** [`scripts/ops/sync_stitch_report.py`](file:///c:/Users/rapha/.gemini/Site/scripts/ops/sync_stitch_report.py)  
+> **Módulo Canônico:** [`engine/stitch_bridge.py`](../../../engine/stitch_bridge.py)
+> **Relatório Dinâmico:** [`STITCH_REPORT.md`](../../../reports/integrations/STITCH_REPORT.md)
+> **Sincronizador Oficial:** [`scripts/ops/sync_stitch_report.py`](../../../scripts/ops/sync_stitch_report.py)
 > **Projeto Vinculado:** `projects/18242753218562483944` (*Nexus PMev & Poker Racional UI*)  
 > **Design System Ativo:** `Obsidian Analytics` (`assets/6f9c8c6e7114422393d45b0c4ca02808`)
 
@@ -17,9 +17,7 @@ description: Runbook, governanca e esteira de UI generativa para o Google Cloud 
 
 ## 1. Motor Generativo — a escolha é na UI, não pelo portão MCP
 
-O Stitch opera hoje em **Gemini 3.8 Flash** (`Balanced`, padrão) e **Gemini 3.5
-Flash-Lite** (`Speed`), após a atualização do Google de 2026-09-04. O seletor
-existe e é **do operador**, no compositor de prompt da interface
+Na verificação de 2026-09-04, o seletor de modelo era **do operador**, no compositor de prompt da interface
 ([stitch.withgoogle.com](https://stitch.withgoogle.com/)) — verificado em tela
 pelo Tier 0 na mesma data.
 
@@ -46,7 +44,7 @@ pelo Tier 0 na mesma data.
 
 ## 2. Design System Canônico: `Obsidian Analytics`
 
-O Stitch sintetiza as diretrizes estéticas do Poker Racional a partir de [frontend/src/app/globals.css](file:///c:/Users/rapha/.gemini/Site/frontend/src/app/globals.css):
+O Stitch sintetiza as diretrizes estéticas do Poker Racional a partir de [frontend/src/app/globals.css](../../../frontend/src/app/globals.css):
 
 * **Fundo & Superfícies:** `Canvas Deep` (`#030610`), `Space Base` (`#0F1729`), `Panel Surface` (`#344154` com backdrop blur de 20px).
 * **Bordas & Brilhos:** Contornos perimetrais de 1px com brilho dourado (`rgba(242, 183, 43, 0.15)`).
@@ -68,7 +66,7 @@ flowchart LR
     end
 
     subgraph StitchCloud["🎨 2. Stitch MCP Cloud"]
-        Gen["generate_screen_from_text\n(Gemini 3.8 Flash / 3.5 Flash-Lite)"]
+        Gen["generate_screen_from_text\n(modelo escolhido na UI)"]
         Var["generate_variants\n(3 a 5 variações)"]
         DS["apply_design_system\n(Obsidian Analytics)"]
         Gen --> Var --> DS
@@ -127,6 +125,6 @@ print(f"Total de telas: {len(screens)}")
 
 ## 5. Retorno de Investimento Diário (ROI Quantitativo & Qualitativo)
 
-1. **Aceleração 10x no Ciclo de Ideação:** Protótipos de dashboards complexos são gerados em segundos, eliminando rascunhos manuais em Figma.
-2. **Imunidade contra "Drift" de Design:** O Design System `Obsidian Analytics` atua como guardião automatizado, impedindo que telas geradas divirjam das cores, fontes ou contrastes canônicos do Site.
-3. **Conversão Direta para Tailwind CSS 4:** Telas inspecionadas via `get_screen` entregam diretamente classes utilitárias modernas compatíveis com o `@theme` do projeto.
+1. **Ideação visual:** Geração de telas e variantes acelera a exploração de alternativas; tempo e qualidade dependem do prompt e exigem revisão.
+2. **Referência de design:** `Obsidian Analytics` fornece tokens e diretrizes, mas não garante por si só conformidade automática nem elimina drift.
+3. **Integração revisável:** Conteúdo obtido por `get_screen` pode orientar componentes Tailwind/Next.js; valide acessibilidade, responsividade e fidelidade antes de produção.

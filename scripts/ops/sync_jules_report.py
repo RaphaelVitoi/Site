@@ -171,8 +171,12 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
         f"| **Sess\u00f5es com Falha de Execu\u00e7\u00e3o** | `{failed}` | \u26a0\ufe0f Diagn\u00f3stico detalhado abaixo |"
     )
     lines.append(f"| **Sess\u00f5es Ativas no Momento** | `{in_progress}` | \U0001f4a4 Standby |")
-    lines.append("| **Plano Ativo** | `Jules in Pro` | Cota: 100 sess\u00f5es/dia (1/100 consumida) |")
-    lines.append("| **Cron Noturno Automatizado** | Ativo (~03:15\u201303:25 UTC) | Persona `Bolt \u26a1` |")
+    lines.append(
+        "| **Plano / cota** | N\u00e3o expostos por este endpoint | Consulte a conta no momento da opera\u00e7\u00e3o |"
+    )
+    lines.append(
+        "| **Agendamento externo** | N\u00e3o verificado | O hist\u00f3rico de sess\u00f5es n\u00e3o prova estado do cron |"
+    )
     lines.append("")
     lines.append("> [!NOTE]")
     lines.append("> **Modelo: a escolha \u00e9 na UI, n\u00e3o pelo port\u00e3o MCP.**")
@@ -188,7 +192,7 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     )
     lines.append(">")
     lines.append(
-        "> **Subscri\u00e7\u00e3o**: `Jules in Pro`, autorizando at\u00e9 100 sess\u00f5es concorrentes/di\u00e1rias na nuvem da Google."
+        "> Plano, limites da conta e automa\u00e7\u00f5es externas n\u00e3o s\u00e3o inferidos do hist\u00f3rico retornado pela API."
     )
     lines.append("")
     lines.append("---")

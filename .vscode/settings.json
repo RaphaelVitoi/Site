@@ -114,7 +114,7 @@
         "editor.defaultFormatter": "vscode.json-language-features"
     },
     "[yaml]": {
-        "editor.defaultFormatter": "redhat.vscode-yaml"
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[html]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"

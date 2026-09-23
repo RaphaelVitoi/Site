@@ -2,7 +2,7 @@
 
 > **Repositório Monitorado:** `RaphaelVitoi/Site`
 > **Governança:** Protocolo Master Chico SOTA v8.0 GOLD (Seção X — Jules Cloud MCP Bridge)
-> **Data de Atualização:** `2026-09-05 14:56:06 UTC`
+> **Data da fotografia:** `2026-09-05 14:56:06 UTC` — snapshot histórico; não representa o estado atual.
 > **Origem dos Dados:** Google Jules API v1alpha (`https://jules.googleapis.com/v1alpha`)
 
 ---
@@ -15,8 +15,8 @@
 | **Sessões Concluídas com Sucesso** | `2` | ✅ Execução com artefatos |
 | **Sessões com Falha de Execução** | `0` | ⚠️ Diagnóstico detalhado abaixo |
 | **Sessões Ativas no Momento** | `0` | 💤 Standby |
-| **Plano Ativo** | `Jules in Pro` | Cota: 100 sessões/dia (1/100 consumida) |
-| **Cron Noturno Automatizado** | Ativo (~03:15–03:25 UTC) | Persona `Bolt ⚡` |
+| **Plano / cota** | Não verificados | O histórico de sessões não expõe limites da conta |
+| **Agendamento externo** | Não verificado | Este snapshot não comprova estado do cron |
 
 > [!NOTE]
 > **Modelo: a escolha é na UI, não pelo portão MCP.**
@@ -25,7 +25,7 @@
 > Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04).
 > Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador.
 >
-> **Subscrição**: `Jules in Pro`, autorizando até 100 sessões concorrentes/diárias na nuvem da Google.
+> Plano e limites da conta não são inferidos do histórico retornado pela API. A informação de 100 sessões diárias citada nesta sessão refere-se aos modelos Gemini e não deve ser atribuída ao Jules.
 
 ---
 
