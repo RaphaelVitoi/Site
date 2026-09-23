@@ -148,8 +148,8 @@ class LabManager:
                 await db.commit()
                 logger.info("Estudo PMev %s persistido no Laboratorio.", study_id)
                 return True
-        except Exception as err:
-            logger.error("Erro ao salvar estudo PMev no LabManager: %s", err)
+        except Exception:
+            logger.exception("Erro ao salvar estudo PMev no LabManager")
             return False
 
     async def get_pmev_benchmark_studies(self, limit: int = 20) -> list[dict[str, str | float | int]]:
