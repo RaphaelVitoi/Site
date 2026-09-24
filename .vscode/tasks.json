@@ -226,6 +226,28 @@
       "problemMatcher": []
     },
     {
+      "label": "Cargo Check: WASM Equity",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["check", "--manifest-path", "${workspaceFolder}/wasm-equity/Cargo.toml", "--all-targets"],
+      "problemMatcher": ["$rustc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Cargo Clippy: WASM Equity",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["clippy", "--manifest-path", "${workspaceFolder}/wasm-equity/Cargo.toml", "--all-targets"],
+      "problemMatcher": ["$rustc"],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
       "label": "Watchers SOTA: All",
       "dependsOn": [
         "Dev: Frontend (Next.js)",

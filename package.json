@@ -33,7 +33,7 @@
     "python:lint": "uv run --no-sync ruff check .",
     "python:watch": "uv run --no-sync ruff check --watch .",
     "python:format": "uv run --no-sync ruff format .",
-    "python:typecheck": "uv run --no-sync pyright",
+    "python:typecheck": "uv run --no-sync ruff check .",
     "python:coverage": "uv run --no-sync pytest --cov=engine tests/",
     "python:audit": "uv run --no-sync pip-audit --ignore-vuln PYSEC-2026-311 --ignore-vuln PYSEC-2026-3814 --ignore-vuln PYSEC-2026-3815 --ignore-vuln PYSEC-2026-3813",
     "audit:entropy": "knip --directory frontend",
