@@ -151,7 +151,7 @@ class LayaSolverAdapter:
     def adapt_for_solver(
         cls,
         solver_name: str,
-        state_text_or_dict: str | dict[str, Any],
+        state_text_or_dict: str | dict[str, Any] | LayaPrediction,
         base_parameters: dict[str, Any] | None = None,
     ) -> LayaSolverBridgeResult:
         """Traduz a entrada S1 (Laya) em parâmetros específicos para o solver requisitado.
@@ -160,8 +160,8 @@ class LayaSolverAdapter:
         ----------
         solver_name : str
             Nome do solver ou framework-alvo (ex: 'pluribus', 'deepstack', 'pmev-perspective').
-        state_text_or_dict : str | dict
-            Estado do jogo, prompt ou requisição textual analisada.
+        state_text_or_dict : str | dict | LayaPrediction
+            Estado do jogo, prompt, requisição textual ou predição Laya pré-calculada.
         base_parameters : dict | None
             Parâmetros base existentes que serão modulados pelo System-1.
 
@@ -174,8 +174,13 @@ class LayaSolverAdapter:
             solver_key = "universal-importer"
 
         params = dict(base_parameters or {})
-        pred = laya_predict(state_text_or_dict)
-        intent = classificar_intencao(state_text_or_dict)
+        if isinstance(state_text_or_dict, LayaPrediction):
+            pred = state_text_or_dict
+            state_desc = str(pred.answers or pred.choice or "")
+            intent = classificar_intencao(state_desc)
+        else:
+            pred = laya_predict(state_text_or_dict)
+            intent = classificar_intencao(state_text_or_dict)
 
         nao_latin = intent.nao_latin_fraction_pct
         if not pred.provenia.fallback_used and (pred.noul is not None or pred.confidence is not None):

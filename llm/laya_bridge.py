@@ -484,6 +484,19 @@ def _construir_fallback_prediction(
     )
 
 
+_PREDICT_ROUTER: Any = None
+
+
+def _obter_predict_router() -> Any:
+    """Obtém ou instancia o Router com cache persistente de agentes carregados em memória."""
+    global _PREDICT_ROUTER
+    if _PREDICT_ROUTER is None:
+        from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        _PREDICT_ROUTER = _Router(default=CANONICAL_LAYA_MODEL)
+    return _PREDICT_ROUTER
+
+
 def laya_predict(
     state: str | dict[str, Any],
     questions: dict[str, dict[str, Any]] | None = None,
@@ -521,9 +534,7 @@ def laya_predict(
         )
 
     try:
-        from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-
-        router = _Router(default=CANONICAL_LAYA_MODEL)
+        router = _obter_predict_router()
 
         # O modelo canônico é sempre 'multilingual', a menos que explicitamente sobrescrito
         model_name = model_override or CANONICAL_LAYA_MODEL
@@ -601,9 +612,7 @@ def predict_batch(
         return [laya_predict(req.get("state", ""), req.get("questions"), model_override) for req in requests]
 
     try:
-        from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-
-        router = _Router(default=CANONICAL_LAYA_MODEL)
+        router = _obter_predict_router()
         target_model = model_override or CANONICAL_LAYA_MODEL
         formatted_requests = []
         for r in requests:

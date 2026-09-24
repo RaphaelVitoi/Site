@@ -10,6 +10,7 @@
 import {
 	CANONICAL_LAYA_MODEL,
 	CANONICAL_LAYA_REPO,
+	adaptForSolverClient,
 	ruinPriorityFromIntencao,
 	ruinPriorityFromLayaPrediction,
 	type LayaPredictionPayload,
@@ -81,6 +82,102 @@ describe('Laya S1 Frontend Parity Tests', () => {
 			confidence: 0.2,
 		};
 		// noul = 0.0 -> prior = 1.0 + (1 - 0)*0.3 = 1.30
-		expect(ruinPriorityFromLayaPrediction(predIncerta)).toBe(1.30);
+		expect(ruinPriorityFromLayaPrediction(predIncerta)).toBe(1.3);
+	});
+
+	it('deve modular parâmetros de CFR+ com base em noul', () => {
+		const pred: LayaPredictionPayload = {
+			answers: {},
+			model_used: CANONICAL_LAYA_MODEL,
+			device: 'cpu',
+			n_tokens: 10,
+			latency_ms: 1.0,
+			noul: 0.5,
+			choice: 'moderate',
+			score: 0.5,
+			confidence: 0.5,
+			provenia: {
+				engine_id: 'test',
+				implementation_level: 'test',
+				runtime_used: 'test',
+				model_used: 'test',
+				intended_model: 'test',
+				weights_loaded: false,
+				fallback_used: true,
+				assumptions: [],
+				limitations: [],
+				units: [],
+			},
+		};
+		const res = adaptForSolverClient('cfr-plus', pred);
+		expect(res.target_solver).toBe('cfr-plus');
+		// discount_alpha = 0.6 + 0.3 * (1 - 0.5) = 0.75
+		expect(res.adapted_parameters.discount_alpha).toBe(0.75);
+		expect(res.framework_signals.cfr_regret_matching_plus).toBe(true);
+	});
+
+	it('deve modular amostragem e prior de ruína para Monte Carlo', () => {
+		const predComplex: LayaPredictionPayload = {
+			answers: {},
+			model_used: CANONICAL_LAYA_MODEL,
+			device: 'cpu',
+			n_tokens: 10,
+			latency_ms: 1.0,
+			noul: 0.2, // incerteza alta
+			choice: 'complex',
+			score: 0.2,
+			confidence: 0.2,
+			provenia: {
+				engine_id: 'test',
+				implementation_level: 'test',
+				runtime_used: 'test',
+				model_used: 'test',
+				intended_model: 'test',
+				weights_loaded: false,
+				fallback_used: true,
+				assumptions: [],
+				limitations: [],
+				units: [],
+			},
+		};
+		const res = adaptForSolverClient('monte-carlo', predComplex, { simulations_count: 10000 });
+		expect(res.target_solver).toBe('monte-carlo');
+		expect(res.adapted_parameters.simulations_count).toBe(15000);
+		expect(Number(res.adapted_parameters.ruin_prior)).toBeGreaterThan(1.2);
+		expect(res.framework_signals.monte_carlo_sample_expansion).toBe(true);
+	});
+
+	it('deve modular horizonte e foco quantílico para TimesFM e poda para Dream-RSI', () => {
+		const pred: LayaPredictionPayload = {
+			answers: {},
+			model_used: CANONICAL_LAYA_MODEL,
+			device: 'cpu',
+			n_tokens: 10,
+			latency_ms: 1.0,
+			noul: 0.8,
+			choice: 'moderate',
+			score: 0.8,
+			confidence: 0.8,
+			provenia: {
+				engine_id: 'test',
+				implementation_level: 'test',
+				runtime_used: 'test',
+				model_used: 'test',
+				intended_model: 'test',
+				weights_loaded: false,
+				fallback_used: true,
+				assumptions: [],
+				limitations: [],
+				units: [],
+			},
+		};
+		const timesfmRes = adaptForSolverClient('timesfm', pred, { horizon: 10 });
+		expect(timesfmRes.target_solver).toBe('timesfm');
+		expect(Number(timesfmRes.adapted_parameters.horizon)).toBe(14); // 10 * (1 + 0.8*0.5) = 14
+
+		const dreamRes = adaptForSolverClient('dream-rsi', pred, { pruning_margin: 0.02 });
+		expect(dreamRes.target_solver).toBe('dream-rsi');
+		expect(dreamRes.framework_signals.s1_pre_filtering_enabled).toBe(true);
 	});
 });
+

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  laya-gpu:
+    build:
+      context: ../..
+      dockerfile: tools/laya_service/Dockerfile.gpu
+    image: nexus-sota/laya-multilingual-gpu:latest
+    container_name: laya-gpu-service
+    restart: unless-stopped
+    ports:
+      - "8192:8192"
+    environment:
+      - CHICO_LAYA_DEVICE=cuda
+      - HF_TOKEN=${HF_TOKEN:-}
+      - CHICO_LAYA_PREDICT_ALLOW_CPU=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8192/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  huggingface_cache:
+    driver: local
