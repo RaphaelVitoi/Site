@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1.4
+# Dockerfile para Microserviço de Inferência GPU Laya Multilingual (322M)
+# Suporta NVIDIA CUDA 12.x / Compute Capability >= 7.5 (T4, L4, A10G, RTX 30/40)
+
+FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HUB_ENABLE_HF_TRANSFER=1 \
+    CHICO_LAYA_DEVICE=cuda
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 \
+    python3.12-venv \
+    python3-pip \
+    curl \
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3.12 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124 && \
+    pip install transformers safetensors huggingface-hub fastapi uvicorn pydantic laya
+
+COPY . /app
+
+EXPOSE 8192
+
+# Download e aquecimento antecipado do checkpoint canonico no container build/startup
+RUN python3.12 -c "import os; os.environ['CHICO_LAYA_PREDICT_ALLOW_CPU']='1'; from laya.router import Router; r = Router(default='multilingual'); r.load('multilingual')"
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8192/health || exit 1
+
+CMD ["python3.12", "scripts/ops/homologar_laya_gpu.py", "--serve", "--port", "8192", "--device", "cuda"]

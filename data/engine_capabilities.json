@@ -314,7 +314,7 @@
       "family": "adapter",
       "implementation_level": "trained-model",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "torch", "transformers"],
+      "runtimes": ["python", "torch", "transformers", "typescript"],
       "source_lineage": ["Laya", "Chico SOTA", "Claudico", "DeepStack", "PMev", "TimesFM", "Dream-RSI"],
       "safe_label": "Interface generica que conecta a classificacao S1 da Laya a Pluribus, DeepStack, CFR+, Monte Carlo, TimesFM 2.5/3.0, Google Dream-RSI, PMev, Prospect Theory e Frameworks.",
       "claims_allowed": ["choice", "score", "noul", "iterations", "lambda_factor", "tolerance", "ruin_priority", "cfr-discount-alpha", "monte-carlo-samples", "timesfm-horizon", "dream-rsi-pruning"],
@@ -324,8 +324,20 @@
       "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
       "assumptions": ["laya-predict-single-forward-pass", "device-auto-detect-cpu-or-cuda", "cpu-fallback-when-no-cuda-and-no-override", "adapter-modulation-is-advisory", "canonical-model=multilingual"],
       "limitations": ["cpu-inference-latency-higher", "requires-checkpoint-download-322m", "fallback-noul-is-proxy-not-calibrated", "gpu-gated-by-default-production-safe"],
-      "consumer_paths": ["llm/laya_solver_adapter.py", "engine/dream_timesfm_forecaster.py", "engine/game_theory_solvers.py", "api/v1/handlers.py::handle_pluribus_solve", "api/v1/handlers.py::handle_deepstack_resolve"],
-      "api_routes": ["/api/v1/game-theory/pluribus/solve", "/api/v1/game-theory/deepstack/resolve"],
+      "consumer_paths": [
+        "llm/laya_solver_adapter.py",
+        "engine/dream_timesfm_forecaster.py",
+        "engine/game_theory_solvers.py",
+        "api/v1/handlers.py::handle_pluribus_solve",
+        "api/v1/handlers.py::handle_deepstack_resolve",
+        "frontend/src/lib/laya.ts",
+        "frontend/src/app/api/sota/laya/solve/route.ts"
+      ],
+      "api_routes": [
+        "/api/v1/game-theory/pluribus/solve",
+        "/api/v1/game-theory/deepstack/resolve",
+        "/api/sota/laya/solve"
+      ],
       "fallback_engine_id": "laya-s1-predict-fallback"
     }
   ]
