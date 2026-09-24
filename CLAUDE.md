@@ -275,7 +275,12 @@ padrão o núcleo compartilhado e este contexto de governança.
 **A lista não mora aqui.** Desde 2026-09-17 a fonte única de MCPs, plugins e
 hooks de todos os hospedeiros é `~\.gemini\nucleo\nucleo_compartilhado.json`,
 e as configurações nativas de cada hospedeiro são **geradas** por
-`~\.gemini\scripts\ops\sincronizar_nucleo.py` — ver §7 da raiz. Documento não
+`~\.gemini\scripts\ops\sincronizar_nucleo.py` — ver §7 e §7.1 da raiz.
+Os 6 MCPs stdio locais rodam centralizados via HTTP SSE em `127.0.0.1:8933`
+(`mcp-proxy`), geridos pela tarefa agendada `SOTA_Shared_MCP_Gateway`, enquanto
+o Playwright roda em `127.0.0.1:8931` (`SOTA_Shared_Playwright_MCP`). Erros de
+`connectex / connection refused` indicam gateway inativo; auto-reparo em
+`Repair-SharedMcpGateway.ps1`. Documento não
 repete valor versionado: prosa com lista de plugins foi exatamente o que
 divergiu (o escopo de usuário chegou a 50 plugins contra o núcleo declarado).
 
