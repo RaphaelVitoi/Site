@@ -183,6 +183,38 @@ def cacheavel() -> tuple[bool, str]:
     return True, ""
 
 
+def arquivos_modificados_entre_arvores(arvore_a: str, arvore_b: str) -> list[str]:
+    """Lista caminhos modificados entre duas arvores git."""
+    r = subprocess.run(
+        ["git", "diff-tree", "--name-only", "-r", arvore_a, arvore_b],
+        cwd=str(RAIZ),
+        capture_output=True,
+        text=True,
+        check=False,
+        encoding="utf-8",
+        errors="replace",
+    )
+    if r.returncode != 0:
+        return []
+    return [linha.strip() for linha in r.stdout.splitlines() if linha.strip()]
+
+
+def _apenas_documentacao_mudou(arvore_a: str, arvore_b: str) -> bool:
+    """Verdadeiro se toda modificacao entre as arvores for puramente documentacao/relatorios (.md, .txt, .rst)."""
+    try:
+        modificados = arquivos_modificados_entre_arvores(arvore_a, arvore_b)
+        if not modificados:
+            return False
+        extensoes_doc = (".md", ".txt", ".rst")
+        for c in modificados:
+            p = Path(c)
+            if p.suffix.lower() not in extensoes_doc:
+                return False
+        return True
+    except Exception:
+        return False
+
+
 def cache_valido() -> tuple[bool, str]:
     """(vale, motivo legivel). O motivo e sempre impresso -- silencio nao explica."""
     pode, porque = cacheavel()
@@ -196,8 +228,14 @@ def cache_valido() -> tuple[bool, str]:
         return False, "nenhuma medicao registrada neste clone"
     if m.get("contrato") != VERSAO_DO_CONTRATO:
         return False, "marcador de contrato antigo"
-    if m.get("arvore") != arvore:
-        return False, f"o conteudo mudou desde a ultima medicao ({str(m.get('arvore'))[:8]} -> {arvore[:8]})"
+    arvore_marcada = str(m.get("arvore") or "")
+    if arvore_marcada != arvore:
+        if arvore_marcada and _apenas_documentacao_mudou(arvore_marcada, arvore):
+            return (
+                True,
+                f"conteudo {arvore[:8]} preserva codigo verde de {arvore_marcada[:8]} (apenas documentacao/reports alterados)",
+            )
+        return False, f"o conteudo mudou desde a ultima medicao ({arvore_marcada[:8]} -> {arvore[:8]})"
     return True, f"conteudo {arvore[:8]} ja medido verde em {m.get('em')}"
 
 
@@ -211,6 +249,9 @@ def paralelismo(extra: list[str]) -> list[str]:
         return []
     if not _tem_xdist():
         return []
+    env_w = os.environ.get("SOTA_SUITE_WORKERS")
+    if env_w and env_w.isdigit() and int(env_w) > 0:
+        return ["-n", env_w]
     gib = 1024**3
     memoria_livre = psutil.virtual_memory().available
     workers = max(1, min(8, os.cpu_count() or 1, (memoria_livre - 4 * gib) // (2 * gib)))
@@ -283,6 +324,15 @@ def main(argv: list[str]) -> int:
                 vale, motivo = cache_valido()
                 if acao == "ensure" and vale:
                     print(f"[SUITE] nao remedido: {motivo}")
+                    pode, _ = cacheavel()
+                    if pode:
+                        arvore = arvore_de_conteudo()
+                        m = ler_marcador()
+                        if arvore and m and m.get("arvore") != arvore:
+                            m["arvore"] = arvore
+                            m["head_na_medicao"] = _git("rev-parse", "HEAD").strip()
+                            m["em"] = datetime.now(UTC).astimezone().isoformat(timespec="seconds")
+                            MARCADOR.write_text(json.dumps(m, ensure_ascii=False), encoding="utf-8")
                     return 0
                 if acao == "ensure":
                     print(f"[SUITE] medindo porque {motivo}")

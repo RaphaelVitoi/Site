@@ -212,3 +212,47 @@ def test_o_hook_de_pre_push_usa_o_mesmo_comando():
     hook = (RAIZ / ".husky" / "pre-push").read_text(encoding="utf-8")
     assert "scripts/ops/suite_verde.py" in hook
     assert "-m pytest" not in hook, "o hook voltou a chamar pytest direto, contornando o cache"
+
+
+def test_variavel_de_ambiente_sota_suite_workers_define_paralelismo(monkeypatch, tmp_path):
+    monkeypatch.setenv("SOTA_SUITE_WORKERS", "4")
+    cmd = _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=True)
+    assert cmd[cmd.index("-n") + 1] == "4", cmd
+
+
+def test_apenas_documentacao_modificada_preserva_cache(monkeypatch, tmp_path):
+    marcador = tmp_path / "marca"
+    marcador.write_text(
+        json.dumps({"contrato": sv.VERSAO_DO_CONTRATO, "arvore": "aaaa", "em": "2026-09-23T22:00:00-03:00"}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sv, "MARCADOR", marcador)
+    monkeypatch.setattr(sv, "cacheavel", lambda: (True, ""))
+    monkeypatch.setattr(sv, "arvore_de_conteudo", lambda: "bbbb")
+    monkeypatch.setattr(
+        sv,
+        "arquivos_modificados_entre_arvores",
+        lambda a, b: ["reports/HANDOFF-teste.md", "docs/manual.md"],
+    )
+    vale, porque = sv.cache_valido()
+    assert vale is True
+    assert "preserva codigo verde" in porque
+
+
+def test_modificacao_de_codigo_invalida_cache(monkeypatch, tmp_path):
+    marcador = tmp_path / "marca"
+    marcador.write_text(
+        json.dumps({"contrato": sv.VERSAO_DO_CONTRATO, "arvore": "aaaa", "em": "2026-09-23T22:00:00-03:00"}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sv, "MARCADOR", marcador)
+    monkeypatch.setattr(sv, "cacheavel", lambda: (True, ""))
+    monkeypatch.setattr(sv, "arvore_de_conteudo", lambda: "bbbb")
+    monkeypatch.setattr(
+        sv,
+        "arquivos_modificados_entre_arvores",
+        lambda a, b: ["engine/perspectiva.py", "reports/HANDOFF-teste.md"],
+    )
+    vale, porque = sv.cache_valido()
+    assert vale is False
+    assert "conteudo mudou" in porque
