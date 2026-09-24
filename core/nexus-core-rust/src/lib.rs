@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -28,40 +28,57 @@ pub struct Node {
     pub total_utility: f64,
 }
 
-pub fn calculate_base_weight(task: &Task, priority_scalars: &HashMap<String, f64>, alpha: f64) -> f64 {
-    let priority_str = task.metadata.as_ref()
+pub fn calculate_base_weight(
+    task: &Task,
+    priority_scalars: &HashMap<String, f64>,
+    alpha: f64,
+) -> f64 {
+    let priority_str = task
+        .metadata
+        .as_ref()
         .and_then(|m| m.priority.clone())
         .unwrap_or_else(|| "medium".to_string())
         .to_lowercase();
-    
+
     let base_prio = *priority_scalars.get(&priority_str).unwrap_or(&1000.0);
-    
+
     let created_dt = DateTime::parse_from_rfc3339(&task.timestamp)
         .map(|dt| dt.with_timezone(&Utc))
         .unwrap_or_else(|_| Utc::now());
-    
+
     let wait_seconds = Utc::now().signed_duration_since(created_dt).num_seconds() as f64;
-    let wait_seconds = if wait_seconds < 0.0 { 0.0 } else { wait_seconds };
-    
+    let wait_seconds = if wait_seconds < 0.0 {
+        0.0
+    } else {
+        wait_seconds
+    };
+
     // SOTA: Crescimento Sublinear (Achatamento Logaritmico)
     let time_bonus = (wait_seconds + 1.0).ln() * (base_prio * 0.05) * alpha;
-    
+
     base_prio + time_bonus
 }
 
-pub fn build_graph(tasks: Vec<Task>, priority_scalars: &HashMap<String, f64>, alpha: f64) -> HashMap<String, Node> {
+pub fn build_graph(
+    tasks: Vec<Task>,
+    priority_scalars: &HashMap<String, f64>,
+    alpha: f64,
+) -> HashMap<String, Node> {
     let mut graph = HashMap::new();
     let task_ids: HashSet<String> = tasks.iter().map(|t| t.id.clone()).collect();
 
     for task in tasks.clone() {
         let base_weight = calculate_base_weight(&task, priority_scalars, alpha);
-        graph.insert(task.id.clone(), Node {
-            task,
-            in_degree: 0,
-            out_edges: Vec::new(),
-            base_weight,
-            total_utility: 0.0,
-        });
+        graph.insert(
+            task.id.clone(),
+            Node {
+                task,
+                in_degree: 0,
+                out_edges: Vec::new(),
+                base_weight,
+                total_utility: 0.0,
+            },
+        );
     }
 
     for task in tasks {
@@ -90,10 +107,17 @@ pub fn compute_utilities(graph: &mut HashMap<String, Node>, gamma: f64) -> Resul
 
     for id in ids {
         if !visited.contains(&id) {
-            dfs_utility(&id, graph, &mut memo, &mut visited, &mut HashSet::new(), gamma)?;
+            dfs_utility(
+                &id,
+                graph,
+                &mut memo,
+                &mut visited,
+                &mut HashSet::new(),
+                gamma,
+            )?;
         }
     }
-    
+
     for (id, utility) in memo {
         if let Some(node) = graph.get_mut(&id) {
             node.total_utility = utility;
@@ -118,12 +142,16 @@ fn dfs_utility(
     }
 
     recursion_stack.insert(node_id.to_string());
-    
-    let node_data = graph.get(node_id).ok_or_else(|| "Node not found".to_string())?;
+
+    let node_data = graph
+        .get(node_id)
+        .ok_or_else(|| "Node not found".to_string())?;
     let mut inherited_weight = 0.0;
 
     for child_id in &node_data.out_edges {
-        let child_node = graph.get(child_id).ok_or_else(|| "Child node not found".to_string())?;
+        let child_node = graph
+            .get(child_id)
+            .ok_or_else(|| "Child node not found".to_string())?;
         let child_utility = dfs_utility(child_id, graph, memo, visited, recursion_stack, gamma)?;
         inherited_weight += gamma * (child_utility / (child_node.in_degree as f64).max(1.0));
     }
@@ -142,13 +170,21 @@ use pyo3::prelude::*;
 
 #[cfg(feature = "python")]
 #[pyfunction]
-fn extract_optimal_task_py(tasks_json: String, scalars_json: String, alpha: f64, gamma: f64) -> PyResult<Option<String>> {
-    let tasks: Vec<Task> = serde_json::from_str(&tasks_json).map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-    let scalars: HashMap<String, f64> = serde_json::from_str(&scalars_json).map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
-    
+fn extract_optimal_task_py(
+    tasks_json: String,
+    scalars_json: String,
+    alpha: f64,
+    gamma: f64,
+) -> PyResult<Option<String>> {
+    let tasks: Vec<Task> = serde_json::from_str(&tasks_json)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+    let scalars: HashMap<String, f64> = serde_json::from_str(&scalars_json)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e.to_string()))?;
+
     let mut graph = build_graph(tasks, &scalars, alpha);
-    compute_utilities(&mut graph, gamma).map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e))?;
-    
+    compute_utilities(&mut graph, gamma)
+        .map_err(|e| PyErr::new::<pyo3::exceptions::PyValueError, _>(e))?;
+
     let mut optimal_task: Option<Task> = None;
     let mut max_utility = f64::NEG_INFINITY;
 
@@ -174,15 +210,20 @@ use wasm_bindgen::prelude::*;
 
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn extract_optimal_task_wasm(tasks_json: &str, scalars_json: &str, alpha: f64, gamma: f64) -> JsValue {
+pub fn extract_optimal_task_wasm(
+    tasks_json: &str,
+    scalars_json: &str,
+    alpha: f64,
+    gamma: f64,
+) -> JsValue {
     let tasks: Vec<Task> = serde_json::from_str(tasks_json).unwrap_or_default();
     let scalars: HashMap<String, f64> = serde_json::from_str(scalars_json).unwrap_or_default();
-    
+
     let mut graph = build_graph(tasks, &scalars, alpha);
     if compute_utilities(&mut graph, gamma).is_err() {
         return JsValue::NULL;
     }
-    
+
     let mut optimal_task: Option<Task> = None;
     let mut max_utility = f64::NEG_INFINITY;
 
@@ -193,5 +234,7 @@ pub fn extract_optimal_task_wasm(tasks_json: &str, scalars_json: &str, alpha: f6
         }
     }
 
-    serde_json::to_string(&optimal_task).map(|s| JsValue::from_str(&s)).unwrap_or(JsValue::NULL)
+    serde_json::to_string(&optimal_task)
+        .map(|s| JsValue::from_str(&s))
+        .unwrap_or(JsValue::NULL)
 }

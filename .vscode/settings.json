@@ -135,7 +135,9 @@
     "prettier.requireConfig": true,
     "[rust]": {
         "editor.wordBasedSuggestions": "matchingDocuments",
-        "editor.tabSize": 4
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
     },
     "eslint.workingDirectories": [
         {
@@ -277,6 +279,25 @@
     "autoDocstring.startOnNewLine": true,
     "autoDocstring.includeExtendedSummary": true,
     "evenBetterToml.schema.enabled": true,
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml",
+        "editor.formatOnSave": true
+    },
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.linkedProjects": [
+        "${workspaceFolder}/wasm-equity/Cargo.toml",
+        "${workspaceFolder}/core/nexus-core-rust/Cargo.toml",
+        "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"
+    ],
+    "rust-analyzer.files.excludeDirs": [
+        ".next",
+        ".venv",
+        "node_modules",
+        "target",
+        ".git"
+    ],
     "turboConsoleLog.addSemicolonInTheEnd": true,
     "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
     "redhat.telemetry.enabled": false,
@@ -304,7 +325,21 @@
         "**/CMakeFiles/**/*.bin": "default",
         "**/.chroma_db/**/*.bin": "default",
         "*.bin": "default",
-        "*.svg": "cweijan.officeViewer"
+        "*.svg": "cweijan.officeViewer",
+        "*.pdf": "pdf.preview",
+        "*.xlsx": "cweijan.officeViewer",
+        "*.xls": "cweijan.officeViewer",
+        "*.docx": "cweijan.officeViewer",
+        "*.doc": "cweijan.officeViewer",
+        "*.pptx": "cweijan.officeViewer",
+        "*.parquet": "parquetViewer.parquetViewer",
+        "*.drawio": "hediet.vscode-drawio",
+        "*.dio": "hediet.vscode-drawio",
+        "*.dio.png": "hediet.vscode-drawio",
+        "*.dio.svg": "hediet.vscode-drawio",
+        "*.excalidraw": "editor.excalidraw",
+        "*.excalidraw.json": "editor.excalidraw",
+        "*.excalidraw.svg": "editor.excalidraw"
     },
     "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
     "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
@@ -433,31 +468,18 @@
     "quarto.render.renderOnSave": true,
     "python.globalModuleInstallation": true,
     "python.useEnvironmentsExtension": false,
-    "workbench.editorAssociations": {
-        "*.pdf": "pdf.preview",
-        "*.xlsx": "cweijan.officeViewer",
-        "*.xls": "cweijan.officeViewer",
-        "*.docx": "cweijan.officeViewer",
-        "*.doc": "cweijan.officeViewer",
-        "*.pptx": "cweijan.officeViewer",
-        "*.parquet": "parquetViewer.parquetViewer",
-        "*.drawio": "hediet.vscode-drawio",
-        "*.dio": "hediet.vscode-drawio",
-        "*.dio.png": "hediet.vscode-drawio",
-        "*.dio.svg": "hediet.vscode-drawio",
-        "*.excalidraw": "pomdtr.excalidraw-editor",
-        "*.excalidraw.json": "pomdtr.excalidraw-editor",
-        "*.excalidraw.svg": "pomdtr.excalidraw-editor"
-    },
-    "ruff.nativeServer": "on",
-    "ruff.importStrategy": "fromEnvironment",
     "markdown.preview.breaks": true,
     "markdown.preview.typographer": true,
     "markdown.preview.doubleClickToSwitchToEditor": true,
     "markdown-preview-github-styles.colorMode": "auto",
     "markmap.defaultExpandLevel": 3,
     "markmap.colorFreezeLevel": 2,
-    "rainbow_csv.autodetect_separators": true,
+    "rainbow_csv.autodetect_separators": [
+        "TAB",
+        ",",
+        ";",
+        "|"
+    ],
     "rainbow_csv.enable_separator_autodetection": true,
     "csv-editor.readOption_hasHeader": "true",
     "csv-editor.theme": "auto",

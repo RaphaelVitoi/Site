@@ -568,7 +568,8 @@ fn calculate_utility_ev(
     if raw_ev.is_nan() || raw_ev.is_infinite() {
         return 0.0;
     }
-    #[allow(clippy::approx_constant)] // piso calibrado em 2.718; trocar por E muda a saida publicada
+    #[allow(clippy::approx_constant)]
+    // piso calibrado em 2.718; trocar por E muda a saida publicada
     let safe_stack = stack_eff.max(2.718);
     let stack_modifier = LN_100 / safe_stack.ln();
     let fgs_modifier = 1.0 / (fgs_health * fgs_health).max(0.1);
@@ -634,7 +635,8 @@ pub fn calculate_perspectiva_core(
     let advantage_multiplier = 1.0 + (risk_advantage * INV_100);
 
     // 2. Amortização de Edge
-    #[allow(clippy::approx_constant)] // piso calibrado em 2.718; trocar por E muda a saida publicada
+    #[allow(clippy::approx_constant)]
+    // piso calibrado em 2.718; trocar por E muda a saida publicada
     let safe_stack_edge = stack_eff.max(2.718);
     let edge_scale = (safe_stack_edge.ln() * INV_LN_60) * advantage_multiplier;
     let amortized_edge = edge_base * edge_scale;
@@ -1071,7 +1073,9 @@ pub fn multiway_equity_core(
         return Err("board_mask deve ter no maximo 5 cartas validas");
     }
 
-    let board_known: Vec<u8> = (0..52u8).filter(|c| board_mask & (1u64 << c) != 0).collect();
+    let board_known: Vec<u8> = (0..52u8)
+        .filter(|c| board_mask & (1u64 << c) != 0)
+        .collect();
     let mut player_cdfs = vec![[0.0f64; 1326]; num_players];
     let mut player_total_mass = vec![0.0f64; num_players];
     for p in 0..num_players {
@@ -1128,7 +1132,8 @@ pub fn multiway_equity_core(
         let mut tied = 0u32;
         for p in 0..num_players {
             let (h1, h2) = hands[p];
-            let power = evaluate_7cards(&[h1, h2, board[0], board[1], board[2], board[3], board[4]]);
+            let power =
+                evaluate_7cards(&[h1, h2, board[0], board[1], board[2], board[3], board[4]]);
             powers[p] = power;
             if power > best {
                 best = power;
@@ -1166,10 +1171,11 @@ pub fn calculate_multiway_equity_zerocopy(
     }
     // SAFETY: o chamador aloca `num_players * 1326` f64 com alloc_range_buffer e os preenche.
     let ranges = unsafe { std::slice::from_raw_parts(ranges_ptr, num_players * 1326) };
-    let (equities, aborted) = match multiway_equity_core(ranges, num_players, board_mask, target_iterations, seed) {
-        Ok(saida) => saida,
-        Err(motivo) => panic!("[ENTROPIA FATAL] {motivo}"),
-    };
+    let (equities, aborted) =
+        match multiway_equity_core(ranges, num_players, board_mask, target_iterations, seed) {
+            Ok(saida) => saida,
+            Err(motivo) => panic!("[ENTROPIA FATAL] {motivo}"),
+        };
     let out_array = js_sys::Float64Array::new_with_length((num_players + 1) as u32);
     for (p, eq) in equities.iter().enumerate() {
         out_array.set_index(p as u32, *eq);
@@ -1287,9 +1293,15 @@ mod multiway_equity_tests {
     #[test]
     fn board_completo_e_deterministico_e_empate_divide() {
         // Board Ah Kh Qh Jh Th: royal na mesa, todos empatam.
-        let board = [card(12, 1), card(11, 1), card(10, 1), card(9, 1), card(8, 1)]
-            .iter()
-            .fold(0u64, |m, &c| m | (1u64 << c));
+        let board = [
+            card(12, 1),
+            card(11, 1),
+            card(10, 1),
+            card(9, 1),
+            card(8, 1),
+        ]
+        .iter()
+        .fold(0u64, |m, &c| m | (1u64 << c));
         let mut ranges = range_de(&[(card(0, 0), card(1, 0))]);
         ranges.extend(range_de(&[(card(2, 2), card(3, 3))]));
         let (eq, _) = multiway_equity_core(&ranges, 2, board, 1_000, 3).unwrap();
