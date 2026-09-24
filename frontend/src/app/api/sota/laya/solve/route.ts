@@ -82,6 +82,41 @@ function simulatePredictForSolve(
 	};
 }
 
+const LAYA_SERVICE_BASE = process.env['LAYA_SERVICE_URL'] || 'http://127.0.0.1:8192';
+
+async function tryFetchUpstreamSolve(
+	solverName: string,
+	state: string | Record<string, unknown>,
+	baseParameters?: Record<string, unknown>,
+	model?: string,
+): Promise<LayaSolverBridgePayload | null> {
+	try {
+		const res = await fetch(`${LAYA_SERVICE_BASE}/solve`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				solver_name: solverName,
+				state: typeof state === 'string' ? state : JSON.stringify(state),
+				base_parameters: baseParameters,
+				model: model || CANONICAL_LAYA_MODEL,
+			}),
+			signal: AbortSignal.timeout(1800),
+			cache: 'no-store',
+		});
+		if (!res.ok) return null;
+		const json = await res.json().catch(() => null);
+		if (json?.status === 'SUCCESS' && json.bridge_result) {
+			return json.bridge_result as LayaSolverBridgePayload;
+		}
+		if (json?.status === 'SUCCESS' && json.solver_bridge) {
+			return json.solver_bridge as LayaSolverBridgePayload;
+		}
+		return null;
+	} catch {
+		return null;
+	}
+}
+
 export async function POST(request: Request): Promise<NextResponse<LayaSolveResponse>> {
 	try {
 		const body: LayaSolveRequest = await request.json().catch(() => ({}));
@@ -98,10 +133,26 @@ export async function POST(request: Request): Promise<NextResponse<LayaSolveResp
 			);
 		}
 
-		// Utiliza predição fornecida ou deriva via simulação S1 determinística
-		const prediction = body.prediction || simulatePredictForSolve(state, body.questions, body.model);
+		// 1. Se já fornecida predição direta (ex: testes ou worker), utiliza diretamente
+		if (body.prediction) {
+			const bridgeResult = adaptForSolverClient(solverName, body.prediction, body.base_parameters);
+			return NextResponse.json({
+				status: 'SUCCESS',
+				bridge_result: bridgeResult,
+			});
+		}
 
-		// Executa modulação estrita de parâmetros para o solver requisitado
+		// 2. Tenta inferência com pesos reais no microserviço FastAPI/CUDA (Porta 8192)
+		const upstreamResult = await tryFetchUpstreamSolve(solverName, state, body.base_parameters, body.model);
+		if (upstreamResult) {
+			return NextResponse.json({
+				status: 'SUCCESS',
+				bridge_result: upstreamResult,
+			});
+		}
+
+		// 3. Fallback Heurístico S1 Determinístico (Garantia de Disponibilidade)
+		const prediction = simulatePredictForSolve(state, body.questions, body.model);
 		const bridgeResult = adaptForSolverClient(solverName, prediction, body.base_parameters);
 
 		return NextResponse.json({

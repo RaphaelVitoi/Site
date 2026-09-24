@@ -9,7 +9,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaButton } from '@/components/ui/layout/SotaButton';
@@ -102,6 +102,33 @@ export default function LayaSolverBridgePage() {
 	const [error, setError] = useState<string | null>(null);
 	const [activeTab, setActiveTab] = useState<'workbench' | 'telemetria' | 'deploy'>('workbench');
 	const [copiedKey, setCopiedKey] = useState<string | null>(null);
+	const [serviceStatus, setServiceStatus] = useState<{
+		status: 'ONLINE' | 'OFFLINE' | 'CHECKING';
+		weights_loaded: boolean;
+		model?: string;
+		cuda_available?: boolean;
+		cpu_override_active?: boolean;
+		latency_ms?: number;
+		reason?: string;
+	}>({ status: 'CHECKING', weights_loaded: false });
+
+	const refreshServiceStatus = useCallback(async () => {
+		try {
+			const res = await fetch('/api/sota/laya/status');
+			if (res.ok) {
+				const json = await res.json();
+				setServiceStatus(json);
+			} else {
+				setServiceStatus({ status: 'OFFLINE', weights_loaded: false, reason: `HTTP ${res.status}` });
+			}
+		} catch {
+			setServiceStatus({ status: 'OFFLINE', weights_loaded: false, reason: 'Microserviço inacessível' });
+		}
+	}, []);
+
+	useEffect(() => {
+		refreshServiceStatus();
+	}, [refreshServiceStatus]);
 
 	const activeSolver = SOLVERS_CONFIG.find((s) => s.id === selectedSolverId) || SOLVERS_CONFIG[0];
 
@@ -124,6 +151,8 @@ export default function LayaSolverBridgePage() {
 				throw new Error(json.error || `Erro HTTP ${res.status}`);
 			}
 			setBridgeResult(json.bridge_result);
+			// Atualiza o indicador de status em tempo real após a modulação
+			refreshServiceStatus();
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : 'Falha na requisição da rota /api/sota/laya/solve';
 			setError(msg);
@@ -161,13 +190,36 @@ export default function LayaSolverBridgePage() {
 						<div className="text-xs text-text-muted mt-1 font-mono">mmBERT-base · RLCD Calibrated</div>
 					</GlassPanel>
 
-					<GlassPanel className="p-4 border-emerald-500/30 bg-emerald-950/20">
+					<GlassPanel className={`p-4 border transition-all ${
+						serviceStatus.status === 'ONLINE'
+							? 'border-emerald-500/40 bg-emerald-950/20'
+							: 'border-amber-500/40 bg-amber-950/20'
+					}`}>
 						<div className="text-text-muted text-xs font-mono uppercase tracking-wider mb-1 flex items-center justify-between">
-							<span>Latência de Forward Pass</span>
-							<i className="fa-solid fa-bolt text-emerald-400" />
+							<span>Pesos Neurais</span>
+							<button
+								type="button"
+								onClick={refreshServiceStatus}
+								title="Atualizar status dos pesos"
+								className="text-white/60 hover:text-white"
+							>
+								<i className="fa-solid fa-arrows-rotate text-xs" />
+							</button>
 						</div>
-						<div className="text-xl font-black text-emerald-300">~232 ms</div>
-						<div className="text-xs text-text-muted mt-1 font-mono">CPU Validado · ~30ms em GPU</div>
+						<div className="flex items-center gap-2">
+							<span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+								serviceStatus.status === 'ONLINE' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+							}`} />
+							<div className={`text-base font-black truncate ${
+								serviceStatus.status === 'ONLINE' ? 'text-emerald-300' : 'text-amber-300'
+							}`}>
+								{serviceStatus.status === 'ONLINE' ? 'Pesos 322M Ativos' : 'Simulação Heurística'}
+							</div>
+						</div>
+						<div className="text-xs text-text-muted mt-1 font-mono flex items-center justify-between">
+							<span>{serviceStatus.status === 'ONLINE' ? 'Porta 8192 (FastAPI)' : 'Fallback TS Ativo'}</span>
+							<span className="text-[10px] opacity-75">{serviceStatus.latency_ms ? `${serviceStatus.latency_ms}ms` : ''}</span>
+						</div>
 					</GlassPanel>
 
 					<GlassPanel className="p-4 border-purple-500/30 bg-purple-950/20">
@@ -516,23 +568,75 @@ export default function LayaSolverBridgePage() {
 													<span
 														className={
 															bridgeResult.provenia.weights_loaded
-																? 'text-emerald-400'
-																: 'text-amber-400'
+																? 'text-emerald-400 font-bold'
+																: 'text-amber-400 font-bold'
 														}
 													>
-														{String(bridgeResult.provenia.weights_loaded)}
+														{bridgeResult.provenia.weights_loaded ? (
+															<>
+																<i className="fa-solid fa-circle-check mr-1" />
+																true (mmBERT 322M)
+															</>
+														) : (
+															<>
+																<i className="fa-solid fa-triangle-exclamation mr-1" />
+																false (Fallback Heurístico S1)
+															</>
+														)}
 													</span>
 												</div>
 												<div>
 													<span className="text-white/60">Fallback Ativo:</span>{' '}
-													<span className="text-text-muted">
-														{String(bridgeResult.provenia.fallback_used)}
+													<span
+														className={
+															bridgeResult.provenia.fallback_used
+																? 'text-amber-300'
+																: 'text-emerald-400 font-bold'
+														}
+													>
+														{bridgeResult.provenia.fallback_used
+															? 'true (Simulação Edge TS)'
+															: 'false (Inferência Neural Direta)'}
 													</span>
 												</div>
 												<div className="text-[10px] text-text-muted pt-1 truncate">
 													Assunções: {bridgeResult.provenia.assumptions.join(', ')}
 												</div>
 											</div>
+
+											{/* Callout de Mitigação / Status dos Pesos */}
+											{!bridgeResult.provenia.weights_loaded ? (
+												<div className="mt-3 p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/30 text-[11px]">
+													<div className="font-bold text-amber-300 flex items-center gap-1.5 mb-1">
+														<i className="fa-solid fa-lightbulb" />
+														Para ativar Pesos Carregados = true:
+													</div>
+													<p className="text-text-muted leading-tight mb-2">
+														O microserviço de pesos reais (322M) opera na porta 8192. Para iniciá-lo no host:
+													</p>
+													<div className="flex items-center justify-between bg-black/60 rounded px-2 py-1 font-mono text-[10px] text-cyan-300 border border-white/5">
+														<span className="truncate">pwsh scripts/ops/Start-LayaService.ps1</span>
+														<button
+															type="button"
+															onClick={() => copyToClipboard('pwsh scripts/ops/Start-LayaService.ps1', 'start-service')}
+															className="text-white/60 hover:text-white ml-2 shrink-0"
+															title="Copiar comando"
+														>
+															<i className={`fa-solid ${copiedKey === 'start-service' ? 'fa-check text-emerald-400' : 'fa-copy'}`} />
+														</button>
+													</div>
+												</div>
+											) : (
+												<div className="mt-3 p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-[11px]">
+													<div className="font-bold text-emerald-300 flex items-center gap-1.5">
+														<i className="fa-solid fa-circle-check" />
+														Checkpoint Canônico 322M Ativo
+													</div>
+													<p className="text-text-muted leading-tight mt-1">
+														Inferência não-autorregressiva real. Os sinais RLCD e a barreira de ruína foram calculados a partir dos tensores neurais reais.
+													</p>
+												</div>
+											)}
 										</GlassPanel>
 									</div>
 								</>
@@ -657,6 +761,34 @@ export default function LayaSolverBridgePage() {
 							</p>
 
 							<div className="space-y-4">
+								{/* Local Host Execution */}
+								<div className="p-4 rounded-lg bg-emerald-950/20 border border-emerald-500/30">
+									<div className="flex items-center justify-between mb-2">
+										<span className="text-xs font-mono font-bold text-emerald-300 flex items-center gap-1.5">
+											<i className="fa-solid fa-terminal" />
+											Execução Local no Host (PowerShell — CPU Override / GPU):
+										</span>
+										<button
+											type="button"
+											onClick={() =>
+												copyToClipboard(
+													'pwsh scripts/ops/Start-LayaService.ps1',
+													'local-ps',
+												)
+											}
+											className="text-xs font-mono text-cyan-400 hover:text-cyan-300"
+										>
+											{copiedKey === 'local-ps' ? 'Copiado!' : 'Copiar'}
+										</button>
+									</div>
+									<pre className="text-xs font-mono text-text-muted p-2 rounded bg-black/60 overflow-x-auto">
+										pwsh scripts/ops/Start-LayaService.ps1
+									</pre>
+									<p className="text-[11px] text-text-muted mt-2">
+										Inicia o microserviço FastAPI na porta 8192 com pesos de 322M carregados, detecção automática de CUDA e fallback para CPU cacheado em memória.
+									</p>
+								</div>
+
 								{/* Docker Run */}
 								<div className="p-4 rounded-lg bg-black/40 border border-white/5">
 									<div className="flex items-center justify-between mb-2">

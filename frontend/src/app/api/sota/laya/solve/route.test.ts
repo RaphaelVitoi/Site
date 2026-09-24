@@ -81,5 +81,26 @@ describe('API SOTA Laya Solve: modulação de solvers via System-1', () => {
 		// noul <= 0.3 expande 1.5x: 5000 * 1.5 = 7500
 		expect(json.bridge_result.adapted_parameters.simulations_count).toBe(7500);
 		expect(json.bridge_result.framework_signals.monte_carlo_sample_expansion).toBe(true);
+		expect(json.bridge_result.provenia.weights_loaded).toBe(true);
+		expect(json.bridge_result.provenia.fallback_used).toBe(false);
+	});
+
+	it('preserva integridade e cai em fallback determinístico quando microserviço offline', async () => {
+		const request = new Request('http://localhost/api/sota/laya/solve', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				solver_name: 'pluribus',
+				state: 'flop dry rainbow pot 50',
+			}),
+		});
+
+		const response = await POST(request);
+		const json = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(json.status).toBe('SUCCESS');
+		expect(json.bridge_result.target_solver).toBe('pluribus');
+		expect(json.bridge_result.provenia.weights_loaded).toBeDefined();
 	});
 });

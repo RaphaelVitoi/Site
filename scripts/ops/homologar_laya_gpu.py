@@ -20,10 +20,10 @@ import statistics
 import subprocess
 import sys
 import time
-from typing import TYPE_CHECKING
+from typing import Annotated, Any
 
-if TYPE_CHECKING:
-    from fastapi import FastAPI
+from fastapi import Body, FastAPI, HTTPException
+from pydantic import BaseModel, Field
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("homologar_laya_gpu")
@@ -437,11 +437,21 @@ gcloud compute instances create sota-laya-inference-node \\
         f.write(content)
 
 
+class PredictRequest(BaseModel):
+    state: str = Field(..., description="Estado, mao ou prompt para classificacao S1")
+    model: str = Field(default=CANONICAL_MODEL, description="Modelo Laya canonico")
+    questions: dict[str, dict[str, Any]] | None = None
+
+
+class SolveRequest(BaseModel):
+    solver_name: str = Field(default="cfr-plus")
+    state: str = Field(...)
+    base_parameters: dict[str, Any] | None = None
+    model: str = Field(default=CANONICAL_MODEL)
+
+
 def criar_fastapi_app() -> FastAPI:
     """Cria a aplicacao FastAPI para o microservico de inferencia Laya GPU."""
-    from fastapi import FastAPI, HTTPException  # noqa: PLC0415
-    from pydantic import BaseModel, Field  # noqa: PLC0415
-
     from llm.laya_bridge import LayaPrediction, laya_predict  # noqa: PLC0415
     from llm.laya_solver_adapter import LayaSolverAdapter  # noqa: PLC0415
 
@@ -453,36 +463,31 @@ def criar_fastapi_app() -> FastAPI:
 
     adapter = LayaSolverAdapter()
 
-    class PredictRequest(BaseModel):
-        state: str = Field(..., description="Estado, mao ou prompt para classificacao S1")
-        model: str = Field(default=CANONICAL_MODEL, description="Modelo Laya canonico")
-        questions: dict[str, dict[str, str | list[str]]] | None = None
-
-    class SolveRequest(BaseModel):
-        solver_name: str = Field(default="cfr-plus")
-        state: str = Field(...)
-        base_parameters: dict[str, float | int | str | bool] | None = None
-        model: str = Field(default=CANONICAL_MODEL)
-
     @app.get("/health")
     def health():
         profile = obter_perfil_hardware()
+        cpu_allowed = os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
+        weights_ready = profile.cuda_available or cpu_allowed
         return {
             "status": "HEALTHY",
             "model": CANONICAL_REPO,
             "cuda_available": profile.cuda_available,
+            "weights_ready": weights_ready,
+            "cpu_override_active": cpu_allowed,
             "devices": [asdict(d) for d in profile.devices],
         }
 
     @app.post("/predict")
-    def predict(req: PredictRequest):
+    def predict(req: Annotated[PredictRequest, Body()]):
         try:
             pred: LayaPrediction = laya_predict(req.state, req.questions, model_override=req.model)
             return {
                 "status": "SUCCESS",
                 "prediction": {
+                    "answers": pred.answers,
                     "model_used": pred.model_used,
                     "device": pred.device,
+                    "n_tokens": pred.n_tokens,
                     "latency_ms": pred.latency_ms,
                     "noul": pred.noul,
                     "choice": pred.choice,
@@ -496,19 +501,33 @@ def criar_fastapi_app() -> FastAPI:
             raise HTTPException(status_code=500, detail=str(e)) from e
 
     @app.post("/solve")
-    def solve(req: SolveRequest):
+    def solve(req: Annotated[SolveRequest, Body()]):
         try:
             pred: LayaPrediction = laya_predict(req.state, model_override=req.model)
             bridge = adapter.adapt_for_solver(req.solver_name, pred, req.base_parameters or {})
+            bridge_payload = {
+                "target_solver": bridge.target_solver,
+                "adapted_parameters": bridge.adapted_parameters,
+                "s1_prediction": {
+                    "answers": pred.answers,
+                    "model_used": pred.model_used,
+                    "device": pred.device,
+                    "n_tokens": pred.n_tokens,
+                    "latency_ms": pred.latency_ms,
+                    "noul": pred.noul,
+                    "choice": pred.choice,
+                    "score": pred.score,
+                    "confidence": pred.confidence,
+                    "provenia": asdict(pred.provenia),
+                },
+                "ruin_priority": bridge.ruin_priority,
+                "framework_signals": bridge.framework_signals,
+                "provenia": asdict(bridge.provenia),
+            }
             return {
                 "status": "SUCCESS",
-                "solver_bridge": {
-                    "target_solver": bridge.target_solver,
-                    "adapted_parameters": bridge.adapted_parameters,
-                    "ruin_priority": bridge.ruin_priority,
-                    "framework_signals": bridge.framework_signals,
-                    "provenia": asdict(bridge.provenia),
-                },
+                "bridge_result": bridge_payload,
+                "solver_bridge": bridge_payload,
             }
         except Exception as e:
             logger.exception("Erro durante solver bridge: %s", e)
@@ -536,9 +555,10 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.serve:
+        os.environ.setdefault("CHICO_LAYA_PREDICT_ALLOW_CPU", "1")
         import uvicorn  # noqa: PLC0415
 
-        logger.info("Iniciando servidor HTTP Laya GPU na porta %d...", args.port)
+        logger.info("Iniciando servidor HTTP Laya GPU na porta %d (CHICO_LAYA_PREDICT_ALLOW_CPU=1)...", args.port)
         app = criar_fastapi_app()
         uvicorn.run(app, host=args.host, port=args.port)
         return 0

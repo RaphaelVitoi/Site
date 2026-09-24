@@ -206,14 +206,22 @@ export function adaptForSolverClient(
 		framework_signals: signals,
 		provenia: {
 			engine_id: `laya-solver-adapter-${solverKey}-ts`,
-			implementation_level: 'simulation',
-			runtime_used: 'nextjs-typescript',
+			implementation_level: prediction.provenia?.weights_loaded ? 'trained-model' : (prediction.provenia?.implementation_level || 'simulation'),
+			runtime_used: prediction.provenia?.runtime_used || 'nextjs-typescript',
 			model_used: prediction.model_used,
 			intended_model: CANONICAL_LAYA_MODEL,
-			weights_loaded: false,
-			fallback_used: true,
-			assumptions: [`solver-adapted=${solverKey}`, 'laya-s1-ts-solver-adapter', 'ruin-priority-injected'],
-			limitations: ['adapter-modulation-is-advisory', 'typescript-client-edge-runtime'],
+			weights_loaded: Boolean(prediction.provenia?.weights_loaded),
+			fallback_used: Boolean(prediction.provenia?.fallback_used),
+			assumptions: [
+				...(prediction.provenia?.assumptions || []),
+				`solver-adapted=${solverKey}`,
+				'laya-s1-ts-solver-adapter',
+				'ruin-priority-injected',
+			],
+			limitations: [
+				...(prediction.provenia?.limitations || []),
+				'adapter-modulation-is-advisory',
+			],
 			units: ['ruin_priority', 'adaptation_factor'],
 		},
 	};

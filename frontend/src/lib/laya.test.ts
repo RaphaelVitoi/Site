@@ -179,5 +179,39 @@ describe('Laya S1 Frontend Parity Tests', () => {
 		expect(dreamRes.target_solver).toBe('dream-rsi');
 		expect(dreamRes.framework_signals.s1_pre_filtering_enabled).toBe(true);
 	});
+
+	it('deve herdar fielmente proveniência §4 com weights_loaded=true de predição treinada', () => {
+		const predTrained: LayaPredictionPayload = {
+			answers: {},
+			model_used: CANONICAL_LAYA_MODEL,
+			device: 'cuda',
+			n_tokens: 25,
+			latency_ms: 28.5,
+			noul: 0.9,
+			choice: 'simple',
+			score: 0.9,
+			confidence: 0.95,
+			provenia: {
+				engine_id: 'laya-s1-trained',
+				implementation_level: 'trained-model',
+				runtime_used: 'torch (cuda)',
+				model_used: CANONICAL_LAYA_MODEL,
+				intended_model: CANONICAL_LAYA_MODEL,
+				weights_loaded: true,
+				fallback_used: false,
+				assumptions: ['device=cuda'],
+				limitations: [],
+				units: ['ms'],
+			},
+		};
+
+		const res = adaptForSolverClient('cfr-plus', predTrained);
+		expect(res.provenia.weights_loaded).toBe(true);
+		expect(res.provenia.fallback_used).toBe(false);
+		expect(res.provenia.implementation_level).toBe('trained-model');
+		expect(res.provenia.runtime_used).toBe('torch (cuda)');
+		expect(res.provenia.assumptions).toContain('device=cuda');
+		expect(res.provenia.assumptions).toContain('solver-adapted=cfr-plus');
+	});
 });
 
