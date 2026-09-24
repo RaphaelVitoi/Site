@@ -62,3 +62,11 @@ antes de comparar ou declarar um percentual unico.
 Nao manter aqui contagens de agentes, versoes comerciais de modelos, status de
 deploy, disponibilidade de credenciais ou resultados de testes sem medicao
 atual e escopo identificado.
+
+## Hardware e aceleracao local de inferencia
+
+- Host fisico: Windows 11 com GPU dedicada AMD Radeon RX 570 Series (Polaris, 8.0 GiB VRAM detectada) e Intel UHD Graphics 630 integrada.
+- Inferencia LLM Local: Acelerada via Vulkan / llama.cpp (`ggml-vulkan`, Ollama daemon e `llama-server.exe`) com offload total de camadas (`-ngl 99`) para a VRAM da Radeon RX 570.
+- Inferencia PyTorch (safetensors / Laya): Opera em modo CPU override (`torch 2.13.0+cpu`) devido a ausencia de suporte upstream a ROCm Polaris no Windows e incompatibilidade de DirectML com Python 3.14. Otimizada com cache de roteador persistente O(1) e multi-threading de CPU (~250 ms por predicao).
+- Telemetria de VRAM: O CLI Nexus (`nexus.py`) e o CEO Dashboard leem a ocupacao da Radeon RX 570 via `/api/ps` e logs do Ollama, exibindo fallback `N/A (Vulkan/AMD Off)` quando o daemon estiver inativo.
+
