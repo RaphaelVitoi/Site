@@ -1,5 +1,5 @@
-use wasm_bindgen::prelude::*;
 use js_sys::Float32Array;
+use wasm_bindgen::prelude::*;
 
 // SOTA: Filtro Bayesiano Integrado
 pub mod bayesian {
@@ -31,7 +31,12 @@ impl QuantumCfrEngine {
     }
 
     #[wasm_bindgen]
-    pub fn compute_cfr_heatmap(&mut self, nodes: usize, iterations: usize, kappa: f32) -> Float32Array {
+    pub fn compute_cfr_heatmap(
+        &mut self,
+        nodes: usize,
+        iterations: usize,
+        kappa: f32,
+    ) -> Float32Array {
         let buffer_size = nodes * nodes;
         let mut regret_matrix = vec![0.0f32; buffer_size];
 

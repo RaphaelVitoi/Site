@@ -230,7 +230,7 @@
       "type": "shell",
       "command": "cargo",
       "args": ["check", "--manifest-path", "${workspaceFolder}/wasm-equity/Cargo.toml", "--all-targets"],
-      "problemMatcher": ["$rustc"],
+      "problemMatcher": [],
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -241,7 +241,7 @@
       "type": "shell",
       "command": "cargo",
       "args": ["clippy", "--manifest-path", "${workspaceFolder}/wasm-equity/Cargo.toml", "--all-targets"],
-      "problemMatcher": ["$rustc"],
+      "problemMatcher": [],
       "presentation": {
         "reveal": "always",
         "panel": "shared"

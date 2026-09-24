@@ -1,0 +1,8 @@
+# Configuração Canônica SOTA do rustfmt para o projeto Site
+edition = "2021"
+max_width = 100
+tab_spaces = 4
+newline_style = "Auto"
+use_small_heuristics = "Default"
+reorder_imports = true
+reorder_modules = true
