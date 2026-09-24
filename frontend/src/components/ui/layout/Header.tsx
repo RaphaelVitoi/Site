@@ -133,6 +133,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: 'fa-satellite-dish',
       },
       { label: 'Oráculo (Gemma)', href: ROUTES.TEMPLO.GEMMA, icon: 'fa-brain' },
+      { label: 'Laya S1 (Solvers)', href: ROUTES.TEMPLO.LAYA, icon: 'fa-microchip' },
     ],
   },
   {
