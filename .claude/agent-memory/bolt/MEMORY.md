@@ -72,3 +72,6 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+## 2024-05-30 - TypedArray Bounded Access Optimization
+**Learning:** Using the nullish coalescing operator (`?? 0`) on bounded `TypedArray` accesses (like `Float32Array`) in JavaScript causes significant performance degradation in hot loops due to unnecessary branching/type-checks. Bounded access always returns a primitive number, never `undefined`.
+**Action:** When working with TypedArrays in performance-critical sections (especially inside Web Workers), remove redundant null-checks on index lookups.
