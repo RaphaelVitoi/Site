@@ -6,6 +6,7 @@
     "arrow-left",
     "arrow-right",
     "arrow-right-long",
+    "arrow-trend-up",
     "arrow-up",
     "arrow-up-right-dots",
     "arrow-up-right-from-square",
@@ -49,6 +50,7 @@
     "cloud",
     "cloud-arrow-up",
     "code",
+    "code-compare",
     "compass",
     "copy",
     "crosshairs",
@@ -92,6 +94,7 @@
     "list-ul",
     "magnifying-glass",
     "masks-theater",
+    "memory",
     "microchip",
     "microphone",
     "microscope",
@@ -113,6 +116,7 @@
     "satellite-dish",
     "scale-unbalanced",
     "scroll",
+    "server",
     "shapes",
     "shield-halved",
     "shuttle-space",
@@ -120,10 +124,12 @@
     "sliders",
     "spinner",
     "square-root-variable",
+    "stamp",
     "stop",
     "table-cells",
     "table-cells-large",
     "terminal",
+    "tower-broadcast",
     "trash-can",
     "triangle-exclamation",
     "user-astronaut",
@@ -149,9 +155,9 @@
   ],
   "fontes": {
     "fa-solid-900": {
-      "glifos": 137,
+      "glifos": 143,
       "bytes_origem": 119488,
-      "bytes_recorte": 13664
+      "bytes_recorte": 14176
     },
     "fa-regular-400": {
       "glifos": 29,
