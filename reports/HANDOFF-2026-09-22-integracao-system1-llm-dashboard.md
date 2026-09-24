@@ -73,6 +73,13 @@ revisoes_de_ancora:
   - registro: registro-2026-09-19-refatoracao-sonar-python-e-icm
     caminhos: [GEMINI.md]
     parecer: GEMINI.md foi reduzido a adaptador de contexto que aponta para governanca canonica; o registro Sonar conserva escopo e evidencias da refatoracao Python e ICM na janela original.
+  - registro: handoff-2026-09-23-ci-ram-e-rustfmt-staged
+    caminhos: [frontend/src/components/analytics/NexusOperationsPanel.test.tsx]
+    parecer: >-
+      Adicionado `import '@testing-library/jest-dom'` no teste para expor os
+      types do matcher `toBeInTheDocument` ao TypeScript language server. A
+      funcionalidade de runtime permanece inalterada (jest.setup.js ja carrega
+      jest-dom via require). Apenas uma importacao side-effect de tipagem.
   - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
     caminhos: [CLAUDE.md]
     parecer: A identidade de condutor adicionada a CLAUDE.md nao altera o relato historico de auditoria de hardware e infraestrutura de 2026-06-16.

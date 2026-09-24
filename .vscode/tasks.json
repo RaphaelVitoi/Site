@@ -16,9 +16,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": [
-        "$rustc"
-      ],
+      "problemMatcher": [],
       "presentation": {
         "reveal": "silent",
         "clear": true
