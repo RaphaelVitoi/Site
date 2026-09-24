@@ -14,6 +14,9 @@
  * @format
  */
 
+export const CANONICAL_LAYA_MODEL = 'multilingual';
+export const CANONICAL_LAYA_REPO = 'convaiinnovations/laya-multilingual';
+
 export interface IntencaoS1 {
 	idioma?: string;
 	script?: string;
@@ -21,9 +24,45 @@ export interface IntencaoS1 {
 	modelo_sugerido?: string;
 	nao_latin_fraction_pct?: number;
 	reason?: string;
+	confidence?: number;
+	noul?: number;
+	choice?: string;
+	score?: number;
 	provenia?: {
 		engine_id?: string;
 		implementation_level?: string;
+		runtime_used?: string;
+		model_used?: string;
+		intended_model?: string;
+		weights_loaded?: boolean;
+		fallback_used?: boolean;
+		assumptions?: string[];
+		limitations?: string[];
+		units?: string[];
+	};
+}
+
+export interface LayaPredictionPayload {
+	answers: Record<string, unknown>;
+	model_used: string;
+	device: string;
+	n_tokens: number;
+	latency_ms: number;
+	noul: number | null;
+	choice: string | null;
+	score: number | null;
+	confidence?: number | null;
+	provenia: {
+		engine_id: string;
+		implementation_level: string;
+		runtime_used: string;
+		model_used: string;
+		intended_model: string;
+		weights_loaded: boolean;
+		fallback_used: boolean;
+		assumptions: string[];
+		limitations: string[];
+		units: string[];
 	};
 }
 
@@ -41,6 +80,29 @@ export function ruinPriorityFromIntencao(intencaoS1: IntencaoS1 | null | undefin
 	const frac = (intencaoS1.nao_latin_fraction_pct ?? 0) / 100.0;
 	const prior = 1.0 + frac * 0.3;
 	return Math.max(1.0, Math.min(1.3, prior));
+}
+
+/**
+ * Deriva prior de ruína (Teorema 2) a partir de predição Laya Multilingual calibrada.
+ *
+ * Se noul ou confidence estiverem disponíveis via RLCD, modula a barreira de ruína
+ * diretamente pela incerteza calibrada da rede neural.
+ */
+export function ruinPriorityFromLayaPrediction(
+	prediction: LayaPredictionPayload | null | undefined,
+): number {
+	if (!prediction) return 1.0;
+	if (prediction.noul !== null && prediction.noul !== undefined) {
+		const noul = Number(prediction.noul);
+		const prior = 1.0 + (1.0 - noul) * 0.3;
+		return Math.max(1.0, Math.min(1.3, prior));
+	}
+	if (prediction.confidence !== null && prediction.confidence !== undefined) {
+		const conf = Number(prediction.confidence);
+		const prior = 1.0 + (1.0 - conf) * 0.3;
+		return Math.max(1.0, Math.min(1.3, prior));
+	}
+	return 1.0;
 }
 
 /**

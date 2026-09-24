@@ -157,3 +157,84 @@ class TestFamiliaModelo:
         assert FAMILIA_MODELO_POR_LAYA["english"] == "small-english"
         assert FAMILIA_MODELO_POR_LAYA["multilingual"] == "multilingual"
         assert FAMILIA_MODELO_POR_LAYA["typed-decisions"] == "multilingual"
+
+
+class TestLayaMultilingualSOTA:
+    """Valida as capacidades avançadas da Laya Multilingual."""
+
+    def test_canonical_model_eh_multilingual(self):
+        from llm.laya_bridge import CANONICAL_LAYA_MODEL, CANONICAL_LAYA_REPO
+
+        assert CANONICAL_LAYA_MODEL == "multilingual"
+        assert CANONICAL_LAYA_REPO == "convaiinnovations/laya-multilingual"
+
+    def test_poker_presets_estruturados(self):
+        from llm.laya_bridge import LAYA_POKER_PRESETS
+
+        assert "street_triage" in LAYA_POKER_PRESETS
+        assert "icm_pressure" in LAYA_POKER_PRESETS
+        st = LAYA_POKER_PRESETS["street_triage"]
+        assert st["board_texture"]["type"] == "choice"
+        assert st["bubble_danger"]["type"] == "noul"
+
+    def test_predict_batch_executa_sem_falhar(self):
+        from llm.laya_bridge import predict_batch
+
+        requests = [
+            {"state": "Hero bet 20BB on dry board"},
+            {"state": "Villain all-in shove on bubble"},
+        ]
+        res = predict_batch(requests, batch_size=2)
+        assert len(res) == 2
+        for pred in res:
+            assert pred.provenia is not None
+            assert pred.model_used == "multilingual"
+
+    def test_ruin_priority_from_laya_prediction_calibrado(self):
+        from llm.laya_bridge import (
+            LayaPrediction,
+            Provenia,
+            ruin_priority_from_laya_prediction,
+        )
+
+        p = Provenia(
+            engine_id="test",
+            implementation_level="primitive",
+            runtime_used="test",
+            model_used="multilingual",
+            intended_model="multilingual",
+            weights_loaded=False,
+            fallback_used=True,
+            assumptions=[],
+            limitations=[],
+            units=[],
+        )
+        # Noul alto = certeza alta de sobrevivencia (baixo risco) -> ruin_priority ~ 1.0
+        pred_certa = LayaPrediction(
+            answers={},
+            model_used="multilingual",
+            device="cpu",
+            n_tokens=10,
+            latency_ms=1.0,
+            noul=1.0,
+            choice="simple",
+            score=1.0,
+            confidence=1.0,
+            provenia=p,
+        )
+        assert ruin_priority_from_laya_prediction(pred_certa) == 1.0
+
+        # Noul baixo = risco elevado de ruina -> ruin_priority infla ate 1.30
+        pred_incerta = LayaPrediction(
+            answers={},
+            model_used="multilingual",
+            device="cpu",
+            n_tokens=10,
+            latency_ms=1.0,
+            noul=0.0,
+            choice="complex",
+            score=0.0,
+            confidence=0.1,
+            provenia=p,
+        )
+        assert ruin_priority_from_laya_prediction(pred_incerta) == 1.30
