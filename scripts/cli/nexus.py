@@ -658,7 +658,7 @@ def _build_system_status_panel() -> Panel:
         vram_color = _color_threshold(vram_percent, (75, 90))
         vram_str = f"[{vram_color}]{vram_percent:.1f}%[/] [dim #6272a4]({vram_used:.1f}G/{vram_total:.1f}G)[/]"
     else:
-        vram_str = "[dim #6272a4]N/A (POSIX Restrito)[/]"
+        vram_str = "[dim #6272a4]N/A (CPU Mode / Off)[/]"
 
     worker_alive = _get_worker_alive_status()
 
@@ -1002,11 +1002,12 @@ def _build_notifications_panel() -> Panel:
     grid.add_column(ratio=1)
     grid.add_column(ratio=2)
 
+    health_color = "#50fa7b" if "HOMEOSTASE" in report.health_status else "#f1fa8c"
     health_col = (
         f"[bold #50fa7b]Dream-RSI:[/] [white]{report.dream_trees_count} arvores[/] ([white]{report.dream_nodes_count} nos[/])\n"
         f"[dim]Poda Preditiva TimesFM:[/] [bold #50fa7b]-15.1% espaco[/] | [dim]Monotonicidade:[/] [bold #50fa7b]100%[/]\n"
         f"[bold #8be9fd]Token Headroom:[/] [white]{report.token_budget_consumed:,} / {report.token_budget_limit:,}[/] ([bold #50fa7b]+{report.token_headroom_percent:.1f}% livre[/])\n"
-        f"[bold #bd93f9]Integridade Global:[/] [bold #50fa7b]{report.health_status}[/]"
+        f"[bold #bd93f9]Integridade Global:[/] [bold {health_color}]{report.health_status}[/]"
     )
 
     recs_lines: list[str] = []
@@ -1045,7 +1046,8 @@ def _build_footer_panel() -> Panel:
         "[3] [bold #50fa7b]nexus ops sanitize[/]\n[dim #6272a4]    Higiene SOTA[/]\n\n"
         "[4] [bold #50fa7b]nexus ops quality-gate[/]\n[dim #6272a4]    Validar Pipeline CI[/]\n\n"
         "[R] [bold #50fa7b]nexus ops optimize-ram[/]\n[dim #6272a4]    Esvaziar e Otimizar RAM[/]\n\n"
-        "[M] [bold #50fa7b]nexus ops maintenance[/]\n[dim #6272a4]    Manutencao Geral SOTA[/]"
+        "[M] [bold #50fa7b]nexus ops maintenance[/]\n[dim #6272a4]    Manutencao Geral SOTA[/]\n\n"
+        "[A] [bold #50fa7b]nexus ops check-ascii[/]\n[dim #6272a4]    Blindagem ASCII[/]"
     )
     c2 = (
         "[5] [bold #8be9fd]nexus agent handoff[/]\n[dim #6272a4]    Sessao Web (Clipboard)[/]\n\n"
@@ -1062,6 +1064,7 @@ def _build_footer_panel() -> Panel:
         "[C] [bold #ff5555]nexus db clear-pending[/]\n[dim #6272a4]    Aniquilar Pendentes[/]\n\n"
         "[F] [bold #ff5555]nexus db clear-failed[/]\n[dim #6272a4]    Aniquilar Falhas[/]\n\n"
         "[V] [bold #f1fa8c]nexus db vacuum[/]\n[dim #6272a4]    Otimizar DB (VACUUM)[/]\n\n"
+        "[P] [bold #f1fa8c]nexus triad status[/]\n[dim #6272a4]    Triade SOTA (Exa/Stitch/Jules)[/]\n\n"
         "[S] [bold #8be9fd]nexus status[/] | [Q] [bold #ff5555]Sair[/]"
     )
 
@@ -1146,6 +1149,8 @@ def _execute_shortcut(key: str):
         "k": [sys.executable, __file__, "agent", "calibration-forecast"],
         "d": [sys.executable, __file__, "agent", "dream-optimize", "--model", "3.0", "--research"],
         "t": [sys.executable, __file__, "stats", "timesfm"],
+        "a": [sys.executable, __file__, "ops", "check-ascii"],
+        "p": [sys.executable, __file__, "triad", "status"],
     }
     if key in cmd_map:
         console.clear()
@@ -1178,6 +1183,8 @@ async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
         "k",
         "d",
         "t",
+        "a",
+        "p",
         "q",
     }
     for _ in range(50):
