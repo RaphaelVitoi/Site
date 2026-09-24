@@ -23,6 +23,7 @@ caminhos:
   - frontend/src/components/simulator/ui/FreqInput.tsx
   - frontend/src/app/(public)/biblioteca/teoria-da-perspectiva/page.tsx
   - frontend/src/components/analytics/NexusOperationsPanel.tsx
+  - frontend/src/components/analytics/NexusOperationsPanel.test.tsx
   - frontend/src/components/ui/layout/SotaMarkdown.tsx
   - frontend/tests/visual/homepage.spec.ts
   - scripts/ops/suite_verde.py
@@ -57,7 +58,14 @@ pendencias:
     dono: proximo condutor designado pelo Tier 0
     prazo: 2026-09-30
 pendencias_resolvidas: []
-revisoes_de_ancora: []
+revisoes_de_ancora:
+  - registro: handoff-2026-09-23-ci-ram-e-rustfmt-staged
+    caminhos: [scripts/ops/suite_verde.py, .vscode/tasks.json, tests/test_suite_verde.py]
+    parecer: >-
+      Revisado em 2026-09-23. As correcoes neste commit sao PURELY DE LINTING
+      (B904 raise-from, I001 import sort) e nao alteram a logica de chaveamento
+      de conteudo, paralelismo ou cache. O contrato VERSAO_DO_CONTRATO,
+      arvore_de_conteudo e comportamento de marcador permanecem inalterados.
 ---
 
 # Handoff — CI e Rustfmt
