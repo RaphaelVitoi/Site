@@ -434,7 +434,7 @@
     "python.globalModuleInstallation": true,
     "python.useEnvironmentsExtension": false,
     "workbench.editorAssociations": {
-        "*.pdf": "default",
+        "*.pdf": "pdf.preview",
         "*.xlsx": "cweijan.officeViewer",
         "*.xls": "cweijan.officeViewer",
         "*.docx": "cweijan.officeViewer",
@@ -449,6 +449,8 @@
         "*.excalidraw.json": "pomdtr.excalidraw-editor",
         "*.excalidraw.svg": "pomdtr.excalidraw-editor"
     },
+    "ruff.nativeServer": "on",
+    "ruff.importStrategy": "fromEnvironment",
     "markdown.preview.breaks": true,
     "markdown.preview.typographer": true,
     "markdown.preview.doubleClickToSwitchToEditor": true,
@@ -457,5 +459,7 @@
     "markmap.colorFreezeLevel": 2,
     "rainbow_csv.autodetect_separators": true,
     "rainbow_csv.enable_separator_autodetection": true,
+    "csv-editor.readOption_hasHeader": "true",
+    "csv-editor.theme": "auto",
     "svg.preview.mode": "svg"
 }
