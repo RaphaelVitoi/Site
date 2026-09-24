@@ -15,7 +15,7 @@ config_medida:
   cuda_disponivel: false
 verificado:
   - "download-checkpoint: verificado no cache local do huggingface (convaiinnovations/laya-multilingual)"
-  - "aquecimento-e-forward-pass: warmup executado em 29488.11 ms"
+  - "aquecimento-e-forward-pass: warmup executado em 28741.39 ms"
   - "proveniencia-s4: engine_id=laya-s1-trained, weights_loaded=True, fallback_used=False"
   - "integracao-solvers: modulação testada com CFR+, Monte Carlo, TimesFM 2.5/3.0 e Dream-RSI"
   - "docker-gpu-pronto: Dockerfile.gpu e docker-compose.gpu.yml providenciados em tools/laya_service/"
@@ -47,7 +47,7 @@ nao_verificado:
 ## 2. Inspecao de Checkpoint e Aquecimento (Warm-up)
 
 O modelo canônico **convaiinnovations/laya-multilingual** (322M parâmetros) foi instanciado e validado:
-- **Tempo de Aquecimento (Warm-up):** `29488.11 ms`
+- **Tempo de Aquecimento (Warm-up):** `28741.39 ms`
 - **Device de Execucao:** `cpu`
 - **Inferencia de Pesos Reais:**
   - `noul`: `0.1897` (probabilidade calibrada RLCD)
@@ -63,8 +63,9 @@ O modelo canônico **convaiinnovations/laya-multilingual** (322M parâmetros) fo
 
 | Lote (Batch) | Requisicoes | Tempo Total (ms) | Latencia Media (ms) | Vazao (req/s) | VRAM Alocada |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | 1 | 250.25 | 250.25 | 4.00 | 0.0 MB |
-| 4 | 4 | 985.23 | 246.31 | 4.06 | 0.0 MB |
+| 1 | 1 | 241.27 | 241.27 | 4.14 | 0.0 MB |
+| 4 | 4 | 930.78 | 232.70 | 4.30 | 0.0 MB |
+| 9 | 9 | 2069.12 | 229.90 | 4.35 | 0.0 MB |
 
 
 ---

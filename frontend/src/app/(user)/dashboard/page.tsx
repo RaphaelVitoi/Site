@@ -216,9 +216,9 @@ export default async function DashboardPage() {
 					</GlassPanel>
 				</div>
 
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 					<Link href={ROUTES.DASHBOARD_FILES} className="group block focus:outline-none">
-						<GlassPanel className="p-6 border-white/10 hover:border-accent-indigo/40 hover:bg-slate-900/60 transition-all duration-300">
+						<GlassPanel className="p-6 border-white/10 hover:border-accent-indigo/40 hover:bg-slate-900/60 transition-all duration-300 h-full">
 							<div className="flex items-center justify-between gap-4">
 								<div className="flex items-center gap-4">
 									<div className="w-11 h-11 rounded-xl bg-accent-indigo/20 border border-accent-indigo/30 flex items-center justify-center text-accent-indigo shrink-0">
@@ -226,10 +226,10 @@ export default async function DashboardPage() {
 									</div>
 									<div>
 										<h3 className="text-base font-bold text-white group-hover:text-accent-indigo-light transition-colors m-0">
-											Explorador de Arquivos & Dados
+											Explorador de Arquivos
 										</h3>
 										<p className="text-xs text-text-muted m-0 mt-1">
-											Visualizador seguro de hand histories, relatórios e acervos do operador
+											Visualizador de hand histories e relatórios
 										</p>
 									</div>
 								</div>
@@ -239,7 +239,7 @@ export default async function DashboardPage() {
 					</Link>
 
 					<Link href={ROUTES.TEMPLO.ANALYTICS} className="group block focus:outline-none">
-						<GlassPanel className="p-6 border-white/10 hover:border-accent-emerald/40 hover:bg-slate-900/60 transition-all duration-300">
+						<GlassPanel className="p-6 border-white/10 hover:border-accent-emerald/40 hover:bg-slate-900/60 transition-all duration-300 h-full">
 							<div className="flex items-center justify-between gap-4">
 								<div className="flex items-center gap-4">
 									<div className="w-11 h-11 rounded-xl bg-accent-emerald/20 border border-accent-emerald/30 flex items-center justify-center text-accent-emerald shrink-0">
@@ -250,11 +250,32 @@ export default async function DashboardPage() {
 											Laboratório Quântico (EV)
 										</h3>
 										<p className="text-xs text-text-muted m-0 mt-1">
-											Panóptico de telemetria de perspectiva e distorções ICM em tempo real
+											Telemetria e distorções ICM em tempo real
 										</p>
 									</div>
 								</div>
 								<i className="fa-solid fa-arrow-right text-xs text-accent-emerald-light transition-transform group-hover:translate-x-1" />
+							</div>
+						</GlassPanel>
+					</Link>
+
+					<Link href={ROUTES.TEMPLO.LAYA} className="group block focus:outline-none">
+						<GlassPanel className="p-6 border-white/10 hover:border-cyan-400/40 hover:bg-slate-900/60 transition-all duration-300 h-full">
+							<div className="flex items-center justify-between gap-4">
+								<div className="flex items-center gap-4">
+									<div className="w-11 h-11 rounded-xl bg-cyan-500/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 shrink-0">
+										<i className="fa-solid fa-microchip text-lg" />
+									</div>
+									<div>
+										<h3 className="text-base font-bold text-white group-hover:text-cyan-300 transition-colors m-0">
+											Laya S1 Solver Bridge
+										</h3>
+										<p className="text-xs text-text-muted m-0 mt-1">
+											Modulação de solvers analíticos e telemetria GPU
+										</p>
+									</div>
+								</div>
+								<i className="fa-solid fa-arrow-right text-xs text-cyan-300 transition-transform group-hover:translate-x-1" />
 							</div>
 						</GlassPanel>
 					</Link>

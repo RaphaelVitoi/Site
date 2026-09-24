@@ -17,6 +17,7 @@ export const ROUTES = {
 	TEMPLO: {
 		ANALYTICS: '/templo/analytics',
 		GEMMA: '/templo/gemma',
+		LAYA: '/templo/laya',
 	},
 	AULAS: {
 		INDEX: '/aulas',
