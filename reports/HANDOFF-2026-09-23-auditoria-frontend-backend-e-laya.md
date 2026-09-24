@@ -108,6 +108,7 @@ O objetivo primordial partiu de uma solicitacao de auditoria minuciosa e holisti
 ## 2. Processo Operacional
 
 O trabalho foi dividido em fases sequenciais sob o Protocolo Chico SOTA v8.0 GOLD:
+
 1. **Auditoria Frontend & Design:** Varredura em rotas claras (`.light-page`), hierarquia cromatica, contraste de botoes e tipografia de micro-escalas.
 2. **Harmonizacao Visual Executada:**
    - Adaptabilidade de tema no rodapé ([`Footer.tsx`](frontend/src/components/ui/layout/Footer.tsx)) para rotas `/` e `/quem-sou`.
@@ -124,23 +125,23 @@ O trabalho foi dividido em fases sequenciais sob o Protocolo Chico SOTA v8.0 GOL
 
 ## 3. Marcos da Sessao
 
-* **Marco 1:** Consolidacao dos relatorios de auditoria [`frontend_design_audit.md`](file:///C:/Users/rapha/.gemini/antigravity/brain/a165dc0a-eb11-4ed6-84a8-d34f8d9d8532/frontend_design_audit.md) e [`backend_code_audit.md`](file:///C:/Users/rapha/.gemini/antigravity/brain/a165dc0a-eb11-4ed6-84a8-d34f8d9d8532/backend_code_audit.md).
-* **Marco 2:** Aprovacao total das suites de testes frontend (99/99 suites, 676/676 testes verdes) e backend (1.712 testes pytest verdes, 0 falhas).
-* **Marco 3:** Atingimento da marca de Zero Erros e Zero Warnings no Pyright em todo o repositorio Python.
-* **Marco 4:** Encerramento formal de 4 pendencias criticas no portao de governanca `record_gate.py` e esvaziamento da fila de pendencias do SQLite (`0 pending, 5 completed`).
-* **Marco 5:** Registro e validacao criptografica do feedback humano de 9.8/10 na cadeia append-only do `feedback-ledger.jsonl`.
+- **Marco 1:** Consolidacao dos relatorios de auditoria [`frontend_design_audit.md`](file:///C:/Users/rapha/.gemini/antigravity/brain/a165dc0a-eb11-4ed6-84a8-d34f8d9d8532/frontend_design_audit.md) e [`backend_code_audit.md`](file:///C:/Users/rapha/.gemini/antigravity/brain/a165dc0a-eb11-4ed6-84a8-d34f8d9d8532/backend_code_audit.md).
+- **Marco 2:** Aprovacao total das suites de testes frontend (99/99 suites, 676/676 testes verdes) e backend (1.712 testes pytest verdes, 0 falhas).
+- **Marco 3:** Atingimento da marca de Zero Erros e Zero Warnings no Pyright em todo o repositorio Python.
+- **Marco 4:** Encerramento formal de 4 pendencias criticas no portao de governanca `record_gate.py` e esvaziamento da fila de pendencias do SQLite (`0 pending, 5 completed`).
+- **Marco 5:** Registro e validacao criptografica do feedback humano de 9.8/10 na cadeia append-only do `feedback-ledger.jsonl`.
 
 ## 4. Desafios Enfrentados
 
-* **Aparente Inutilidade vs. Uso Efetivo de `Any`:** A analise preliminar sugeriu que `from typing import Any, Final` em `vitoi_perspective_engine.py` continha um `Any` orfao. A busca detalhada revelou que `Any` era de fato consumido em assinaturas de interoperabilidade com C++/SIMD e retorno diacronico. Em vez de uma remocao cega que quebraria contratos, refinamos e tipamos estritamente todas as ocorrencias (`float | Sequence[float]`, `dict[str, object]`), alcancando Zero-Any com total elegancia e sem regressao.
-* **Tipagem Rigorosa com `exactOptionalPropertyTypes`:** Ao estender `StreetState` e `PostFlopResult` em `rpDeriver.ts`, o compilador TypeScript acusou incompatibilidade de tipos opcionais (`TS2375`). A solucao adotou unioes explicitas com `| undefined`, respeitando a configuracao mais estrita do `tsconfig.audit.json`.
-* **Desacoplamento de BFs e Ruin Prior:** A propagacao do `ruinPrior` em `derivePostFlopRps` exigiu garantir que o `riskAdvantage` modulasse o `heroRpAbsolute` proporcionalmente (1.30x em cenarios nao-latinos), sem afetar as propriedades invariantes do Teorema 2 no River.
+- **Aparente Inutilidade vs. Uso Efetivo de `Any`:** A analise preliminar sugeriu que `from typing import Any, Final` em `vitoi_perspective_engine.py` continha um `Any` orfao. A busca detalhada revelou que `Any` era de fato consumido em assinaturas de interoperabilidade com C++/SIMD e retorno diacronico. Em vez de uma remocao cega que quebraria contratos, refinamos e tipamos estritamente todas as ocorrencias (`float | Sequence[float]`, `dict[str, object]`), alcancando Zero-Any com total elegancia e sem regressao.
+- **Tipagem Rigorosa com `exactOptionalPropertyTypes`:** Ao estender `StreetState` e `PostFlopResult` em `rpDeriver.ts`, o compilador TypeScript acusou incompatibilidade de tipos opcionais (`TS2375`). A solucao adotou unioes explicitas com `| undefined`, respeitando a configuracao mais estrita do `tsconfig.audit.json`.
+- **Desacoplamento de BFs e Ruin Prior:** A propagacao do `ruinPrior` em `derivePostFlopRps` exigiu garantir que o `riskAdvantage` modulasse o `heroRpAbsolute` proporcionalmente (1.30x em cenarios nao-latinos), sem afetar as propriedades invariantes do Teorema 2 no River.
 
 ## 5. Aprendizados & Calibracao
 
-* **Feedback do Usuario:** `9.8/10 Eficiente, rápida, alta qualidade, mas a latencia foi maior do que a entrega um pouco. Otima sessão.`
-* **Calibracao de Latencia:** Para instrucoes diretas de resolucao em sessao assistida, orquestrar subcomandos de validacao em batches compactados em vez de chamadas sequenciais reduz o tempo total de resposta, aumentando a fluidez para o operador Tier 0.
-* **Integridade de Registros:** A governanca do `record_gate.py` demonstra seu valor pratico: nenhum arquivo ancorado por registros vigentes e alterado em stage passa despercebido, garantindo que o historico epistemico do repositorio permaneca consistente.
+- **Feedback do Usuario:** `9.8/10 Eficiente, rápida, alta qualidade, mas a latencia foi maior do que a entrega um pouco. Otima sessão.`
+- **Calibracao de Latencia:** Para instrucoes diretas de resolucao em sessao assistida, orquestrar subcomandos de validacao em batches compactados em vez de chamadas sequenciais reduz o tempo total de resposta, aumentando a fluidez para o operador Tier 0.
+- **Integridade de Registros:** A governanca do `record_gate.py` demonstra seu valor pratico: nenhum arquivo ancorado por registros vigentes e alterado em stage passa despercebido, garantindo que o historico epistemico do repositorio permaneca consistente.
 
 ## 6. Status Atual vs. Status Inicial
 
