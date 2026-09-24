@@ -202,9 +202,9 @@ def test_arbitrator_mermaid_graph() -> None:
 
 @pytest.mark.unit
 def test_arbitrator_edge_cases() -> None:
-    """Valida ciclos, falhas upstream e dependências externas no UniversalArbitrator."""
+    """Valida ciclos, falhas upstream e dependencias externas no UniversalArbitrator."""
     now_str = datetime.now(UTC).isoformat()
-    # 1. Ciclo irresolvível
+    # 1. Ciclo irresolvivel
     cyclic_tasks = [
         Task(id="C1", description="C1", agent="@maverick", timestamp=now_str, metadata={"depends_on": ["C2"]}),
         Task(id="C2", description="C2", agent="@maverick", timestamp=now_str, metadata={"depends_on": ["C1"]}),
@@ -212,7 +212,7 @@ def test_arbitrator_edge_cases() -> None:
     assert UniversalArbitrator.has_dependency_cycle(cyclic_tasks) is True
     assert UniversalArbitrator.extract_optimal_task(cyclic_tasks) is None
 
-    # 2. Dependências externas e falhas upstream
+    # 2. Dependencias externas e falhas upstream
     tasks = [
         Task(id="T1", description="T1", agent="@maverick", timestamp=now_str, metadata={"depends_on": ["EXT_FAILED"]}),
     ]

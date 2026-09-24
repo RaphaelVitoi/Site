@@ -167,7 +167,7 @@ class TimesFMForecastRequest(BaseModel):
     preferred_model_key: str = Field(TIMESFM_25_200M, description="Chave do modelo no catalogo TimesFM")
     use_pretrained_weights: bool = Field(
         False,
-        description="Carrega pesos locais já baixados; não baixa arquivos durante a chamada da API.",
+        description="Carrega pesos locais j\u00e1 baixados; n\u00e3o baixa arquivos durante a chamada da API.",
     )
 
 
@@ -208,11 +208,11 @@ class TimesFMEngine:
         cache_dir: str | None = None,
         local_files_only: bool = False,
     ) -> bool:
-        """Carrega TimesFM 2.5 localmente; download ocorre apenas por chamada explícita."""
+        """Carrega TimesFM 2.5 localmente; download ocorre apenas por chamada explicita."""
         if self.preferred_model_key != TIMESFM_25_200M:
             raise RuntimeError(
-                "Carregamento integrado disponível apenas para TimesFM 2.5; "
-                "TimesFM 2.0/3.0 exigem adaptadores isolados por versão e licença."
+                "Carregamento integrado dispon\u00edvel apenas para TimesFM 2.5; "
+                "TimesFM 2.0/3.0 exigem adaptadores isolados por vers\u00e3o e licen\u00e7a."
             )
         if self._model is not None:
             return True
@@ -250,7 +250,7 @@ class TimesFMEngine:
 
     @property
     def weights_loaded(self) -> bool:
-        """Indica se a inferência usa pesos carregados em memória."""
+        """Indica se a inferencia usa pesos carregados em memoria."""
         return self._model is not None
 
     @property
@@ -275,20 +275,20 @@ class TimesFMEngine:
     ) -> ModelMetadata:
         canonical_key = TIMESFM_ALIASES.get(model_key.strip().lower(), model_key)
         if canonical_key not in TIMESFM_CATALOG:
-            raise ValueError(f"Modelo desconhecido: '{model_key}'. Opções: {list(TIMESFM_CATALOG.keys())}")
+            raise ValueError(f"Modelo desconhecido: '{model_key}'. Op\u00e7\u00f5es: {list(TIMESFM_CATALOG.keys())}")
 
         meta = TIMESFM_CATALOG[canonical_key]
 
         if mode == ExecutionMode.COMMERCIAL_PRODUCTION and not meta.is_commercial_allowed:
             raise TimesFMGovernanceError(
-                f"VIOLAÇÃO DE LICENÇA: O modelo '{canonical_key}' está sob '{meta.license_tier.value}'. "
-                "O Google proíbe expressamente o uso de pesos do TimesFM 3.0 em ambientes comerciais ou de produção. "
-                f"Para produção comercial, utilize '{TIMESFM_20_500M}' / '{TIMESFM_25_200M}' (Apache 2.0) "
-                "ou utilize o serviço gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
+                f"VIOLA\u00c7\u00c3O DE LICEN\u00c7A: O modelo '{canonical_key}' est\u00e1 sob '{meta.license_tier.value}'. "
+                "O Google pro\u00edbe expressamente o uso de pesos do TimesFM 3.0 em ambientes comerciais ou de produ\u00e7\u00e3o. "
+                f"Para produ\u00e7\u00e3o comercial, utilize '{TIMESFM_20_500M}' / '{TIMESFM_25_200M}' (Apache 2.0) "
+                "ou utilize o servi\u00e7o gerenciado Google Cloud BigQuery ML (AI.FORECAST)."
             )
 
         logger.debug(
-            "TimesFM Inicializado | Modo: %s | Modelo: %s | Licença: %s",
+            "TimesFM Inicializado | Modo: %s | Modelo: %s | Licen\u00e7a: %s",
             mode.value,
             meta.model_id,
             meta.license_tier.value,

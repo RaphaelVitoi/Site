@@ -326,7 +326,7 @@ def measure_h8(
 
     O enunciado do registro e "frequencia de apostas >= 50% inalterada" como
     condicao de refuta: IC95 que contem zero e exatamente "inalterada" nao
-    excluida pelos dados, e nao se lê como confirmacao fraca.
+    excluida pelos dados, e nao se le como confirmacao fraca.
     """
     nos = free_bet_nodes(pares)
     if not nos:

@@ -39,7 +39,9 @@ class TestLayaReal:
 
     def test_route_multilingual_devanagari(self):
         # Saida verificada: model=multilingual, script=devanagari, non_latin=1.0
-        i = classificar_intencao("नमस्ते मार्केट सेवा अस्ति")
+        i = classificar_intencao(
+            "\u0928\u092e\u0938\u094d\u0924\u0947 \u092e\u093e\u0930\u094d\u0915\u0947\u091f \u0938\u0947\u0935\u093e \u0905\u0938\u094d\u0924\u093f"
+        )
         assert i.idioma == "multilingual"
         assert i.script == "devanagari"
         assert i.is_english is False
@@ -47,7 +49,7 @@ class TestLayaReal:
         assert i.modelo_sugerido == "multilingual"
 
     def test_route_multilingual_han(self):
-        i = classificar_intencao("下一步实施计划实施")
+        i = classificar_intencao("\u4e0b\u4e00\u6b65\u5b9e\u65bd\u8ba1\u5212\u5b9e\u65bd")
         assert i.idioma == "multilingual"
         assert i.script == "han"
         assert i.is_english is False
@@ -88,7 +90,7 @@ class TestFallback:
     def test_fallback_detecta_non_latin(self, monkeypatch):
         monkeypatch.setattr(LayaRouter, "_router", None)
         monkeypatch.setattr(LayaRouter, "_tentado", True)
-        i = classificar_intencao("नमस्ते")
+        i = classificar_intencao("\u0928\u092e\u0938\u094d\u0924\u0947")
         assert i.idioma == "multilingual"
         assert i.is_english is False
         assert i.nao_latin_fraction_pct == pytest.approx(100.0)
@@ -160,7 +162,7 @@ class TestFamiliaModelo:
 
 
 class TestLayaMultilingualSOTA:
-    """Valida as capacidades avançadas da Laya Multilingual."""
+    """Valida as capacidades avancadas da Laya Multilingual."""
 
     def test_canonical_model_eh_multilingual(self):
         from llm.laya_bridge import CANONICAL_LAYA_MODEL, CANONICAL_LAYA_REPO

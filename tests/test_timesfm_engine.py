@@ -315,7 +315,7 @@ async def test_timesfm_3_research_mode_is_not_served_by_product_api():
     response = await handle_timesfm_forecast(req)
 
     assert response.status == 403
-    assert "não comerciais" in json.loads(response.text)["error"]
+    assert "n\u00e3o comerciais" in json.loads(response.text)["error"]
 
 
 @pytest.mark.asyncio

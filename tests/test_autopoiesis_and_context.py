@@ -30,7 +30,7 @@ class SampleSchema(BaseModel):
 
 @pytest.mark.unit
 def test_autopoiesis_lock_and_temps(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Valida lock, stale-lock recovery, foreign-PID block e purga de temporários."""
+    """Valida lock, stale-lock recovery, foreign-PID block e purga de temporarios."""
     lock_path = tmp_path / "homeostasis.lock"
     monkeypatch.setattr(ae_module, "LOCK_FILE", lock_path)
     monkeypatch.setattr(ae_module, "TELEMETRY_LOG", tmp_path / "telemetry.jsonl")
@@ -41,7 +41,7 @@ def test_autopoiesis_lock_and_temps(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert engine._acquire_lock() is True
     assert lock_path.exists()
 
-    # 2. Reentrância: mesmo PID re-acquire com sucesso
+    # 2. Reentrancia: mesmo PID re-acquire com sucesso
     assert engine._acquire_lock() is True
 
     # Release
@@ -56,7 +56,7 @@ def test_autopoiesis_lock_and_temps(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
 @pytest.mark.unit
 def test_autopoiesis_sqlite_wal(tmp_path: Path) -> None:
-    """Valida a verificação de integridade SQLite WAL."""
+    """Valida a verificacao de integridade SQLite WAL."""
     engine = AutopoiesisEngine(base_dir=tmp_path)
     ok, msg = engine.check_and_heal_sqlite_wal()
     assert isinstance(ok, bool)
@@ -66,7 +66,7 @@ def test_autopoiesis_sqlite_wal(tmp_path: Path) -> None:
 @pytest.mark.unit
 @patch("subprocess.run")
 def test_autopoietic_cycle_execution(mock_run: MagicMock, tmp_path: Path) -> None:
-    """Valida a execução completa de um ciclo autoiopoiético com mock de subprocessos."""
+    """Valida a execucao completa de um ciclo autoiopoietico com mock de subprocessos."""
     mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
     engine = AutopoiesisEngine(base_dir=tmp_path)
 
@@ -78,7 +78,7 @@ def test_autopoietic_cycle_execution(mock_run: MagicMock, tmp_path: Path) -> Non
 
 @pytest.mark.unit
 def test_sota_context_cache_engine() -> None:
-    """Valida o SotaContextCacheEngine (buckets, TTL, assinaturas, tamanho em MB e evicção LRU)."""
+    """Valida o SotaContextCacheEngine (buckets, TTL, assinaturas, tamanho em MB e eviccao LRU)."""
     cache = SotaContextCacheEngine(max_cache_size_mb=10)
 
     bucket = cache.get_or_create_bucket(
@@ -99,7 +99,7 @@ def test_sota_context_cache_engine() -> None:
 
 @pytest.mark.unit
 def test_structured_output_engine() -> None:
-    """Valida validação estrita com Pydantic e limpeza de blocos markdown."""
+    """Valida validacao estrita com Pydantic e limpeza de blocos markdown."""
     raw_json = '```json\n{"result": "sucesso sota", "code": 200}\n```'
     parsed = StructuredOutputEngine.enforce_pydantic(raw_json, SampleSchema)
     assert parsed.result == "sucesso sota"
@@ -111,7 +111,7 @@ def test_structured_output_engine() -> None:
 
 @pytest.mark.unit
 def test_prompt_structure_optimizer() -> None:
-    """Valida a construção de prompts otimizados para Radix Prefix Caching."""
+    """Valida a construcao de prompts otimizados para Radix Prefix Caching."""
     prompt = PromptStructureOptimizer.build_cached_prompt(
         system_prompt="System instructions",
         tool_definitions="Tools definition",

@@ -35,7 +35,7 @@ class DeepSolverImporter(BaseSolverImporter):
         return False
 
     def _process_list_nodes(self, raw_nodes: list[dict[str, Any]], starting_pot: float) -> dict[str, SolverNode]:
-        """Processa nós no formato de lista."""
+        """Processa nos no formato de lista."""
         nodes_dict: dict[str, SolverNode] = {}
         for item in raw_nodes:
             nid = str(item.get("id", item.get("node_id", f"node_{len(nodes_dict)}")))
@@ -56,7 +56,7 @@ class DeepSolverImporter(BaseSolverImporter):
         return nodes_dict
 
     def _process_dict_nodes(self, raw_nodes: dict[str, Any], starting_pot: float) -> dict[str, SolverNode]:
-        """Processa nós no formato de dicionário."""
+        """Processa nos no formato de dicionario."""
         nodes_dict: dict[str, SolverNode] = {}
         for nid, item in raw_nodes.items():
             strategy = {self.sanitize_action_name(a): float(f) for a, f in item.get("strategy", {}).items()}
@@ -76,7 +76,7 @@ class DeepSolverImporter(BaseSolverImporter):
         return nodes_dict
 
     def _determine_root_id(self, nodes_dict: dict[str, SolverNode]) -> str:
-        """Determina o ID do nó raiz."""
+        """Determina o ID do no raiz."""
         if "root" in nodes_dict:
             return "root"
         if nodes_dict:
@@ -140,7 +140,7 @@ class DeepSolverImporter(BaseSolverImporter):
         return matrix
 
     def _parse_dict(self, raw_data: dict[str, float]) -> list[list[float]]:
-        """Processa dicionário com labels de mãos."""
+        """Processa dicionario com labels de maos."""
         matrix = [[0.0 for _ in range(13)] for _ in range(13)]
         for r in range(13):
             for c in range(13):

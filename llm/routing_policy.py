@@ -734,7 +734,7 @@ def avaliar_uso_condicional_pro(
 
             sig = intencao_s1 if intencao_s1 else classificar_intencao(prompt or "").metadados_s1()
             rp = ruin_priority_from_intencao(sig)
-            # ruin_priority [1.0, 1.30] modula o threshold de ganho (1.0 -> 25.0%, 1.30 -> até 32.5% mais exigente)
+            # ruin_priority [1.0, 1.30] modula o threshold de ganho (1.0 -> 25.0%, 1.30 -> ate 32.5% mais exigente)
             threshold_ganho = round(25.0 * rp, 2)
             s1_meta = {
                 "laya_adapted": True,

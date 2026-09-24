@@ -734,13 +734,13 @@ class VitoiPerspectiveEngine:
         Quando a stack residual encolhe para zona de morte (<= 4bb) e o pote infla,
         a probabilidade de ressurgir com o Bluffcatcher supera a morte por inanicao com micro-stack.
 
-        Etapa 0 (laya S1): ``ruin_prior`` modula a barreira de ruína (Teorema 2, BF<1).
+        Etapa 0 (laya S1): ``ruin_prior`` modula a barreira de ruina (Teorema 2, BF<1).
         1.0 = desativado (backward-compat). nao_latin>0 (via
         llm.laya_bridge.ruin_priority_from_intencao sobre Task.metadata['n']) ->
-        ruin_prior>1 infla o prior de sobrevivência (fold_survival/call_win_survival)
-        -> exige mais equidade para chamar -> Cautela (aniquila variância) para input
-        incerto. S1 não altera os 10 teoremas (invariante §3): apenas o prior de
-        sobrevivência é modulado, nunca a estrutura de decisão dos teoremas.
+        ruin_prior>1 infla o prior de sobrevivencia (fold_survival/call_win_survival)
+        -> exige mais equidade para chamar -> Cautela (aniquila variancia) para input
+        incerto. S1 nao altera os 10 teoremas (invariante Secao 3): apenas o prior de
+        sobrevivencia e modulado, nunca a estrutura de decisao dos teoremas.
         """
         chipev_equity = bet_size / (pot_size + 2.0 * bet_size)
         if fold_survival_prob <= 0:
@@ -934,7 +934,7 @@ class VitoiPerspectiveEngine:
         SOTA: Sintese Unificada dos 10 Teoremas Canonicos da Perspectiva Matematica (PMev).
         Executa uma auditoria multidimensional diacronica do cenario em tempo real.
 
-        Etapa 0 (laya S1): ``ruin_prior`` modula a barreira de ruína do Teorema 2
+        Etapa 0 (laya S1): ``ruin_prior`` modula a barreira de ruina do Teorema 2
         (relative_survival_ratio). 1.0 = desativado (backward-compat); >1 conservador.
         """
         ev_fold = cls.calculate_dynamic_ev_fold(

@@ -144,7 +144,7 @@ def _detect_data_mode(df: pd.DataFrame, meta: dict[str, Any]) -> None:
 
 
 def _filter_successful_requests(df: pd.DataFrame, meta: dict[str, Any]) -> pd.DataFrame:
-    """Filtra apenas requisições bem-sucedidas e atualiza metadados."""
+    """Filtra apenas requisicoes bem-sucedidas e atualiza metadados."""
     if "is_success" in df.columns:
         df = cast("pd.DataFrame", df[df["is_success"]]).copy().reset_index(drop=True)
         meta["sucesso"] = len(df)

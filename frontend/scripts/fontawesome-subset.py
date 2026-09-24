@@ -1,24 +1,24 @@
 # pylint: disable=invalid-name
 """Gera o subconjunto do Font Awesome Free que o frontend realmente usa.
 
-Até 2026-09-17 o layout importava `all.min.css`: 2.715 classes e três webfonts
-completas. Medido no build de produção, o artigo /biblioteca/geometria-do-risco
+Ate 2026-09-17 o layout importava `all.min.css`: 2.715 classes e tres webfonts
+completas. Medido no build de producao, o artigo /biblioteca/geometria-do-risco
 baixava `fa-solid-900.woff2` (117 KB) e `fa-brands-400.woff2` (113 KB) para
-desenhar cerca de 140 ícones, três deles de marca.
+desenhar cerca de 140 icones, tres deles de marca.
 
-Este gerador lê os ícones citados em `frontend/src`, recorta as fontes com
+Este gerador le os icones citados em `frontend/src`, recorta as fontes com
 fontTools e escreve em `frontend/src/styles/fontawesome/`:
 
-- `fontawesome-subset.css` -- núcleo do Font Awesome e só as regras dos ícones usados;
+- `fontawesome-subset.css` -- nucleo do Font Awesome e so as regras dos icones usados;
 - `fa-solid-900.woff2`, `fa-regular-400.woff2`, `fa-brands-400.woff2` -- fontes recortadas;
-- `manifest.json` -- a lista de ícones, que `src/tests/styles/fontawesomeSubset.test.ts`
-  compara com o código. Ícone novo sem rodar este gerador reprova a suíte.
+- `manifest.json` -- a lista de icones, que `src/tests/styles/fontawesomeSubset.test.ts`
+  compara com o codigo. Icone novo sem rodar este gerador reprova a suite.
 
-Uso, a partir da raiz do repositório:
+Uso, a partir da raiz do repositorio:
 
     .venv/Scripts/python.exe frontend/scripts/fontawesome-subset.py
 
-Depende de `fonttools` e `brotli` (hoje instalados no .venv como dependências
+Depende de `fonttools` e `brotli` (hoje instalados no .venv como dependencias
 transitivas de matplotlib e geventhttpclient).
 """
 
@@ -40,7 +40,7 @@ FRONTEND = ROOT / "frontend"
 FA = ROOT / "node_modules" / "@fortawesome" / "fontawesome-free"
 SAIDA = FRONTEND / "src" / "styles" / "fontawesome"
 
-# Mesma regra de extração da guarda em src/tests/styles/fontawesomeSubset.test.ts.
+# Mesma regra de extracao da guarda em src/tests/styles/fontawesomeSubset.test.ts.
 EXTENSOES = {".ts", ".tsx", ".js", ".jsx", ".md", ".mdx"}
 IGNORAR_DIRS = {"coverage", "tests", "interativo", "fontawesome"}
 TOKEN = re.compile(r"(?<![\w-])fa-([a-z0-9]+(?:-[a-z0-9]+)*)")
@@ -80,7 +80,7 @@ def main() -> None:
     usados = tokens_usados()
     inexistentes = sorted(usados - icones_nucleo.keys() - icones_marca.keys() - classes_nao_icone)
     if inexistentes:
-        sys.exit(f"Tokens fa- que não existem no Font Awesome Free: {inexistentes}")
+        sys.exit(f"Tokens fa- que n\u00e3o existem no Font Awesome Free: {inexistentes}")
 
     nucleo = sorted(usados & icones_nucleo.keys())
     marcas = sorted(usados & icones_marca.keys())
@@ -107,12 +107,12 @@ def main() -> None:
     relatorio = {}
     for estilo, arquivo in FONTES.items():
         origem = FA / "webfonts" / f"{arquivo}.woff2"
-        # Sem recalcular head.modified: com o carimbo de agora, cada execução mudava os três binários
-        # e o manifesto mesmo sem ícone novo.
+        # Sem recalcular head.modified: com o carimbo de agora, cada execucao mudava os tres binarios
+        # e o manifesto mesmo sem icone novo.
         fonte = TTFont(origem, recalcTimestamp=False)
         cmap = fonte.getBestCmap() or {}
         presentes = [u for u in unicodes[estilo] if u in cmap]
-        # name_IDs "*" preserva copyright e licença (SIL OFL 1.1).
+        # name_IDs "*" preserva copyright e licenca (SIL OFL 1.1).
         opcoes = subset.Options(flavor="woff2", layout_features=["*"], name_IDs=["*"])
         recorte = subset.Subsetter(opcoes)
         recorte.populate(unicodes=presentes)

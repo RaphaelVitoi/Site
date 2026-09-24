@@ -210,7 +210,7 @@ class TimesFMPredictivePolicy(ExplorationPolicy):
         sorted_leaves = sorted(candidate_leaves, key=lambda n: n.metric_score, reverse=True)
         effective_width = self.base_beam_width
 
-        # Inferencia de plateau pró-ativo usando TimesFM se houver dados suficientes
+        # Inferencia de plateau pro-ativo usando TimesFM se houver dados suficientes
         if self._forecaster and sorted_leaves:
             best_leaf = sorted_leaves[0]
             scores = self._forecaster.extract_trajectory_scores(tree, best_leaf.node_id)

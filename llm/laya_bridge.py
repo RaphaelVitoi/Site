@@ -12,7 +12,7 @@ executados DENTRO de metodos, nunca no nivel de modulo. Assim
 livre de torch. A primeira classificacao paga o warmup; as demais reaproveitam
 o Router cached em LayaRouter._router.
 
-Provenia (data/engine_capabilities.json, contrato §4):
+Provenia (data/engine_capabilities.json, contrato Secao 4):
   - nivel 1 "primitive": route()-only, SEM pesos (este modulo).
   - nivel 2 "trained-model": predict() (choice/score/noul), GPU-gated, fase 4.
 
@@ -71,7 +71,7 @@ _LATIN_RE = re.compile(r"[\u0000-\u024F\u1E00-\u1EFF]")
 
 @dataclass
 class Provenia:
-    """Contrato minimo de provenia §4 (10 campos) de data/engine_capabilities.json."""
+    """Contrato minimo de provenia Secao 4 (10 campos) de data/engine_capabilities.json."""
 
     engine_id: str
     implementation_level: str  # primitive | simulation | trained-model
@@ -169,7 +169,7 @@ class HeuristicRouter:
 class LayaRouter:
     """Adaptador System-1 da Laya (rote()) zero-download.
 
-    O Router e carregado preguiçosamente (lazy) na primeira chamada -- nunca
+    O Router e carregado preguicosamente (lazy) na primeira chamada -- nunca
     em import. Assim core/arbitrator.py e llm/routing_policy.py permanecem
     livres de torch.
     """
@@ -249,12 +249,12 @@ classificar_intencao = LayaRouter.classificar_intencao
 
 
 def compor_advisory_s1(system_prompt: str, user_prompt: str) -> tuple[str, dict[str, Any] | None]:
-    """Compõe o sinal System-1 da Laya com qualquer backend LLM, sem autoridade.
+    """Compoe o sinal System-1 da Laya com qualquer backend LLM, sem autoridade.
 
-    O contrato é deliberadamente compacto: não injeta texto livre derivado da
-    entrada, não troca modelo/provedor e informa quando a rota é fallback.
+    O contrato e deliberadamente compacto: nao injeta texto livre derivado da
+    entrada, nao troca modelo/provedor e informa quando a rota e fallback.
     """
-    marcador = "[System-1 advisory — Laya; input-side signal, not an answer or authority]"
+    marcador = "[System-1 advisory \u2014 Laya; input-side signal, not an answer or authority]"
     if not user_prompt or marcador in system_prompt:
         return system_prompt, None
     try:
@@ -277,7 +277,7 @@ def compor_advisory_s1(system_prompt: str, user_prompt: str) -> tuple[str, dict[
 
 
 # =============================================================================
-# CAMADA S1-TRAINED: predict() (Fase 4 — GPU-gated)
+# CAMADA S1-TRAINED: predict() (Fase 4 -- GPU-gated)
 # =============================================================================
 
 
@@ -290,7 +290,7 @@ class LayaPrediction:
       - score:  pontuacao numerica calibrada
       - noul:   probabilidade calibrada (escala [0, 1])
       - confidence: confianca calibrada via entropia de Shannon (escala [0, 1])
-    Sempre acompanhado de provenia §4.
+    Sempre acompanhado de provenia Secao 4.
     """
 
     answers: dict[str, Any]
@@ -305,7 +305,7 @@ class LayaPrediction:
     confidence: float | None = None
 
 
-# Presets reutilizáveis (conforme documentacao laya): tipos question/choice/score/noul.
+# Presets reutilizaveis (conforme documentacao laya): tipos question/choice/score/noul.
 # Cada preset e um conjunto de questoes tipadas para o forward pass unico.
 LAYA_DEFAULT_QUESTIONS: dict[str, dict[str, Any]] = {
     "guard": {
@@ -331,7 +331,7 @@ LAYA_DEFAULT_QUESTIONS: dict[str, dict[str, Any]] = {
     },
 }
 
-# Presets SOTA Canônicos para Poker & Game Theory
+# Presets SOTA Canonicos para Poker & Game Theory
 LAYA_POKER_PRESETS: dict[str, dict[str, Any]] = {
     "street_triage": {
         "board_texture": {
@@ -394,7 +394,7 @@ def _detect_device() -> str:
 def _allow_cpu_predict() -> bool:
     """Override Tier-0: permite tentar laya.predict() em host CPU.
 
-    Demoroso (download 322M + forward ~350ms/CPU). Apenas para validação
+    Demoroso (download 322M + forward ~350ms/CPU). Apenas para validacao
     ou quando o arbitro Tier 0 autoriza explicitamente.
     """
     return os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
@@ -444,7 +444,7 @@ def _construir_fallback_prediction(
     assumption_tag: str,
     limitation_extras: list[str],
 ) -> LayaPrediction:
-    """Constrói LayaPrediction heurístico (fallback) a partir de ruin_priority."""
+    """Constroi LayaPrediction heuristico (fallback) a partir de ruin_priority."""
     intent = LayaRouter.classificar_intencao(state)
     rp = ruin_priority_from_intencao(intent.metadados_s1())
     noul_proxy = round(1.0 - (rp - 1.0) / 0.30, 4) if rp > 1.0 else 0.95
@@ -488,7 +488,7 @@ _PREDICT_ROUTER: Any = None
 
 
 def _obter_predict_router() -> Any:
-    """Obtém ou instancia o Router com cache persistente de agentes carregados em memória."""
+    """Obtem ou instancia o Router com cache persistente de agentes carregados em memoria."""
     global _PREDICT_ROUTER
     if _PREDICT_ROUTER is None:
         from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
@@ -505,7 +505,7 @@ def laya_predict(
 ) -> LayaPrediction:
     """Executa laya.predict() (full System-1 forward pass com laya-multilingual).
 
-    IMPORT LAZY: carrega torch apenas aqui. Respecta o device detectado —
+    IMPORT LAZY: carrega torch apenas aqui. Respecta o device detectado --
     CPU host nunca tenta CUDA. Perguntas sobreescrevem os presets default.
     Target canonico SOTA: laya-multilingual (mmBERT-base, 322M). Suporta
     contexto estendido ate 8192 tokens para Hand Histories completos.
@@ -536,7 +536,7 @@ def laya_predict(
     try:
         router = _obter_predict_router()
 
-        # O modelo canônico é sempre 'multilingual', a menos que explicitamente sobrescrito
+        # O modelo canonico e sempre 'multilingual', a menos que explicitamente sobrescrito
         model_name = model_override or CANONICAL_LAYA_MODEL
         result = router.predict(state, qs, model=model_name)
 
@@ -598,11 +598,11 @@ def predict_batch(
     batch_size: int = 8,
     model_override: str | None = None,
 ) -> list[LayaPrediction]:
-    """Processa lote heterogêneo de predições Laya S1 Multilingual.
+    """Processa lote heterogeneo de predicoes Laya S1 Multilingual.
 
-    Agrupa requisições para execução em batch otimizada via Router.predict_batch()
-    quando disponível, ou despacha individualmente preservando a ordem dos resultados.
-    Ideal para avaliação de mesas multiway (ex: 9 jogadores em FT).
+    Agrupa requisicoes para execucao em batch otimizada via Router.predict_batch()
+    quando disponivel, ou despacha individualmente preservando a ordem dos resultados.
+    Ideal para avaliacao de mesas multiway (ex: 9 jogadores em FT).
     """
     if not requests:
         return []
@@ -679,16 +679,16 @@ def predict_batch(
 
 
 def ruin_priority_from_intencao(intencao_s1: dict[str, Any] | None = None) -> float:
-    """Etapa 0 (laya S1): converte o sinal System-1 em prior de ruína (Teorema 2).
+    """Etapa 0 (laya S1): converte o sinal System-1 em prior de ruina (Teorema 2).
 
-    ``intencao_s1`` é o sinal bruto da Laya (``Task.metadata['n']`` =
+    ``intencao_s1`` e o sinal bruto da Laya (``Task.metadata['n']`` =
     ``LayaIntent.metadados_s1()``). ``nao_latin_fraction_pct`` [0,100] media o input:
-    não-latim/incerto -> ``ruin_priority`` > 1.0 (prior de sobrevivência inflado ->
-    exige mais equidade para chamar -> cautela, aniquila variância, SOTA GOLD).
-    1.0 = latim/inglês (desativado, backward-compat).
+    nao-latim/incerto -> ``ruin_priority`` > 1.0 (prior de sobrevivencia inflado ->
+    exige mais equidade para chamar -> cautela, aniquila variancia, SOTA GOLD).
+    1.0 = latim/ingles (desativado, backward-compat).
 
-    S1 não decide os 10 teoremas (invariante §§3, 6.6) — apenas modula o prior de
-    sobrevivência de ``calculate_negative_risk_premium_river`` (Teorema 2, BF<1).
+    S1 nao decide os 10 teoremas (invariante Secao Secao 3, 6.6) -- apenas modula o prior de
+    sobrevivencia de ``calculate_negative_risk_premium_river`` (Teorema 2, BF<1).
     """
     if not intencao_s1:
         return 1.0
@@ -698,10 +698,10 @@ def ruin_priority_from_intencao(intencao_s1: dict[str, Any] | None = None) -> fl
 
 
 def ruin_priority_from_laya_prediction(prediction: LayaPrediction | None) -> float:
-    """Etapa 0 (laya S1 Multilingual): modula o prior de ruína do Teorema 2.
+    """Etapa 0 (laya S1 Multilingual): modula o prior de ruina do Teorema 2.
 
-    Se uma predição treinada estiver disponível com probabilidade calibrada (noul)
-    ou confiança de Shannon, usa-a diretamente para modular o risco [1.0, 1.30].
+    Se uma predicao treinada estiver disponivel com probabilidade calibrada (noul)
+    ou confianca de Shannon, usa-a diretamente para modular o risco [1.0, 1.30].
     """
     if not prediction:
         return 1.0

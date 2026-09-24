@@ -15,9 +15,9 @@ config_medida:
   cuda_disponivel: false
 verificado:
   - "download-checkpoint: verificado no cache local do huggingface (convaiinnovations/laya-multilingual)"
-  - "aquecimento-e-forward-pass: warmup executado em 28741.39 ms"
+  - "aquecimento-e-forward-pass: warmup executado em 35781.22 ms"
   - "proveniencia-s4: engine_id=laya-s1-trained, weights_loaded=True, fallback_used=False"
-  - "integracao-solvers: modulação testada com CFR+, Monte Carlo, TimesFM 2.5/3.0 e Dream-RSI"
+  - "integracao-solvers: modulacao testada com CFR+, Monte Carlo, TimesFM 2.5/3.0 e Dream-RSI"
   - "docker-gpu-pronto: Dockerfile.gpu e docker-compose.gpu.yml providenciados em tools/laya_service/"
 nao_verificado:
   - "execucao nativa em GPU de producao no host local (requer instancia com driver NVIDIA)"
@@ -46,8 +46,8 @@ nao_verificado:
 
 ## 2. Inspecao de Checkpoint e Aquecimento (Warm-up)
 
-O modelo canônico **convaiinnovations/laya-multilingual** (322M parâmetros) foi instanciado e validado:
-- **Tempo de Aquecimento (Warm-up):** `28741.39 ms`
+O modelo canonico **convaiinnovations/laya-multilingual** (322M parametros) foi instanciado e validado:
+- **Tempo de Aquecimento (Warm-up):** `35781.22 ms`
 - **Device de Execucao:** `cpu`
 - **Inferencia de Pesos Reais:**
   - `noul`: `0.1897` (probabilidade calibrada RLCD)
@@ -63,16 +63,16 @@ O modelo canônico **convaiinnovations/laya-multilingual** (322M parâmetros) fo
 
 | Lote (Batch) | Requisicoes | Tempo Total (ms) | Latencia Media (ms) | Vazao (req/s) | VRAM Alocada |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | 1 | 241.27 | 241.27 | 4.14 | 0.0 MB |
-| 4 | 4 | 930.78 | 232.70 | 4.30 | 0.0 MB |
-| 9 | 9 | 2069.12 | 229.90 | 4.35 | 0.0 MB |
+| 1 | 1 | 251.24 | 251.24 | 3.98 | 0.0 MB |
+| 4 | 4 | 975.66 | 243.91 | 4.10 | 0.0 MB |
+| 9 | 9 | 2344.23 | 260.47 | 3.84 | 0.0 MB |
 
 
 ---
 
 ## 4. Receita de Deploy em Producao com GPU Ativa (CUDA)
 
-Para subir o microserviço de inferência com aceleração de hardware:
+Para subir o microservico de inferencia com aceleracao de hardware:
 
 ### A. Execucao via Docker Container com NVIDIA Container Toolkit:
 ```bash

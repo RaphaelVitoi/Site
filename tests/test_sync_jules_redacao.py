@@ -135,7 +135,7 @@ def test_o_relatorio_publicado_nao_contem_chave_em_texto_claro():
 def test_gerador_nao_inventa_cotas_ou_agendamentos_de_conta():
     relatorio = _mod.format_markdown_report([])
 
-    assert "100 sessões/dia" not in relatorio
+    assert "100 sess\u00f5es/dia" not in relatorio
     assert "Cota: 100" not in relatorio
     assert "Agendamento externo" in relatorio
-    assert "Não verificado" in relatorio
+    assert "N\u00e3o verificado" in relatorio

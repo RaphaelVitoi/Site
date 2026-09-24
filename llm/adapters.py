@@ -431,7 +431,7 @@ class GoogleGenAIAdapter:
 
     @staticmethod
     def _build_thinking_config(gen: dict[str, Any], kwargs: dict[str, Any]) -> dict[str, Any]:
-        """Constrói configuração de Extended Thinking para a API REST."""
+        """Constroi configuracao de Extended Thinking para a API REST."""
         thinking_cfg: dict[str, Any] = {}
         if "thinking_level" in gen:
             thinking_cfg["thinkingLevel"] = gen.pop("thinking_level").upper()
