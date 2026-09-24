@@ -282,8 +282,8 @@
       "reserved_parameters": ["cuda-context", "322m-checkpoint-download"],
       "units": ["model", "choice", "score", "probability", "ms", "n_tokens"],
       "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
-      "assumptions": ["laya-predict-single-forward-pass", "device-auto-detect-cpu-or-cuda", "cpu-fallback-when-no-cuda-and-no-override", "override-via-CHICO_LAYA_PREDICT_ALLOW_CPU-env", "canonical-model=multilingual"],
-      "limitations": ["cpu-inference-latency-higher", "requires-checkpoint-download-322m", "fallback-noul-is-proxy-not-calibrated", "gpu-gated-by-default-production-safe"],
+      "assumptions": ["laya-predict-single-forward-pass", "device-auto-detect-cpu-or-cuda", "cpu-fallback-when-no-cuda-and-no-override", "override-via-CHICO_LAYA_PREDICT_ALLOW_CPU-env", "canonical-model=multilingual", "host-hybrid-acceleration: GGUF/llama.cpp on AMD Radeon RX 570 via Vulkan; native PyTorch runs via CPU override on Windows"],
+      "limitations": ["cpu-inference-latency-higher", "requires-checkpoint-download-322m", "fallback-noul-is-proxy-not-calibrated", "gpu-gated-by-default-production-safe", "native-pytorch-rocm-unavailable-for-polaris-on-windows"],
       "consumer_paths": ["llm/laya_bridge.py", "api/v1/handlers.py", "frontend/src/app/api/sota/laya/route.ts", "frontend/src/app/api/sota/laya/predict/route.ts"],
       "api_routes": ["/api/sota/laya/predict"],
       "fallback_engine_id": "laya-s1-predict-fallback"
@@ -322,8 +322,8 @@
       "reserved_parameters": ["cuda-context", "322m-checkpoint-download"],
       "units": ["model", "choice", "score", "probability", "ms", "n_tokens", "ruin_priority", "adapted_iterations"],
       "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
-      "assumptions": ["laya-predict-single-forward-pass", "device-auto-detect-cpu-or-cuda", "cpu-fallback-when-no-cuda-and-no-override", "adapter-modulation-is-advisory", "canonical-model=multilingual"],
-      "limitations": ["cpu-inference-latency-higher", "requires-checkpoint-download-322m", "fallback-noul-is-proxy-not-calibrated", "gpu-gated-by-default-production-safe"],
+      "assumptions": ["laya-predict-single-forward-pass", "device-auto-detect-cpu-or-cuda", "cpu-fallback-when-no-cuda-and-no-override", "adapter-modulation-is-advisory", "canonical-model=multilingual", "host-hybrid-acceleration: GGUF/llama.cpp on AMD Radeon RX 570 via Vulkan; native PyTorch runs via CPU override on Windows"],
+      "limitations": ["cpu-inference-latency-higher", "requires-checkpoint-download-322m", "fallback-noul-is-proxy-not-calibrated", "gpu-gated-by-default-production-safe", "native-pytorch-rocm-unavailable-for-polaris-on-windows"],
       "consumer_paths": [
         "llm/laya_solver_adapter.py",
         "engine/dream_timesfm_forecaster.py",
