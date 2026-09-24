@@ -11,7 +11,7 @@ import React from 'react';
 
 export interface SotaButtonProps {
 	children?: React.ReactNode;
-	variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'gold';
+	variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'gold' | 'indigo';
 	size?: 'sm' | 'md' | 'lg';
 	isLoading?: boolean;
 	fullWidth?: boolean;
@@ -36,10 +36,12 @@ function getButtonVariantClass(variant: string) {
 			return 'bg-transparent border-2 border-white/10 text-white hover:bg-white/5 hover:border-white/20';
 		case 'ghost':
 			return 'bg-transparent text-text-muted hover:bg-white/5 hover:text-white';
-		case 'gold':
-			return 'bg-linear-to-r from-accent-amber/80 to-accent-gold/80 text-black shadow-[0_4px_15px_rgba(251,191,36,0.3)] hover:shadow-[0_8px_30px_rgba(251,191,36,0.5)] border border-accent-gold/50 hover:border-accent-gold';
-		default:
+		case 'indigo':
 			return 'bg-accent-indigo text-white shadow-[0_4px_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.5)] border border-white/10 hover:border-white/20 hover:text-glow-indigo';
+		case 'gold':
+		case 'primary':
+		default:
+			return 'bg-linear-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-md shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/30 border border-amber-400/40';
 	}
 }
 

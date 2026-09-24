@@ -15,8 +15,10 @@ import sys
 import time
 import uuid
 from pathlib import Path
-from typing import Annotated, Any
-from typing_extensions import TypedDict
+from typing import TYPE_CHECKING, Annotated, Any, TypedDict
+
+if TYPE_CHECKING:
+    from memory_rag import MemoryRAG
 
 # SOTA: Garantir que o root do projeto esteja no sys.path para execucao direta
 PROJECT_ROOT = str(Path(__file__).parent.parent.resolve())
@@ -91,7 +93,7 @@ def verify_sota_auth(
 
 class OpenAIMessage(BaseModel):
     role: str
-    content: Any
+    content: str | list[dict[str, object]] | list[object] = ""
 
     @property
     def text_content(self) -> str:
@@ -154,7 +156,7 @@ app = FastAPI(
 # [SOTA RAG] INTEGRACAO LANCEDB (BUSCA VETORIAL - FRICCAO ZERO)
 # ==============================================================================
 RAG_AVAILABLE = False
-rag_engine: Any = None
+rag_engine: MemoryRAG | None = None
 try:
     from memory_rag import MemoryRAG
 
@@ -165,7 +167,15 @@ except Exception as e:  # noqa: BLE001
     logger.warning("[INFRA] MemoryRAG (ChromaDB) nao inicializado. RAG desativado: %s", e)
 # ==============================================================================
 
-ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")]
+# SOTA: Unificacao de Contratos Web (Origens Confiadas Canonicas)
+from api.v1.middleware import DEFAULT_TRUSTED_ORIGINS
+
+ALLOWED_ORIGINS = sorted(
+    {
+        *DEFAULT_TRUSTED_ORIGINS,
+        *[o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "").split(",") if o.strip()],
+    }
+)
 
 app.add_middleware(
     CORSMiddleware,

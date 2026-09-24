@@ -91,4 +91,27 @@ describe('Teorema 2 -- RP negativo no river', () => {
 		const soma = negativo.oop.call.center + negativo.oop.fold.center + negativo.oop.raise.center;
 		expect(soma).toBeCloseTo(100, 10);
 	});
+
+	it('derivePostFlopRps modula o riskAdvantage quando ruinPrior ou intencaoS1 são fornecidos', () => {
+		const s = SCENARIOS.find((sc) => sc.id === 'paradoxo')!;
+		const baseState = { street: 'river' as const, potAcumuladoHero: 20, potTotal: 40, heroIsIp: true };
+
+		const resBase = derivePostFlopRps(s.stacks, s.prizes, 0, 1, baseState)!;
+		const resConservador = derivePostFlopRps(s.stacks, s.prizes, 0, 1, {
+			...baseState,
+			ruinPrior: 1.30,
+		})!;
+		const resIntencao = derivePostFlopRps(s.stacks, s.prizes, 0, 1, {
+			...baseState,
+			intencaoS1: { script: 'devanagari', nao_latin_fraction_pct: 100 },
+		})!;
+
+		expect(resBase.ruinPrior).toBe(1.0);
+		expect(resConservador.ruinPrior).toBe(1.30);
+		expect(resIntencao.ruinPrior).toBe(1.30);
+
+		// O ruinPrior conservador (1.30) modula o heroRpAbsolute (core.riskAdvantage) para cima
+		expect(resConservador.heroRpAbsolute).toBeCloseTo(resBase.heroRpAbsolute * 1.30, 2);
+		expect(resIntencao.heroRpAbsolute).toBeCloseTo(resBase.heroRpAbsolute * 1.30, 2);
+	});
 });

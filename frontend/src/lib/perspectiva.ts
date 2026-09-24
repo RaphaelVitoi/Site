@@ -698,7 +698,7 @@ export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaR
 		dynamicEvFold,
 		perspectivaPct,
 		amortizedEdge,
-		riskAdvantage,    // [v8.0] Exportado no resultado core
+		riskAdvantage: riskAdvantage * (input.ruinPrior ?? 1.0),    // [v8.0 + laya S1]
 		ruinPrior: input.ruinPrior ?? 1.0, // [laya S1]
 		ci,
 		marginInstability,
@@ -832,10 +832,8 @@ export function computeQuantumMetrics(quantumPerspectiva: PerspectivaResult | nu
 		threshEq: quantumPerspectiva.threshEq,
 		ci: quantumPerspectiva.ci,
 		marginInstability: quantumPerspectiva.marginInstability,
-		// [v8.0 + laya S1] riskAdvantage modulado pelo ruinPrior (Teorema 2).
-		// ruinPrior > 1 (input não-latim/incerto) infla o RP -> mais equidade requerida ->
-		// aniquila variância (SOTA GOLD). ruinPrior=1.0 = desativado (backward-compat).
-		riskAdvantage: quantumPerspectiva.riskAdvantage * (quantumPerspectiva.ruinPrior ?? 1.0),
+		// [v8.0 + laya S1] riskAdvantage modulado pelo ruinPrior no core (Teorema 2).
+		riskAdvantage: quantumPerspectiva.riskAdvantage,
 		isSolvent: quantumPerspectiva.ci >= 1,
 		isActionable: quantumPerspectiva.perspectivaPct > 0,
 	};
