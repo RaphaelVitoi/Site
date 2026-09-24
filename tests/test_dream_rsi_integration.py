@@ -596,3 +596,29 @@ def test_review_findings_hardening(tmp_path: object) -> None:
     assert prune is False
     assert "margem=" in reason
     assert "[CALIBRATED-MOMENTUM]" in reason
+
+
+def test_timesfm_dream_rsi_laya_s1_pruning() -> None:
+    """Valida a cooperação autopoietica entre Laya S1, TimesFM e Google Dream-RSI."""
+    from engine.dream_timesfm_forecaster import DreamTimesFMForecaster  # noqa: PLC0415
+
+    forecaster = DreamTimesFMForecaster()
+
+    # Fast-path prune quando S1 determina ramo irremediavelmente inferior
+    prune_fast, reason_fast = forecaster.should_prune_with_laya_s1(
+        scores=[0.10, 0.15],
+        global_best_score=0.90,
+        laya_noul=0.10,
+        laya_choice="fast",
+    )
+    assert prune_fast is True
+    assert "[LAYA-S1-FAST-PRUNE]" in reason_fast
+
+    # Poda com expansão adaptativa de margem em cenário complexo
+    prune_complex, _ = forecaster.should_prune_with_laya_s1(
+        scores=[0.70, 0.85],
+        global_best_score=0.82,
+        laya_noul=0.80,
+        laya_choice="complex",
+    )
+    assert prune_complex is False

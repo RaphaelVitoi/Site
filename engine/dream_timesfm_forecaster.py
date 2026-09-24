@@ -126,3 +126,33 @@ class DreamTimesFMForecaster:
         # Verifica se o ganho marginal previsto e menor que o threshold
         predicted_delta = forecast.mean_prediction[-1] - scores[-1]
         return predicted_delta < threshold
+
+    def should_prune_with_laya_s1(
+        self,
+        scores: Sequence[float],
+        global_best_score: float,
+        laya_noul: float = 0.0,
+        laya_choice: str = "moderate",
+        base_margin: float = 0.02,
+        horizon: int = 5,
+    ) -> tuple[bool, str]:
+        """Poda preditiva calibrada pelo sinal System-1 (Laya Multilingual).
+
+        Combina a intuicao S1 ultra-rapida (<10ms) com a projecao temporal quantilica
+        do TimesFM (2.5/3.0) para acelerar a convergencia do Google Dream-RSI.
+        """
+        entropy_factor = 1.0 + (laya_noul * 0.5) if laya_choice == "complex" else 1.0
+        calibrated_margin = round(base_margin * entropy_factor, 4)
+
+        if laya_choice == "fast" and scores and scores[-1] < (global_best_score - 0.25):
+            return (
+                True,
+                f"[LAYA-S1-FAST-PRUNE] Score ({scores[-1]:.3f}) irremediavelmente inferior com noul={laya_noul:.2f}",
+            )
+
+        return self.should_prune_predictively(
+            scores=scores,
+            global_best_score=global_best_score,
+            margin=calibrated_margin,
+            horizon=horizon,
+        )

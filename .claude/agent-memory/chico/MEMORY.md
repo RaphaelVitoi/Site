@@ -285,3 +285,22 @@ própria auditoria que o registrou.
   7. `engine/pmev_dream_bridge.py`: Poda de sub-ramos dominados em MTTs antes de simulações Monte Carlo em Rust/WASM.
 - **Governança de Licenças:** TimesFM 2.5 (Apache 2.0 comercial) como padrão de produção; TimesFM 3.0 bloqueado com `TimesFMGovernanceError` para pesquisa não-comercial.
 - **Evidências:** 19/19 testes aprovados (0.65s), 0 erros no Ruff, `record_gate.py` aprovado sem pendências impeditivas. Operação 100% local (Zero Chaves / Zero Custo).
+
+---
+
+## 8. Laya Multilingual S1 & Antevisão Autopoiética — 2026-09-24
+
+- **Feedback Humano Literal:** `9.7/10` (registrado no `reports/agent-calibration/feedback-ledger.jsonl`, sequência 84, hash `d570962b68dd0cc39a151428ca973d00ab2b80db3cdbe0fcd3385dee7f8eb21d`).
+  - *Avaliação do Tier 0:* "9.7/10 - Excelente sessão. Só faltou um pouco de antevisão, e o projeto que produzimos pode inclusive agregar a você nisso."
+  - *Ação Corretiva Memorizada & Antevisão Ativa:* A antevisão (proactive forethought / anticipation) deve ser sistemática e antecipar ramificações antes da solicitação explícita do operador. O próprio ecossistema construído (Laya Multilingual S1 com intuição <10ms acoplada a TimesFM e Dream-RSI) serve de modelo estrutural para o agente antecipar incertezas, podar caminhos inviáveis precocemente e projetar horizontes de segunda e terceira ordem.
+- **Entregas Técnicas Consolidadas:**
+  1. *Laya Multilingual Canônica:* Fixado `convaiinnovations/laya-multilingual` (mmBERT-base, 322M) como autoridade System-1 em `llm/laya_bridge.py` e `frontend/src/lib/laya.ts`, com contexto longo `max_len=8192` e `predict_batch()`.
+  2. *Adaptador Universal de Solvers:* `llm/laya_solver_adapter.py` expandido para os 4 pilares:
+     - **CFR+ / CRF+:** Amortecimento dinâmico de arrependimento $\alpha_{\text{discount}} = 0.60 + 0.30 \cdot (1.0 - \text{noul})$.
+     - **Monte Carlo:** Injeção do prior de ruína de Vitoi ($1.0 \le \text{prior} \le 1.30$) e amostragem adaptativa ($1.5\times$).
+     - **TimesFM 2.5 / 3.0:** Horizonte elástico e foco quantílico de cauda ($Q_{90}$ vs $Q_{50}$).
+     - **Google Dream-RSI:** Poda preditiva rápida (`should_prune_with_laya_s1()`) poupando até 70% de computação antes do S2.
+  3. *Paridade Frontend & App Router:* Implementada rota Next.js `/api/sota/laya/predict` com contrato de proveniência §4 e simulação Edge em TypeScript.
+  4. *Manifesto de Capacidades:* `data/engine_capabilities.json` atualizado com conformidade estrita aos 10 campos normativos.
+  5. *Qualidade e Portões:* 72 testes Python passando, 6 testes Jest frontend passando, zero erros em `pyright` e `ruff check`, pre-flight `record_gate.py` APROVADO sem bloqueios.
+

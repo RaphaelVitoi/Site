@@ -72,6 +72,44 @@ class TestLayaSolverAdapter:
         assert res.target_solver == "universal-importer"
         assert res.provenia.engine_id == "laya-solver-adapter-universal-importer"
 
+    def test_adapt_for_monte_carlo_modula_amostragem_e_ruina(self):
+        """Monte Carlo deve modular contagem de simulações e prior de ruína."""
+        res = LayaSolverAdapter.adapt_for_solver(
+            "monte-carlo",
+            "Multiway all-in preflop simulation.",
+            {"simulations_count": 10000, "confidence_level": 0.95},
+        )
+        assert res.target_solver == "monte-carlo"
+        assert res.adapted_parameters["simulations_count"] >= 10000
+        assert 1.0 <= res.adapted_parameters["ruin_prior"] <= 1.30
+        assert res.framework_signals["ruin_barrier_factor"] == res.adapted_parameters["ruin_prior"]
+        assert "laya-solver-adapter-monte-carlo" in res.provenia.engine_id
+
+    def test_adapt_for_timesfm_modula_horizonte_e_quantil(self):
+        """TimesFM deve modular horizonte e foco de quantil com base no sinal S1."""
+        res = LayaSolverAdapter.adapt_for_solver(
+            "timesfm",
+            "Long-term bankroll and EV trajectory volatility.",
+            {"horizon": 5, "mode": "commercial"},
+        )
+        assert res.target_solver == "timesfm"
+        assert res.adapted_parameters["horizon"] >= 5
+        assert res.adapted_parameters["quantile_focus"] in {"quantile_50", "quantile_90"}
+        assert res.adapted_parameters["preferred_model"] == "timesfm-2.5-200m"
+        assert "timesfm_volatility_prior" in res.framework_signals
+
+    def test_adapt_for_dream_rsi_modula_poda_preditiva(self):
+        """Google Dream-RSI deve calibrar margem de poda e pre-filtragem S1."""
+        res = LayaSolverAdapter.adapt_for_solver(
+            "dream-rsi",
+            "DiscoveryTree exploration loop with potential plateau.",
+            {"pruning_margin": 0.02},
+        )
+        assert res.target_solver == "dream-rsi"
+        assert res.adapted_parameters["pruning_margin"] >= 0.02
+        assert "s1_pruning_threshold" in res.adapted_parameters
+        assert res.framework_signals["s1_pre_filtering_enabled"] is True
+
     def test_provenia_sempre_presente_e_valida(self):
         """Toda resposta do adaptador DEVE incluir proveniência §4 completa."""
         res = LayaSolverAdapter.adapt_for_solver("cfr-plus", "Test CFR+ state")
@@ -81,3 +119,4 @@ class TestLayaSolverAdapter:
         assert isinstance(p.assumptions, list)
         assert isinstance(p.units, list)
         assert len(p.assumptions) > 0
+        assert res.framework_signals.get("cfr_regret_matching_plus") is True

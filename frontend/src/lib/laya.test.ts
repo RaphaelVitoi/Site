@@ -7,9 +7,20 @@
  * em prior de ruína (Teorema 2).
  */
 
-import { ruinPriorityFromIntencao } from './laya';
+import {
+	CANONICAL_LAYA_MODEL,
+	CANONICAL_LAYA_REPO,
+	ruinPriorityFromIntencao,
+	ruinPriorityFromLayaPrediction,
+	type LayaPredictionPayload,
+} from './laya';
 
 describe('Laya S1 Frontend Parity Tests', () => {
+	it('deve ter CANONICAL_LAYA_MODEL configurado para multilingual', () => {
+		expect(CANONICAL_LAYA_MODEL).toBe('multilingual');
+		expect(CANONICAL_LAYA_REPO).toBe('convaiinnovations/laya-multilingual');
+	});
+
 	it('deve retornar 1.0 para null, undefined ou objeto vazio', () => {
 		expect(ruinPriorityFromIntencao(null)).toBe(1.0);
 		expect(ruinPriorityFromIntencao(undefined)).toBe(1.0);
@@ -32,5 +43,44 @@ describe('Laya S1 Frontend Parity Tests', () => {
 
 		const exagerado = { script: 'han', nao_latin_fraction_pct: 100.0 };
 		expect(ruinPriorityFromIntencao(exagerado)).toBe(1.3);
+	});
+
+	it('deve calcular ruinPriorityFromLayaPrediction com base em noul ou confidence', () => {
+		expect(ruinPriorityFromLayaPrediction(null)).toBe(1.0);
+		expect(ruinPriorityFromLayaPrediction(undefined)).toBe(1.0);
+
+		const predCerta: LayaPredictionPayload = {
+			answers: {},
+			model_used: CANONICAL_LAYA_MODEL,
+			device: 'cpu',
+			n_tokens: 15,
+			latency_ms: 32.5,
+			noul: 1.0,
+			choice: 'value_pure',
+			score: 0.95,
+			confidence: 1.0,
+			provenia: {
+				engine_id: 'laya-s1-trained',
+				implementation_level: 'trained-model',
+				runtime_used: 'torch',
+				model_used: CANONICAL_LAYA_MODEL,
+				intended_model: CANONICAL_LAYA_MODEL,
+				weights_loaded: true,
+				fallback_used: false,
+				assumptions: [],
+				limitations: [],
+				units: [],
+			},
+		};
+		// noul = 1.0 -> prior = 1.0 + (1 - 1)*0.3 = 1.0
+		expect(ruinPriorityFromLayaPrediction(predCerta)).toBe(1.0);
+
+		const predIncerta: LayaPredictionPayload = {
+			...predCerta,
+			noul: 0.0, // risco maximo / probabilidade nula
+			confidence: 0.2,
+		};
+		// noul = 0.0 -> prior = 1.0 + (1 - 0)*0.3 = 1.30
+		expect(ruinPriorityFromLayaPrediction(predIncerta)).toBe(1.30);
 	});
 });
