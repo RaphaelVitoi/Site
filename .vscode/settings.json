@@ -134,7 +134,8 @@
     "prettier.logLevel": "warn",
     "prettier.requireConfig": true,
     "[rust]": {
-        "editor.defaultFormatter": "rust-lang.rust-analyzer"
+        "editor.wordBasedSuggestions": "matchingDocuments",
+        "editor.tabSize": 4
     },
     "eslint.workingDirectories": [
         {
@@ -147,10 +148,6 @@
         "typescript",
         "typescriptreact"
     ],
-    "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.cargo.allTargets": true,
-    "rust-analyzer.procMacro.enable": true,
-    "rust-analyzer.inlayHints.typeHints.enable": true,
     "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
     "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
     "cmake.generator": "Visual Studio 16 2019",
@@ -435,5 +432,30 @@
     "lldb-dap.captureSessionLogs": true,
     "quarto.render.renderOnSave": true,
     "python.globalModuleInstallation": true,
-    "python.useEnvironmentsExtension": false
+    "python.useEnvironmentsExtension": false,
+    "workbench.editorAssociations": {
+        "*.pdf": "default",
+        "*.xlsx": "cweijan.officeViewer",
+        "*.xls": "cweijan.officeViewer",
+        "*.docx": "cweijan.officeViewer",
+        "*.doc": "cweijan.officeViewer",
+        "*.pptx": "cweijan.officeViewer",
+        "*.parquet": "fast-parquet.viewer",
+        "*.drawio": "hediet.vscode-drawio",
+        "*.dio": "hediet.vscode-drawio",
+        "*.dio.png": "hediet.vscode-drawio",
+        "*.dio.svg": "hediet.vscode-drawio",
+        "*.excalidraw": "pomdtr.excalidraw-editor",
+        "*.excalidraw.json": "pomdtr.excalidraw-editor",
+        "*.excalidraw.svg": "pomdtr.excalidraw-editor"
+    },
+    "markdown.preview.breaks": true,
+    "markdown.preview.typographer": true,
+    "markdown.preview.doubleClickToSwitchToEditor": true,
+    "markdown-preview-github-styles.colorMode": "auto",
+    "markmap.defaultExpandLevel": 3,
+    "markmap.colorFreezeLevel": 2,
+    "rainbow_csv.autodetect_separators": true,
+    "rainbow_csv.enable_separator_autodetection": true,
+    "svg.preview.mode": "svg"
 }

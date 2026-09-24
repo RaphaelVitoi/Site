@@ -7,24 +7,51 @@
   "session_filter": "",
   "ultima_calibracao": "2026-09-17T21:11:10.0000000-03:00",
   "timesfm_forecast": {
-    "status": "INSUFFICIENT_HISTORY",
-    "required_points": 4,
-    "available_points": 3,
-    "reason": "TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica."
+    "status": "PROJECTION_ACTIVE",
+    "history_points": 5,
+    "horizon_sessions": 3,
+    "mean_trajectory": [
+      9.8,
+      9.8,
+      9.8
+    ],
+    "quantile_10": [
+      8.11,
+      7.41,
+      6.87
+    ],
+    "quantile_90": [
+      10.0,
+      10.0,
+      10.0
+    ],
+    "drift_per_session": 0.0,
+    "drift_direction": "ESTAVEL",
+    "risk_of_degradation": 0.1623,
+    "model_used": "analytic-linear-extrapolation (sem pesos de google/timesfm-2.5-200m-pytorch)",
+    "license_tier": "Apache 2.0 (Permissivo / Comercial)",
+    "intended_model": "google/timesfm-2.5-200m-pytorch",
+    "weights_loaded": false,
+    "conductor_model": null,
+    "notes": null
   },
   "sessoes_com_feedback": [
     "01a0ba03-5e1a-7cb2-8127-1356fe6e105a",
-    "01a0cad2-cb70-7111-95f0-3d080332f420"
+    "01a0cad2-cb70-7111-95f0-3d080332f420",
+    "01a0cd79-1e50-7aa3-9865-32e051504374",
+    "a165dc0a-eb11-4ed6-84a8-d34f8d9d8532"
   ],
-  "sessoes_com_feedback_count": 2,
-  "sessoes_faltantes": 1,
+  "sessoes_com_feedback_count": 4,
+  "sessoes_faltantes": 0,
   "sessoes_com_inicio_inconsistente": [],
   "sessoes_com_densidade_relevante": [],
   "sessoes_ativas_no_dia": [
-    "01a0cad2-cb70-7111-95f0-3d080332f420"
+    "01a0cad2-cb70-7111-95f0-3d080332f420",
+    "01a0cd79-1e50-7aa3-9865-32e051504374",
+    "a165dc0a-eb11-4ed6-84a8-d34f8d9d8532"
   ],
-  "feedback_count_acumulado": 3,
-  "eligible_feedback_count": 3,
+  "feedback_count_acumulado": 5,
+  "eligible_feedback_count": 5,
   "eligible_feedback": [
     {
       "event_id": "4e8de6cd-d20a-4cbe-94c2-9545d0869e65",
@@ -41,6 +68,18 @@
     {
       "event_id": "540b863b-f5e7-4b44-83f0-feab19fbd664",
       "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "d8c62055-aa26-46ac-b78d-19117aba3d47",
+      "session_id": "01a0cd79-1e50-7aa3-9865-32e051504374",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "25595b7c-a9a0-4bf4-ac94-92aeab979dbe",
+      "session_id": "a165dc0a-eb11-4ed6-84a8-d34f8d9d8532",
       "eligible": true,
       "reasons": []
     }
@@ -310,13 +349,27 @@
       "session_id": "01a0cad2-cb70-7111-95f0-3d080332f420",
       "provenance_complete": true,
       "reasons": []
+    },
+    {
+      "event_id": "d8c62055-aa26-46ac-b78d-19117aba3d47",
+      "sequence": 82,
+      "session_id": "01a0cd79-1e50-7aa3-9865-32e051504374",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "25595b7c-a9a0-4bf4-ac94-92aeab979dbe",
+      "sequence": 83,
+      "session_id": "a165dc0a-eb11-4ed6-84a8-d34f8d9d8532",
+      "provenance_complete": true,
+      "reasons": []
     }
   ],
   "historical_excluded_count": 2,
   "provenance_policy": "Incomplete historical evidence is retained in records, excluded from structural gate and corroboration. Scope must explicitly declare handoff; model, connector and supervision are independent required fields. Score statistics describe retained history, not an eligible calibration sample.",
   "correcoes_no_ledger": 42,
   "correcoes_aplicadas": 42,
-  "feedback_count_no_dia": 1,
+  "feedback_count_no_dia": 3,
   "feedback_sem_sessao": 0,
   "por_sessao": [
     {
@@ -360,25 +413,67 @@
       "supervision_modes": [
         "assistida"
       ]
+    },
+    {
+      "session_id": "01a0cd79-1e50-7aa3-9865-32e051504374",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-23T16:01:32.0000000-03:00",
+      "ultimo_feedback": "2026-09-23T16:01:32.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/23/2026 05:54:22"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gpt-6-luna"
+      ],
+      "conductor_vehicles": [
+        "codex"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
+    {
+      "session_id": "a165dc0a-eb11-4ed6-84a8-d34f8d9d8532",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-23T22:54:15.0000000-03:00",
+      "ultimo_feedback": "2026-09-23T22:54:15.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/23/2026 20:00:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gemini-3.8-flash"
+      ],
+      "conductor_vehicles": [
+        "antigravity"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
     }
   ],
-  "score_mean": 8.7,
+  "score_mean": 9.14,
   "score_min": 6.5,
   "score_max": 9.8,
-  "score_mean_no_dia": 6.5,
+  "score_mean_no_dia": 8.7,
   "evidence_gate": {
     "metric": "distinct_sessions_with_feedback",
     "minimum_distinct_sessions": 3,
     "minimum_feedback_records": 3,
-    "structural_gate_passed": false,
-    "reason": "2 de 3 sessoes com feedback; faltam 1. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
+    "structural_gate_passed": true,
+    "reason": "4 sessoes com feedback (01a0ba03-5e1a-7cb2-8127-1356fe6e105a, 01a0cad2-cb70-7111-95f0-3d080332f420, 01a0cd79-1e50-7aa3-9865-32e051504374, a165dc0a-eb11-4ed6-84a8-d34f8d9d8532) alcancam o minimo de 3. A recorrencia de padrao continua sendo obrigacao do auditor, e nao e medida aqui.",
     "intra_session_density_is_data_not_trigger": "Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.",
     "accumulation_never_expires": "Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.",
     "unsessioned_feedback_ignored": "Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.",
     "split_session_not_counted": "session_id com mais de um session_started_at indica sessao partida. Sob contagem por sessao isso inflaria o portao, entao a sessao nao conta ate a origem ser reconciliada.",
     "pattern_confirmation_required": "At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency."
   },
-  "calibration_planning_permitted": false,
+  "calibration_planning_permitted": true,
   "records": [
     {
       "schema_version": "agent-calibration-ledger/v1",
@@ -430,6 +525,40 @@
       "conductor_vehicle": "codex",
       "supervision_mode": "assistida",
       "record_hash": "951222875bd3bc1c946134f72b64f5ba3d80a2f5489a3e347431ad2ddf8de5fd"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 82,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-23T16:01:32.2316779-03:00",
+      "previous_hash": "951222875bd3bc1c946134f72b64f5ba3d80a2f5489a3e347431ad2ddf8de5fd",
+      "event_id": "d8c62055-aa26-46ac-b78d-19117aba3d47",
+      "session_id": "01a0cd79-1e50-7aa3-9865-32e051504374",
+      "score": 9.8,
+      "scope": "handoff",
+      "feedback": "fizemos uma boa dupla, mas sinto falta um pouco de criatividade em vc. ser mais proativo e criar soluções menos óbvias.",
+      "session_started_at": "2026-09-23T05:54:22.151-03:00",
+      "conductor_model": "gpt-6-luna",
+      "conductor_vehicle": "codex",
+      "supervision_mode": "assistida",
+      "record_hash": "3b9dd64ec949eda9792c3470faea63855febbf125c2c6f0c427057fc0c3928f0"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 83,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-23T22:54:15.2136729-03:00",
+      "previous_hash": "3b9dd64ec949eda9792c3470faea63855febbf125c2c6f0c427057fc0c3928f0",
+      "event_id": "25595b7c-a9a0-4bf4-ac94-92aeab979dbe",
+      "session_id": "a165dc0a-eb11-4ed6-84a8-d34f8d9d8532",
+      "score": 9.8,
+      "scope": "handoff",
+      "feedback": "Eficiente, rápida, alta qualidade, mas a latencia foi maior do que a entrega um pouco. Otima sessão.",
+      "session_started_at": "2026-09-23T20:00:00-03:00",
+      "conductor_model": "gemini-3.8-flash",
+      "conductor_vehicle": "antigravity",
+      "supervision_mode": "assistida",
+      "record_hash": "02a9a6986ddbb0527283e45cf97f1696ff7c14467208f4ce3a57d9f90fe95836"
     }
   ],
   "outlier_evidence": {
