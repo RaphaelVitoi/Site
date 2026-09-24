@@ -29,6 +29,7 @@ from rich import box
 from rich.align import Align
 from rich.console import Console, Group
 from rich.live import Live
+from rich.markup import escape
 from rich.panel import Panel
 from rich.table import Table
 import typer
@@ -2651,7 +2652,7 @@ async def _read_stream_and_log(stream, name: str) -> list[str]:
         if decoded:
             clean_decoded = decoded.encode("ascii", errors="ignore").decode("ascii")
             if clean_decoded:
-                console.print(f"[dim]{clean_decoded}[/]")
+                console.print(clean_decoded, style="dim", highlight=False, markup=False)
                 logger.debug(f"[{name}] {clean_decoded}")
                 linhas.append(clean_decoded)
     return linhas
@@ -2707,7 +2708,7 @@ async def _execute_step(name: str, cmd: list[str], cwd: Path | str, env: dict | 
         raise
     except Exception as e:
         logger.exception(f"[QUALITY-GATE] FATAL ERROR in {name}: {e}")
-        console.print(f"[bold red]Excecao fatal executando '{name}': {e}[/]")
+        console.print(f"[bold red]Excecao fatal executando '{escape(name)}': {escape(str(e))}[/]")
         raise typer.Exit(1)
 
 
@@ -3055,7 +3056,8 @@ def _executar_categoria_scripts(run_cat: str, taxonomy: dict) -> None:
         if res.returncode == 0:
             console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)")
         else:
-            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}")
+            err_snip = escape(res.stderr[:200])
+            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{err_snip}")
             script_errors.append((s_path, res.stderr or res.stdout))
 
     _imprimir_resumo_tri_state(
@@ -3124,7 +3126,8 @@ def _executar_bloco_operacoes(
         if res.returncode == 0:
             console.print(f"  [bold green] SUCESSO[/] em {dt:.2f}s (SLA: {sla}s)\n")
         else:
-            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{res.stderr[:200]}\n")
+            err_snip = escape(res.stderr[:200])
+            console.print(f"  [bold red] FALHA[/] (Exit: {res.returncode}) em {dt:.2f}s:\n{err_snip}\n")
             op_errors.append((op_id, res.stderr or res.stdout))
 
     _imprimir_resumo_tri_state(titulo_tri_state, len(op_errors), warnings_por_op, msg_sucesso)
