@@ -191,7 +191,7 @@ def _cliente_local(local_tmp_dir: Path, monkeypatch, nome_db: str):
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_status_accepta_janela_limitada_para_dashboard(local_tmp_dir: Path, monkeypatch) -> None:
-    """O painel restringe a listagem à janela pedida sem aceitar filtros inválidos."""
+    """O painel restringe a listagem a janela pedida sem aceitar filtros invalidos."""
     async with _cliente_local(local_tmp_dir, monkeypatch, "status-window.db") as cliente:
         recente = await cliente.get("/status", params={"status": "all", "since_hours": "168"})
         assert recente.status == 200
@@ -207,7 +207,7 @@ async def test_status_accepta_janela_limitada_para_dashboard(local_tmp_dir: Path
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_queue_manager_aplica_limite_na_consulta(local_tmp_dir: Path) -> None:
-    """A listagem do dashboard aplica LIMIT no SQLite, sem carregar o histórico inteiro."""
+    """A listagem do dashboard aplica LIMIT no SQLite, sem carregar o historico inteiro."""
     manager = QueueManager(queue_path=str(local_tmp_dir / "bounded-tasks.db"))
     now = datetime.now(UTC).isoformat()
     for task_id in ("bounded-1", "bounded-2"):
@@ -222,7 +222,7 @@ async def test_queue_manager_aplica_limite_na_consulta(local_tmp_dir: Path) -> N
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_ask_oracle_retorna_contexto_e_proveniencia_system1(monkeypatch) -> None:
-    """A retrieval local entrega o sinal Laya para composição pelo consumidor LLM."""
+    """A retrieval local entrega o sinal Laya para composicao pelo consumidor LLM."""
     import json
 
     from api.v1 import handlers
@@ -297,10 +297,10 @@ async def test_view_file_entrega_texto_e_barra_arquivo_gigante(local_tmp_dir: Pa
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_view_file_separa_visualizacao_e_download_com_nome_original(local_tmp_dir: Path) -> None:
-    """Raw permanece inline; download força attachment com filename e filename*."""
+    """Raw permanece inline; download forca attachment com filename e filename*."""
     from api.v1 import handlers
 
-    arquivo = local_tmp_dir / "tratado didático.pdf"
+    arquivo = local_tmp_dir / "tratado did\u00e1tico.pdf"
     arquivo.write_bytes(b"%PDF-1.4\n%%EOF")
 
     inline = await handlers.handle_view_file(

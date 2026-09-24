@@ -33,6 +33,11 @@ verificado:
   - "memoria-persistente: registros de licao e arquitetura adicionados em Site/memory/ e gemini/memory/"
 nao_verificado:
   - "reinicio fisico da maquina hospedeira durante a sessao corrente (validado via disparo programatico da tarefa agendada)"
+referencias_nao_resolviveis:
+  - scripts/ops/Repair-SharedMcpGateway.ps1
+  - scripts/ops/Start-SharedMcpGateway.ps1
+  - scripts/ops/sincronizar_nucleo.py
+  - nucleo/nucleo_compartilhado.json
 ---
 
 # AUDITORIA E RELATORIO OFICIAL: GATEWAY MCP COMPARTILHADO E PERSISTENCIA DE INFRAESTRUTURA

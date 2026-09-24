@@ -56,7 +56,7 @@ CHUNK_SIZE = 1200
 CHUNK_OVERLAP = 300
 HYBRID_SEARCH_N_RESULTS_MULTIPLIER = 5
 HYBRID_SEARCH_LEXICAL_WEIGHT = 0.4
-WORD_PATTERN = r"\b\w{3,}\b"  # Padrão regex para extração de palavras com 3+ caracteres
+WORD_PATTERN = r"\b\w{3,}\b"  # Padrao regex para extracao de palavras com 3+ caracteres
 
 LANCEDB_DIR = "data/lancedb"
 LANCEDB_PATH = RAIZ_DO_PROJETO / LANCEDB_DIR
@@ -988,11 +988,11 @@ class MemoryRAG:
     async def sync_lance_to_chroma(self, batch_size: int = 500) -> dict[str, int]:
         """Reidrata Chroma a partir dos IDs e vetores persistidos no LanceDB.
 
-        Usa upsert em lotes e não apaga registros do Chroma que não estejam no
-        LanceDB; isso mantém a operação repetível e reversível.
+        Usa upsert em lotes e nao apaga registros do Chroma que nao estejam no
+        LanceDB; isso mantem a operacao repetivel e reversivel.
         """
         if not self.lance_backend:
-            raise RuntimeError("LanceDB indisponível; não há fonte para sincronização.")
+            raise RuntimeError("LanceDB indispon\u00edvel; n\u00e3o h\u00e1 fonte para sincroniza\u00e7\u00e3o.")
         if batch_size < 1:
             raise ValueError("batch_size deve ser maior que zero.")
 
@@ -1004,7 +1004,7 @@ class MemoryRAG:
         for row in records:
             vector = row.get("vector")
             if vector is None or len(vector) != 384:
-                raise ValueError(f"Vetor inválido no LanceDB para id {row['id']}.")
+                raise ValueError(f"Vetor inv\u00e1lido no LanceDB para id {row['id']}.")
 
         for offset in range(0, len(records), batch_size):
             batch = records[offset : offset + batch_size]
@@ -1039,7 +1039,7 @@ class MemoryRAG:
             db.commit()
 
     async def storage_health(self) -> dict[str, Any]:
-        """Audita paridade local e acumula snapshots diários para forecast TimesFM."""
+        """Audita paridade local e acumula snapshots diarios para forecast TimesFM."""
         chroma_ids_result = await asyncio.to_thread(self.collection.get, include=[])
         chroma_ids = set(chroma_ids_result.get("ids", []))
 
@@ -1149,7 +1149,7 @@ class MemoryRAG:
         return fused[:n_results]
 
     def _select_target_engine(self, question: str, engine: str) -> str:
-        """Seleciona o engine de busca baseado na complexidade da query e configuração."""
+        """Seleciona o engine de busca baseado na complexidade da query e configuracao."""
         if engine == "auto":
             if self.lance_backend and any(
                 char.isalpha() and not unicodedata.name(char, "").startswith("LATIN") for char in question
@@ -1162,12 +1162,12 @@ class MemoryRAG:
                         logger.info("[RAG] Laya sinalizou script %s; habilitando busca federada.", intent.script)
                         return "hybrid_federated"
                 except Exception as e:  # noqa: BLE001
-                    logger.debug("[RAG] Sinal contextual Laya indisponível; mantendo roteamento base: %s", e)
+                    logger.debug("[RAG] Sinal contextual Laya indispon\u00edvel; mantendo roteamento base: %s", e)
             return "lance" if (self._is_high_complexity_query(question) and self.lance_backend) else "chroma"
         return engine
 
     def _format_hybrid_federated_results(self, top_docs: list[dict]) -> str:
-        """Formata resultados da busca federada híbrida."""
+        """Formata resultados da busca federada hibrida."""
         output_parts = [f"\n=== MENTE COLETIVA (FUSAO FEDERADA SOTA: {len(top_docs)} fragmentos) ==="]
         for i, item in enumerate(top_docs):
             src = Path(item.get("source", "N/A")).name

@@ -88,7 +88,7 @@ def _extract_final_placements(texto: str, cabecalhos: list[re.Match]) -> dict[tu
 
 
 def _extract_hero_and_seats(texto: str, cabecalhos: list[re.Match]) -> tuple[dict[int, str], dict[int, list[str]]]:
-    """Extrai o herói e os assentos de cada mão."""
+    """Extrai o heroi e os assentos de cada mao."""
     heroi_da_mao: dict[int, str] = {}
     assentos_da_mao: dict[int, list[str]] = {}
     for cab in cabecalhos:
@@ -113,7 +113,7 @@ def _validate_observation(
     lugar: int | None,
     structure: CanonicalStructure,
 ) -> bool:
-    """Valida se a observação é válida e completa."""
+    """Valida se a observacao e valida e completa."""
     return (
         heroi is not None
         and heroi in nomes

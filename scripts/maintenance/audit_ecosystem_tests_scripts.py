@@ -33,7 +33,11 @@ def audit_python_files() -> tuple[int, list[tuple[str, str]]]:
     """Valida a compilacao e integridade sintatica de todos os arquivos .py."""
     py_files = []
     for root, dirs, files in os.walk(BASE_DIR):
-        dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
+        dirs[:] = [
+            d
+            for d in dirs
+            if d not in IGNORE_DIRS and not d.startswith((".venv", "venv", ".env")) and d != "site-packages"
+        ]
         for f in files:
             if f.endswith(".py"):
                 py_files.append(Path(root) / f)
@@ -52,7 +56,11 @@ def audit_powershell_files() -> tuple[int, list[str]]:
     """Valida a integridade da AST em todos os scripts PowerShell (.ps1) em lote ultra-rapido."""
     ps_files = []
     for root, dirs, files in os.walk(BASE_DIR):
-        dirs[:] = [d for d in dirs if d not in IGNORE_DIRS]
+        dirs[:] = [
+            d
+            for d in dirs
+            if d not in IGNORE_DIRS and not d.startswith((".venv", "venv", ".env")) and d != "site-packages"
+        ]
         for f in files:
             if f.endswith(".ps1"):
                 ps_files.append(Path(root) / f)

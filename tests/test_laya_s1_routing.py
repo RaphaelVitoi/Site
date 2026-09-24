@@ -13,7 +13,7 @@ entrada da Cognicao SOTA":
 
 A fonte-unica (modelo_do_agente / decidir / rotear) NAO e alterada; laya apenas
 reordena `models_to_try`. Backward-compatible: sem intencao_s1, models_to_try e
-designated_model sao idênticos ao comportamento original.
+designated_model sao identicos ao comportamento original.
 """
 
 import asyncio
@@ -102,10 +102,10 @@ def test_laya_s1_proveniancia_registrada_no_reason_codes():
     call_llm_api necessita de session de rede."""
     # Reaproveita a classe LayaIntent do bridge: a proveniancia fluindo do
     # arbitrator -> Task.metadata -> reason_codes e a mesma estrutura que
-    # metadados_s1() produz (garante contrato §4 end-to-end).
+    # metadados_s1() produz (garante contrato Secao 4 end-to-end).
     intencao = LayaRouter.classificar_intencao("namaste deployment error")
     md = intencao.metadados_s1()
-    # Proveniancia SEMPRE carrega os campos do contrato §4.
+    # Proveniancia SEMPRE carrega os campos do contrato Secao 4.
     assert md["idioma"] in ("english", "multilingual")
     assert md["script"] in {"latin", "devanagari", "han", "non-latin", "unknown"}
     assert isinstance(md["nao_latin_fraction_pct"], float)

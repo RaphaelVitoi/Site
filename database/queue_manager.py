@@ -76,7 +76,7 @@ class QueueManager:
             self.db_path = db_path_resolved
 
     def _resolve_fallback_db_path(self, name: str) -> Path:
-        """Resolve fallback dentro do projeto antes de criar qualquer diretório."""
+        """Resolve fallback dentro do projeto antes de criar qualquer diretorio."""
         fallback = (_core_config.PATH_NEXUS_ZONE / "runtime" / "queue" / name).resolve(strict=False)
         try:
             fallback.relative_to(self.base_path.resolve())

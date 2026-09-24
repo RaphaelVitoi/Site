@@ -157,7 +157,7 @@ class StitchClient:
                 return {}
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
-            logger.error("[STITCH] Erro HTTP %d na chamada %s: %s", e.code, tool_name, err_msg)  # noqa: TRY200 - HTTPError específico com resposta personalizada
+            logger.error("[STITCH] Erro HTTP %d na chamada %s: %s", e.code, tool_name, err_msg)  # noqa: TRY200 - HTTPError especifico com resposta personalizada
             raise RuntimeError(f"Erro HTTP ({e.code}) no Stitch MCP: {err_msg}") from e
         except Exception:
             logger.exception("[STITCH] Falha de conexao com Stitch MCP")

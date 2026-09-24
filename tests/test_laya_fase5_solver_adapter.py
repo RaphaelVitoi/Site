@@ -1,10 +1,10 @@
-"""Testes da Fase 5: Laya Solver Adapter (interface genérica S1 -> Solvers & Frameworks).
+"""Testes da Fase 5: Laya Solver Adapter (interface generica S1 -> Solvers & Frameworks).
 
 Cubrem:
-  - Adaptação para Pluribus, DeepStack, CFR+, PMev, Shannon, Prospect Theory, Libratus, Systems Theory, Antevisão.
-  - Modulação correta de parâmetros (ruin_priority, iterations, lambda_factor, tolerance, loss_aversion_lambda).
-  - Preservação da proveniência §4 em todas as saídas.
-  - Comportamento robusto com fallback heurístico.
+  - Adaptacao para Pluribus, DeepStack, CFR+, PMev, Shannon, Prospect Theory, Libratus, Systems Theory, Antevisao.
+  - Modulacao correta de parametros (ruin_priority, iterations, lambda_factor, tolerance, loss_aversion_lambda).
+  - Preservacao da proveniencia Secao 4 em todas as saidas.
+  - Comportamento robusto com fallback heuristico.
 """
 
 from llm.laya_solver_adapter import LayaSolverAdapter, LayaSolverBridgeResult
@@ -27,7 +27,7 @@ class TestLayaSolverAdapter:
         assert res.provenia.engine_id == "laya-solver-adapter-pluribus"
 
     def test_adapt_for_deepstack_modula_tolerance(self):
-        """DeepStack deve ajustar a tolerância do continual resolving."""
+        """DeepStack deve ajustar a tolerancia do continual resolving."""
         res = LayaSolverAdapter.adapt_for_solver(
             "deepstack",
             "River decision under uncertainty.",
@@ -49,7 +49,7 @@ class TestLayaSolverAdapter:
         assert res.ruin_priority == res.adapted_parameters["ruin_prior"]
 
     def test_adapt_for_prospect_theory_modula_lambda(self):
-        """Prospect Theory deve modular o coeficiente de aversão à perda (lambda)."""
+        """Prospect Theory deve modular o coeficiente de aversao a perda (lambda)."""
         res = LayaSolverAdapter.adapt_for_solver(
             "prospect-theory",
             "Loss aversion decision under risk.",
@@ -59,7 +59,7 @@ class TestLayaSolverAdapter:
         assert res.adapted_parameters["loss_aversion_lambda"] >= 2.25
 
     def test_adapt_for_frameworks_genericos(self):
-        """Frameworks genéricos (Libratus, Shannon, Systems Theory, Antevisão) respondem corretamente."""
+        """Frameworks genericos (Libratus, Shannon, Systems Theory, Antevisao) respondem corretamente."""
         for fw in ["libratus", "shannon-entropy", "systems-theory", "antevisao"]:
             res = LayaSolverAdapter.adapt_for_solver(fw, "General strategic analysis query.")
             assert res.target_solver == fw
@@ -67,13 +67,13 @@ class TestLayaSolverAdapter:
             assert res.provenia.fallback_used is True  # CPU-safe default
 
     def test_solver_desconhecido_cai_no_default(self):
-        """Solver desconhecido deve cair em universal-importer com segurança."""
+        """Solver desconhecido deve cair em universal-importer com seguranca."""
         res = LayaSolverAdapter.adapt_for_solver("solver-fantasma-xyz", "Test input")
         assert res.target_solver == "universal-importer"
         assert res.provenia.engine_id == "laya-solver-adapter-universal-importer"
 
     def test_adapt_for_monte_carlo_modula_amostragem_e_ruina(self):
-        """Monte Carlo deve modular contagem de simulações e prior de ruína."""
+        """Monte Carlo deve modular contagem de simulacoes e prior de ruina."""
         res = LayaSolverAdapter.adapt_for_solver(
             "monte-carlo",
             "Multiway all-in preflop simulation.",
@@ -111,7 +111,7 @@ class TestLayaSolverAdapter:
         assert res.framework_signals["s1_pre_filtering_enabled"] is True
 
     def test_provenia_sempre_presente_e_valida(self):
-        """Toda resposta do adaptador DEVE incluir proveniência §4 completa."""
+        """Toda resposta do adaptador DEVE incluir proveniencia Secao 4 completa."""
         res = LayaSolverAdapter.adapt_for_solver("cfr-plus", "Test CFR+ state")
         p = res.provenia
         assert p.engine_id is not None

@@ -88,7 +88,7 @@ class PerspectiveTreeRequest(BaseModel):
     fold_equity: float = Field(0.30, ge=0.0, le=1.0)
     intencao_s1: dict[str, Any] | None = Field(
         None,
-        description="Sinal System-1 da Laya (Task.metadata['n']) para prior de ruína (Etapa 0 PMev).",
+        description="Sinal System-1 da Laya (Task.metadata['n']) para prior de ru\u00edna (Etapa 0 PMev).",
     )
 
 

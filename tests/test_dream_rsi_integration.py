@@ -167,12 +167,12 @@ def test_dream_gate_screening() -> None:
     """Testa a triagem preventiva de mudancas por arquivo e ancora."""
     gate = DreamGate()
 
-    # Cenário seguro
+    # Cenario seguro
     safe_assessment = gate.assess_proposal(target_files=["core/schemas/new_tool.py", "engine/math_helper.py"])
     assert safe_assessment.should_proceed is True
     assert safe_assessment.suggested_action == "PROCEED_SAFE"
 
-    # Cenário com colisão em arquivo de ancoragem sem revisão formal
+    # Cenario com colisao em arquivo de ancoragem sem revisao formal
     anchor_assessment = gate.assess_proposal(
         target_files=["reports/REGISTRO-001.md", "engine/algo.py"],
         has_formal_anchor_revision=False,
@@ -181,7 +181,7 @@ def test_dream_gate_screening() -> None:
     assert "governanca protegidos" in str(anchor_assessment.prune_reason)
     assert anchor_assessment.suggested_action == "PRUNE_AND_REQUEST_REVISION_RECORD"
 
-    # Cenário de escopo amplo (violação de Target Lock)
+    # Cenario de escopo amplo (violacao de Target Lock)
     too_many_files = [f"file_{i}.py" for i in range(15)]
     scope_assessment = gate.assess_proposal(target_files=too_many_files)
     assert scope_assessment.should_proceed is False
@@ -204,7 +204,7 @@ def test_pmev_dream_bridge_pruning() -> None:
     assert result.pruned_branches[0].action_name == "call_bad"
     assert result.cpu_cycles_saved_estimate_pct > 0.0
 
-    # Teste de registro de nó
+    # Teste de registro de no
     node = bridge.record_pmev_run(
         tree_id="mtt_final_table",
         action_name="raise_all_in",
@@ -599,7 +599,7 @@ def test_review_findings_hardening(tmp_path: object) -> None:
 
 
 def test_timesfm_dream_rsi_laya_s1_pruning() -> None:
-    """Valida a cooperação autopoietica entre Laya S1, TimesFM e Google Dream-RSI."""
+    """Valida a cooperacao autopoietica entre Laya S1, TimesFM e Google Dream-RSI."""
     from engine.dream_timesfm_forecaster import DreamTimesFMForecaster  # noqa: PLC0415
 
     forecaster = DreamTimesFMForecaster()
@@ -614,7 +614,7 @@ def test_timesfm_dream_rsi_laya_s1_pruning() -> None:
     assert prune_fast is True
     assert "[LAYA-S1-FAST-PRUNE]" in reason_fast
 
-    # Poda com expansão adaptativa de margem em cenário complexo
+    # Poda com expansao adaptativa de margem em cenario complexo
     prune_complex, _ = forecaster.should_prune_with_laya_s1(
         scores=[0.70, 0.85],
         global_best_score=0.82,

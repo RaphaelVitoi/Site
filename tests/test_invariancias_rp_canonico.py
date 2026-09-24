@@ -1,10 +1,10 @@
-"""Invariâncias Canônicas do Risk Premium (I1 a I7) no motor Python.
+"""Invariancias Canonicas do Risk Premium (I1 a I7) no motor Python.
 
 Trava matematicamente:
-- I3: Redução em all-in even money (a = 0.5) para (BF - 1) / (BF + 1).
+- I3: Reducao em all-in even money (a = 0.5) para (BF - 1) / (BF + 1).
 - I4: Teorema 2 (BF < 1 <=> RP < 0).
 - I6: Monotonicidade estrita em BF para qualquer pot odds a > 0.
-- I7: Fonte única de cálculo em engine/.
+- I7: Fonte unica de calculo em engine/.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def test_i7_fonte_unica_sem_literais_dispersos() -> None:
             self.violations: list[str] = []
 
         def visit_BinOp(self, node: ast.BinOp) -> None:
-            # Detecta padrão (bf - 1) / bf em AST
+            # Detecta padrao (bf - 1) / bf em AST
             if (
                 isinstance(node.op, ast.Div)
                 and isinstance(node.right, ast.Name)
@@ -67,4 +67,4 @@ def test_i7_fonte_unica_sem_literais_dispersos() -> None:
         tree = ast.parse(py_file.read_text(encoding="utf-8"), filename=str(py_file))
         checker = DivChecker(str(py_file))
         checker.visit(tree)
-        assert not checker.violations, f"Violações encontradas: {checker.violations}"
+        assert not checker.violations, f"Viola\u00e7\u00f5es encontradas: {checker.violations}"

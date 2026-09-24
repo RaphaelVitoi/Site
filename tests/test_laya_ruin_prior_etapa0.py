@@ -1,14 +1,14 @@
-"""Etapa 0 (laya S1) — testes de convergência da prior de ruína (Teorema 2).
+"""Etapa 0 (laya S1) -- testes de convergencia da prior de ruina (Teorema 2).
 
 Cobrem:
-(a) bridge.ruin_priority_from_intencao — sinal System-1 (nao_latin_fraction_pct) -> prior.
-(b) engine.calculate_negative_risk_premium_river — ruin_prior modula relative_survival_ratio
-    (Teorema 2, BF<1); 1.0 = off (backward-compat); >1 conservador (aniquila variância, SOTA GOLD).
-(c) consumidor handler — intencao_s1 -> ruin_priority -> premium de ruína no tree_result.
-(d) backward-compat — default ruin_prior=1.0 equivale a omitir o argumento.
+(a) bridge.ruin_priority_from_intencao -- sinal System-1 (nao_latin_fraction_pct) -> prior.
+(b) engine.calculate_negative_risk_premium_river -- ruin_prior modula relative_survival_ratio
+    (Teorema 2, BF<1); 1.0 = off (backward-compat); >1 conservador (aniquila variancia, SOTA GOLD).
+(c) consumidor handler -- intencao_s1 -> ruin_priority -> premium de ruina no tree_result.
+(d) backward-compat -- default ruin_prior=1.0 equivale a omitir o argumento.
 
-S1 não decide os 10 teoremas (invariante CLAUDE.md §§3, 6.6): apenas modula o prior de
-sobrevivência. A paridade frontend (rpDeriver.ts) -> Phase 3 (opção B).
+S1 nao decide os 10 teoremas (invariante CLAUDE.md Secao Secao 3, 6.6): apenas modula o prior de
+sobrevivencia. A paridade frontend (rpDeriver.ts) -> Phase 3 (opcao B).
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ def test_ruin_priority_from_intencao_mapping():
     assert ruin_priority_from_intencao(misto) == pytest.approx(1.15)
     nao_latim = {"script": "devanagari", "nao_latin_fraction_pct": 100.0}
     assert ruin_priority_from_intencao(nao_latim) == 1.30
-    # clamping: 130% não ultrapassa o teto de modulação conservador (30%).
+    # clamping: 130% nao ultrapassa o teto de modulacao conservador (30%).
     exagerado = {"script": "han", "nao_latin_fraction_pct": 100.0}
     assert ruin_priority_from_intencao(exagerado) == 1.30
 
@@ -50,12 +50,12 @@ def test_ruin_prior_modula_barreira_ruina():
         **kwargs,
         ruin_prior=1.30,
     )
-    # Convergência: pmev_required_equity escala linearmente pelo ruin_prior.
+    # Convergencia: pmev_required_equity escala linearmente pelo ruin_prior.
     assert conservador["pmev_required_equity"] == pytest.approx(
         1.30 * base["pmev_required_equity"],
         rel=1e-9,
     )
-    # Conservador (ruin_prior>1) exige MAIS equidade -> menos variância (anihila).
+    # Conservador (ruin_prior>1) exige MAIS equidade -> menos variancia (anihila).
     assert conservador["pmev_required_equity"] > base["pmev_required_equity"]
     # Teorema 2 preservado: is_negative_rp continua bem-definido (0/1).
     assert base["is_negative_rp"] in (0, 1)
@@ -64,7 +64,7 @@ def test_ruin_prior_modula_barreira_ruina():
 
 # --------------------------------------------------------------------------- (d)
 def test_ruin_prior_default_eh_1_backward_compat():
-    """Omissão de ruin_prior ≡ ruin_prior=1.0 (não altera os 26 testes PMev existentes)."""
+    """Omissao de ruin_prior == ruin_prior=1.0 (nao altera os 26 testes PMev existentes)."""
     kwargs = {
         "pot_size": 36,
         "bet_size": 4,
@@ -83,7 +83,7 @@ def test_ruin_prior_default_eh_1_backward_compat():
 # --------------------------------------------------------------------------- (c)
 def test_consumidor_tree_result_ruin_prior():
     """Replica o fluxo do handler: req.intencao_s1 -> bridge -> ruin_prior -> premio."""
-    # Input incerto (não-latim, devanagari) -> bridge fornece prior conservador.
+    # Input incerto (nao-latim, devanagari) -> bridge fornece prior conservador.
     intencao_s1 = {"script": "devanagari", "nao_latin_fraction_pct": 100.0}
     ruin_prior_s1 = ruin_priority_from_intencao(intencao_s1)
     assert ruin_prior_s1 == 1.30

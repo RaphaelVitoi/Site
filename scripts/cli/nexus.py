@@ -1792,7 +1792,19 @@ def purify_memories():
     subprocess.run([sys.executable, str(script_path)], cwd=str(BASE_DIR), check=True)
 
 
+@ops_app.command("purify-python")
+def purify_python():
+    """Purifica os modulos Python para Pure ASCII preservando equivalencia AST e runtime."""
+    script_path = BASE_DIR / "scripts/maintenance/purify_python_ascii.py"
+    if not script_path.exists():
+        console.print(f"[bold red][ERRO] Script de purificacao ausente: {script_path}[/]")
+        raise typer.Exit(1)
+    subprocess.run([sys.executable, str(script_path)], cwd=str(BASE_DIR), check=True)
+
+
 def _is_ignored_dir(name: str) -> bool:
+    if name.startswith((".venv", "venv", ".env")) or name == "site-packages":
+        return True
     return name in {
         ".venv",
         ".venv-wsl",

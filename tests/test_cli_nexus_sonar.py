@@ -17,7 +17,7 @@ from scripts.cli import nexus
     [
         ("eslint", "12 warnings", 12),
         ("lint", "abc123\tWARNING", 123),
-        ("lint", "١٢ warnings", 12),
+        ("lint", "\u0661\u0662 warnings", 12),
         ("lint", "123" * 10000 + " sem aviso", 0),
         ("next build", "WARNING: x\n[OK] warning ignorado\nv warning ignorado\nwarn: y", 2),
         ("outra fase", "warning: x", 0),
@@ -33,7 +33,7 @@ def test_fallback_warnings_preserva_contagem(nome: str, saida: str, esperado: in
     [
         ("12warning; 3 warnings; 7 warnings", 3),
         ("warning sem contagem; 12 erros; warning; 5\n\tWaRnInGs", 5),
-        ("² warnings; ٠ warnings; 9 warnings", 0),
+        ("\u00b2 warnings; \u0660 warnings; 9 warnings", 0),
         ("9" * 30000 + " " * 30000 + "sem aviso", 0),
         (("7 " + " " * 1000 + "sem aviso warning ") * 1000 + "4 warnings", 4),
     ],

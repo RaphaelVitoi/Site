@@ -1,6 +1,6 @@
-"""Adaptador Genérico S1 (Laya) para Solvers e Frameworks do Ecossistema SOTA.
+"""Adaptador Generico S1 (Laya) para Solvers e Frameworks do Ecossistema SOTA.
 
-Conecta a classificação System-1 (Laya Multilingual) aos motores e frameworks analíticos:
+Conecta a classificacao System-1 (Laya Multilingual) aos motores e frameworks analiticos:
   - Pluribus Depth-Limited Solver
   - DeepStack Continual Resolving Engine
   - CFR+ / Growing Tree CFR
@@ -8,13 +8,13 @@ Conecta a classificação System-1 (Laya Multilingual) aos motores e frameworks 
   - Google TimesFM 2.5 / 3.0 (Time Series Foundation Models)
   - Google Dream-RSI (Recursive Self-Improvement through Evolving Worlds)
   - Universal Importer / GTO Wizard / PioSolver
-  - PMev Perspective Engine (Teorema de Ruína de Vitoi)
-  - Frameworks declarados (Libratus, Systems Theory, Shannon, Antevisão, Prospect Theory).
+  - PMev Perspective Engine (Teorema de Ruina de Vitoi)
+  - Frameworks declarados (Libratus, Systems Theory, Shannon, Antevisao, Prospect Theory).
 
 Invariantes:
-  - Proveniência §4 em todas as respostas (data/engine_capabilities.json).
+  - Proveniencia Secao 4 em todas as respostas (data/engine_capabilities.json).
   - Lazy import: torch/laya carregam apenas sob demanda.
-  - Fallback Heurístico robusto: nunca falha em host CPU ou sem dependência pesada.
+  - Fallback Heuristico robusto: nunca falha em host CPU ou sem dependencia pesada.
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ class LayaSolverBridgeResult:
 
 
 class LayaSolverAdapter:
-    """Adaptador universal que traduz sinais S1 da Laya para parâmetros de Solvers."""
+    """Adaptador universal que traduz sinais S1 da Laya para parametros de Solvers."""
 
     SOLVERS_SUPORTADOS: set[str] = {
         "pluribus",
@@ -82,7 +82,7 @@ class LayaSolverAdapter:
         choice: str,
         ruin_priority: float,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """Extrai a lógica de modulação específica por solver (reduz complexidade cognitiva)."""
+        """Extrai a logica de modulacao especifica por solver (reduz complexidade cognitiva)."""
         signals: dict[str, Any] = {}
 
         if solver_key == "pluribus":
@@ -154,20 +154,20 @@ class LayaSolverAdapter:
         state_text_or_dict: str | dict[str, Any] | LayaPrediction,
         base_parameters: dict[str, Any] | None = None,
     ) -> LayaSolverBridgeResult:
-        """Traduz a entrada S1 (Laya) em parâmetros específicos para o solver requisitado.
+        """Traduz a entrada S1 (Laya) em parametros especificos para o solver requisitado.
 
         Parameters
         ----------
         solver_name : str
             Nome do solver ou framework-alvo (ex: 'pluribus', 'deepstack', 'pmev-perspective').
         state_text_or_dict : str | dict | LayaPrediction
-            Estado do jogo, prompt, requisição textual ou predição Laya pré-calculada.
+            Estado do jogo, prompt, requisicao textual ou predicao Laya pre-calculada.
         base_parameters : dict | None
-            Parâmetros base existentes que serão modulados pelo System-1.
+            Parametros base existentes que serao modulados pelo System-1.
 
         Returns
         -------
-        LayaSolverBridgeResult com parâmetros adaptados e proveniência §4.
+        LayaSolverBridgeResult com parametros adaptados e proveniencia Secao 4.
         """
         solver_key = solver_name.lower().strip()
         if solver_key not in cls.SOLVERS_SUPORTADOS:
@@ -225,9 +225,9 @@ class LayaSolverAdapter:
         player_states: list[dict[str, Any] | str],
         base_parameters: dict[str, Any] | None = None,
     ) -> list[LayaSolverBridgeResult]:
-        """Processa lote heterogêneo de estados de múltiplos jogadores (ex: 9-max FT).
+        """Processa lote heterogeneo de estados de multiplos jogadores (ex: 9-max FT).
 
-        Aproveita predict_batch() da Laya Multilingual para avaliar até 9 jogadores
+        Aproveita predict_batch() da Laya Multilingual para avaliar ate 9 jogadores
         em ~72ms compartilhando o mesmo checkpoint mmBERT-base (322M).
         """
         requests = [{"state": s, "questions": LAYA_POKER_PRESETS["street_triage"]} for s in player_states]

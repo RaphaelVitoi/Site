@@ -1105,11 +1105,11 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
         )
         runtime_ms = (time.perf_counter() - inicio) * 1000.0
 
-        # Etapa 0 (laya S1): prior de ruína sobre a barreira de ruína (Teorema 2, BF<1).
+        # Etapa 0 (laya S1): prior de ruina sobre a barreira de ruina (Teorema 2, BF<1).
         # intencao_s1 (Task.metadata['n']) -> ruin_priority via llm.laya_bridge.
-        # Prefiltro: o premium de ruína é calculado apenas quando o input é incerto
-        # (nao_latin>0 -> ruin_priority>1). S1 não decide os 10 teoremas (§3); modula
-        # o prior de sobrevivência. Proveniância: 's1_ruin_prior'.
+        # Prefiltro: o premium de ruina e calculado apenas quando o input e incerto
+        # (nao_latin>0 -> ruin_priority>1). S1 nao decide os 10 teoremas (Secao 3); modula
+        # o prior de sobrevivencia. Proveniancia: 's1_ruin_prior'.
         ruin_prior_s1 = ruin_priority_from_intencao(req.intencao_s1)
         if not math.isclose(ruin_prior_s1, 1.0):
             tree_res["s1_ruin_prior"] = ruin_prior_s1
@@ -1234,7 +1234,7 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
 
     def _execute_pluribus() -> tuple[dict[str, Any], dict[str, Any]]:
-        # Adaptação S1 (Laya) para Pluribus se request trouxer prompt ou metadata
+        # Adaptacao S1 (Laya) para Pluribus se request trouxer prompt ou metadata
         adapted_iters = req.iterations
         adapted_lambda = req.state.lambda_factor
         laya_meta: dict[str, Any] = {}
@@ -1305,9 +1305,9 @@ def _aggregate_action_frequencies(
     raw_strategy: dict[str, dict[str, float]],
     ranges_ip: dict[str, float],
 ) -> dict[str, float]:
-    """Agrega frequências de ações do raw strategy ponderadas pela range IP.
+    """Agrega frequencias de acoes do raw strategy ponderadas pela range IP.
 
-    Extraído de handle_deepstack_resolve para reduzir complexidade cognitiva (S3776).
+    Extraido de handle_deepstack_resolve para reduzir complexidade cognitiva (S3776).
     """
     actions = ["CHECK", "BET_HALF_POT", "BET_POT", "ALL_IN"]
     agg_freqs: dict[str, float] = dict.fromkeys(actions, 0.0)
@@ -1335,7 +1335,7 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
 
     def _execute_deepstack() -> tuple[dict[str, float], dict[str, dict[str, float]], dict[str, float], dict[str, Any]]:
-        # Adaptação S1 (Laya) para DeepStack se request trouxer prompt ou metadata
+        # Adaptacao S1 (Laya) para DeepStack se request trouxer prompt ou metadata
         adapted_iters = req.iterations
         laya_meta: dict[str, Any] = {}
         if getattr(req, "prompt", None) or getattr(req, "intencao_s1", None):
@@ -1707,7 +1707,7 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
             return web.json_response(
                 {
                     "status": "FORBIDDEN",
-                    "error": "Pesos TimesFM não comerciais não podem ser servidos pela API do produto.",
+                    "error": "Pesos TimesFM n\u00e3o comerciais n\u00e3o podem ser servidos pela API do produto.",
                     "license_tier": engine.metadata.license_tier.value,
                 },
                 status=403,

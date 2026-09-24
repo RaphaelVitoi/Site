@@ -39,7 +39,7 @@ def _normalize_gemini_model(model: str) -> str:
 
 
 def _is_gemini_3x(model_str: str) -> bool:
-    """Verifica se o modelo pertence à série Gemini 3.x."""
+    """Verifica se o modelo pertence a serie Gemini 3.x."""
     return any(v in model_str for v in ("3.8", "3.7", "3.6", "3.5"))
 
 
@@ -49,7 +49,7 @@ def _is_thinking_capable(model_str: str, thinking_kwarg: bool) -> bool:
 
 
 def _build_thinking_config(kwargs: dict[str, Any], model_str: str) -> dict[str, Any]:
-    """Constrói configuração de Extended Thinking."""
+    """Constroi configuracao de Extended Thinking."""
     budget = kwargs.get("thinking_budget")
     if budget is None and _is_thinking_capable(model_str, kwargs.get("thinking", False)):
         budget = 4096

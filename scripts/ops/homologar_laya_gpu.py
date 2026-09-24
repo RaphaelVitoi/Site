@@ -147,7 +147,7 @@ def executar_homologacao(
     else:
         os.environ["CHICO_LAYA_PREDICT_ALLOW_CPU"] = "1"
 
-    # Carrega e aquece o modelo canônico
+    # Carrega e aquece o modelo canonico
     logger.info("Aquecendo checkpoint 322M (laya-%s) no device '%s'...", CANONICAL_MODEL, resolved_device)
     from llm.laya_bridge import LAYA_DEFAULT_QUESTIONS, laya_predict  # noqa: PLC0415
 
@@ -229,7 +229,7 @@ def executar_homologacao(
             )
         )
 
-    # Validacao de modulação com solver bridge
+    # Validacao de modulacao com solver bridge
     from llm.laya_solver_adapter import LayaSolverAdapter  # noqa: PLC0415
 
     adapter = LayaSolverAdapter()
@@ -238,7 +238,7 @@ def executar_homologacao(
     timesfm_mod = adapter.adapt_for_solver("timesfm", pred_warmup, {"horizon": 20})
     dream_mod = adapter.adapt_for_solver("dream-rsi", pred_warmup, {"pruning_margin": 0.05})
 
-    logger.info("Validacao de modulação de solvers SOTA:")
+    logger.info("Validacao de modula\u00e7\u00e3o de solvers SOTA:")
     logger.info(
         "  CFR+: iteracoes moduladas = %s (ruin_priority=%.3f)",
         cfr_mod.adapted_parameters.get("iterations"),
@@ -270,7 +270,7 @@ def _gerar_relatorio_homologacao(
     pred_warmup: object,
     benchmarks: list[BenchmarkMetric],
 ) -> None:
-    """Escreve o relatorio normativo de homologacao em formato Pure ASCII compatível."""
+    """Escreve o relatorio normativo de homologacao em formato Pure ASCII compativel."""
     os.makedirs(os.path.dirname(os.path.abspath(report_path)), exist_ok=True)
 
     gpu_table = ""
@@ -312,7 +312,7 @@ verificado:
   - "download-checkpoint: verificado no cache local do huggingface ({CANONICAL_REPO})"
   - "aquecimento-e-forward-pass: warmup executado em {warmup_time_ms:.2f} ms"
   - "proveniencia-s4: engine_id={engine_id}, weights_loaded={weights_flag}, fallback_used={fallback_flag}"
-  - "integracao-solvers: modulação testada com CFR+, Monte Carlo, TimesFM 2.5/3.0 e Dream-RSI"
+  - "integracao-solvers: modulacao testada com CFR+, Monte Carlo, TimesFM 2.5/3.0 e Dream-RSI"
   - "docker-gpu-pronto: Dockerfile.gpu e docker-compose.gpu.yml providenciados em tools/laya_service/"
 nao_verificado:
   - "{"execucao nativa em GPU de producao no host local (requer instancia com driver NVIDIA)" if not profile.cuda_available else "nenhum"}"
@@ -340,7 +340,7 @@ nao_verificado:
 
 ## 2. Inspecao de Checkpoint e Aquecimento (Warm-up)
 
-O modelo canônico **{CANONICAL_REPO}** (322M parâmetros) foi instanciado e validado:
+O modelo canonico **{CANONICAL_REPO}** (322M parametros) foi instanciado e validado:
 - **Tempo de Aquecimento (Warm-up):** `{warmup_time_ms:.2f} ms`
 - **Device de Execucao:** `{resolved_device}`
 - **Inferencia de Pesos Reais:**
@@ -361,7 +361,7 @@ O modelo canônico **{CANONICAL_REPO}** (322M parâmetros) foi instanciado e val
 
 ## 4. Receita de Deploy em Producao com GPU Ativa (CUDA)
 
-Para subir o microserviço de inferência com aceleração de hardware:
+Para subir o microservico de inferencia com aceleracao de hardware:
 
 ### A. Execucao via Docker Container com NVIDIA Container Toolkit:
 ```bash

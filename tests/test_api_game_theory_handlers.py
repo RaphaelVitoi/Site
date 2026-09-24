@@ -95,7 +95,7 @@ async def test_handle_pluribus_solve_with_laya_s1_prompt_adaptation():
         "hero_position": "CO",
         "depth_streets": 1,
         "iterations": 40,
-        "prompt": "Analise complexa multiway em turn com bordo monótono.",
+        "prompt": "Analise complexa multiway em turn com bordo mon\u00f3tono.",
     }
 
     req = make_mocked_request(

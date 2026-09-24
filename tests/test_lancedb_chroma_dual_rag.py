@@ -72,7 +72,7 @@ def test_non_latin_query_uses_federated_retrieval_when_laya_detects_script(monke
         lambda _question: type("Intent", (), {"script": "non-latin"})(),
     )
 
-    assert rag._select_target_engine("質問の検索", "auto") == "hybrid_federated"
+    assert rag._select_target_engine("\u8cea\u554f\u306e\u691c\u7d22", "auto") == "hybrid_federated"
 
 
 @pytest.mark.asyncio

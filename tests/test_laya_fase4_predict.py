@@ -1,7 +1,7 @@
 """Testes da Fase 4: laya.predict() (full System-1 forward pass).
 
 Cubrem:
-  - Contrato LayaPrediction (campos obrigatórios, provenia §4).
+  - Contrato LayaPrediction (campos obrigatorios, provenia Secao 4).
   - Fallback heuristico quando laya.Router.predict() falha (CPU host).
   - Presets LAYA_DEFAULT_QUESTIONS (3 tipos: noul, choice, score).
   - Paridade de ruin_priority: metadados_s1() -> ruin_priority_from_intencao().
@@ -38,7 +38,7 @@ def _allow_cpu_override() -> bool:
 
 
 class TestLayaPredictionContract:
-    """Valida o dataclass LayaPrediction e sua provenia §4."""
+    """Valida o dataclass LayaPrediction e sua provenia Secao 4."""
 
     def test_prediction_tem_campos_obrigatorios(self):
         """LayaPrediction deve ter todos os campos do contrato do Teorema 1."""
@@ -58,7 +58,7 @@ class TestLayaPredictionContract:
 
     @pytest.mark.skipif(
         (not _cuda_disponivel() and not _allow_cpu_override()),
-        reason="CUDA não disponível e override CPU não ativado — predict() usa fallback heurístico.",
+        reason="CUDA n\u00e3o dispon\u00edvel e override CPU n\u00e3o ativado \u2014 predict() usa fallback heur\u00edstico.",
     )
     def test_provenia_nivel_trained_model(self):
         """Provenia da predict() deve usar implementation_level='trained-model'.
@@ -66,7 +66,7 @@ class TestLayaPredictionContract:
         Apenas em host GPU (Tier 6 Edge AI) ou quando override CPU ativado.
         Em CPU sem override, use test_provenia_fallback_primitive.
         """
-        pred = laya_predict("Teste de prova simples em português.")
+        pred = laya_predict("Teste de prova simples em portugu\u00eas.")
         assert pred.provenia.engine_id == "laya-s1-trained"
         assert pred.provenia.implementation_level == "trained-model"
         assert pred.provenia.runtime_used.startswith("transformers+torch")
@@ -90,7 +90,7 @@ class TestLayaPredictFallback:
         assert isinstance(pred, LayaPrediction)
 
     def test_fallback_noul_no_intervalo_valido(self):
-        """noul do fallback deve estar em [0, 1] (escala probabilística)."""
+        """noul do fallback deve estar em [0, 1] (escala probabilistica)."""
         pred = laya_predict("Texto em portugues, latim, fallback esperado.")
         assert pred.noul is not None
         assert 0.0 <= pred.noul <= 1.0
@@ -102,7 +102,7 @@ class TestLayaPredictFallback:
         assert "fallback" in pred.choice.lower()
 
     def test_fallback_has_provenia(self):
-        """Todo resultado (inclusive fallback) carrega provenia §4."""
+        """Todo resultado (inclusive fallback) carrega provenia Secao 4."""
         pred = laya_predict("Fallback provenia test")
         assert pred.provenia is not None
         assert pred.provenia.engine_id is not None
@@ -142,7 +142,7 @@ class TestParidadeRuimPriority:
     """Paridade: LayaIntent.metadados_s1() -> ruin_priority_from_intencao()."""
 
     def test_metodos_s1_compativel_com_ruin_priority(self):
-        """metadados_s1() deve retornar dict compatível com ruin_priority_from_intencao()."""
+        """metadados_s1() deve retornar dict compativel com ruin_priority_from_intencao()."""
         intent = LayaRouter.classificar_intencao("Teste em portugues.")
         assert isinstance(intent, LayaIntent)
         md = intent.metadados_s1()
@@ -151,20 +151,20 @@ class TestParidadeRuimPriority:
         assert 1.0 <= rp <= 1.30
 
     def test_ruin_priority_latim_eh_um(self):
-        """Latim/inglês -> ruin_priority = 1.0 (backward-compat, desativado)."""
+        """Latim/ingles -> ruin_priority = 1.0 (backward-compat, desativado)."""
         md = {"nao_latin_fraction_pct": 0.0}
         rp = ruin_priority_from_intencao(md)
         assert rp == 1.0
 
     def test_ruin_priority_nao_latin_infla(self):
-        """Não-latim/incerto -> ruin_priority > 1.0."""
+        """Nao-latim/incerto -> ruin_priority > 1.0."""
         md = {"nao_latin_fraction_pct": 50.0}
         rp = ruin_priority_from_intencao(md)
         assert rp > 1.0
         assert rp == pytest.approx(1.15, abs=1e-6)
 
     def test_ruin_priority_cap_1_30(self):
-        """Cap máximo em 1.30 (SOTA GOLD)."""
+        """Cap maximo em 1.30 (SOTA GOLD)."""
         md = {"nao_latin_fraction_pct": 100.0}
         rp = ruin_priority_from_intencao(md)
         assert rp == 1.30
@@ -179,18 +179,18 @@ class TestLazyImportInvariant:
     """Invariante da Fase 0: torch NO carrega no import-level."""
 
     def test_laya_bridge_importavel_sem_torch(self):
-        """Importar llm.laya_bridge não deve carregar torch no namespace de módulo."""
-        # NÃO fazer importlib.reload — quebra isinstance de LayaIntent em testes
+        """Importar llm.laya_bridge nao deve carregar torch no namespace de modulo."""
+        # NAO fazer importlib.reload -- quebra isinstance de LayaIntent em testes
         # subsequentes (redefine o objeto classe). Verificacao estatica de source.
         import llm.laya_bridge as mod  # pylint: disable=import-outside-toplevel
 
-        # torch não deve aparecer como atributo top-level
+        # torch nao deve aparecer como atributo top-level
         assert not hasattr(mod, "torch")
-        # Nenhuma chamada a import(torch) no nível de módulo (apenas dentro de funções/métodos)
+        # Nenhuma chamada a import(torch) no nivel de modulo (apenas dentro de funcoes/metodos)
         with open(mod.__file__, encoding="utf-8") as f:
             source = f.read()
-        # 'import torch' deve estar apenas dentro de funções/métodos, nunca no nível módulo
+        # 'import torch' deve estar apenas dentro de funcoes/metodos, nunca no nivel modulo
         import_lines = [
             line.strip() for line in source.split("\n") if "import torch" in line and not line.startswith((" ", "\t"))
         ]
-        assert len(import_lines) == 0, f"import torch no nível módulo detectado: {import_lines}"
+        assert len(import_lines) == 0, f"import torch no n\u00edvel m\u00f3dulo detectado: {import_lines}"

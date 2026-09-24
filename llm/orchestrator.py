@@ -189,7 +189,7 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     models_to_try = _inject_openrouter_alternatives(models_to_try)
     models_to_try = await _apply_model_health_gate(models_to_try, manager, task)
 
-    # [CAMADA S1 -- Laya | CLAUDE.md §6.5 consumidor real | §3 fonte-unica preservada]
+    # [CAMADA S1 -- Laya | CLAUDE.md Secao 6.5 consumidor real | Secao 3 fonte-unica preservada]
     # Uma unica classificacao zero-download (core/arbitrator::_registrar_intencao_s1,
     # em Task.metadata["intencao_s1"]) vira telemetry + fator de reordencao no caminho
     # quente de call_llm_api ("Ponto unico de entrada da Cognicao SOTA"). A fonte-unica
@@ -221,7 +221,7 @@ async def _apply_s1_advisory(
     if task.metadata is None:
         task.metadata = {}
     try:
-        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415,I001 — importo sob demanda para evitar import circular
+        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415,I001 -- importo sob demanda para evitar import circular
 
         system_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
         if laya_metadata:
@@ -242,7 +242,7 @@ def _build_route_selected(
     response: dict,
     s1_metadata: dict | None,
 ) -> dict:
-    """Constrói o dicionario de telemetry de rota selecionada."""
+    """Constroi o dicionario de telemetry de rota selecionada."""
     route_selected = {
         "route_selected": models_to_try,
         "reason_codes": [
@@ -373,8 +373,8 @@ async def call_llm_api(
     te._maybe_reload_config()
     _c = te._c
 
-    # System-1 Laya acompanha a chamada canônica, registra procedência e compõe
-    # o advisory com o LLM sem substituir a fonte única de roteamento.
+    # System-1 Laya acompanha a chamada canonica, registra procedencia e compoe
+    # o advisory com o LLM sem substituir a fonte unica de roteamento.
     if task.metadata is None:
         task.metadata = {}
     try:
@@ -436,7 +436,7 @@ async def call_llm_api(
             }
             # Proveniancia S1 (laya): registra a classificacao zero-download que
             # influenciou este roteamento (advisory -- nao altera o resultado, apenas
-            # a telemetry; contrato §4 de proveniancia).
+            # a telemetry; contrato Secao 4 de proveniancia).
             _s1 = cast(dict, (task.metadata or {}).get("intencao_s1") or {})
             if _s1:
                 route_selected["reason_codes"].append(
