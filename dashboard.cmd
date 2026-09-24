@@ -9,5 +9,3 @@ uv run nexus dashboard %*
 set "NEXUS_DASHBOARD_RC=%ERRORLEVEL%"
 popd
 exit /b %NEXUS_DASHBOARD_RC%
-popd
-exit /b %EXIT_CODE%
