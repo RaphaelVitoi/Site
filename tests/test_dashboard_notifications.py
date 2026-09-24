@@ -118,3 +118,17 @@ def test_cli_dashboard_shortcuts_registered() -> None:
         cmd2 = mock_sub2.call_args[0][0]
         assert "stats" in cmd2
         assert "timesfm" in cmd2
+
+    with patch("subprocess.run") as mock_sub3:
+        nexus_mod._execute_shortcut("a")
+        mock_sub3.assert_called_once()
+        cmd3 = mock_sub3.call_args[0][0]
+        assert "ops" in cmd3
+        assert "check-ascii" in cmd3
+
+    with patch("subprocess.run") as mock_sub4:
+        nexus_mod._execute_shortcut("p")
+        mock_sub4.assert_called_once()
+        cmd4 = mock_sub4.call_args[0][0]
+        assert "triad" in cmd4
+        assert "status" in cmd4
