@@ -77,6 +77,36 @@ function simulatePredict(
 	};
 }
 
+const LAYA_SERVICE_BASE = process.env['LAYA_SERVICE_URL'] || 'http://127.0.0.1:8192';
+
+async function tryFetchUpstreamPredict(
+	state: string | Record<string, unknown>,
+	questions?: Record<string, unknown>,
+	model?: string,
+): Promise<LayaPredictionPayload | null> {
+	try {
+		const res = await fetch(`${LAYA_SERVICE_BASE}/predict`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				state: typeof state === 'string' ? state : JSON.stringify(state),
+				questions,
+				model: model || CANONICAL_LAYA_MODEL,
+			}),
+			signal: AbortSignal.timeout(1800),
+			cache: 'no-store',
+		});
+		if (!res.ok) return null;
+		const json = await res.json().catch(() => null);
+		if (json?.status === 'SUCCESS' && json.prediction) {
+			return json.prediction as LayaPredictionPayload;
+		}
+		return null;
+	} catch {
+		return null;
+	}
+}
+
 export async function POST(request: Request): Promise<NextResponse<LayaPredictResponse>> {
 	try {
 		const body: LayaPredictRequest = await request.json().catch(() => ({}));
@@ -92,7 +122,16 @@ export async function POST(request: Request): Promise<NextResponse<LayaPredictRe
 			);
 		}
 
-		// Simulação SOTA em TypeScript com proveniência §4 garantida
+		// 1. Tenta inferência no microserviço com pesos reais carregados
+		const upstreamPrediction = await tryFetchUpstreamPredict(state, body.questions, body.model);
+		if (upstreamPrediction) {
+			return NextResponse.json({
+				status: 'SUCCESS',
+				prediction: upstreamPrediction,
+			});
+		}
+
+		// 2. Simulação SOTA em TypeScript com proveniência §4 garantida (Fallback Heurístico)
 		const prediction = simulatePredict(state, body.questions, body.model);
 
 		return NextResponse.json({
