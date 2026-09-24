@@ -41,6 +41,9 @@
  */
 
 import { buildSimulatedStacks, calculateMapaICM, calculatePerspectivaVitoi, premioDeRiscoCanonico, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
+import { ruinPriorityFromIntencao, type IntencaoS1 } from './laya';
+
+export { ruinPriorityFromIntencao, type IntencaoS1 } from './laya';
 
 const RP_MAX = 60;
 export const BF_THRESHOLD = 1.01;
@@ -194,6 +197,8 @@ export interface StreetState {
 	numPlayers?: number;       // D6: jogadores no pot (HU=2, MW=3+)
 	humanNoiseFactor?: number;
 	referenceStatus?: ReferencePointStatus; // [v8.0] Estado psicológico do hero (Prospecto)
+	intencaoS1?: IntencaoS1 | undefined;   // [laya S1] Intenção inferida System-1
+	ruinPrior?: number | undefined;        // [laya S1] Prior de ruína direto [1.0, 1.30]
 }
 
 export interface PostFlopResult extends RpDerivationResult {
@@ -210,6 +215,7 @@ export interface PostFlopResult extends RpDerivationResult {
 	potEntrapmentRatio: number; // Razão EV_fold / stack_hero (severidade do aprisionamento)
 	// [v8.0] Métricas do core fused
 	heroRpAbsolute: number;   // RP canônico do hero (core.riskAdvantage — BF + RIO + Prospecto)
+	ruinPrior?: number | undefined;       // [laya S1] Prior de ruína modulador
 }
 
 export function derivePostFlopRps(
@@ -253,6 +259,12 @@ export function derivePostFlopRps(
 
 	if (referenceStatus !== undefined) {
 		input.referenceStatus = referenceStatus;
+	}
+
+	if (state.ruinPrior !== undefined) {
+		input.ruinPrior = state.ruinPrior;
+	} else if (state.intencaoS1 !== undefined) {
+		input.ruinPrior = ruinPriorityFromIntencao(state.intencaoS1);
 	}
 
 	const core = calculatePerspectivaVitoi(input);
@@ -341,5 +353,6 @@ export function derivePostFlopRps(
 		threshEqStreet: core.threshEq,
 		potEntrapmentRatio: Math.abs(core.deltaFoldPct) / (stacks[heroIdx] || 1),
 		heroRpAbsolute,        // [v8.0] RP canônico do hero via core fused
+		ruinPrior: core.ruinPrior,
 	};
 }

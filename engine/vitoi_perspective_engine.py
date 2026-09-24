@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import math
 from pathlib import Path
 import sys
-from typing import Any, Final
+from typing import Final
 
 from engine.game_theory_solvers import PluribusMultiwayState, Street
 
@@ -365,7 +365,7 @@ except ImportError:
 
 # SOTA: Bootstrap de Aceleracao Nativa C++ (AVX2 / Quantum Tensor Engine)
 TENSOR_ENGINE_AVAILABLE: bool = False
-QUANTUM_TENSOR_ENGINE: Any = None
+QUANTUM_TENSOR_ENGINE: object | None = None
 
 try:
     import quantum_tensor_engine as _qte  # type: ignore
@@ -929,7 +929,7 @@ class VitoiPerspectiveEngine:
         base_rio: float = 1.0,
         board_connectedness: float = 0.5,
         ruin_prior: float = 1.0,
-    ) -> dict[str, Any]:
+    ) -> dict[str, object]:
         """
         SOTA: Sintese Unificada dos 10 Teoremas Canonicos da Perspectiva Matematica (PMev).
         Executa uma auditoria multidimensional diacronica do cenario em tempo real.
@@ -1056,10 +1056,10 @@ class VitoiPerspectiveEngine:
     @classmethod
     def calculate_perspective_vectorized(
         cls,
-        equity: Any,
-        pot: Any,
+        equity: float | Sequence[float],
+        pot: float | Sequence[float],
         human_noise_factor: float = 0.05,
-    ) -> Any:
+    ) -> float | list[float] | object:
         """
         Executa calculo vetorizado de Perspectiva via Kernel C++ SIMD (AVX2)
         com fallback transparente para NumPy/Python puro.
