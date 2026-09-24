@@ -440,7 +440,7 @@
         "*.docx": "cweijan.officeViewer",
         "*.doc": "cweijan.officeViewer",
         "*.pptx": "cweijan.officeViewer",
-        "*.parquet": "fast-parquet.viewer",
+        "*.parquet": "parquetViewer.parquetViewer",
         "*.drawio": "hediet.vscode-drawio",
         "*.dio": "hediet.vscode-drawio",
         "*.dio.png": "hediet.vscode-drawio",
