@@ -15,12 +15,12 @@ config_medida:
   cuda_disponivel: false
 verificado:
   - "download-checkpoint: verificado no cache local do huggingface (convaiinnovations/laya-multilingual)"
-  - "aquecimento-e-forward-pass: warmup executado em 35781.22 ms"
+  - "aquecimento-e-forward-pass: warmup executado em 33067.48 ms"
   - "proveniencia-s4: engine_id=laya-s1-trained, weights_loaded=True, fallback_used=False"
   - "integracao-solvers: modulacao testada com CFR+, Monte Carlo, TimesFM 2.5/3.0 e Dream-RSI"
   - "docker-gpu-pronto: Dockerfile.gpu e docker-compose.gpu.yml providenciados em tools/laya_service/"
 nao_verificado:
-  - "execucao nativa em GPU de producao no host local (requer instancia com driver NVIDIA)"
+  - "execucao nativa de PyTorch em GPU no host local (host fisico opera GPU AMD Radeon RX 570 com Vulkan/llama.cpp; PyTorch local opera em CPU override por ausencia de ROCm Polaris no Windows)"
 ---
 
 # RELATORIO DE HOMOLOGACAO DE AMBIENTE GPU -- LAYA MULTILINGUAL S1 (322M)
@@ -39,7 +39,8 @@ nao_verificado:
 - **Dispositivos GPU:** `0`
 
 ### Dispositivos Detectados:
-*Nenhuma GPU CUDA ativa detectada no host atual (Execucao de Validacao em CPU).* 
+*Host fisico opera GPU (Radeon RX 570 Series, Intel(R) UHD Graphics 630) com aceleracao Vulkan / llama.cpp (8.0 GiB VRAM).* 
+*PyTorch local opera em modo CPU override por ausencia de suporte ROCm Polaris no Windows.* 
 
 
 ---
@@ -47,7 +48,7 @@ nao_verificado:
 ## 2. Inspecao de Checkpoint e Aquecimento (Warm-up)
 
 O modelo canonico **convaiinnovations/laya-multilingual** (322M parametros) foi instanciado e validado:
-- **Tempo de Aquecimento (Warm-up):** `35781.22 ms`
+- **Tempo de Aquecimento (Warm-up):** `33067.48 ms`
 - **Device de Execucao:** `cpu`
 - **Inferencia de Pesos Reais:**
   - `noul`: `0.1897` (probabilidade calibrada RLCD)
@@ -63,9 +64,9 @@ O modelo canonico **convaiinnovations/laya-multilingual** (322M parametros) foi 
 
 | Lote (Batch) | Requisicoes | Tempo Total (ms) | Latencia Media (ms) | Vazao (req/s) | VRAM Alocada |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | 1 | 251.24 | 251.24 | 3.98 | 0.0 MB |
-| 4 | 4 | 975.66 | 243.91 | 4.10 | 0.0 MB |
-| 9 | 9 | 2344.23 | 260.47 | 3.84 | 0.0 MB |
+| 1 | 1 | 252.58 | 252.58 | 3.96 | 0.0 MB |
+| 4 | 4 | 1011.47 | 252.87 | 3.95 | 0.0 MB |
+| 9 | 9 | 2246.40 | 249.60 | 4.01 | 0.0 MB |
 
 
 ---

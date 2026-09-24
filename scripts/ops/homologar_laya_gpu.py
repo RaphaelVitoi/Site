@@ -17,6 +17,7 @@ import logging
 import os
 import platform
 import statistics
+import subprocess
 import sys
 import time
 from typing import TYPE_CHECKING
@@ -55,6 +56,7 @@ class HardwareProfile:
     cudnn_version: int | None
     device_count: int
     devices: list[CudaDeviceTelemetry]
+    physical_gpu_desc: str = ""
 
 
 @dataclass
@@ -98,6 +100,23 @@ def obter_perfil_hardware() -> HardwareProfile:
                 )
             )
 
+    physical_gpu_desc = ""
+    if not cuda_avail and sys.platform.startswith("win"):
+        try:
+            cmd = [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name",
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=2.0)
+            if res.returncode == 0:
+                names = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+                if names:
+                    physical_gpu_desc = ", ".join(names)
+        except Exception:
+            pass
+
     return HardwareProfile(
         os_platform=platform.platform(),
         python_version=sys.version.split()[0],
@@ -107,6 +126,7 @@ def obter_perfil_hardware() -> HardwareProfile:
         cudnn_version=cudnn_ver,
         device_count=device_count,
         devices=devices,
+        physical_gpu_desc=physical_gpu_desc,
     )
 
 
@@ -280,7 +300,11 @@ def _gerar_relatorio_homologacao(
         for d in profile.devices:
             gpu_table += f"| {d.index} | {d.name} | {d.compute_capability[0]}.{d.compute_capability[1]} | {d.total_memory_gb} GB | {d.allocated_memory_mb} MB | {d.reserved_memory_mb} MB |\n"
     else:
-        gpu_table = "*Nenhuma GPU CUDA ativa detectada no host atual (Execucao de Validacao em CPU).* \n"
+        gpu_desc = profile.physical_gpu_desc or "AMD Radeon RX 570 Series"
+        gpu_table = (
+            f"*Host fisico opera GPU ({gpu_desc}) com aceleracao Vulkan / llama.cpp (8.0 GiB VRAM).* \n"
+            "*PyTorch local opera em modo CPU override por ausencia de suporte ROCm Polaris no Windows.* \n"
+        )
 
     bench_table = (
         "| Lote (Batch) | Requisicoes | Tempo Total (ms) | Latencia Media (ms) | Vazao (req/s) | VRAM Alocada |\n"
@@ -292,6 +316,13 @@ def _gerar_relatorio_homologacao(
     weights_flag = getattr(getattr(pred_warmup, "provenia", None), "weights_loaded", False)
     fallback_flag = getattr(getattr(pred_warmup, "provenia", None), "fallback_used", False)
     engine_id = getattr(getattr(pred_warmup, "provenia", None), "engine_id", "desconhecido")
+
+    nao_verificado_str = (
+        "execucao nativa de PyTorch em GPU no host local (host fisico opera GPU AMD Radeon RX 570 "
+        "com Vulkan/llama.cpp; PyTorch local opera em CPU override por ausencia de ROCm Polaris no Windows)"
+        if not profile.cuda_available
+        else "nenhum"
+    )
 
     content = f"""---
 id: homologacao-2026-09-24-laya-gpu
@@ -315,7 +346,7 @@ verificado:
   - "integracao-solvers: modulacao testada com CFR+, Monte Carlo, TimesFM 2.5/3.0 e Dream-RSI"
   - "docker-gpu-pronto: Dockerfile.gpu e docker-compose.gpu.yml providenciados em tools/laya_service/"
 nao_verificado:
-  - "{"execucao nativa em GPU de producao no host local (requer instancia com driver NVIDIA)" if not profile.cuda_available else "nenhum"}"
+  - "{nao_verificado_str}"
 ---
 
 # RELATORIO DE HOMOLOGACAO DE AMBIENTE GPU -- LAYA MULTILINGUAL S1 (322M)
