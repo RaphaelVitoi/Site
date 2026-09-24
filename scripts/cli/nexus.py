@@ -658,7 +658,7 @@ def _build_system_status_panel() -> Panel:
         vram_color = _color_threshold(vram_percent, (75, 90))
         vram_str = f"[{vram_color}]{vram_percent:.1f}%[/] [dim #6272a4]({vram_used:.1f}G/{vram_total:.1f}G)[/]"
     else:
-        vram_str = "[dim #6272a4]N/A (CPU Mode / Off)[/]"
+        vram_str = "[dim #6272a4]N/A (Vulkan/AMD Off)[/]"
 
     worker_alive = _get_worker_alive_status()
 
