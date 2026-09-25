@@ -28,6 +28,8 @@ Use `reports/` and the current official naming/frontmatter contract in `CLAUDE.m
 
 Avoid three reports that repeat the same prose. Each record must have a separate purpose, stable links, a named author/conductor grounded in the canonical identity catalog, and measured versus unmeasured claims clearly separated. When an impact percentage is requested but no ecosystem baseline exists, label it an estimate/proxy, disclose the criteria and weights (sum 100%), and do not call it causal improvement or whole-ecosystem completion.
 
+- **Avaliação factual de impacto (compulsória ao final anunciado):** Ao fechar formalmente a sessão, execute a skill `session-impact-evaluator` via `python scripts/ops/avaliar_impacto_sessao.py --markdown` e incorpore a tabela quantitativa resultante diretamente no `reports/HANDOFF-YYYY-MM-DD-<scope>.md`. Esta avaliação é democrática, agnóstica e mandatória para todos os condutores Tier 3, Tier 2 e Tier 1.
+
 ## 3. Persist memory and identity without fabricating provenance
 
 - Update persistent cross-session memory only when the user explicitly requests remembering/saving, or when the governing memory workflow says the artifact is mandatory. Use the approved memory channel and one small append-only/update note; do not edit a memory index or ledger manually. Include the learning, source/session context, and corrections to superseded notes.
@@ -62,8 +64,9 @@ Lead with completion status. Link the official handoff and any distinct audit/le
 
 ## Canonical references
 
-- Governance and feedback: [`CLAUDE.md`](../../../CLAUDE.md), §§1, 8.3, 9.
+- Governance and feedback: [`CLAUDE.md`](../../../CLAUDE.md), §§1, 8.3, 9, 9.3.
 - Identity catalog: [`data/agent_identities.json`](../../../data/agent_identities.json).
 - Feedback writer and verifier: `scripts/ops/Register-AgentCalibrationFeedback.ps1`, `scripts/ops/Test-AgentCalibrationLedger.ps1`.
+- Avaliação factual de impacto: [`session-impact-evaluator`](../session-impact-evaluator/SKILL.md), `scripts/ops/avaliar_impacto_sessao.py`.
 - Quality and release gates: `scripts/ops/suite_verde.py`, `scripts/ops/cwv_gate.ps1`, `scripts/ops/record_anchor_gate.ps1`, `scripts/ops/record_gate.py`, `.husky/pre-commit`, `.husky/pre-push`.
 - Current product context and Modus Operandi are named by the canonical `CLAUDE.md`; resolve their current paths there rather than copying them into the skill.
