@@ -29,6 +29,7 @@ Use `reports/` and the current official naming/frontmatter contract in `CLAUDE.m
 Avoid three reports that repeat the same prose. Each record must have a separate purpose, stable links, a named author/conductor grounded in the canonical identity catalog, and measured versus unmeasured claims clearly separated. When an impact percentage is requested but no ecosystem baseline exists, label it an estimate/proxy, disclose the criteria and weights (sum 100%), and do not call it causal improvement or whole-ecosystem completion.
 
 - **Avaliação factual de impacto (compulsória ao final anunciado):** Ao fechar formalmente a sessão, execute a skill `session-impact-evaluator` via `python scripts/ops/avaliar_impacto_sessao.py --markdown` e incorpore a tabela quantitativa resultante diretamente no `reports/HANDOFF-YYYY-MM-DD-<scope>.md`. Esta avaliação é democrática, agnóstica e mandatória para todos os condutores Tier 3, Tier 2 e Tier 1.
+- **Auditoria e Estado dos Pools de Chaves Multi-Tier:** Inspecione e registre a integridade dos pools de chaves OpenRouter dos Tiers 1 a 4 (`openrouter_pool_manager.get_telemetry_summary()`) com paridade HKCU/HKLM e scores de saúde na tabela de impacto do Handoff.
 
 ## 3. Persist memory and identity without fabricating provenance
 
@@ -68,5 +69,6 @@ Lead with completion status. Link the official handoff and any distinct audit/le
 - Identity catalog: [`data/agent_identities.json`](../../../data/agent_identities.json).
 - Feedback writer and verifier: `scripts/ops/Register-AgentCalibrationFeedback.ps1`, `scripts/ops/Test-AgentCalibrationLedger.ps1`.
 - Avaliação factual de impacto: [`session-impact-evaluator`](../session-impact-evaluator/SKILL.md), `scripts/ops/avaliar_impacto_sessao.py`.
+- Pools e Roteamento de Chaves OpenRouter Multi-Tier: [`CLAUDE.md`](../../../CLAUDE.md) §§3, 3.1, 7; [`llm/openrouter_pool.py`](../../../llm/openrouter_pool.py), `scripts/ops/Set-OpenRouterKeyPools.ps1`.
 - Quality and release gates: `scripts/ops/suite_verde.py`, `scripts/ops/cwv_gate.ps1`, `scripts/ops/record_anchor_gate.ps1`, `scripts/ops/record_gate.py`, `.husky/pre-commit`, `.husky/pre-push`.
 - Current product context and Modus Operandi are named by the canonical `CLAUDE.md`; resolve their current paths there rather than copying them into the skill.

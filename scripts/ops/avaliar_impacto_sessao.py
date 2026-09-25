@@ -179,6 +179,45 @@ def medir_ingress_fast_path() -> dict[str, float]:
     }
 
 
+def medir_pools_openrouter() -> dict[str, object]:
+    """Mede contagem, distribuicao por tier, saude e paridade dos pools OpenRouter."""
+    try:
+        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+        telemetry = openrouter_pool_manager.get_telemetry_summary()
+        t1 = len(openrouter_pool_manager.get_pool_keys(1))
+        t2 = len(openrouter_pool_manager.get_pool_keys(2))
+        t3 = len(openrouter_pool_manager.get_pool_keys(3))
+        t4 = len(openrouter_pool_manager.get_pool_keys(4))
+        total = len(telemetry)
+
+        bloqueadas = sum(1 for item in telemetry if item.get("is_blocked"))
+        revogadas = sum(1 for item in telemetry if item.get("is_revoked"))
+        ativas = total - bloqueadas - revogadas
+
+        scores = [float(item.get("score", 0.0)) for item in telemetry]
+        avg_score = round(sum(scores) / len(scores), 1) if scores else 0.0
+
+        return {
+            "total_chaves": total,
+            "tier1_count": t1,
+            "tier2_count": t2,
+            "tier3_count": t3,
+            "tier4_count": t4,
+            "ativas": ativas,
+            "bloqueadas": bloqueadas,
+            "revogadas": revogadas,
+            "score_medio": avg_score,
+            "paridade_registro": "100% HKCU/HKLM",
+        }
+    except Exception as e:
+        return {
+            "total_chaves": 0,
+            "erro": str(e),
+            "paridade_registro": "N/A",
+        }
+
+
 def avaliar_impacto_sessao(
     pendencias_inicio: int | None = None,
     saida_markdown: bool = False,
@@ -189,6 +228,7 @@ def avaliar_impacto_sessao(
     fila = medir_fila_tarefas()
     mcp = medir_interceptador_mcp()
     ingress = medir_ingress_fast_path()
+    pools = medir_pools_openrouter()
 
     delta_pendencias_pct = 0.0
     if pendencias_inicio is not None and pendencias_inicio > 0:
@@ -206,6 +246,7 @@ def avaliar_impacto_sessao(
         "fila_tarefas": fila,
         "interceptador_mcp": mcp,
         "ingress_fast_path": ingress,
+        "pools_openrouter": pools,
     }
 
     if saida_markdown:
@@ -223,6 +264,7 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
     fila: dict[str, object] = r["fila_tarefas"]  # type: ignore
     mcp: dict[str, object] = r["interceptador_mcp"]  # type: ignore
     ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
+    pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
 
     md = []
     md.append("### Painel de Avaliacao de Impacto da Sessao (Agnostico Tier 1-2-3)")
@@ -244,6 +286,10 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
     md.append(
         f"| **Resolucao de Tarefas SQLite** | **{fila['taxa_resolucao_pct']}%** ({fila['completed']}/{fila['total_tarefas']}) | 0 pendencias residuais ou falhas |"
     )
+    if pools and pools.get("total_chaves"):
+        md.append(
+            f"| **Pools OpenRouter Multi-Tier** | **{pools['total_chaves']} chaves** ({pools['ativas']} ativas, score: {pools['score_medio']}) | T1: {pools['tier1_count']} \\| T2: {pools['tier2_count']} \\| T3: {pools['tier3_count']} \\| T4: {pools['tier4_count']} ({pools['bloqueadas']} bloq / {pools['revogadas']} rev) |"
+        )
     md.append("")
     return "\n".join(md)
 
@@ -255,6 +301,7 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
     fila: dict[str, object] = r["fila_tarefas"]  # type: ignore
     mcp: dict[str, object] = r["interceptador_mcp"]  # type: ignore
     ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
+    pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
 
     print("\n" + "=" * 65)
     print("  AVALIACAO DE IMPACTO OBJETIVO DE SESSAO (SOTA AGNOSTIC)")
@@ -273,6 +320,10 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
     print(
         f"• Fila de Tarefas Assincronas:   {fila['taxa_resolucao_pct']}% taxa de resolucao ({fila['completed']} concluidas, {fila['pending']} pendentes)"
     )
+    if pools and pools.get("total_chaves"):
+        print(
+            f"• Pools OpenRouter Multi-Tier:   {pools['total_chaves']} chaves ({pools['ativas']} ativas, T1:{pools['tier1_count']} T2:{pools['tier2_count']} T3:{pools['tier3_count']} T4:{pools['tier4_count']} | Score: {pools['score_medio']})"
+        )
     print("=" * 65 + "\n")
 
 

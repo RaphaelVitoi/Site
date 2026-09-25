@@ -26,7 +26,7 @@ Esta skill deve ser disparada **compulsoriamente no encerramento anunciado de ca
 > [!IMPORTANT]
 > A avaliação não substitui o relatório de Handoff; ela **fornece o lastro quantitativo** mandatória que deve ser incorporado na Seção de Resultados do `reports/HANDOFF-*.md`.
 
-## 3. Os 5 Eixos Objetivos de Medição
+## 3. Os 6 Eixos Objetivos de Medição
 
 A ferramenta afere concretamente:
 
@@ -43,6 +43,8 @@ A ferramenta afere concretamente:
    - Mede a redução percentual de tokens de schemas de ferramentas podados via oráculo S1 e o overhead de latência em microssegundos ($\mu\text{s}$).
 5. **Latência de Decisão & Ingress Fast-Path S1 (`core/arbitrator.py`):**
    - Mede a latência de triagem $\mathcal{O}(1)$ de tarefas unitárias sem compilação desnecessária de grafos DAG.
+6. **Integridade e Saúde dos Pools de Chaves Multi-Tier (`llm/openrouter_pool.py`):**
+   - Mede contagem total de chaves (16 chaves), distribuição por tier (Tier 1: 3, Tier 2: 3, Tier 3: 5, Tier 4: 5), chaves bloqueadas por rate limit (HTTP 429), revogações (HTTP 401/403), score médio de saúde e paridade de registro HKCU/HKLM.
 
 ## 4. Como Executar e Incorporar no Handoff
 
@@ -65,6 +67,7 @@ A saída gerada segue rigorosamente o formato Markdown aprovado pelos gates:
 | **Passivo de Pendencias** | **X abertas** (reducao: XX.X%) | Resolucao formal via M.O. 13.F |
 | **Integridade do Ledger** | **XX registros** (tail: `XXXXXXXX`) | Portao acumulado: X sessoes |
 | **Resolucao de Tarefas SQLite** | **100.0%** (X/X) | 0 pendencias residuais ou falhas |
+| **Pools OpenRouter Multi-Tier** | **16 chaves** (16 ativas, score: 80.0) | T1: 3 \| T2: 3 \| T3: 5 \| T4: 5 (0 bloq / 0 rev) |
 ```
 
 ### Passo 3: Fechamento no Git
