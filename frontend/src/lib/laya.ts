@@ -238,3 +238,77 @@ export const LAYA_TEST_REFERENCE = {
 		exagerado: 1.3,
 	},
 };
+
+export interface SpeculativeSolveOutput {
+	speculativeResult: LayaSolverBridgePayload;
+	settledPromise: Promise<LayaSolverBridgePayload>;
+	isSpeculative: true;
+}
+
+/**
+ * Executa o padrao de Execucao Especulativa S1/S2 no frontend.
+ * Retorna imediatamente a predicao heuristica/S1 em <10ms e dispara uma Promise
+ * em segundo plano para validar/reconciliar com o solver S2 real (API ou WASM).
+ */
+export function speculativeSolve(
+	solverName: string,
+	stateTextOrDict: string | Record<string, unknown>,
+	baseParameters?: Record<string, unknown>,
+	fastPrediction?: LayaPredictionPayload,
+): SpeculativeSolveOutput {
+	const initialPrediction: LayaPredictionPayload = fastPrediction || {
+		answers: {},
+		model_used: CANONICAL_LAYA_MODEL,
+		device: 'edge-client (speculative)',
+		n_tokens: 0,
+		latency_ms: 1.0,
+		noul: 0.95,
+		choice: 'simple',
+		score: 0.95,
+		confidence: 1.0,
+		provenia: {
+			engine_id: 'laya-s1-speculative-fast-path',
+			implementation_level: 'primitive',
+			runtime_used: 'frontend-speculative',
+			model_used: CANONICAL_LAYA_MODEL,
+			intended_model: CANONICAL_LAYA_MODEL,
+			weights_loaded: false,
+			fallback_used: true,
+			assumptions: ['speculative-draft-optimistic'],
+			limitations: ['provisional-awaiting-s2-settlement'],
+			units: ['ms', 'probability'],
+		},
+	};
+
+	const speculativeResult = adaptForSolverClient(solverName, initialPrediction, baseParameters);
+
+	const settledPromise = (async (): Promise<LayaSolverBridgePayload> => {
+		try {
+			if (typeof fetch !== 'undefined') {
+				const res = await fetch('/api/sota/laya/solve', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						solver: solverName,
+						state: stateTextOrDict,
+						parameters: baseParameters || {},
+					}),
+					signal: AbortSignal.timeout(4000),
+				});
+				if (res.ok) {
+					const data = (await res.json()) as LayaSolverBridgePayload;
+					return data;
+				}
+			}
+		} catch {
+			// Fail-open: em caso de timeout ou rede indisponivel, mantem o resultado especulativo
+		}
+		return speculativeResult;
+	})();
+
+	return {
+		speculativeResult,
+		settledPromise,
+		isSpeculative: true,
+	};
+}

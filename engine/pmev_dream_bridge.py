@@ -142,8 +142,25 @@ class PMevDreamBridge:
             DiscoveryTree(tree_id=f"tree_{no.node_id}", root_id=no.node_id, domain="pmev_math", nodes={no.node_id: no})
         )
 
+        # Instrumentacao S1/S2: Grava o trio (HandHistory, SolucaoExataPMev, ResiduoDeIncerteza)
+        trio_id: str | None = None
+        if hasattr(simulator, "record_pmev_distillation_trio"):
+            residuo = max(0.0, min(1.0, 1.0 - (poda.cpu_cycles_saved_estimate_pct / 100.0)))
+            trio_id = simulator.record_pmev_distillation_trio(
+                hand_history=str(
+                    tree_result.get("hand_history") or tree_result.get("cenario") or f"PMev Tree {no.node_id}"
+                ),
+                exact_solution={
+                    "best_action": melhor,
+                    "pm_best": float(pm_best) if isinstance(pm_best, int | float) else 0.0,
+                },
+                uncertainty_residual=residuo,
+                metadata={"runtime_ms": runtime_ms, "limiar_ev": self.min_ev_threshold},
+            )
+
         return {
             "registrado": no.node_id,
+            "distillation_trio_id": trio_id,
             "ramos_podados": [r.action_name for r in poda.pruned_branches],
             "ramos_sobreviventes": [r.action_name for r in poda.surviving_branches],
             "limiar_ev": self.min_ev_threshold,
