@@ -138,6 +138,7 @@ archive/
 NEXUS_SOTA_BACKUP_*/
 .claude/logs/
 .claude/task_results/
+.claude/RELATORIOS/
 .claude/.archive/
 .pytest_tmp/
 *.zip
