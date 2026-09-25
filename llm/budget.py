@@ -94,9 +94,27 @@ GEMINI_KEYS = _collect_keys(
 GEMINI_ALL_KEYS = list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS + GEMINI_KEYS))
 
 
+def _collect_openrouter_tier_keys(tier: int, prefix: str) -> list[str]:
+    from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+    pool_keys = openrouter_pool_manager.get_pool_keys(tier)
+    if pool_keys:
+        return pool_keys
+    return _collect_keys((prefix,))
+
+
+OPENROUTER_TIER1_KEYS = _collect_openrouter_tier_keys(1, "OPENROUTER_TIER1")
+OPENROUTER_TIER2_KEYS = _collect_openrouter_tier_keys(2, "OPENROUTER_TIER2")
+OPENROUTER_TIER3_KEYS = _collect_openrouter_tier_keys(3, "OPENROUTER_TIER3")
+OPENROUTER_TIER4_KEYS = _collect_openrouter_tier_keys(4, "OPENROUTER_TIER4")
+
 OPENROUTER_KEYS = list(
     dict.fromkeys(
-        [
+        OPENROUTER_TIER1_KEYS
+        + OPENROUTER_TIER2_KEYS
+        + OPENROUTER_TIER3_KEYS
+        + OPENROUTER_TIER4_KEYS
+        + [
             v
             for k, v in ALL_ENV_VARS.items()
             if _is_real_key_value(v)
@@ -113,6 +131,14 @@ ANTHROPIC_KEYS = _collect_keys(("ANTHROPIC", "CLAUDE"))
 TAVILY_KEYS = _collect_keys(("TAVILY",))
 PERPLEXITY_KEYS = _collect_keys(("PERPLEXITY",))
 API_SECRET_TOKEN = ALL_ENV_VARS.get("API_SECRET_TOKEN", "")
+
+
+async def get_openrouter_key_for_tier(tier: int) -> tuple[str | None, int]:
+    """Obtem chave OpenRouter mais saudavel para o tier solicitado via OpenRouterPoolManager."""
+    from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+    return await openrouter_pool_manager.get_key_for_tier(tier)
+
 
 # Cache para resultados da WebSearch (bounded: max 256 entradas)
 _WEB_SEARCH_CACHE_MAX = 256
