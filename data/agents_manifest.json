@@ -43,6 +43,7 @@
       "agy-customizations",
       "windows-system-maintenance",
       "windows-visual-tuning",
+      "session-impact-evaluator",
       "site-session-handoff"
     ],
     "specialized_scripts": [
@@ -196,6 +197,7 @@
       "firebase-security-rules-auditor",
       "credentials",
       "windows-system-maintenance",
+      "session-impact-evaluator",
       "site-session-handoff"
     ],
     "specialized_scripts": [

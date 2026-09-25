@@ -124,7 +124,12 @@ empurra o operador para o parecer genérico, e **parecer genérico é pior que
 nenhum**, porque parece revisão sem ser. Guard em
 `tests/test_record_gate_merge.py`.
 
+### 1.3 Teto de acúmulo de commits locais e obrigação de push (Regra do 2º Commit)
+
+Promulgada pelo Tier 0 em 2026-09-25. Sempre que se acumular 2 commits locais sem publicação no remoto (`ahead >= 2`), é terminantemente obrigatório que o próximo commit venha acompanhado de push imediato para a branch de publicação (`origin`). O teto de commits locais não empurrados é 2. É proibido acumular 3 ou mais commits à frente de `origin` sem sincronização remota.
+
 ---
+
 
 ## 2. Camada de dependências
 
@@ -208,8 +213,8 @@ gerador ou o manifesto.
 
 **Circuit Breaker Adaptativo (`llm/openrouter_pool.py`):**
 - **HTTP 429 (Rate Limit):** Cooldown de 5 minutos (ou valor do cabeçalho `Retry-After`).
-- **HTTP 500/502/503 (Falha do Provedor):** Cooldown transitório de 2 minutos.
-- **HTTP 401/403 (Chave Inválida/Revogada):** Banimento definitivo automático (`is_revoked=True`) e emissão de alerta.
+- **HTTP 500, 502 ou 503 (Falha do Provedor):** Cooldown transitório de 2 minutos.
+- **HTTP 401 ou 403 (Chave Inválida/Revogada):** Banimento definitivo automático (`is_revoked=True`) e emissão de alerta.
 - **Score Adaptativo de Saúde:** Seleção da melhor chave ativa via:
   $$\text{Score} = (\text{Taxa de Sucesso } \%) - \min\left(\frac{\text{Latência Média}}{100}, 30\right) - \min(15 \times \text{Falhas Consecutivas}, 50)$$
 - **Política de Failover:** Tier 1 nunca degrada; Tier 2 degrada para 4/1; Tier 4 para 3; Tier 3 esgotado dispara fallback direto para o Tier 6 local (Ollama Gemma).

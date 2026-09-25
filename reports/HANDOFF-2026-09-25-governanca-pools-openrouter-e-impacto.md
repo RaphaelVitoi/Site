@@ -34,6 +34,8 @@ verificado:
   - "testes-e-gates: suite de testes 29/29 aprovada, CWV Gate verde (LCP 343ms, TTFB 81ms, 0 CVEs), pre-commit aprovado"
 nao_verificado:
   - "esgotamento simultaneo sob carga sintetica de estresse em producao real por 24 horas continuas"
+referencias_nao_resolviveis:
+  - nucleo/nucleo_compartilhado.json
 revisoes_de_ancora:
   - registro: taxonomia-canonica-de-documentacao-e-relatorios
     caminhos:
