@@ -238,6 +238,48 @@ class UniversalArbitrator:
         return None
 
     @classmethod
+    def ingress_fast_path_s1(
+        cls,
+        pending_tasks: list[Task],
+        dependency_status: Mapping[str, str | None] | None = None,
+    ) -> tuple[Task | None, list[Task]]:
+        """Oraculo System-1 de Ingress Fast-Path.
+
+        Classifica tarefas recebidas e pre-filtra dependencias triviais (tarefas sem
+        dependencias declaradas e prontas para despacho imediato) antes da
+        compilacao completa do grafo topologico DAG.
+
+        Returns:
+            (tarefa_candidata_fast_path, tarefas_restantes)
+        """
+        if not pending_tasks:
+            return None, []
+
+        statuses: Mapping[str, str | None] = dependency_status or {}
+        pending_ids = {t.id for t in pending_tasks}
+
+        candidata: Task | None = None
+        melhor_peso: float = -1.0
+        restantes: list[Task] = []
+
+        for task in pending_tasks:
+            cls._registrar_intencao_s1(task)
+            deps = cls.dependency_ids(task)
+            if not deps and cls._is_ready(task, pending_ids, statuses):
+                peso = cls._calculate_base_weight(task)
+                if peso > melhor_peso:
+                    if candidata is not None:
+                        restantes.append(candidata)
+                    melhor_peso = peso
+                    candidata = task
+                else:
+                    restantes.append(task)
+            else:
+                restantes.append(task)
+
+        return candidata, restantes
+
+    @classmethod
     def extract_optimal_task(
         cls,
         pending_tasks: list[Task],
@@ -255,6 +297,13 @@ class UniversalArbitrator:
 
         statuses: Mapping[str, str | None] = dependency_status or {}
         pending_ids = {t.id for t in pending_tasks}
+
+        # Fast-Path S1: Atendimento O(1) imediato para tarefa unica pronta sem dependencias
+        if len(pending_tasks) == 1:
+            single = pending_tasks[0]
+            cls._registrar_intencao_s1(single)
+            if cls._is_ready(single, pending_ids, statuses):
+                return single
 
         # SOTA: Aceleracao Speedforce (Rust)
         rust_candidate = cls._try_rust_core(pending_tasks, pending_ids, statuses)

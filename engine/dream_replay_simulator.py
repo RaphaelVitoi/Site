@@ -11,14 +11,16 @@ Padrao SOTA: Pure ASCII, PEP 585/604, Zero-Any, Tipagem Estrita Python 3.12+.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 import contextlib
 import copy
 from dataclasses import dataclass
+from datetime import UTC, datetime
 import json
 from pathlib import Path
 import sqlite3
 from typing import Any
+import uuid
 
 from core.discovery_tree_schemas import (
     DiscoveryNode,
@@ -51,6 +53,7 @@ class DreamReplaySimulator:
     def __init__(self, db_path: str = IN_MEMORY_DB) -> None:
         self.db_path = db_path
         self._memory_trees: dict[str, DiscoveryTree] = {}
+        self._memory_trios: list[dict[str, Any]] = []
         if self.db_path != IN_MEMORY_DB:
             self._init_db()
 
@@ -71,6 +74,18 @@ class DreamReplaySimulator:
                     domain TEXT NOT NULL,
                     created_at TEXT NOT NULL,
                     payload_json TEXT NOT NULL
+                )
+                """
+            )
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS pmev_distillation_trios (
+                    id TEXT PRIMARY KEY,
+                    hand_history TEXT NOT NULL,
+                    exact_solution TEXT NOT NULL,
+                    uncertainty_residual REAL NOT NULL,
+                    metadata_json TEXT,
+                    created_at TEXT NOT NULL
                 )
                 """
             )
@@ -118,6 +133,105 @@ class DreamReplaySimulator:
                 loaded_trees.append(DiscoveryTree.model_validate(data))
 
         return loaded_trees
+
+    def record_pmev_distillation_trio(
+        self,
+        hand_history: str,
+        exact_solution: Mapping[str, Any] | str,
+        uncertainty_residual: float,
+        metadata: Mapping[str, Any] | None = None,
+        trio_id: str | None = None,
+    ) -> str:
+        """Registra trio (HandHistory, SolucaoExataPMev, ResiduoDeIncerteza) para a Fase de Sonho."""
+        tid = trio_id or f"trio_{uuid.uuid4().hex[:12]}"
+        created_at = datetime.now(UTC).isoformat()
+        sol_str = json.dumps(exact_solution) if isinstance(exact_solution, (dict, list)) else str(exact_solution)
+        meta_str = json.dumps(metadata) if metadata else "{}"
+
+        trio_record = {
+            "id": tid,
+            "hand_history": hand_history,
+            "exact_solution": sol_str,
+            "uncertainty_residual": float(uncertainty_residual),
+            "metadata_json": meta_str,
+            "created_at": created_at,
+        }
+
+        if self.db_path == IN_MEMORY_DB:
+            self._memory_trios.append(trio_record)
+        else:
+            with contextlib.closing(sqlite3.connect(self.db_path)) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    INSERT OR REPLACE INTO pmev_distillation_trios
+                    (id, hand_history, exact_solution, uncertainty_residual, metadata_json, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (tid, hand_history, sol_str, float(uncertainty_residual), meta_str, created_at),
+                )
+                conn.commit()
+        return tid
+
+    def load_distillation_trios(self, limit: int = 1000) -> list[dict[str, Any]]:
+        """Recupera os trios registrados para destilacao e autoaperfeicoamento."""
+        if self.db_path == IN_MEMORY_DB:
+            return list(self._memory_trios[:limit])
+
+        records: list[dict[str, Any]] = []
+        with contextlib.closing(sqlite3.connect(self.db_path)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, hand_history, exact_solution, uncertainty_residual, metadata_json, created_at
+                FROM pmev_distillation_trios
+                ORDER BY created_at DESC LIMIT ?
+                """,
+                (limit,),
+            )
+            for row in cursor.fetchall():
+                records.append(
+                    {
+                        "id": row[0],
+                        "hand_history": row[1],
+                        "exact_solution": json.loads(row[2]) if row[2].startswith(("{", "[")) else row[2],
+                        "uncertainty_residual": float(row[3]),
+                        "metadata": json.loads(row[4]) if row[4] else {},
+                        "created_at": row[5],
+                    }
+                )
+        return records
+
+    def export_synthetic_laya_dataset(
+        self,
+        output_path: str | Path,
+        _format: str = "jsonl",
+    ) -> int:
+        """Exporta os trios acumulados no formato do dataset sintetico para fine-tuning/RLCD da Laya S1.
+
+        Cada linha contem o texto de entrada (hand_history/cenario), as escolhas calibradas
+        e o score de certeza baseado no residuo de incerteza do PMev.
+        """
+        trios = self.load_distillation_trios(limit=10000)
+        p = Path(output_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+
+        count = 0
+        with p.open("w", encoding="utf-8") as f:
+            for item in trios:
+                exact = item["exact_solution"]
+                best_act = exact.get("best_action", "fold") if isinstance(exact, dict) else str(exact)
+                noul_target = max(0.0, min(1.0, 1.0 - float(item["uncertainty_residual"])))
+                entry = {
+                    "text": item["hand_history"],
+                    "target_choice": best_act,
+                    "target_noul": round(noul_target, 4),
+                    "target_score": round(float(exact.get("ev", 0.5)) if isinstance(exact, dict) else 0.5, 4),
+                    "metadata": item.get("metadata", {}),
+                }
+                f.write(json.dumps(entry, ensure_ascii=True) + "\n")
+                count += 1
+        return count
 
     def _memory_health_counts(self) -> tuple[dict[str, int], int, int, int]:
         domain_counts: dict[str, int] = {}

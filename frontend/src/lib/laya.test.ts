@@ -13,6 +13,7 @@ import {
 	adaptForSolverClient,
 	ruinPriorityFromIntencao,
 	ruinPriorityFromLayaPrediction,
+	speculativeSolve,
 	type LayaPredictionPayload,
 } from './laya';
 
@@ -212,6 +213,18 @@ describe('Laya S1 Frontend Parity Tests', () => {
 		expect(res.provenia.runtime_used).toBe('torch (cuda)');
 		expect(res.provenia.assumptions).toContain('device=cuda');
 		expect(res.provenia.assumptions).toContain('solver-adapted=cfr-plus');
+	});
+
+	it('deve retornar resultado especulativo imediato e promise em speculativeSolve', async () => {
+		const out = speculativeSolve('pmev-perspective', 'Hero on BTN vs BB 3bet');
+		expect(out.isSpeculative).toBe(true);
+		expect(out.speculativeResult.target_solver).toBe('pmev-perspective');
+		expect(out.speculativeResult.ruin_priority).toBeGreaterThanOrEqual(1.0);
+		expect(out.speculativeResult.provenia.engine_id).toContain('laya-solver-adapter-pmev-perspective');
+
+		const settled = await out.settledPromise;
+		expect(settled).toBeDefined();
+		expect(settled.target_solver).toBe('pmev-perspective');
 	});
 });
 
