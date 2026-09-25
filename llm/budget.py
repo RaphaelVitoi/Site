@@ -95,8 +95,21 @@ GEMINI_KEYS = _collect_keys(
         "GOOGLE_CLOUD_PROJECT",
     ),
 )
+def _collect_all_gemini_keys() -> list[str]:
+    keys = list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS + GEMINI_KEYS))
+    try:
+        from llm.gemini_pool import gemini_pool_manager  # noqa: PLC0415
+
+        for k in gemini_pool_manager._keys:
+            if k not in keys:
+                keys.append(k)
+    except Exception:
+        pass
+    return keys
+
+
 # Pool total para auditorias/telemetria.
-GEMINI_ALL_KEYS = list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS + GEMINI_KEYS))
+GEMINI_ALL_KEYS = _collect_all_gemini_keys()
 
 
 def _collect_openrouter_tier_keys(tier: int, prefix: str) -> list[str]:
