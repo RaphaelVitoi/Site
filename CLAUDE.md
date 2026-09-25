@@ -161,6 +161,7 @@ Auditado em 2026-08-21. **Não reintroduzir fontes paralelas.**
 | **Modelo autorizado a rodar aqui** | `llm/model_registry.py` → `autorizado` | `llm/routing_policy.py` → `ROTAS` |
 | **Faixa de acesso do modelo** | `llm/model_registry.py` → `cota_por_assinatura` | `Faixa.FLAT_FEE` em `llm/routing_policy.py` |
 | Modelos locais (Ollama) | `data/ollama_models.json` | `scripts/ops/Ensure-OllamaModels.ps1` |
+| **Pools e Roteamento OpenRouter Multi-Tier** | `HKCU`/`HKLM` + `llm/openrouter_pool.py` | `llm/openrouter_pool.py`, `llm/budget.py` |
 
 `data/routing_map.json` é **fallback apenas** — sombreado por `system_config`.
 
@@ -196,6 +197,22 @@ perda garantida na próxima sincronia. Para mudar o que aparece ali, edite o
 gerador ou o manifesto.
 
 `tests/test_desambiguacao.py` falha se qualquer uma dessas regras for revertida.
+
+### 3.1 Pools de Chaves OpenRouter Multi-Tier com Isolamento e Circuit Breaker
+
+**Estrutura canônica de credenciais (16 chaves) no Windows Registry (`HKCU` e `HKLM`):**
+- **Tier 1 (Core Cognitivo — 3 chaves):** `OPENROUTER_TIER1_KEY_1..3` (Claude Opus 5, ChatGPT 6 Astra/Sol, Gemini 3.8 Flash). Zero tolerância a latência ou contenção de cota.
+- **Tier 2 (Superagentes & Pesquisa — 3 chaves):** `OPENROUTER_TIER2_KEY_1..3` (Jules, Stitch, Exa, Devin, Solar-Pro4). Fallback autorizado para Tier 4 e Tier 1.
+- **Tier 3 (Frota Especialista & Batch — 5 chaves):** `OPENROUTER_TIER3_KEY_1..5` (19 agentes especialistas, dream replay, síntese massiva). Alto throughput, estritamente isolado do Tier 1.
+- **Tier 4 (Subagentes Dedicados — 5 chaves):** `OPENROUTER_TIER4_KEY_1..5` (task-subagents, generalist, research, architect). Fallback autorizado para Tier 3.
+
+**Circuit Breaker Adaptativo (`llm/openrouter_pool.py`):**
+- **HTTP 429 (Rate Limit):** Cooldown de 5 minutos (ou valor do cabeçalho `Retry-After`).
+- **HTTP 500/502/503 (Falha do Provedor):** Cooldown transitório de 2 minutos.
+- **HTTP 401/403 (Chave Inválida/Revogada):** Banimento definitivo automático (`is_revoked=True`) e emissão de alerta.
+- **Score Adaptativo de Saúde:** Seleção da melhor chave ativa via:
+  $$\text{Score} = (\text{Taxa de Sucesso } \%) - \min\left(\frac{\text{Latência Média}}{100}, 30\right) - \min(15 \times \text{Falhas Consecutivas}, 50)$$
+- **Política de Failover:** Tier 1 nunca degrada; Tier 2 degrada para 4/1; Tier 4 para 3; Tier 3 esgotado dispara fallback direto para o Tier 6 local (Ollama Gemma).
 
 ---
 
@@ -759,10 +776,10 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
   > **Os tiers de assinatura empatam em preço, ao contrário do que se supunha.** Medido nas duas fontes em 2026-09-07 — Anthropic: Pro `$20`, Max 5x `$100`, Max 20x `$200`. OpenAI: Plus `$20`, Pro `$100` (5×), Pro `$200` (20×). Não existe tier Anthropic a `$120`, e a OpenAI não é mais barata no tier equivalente. **A assimetria é de cobertura, não de mensalidade:** pelo mesmo valor, a assinatura OpenAI inclui o Astra (teto de mensagens, sem custo extra) e a Anthropic não inclui o Fable. Os valores de assinatura têm **refinação delegada ao `Gemini 3.5 Flash-Lite`** — a fonte da OpenAI respondeu HTTP 403 e os números dela vêm de agregadores.
 
   - *Fallovers e Opcionais Anthropic:* Além do núcleo com **`Claude Opus 5`**, a malha elenca como opcionais e fallovers: **`Claude Sonnet 5`** (parceiro opcional de engenharia), **`Claude Haiku 4.5`** (`claude-haiku-4-5`, fast operations / fastopp opcional), e os fallovers **`Claude Opus 4.8`**, **`Claude Opus 4.7`**, **`Claude Opus 4.6`** e **`Claude Sonnet 4.6`** (todos opcionais catalogados para resiliência e delegação econômica; o Tier 1 primário de código e governança é Opus 5). Duas armadilhas medidas: o Sonnet 5 (`$2/$10`) é **mais barato** que o Sonnet 4.6 (`$3/$15`), então preferir a 4.6 exige razão que não seja preço; e a geração 4.6 **aceita** amostragem legada, ao contrário da 5 — `reject_legacy_sampling=False` neles não é descuido.
-|- **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`) — com destaque para o trio de integração contínua **(Exa-Stitch-Jules)** em sinergia com o Gemini 3.8 Flash para Design, Brainstorm, Pesquisa Profunda, Planejamento e Documentação.
+|- **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`) — com destaque para o trio de integração contínua **(Exa-Stitch-Jules)** em sinergia com o Gemini 3.8 Flash para Design, Brainstorm, Pesquisa Profunda, Planejamento e Documentação. Sustentado por pool isolado de 3 chaves OpenRouter (`OPENROUTER_TIER2_KEY_1..3`) com fallback autorizado para Tiers 4 e 1.
   - *Condutor Hermes Agent:* **`Solar-Pro4`** (`solar@hermes.com`, veículo `hermes-agent`) — condutor da/runtime Hermes Agent. Atua como **Tier 2** por padrão; pode integrar **Tier 1** quando autorizado explicitamente por Raphael Vitoi (Tier 0, árbitro maior). Sessão assistida.
-- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`)
-- **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`)
+- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`). Sustentada por pool isolado de 5 chaves OpenRouter (`OPENROUTER_TIER3_KEY_1..5`) para alto throughput de batch e dream replay, com fallback para o Tier 6 local (Ollama Gemma).
+- **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`). Sustentado por pool dedicado de 5 chaves OpenRouter (`OPENROUTER_TIER4_KEY_1..5`) com fallback para o Tier 3.
 - **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`, YouTube Intelligence via `gemma4:12b-unified-it`)
 - **Tier 6:** Modelos Locais, Edge AI & Aceleração Numérica (`Ollama: gemma4:31b-cloud, gemma4:12b, gemma4:e4b/e2b, kimi-k2.7-code:cloud`, `Gemini Nano`, `C++ SIMD`)
 - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
@@ -1069,7 +1086,7 @@ python scripts/ops/avaliar_impacto_sessao.py --markdown
 **Democracia e agnosticismo entre Tiers (Tier 1-2-3):**
 Em consonância estrita com a governança do coletivo Chico (§7) e a ausência de feudos
 funcionais, nenhum modelo possui isenção ou privilégio perante a régua de medição.
-Todos os condutores prestam contas do impacto produzido com base em 5 dimensões
+Todos os condutores prestam contas do impacto produzido com base em 6 dimensões
 objetivas e auditáveis:
 
 1. **$\Delta\%$ de Pendências Ativas:** redução líquida de tarefas abertas no corpus.
@@ -1077,6 +1094,7 @@ objetivas e auditáveis:
 3. **Resolução da Fila de Tarefas (Task Queue):** proporção de tarefas resolvidas no grafo operacional.
 4. **Eficiência de Tokens do MCP Gateway (Pruning):** taxa de supressão de schemas de ferramentas irrelevantes para o prompt.
 5. **Latência do Ingress Fast-Path S1:** tempo de classificação e bypass reflexivo de compilação de grafo.
+6. **Integridade e Saúde dos Pools de Chaves Multi-Tier (OpenRouter Tiers 1-4):** contagem de chaves ativas, score de saúde médio, circuit breakers acionados e paridade de registro HKCU/HKLM.
 
 A tabela consolidada resultante deve ser anexada na íntegra ao relatório oficial
 de encerramento (`reports/HANDOFF-YYYY-MM-DD-*.md`). Quando não houver linha de
