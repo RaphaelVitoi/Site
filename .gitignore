@@ -41,6 +41,8 @@ dist-workers/
 *.dylib
 *.rlib
 *.wasm
+!frontend/public/wasm/*.wasm
+!frontend/src/lib/engine/generated/*.wasm
 
 # 3. MODELOS PESADOS, BLOBS E LLM ENGINE (LOCAL STORAGE) ───────────────────────
 .ollama/
@@ -151,6 +153,8 @@ NEXUS_SOTA_BACKUP_*/
 .env.production
 .env.development
 _env.ps1
+*_env.ps1
+!_env.example.ps1
 frontend/.env
 frontend/.env.local
 prisma/.env
