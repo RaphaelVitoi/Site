@@ -12,6 +12,7 @@ Analise de seguranca estrutural, Auditoria ASCII-only, Deteccao de edge cases, P
 - `firebase-security-rules-auditor`
 - `credentials`
 - `windows-system-maintenance`
+- `session-impact-evaluator`
 - `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
