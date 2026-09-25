@@ -9,8 +9,10 @@ import logging
 from typing import Any
 
 import aiohttp
+import time
 
 from llm.budget import get_rate_limiter_for_model
+from llm.gemini_pool import GeminiWorkload, gemini_pool_manager
 from llm.session import _sync_fallback_request, get_api_semaphore
 
 GEMINI_API_KEY_HEADER = "x-goog-api-key"
@@ -173,13 +175,18 @@ async def call_gemini(
     model: str,
     system_prompt: str,
     user_prompt: str,
-    api_key: str,
+    api_key: str = "",
     client_timeout: aiohttp.ClientTimeout | None = None,
     require_json: bool = False,
     **kwargs,
 ) -> tuple[str, dict]:
-    """Cortex de Execucao da API Gemini SOTA."""
+    """Cortex de Execucao da API Gemini SOTA com suporte a pool rotacional."""
     from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    workload = kwargs.pop("workload", GeminiWorkload.TRIAGEM)
+    active_key = api_key
+    if not active_key:
+        active_key, _ = await gemini_pool_manager.get_key_for_workload(workload)
 
     system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     # SOTA: Multi-Bucket Rate Limiter (Lei de Shannon). Respeita as cotas individuais (Pro vs Flash).
@@ -195,20 +202,85 @@ async def call_gemini(
     # de proxy e em `str(aiohttp.ClientResponseError)` -- medido: `url=...?key=...`.
     # O header e o canal documentado pelo Google para a mesma autenticacao.
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    headers = {"Content-Type": APP_JSON, GEMINI_API_KEY_HEADER: api_key}
+    headers = {"Content-Type": APP_JSON, GEMINI_API_KEY_HEADER: active_key}
     data = _build_gemini_payload(system_prompt, user_prompt, require_json, **kwargs)
     request_kwargs: dict = {"timeout": client_timeout} if client_timeout is not None else {}
     timeout_val = client_timeout.total if client_timeout and client_timeout.total else 60.0
 
+    start_t = time.perf_counter()
     async with get_api_semaphore():
         try:
-            return await asyncio.wait_for(
+            res_text, res_usage = await asyncio.wait_for(
                 _execute_primary_request(session, url, data, headers, request_kwargs),
                 timeout=timeout_val + 5.0,
             )
-        except RuntimeError:
-            # Erros semanticos (ex: 400, 403, 404, 429 tratados) sobem diretamente
+            lat_ms = (time.perf_counter() - start_t) * 1000.0
+            await gemini_pool_manager.mark_success(active_key, lat_ms)
+            return res_text, res_usage
+        except RuntimeError as err:
+            err_str = str(err)
+            status_code = 500
+            retry_after = 0.0
+            if "HTTP 429" in err_str:
+                status_code = 429
+                if "retry_after=" in err_str:
+                    try:
+                        retry_after = float(err_str.split("retry_after=")[1].split("s")[0])
+                    except (IndexError, ValueError):
+                        retry_after = 45.0
+            elif "HTTP 401" in err_str:
+                status_code = 401
+            elif "HTTP 403" in err_str:
+                status_code = 403
+
+            await gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(err))
             raise
-        except (aiohttp.ClientError, TimeoutError, ConnectionResetError):
-            # Exaustao da pilha aiohttp leva ao bypass nativo via urllib thread
-            return await _execute_native_fallback(url, data, client_timeout, api_key)
+        except (aiohttp.ClientError, TimeoutError, ConnectionResetError) as net_err:
+            await gemini_pool_manager.mark_failure(active_key, 503, 10.0, str(net_err))
+            return await _execute_native_fallback(url, data, client_timeout, active_key)
+
+
+async def call_gemini_flash_lite(
+    session: aiohttp.ClientSession,
+    user_prompt: str,
+    system_prompt: str = "",
+    workload: GeminiWorkload | str = GeminiWorkload.TRIAGEM,
+    require_json: bool = False,
+    client_timeout: aiohttp.ClientTimeout | None = None,
+    max_retries: int = 3,
+    **kwargs,
+) -> tuple[str, dict]:
+    """
+    Chamada especializada para Gemini 3.5 Flash-Lite com rotação inteligente e circuit breaker.
+    Projetado especificamente para:
+      - Edições pontuais e atômicas (workload='atomic_edits')
+      - Triagem de prompts e tarefas (workload='triagem')
+      - Linting e verificação estática (workload='linting')
+    """
+    last_err: Exception | None = None
+    for attempt in range(max_retries):
+        try:
+            return await call_gemini(
+                session=session,
+                model="gemini-3.5-flash-lite",
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                api_key="",  # força rotação inteligente via pool
+                client_timeout=client_timeout,
+                require_json=require_json,
+                workload=workload,
+                **kwargs,
+            )
+        except RuntimeError as err:
+            last_err = err
+            if "HTTP 429" in str(err) and attempt < max_retries - 1:
+                logger.warning(
+                    f"[GEMINI FLASH-LITE] Chave atingiu 429 na tentativa {attempt + 1}. "
+                    "Alternando automaticamente para a próxima chave do pool..."
+                )
+                continue
+            raise
+
+    if last_err:
+        raise last_err
+    raise RuntimeError("[GEMINI FLASH-LITE] Falha desconhecida no pool de chaves.")
