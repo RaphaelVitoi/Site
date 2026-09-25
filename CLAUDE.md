@@ -1053,6 +1053,37 @@ campo existe para corrigir. Guards em `tests/test_record_index.py`.
 Prazo é opcional e recomendado, pela §2.1 da raiz: *sem prazo não se distingue
 guardado de esquecido*. O portão marca as vencidas; não as julga.
 
+### 9.3 Avaliação factual de impacto ao final anunciado da sessão (Skill `session-impact-evaluator`)
+
+**Estabelecido pelo Tier 0 em 2026-09-25, por arbitragem aditiva.**
+
+Ao final formalmente anunciado de toda e qualquer sessão de trabalho (e nunca em
+pausas, compacções de contexto ou etapas intermediárias), o condutor da sessão —
+independente de linhagem ou graduação (modelos Tier 3, Tier 2 e Tier 1) — deve
+obrigatoriamente executar a avaliação factual de impacto via script canônico:
+
+```bash
+python scripts/ops/avaliar_impacto_sessao.py --markdown
+```
+
+**Democracia e agnosticismo entre Tiers (Tier 1-2-3):**
+Em consonância estrita com a governança do coletivo Chico (§7) e a ausência de feudos
+funcionais, nenhum modelo possui isenção ou privilégio perante a régua de medição.
+Todos os condutores prestam contas do impacto produzido com base em 5 dimensões
+objetivas e auditáveis:
+
+1. **$\Delta\%$ de Pendências Ativas:** redução líquida de tarefas abertas no corpus.
+2. **Integridade da Hash-Chain e Portão de Calibração (§8.3):** status do ledger e aptidão do ciclo.
+3. **Resolução da Fila de Tarefas (Task Queue):** proporção de tarefas resolvidas no grafo operacional.
+4. **Eficiência de Tokens do MCP Gateway (Pruning):** taxa de supressão de schemas de ferramentas irrelevantes para o prompt.
+5. **Latência do Ingress Fast-Path S1:** tempo de classificação e bypass reflexivo de compilação de grafo.
+
+A tabela consolidada resultante deve ser anexada na íntegra ao relatório oficial
+de encerramento (`reports/HANDOFF-YYYY-MM-DD-*.md`). Quando não houver linha de
+base histórica comparável para certas métricas de subsistemas emergentes, os valores
+devem ser reportados como proxies explicitamente documentados com seus critérios e
+pesos, vedada a atribuição causal fictícia ou a fabricação de progresso.
+
 ---
 
 ## 10. Régua para agente autônomo de nuvem — Jules / `Bolt ⚡`
