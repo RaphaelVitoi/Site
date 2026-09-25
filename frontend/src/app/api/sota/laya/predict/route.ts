@@ -93,7 +93,7 @@ async function tryFetchUpstreamPredict(
 				questions,
 				model: model || CANONICAL_LAYA_MODEL,
 			}),
-			signal: AbortSignal.timeout(1800),
+			signal: AbortSignal.timeout(6000),
 			cache: 'no-store',
 		});
 		if (!res.ok) return null;
