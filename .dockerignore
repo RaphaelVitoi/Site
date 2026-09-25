@@ -1,7 +1,11 @@
 .git
 .gitignore
+.gitattributes
 .env
 .env.*
+!.env.example
+_env.ps1
+*_env.ps1
 .venv
 *.pyc
 __pycache__
@@ -19,4 +23,8 @@ brain
 tests
 *.md
 *.log
+*.db
+*.sqlite*
+*.pem
+*.key
 compile_commands.json

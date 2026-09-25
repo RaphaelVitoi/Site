@@ -1,13 +1,23 @@
+.next
 .next-dev
 .next-build
+.turbo
 node_modules/
 coverage/
 *.log
+*.tsbuildinfo
+
+# Segredos e Ambiente
+.env
+.env.*
+!.env.example
 .env.local
+.env.production
+.env.development
+
 prisma/*.db-shm
 prisma/*.db-wal
 
 # Pre-comprimidos derivados: o server.js standalone comprime sob demanda e nao os serve.
-# Versionados ficavam defasados (robots.txt.gz de 2026-08-21). Ver scripts/ops/brotli_compressor.mjs.
 public/**/*.br
 public/**/*.gz
