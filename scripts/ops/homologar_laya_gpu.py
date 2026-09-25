@@ -12,6 +12,7 @@ com endpoints /health, /predict e /solve.
 from __future__ import annotations
 
 import argparse
+from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 import logging
 import os
@@ -455,10 +456,27 @@ def criar_fastapi_app() -> FastAPI:
     from llm.laya_bridge import LayaPrediction, laya_predict  # noqa: PLC0415
     from llm.laya_solver_adapter import LayaSolverAdapter  # noqa: PLC0415
 
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Aquecimento mandatorio do checkpoint canonico 322M (RLCD mmBERT-base)
+        profile = obter_perfil_hardware()
+        cpu_allowed = os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
+        if profile.cuda_available or cpu_allowed:
+            logger.info("Aquecendo checkpoint canonico Laya Multilingual (322M) na memoria...")
+            t0 = time.perf_counter()
+            try:
+                laya_predict("Warmup Laya Multilingual S1 SOTA", model_override=CANONICAL_MODEL)
+                elapsed = (time.perf_counter() - t0) * 1000.0
+                logger.info("Aquecimento Laya 322M concluido com sucesso em %.1f ms!", elapsed)
+            except Exception as e:
+                logger.warning("Falha durante aquecimento Laya S1: %s", e)
+        yield
+
     app = FastAPI(
         title="Laya Multilingual S1 Inference Service",
         description="Microservico de inferencia System-1 acelerado por GPU para o ecossistema Chico SOTA.",
         version="1.0.0",
+        lifespan=lifespan,
     )
 
     adapter = LayaSolverAdapter()
@@ -467,7 +485,12 @@ def criar_fastapi_app() -> FastAPI:
     def health():
         profile = obter_perfil_hardware()
         cpu_allowed = os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
-        weights_ready = profile.cuda_available or cpu_allowed
+        from llm.laya_bridge import _PREDICT_ROUTER  # noqa: PLC0415
+
+        weights_resident = bool(
+            _PREDICT_ROUTER is not None and "multilingual" in getattr(_PREDICT_ROUTER, "_agents", {})
+        )
+        weights_ready = (profile.cuda_available or cpu_allowed) and weights_resident
         return {
             "status": "HEALTHY",
             "model": CANONICAL_REPO,

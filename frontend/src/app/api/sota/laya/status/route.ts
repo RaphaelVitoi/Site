@@ -33,7 +33,7 @@ export async function GET(): Promise<NextResponse<LayaStatusResponse>> {
 	try {
 		const res = await fetch(`${LAYA_SERVICE_BASE}/health`, {
 			method: 'GET',
-			signal: AbortSignal.timeout(2000),
+			signal: AbortSignal.timeout(3000),
 			cache: 'no-store',
 		});
 
@@ -43,7 +43,7 @@ export async function GET(): Promise<NextResponse<LayaStatusResponse>> {
 			const data = await res.json().catch(() => ({}));
 			return NextResponse.json({
 				status: 'ONLINE',
-				weights_loaded: Boolean(data.weights_ready ?? true),
+				weights_loaded: Boolean(data.weights_ready ?? false),
 				model: CANONICAL_LAYA_MODEL,
 				canonical_repo: data.model || CANONICAL_LAYA_REPO,
 				cuda_available: Boolean(data.cuda_available),
