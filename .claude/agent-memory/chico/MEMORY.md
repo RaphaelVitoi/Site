@@ -320,4 +320,26 @@ própria auditoria que o registrou.
   - 0 erros em TypeScript (`tsc --noEmit`), ESLint e Ruff.
   - `record_gate.py` APROVADO.
 
+---
+
+## 10. Pool Rotacional Inteligente Gemini 3.5 Flash-Lite & Especialização Tripla — 2026-09-25
+
+- **Diretriz do Operador (Tier 0):** Provisionar 5 chaves de API da Generative Language API (`projects/913870412920` / `original-498419`) em pool rotacional adaptativo inteligente, especializando `gemini-3.5-flash-lite` para:
+  1. **Edições pontuais e atômicas** (micro-patches, blocos SEARCH/REPLACE cirúrgicos).
+  2. **Triagem** (classificação rápida, fast-path ingress, triagem de tarefas).
+  3. **Linting** (auditoria estática, validação de AST e pre-commit gates).
+- **Entregas Técnicas Consolidadas:**
+  1. *Provisionamento Seguro:* `Site/scripts/ops/Set-GeminiKeyPool.ps1` e ponteiro na raiz multiprojeto persistem `GEMINI_API_KEY_1..5` e `GEMINI_FLASH_KEY_1..5` em `HKCU:\Environment` e no processo com broadcast `WM_SETTINGCHANGE`. Zero chaves em texto claro em código ou git.
+  2. *Gerenciador de Pool (`Site/llm/gemini_pool.py`):* `GeminiPoolManager` com thread-safety assíncrono (`asyncio.Lock`), Weighted Round-Robin adaptativo, Circuit Breaker reativo para HTTP 429 (`RESOURCE_EXHAUSTED` com leitura de `retryDelay` e cooldown de 45s) e HTTP 401/403 (revogação e isolamento definitivo).
+  3. *Wrapper Canônico (`Site/llm/gemini.py`):* Função `call_gemini_flash_lite()` com injeção automática de chaves do pool, retries automáticos com rotação $\mathcal{O}(1)$ em caso de 429 e rastreamento de cargas de trabalho (`GeminiWorkload`).
+  4. *Validação em Voo & Testes:*
+     - 5/5 chaves testadas contra a API real do Google AI Studio com sucesso e latência média < 420 ms.
+     - `tests/test_gemini_pool.py`: 8/8 testes aprovados com homeostase total (0 erros, 0 warnings).
+     - `tests/test_credenciais.py`: 7/7 aprovados sem vazamento.
+     - `tests/test_declarado_e_lido.py`: 100% aprovado sem constantes órfãs.
+  5. *Commits e Repositórios:*
+     - `Site`: commit `1e863617` em `master`, sincronizado via push com `origin/master`.
+     - `raiz-multiprojeto` (`.gemini`): commit `e3060b1` em `main`, sincronizado via push com `origin/main`.
+
+
 
