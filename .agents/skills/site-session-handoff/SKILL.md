@@ -69,6 +69,6 @@ Lead with completion status. Link the official handoff and any distinct audit/le
 - Identity catalog: [`data/agent_identities.json`](../../../data/agent_identities.json).
 - Feedback writer and verifier: `scripts/ops/Register-AgentCalibrationFeedback.ps1`, `scripts/ops/Test-AgentCalibrationLedger.ps1`.
 - Avaliação factual de impacto: [`session-impact-evaluator`](../session-impact-evaluator/SKILL.md), `scripts/ops/avaliar_impacto_sessao.py`.
-- Pools e Roteamento de Chaves OpenRouter Multi-Tier: [`CLAUDE.md`](../../../CLAUDE.md) §§3, 3.1, 7; [`llm/openrouter_pool.py`](../../../llm/openrouter_pool.py), `scripts/ops/Set-OpenRouterKeyPools.ps1`.
+- Pools e Roteamento de Chaves OpenRouter Multi-Tier & Precedência Econômica: [`CLAUDE.md`](../../../CLAUDE.md) §§3, 3.1, 7; [`llm/openrouter_pool.py`](../../../llm/openrouter_pool.py), `scripts/ops/Set-OpenRouterKeyPools.ps1`, prioridade de cotas Pro (`Faixa.FLAT_FEE`) no Tier 1 e mitigação ativa de custos de servidores via Ollama cloud (`gemma4:31b-cloud`), llama.cpp (família Qwen) e Hermes Agent (família Laguna).
 - Quality and release gates: `scripts/ops/suite_verde.py`, `scripts/ops/cwv_gate.ps1`, `scripts/ops/record_anchor_gate.ps1`, `scripts/ops/record_gate.py`, `.husky/pre-commit`, `.husky/pre-push`.
 - Current product context and Modus Operandi are named by the canonical `CLAUDE.md`; resolve their current paths there rather than copying them into the skill.

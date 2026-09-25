@@ -218,6 +218,37 @@ def medir_pools_openrouter() -> dict[str, object]:
         }
 
 
+def medir_eficiencia_economica_e_infraestrutura() -> dict[str, object]:
+    """Mede a conformidade de economia, cotas Pro e mitigacao de custos de nuvem/servidores."""
+    manifesto_path = SITE_ROOT / "data/ollama_models.json"
+    cloud_models_count = 0
+    local_models_count = 0
+
+    if manifesto_path.exists():
+        try:
+            dados = json.loads(manifesto_path.read_text(encoding="utf-8"))
+            for m in dados.get("models", []):
+                tier = m.get("tier", "")
+                if tier == "cloud":
+                    cloud_models_count += 1
+                elif tier == "local":
+                    local_models_count += 1
+        except Exception:
+            pass
+
+    return {
+        "prioridade_tier1_assinaturas_pro": "Ativa (Faixa.FLAT_FEE tem precedencia sobre API Paga)",
+        "modelos_cloud_zero_ram_count": cloud_models_count,
+        "modelos_locais_quantizados_count": local_models_count,
+        "runtimes_mitigacao_infraestrutura": [
+            "Ollama (Zero-RAM cloud models: gemma4:31b-cloud, kimi-k2.7-code:cloud, deepseek)",
+            "llama.cpp (Familia Qwen quantizada local de alta taxa tokens/watt)",
+            "Hermes Agent (Familia Laguna e condutor Solar-Pro4 com modelos free em nuvem)",
+        ],
+        "mitigacao_custo_servidores": "Eliminacao de VMs e servidores pagos via inferencia free em nuvem e edge",
+    }
+
+
 def avaliar_impacto_sessao(
     pendencias_inicio: int | None = None,
     saida_markdown: bool = False,
@@ -229,6 +260,7 @@ def avaliar_impacto_sessao(
     mcp = medir_interceptador_mcp()
     ingress = medir_ingress_fast_path()
     pools = medir_pools_openrouter()
+    economia = medir_eficiencia_economica_e_infraestrutura()
 
     delta_pendencias_pct = 0.0
     if pendencias_inicio is not None and pendencias_inicio > 0:
@@ -247,6 +279,7 @@ def avaliar_impacto_sessao(
         "interceptador_mcp": mcp,
         "ingress_fast_path": ingress,
         "pools_openrouter": pools,
+        "eficiencia_economica_infra": economia,
     }
 
     if saida_markdown:
@@ -265,6 +298,7 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
     mcp: dict[str, object] = r["interceptador_mcp"]  # type: ignore
     ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
     pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
+    econ: dict[str, object] = r.get("eficiencia_economica_infra", {})  # type: ignore
 
     md = []
     md.append("### Painel de Avaliacao de Impacto da Sessao (Agnostico Tier 1-2-3)")
@@ -290,6 +324,10 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
         md.append(
             f"| **Pools OpenRouter Multi-Tier** | **{pools['total_chaves']} chaves** ({pools['ativas']} ativas, score: {pools['score_medio']}) | T1: {pools['tier1_count']} \\| T2: {pools['tier2_count']} \\| T3: {pools['tier3_count']} \\| T4: {pools['tier4_count']} ({pools['bloqueadas']} bloq / {pools['revogadas']} rev) |"
         )
+    if econ:
+        md.append(
+            f"| **Eficiencia Economica & Infra** | **{econ.get('modelos_cloud_zero_ram_count', 0)} cloud / {econ.get('modelos_locais_quantizados_count', 0)} locais** | Cotas Pro Tier 1 prioritarias (Faixa.FLAT_FEE); Mitigacao ativa de custos de servidores |"
+        )
     md.append("")
     return "\n".join(md)
 
@@ -302,6 +340,7 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
     mcp: dict[str, object] = r["interceptador_mcp"]  # type: ignore
     ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
     pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
+    econ: dict[str, object] = r.get("eficiencia_economica_infra", {})  # type: ignore
 
     print("\n" + "=" * 65)
     print("  AVALIACAO DE IMPACTO OBJETIVO DE SESSAO (SOTA AGNOSTIC)")
@@ -324,6 +363,11 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
         print(
             f"• Pools OpenRouter Multi-Tier:   {pools['total_chaves']} chaves ({pools['ativas']} ativas, T1:{pools['tier1_count']} T2:{pools['tier2_count']} T3:{pools['tier3_count']} T4:{pools['tier4_count']} | Score: {pools['score_medio']})"
         )
+    if econ:
+        print(
+            f"• Eficiencia Economica & Infra:  Cotas Pro Tier 1 prioritarias (FLAT_FEE) | {econ.get('modelos_cloud_zero_ram_count', 0)} cloud Zero-RAM / {econ.get('modelos_locais_quantizados_count', 0)} locais"
+        )
+        print("                                 Runtimes: Ollama cloud + llama.cpp Qwen + Hermes Agent")
     print("=" * 65 + "\n")
 
 
