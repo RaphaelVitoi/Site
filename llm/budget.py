@@ -45,8 +45,11 @@ def _is_real_key_value(value: str) -> bool:
     if not value:
         return False
     v = value.strip()
-    invalid_prefixes = ("$env:", "${", "sk-REPLACE", "SUA_KEY", "COLE_SUA_KEY")
+    invalid_prefixes = ("$env:", "${", "sk-REPLACE", "SUA_KEY", "COLE_SUA_KEY", "COLOQUE_")
     if any(v.startswith(prefix) for prefix in invalid_prefixes):
+        return False
+
+    if len(v) < 20:
         return False
 
     # Sufixos de chaves conhecidamente revogadas (configuravel via REVOKED_KEY_SUFFIXES no env)
@@ -88,6 +91,8 @@ GEMINI_KEYS = _collect_keys(
         "GOOGLE_PRO",
         "GEMINI_FLASH",
         "GOOGLE_FLASH",
+        "GEMINI_PROJECT",
+        "GOOGLE_CLOUD_PROJECT",
     ),
 )
 # Pool total para auditorias/telemetria.
@@ -228,6 +233,12 @@ async def _block_gemini_model_key(model: str, key: str):
 
 
 def _gemini_key_pool_for_model(model: str) -> list[str]:
+    from llm.gemini_pool import gemini_pool_manager  # noqa: PLC0415
+
+    pool_keys = [k for k in gemini_pool_manager._keys if _is_real_key_value(k)]
+    if pool_keys:
+        return pool_keys
+
     model_l = model.lower()
     if "pro" in model_l:
         return list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_KEYS + GEMINI_FLASH_KEYS))
