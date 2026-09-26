@@ -9,18 +9,37 @@
   "timesfm_forecast": {
     "status": "INSUFFICIENT_HISTORY",
     "required_points": 4,
-    "available_points": 0,
+    "available_points": 2,
     "reason": "TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica."
   },
-  "sessoes_com_feedback": [],
-  "sessoes_com_feedback_count": 0,
-  "sessoes_faltantes": 3,
+  "sessoes_com_feedback": [
+    "31abdec0-f1f1-44d8-a782-de88a85e8c3a",
+    "8356731b-61df-479a-a930-2d731f86444e"
+  ],
+  "sessoes_com_feedback_count": 2,
+  "sessoes_faltantes": 1,
   "sessoes_com_inicio_inconsistente": [],
   "sessoes_com_densidade_relevante": [],
-  "sessoes_ativas_no_dia": [],
-  "feedback_count_acumulado": 0,
-  "eligible_feedback_count": 0,
-  "eligible_feedback": [],
+  "sessoes_ativas_no_dia": [
+    "31abdec0-f1f1-44d8-a782-de88a85e8c3a",
+    "8356731b-61df-479a-a930-2d731f86444e"
+  ],
+  "feedback_count_acumulado": 2,
+  "eligible_feedback_count": 2,
+  "eligible_feedback": [
+    {
+      "event_id": "76bd2286-0098-4df6-8dc2-0a23ec8d2065",
+      "session_id": "8356731b-61df-479a-a930-2d731f86444e",
+      "eligible": true,
+      "reasons": []
+    },
+    {
+      "event_id": "3cde6caf-16b3-4b35-a855-2953d42c2630",
+      "session_id": "31abdec0-f1f1-44d8-a782-de88a85e8c3a",
+      "eligible": true,
+      "reasons": []
+    }
+  ],
   "excluded_feedback_count": 0,
   "excluded_feedback": [],
   "historical_provenance_audit": [
@@ -307,25 +326,82 @@
       "session_id": "ee1d6652-38d0-4803-9048-cf30bc0588a0",
       "provenance_complete": true,
       "reasons": []
+    },
+    {
+      "event_id": "76bd2286-0098-4df6-8dc2-0a23ec8d2065",
+      "sequence": 86,
+      "session_id": "8356731b-61df-479a-a930-2d731f86444e",
+      "provenance_complete": true,
+      "reasons": []
+    },
+    {
+      "event_id": "3cde6caf-16b3-4b35-a855-2953d42c2630",
+      "sequence": 87,
+      "session_id": "31abdec0-f1f1-44d8-a782-de88a85e8c3a",
+      "provenance_complete": true,
+      "reasons": []
     }
   ],
   "historical_excluded_count": 2,
   "provenance_policy": "Incomplete historical evidence is retained in records, excluded from structural gate and corroboration. Scope must explicitly declare handoff; model, connector and supervision are independent required fields. Score statistics describe retained history, not an eligible calibration sample.",
   "correcoes_no_ledger": 42,
   "correcoes_aplicadas": 42,
-  "feedback_count_no_dia": 0,
+  "feedback_count_no_dia": 2,
   "feedback_sem_sessao": 0,
-  "por_sessao": [],
-  "score_mean": null,
-  "score_min": null,
-  "score_max": null,
-  "score_mean_no_dia": null,
+  "por_sessao": [
+    {
+      "session_id": "31abdec0-f1f1-44d8-a782-de88a85e8c3a",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-25T19:49:15.0000000-03:00",
+      "ultimo_feedback": "2026-09-25T19:49:15.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/25/2026 19:15:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gemini-3.8-flash"
+      ],
+      "conductor_vehicles": [
+        "antigravity"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    },
+    {
+      "session_id": "8356731b-61df-479a-a930-2d731f86444e",
+      "feedback_count": 1,
+      "densidade_relevante": false,
+      "primeiro_feedback": "2026-09-25T09:04:58.0000000-03:00",
+      "ultimo_feedback": "2026-09-25T09:04:58.0000000-03:00",
+      "atravessa_meia_noite": false,
+      "session_started_at": [
+        "09/25/2026 07:15:00"
+      ],
+      "inicio_inconsistente": false,
+      "conductor_models": [
+        "gemini-3.8-flash"
+      ],
+      "conductor_vehicles": [
+        "antigravity"
+      ],
+      "supervision_modes": [
+        "assistida"
+      ]
+    }
+  ],
+  "score_mean": 8.7,
+  "score_min": 7.5,
+  "score_max": 9.9,
+  "score_mean_no_dia": 8.7,
   "evidence_gate": {
     "metric": "distinct_sessions_with_feedback",
     "minimum_distinct_sessions": 3,
     "minimum_feedback_records": 3,
     "structural_gate_passed": false,
-    "reason": "0 de 3 sessoes com feedback; faltam 3. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
+    "reason": "2 de 3 sessoes com feedback; faltam 1. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
     "intra_session_density_is_data_not_trigger": "Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.",
     "accumulation_never_expires": "Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.",
     "unsessioned_feedback_ignored": "Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.",
@@ -333,7 +409,42 @@
     "pattern_confirmation_required": "At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency."
   },
   "calibration_planning_permitted": false,
-  "records": [],
+  "records": [
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 86,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-25T09:04:58.2290334-03:00",
+      "previous_hash": "05e1ca143c7f2fdb78fa12ad7b975e3a27a9b1e50522915c8ad7c47d26fdcfab",
+      "event_id": "76bd2286-0098-4df6-8dc2-0a23ec8d2065",
+      "session_id": "8356731b-61df-479a-a930-2d731f86444e",
+      "score": 9.9,
+      "scope": "handoff",
+      "feedback": "Motivo qualitativo do -0.1 = Sempre que acumular 2 commits, é obrigatório que o proximo commit venha com push. Registre nas regras mestras e MO.",
+      "session_started_at": "2026-09-25T07:15:00-03:00",
+      "conductor_model": "gemini-3.8-flash",
+      "conductor_vehicle": "antigravity",
+      "supervision_mode": "assistida",
+      "record_hash": "72a16a2c8e00f045de444a09f998d348d07c6ae606f9e953c0065b61ef2474df"
+    },
+    {
+      "schema_version": "agent-calibration-ledger/v1",
+      "sequence": 87,
+      "record_type": "feedback",
+      "recorded_at": "2026-09-25T19:49:15.9798382-03:00",
+      "previous_hash": "72a16a2c8e00f045de444a09f998d348d07c6ae606f9e953c0065b61ef2474df",
+      "event_id": "3cde6caf-16b3-4b35-a855-2953d42c2630",
+      "session_id": "31abdec0-f1f1-44d8-a782-de88a85e8c3a",
+      "score": 7.5,
+      "scope": "handoff",
+      "feedback": "você está repetindo demais os gates de novo. redundante. não é inteligente e nem eficiente. feedback intrassession. 7.5",
+      "session_started_at": "2026-09-25T19:15:00-03:00",
+      "conductor_model": "gemini-3.8-flash",
+      "conductor_vehicle": "antigravity",
+      "supervision_mode": "assistida",
+      "record_hash": "61de89e558e493407f0a62d0e83e2cbc4109c39272f1995f762e15154db6c541"
+    }
+  ],
   "outlier_evidence": {
     "ledger_path": "C:\\Users\\rapha\\.gemini\\Site\\reports\\agent-calibration\\outlier-evidence-ledger.jsonl",
     "count": 0,
