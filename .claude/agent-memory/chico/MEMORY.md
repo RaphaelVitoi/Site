@@ -79,6 +79,12 @@
   `decimal`; o teste de regressão confirmou que `7.5` é preservado no ledger,
   em vez de arredondado para `8`.
 
+## 5. Diretiva Soberana de Operação & Governança de Commit/Push (2026-09-25)
+
+- **Cessação de Testes Proativos:** Baterias de testes pesadas, CWV gates redundantes e verificações em lote estão terminantemente suspensas de rodar por iniciativa autônoma do agente. O agente não roda testes por conta própria — testes rodam única e exclusivamente se e quando Raphael Vitoi requisitar.
+- **Commit e Push Monocráticos sob Demanda:** O agente **JAMAIS** commita (`git commit`) ou faz push (`git push`) por iniciativa própria. O disparo de commit e push é prerrogativa monocrática e ocorre **estritamente sob ordem expressa do operador**.
+- **Invariante de Staging Perpétuo (Harmonizado e Staged):** Todo o trabalho realizado (código, configurações, documentos) deve ser mantido continuamente harmonizado, sincronizado e colocado na área de preparação (`git add`), deixando o repositório perfeitamente limpo, íntegro e staged, aguardando o comando de commit/push do operador.
+
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
