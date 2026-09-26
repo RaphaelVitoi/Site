@@ -27,6 +27,12 @@ LFS introduzida na própria sessão que criou a fase 5.
 
 Se ele reprovar, "a regra está errada" é a hipótese **menos** provável.
 
+### 1.0 Soberania de Commit e Push & Staging Contínuo (Promulgada em 2026-09-25)
+
+- **Commit e Push Monocráticos sob Demanda:** O agente **nunca** commita nem empurra commits por iniciativa própria ou de forma autônoma. O commit (`git commit`) e o push (`git push`) ocorrem **somente quando requisitados expressamente pelo operador Raphael Vitoi**.
+- **Invariante do Trabalho Staged e Harmonizado:** As alterações produzidas devem ser mantidas permanentemente sincronizadas, harmonizadas e colocadas na área de preparação (`git add`), mantendo a árvore e o índice prontos e limpos para execução imediata ao receber a ordem do operador.
+- **Cessação de Testes Proativos:** O agente cessa imediatamente a execução autônoma de suítes de teste e gates redundantes que geram latência excessiva. Testes só rodam quando expressamente solicitados pelo operador.
+
 ### 1.1 Operar de host sem Windows PowerShell 5.1
 
 A fase 5 parseia todo `.ps1` em stage com `powershell.exe` — o 5.1, que é o
