@@ -45,11 +45,11 @@ def _is_real_key_value(value: str) -> bool:
     if not value:
         return False
     v = value.strip()
-    invalid_prefixes = ("$env:", "${", "sk-REPLACE", "SUA_KEY", "COLE_SUA_KEY", "COLOQUE_")
+    invalid_prefixes = ("$env:", "${", "sk-REPLACE", "SUA_KEY", "COLE_SUA_KEY", "COLOQUE_", "dummy-", "dummy")
     if any(v.startswith(prefix) for prefix in invalid_prefixes):
         return False
 
-    if len(v) < 20:
+    if len(v) < 12:
         return False
 
     # Sufixos de chaves conhecidamente revogadas (configuravel via REVOKED_KEY_SUFFIXES no env)
@@ -95,6 +95,8 @@ GEMINI_KEYS = _collect_keys(
         "GOOGLE_CLOUD_PROJECT",
     ),
 )
+
+
 def _collect_all_gemini_keys() -> list[str]:
     keys = list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS + GEMINI_KEYS))
     try:

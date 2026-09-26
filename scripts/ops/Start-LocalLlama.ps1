@@ -4,6 +4,7 @@
     Modelos:
       - AI9Stars G9v3-3B (Tool Calling & Fast Operations) -> Porta 8081
       - Ling-3.0-tiny MoE (Sintese Confiavel & Portugues BR) -> Porta 8082
+      - Qwen2.5-Coder-1.5B (Engenharia de Codigo & Linting Q8_0) -> Porta 8083
 
 .DESCRIPTION
     Script operacional para iniciar, monitorar e parar instancias do llama-server
@@ -11,7 +12,7 @@
     empiricas de estabilidade (modo de raciocinio desligado, contexto delimitado).
 
 .PARAMETER Model
-    Qual modelo iniciar: 'G9v3', 'Ling3' ou 'Both'. Padrao: 'G9v3'.
+    Qual modelo iniciar: 'G9v3', 'Ling3', 'QwenCoder' ou 'All'. Padrao: 'All'.
 
 .PARAMETER Action
     Acao a executar: 'Start', 'Stop', 'Status'. Padrao: 'Start'.
@@ -21,18 +22,22 @@
 
 .PARAMETER PortLing
     Porta HTTP para o Ling-3.0-tiny. Padrao: 8082.
+
+.PARAMETER PortQwen
+    Porta HTTP para o Qwen2.5-Coder-1.5B. Padrao: 8083.
 #>
 
 [CmdletBinding()]
 param(
-    [ValidateSet('G9v3', 'Ling3', 'Both')]
-    [string]$Model = 'G9v3',
+    [ValidateSet('G9v3', 'Ling3', 'QwenCoder', 'All')]
+    [string]$Model = 'All',
 
     [ValidateSet('Start', 'Stop', 'Status')]
     [string]$Action = 'Start',
 
     [int]$PortG9 = 8081,
-    [int]$PortLing = 8082
+    [int]$PortLing = 8082,
+    [int]$PortQwen = 8083
 )
 
 $ErrorActionPreference = 'Stop'
@@ -41,6 +46,7 @@ $ErrorActionPreference = 'Stop'
 $ModelsDir = 'C:\Users\rapha\models\gguf'
 $G9ModelPath = Join-Path $ModelsDir 'ai9stars_G9v3-3B-Q4_K_M.gguf'
 $LingModelPath = Join-Path $ModelsDir 'Ling-3.0-tiny-Q4_K_M.gguf'
+$QwenModelPath = Join-Path $ModelsDir 'qwen2.5-coder-1.5b-q8_0.gguf'
 
 # Localizacao do binario do llama-server
 $LlamaServerBin = $null
@@ -101,6 +107,14 @@ function Show-Status {
     Write-Host (if ($lingOnline) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }) -ForegroundColor $lingColor
     Write-Host "   Arquivo: $LingModelPath"
     Write-Host "   Existe em disco: $(Test-Path $LingModelPath)"
+
+    # Qwen 2.5 Coder
+    $qwenOnline = Test-LlamaHealth $PortQwen
+    $qwenColor = if ($qwenOnline) { 'Green' } else { 'DarkGray' }
+    Write-Host "`n3. Qwen2.5-Coder-1.5B Q8_0 (Porta $PortQwen): " -NoNewline
+    Write-Host (if ($qwenOnline) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }) -ForegroundColor $qwenColor
+    Write-Host "   Arquivo: $QwenModelPath"
+    Write-Host "   Existe em disco: $(Test-Path $QwenModelPath)"
     Write-Host "===========================================`n"
 }
 
@@ -110,8 +124,9 @@ if ($Action -eq 'Status') {
 }
 
 if ($Action -eq 'Stop') {
-    if ($Model -in @('G9v3', 'Both')) { Stop-LlamaProcess $PortG9 }
-    if ($Model -in @('Ling3', 'Both')) { Stop-LlamaProcess $PortLing }
+    if ($Model -in @('G9v3', 'All')) { Stop-LlamaProcess $PortG9 }
+    if ($Model -in @('Ling3', 'All')) { Stop-LlamaProcess $PortLing }
+    if ($Model -in @('QwenCoder', 'All')) { Stop-LlamaProcess $PortQwen }
     Show-Status
     exit 0
 }
@@ -120,9 +135,9 @@ if ($Action -eq 'Stop') {
 Write-Host "`n[START] Iniciando servicos locais com llama.cpp..." -ForegroundColor Cyan
 
 # 1. Iniciar G9v3-3B se solicitado
-if ($Model -in @('G9v3', 'Both')) {
+if ($Model -in @('G9v3', 'All')) {
     if (-not (Test-Path $G9ModelPath)) {
-        Write-Error "[ERRO] Arquivo do G9v3 nao encontrado em $G9ModelPath. Conclua o download antes de iniciar."
+        Write-Error "[ERRO] Arquivo do G9v3 nao encontrado em $G9ModelPath."
         exit 1
     }
 
@@ -130,13 +145,6 @@ if ($Model -in @('G9v3', 'Both')) {
         Write-Host "[G9v3] Ja esta ONLINE e respondendo na porta $PortG9." -ForegroundColor Green
     } else {
         Write-Host "[G9v3] Lancando llama-server na porta $PortG9 (Vulkan0, 8GB VRAM RX 570, Raciocinio Desligado)..." -ForegroundColor Yellow
-        
-        # Parametros otimizados para AMD Radeon RX 570 8GB:
-        # -dev Vulkan0: usa a RX 570 (8192 MiB VRAM total)
-        # -ngl 99: offload total - modelo denso 3B Q4_K_M (1.77GB) cabe com ~6GB de folga
-        # -c 16384: contexto de 16k tokens - com 8GB de VRAM ha espaco para KV cache maior
-        # --reasoning off / --reasoning-format none: impede desistencia silenciosa em multi-step
-        # -fa auto: Flash Attention ativo
         $argsG9 = @(
             "-m", "`"$G9ModelPath`"",
             "--host", "127.0.0.1",
@@ -149,10 +157,8 @@ if ($Model -in @('G9v3', 'Both')) {
             "--reasoning-format", "none",
             "-np", "1"
         )
-        
         $procG9 = Start-Process -FilePath $LlamaServerBin -ArgumentList $argsG9 -PassThru -WindowStyle Hidden
         Write-Host "  -> Processo G9v3 iniciado (PID $($procG9.Id)). Aguardando warmup..."
-        
         $attempts = 0
         while ($attempts -lt 20) {
             Start-Sleep -Seconds 1
@@ -162,16 +168,13 @@ if ($Model -in @('G9v3', 'Both')) {
             }
             $attempts++
         }
-        if ($attempts -ge 20) {
-            Write-Warning "  [TIMEOUT] O servidor G9v3 demorou para responder. Verifique os logs."
-        }
     }
 }
 
 # 2. Iniciar Ling-3.0-tiny se solicitado
-if ($Model -in @('Ling3', 'Both')) {
+if ($Model -in @('Ling3', 'All')) {
     if (-not (Test-Path $LingModelPath)) {
-        Write-Error "[ERRO] Arquivo do Ling-3.0 nao encontrado em $LingModelPath. Conclua o download antes de iniciar."
+        Write-Error "[ERRO] Arquivo do Ling-3.0 nao encontrado em $LingModelPath."
         exit 1
     }
 
@@ -179,13 +182,6 @@ if ($Model -in @('Ling3', 'Both')) {
         Write-Host "[Ling3] Ja esta ONLINE e respondendo na porta $PortLing." -ForegroundColor Green
     } else {
         Write-Host "[Ling3] Lancando llama-server na porta $PortLing (Vulkan0, 8GB VRAM RX 570, Raciocinio Desligado)..." -ForegroundColor Yellow
-        
-        # Parametros otimizados para MoE de 4.49GB em GPU de 8GB + 32GB RAM:
-        # -dev Vulkan0: aceleracao grafica com offload majoritario
-        # -ngl 40: offload de ~40 camadas (~3.5GB) para a VRAM, restante no RAM (32GB)
-        #   -> modelo 4.49GB + KV cache ~1.5GB = ~5-6GB total na GPU, dentro dos 8GB
-        # -c 16384: contexto de 16k - VRAM comporta KV cache maior com o offload parcial
-        # --reasoning off: garante taxa de conclusao de 10/10 nas cadeias de multiplos passos
         $argsLing = @(
             "-m", "`"$LingModelPath`"",
             "--host", "127.0.0.1",
@@ -198,10 +194,8 @@ if ($Model -in @('Ling3', 'Both')) {
             "--reasoning-format", "none",
             "-np", "1"
         )
-        
         $procLing = Start-Process -FilePath $LlamaServerBin -ArgumentList $argsLing -PassThru -WindowStyle Hidden
         Write-Host "  -> Processo Ling3 iniciado (PID $($procLing.Id)). Aguardando warmup..."
-        
         $attempts = 0
         while ($attempts -lt 25) {
             Start-Sleep -Seconds 1
@@ -211,8 +205,40 @@ if ($Model -in @('Ling3', 'Both')) {
             }
             $attempts++
         }
-        if ($attempts -ge 25) {
-            Write-Warning "  [TIMEOUT] O servidor Ling-3 demorou para responder. Verifique os logs."
+    }
+}
+
+# 3. Iniciar Qwen2.5-Coder-1.5B se solicitado
+if ($Model -in @('QwenCoder', 'All')) {
+    if (-not (Test-Path $QwenModelPath)) {
+        Write-Error "[ERRO] Arquivo do Qwen2.5-Coder nao encontrado em $QwenModelPath."
+        exit 1
+    }
+
+    if (Test-LlamaHealth $PortQwen) {
+        Write-Host "[QwenCoder] Ja esta ONLINE e respondendo na porta $PortQwen." -ForegroundColor Green
+    } else {
+        Write-Host "[QwenCoder] Lancando llama-server na porta $PortQwen (Vulkan0, 8GB VRAM RX 570, Codigo Q8_0)..." -ForegroundColor Yellow
+        $argsQwen = @(
+            "-m", "`"$QwenModelPath`"",
+            "--host", "127.0.0.1",
+            "--port", "$PortQwen",
+            "-dev", "Vulkan0",
+            "-ngl", "99",
+            "-c", "16384",
+            "-fa", "auto",
+            "-np", "1"
+        )
+        $procQwen = Start-Process -FilePath $LlamaServerBin -ArgumentList $argsQwen -PassThru -WindowStyle Hidden
+        Write-Host "  -> Processo QwenCoder iniciado (PID $($procQwen.Id)). Aguardando warmup..."
+        $attempts = 0
+        while ($attempts -lt 20) {
+            Start-Sleep -Seconds 1
+            if (Test-LlamaHealth $PortQwen) {
+                Write-Host "  [OK] Qwen2.5-Coder-1.5B esta ONLINE em http://127.0.0.1:$PortQwen/v1" -ForegroundColor Green
+                break
+            }
+            $attempts++
         }
     }
 }

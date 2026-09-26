@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_G9_PORT = 8081
 DEFAULT_LING_PORT = 8082
+DEFAULT_QWEN_PORT = 8083
 
 
 class LocalLlamaClient:
@@ -104,3 +105,8 @@ def get_local_tool_caller() -> LocalLlamaClient:
 def get_local_synthesizer() -> LocalLlamaClient:
     """Retorna o cliente configurado para o Ling-3.0-tiny MoE (Porta 8082)."""
     return LocalLlamaClient(port=DEFAULT_LING_PORT)
+
+
+def get_local_coder() -> LocalLlamaClient:
+    """Retorna o cliente configurado para o Qwen2.5-Coder-1.5B (Porta 8083)."""
+    return LocalLlamaClient(port=DEFAULT_QWEN_PORT)

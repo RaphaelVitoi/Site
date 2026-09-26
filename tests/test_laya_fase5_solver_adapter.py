@@ -58,8 +58,9 @@ class TestLayaSolverAdapter:
         assert res.target_solver == "prospect-theory"
         assert res.adapted_parameters["loss_aversion_lambda"] >= 2.25
 
-    def test_adapt_for_frameworks_genericos(self):
+    def test_adapt_for_frameworks_genericos(self, monkeypatch):
         """Frameworks genericos (Libratus, Shannon, Systems Theory, Antevisao) respondem corretamente."""
+        monkeypatch.setenv("CHICO_LAYA_PREDICT_ALLOW_CPU", "0")
         for fw in ["libratus", "shannon-entropy", "systems-theory", "antevisao"]:
             res = LayaSolverAdapter.adapt_for_solver(fw, "General strategic analysis query.")
             assert res.target_solver == fw
