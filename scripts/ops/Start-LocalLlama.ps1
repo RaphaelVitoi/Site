@@ -12,7 +12,7 @@
     empiricas de estabilidade (modo de raciocinio desligado, contexto delimitado).
 
 .PARAMETER Model
-    Qual modelo iniciar: 'G9v3', 'Ling3', 'QwenCoder' ou 'All'. Padrao: 'All'.
+    Qual modelo iniciar: 'G9v3', 'Ling3', 'QwenCoder', 'Duo' (G9v3+Qwen) ou 'All'. Padrao: 'Duo'.
 
 .PARAMETER Action
     Acao a executar: 'Start', 'Stop', 'Status'. Padrao: 'Start'.
@@ -29,8 +29,8 @@
 
 [CmdletBinding()]
 param(
-    [ValidateSet('G9v3', 'Ling3', 'QwenCoder', 'All')]
-    [string]$Model = 'All',
+    [ValidateSet('G9v3', 'Ling3', 'QwenCoder', 'Duo', 'All')]
+    [string]$Model = 'Duo',
 
     [ValidateSet('Start', 'Stop', 'Status')]
     [string]$Action = 'Start',
@@ -124,9 +124,9 @@ if ($Action -eq 'Status') {
 }
 
 if ($Action -eq 'Stop') {
-    if ($Model -in @('G9v3', 'All')) { Stop-LlamaProcess $PortG9 }
+    if ($Model -in @('G9v3', 'Duo', 'All')) { Stop-LlamaProcess $PortG9 }
     if ($Model -in @('Ling3', 'All')) { Stop-LlamaProcess $PortLing }
-    if ($Model -in @('QwenCoder', 'All')) { Stop-LlamaProcess $PortQwen }
+    if ($Model -in @('QwenCoder', 'Duo', 'All')) { Stop-LlamaProcess $PortQwen }
     Show-Status
     exit 0
 }
@@ -135,7 +135,7 @@ if ($Action -eq 'Stop') {
 Write-Host "`n[START] Iniciando servicos locais com llama.cpp..." -ForegroundColor Cyan
 
 # 1. Iniciar G9v3-3B se solicitado
-if ($Model -in @('G9v3', 'All')) {
+if ($Model -in @('G9v3', 'Duo', 'All')) {
     if (-not (Test-Path $G9ModelPath)) {
         Write-Error "[ERRO] Arquivo do G9v3 nao encontrado em $G9ModelPath."
         exit 1
@@ -187,7 +187,7 @@ if ($Model -in @('Ling3', 'All')) {
             "--host", "127.0.0.1",
             "--port", "$PortLing",
             "-dev", "Vulkan0",
-            "-ngl", "40",
+            "-ngl", "32",
             "-c", "16384",
             "-fa", "auto",
             "--reasoning", "off",
@@ -209,7 +209,7 @@ if ($Model -in @('Ling3', 'All')) {
 }
 
 # 3. Iniciar Qwen2.5-Coder-1.5B se solicitado
-if ($Model -in @('QwenCoder', 'All')) {
+if ($Model -in @('QwenCoder', 'Duo', 'All')) {
     if (-not (Test-Path $QwenModelPath)) {
         Write-Error "[ERRO] Arquivo do Qwen2.5-Coder nao encontrado em $QwenModelPath."
         exit 1
