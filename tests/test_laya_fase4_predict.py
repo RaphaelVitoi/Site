@@ -84,6 +84,10 @@ class TestLayaPredictionContract:
 class TestLayaPredictFallback:
     """No host CPU, laya.predict() caminha para HeuristicRouter."""
 
+    @pytest.fixture(autouse=True)
+    def force_cpu_fallback(self, monkeypatch):
+        monkeypatch.setenv("CHICO_LAYA_PREDICT_ALLOW_CPU", "0")
+
     def test_retorna_laya_prediction_valida(self):
         """laya_predict() sempre retorna LayaPrediction, nunca levanta."""
         pred = laya_predict("Input de teste em portugues para fallback.")
