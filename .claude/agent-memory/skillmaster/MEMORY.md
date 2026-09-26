@@ -61,3 +61,9 @@ Trabalho silencioso. Sincronizo as memorias de todos os outros via `rag_ingest` 
 *A evolucao do Todo comeca na precisao e integridade da Parte.*
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->
+
+## 7. PROTOCOLO DE CONSERVAÇÃO E PARSIMÔNIA DE SKILLS (2026-09-25)
+
+#padrao - O ecossistema de skills foi saneado de 89 para 37 skills ativas com zero perda (418 arquivos zumbis em quarentena).
+#diretriz - Invocação estratégica, parsimoniosa e inteligente. Toda skill exige consumo de contexto; se a tarefa é nativa, resolva por raciocínio ou CLI direto sem disparar skill desnecessariamente.
+#governanca - Commits e pushes sob autoridade monocrática de Raphael Vitoi. Trabalho sempre sincronizado e staged, disparo apenas por ordem direta.

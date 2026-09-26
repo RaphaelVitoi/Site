@@ -349,3 +349,26 @@ própria auditoria que o registrou.
 
 
 
+
+
+---
+
+## 11. Saneamento Termodinâmico de Skills & Diretriz de Invocação Estratégica (PMev) — 2026-09-25
+
+- **Diretriz do Operador (Tier 0):** Auditoria radical do ecossistema de skills para o @Principal Project = PMev, expurgo de ferramentas alienígenas (BigQuery, GCP Datacloud, Airflow, Spark, Firebase, Xcode, Chrome Web Store), remoção de duplicatas/lixo (.trash/synced) e uso estritamente inteligente, estratégico e parcimonioso das skills retidas, sem necessidade de commit/push imediato.
+- **Resultados e Metadados do Saneamento:**
+  1. *Eliminação de Entropia em Disco:* 418 arquivos SKILL.md zumbis/obsoletos movidos para quarentena isolada (C:\Users\rapha\.gemini\_quarantine_skills_pmev\), sem perda de dados e blindados no .gitignore.
+  2. *Contração de Cabeçalho:* Redução de 89 skills ativas para exatamente **37 skills laser-focused** em PMev e governança SOTA.
+  3. *Reversão de Déficit de Tokens:* O consumo de cabeçalho de skills caiu de **13.496 tokens para ~4.440 tokens (-67%)**, revertendo o estouro de orçamento de **-8,3% para ~+40% de headroom livre**.
+  4. *Quarentena e Desativação de Plugins:* Plugins irebase, data-agent-kit-plugin, lutter, google_maps_platform e googlecloudtools.datacloud_telemetry desativados no config.json.
+- **Axioma de Invocação Estratégica e Eficiente de Skills (Mandatório):**
+  - **Não Invoque por Inércia:** Toda invocação consome tokens e foco. Se a tarefa é resolvida por raciocínio analítico nativo ou comando direto de CLI/SDK, não invoque skill.
+  - **Invocação por Domínio Cirúrgico:**
+    - pmev-game-theory-engine & poker-pmev-knowledge-engine: Exclusivas para equidade, modelos de risco, ranges, solvers e arquitetura matemática MTT.
+    - 	imesfm-forecasting: Séries temporais de bankroll e variância EV.
+    - supabase & supabase-postgres-best-practices: Operações de banco, esquemas, migrações e RLS.
+    - chrome-devtools-agent-sota, utomation, performance: Validação real de frontend via DOM / A11y Tree e métricas CWV (LCP/INP/CLS).
+    - google-stitch-design: Telas, wireframes e fidelidade ao design system Obsidian Analytics.
+    - google-jules-cloud: Tarefas longas, assíncronas e refatorações complexas em nuvem com VM descartável.
+    - sota-quality-gate & site-session-handoff: Validação pre-commit de qualidade e encerramento oficial de sessão.
+  - **Governança de Commit/Push:** Commit e push ocorrem **estritamente sob demanda explícita do operador**. O trabalho permanece sincronizado e harmonizado em staging contínuo.
