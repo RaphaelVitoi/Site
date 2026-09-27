@@ -19,9 +19,15 @@ from llm.gemini_pool import (
 )
 
 
+import os
+
+
 @pytest.fixture
 def mock_pool_keys(monkeypatch):
     """Configura 5 chaves simuladas para teste isolado."""
+    for k in list(os.environ.keys()):
+        if k.startswith(("GEMINI_API_KEY", "GEMINI_FLASH_KEY", "GEMINI_KEY")):
+            monkeypatch.delenv(k, raising=False)
     keys = [
         "CHAVE_SINTETICA_MOCK_KEY_11111111111111111111111111111111",
         "CHAVE_SINTETICA_MOCK_KEY_22222222222222222222222222222222",
