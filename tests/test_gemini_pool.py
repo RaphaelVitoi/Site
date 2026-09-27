@@ -160,7 +160,11 @@ async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
             raise RuntimeError("HTTP 429: RESOURCE_EXHAUSTED retry_after=5s")
         return "Edição atômica executada com sucesso", {"totalTokenCount": 42}
 
-    with patch("llm.gemini._execute_primary_request", side_effect=fake_execute_primary):
+    with patch("llm.gemini.gemini_pool_manager._keys", mock_pool_keys), \
+         patch("llm.gemini.gemini_pool_manager.get_key_for_workload", side_effect=lambda w: (mock_pool_keys[call_count % len(mock_pool_keys)], "sha")), \
+         patch("llm.gemini.gemini_pool_manager.mark_failure", new_callable=__import__("unittest.mock").mock.AsyncMock), \
+         patch("llm.gemini.gemini_pool_manager.mark_success", new_callable=__import__("unittest.mock").mock.AsyncMock), \
+         patch("llm.gemini._execute_primary_request", side_effect=fake_execute_primary):
         text, usage = await call_gemini_flash_lite(
             session=mock_session,
             user_prompt="Substituir bloco X por Y",
