@@ -5,21 +5,17 @@ Protocolo Chico SOTA v8.0 GOLD.
 
 from __future__ import annotations
 
-import asyncio
-from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from llm.gemini import call_gemini, call_gemini_flash_lite
+from llm.gemini import call_gemini_flash_lite
 from llm.gemini_pool import (
     GeminiPoolManager,
     GeminiWorkload,
     _key_sha8,
 )
-
-
-import os
 
 
 @pytest.fixture
@@ -168,6 +164,14 @@ async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
             raise RuntimeError("HTTP 429: RESOURCE_EXHAUSTED retry_after=5s")
         return "Edição atômica executada com sucesso", {"totalTokenCount": 42}
 
+
+    from llm.gemini import gemini_pool_manager
+
+    # Inject a new manager with mock keys into the global instance used by call_gemini_flash_lite
+    from llm.gemini_pool import GeminiPoolManager
+    mock_mgr = GeminiPoolManager(read_registry=False)
+    gemini_pool_manager._keys = mock_mgr._keys
+    gemini_pool_manager._stats = mock_mgr._stats
     with patch("llm.gemini._execute_primary_request", side_effect=fake_execute_primary):
         text, usage = await call_gemini_flash_lite(
             session=mock_session,

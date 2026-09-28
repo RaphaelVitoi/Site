@@ -457,7 +457,7 @@ def criar_fastapi_app() -> FastAPI:
     from llm.laya_solver_adapter import LayaSolverAdapter  # noqa: PLC0415
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI):  # noqa: ARG001
         # Aquecimento mandatorio do checkpoint canonico 322M (RLCD mmBERT-base)
         profile = obter_perfil_hardware()
         cpu_allowed = os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"

@@ -105,7 +105,7 @@ def _collect_all_gemini_keys() -> list[str]:
         for k in gemini_pool_manager._keys:
             if k not in keys:
                 keys.append(k)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return keys
 
