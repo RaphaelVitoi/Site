@@ -11,7 +11,6 @@
     "arrow-up-right-dots",
     "arrow-up-right-from-square",
     "arrows-left-right",
-    "arrows-rotate",
     "arrows-split-up-and-left",
     "atom",
     "ban",
@@ -156,9 +155,9 @@
   ],
   "fontes": {
     "fa-solid-900": {
-      "glifos": 144,
+      "glifos": 143,
       "bytes_origem": 119488,
-      "bytes_recorte": 14352
+      "bytes_recorte": 14176
     },
     "fa-regular-400": {
       "glifos": 29,

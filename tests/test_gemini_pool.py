@@ -166,6 +166,7 @@ async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
 
 
     from llm.gemini import gemini_pool_manager
+
     # Inject a new manager with mock keys into the global instance used by call_gemini_flash_lite
     from llm.gemini_pool import GeminiPoolManager
     mock_mgr = GeminiPoolManager(read_registry=False)
