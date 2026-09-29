@@ -5,21 +5,17 @@ Protocolo Chico SOTA v8.0 GOLD.
 
 from __future__ import annotations
 
-import asyncio
-from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from llm.gemini import call_gemini, call_gemini_flash_lite
+from llm.gemini import call_gemini_flash_lite
 from llm.gemini_pool import (
     GeminiPoolManager,
     GeminiWorkload,
     _key_sha8,
 )
-
-
-import os
 
 
 @pytest.fixture
@@ -157,6 +153,9 @@ async def test_telemetry_table_zero_plaintext_leak(mock_pool_keys):
 @pytest.mark.asyncio
 async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
     """Testa se call_gemini_flash_lite failover rotaciona chave quando ocorre erro 429."""
+    import llm.gemini
+    mock_manager = GeminiPoolManager(read_registry=False)
+    llm.gemini.gemini_pool_manager = mock_manager
     mock_session = MagicMock()
 
     call_count = 0

@@ -105,8 +105,9 @@ def _collect_all_gemini_keys() -> list[str]:
         for k in gemini_pool_manager._keys:
             if k not in keys:
                 keys.append(k)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Budget read error: %s", e)
+
     return keys
 
 
@@ -353,8 +354,8 @@ async def is_cognitive_hibernation_active(manager: QueueManager, task: Task) -> 
             hibernation_end = datetime.fromisoformat(state)
             if datetime.now(UTC) < hibernation_end:
                 return True
-        except ValueError:
-            pass
+        except ValueError as e:
+            logger.debug("ValueError parsing hibernation state: %s", e)
     return False
 
 
