@@ -45,8 +45,8 @@ class LocalLlamaClient:
         """Verifica se o servidor local esta ativo e respondendo."""
         try:
             url = f"http://{self.host}:{self.port}/health"
-            req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=2.0) as resp:
+            req = urllib.request.Request(url, method="GET")  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
+            with urllib.request.urlopen(req, timeout=2.0) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
                 data = json.loads(resp.read().decode("utf-8"))
                 return data.get("status") in ("ok", "loading model")
         except Exception:
@@ -94,7 +94,7 @@ class LocalLlamaClient:
 
         url = f"{self.base_url}/chat/completions"
         req_data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
             url,
             data=req_data,
             headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
@@ -103,7 +103,7 @@ class LocalLlamaClient:
 
         t0 = time.time()
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
                 result = json.loads(resp.read().decode("utf-8"))
                 latency_ms = (time.time() - t0) * 1000.0
                 result["_sota_telemetry"] = {

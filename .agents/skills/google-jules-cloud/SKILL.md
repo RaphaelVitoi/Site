@@ -38,6 +38,7 @@ description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (
 > Para trocar o modelo do Jules, use as preferências da própria plataforma.
 
 ### Configuração da Conta & Cotas
+
 - **Assinatura:** `Jules in Pro` (Workflows intensivos contínuos)
 - **Cotas:** São próprias da conta e podem mudar; consulte a interface oficial no momento do despacho. O bridge não declara nem garante um teto fixo.
 - **Credenciais:** Chave `JULES_API_KEY` persistida em `HKCU:\Environment:JULES_API_KEY` (Pure ASCII, zero plaintext no Git).
