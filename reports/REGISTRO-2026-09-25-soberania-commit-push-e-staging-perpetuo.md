@@ -1,4 +1,5 @@
 ---
+
 id: registro-2026-09-25-soberania-commit-push-e-staging-perpetuo
 tipo: registro
 escopo: Site -- formalizacao da soberania monocratica de commit e push, invariante de staging perpetuo e cessacao de testes proativos
@@ -32,51 +33,12 @@ verificado:
 nao_verificado:
   - "nenhuma verificacao omitida"
 revisoes_de_ancora:
-  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+  - registro: registro-2026-09-25-soberania-commit-push-e-staging-perpetuo
     caminhos:
       - CLAUDE.md
     parecer: >-
-      Revisado e mantido valido. A inclusao da Secao 1.0 de governanca de commit e push no CLAUDE.md complementa o fluxo de trabalho sem impactar a taxonomia de documentos.
-  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A proveniencia do feedback e da diretiva do operador permanece estritamente auditavel e transparente.
-  - registro: checkpoint-2026-06-14-infrastructure-hardening
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. O endurecimento de infraestrutura e reforcado pelo staging continuo e pela subordinacao de commit/push ao operador humano.
-  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A integridade e calibracao do ecossistema mantem-se intactas com a simplificacao operacional.
-  - registro: handoff-2026-09-25-pool-rotacional-gemini-flash-lite
-    caminhos:
-      - .claude/agent-memory/chico/MEMORY.md
-    parecer: >-
-      Revisado e mantido valido. A memoria do agente @chico assimilou a diretiva de commit/push e cessacao de testes proativos sem afetar as definicoes do pool Gemini.
-  - registro: handoff-2026-09-25-governanca-pools-openrouter-e-impacto
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A arquitetura de pools OpenRouter permanece ativa e funcional sob as novas regras de disciplina de git.
-  - registro: registro-2026-09-25-precedencia-economica-assinaturas-pro-e-nuvem-free
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A alocacao economica de modelos e precedencia de cotas mantem-se preservada e inalterada.
-  - registro: registro-2026-09-25-teto-de-commits-e-push-obrigatorio
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. O teto de acumulo de 2 commits locais converge com a diretiva de manter alteracoes staged e submeter commit e push a ordem do operador.
-  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. O protocolo v8.0 Gold permanece com plena autoridade piramidal, incorporando a governanca refinada de ciclo git.
+      Revisado e mantido valido. O protocolo v8.0 Gold permanece com plena autoridade piramidal, incorporando a governanca refinada de ciclo git. Revisado em 2026-09-29; diff desta revisada: +290/-259.
+
 ---
 
 # Registro: Soberania de Commit/Push e Invariante de Staging Perpetuo

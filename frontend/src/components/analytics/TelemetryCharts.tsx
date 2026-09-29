@@ -656,7 +656,7 @@ ${zoneRows}
 								}`}
 							>
 								<span>{p.label}</span>
-								<span className="text-[0.55rem] px-1 py-0.2 rounded bg-black/40 text-slate-400 font-mono">
+								<span className="text-[0.55rem] px-1 py-0.2 rounded bg-black/40 text-text-muted font-mono">
 									{p.count}
 								</span>
 							</button>
@@ -689,7 +689,7 @@ ${zoneRows}
 								}`}
 							>
 								<span>{f.label}</span>
-								<span className="text-[0.55rem] px-1 py-0.2 rounded bg-black/40 text-slate-400 font-mono">
+								<span className="text-[0.55rem] px-1 py-0.2 rounded bg-black/40 text-text-muted font-mono">
 									{f.count}
 								</span>
 							</button>
@@ -783,7 +783,7 @@ ${zoneRows}
 
 			{/* Toast de Feedback de Cópia / Download */}
 			{copiedFeedback && (
-				<div className="p-2.5 rounded-xl bg-accent-emerald/20 border border-accent-emerald/40 text-emerald-300 text-[0.65rem] font-mono font-bold text-center animate-fade-in">
+				<div className="p-2.5 rounded-xl bg-accent-emerald-surface/20 border border-accent-emerald/40 text-emerald-300 text-[0.65rem] font-mono font-bold text-center animate-fade-in">
 					{copiedFeedback}
 				</div>
 			)}
@@ -970,7 +970,7 @@ ${zoneRows}
 
 									<div className="flex justify-between items-center text-[0.6rem] font-mono text-text-muted border-t border-white/5 pt-2">
 										<span>{quad.count} decisões</span>
-										<span className="text-slate-300">
+										<span className="text-text-main">
 											Total: -{quad.totalLoss} bb
 										</span>
 									</div>
@@ -989,7 +989,7 @@ ${zoneRows}
 								<span className="text-[0.65rem] font-black uppercase tracking-widest text-accent-rose block">
 									Diagnóstico de Sangria Máxima de $EV
 								</span>
-								<p className="text-xs text-slate-300 m-0 leading-relaxed font-sans">
+								<p className="text-xs text-text-main m-0 leading-relaxed font-sans">
 									O quadrante mais crítico é{' '}
 									<strong className="text-white">
 										{quadrantMatrix.worstQuadrant.plainTitle || quadrantMatrix.worstQuadrant.title}
@@ -1024,7 +1024,7 @@ ${zoneRows}
 									{zone.pct}%
 								</span>
 							</div>
-							<p className="text-[0.62rem] text-slate-400 m-0 leading-relaxed font-sans">
+							<p className="text-[0.62rem] text-text-muted m-0 leading-relaxed font-sans">
 								{zone.desc}
 							</p>
 							<div className="flex justify-between items-center border-t border-white/5 pt-2 font-mono text-[0.6rem] text-text-muted">

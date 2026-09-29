@@ -151,7 +151,7 @@ export default function TheoryPanel({
 							className={`w-full py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl text-[0.62rem] sm:text-[0.7rem] font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border ${
 								isActive
 									? 'bg-accent-indigo text-white border-accent-indigo-light shadow-lg shadow-indigo-500/25 ring-1 ring-white/20'
-									: 'bg-slate-900/60 hover:bg-slate-850 text-text-dim hover:text-white border-white/5 hover:border-white/15'
+									: 'bg-slate-900/60 hover:bg-slate-800 text-text-dim hover:text-white border-white/5 hover:border-white/15'
 							}`}
 						>
 							<i className={`fa-solid ${tab.icon} text-[0.65rem] ${isActive ? 'text-white' : 'text-text-dim'}`} />
@@ -438,7 +438,7 @@ export default function TheoryPanel({
 									key={rule.slice(0, 20)}
 									className="p-4 sm:p-5 rounded-2xl bg-slate-950/50 border border-accent-amber/20 hover:border-accent-amber/40 transition-all flex items-start gap-4 relative overflow-hidden group"
 								>
-									<div className="w-8 h-8 rounded-xl bg-accent-amber/10 border border-accent-amber/30 flex items-center justify-center shrink-0 text-accent-amber text-xs font-black font-mono">
+									<div className="w-8 h-8 rounded-xl bg-accent-amber-surface/10 border border-accent-amber/30 flex items-center justify-center shrink-0 text-accent-amber text-xs font-black font-mono">
 										0{idx + 1}
 									</div>
 									<div className="flex-1">

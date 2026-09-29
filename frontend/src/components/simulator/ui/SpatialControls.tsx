@@ -206,7 +206,7 @@ export const SpatialControls = ({
 						className={`flex-1 min-w-0 h-1.5 rounded-full appearance-none transition-opacity ${isPredictive ? 'opacity-20 cursor-not-allowed bg-white/5' : 'bg-white/10 accent-accent-indigo cursor-pointer'}`}
 					/>
 					<span
-						className={`text-[0.62rem] font-mono font-black shrink-0 px-2 py-1 rounded tracking-wider ${isPredictive ? 'text-accent-emerald bg-accent-emerald/10 border border-accent-emerald/20' : 'text-text-darker bg-white/5'}`}
+						className={`text-[0.62rem] font-mono font-black shrink-0 px-2 py-1 rounded tracking-wider ${isPredictive ? 'text-accent-emerald bg-accent-emerald-surface/10 border border-accent-emerald/20' : 'text-text-darker bg-white/5'}`}
 					>
 						{isPredictive ? 'AUTO' : 'MAN'}
 					</span>

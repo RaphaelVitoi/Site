@@ -420,7 +420,7 @@ export default function CfrRegretPanel({
 								<h4 className="text-base font-black text-white uppercase tracking-wide m-0">
 									Dimensionamento Geométrico (A* & Janda)
 								</h4>
-								<span className="text-xs font-mono font-bold text-accent-indigo-light bg-accent-indigo/10 px-2 py-0.5 rounded-full border border-accent-indigo/20">
+								<span className="text-xs font-mono font-bold text-accent-indigo-light bg-accent-indigo-surface/10 px-2 py-0.5 rounded-full border border-accent-indigo/20">
 									{canonicalSizing.potFractionPercentage}% Pot / Street
 								</span>
 							</div>

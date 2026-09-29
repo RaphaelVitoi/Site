@@ -69,6 +69,15 @@ function Get-AgentCalibrationProvenance {
     if ($values.conductor_vehicle -and $values.conductor_vehicle -cnotin @('codex', 'claude-code', 'antigravity', 'hermes-agent', 'ollama', 'llama-cpp')) {
         $reasons.Add('unknown:conductor_vehicle')
     }
+    # Fonte unica dos condutores. O `default` do switch abaixo consulta este
+    # catalogo para reconhecer um condutor que nao casa com nenhuma familia de
+    # provedor API -- sem ele, um condutor novo e recusado como inexistente.
+    $IdentityCatalog = $null
+    $catalogPath = Join-Path $PSScriptRoot '..\..\data\agent_identities.json'
+    if (Test-Path $catalogPath) {
+        try { $IdentityCatalog = Get-Content -Raw -LiteralPath $catalogPath | ConvertFrom-Json }
+        catch { $IdentityCatalog = $null }
+    }
     if ($values.conductor_model) {
         # Duas camadas, e elas respondem perguntas diferentes. A sintaxe diz a
         # QUAL FAMILIA o nome pertence, e dai sai o conector esperado. O conjunto
@@ -90,8 +99,31 @@ function Get-AgentCalibrationProvenance {
             # O check do conjunto canonico de modelos de API abaixo e defererido
             # para esses casos: um modelo local nao precisa estar no registry de
             # provedores cloud para ser valido como evidencia de sessao local.
-            '^(?:solar-pro\d+|ollama-|llama[-\w]*|qwen[\w-]*:\d+b[a-z_]*)$' { $values.conductor_vehicle; break }
-            default { '' }
+            # `solar-pro\d+` literal aqui so previa o Solar-Pro4. Um condutor novo
+            # no catalogo (Space-Bunny-Alpha, 2026-09-29) caia em `default` e
+            # voltava recusado como `unknown_or_nonexact` -- a sintaxe decideva
+            # que existe, e essa era a divergencia entre as duas camadas que este
+            # bloco existe para impedir. Agora o veiculo vem do catalogo:
+            # qualquer modelo cujo `veiculo` esteja na fonte unica e aceito, e
+            # `MODEL_REGISTRY` segue decidindo a existencia dos modelos de API.
+            '^(?:ollama-|llama[-\w]*|qwen[\w-]*:\d+b[a-z_]*)$' { $values.conductor_vehicle; break }
+            default {
+                # Condutor fora de qualquer familia de provedor API. A
+                # existencia e decidida pelo catalogo unico, nao por sintaxe:
+                # `solar-pro\d+` literal so previa o Solar-Pro4, e um
+                # condutor novo (Space-Bunny-Alpha, 2026-09-29) caia aqui
+                # e voltava recusado como `unknown_or_nonexact` -- exatamente
+                # a divergencia entre as duas camadas que este bloco existe
+                # para impedir.
+                $condutor = $null
+                if ($IdentityCatalog) {
+                    $condutor = $IdentityCatalog.canonicas |
+                        Where-Object { $_.modelo -eq $values.conductor_model } |
+                        Select-Object -First 1
+                }
+                if ($condutor) { $values.conductor_vehicle; break }
+                ''
+            }
         }
         if (-not $expected) { $reasons.Add('unknown_or_nonexact:conductor_model') }
         elseif ($values.conductor_vehicle -and $values.conductor_vehicle -cne $expected) {

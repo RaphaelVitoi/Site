@@ -83,9 +83,9 @@ export default function EstadoDaArtePage() {
 						</p>
 
 						<div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-10 rounded-r-2xl">
-							<h4 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading italic">
+							<h3 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading italic">
 								A Falha na Matriz
-							</h4>
+							</h3>
 							<p className="text-text-main leading-relaxed m-0 text-sm">
 								Em ChipEV, a resposta padrão seria o raise. No ICMev, crescer o pote
 								para punir uma aposta pequena é um{' '}
@@ -115,7 +115,7 @@ export default function EstadoDaArtePage() {
 						</p>
 						<p>
 							O acordo silencioso de passividade entre os stacks médios torna-se{' '}
-							<strong className="text-accent-rose text-shadow-glow uppercase font-black">
+							<strong className="text-accent-rose uppercase font-black [text-shadow:0_0_14px_rgba(244,62,96,0.55)]">
 								lei marcial
 							</strong>. Qualquer desvio dessa norma é suicídio em $EV.
 						</p>
@@ -171,7 +171,7 @@ export default function EstadoDaArtePage() {
 										<td className="py-4 px-6 text-accent-indigo-light">
 											Heurísticas Rápidas
 										</td>
-										<td className="py-4 px-6 text-accent-emerald font-mono font-bold text-shadow-glow">
+										<td className="py-4 px-6 text-accent-emerald font-mono font-bold [text-shadow:0_0_14px_rgba(18,181,121,0.55)]">
 											Estudo Cirúrgico
 										</td>
 									</tr>

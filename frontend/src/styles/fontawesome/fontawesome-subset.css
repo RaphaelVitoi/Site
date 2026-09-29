@@ -187,14 +187,12 @@
 
 .fa-pull-left,
 .fa-pull-start {
-  float: left;
   float: inline-start;
   margin-inline-end: var(--fa-pull-margin, 0.3em);
 }
 
 .fa-pull-right,
 .fa-pull-end {
-  float: right;
   float: inline-end;
   margin-inline-start: var(--fa-pull-margin, 0.3em);
 }
@@ -1524,6 +1522,9 @@
 
 
 
+.fa-arrows-rotate {
+  --fa: "\f021";
+}
 
 
 

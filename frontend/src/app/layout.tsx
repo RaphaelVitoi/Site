@@ -116,7 +116,7 @@ export default function RootLayout({
     >
       <body
         data-surface="laboratory"
-        className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${playfair.variable} ${ebGaramond.variable} font-body bg-bg-base text-text-main selection:bg-accent-indigo/30 selection:text-text-bright flex min-h-screen w-full max-w-full flex-col overflow-x-hidden antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${playfair.variable} ${ebGaramond.variable} font-body bg-bg-base text-text-main selection:bg-accent-indigo-surface/30 selection:text-text-bright flex min-h-screen w-full max-w-full flex-col overflow-x-hidden antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>

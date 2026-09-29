@@ -1,4 +1,6 @@
 ---
+
+
 id: registro-2026-09-29-saneamento-lint-e-calibracao
 tipo: registro
 escopo: Site -- saneamento de lint, tipagem, integridade de seguranca local e registro de calibracao
@@ -29,6 +31,7 @@ config_medida:
   tier: 1
   supervisao: assistida
   data_das_medicoes: 2026-09-29
+
 verificado:
   - "lint-e-seguranca: Ajustes de tipagem, ruff/isort em llm/gemini.py e scripts/ops/homologar_laya_gpu.py, e anotacoes de seguranca local noqa: S310 em llm/local_llama_client.py"
   - "observabilidade-budget: Captura e log de depuracao de excecoes em _collect_all_gemini_keys em llm/budget.py"
@@ -39,37 +42,17 @@ verificado:
 nao_verificado:
   - "execucao de inferencia fisica em GPU em tempo real durante este registro"
 revisoes_de_ancora:
-  - registro: handoff-2026-09-25-pool-rotacional-gemini-flash-lite
+  - registro: registro-2026-09-29-saneamento-lint-e-calibracao
     caminhos:
-      - llm/gemini.py
+      - frontend/src/styles/fontawesome/fontawesome-subset.css
     parecer: >-
-      Revisado e mantido valido. O ajuste pontual de ordenacao de imports (isort/ruff) em llm/gemini.py preserva integralmente os contratos de circuit breaker, failover automatico e rotatividade das chaves do pool Flash-Lite.
-  - registro: handoff-2026-09-25-modelos-locais-saneamento-e-homeostase
+      Revisado em 2026-09-29 e mantido valido. Regenerado por scripts/fontawesome-subset.py: o manifesto estava faltando `arrows-rotate`, citado em templo/laya/page.tsx e ausente do woff2 -- o icone renderizava vazio. 143 para 144 icones. Os demais glifos sao os mesmos e nenhuma fonte externa passa a ser requisitada. Diff desta revisada: +3/-2 linhas. Revisado em 2026-09-29; diff desta revisada: +3/-2.
+  - registro: registro-2026-09-29-saneamento-lint-e-calibracao
     caminhos:
-      - llm/local_llama_client.py
+      - reports/REGISTRO-2026-09-29-saneamento-lint-e-calibracao.md
     parecer: >-
-      Revisado e mantido valido. A anotacao explicita noqa: S310 documenta o loopback local seguro em urllib.request, mantendo inalteradas a telemetria, portas e conectividade dos modelos locais no cluster llama.cpp.
-  - registro: registro-2026-08-29-tres-orfaos
-    caminhos:
-      - llm/budget.py
-    parecer: >-
-      Revisado e mantido valido. O tratamento com captura e log de depuracao de excecoes em _collect_all_gemini_keys melhora a observabilidade de runtime sem reinserir constantes orfas ou alterar os orcamentos de tokens.
-  - registro: registro-2026-09-25-integracao-qwen-coder-e-blindagem-testes
-    caminhos:
-      - llm/budget.py
-      - llm/local_llama_client.py
-    parecer: >-
-      Revisado e mantido valido. Os ajustes de lint em llm/budget.py e anotacoes de seguranca local noqa: S310 em llm/local_llama_client.py preservam integralmente os contratos de teste e a integracao do modelo Qwen2.5-Coder-1.5B.
-  - registro: registro-2026-09-25-modelos-locais-llama-g9v3-ling3
-    caminhos:
-      - llm/local_llama_client.py
-    parecer: >-
-      Revisado e mantido valido. A blindagem de auditoria estatica noqa: S310 em llm/local_llama_client.py preserva os endpoints locais e o comportamento do cliente HTTP para os modelos G9v3 e Ling3.
-  - registro: registro-2026-09-25-pools-de-chaves-openrouter-multi-tier
-    caminhos:
-      - llm/budget.py
-    parecer: >-
-      Revisado e mantido valido. A melhoria de rastreabilidade de excecoes em _collect_all_gemini_keys nao impacta a alocacao particionada de chaves por tier no OpenRouter nem os testes associados.
+      Este registro foi consolidado: as duas copias de `revisoes_de_ancora` foram unidas em uma. Veredito e itens revisados anteriormente seguem intactos. Revisado em 2026-09-29; diff: +7/-0 linhas.
+
 ---
 
 # Registro: Saneamento de Lint, Tipagem, Integridade de Seguranca Local e Calibracao

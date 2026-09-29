@@ -239,7 +239,7 @@ export function SotaTooltip({
 							</p>
 						</div>
 						{bodyText && (
-							<p className="text-text-light text-[0.75rem] leading-relaxed font-medium m-0 normal-case tracking-normal text-left drop-shadow-md whitespace-pre-wrap">
+							<p className="text-text-main text-[0.75rem] leading-relaxed font-medium m-0 normal-case tracking-normal text-left drop-shadow-md whitespace-pre-wrap">
 								{bodyText}
 							</p>
 						)}

@@ -17,7 +17,7 @@ export interface AppliedTournamentContext {
   prizes: number[];
 }
 
-const fieldClass = 'w-full rounded-lg border border-white/20 bg-bg-panel p-3 text-text-light';
+const fieldClass = 'w-full rounded-lg border border-white/20 bg-bg-panel p-3 text-text-main';
 
 export default function TournamentTableImport({ onApply, initialContext, defaultRoom, mode = 'hh' }: Readonly<{ mode?: 'hh' | 'hrc'; defaultRoom?: PokerRoom; onApply: (context: AppliedTournamentContext) => void; initialContext?: AppliedTournamentContext | null }>) {
   const [structures, setStructures] = useState<HRCStructureSource[]>(initialContext?.snapshot.structureSource ? [initialContext.snapshot.structureSource] : []);
@@ -173,7 +173,7 @@ export default function TournamentTableImport({ onApply, initialContext, default
     setParticipants(previous => previous.filter(item => item !== id));
   }
 
-  return <section aria-label="Importar torneio e selecionar mesa" className="space-y-4 rounded-2xl border border-white/15 p-4 text-sm text-text-light">
+  return <section aria-label="Importar torneio e selecionar mesa" className="space-y-4 rounded-2xl border border-white/15 p-4 text-sm text-text-main">
     <h4 className="text-lg font-bold">{mode === 'hrc' ? 'Importar cenário HRC' : 'Importar Hand History'}</h4>
     <p>MTT · No-Limit Texas Hold’em. Importe um snapshot dos jogadores restantes do torneio em JSON ou uma única Hand History. A equidade usa todos os stacks recebidos; a mesa analisada será selecionada abaixo.</p>
     <label className="flex flex-col gap-1">
@@ -284,7 +284,7 @@ export default function TournamentTableImport({ onApply, initialContext, default
         <span>Payouts restantes de todo o torneio</span>
         <textarea aria-label="Payouts restantes de todo o torneio" className={fieldClass} value={payouts} onChange={event => setPayouts(event.target.value)} />
       </label>
-      <button type="button" className="rounded-xl bg-accent-indigo px-4 py-3 text-white" onClick={apply}>Analisar mesa com contexto completo</button>
+      <button type="button" className="rounded-xl bg-accent-indigo-surface px-4 py-3 text-white" onClick={apply}>Analisar mesa com contexto completo</button>
     </>}
     {error && <p role="alert" className="text-accent-danger">{error}</p>}
   </section>;

@@ -170,7 +170,7 @@ const markdownComponents: Components = {
       <a
         href={href}
         title={title}
-        className="text-accent-indigo-light decoration-accent-indigo/40 hover:decoration-accent-indigo hover:text-glow-indigo font-bold underline underline-offset-4 transition-all hover:text-white"
+        className="text-accent-indigo-light decoration-accent-indigo/40 hover:decoration-accent-indigo hover:text-text-bright font-bold underline underline-offset-4 transition-all hover:text-white"
         target={isExternalHttpUrl(href) ? '_blank' : undefined}
         rel={isExternalHttpUrl(href) ? 'noopener noreferrer' : undefined}
       >
@@ -235,7 +235,7 @@ const markdownComponents: Components = {
     />
   ),
   td: ({ children, align }) => (
-    <td align={align} className="text-text-light border-b border-white/5 p-5 font-mono whitespace-nowrap opacity-90">
+    <td align={align} className="text-text-main border-b border-white/5 p-5 font-mono whitespace-nowrap opacity-90">
       {children}
     </td>
   ),

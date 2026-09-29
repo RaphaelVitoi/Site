@@ -69,7 +69,7 @@ export const PlayerSelectButton = ({
 	onClick,
 }: Readonly<PlayerSelectButtonProps>) => {
 	const display = buildPlayerRowDisplay(isA, isD, player.id);
-	const badgeFg = isA || isD ? 'text-white' : 'text-slate-400';
+	const badgeFg = isA || isD ? 'text-white' : 'text-text-muted';
 
 	return (
 		<button

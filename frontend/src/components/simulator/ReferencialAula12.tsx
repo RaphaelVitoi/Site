@@ -395,7 +395,7 @@ function BoardAndTableLeft(_props: Readonly<{ rpBtn: number; rpBb: number }>) {
               if (isHero) chipRingStroke = 'rgba(16, 185, 129, 0.3)';
               else if (isVillain) chipRingStroke = 'rgba(99, 102, 241, 0.3)';
 
-              let stackColor = 'text-slate-400/80';
+              let stackColor = 'text-text-muted/80';
               if (isHero) stackColor = 'text-emerald-200/80';
               else if (isVillain) stackColor = 'text-indigo-200/80';
 
@@ -493,7 +493,7 @@ function RiskAndPrizesRight(
               valColorClass = 'text-amber-400';
             } else if (i === 1) {
               barBgClass = 'bg-linear-to-r from-slate-200 to-slate-400';
-              valColorClass = 'text-slate-400';
+              valColorClass = 'text-text-muted';
             } else if (i === 2) {
               barBgClass = 'bg-linear-to-r from-violet-400 to-violet-600';
               valColorClass = 'text-violet-400';
@@ -750,7 +750,7 @@ export default function ReferencialAula12() {
       <details className="group" open>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 border-b border-white/5 p-12 transition-all outline-none select-none hover:bg-white/5 lg:p-16">
           <div className="flex items-center gap-8">
-            <div className="bg-accent-indigo/10 text-accent-indigo group-open:bg-accent-indigo flex h-14 w-14 items-center justify-center rounded-3xl shadow-xl transition-all group-open:text-white">
+            <div className="bg-accent-indigo-surface/10 text-accent-indigo group-open:bg-accent-indigo-surface flex h-14 w-14 items-center justify-center rounded-3xl shadow-xl transition-all group-open:text-white">
               <i className="fa-solid fa-chevron-right text-xl group-open:rotate-90" />
             </div>
             <div className="flex flex-col gap-1.5">

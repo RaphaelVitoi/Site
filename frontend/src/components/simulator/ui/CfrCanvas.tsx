@@ -288,7 +288,7 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
 
   if (error) {
     return (
-      <div className="border-accent-danger/20 bg-accent-danger/5 text-accent-danger flex h-full w-full items-center justify-center rounded-3xl border p-4 text-center font-mono text-[0.6rem]">
+      <div className="border-accent-danger/20 bg-accent-danger-surface/5 text-accent-danger flex h-full w-full items-center justify-center rounded-3xl border p-4 text-center font-mono text-[0.6rem]">
         {error}
       </div>
     );

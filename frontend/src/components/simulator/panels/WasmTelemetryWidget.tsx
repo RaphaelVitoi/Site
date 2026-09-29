@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef } from 'react';
 const getLogColor = (logText: string) => {
 	if (logText.includes('[ERRO]')) return 'text-rose-400';
 	if (logText.includes('[MATH]') || logText.includes('[SOLVER]')) return 'text-sky-300';
-	return 'text-slate-300';
+	return 'text-text-main';
 };
 
 interface WasmTelemetryWidgetProps {

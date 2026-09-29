@@ -47,15 +47,15 @@ export default function TableOfContents({ toc, content }: Readonly<TableOfConten
 
 	return (
 		<nav aria-label="Índice do conteúdo" className="mb-10 p-6 rounded-lg bg-slate-900/40 border border-white/5 shadow-inner">
-			<h4 className="text-xs font-mono text-emerald-400 uppercase tracking-widest mb-4 flex items-center">
+			<h2 className="text-xs font-mono text-accent-emerald-light uppercase tracking-widest mb-4 flex items-center">
 				<i className="fa-solid fa-list-ul mr-3" /> Índice de Navegação
-			</h4>
+			</h2>
 			<ul className="space-y-2">
 				{finalToc.map((item) => (
 					<li key={item.slug} className={getLevelMarginClass(item.level)}>
 						<a
 							href={`#${item.slug}`}
-							className="text-sm text-slate-400 hover:text-emerald-400 transition-colors block border-l-2 border-transparent hover:border-emerald-400 pl-3 -ml-3"
+							className="text-sm text-text-muted hover:text-accent-emerald-light transition-colors block border-l-2 border-transparent hover:border-emerald-400 pl-3 -ml-3"
 						>
 							{item.text}
 						</a>

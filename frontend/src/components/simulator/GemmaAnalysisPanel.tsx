@@ -148,7 +148,7 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 					type="button"
 					onClick={handleInjectAnalysis}
 					disabled={isStreaming}
-					className="w-full py-2.5 px-4 text-[0.65rem] font-black tracking-[0.2em] uppercase text-white bg-accent-indigo/15 hover:bg-accent-indigo/25 rounded-xl border border-accent-indigo/35 disabled:opacity-40 transition-all duration-300 active:scale-98 shadow-md hover:shadow-indigo-500/20 group/btn flex items-center justify-center gap-2 cursor-pointer"
+					className="w-full py-2.5 px-4 text-[0.65rem] font-black tracking-[0.2em] uppercase text-white bg-accent-indigo-surface/15 hover:bg-accent-indigo/25 rounded-xl border border-accent-indigo/35 disabled:opacity-40 transition-all duration-300 active:scale-98 shadow-md hover:shadow-indigo-500/20 group/btn flex items-center justify-center gap-2 cursor-pointer"
 				>
 					{isStreaming ? (
 						<span className="flex items-center gap-2.5">
@@ -165,7 +165,7 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 			</div>
 
 			{/* ═══ TERMINAL DE SAÍDA SOTA ═══ */}
-			<div className="min-h-32 text-[0.75rem] text-slate-300 font-mono leading-relaxed whitespace-pre-wrap relative bg-black/40 rounded-2xl p-4 border border-white/5 shadow-inner overflow-hidden">
+			<div className="min-h-32 text-[0.75rem] text-text-main font-mono leading-relaxed whitespace-pre-wrap relative bg-black/40 rounded-2xl p-4 border border-white/5 shadow-inner overflow-hidden">
 				{error && (
 					<div className="text-accent-rose p-3 bg-accent-rose/10 rounded-xl border border-accent-rose/20 text-[0.62rem] font-black tracking-wider flex items-center gap-3">
 						<i className="fa-solid fa-triangle-exclamation text-base shrink-0" />

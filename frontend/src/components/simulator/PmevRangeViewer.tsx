@@ -359,7 +359,7 @@ function getActionBadgeStyle(action: HandAction): { className: string; label: st
 		};
 	}
 	return {
-		className: 'bg-slate-800 text-slate-400 border border-slate-700',
+		className: 'bg-slate-800 text-text-muted border border-white/10',
 		label: 'Paridade GTO',
 	};
 }
@@ -367,7 +367,7 @@ function getActionBadgeStyle(action: HandAction): { className: string; label: st
 function getDeltaColor(delta: number): string {
 	if (delta > 0) return 'text-emerald-400';
 	if (delta < 0) return 'text-rose-400';
-	return 'text-slate-400';
+	return 'text-text-muted';
 }
 
 function formatDeltaDisplay(delta: number): string {
@@ -402,9 +402,9 @@ function getCellColor(cell: HandCellInfo, mode: ViewMode): string {
 		return 'bg-linear-to-br from-rose-700 to-rose-500 text-white font-bold opacity-80';
 	}
 	if (cell.baselineFreq > 0) {
-		return 'bg-slate-800 text-slate-300 font-semibold border border-slate-700';
+		return 'bg-slate-800 text-text-main font-semibold border border-white/10';
 	}
-	return 'bg-slate-950 text-slate-700';
+	return 'bg-slate-950 text-text-darker';
 }
 
 async function parseSolverFile(file: File): Promise<{ customMap: Record<string, number>; sourceLabel: string } | null> {
@@ -505,7 +505,7 @@ function RangeControlsBar({
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 bg-slate-900/70 p-5 rounded-2xl border border-slate-800/80">
 			<div>
-				<label htmlFor="spot-type-select" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+				<label htmlFor="spot-type-select" className="text-[11px] font-bold text-text-muted uppercase tracking-wider block mb-1.5">
 					Spot & Ação
 				</label>
 				<div className="grid grid-cols-2 gap-2">
@@ -513,7 +513,7 @@ function RangeControlsBar({
 						id="spot-type-select"
 						value={spotType}
 						onChange={(e) => setSpotType(e.target.value as SpotType)}
-						className="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
+						className="bg-slate-800 border border-white/10 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
 					>
 						<option value="RFI">RFI (Open Raise)</option>
 						<option value="BB_DEFENSE">Defesa de BB</option>
@@ -528,7 +528,7 @@ function RangeControlsBar({
 							setPosition(e.target.value);
 							setCustomBaseline(null);
 						}}
-						className="bg-slate-800 border border-slate-700 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
+						className="bg-slate-800 border border-white/10 text-xs text-white rounded-lg p-2 font-bold focus:outline-none focus:border-amber-500"
 					>
 						<option value="UTG">UTG (8 Atrás)</option>
 						<option value="MP">MP / LJ (6 Atrás)</option>
@@ -541,10 +541,10 @@ function RangeControlsBar({
 
 			<div>
 				<div className="flex justify-between items-center mb-1.5">
-					<label htmlFor="stack-slider" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+					<label htmlFor="stack-slider" className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
 						Stack: <span className="text-amber-400 font-extrabold">{stackBb} BB</span>
 					</label>
-					<span className="text-[11px] text-slate-500">Sizing: {sizingBb}bb</span>
+					<span className="text-[11px] text-text-dim">Sizing: {sizingBb}bb</span>
 				</div>
 				<input
 					id="stack-slider"
@@ -560,7 +560,7 @@ function RangeControlsBar({
 
 			<div>
 				<div className="flex justify-between items-center mb-1.5">
-					<label htmlFor="risk-advantage-slider" className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+					<label htmlFor="risk-advantage-slider" className="text-[11px] font-bold text-text-muted uppercase tracking-wider">
 						Risk Advantage: <span className={riskAdvantageBadgeColor}>
 							{riskAdvantage > 0 ? `+${riskAdvantage}` : riskAdvantage}
 						</span>
@@ -576,7 +576,7 @@ function RangeControlsBar({
 					onChange={(e) => setRiskAdvantage(Number.parseFloat(e.target.value))}
 					className="w-full accent-amber-500 cursor-pointer"
 				/>
-				<div className="flex justify-between text-[10px] text-slate-500 mt-1">
+				<div className="flex justify-between text-[10px] text-text-dim mt-1">
 					<span>Hero Coberto (CL)</span>
 					<span>Neutro</span>
 					<span>Hero Cobre (Pressão)</span>
@@ -584,7 +584,7 @@ function RangeControlsBar({
 			</div>
 
 			<div>
-				<span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+				<span className="text-[11px] font-bold text-text-muted uppercase tracking-wider block mb-1.5">
 					Custo de Sobrevivência (EV_fold)
 				</span>
 				<div className="flex items-center gap-2">
@@ -594,7 +594,7 @@ function RangeControlsBar({
 						className={`text-xs px-3 py-2 rounded-lg font-bold border transition-all flex-1 ${
 							hasShortStackPressure
 								? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-								: 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+								: 'bg-slate-800 text-text-muted border-slate-700 hover:text-white'
 						}`}
 					>
 						{hasShortStackPressure ? '⚡ Payjump Passivo (EV>0)' : 'Órbita Normal'}
@@ -606,7 +606,7 @@ function RangeControlsBar({
 						className={`text-xs px-3 py-2 rounded-lg font-bold border transition-all flex-1 ${
 							timeToBlind <= 3
 								? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-								: 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+								: 'bg-slate-800 text-text-muted border-slate-700 hover:text-white'
 						}`}
 					>
 						{timeToBlind <= 3 ? '🚨 Blinds em 2m' : '⏱ Blinds em 12m'}
@@ -628,39 +628,39 @@ function RangeKpiSummary({ calculatedEvFold, stats }: RangeKpiSummaryProps) {
 	return (
 		<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sinal EV_fold do modelo</span>
+				<span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Sinal EV_fold do modelo</span>
 				<div className={`text-xl font-black mt-1 ${calculatedEvFold > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
 					{calculatedEvFold > 0 ? `+${calculatedEvFold.toFixed(3)} BB` : `${calculatedEvFold.toFixed(3)} BB`}
 				</div>
-				<p className="text-[10px] text-slate-500 mt-1">
+				<p className="text-[10px] text-text-dim mt-1">
 					{calculatedEvFold > 0 ? 'Hipótese de payjump: requer payouts e nós reproduzíveis.' : 'Referência de erosão: depende de ante, posição e mesa declarados.'}
 				</p>
 			</div>
 
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Combos de referência</span>
+				<span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Combos de referência</span>
 				<div className="text-xl font-black text-amber-400 mt-1">
-					{stats.baseCombos} <span className="text-xs text-slate-500 font-normal">do baseline carregado</span>
+					{stats.baseCombos} <span className="text-xs text-text-dim font-normal">do baseline carregado</span>
 				</div>
-				<p className="text-[10px] text-slate-500 mt-1">
+				<p className="text-[10px] text-text-dim mt-1">
 					Recalibração quantitativa: <strong className="text-amber-400">aguarda nó/ranges</strong>
 				</p>
 			</div>
 
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Expansões calibradas</span>
+				<span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Expansões calibradas</span>
 				<div className="text-xl font-black text-emerald-400 mt-1">
 					—
 				</div>
-				<p className="text-[10px] text-slate-500 mt-1">Não derivadas de slider sem nó verificável.</p>
+				<p className="text-[10px] text-text-dim mt-1">Não derivadas de slider sem nó verificável.</p>
 			</div>
 
 			<div className="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl">
-				<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Contrações calibradas</span>
+				<span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Contrações calibradas</span>
 				<div className="text-xl font-black text-rose-400 mt-1">
 					—
 				</div>
-				<p className="text-[10px] text-slate-500 mt-1">Não derivadas de RP/RIO isolados.</p>
+				<p className="text-[10px] text-text-dim mt-1">Não derivadas de RP/RIO isolados.</p>
 			</div>
 		</div>
 	);
@@ -714,7 +714,7 @@ function SingleMatrixWithInspector({
 						<div className="flex items-center justify-between pb-4 border-b border-slate-800">
 							<div>
 								<h3 className="text-3xl font-black text-white">{selectedHand.hand}</h3>
-								<span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">
+								<span className="text-xs text-text-dim uppercase tracking-wider font-semibold">
 									{getHandTypeLabel(selectedHand.type)}
 								</span>
 							</div>
@@ -725,17 +725,17 @@ function SingleMatrixWithInspector({
 
 						<div className="space-y-4 my-5">
 							<div className="flex justify-between items-center text-sm">
-								<span className="text-slate-400 font-semibold">Frequência GTO Baseline:</span>
+								<span className="text-text-muted font-semibold">Frequência GTO Baseline:</span>
 								<span className="text-white font-bold">{(selectedHand.baselineFreq * 100).toFixed(0)}%</span>
 							</div>
 
 							<div className="flex justify-between items-center text-sm">
-								<span className="text-slate-400 font-semibold">Frequência de referência:</span>
+								<span className="text-text-muted font-semibold">Frequência de referência:</span>
 								<span className="text-amber-400 font-extrabold">{(selectedHand.vitoiFreq * 100).toFixed(0)}%</span>
 							</div>
 
 							<div className="flex justify-between items-center text-sm">
-								<span className="text-slate-400 font-semibold">Delta calculado:</span>
+								<span className="text-text-muted font-semibold">Delta calculado:</span>
 								<span className={`font-black ${getDeltaColor(selectedHand.delta)}`}>
 									{formatDeltaDisplay(selectedHand.delta)}
 								</span>
@@ -745,19 +745,19 @@ function SingleMatrixWithInspector({
 								<span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
 									Justificativa Epistêmica (Vitoi Framework)
 								</span>
-								<p className="text-xs text-slate-300 leading-relaxed">
+								<p className="text-xs text-text-main leading-relaxed">
 									{selectedHand.justification}
 								</p>
 							</div>
 						</div>
 					</div>
 				) : (
-					<div className="flex items-center justify-center h-full text-slate-500 text-xs">
+					<div className="flex items-center justify-center h-full text-text-dim text-xs">
 						Selecione uma mão na matriz 13x13 para inspecionar o racional.
 					</div>
 				)}
 
-				<div className="pt-4 border-t border-slate-800 text-[11px] space-y-1.5 text-slate-400">
+				<div className="pt-4 border-t border-slate-800 text-[11px] space-y-1.5 text-text-muted">
 					<div className="flex items-center gap-2">
 						<span className="w-3 h-3 rounded bg-emerald-500 inline-block"></span>
 						<span><strong>Verde:</strong> reservado para expansão comprovada por nó importado.</span>
@@ -789,7 +789,7 @@ function DualGridComparison({ gridCells, stats }: DualGridComparisonProps) {
 			<div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
 				<div className="flex justify-between items-center mb-3">
 					<h4 className="text-xs font-black uppercase text-sky-400 tracking-wider">1. Solver Baseline (GTO Puro)</h4>
-					<span className="text-xs text-slate-500 font-bold">{stats.baseCombos} Combos</span>
+					<span className="text-xs text-text-dim font-bold">{stats.baseCombos} Combos</span>
 				</div>
 				<div className="grid grid-cols-13 gap-1 aspect-square">
 					{gridCells.map((cell) => (
@@ -882,7 +882,7 @@ function RangeViewerTab({
 						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
 							viewMode === 'DELTA'
 								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-								: 'bg-slate-900 text-slate-400 hover:text-white'
+								: 'bg-slate-900 text-text-muted hover:text-white'
 						}`}
 					>
 						Diferencial (aguarda nó)
@@ -894,7 +894,7 @@ function RangeViewerTab({
 						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
 							viewMode === 'PMEV_ADJUSTED'
 								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-								: 'bg-slate-900 text-slate-400 hover:text-white'
+								: 'bg-slate-900 text-text-muted hover:text-white'
 						}`}
 					>
 						Campo PMev (referência)
@@ -906,7 +906,7 @@ function RangeViewerTab({
 						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
 							viewMode === 'BASELINE_GTO'
 								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-								: 'bg-slate-900 text-slate-400 hover:text-white'
+								: 'bg-slate-900 text-text-muted hover:text-white'
 						}`}
 					>
 						GTO Solver Baseline
@@ -918,15 +918,15 @@ function RangeViewerTab({
 						className={`text-xs font-bold px-4 py-2 rounded-xl transition-all ${
 							viewMode === 'DUAL_GRID'
 								? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-								: 'bg-slate-900 text-slate-400 hover:text-white'
+								: 'bg-slate-900 text-text-muted hover:text-white'
 						}`}
 					>
 						Dual Grid (Lado a Lado)
 					</button>
 				</div>
 
-				<div className="text-right text-[11px] text-slate-500">
-					Fonte ativa: <span className="text-slate-300 font-bold">{sourceLabel}</span>
+				<div className="text-right text-[11px] text-text-dim">
+					Fonte ativa: <span className="text-text-main font-bold">{sourceLabel}</span>
 				</div>
 			</div>
 
@@ -969,7 +969,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 								className={`w-full text-left text-xs p-2.5 rounded-xl font-bold transition-all ${
 									selectedToyGame.id === tg.id
 										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-										: 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+										: 'bg-slate-800 text-text-main hover:bg-slate-700'
 								}`}
 							>
 								{tg.title}
@@ -991,7 +991,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 								className={`w-full text-left text-xs p-2.5 rounded-xl font-bold transition-all ${
 									selectedToyGame.id === tg.id
 										? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-										: 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+										: 'bg-slate-800 text-text-main hover:bg-slate-700'
 								}`}
 							>
 								{tg.title}
@@ -1006,16 +1006,16 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 							Métricas PioSolver / Toy Game
 						</span>
 						<h4 className="text-sm font-black text-white">{selectedToyGame.title}</h4>
-						<p className="text-xs text-slate-400 mt-1">{selectedToyGame.description}</p>
+						<p className="text-xs text-text-muted mt-1">{selectedToyGame.description}</p>
 					</div>
 
 					<div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
 						<div className="bg-slate-900 p-2 rounded-lg">
-							<span className="text-[9px] text-slate-500 uppercase block font-bold">IP Shove Freq</span>
+							<span className="text-[9px] text-text-dim uppercase block font-bold">IP Shove Freq</span>
 							<span className="text-sm font-extrabold text-amber-400">{selectedToyGame.ipShovePercent}%</span>
 						</div>
 						<div className="bg-slate-900 p-2 rounded-lg">
-							<span className="text-[9px] text-slate-500 uppercase block font-bold">OOP KK Defense</span>
+							<span className="text-[9px] text-text-dim uppercase block font-bold">OOP KK Defense</span>
 							<span className="text-sm font-extrabold text-emerald-400">{selectedToyGame.oopCallPercent}%</span>
 						</div>
 					</div>
@@ -1027,7 +1027,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 					<div className="flex justify-between items-center pb-3 border-b border-slate-800">
 						<div>
 							<h4 className="text-sm font-black text-sky-400 uppercase">Range IP (AA, QQ, JJ - 18 Combos)</h4>
-							<span className="text-xs text-slate-500 font-semibold">Risk Premium: {selectedToyGame.rpIp}%</span>
+							<span className="text-xs text-text-dim font-semibold">Risk Premium: {selectedToyGame.rpIp}%</span>
 						</div>
 						<span className="text-xs font-black text-white bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/40">
 							Shove Total: {selectedToyGame.ipShovePercent}%
@@ -1037,7 +1037,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 					<div className="space-y-3 mt-4">
 						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
 							<div className="flex justify-between text-xs font-bold mb-1">
-								<span className="text-slate-300">Valor Puro (AA - 6 Combos):</span>
+								<span className="text-text-main">Valor Puro (AA - 6 Combos):</span>
 								<span className="text-emerald-400 font-black">100% Shove (6.0 Combos)</span>
 							</div>
 							<div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
@@ -1047,7 +1047,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 
 						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
 							<div className="flex justify-between text-xs font-bold mb-1">
-								<span className="text-slate-300">Blefes (QQ, JJ - 12 Combos):</span>
+								<span className="text-text-main">Blefes (QQ, JJ - 12 Combos):</span>
 								<span className="text-amber-400 font-black">
 									{((selectedToyGame.ipBluffCombos / 12) * 100).toFixed(1)}% Shove ({selectedToyGame.ipBluffCombos} Combos)
 								</span>
@@ -1066,7 +1066,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 					<div className="flex justify-between items-center pb-3 border-b border-slate-800">
 						<div>
 							<h4 className="text-sm font-black text-rose-400 uppercase">Range OOP (KK Bluffcatcher - 6 Combos)</h4>
-							<span className="text-xs text-slate-500 font-semibold">Risk Premium: {selectedToyGame.rpOop}%</span>
+							<span className="text-xs text-text-dim font-semibold">Risk Premium: {selectedToyGame.rpOop}%</span>
 						</div>
 						<span className={`text-xs font-black px-3 py-1 rounded-full border ${
 							selectedToyGame.oopFoldPercent > 60
@@ -1080,7 +1080,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 					<div className="space-y-3 mt-4">
 						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
 							<div className="flex justify-between text-xs font-bold mb-1">
-								<span className="text-slate-300">Ação de Call no River (MDF vs Teto do RP):</span>
+								<span className="text-text-main">Ação de Call no River (MDF vs Teto do RP):</span>
 								<span className="text-emerald-400 font-black">
 									{selectedToyGame.oopCallPercent}% ({(6 * (selectedToyGame.oopCallPercent / 100)).toFixed(1)} Combos)
 								</span>
@@ -1095,7 +1095,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 
 						<div className="bg-slate-950 p-3.5 rounded-xl border border-slate-800/80">
 							<div className="flex justify-between text-xs font-bold mb-1">
-								<span className="text-slate-300">Ação de Fold (Preservação de Valuation):</span>
+								<span className="text-text-main">Ação de Fold (Preservação de Valuation):</span>
 								<span className="text-rose-400 font-black">
 									{selectedToyGame.oopFoldPercent}% ({(6 * (selectedToyGame.oopFoldPercent / 100)).toFixed(1)} Combos)
 								</span>
@@ -1115,7 +1115,7 @@ function ToyGamesLabTab({ selectedToyGame, setSelectedToyGame }: ToyGamesLabTabP
 				<span className="text-[11px] font-extrabold text-amber-400 uppercase tracking-wider block mb-2">
 					💡 Racional Teórico do Paradoxo VITOI ("Entendendo o ICM e suas heurísticas")
 				</span>
-				<p className="text-xs md:text-sm text-slate-300 leading-relaxed">
+				<p className="text-xs md:text-sm text-text-main leading-relaxed">
 					{selectedToyGame.vitoiInsight}
 				</p>
 			</div>
@@ -1273,7 +1273,7 @@ export function PmevRangeViewer() {
 	const riskAdvantageBadgeColor = getDeltaColor(riskAdvantage);
 
 	return (
-		<div className="w-full bg-[#0b0e14] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl text-slate-200">
+		<div className="w-full bg-[#0b0e14] border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl text-text-bright">
 			{/* Top Header */}
 			<div className="flex flex-col lg:flex-row lg:items-center justify-between pb-6 border-b border-slate-800 gap-4">
 				<div>
@@ -1285,8 +1285,8 @@ export function PmevRangeViewer() {
 							Range Viewer & Laboratório de Heurísticas do ICM
 						</h2>
 					</div>
-					<p className="text-xs md:text-sm text-slate-400 mt-1.5">
-						Modelagem sistêmica baseada nos toy-games do <strong className="text-slate-200">PioSolver</strong> e na obra <strong className="text-slate-200">"Entendendo o ICM e suas heurísticas"</strong>.
+					<p className="text-xs md:text-sm text-text-muted mt-1.5">
+						Modelagem sistêmica baseada nos toy-games do <strong className="text-text-bright">PioSolver</strong> e na obra <strong className="text-text-bright">"Entendendo o ICM e suas heurísticas"</strong>.
 					</p>
 				</div>
 
@@ -1301,7 +1301,7 @@ export function PmevRangeViewer() {
 						<span>{downloadingPdf ? 'Gerando...' : 'Baixar Relatório (PDF)'}</span>
 					</button>
 
-					<label htmlFor="solver-upload-input" className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white px-4 py-2 rounded-xl border border-slate-700 transition-colors">
+					<label htmlFor="solver-upload-input" className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white px-4 py-2 rounded-xl border border-white/10 transition-colors">
 						<span>Importar Solver (.json/.hrc/.csv)</span>
 						<input
 							id="solver-upload-input"
@@ -1325,7 +1325,7 @@ export function PmevRangeViewer() {
 					className={`text-xs md:text-sm font-black px-5 py-2.5 rounded-xl transition-all ${
 						activeTab === 'RANGE_VIEWER'
 							? 'bg-amber-500 text-slate-950 shadow-lg'
-							: 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+							: 'bg-slate-900 text-text-muted hover:text-white border border-slate-800'
 					}`}
 				>
 					1. Range Viewer de Abertura & Defesa
@@ -1337,7 +1337,7 @@ export function PmevRangeViewer() {
 					className={`text-xs md:text-sm font-black px-5 py-2.5 rounded-xl transition-all ${
 						activeTab === 'TOY_GAMES_LAB'
 							? 'bg-amber-500 text-slate-950 shadow-lg'
-							: 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+							: 'bg-slate-900 text-text-muted hover:text-white border border-slate-800'
 					}`}
 				>
 					2. Laboratório de Toy Games (PioSolver RP 3x6 a 24x3)

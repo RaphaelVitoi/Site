@@ -164,7 +164,7 @@ export default function BayesianBeliefPanel({
 			{/* TELEMETRIA DO PBS: ENTROPIA, POLARIZAÇÃO E COMBOS */}
 			<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-black/40 p-4 sm:p-5 rounded-3xl border border-white/5">
 				<div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/5">
-					<div className="w-8 h-8 rounded-xl bg-accent-indigo/20 border border-accent-indigo/30 flex items-center justify-center text-accent-indigo text-xs">
+					<div className="w-8 h-8 rounded-xl bg-accent-indigo-surface/20 border border-accent-indigo/30 flex items-center justify-center text-accent-indigo text-xs">
 						<i className="fa-solid fa-wave-square" />
 					</div>
 					<div>
@@ -179,7 +179,7 @@ export default function BayesianBeliefPanel({
 				</div>
 
 				<div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/5">
-					<div className="w-8 h-8 rounded-xl bg-accent-rose/20 border border-accent-rose/30 flex items-center justify-center text-accent-rose text-xs">
+					<div className="w-8 h-8 rounded-xl bg-accent-rose-surface/20 border border-accent-rose/30 flex items-center justify-center text-accent-rose text-xs">
 						<i className="fa-solid fa-crosshairs" />
 					</div>
 					<div>
@@ -193,7 +193,7 @@ export default function BayesianBeliefPanel({
 				</div>
 
 				<div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/5">
-					<div className="w-8 h-8 rounded-xl bg-accent-emerald/20 border border-accent-emerald/30 flex items-center justify-center text-accent-emerald text-xs">
+					<div className="w-8 h-8 rounded-xl bg-accent-emerald-surface/20 border border-accent-emerald/30 flex items-center justify-center text-accent-emerald text-xs">
 						<i className="fa-solid fa-layer-group" />
 					</div>
 					<div>

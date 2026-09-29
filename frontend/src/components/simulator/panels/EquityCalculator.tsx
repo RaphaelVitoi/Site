@@ -313,12 +313,12 @@ export default function EquityCalculator() {
             type="button"
             onClick={() => { setImportMode('hh'); setShowParser(true); }}
             aria-controls="tournament-import-panel"
-            className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all border ${showParser ? 'bg-accent-indigo text-white border-accent-indigo shadow-lg' : 'bg-black/40 border-white/5 text-text-muted hover:bg-white/5 hover:text-white'}`}
+            className={`px-4 py-2 rounded-xl text-[0.6rem] font-black uppercase tracking-widest transition-all border ${showParser ? 'bg-accent-indigo-surface text-white border-accent-indigo shadow-lg' : 'bg-black/40 border-white/5 text-text-muted hover:bg-white/5 hover:text-white'}`}
           >
             <i className="fa-solid fa-code mr-1.5" /> Importar HH
           </button>
           <button type="button" aria-controls="tournament-import-panel" onClick={() => { setImportMode('hrc'); setShowParser(true); }}
-            className="px-4 py-2 rounded-xl bg-accent-indigo/20 border border-accent-indigo/40 text-white text-[0.6rem] font-black uppercase tracking-widest">
+            className="px-4 py-2 rounded-xl bg-accent-indigo-surface/20 border border-accent-indigo/40 text-white text-[0.6rem] font-black uppercase tracking-widest">
             Importar cenário HRC
           </button>
           <button
@@ -353,7 +353,7 @@ export default function EquityCalculator() {
 
       {exportError && <p role="alert" className="text-accent-danger">{exportError}</p>}
       <TournamentConditionsPanel value={conditions} onChange={setConditions} canonicalUnits />
-      <fieldset className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-light">
+      <fieldset className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-main">
         <legend>Fichas, posições e representação</legend>
         <p>Inputs em fichas inteiras e valores monetários. Os totais definem o cenário e não mudam ao editar stacks ou payouts. Alterá-los explicitamente configura outro cenário.</p>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -367,7 +367,7 @@ export default function EquityCalculator() {
         <p>Premiação já paga no cenário: {(conditions.totalPrizePool - conditions.remainingPrizePool).toFixed(2)} · restante a distribuir: {conditions.remainingPrizePool.toFixed(2)}. Use a mesma moeda em todos os campos; bounties ficam fora deste pool.</p>
       </fieldset>
       <p className="text-xs text-text-muted">Posições seguem a ordem circular dos assentos e o botão informado. HH preenche o botão quando disponível; HRC informa a ordem das posições. Presets têm botão sintético editável. Export HRC preserva a árvore original quando disponível; novos setups usam um molde push/fold editável no HRC.</p>
-      <div className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-light">
+      <div className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-main">
         <label className="flex items-center gap-3">
           <span>Sala da bancada</span>
           <select aria-label="Sala da bancada" value={room} disabled={importedContext !== null}
@@ -417,7 +417,7 @@ export default function EquityCalculator() {
                   <button
                     type="button"
                     onClick={() => setHeroId(p.id)}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-[0.6rem] font-black uppercase tracking-tighter border transition-all ${heroId === p.id ? 'bg-accent-indigo text-white border-accent-indigo' : 'bg-black/60 text-text-darker border-white/5 hover:text-text-muted'}`}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-[0.6rem] font-black uppercase tracking-tighter border transition-all ${heroId === p.id ? 'bg-accent-indigo-surface text-white border-accent-indigo' : 'bg-black/60 text-text-darker border-white/5 hover:text-text-muted'}`}
                   >
                     {heroId === p.id ? 'HERO' : 'VILL'}
                   </button>
@@ -429,7 +429,7 @@ export default function EquityCalculator() {
                     placeholder="Nome"
                     value={p.name}
                     onChange={(e) => updateName(p.id, e.target.value)}
-                    className="min-w-0 flex-1 bg-transparent border-none text-[0.75rem] font-bold text-text-light focus:outline-none focus:ring-0"
+                    className="min-w-0 flex-1 bg-transparent border-none text-[0.75rem] font-bold text-text-main focus:outline-none focus:ring-0"
                   />
                   <div className="flex items-center gap-2 bg-black/60 px-3 py-1.5 rounded-xl border border-white/5 shadow-inner">
                     <input
@@ -445,7 +445,7 @@ export default function EquityCalculator() {
                     <span className="text-[0.6rem] text-text-darker font-black uppercase">fichas</span>
                     {showBb && <span className="text-xs whitespace-nowrap">{(p.stack / bigBlind).toFixed(3)} BB</span>}
                   </div>
-                  {!importedContext && <label className="text-xs text-text-light">
+                  {!importedContext && <label className="text-xs text-text-main">
                     <input type="checkbox" aria-label={`Na mão: ${p.name}`} checked={manualParticipants.includes(p.id)}
                       onChange={() => setManualParticipants(previous => previous.includes(p.id) ? previous.filter(id => id !== p.id) : [...previous, p.id])} /> Na mão
                   </label>}
@@ -609,9 +609,9 @@ export default function EquityCalculator() {
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
                         <div
-                          className={`w-1.5 h-1.5 rounded-full ${heroId === r.id ? 'bg-accent-indigo' : 'bg-text-darker'}`}
+                          className={`w-1.5 h-1.5 rounded-full ${heroId === r.id ? 'bg-accent-indigo-surface' : 'bg-text-darker'}`}
                         />
-                        <span className="text-[0.75rem] font-bold text-text-light">{r.name}</span>
+                        <span className="text-[0.75rem] font-bold text-text-main">{r.name}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-right font-mono text-[0.75rem] text-text-dim tabular-nums">

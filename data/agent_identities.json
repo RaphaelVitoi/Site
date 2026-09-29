@@ -101,6 +101,14 @@
       "modelo": "solar-pro4",
       "tier": "2",
       "nota": "Condutor Hermes Agent. Atua como Tier 2 por padrao; integra Tier 1 quando autorizado explicitamente por Raphael Vitoi (Tier 0, arbitro maior). Sessao assistida."
+    },
+    {
+      "nome": "Space-Bunny-Alpha",
+      "email": "noreply@hermes.com",
+      "veiculo": "hermes-agent",
+      "modelo": "space-bunny-alpha",
+      "tier": "2",
+      "nota": "Identidade de condutor Hermes Agent solicitada pelo Tier 0 em 2026-09-29. O catalogo registrava apenas Solar-Pro4 como condutor do veiculo, entao nao havia contra o que conferir a autoria desta sessao -- e a alternativa seria assinar com a identidade de outro condutor, o que a SS7 proibe por ser atribuicao falsa. Mesmo regime de Solar-Pro4: Tier 2 por padrao, promocao a Tier 1 somente por autorizacao explicita de Raphael Vitoi. Sessao assistida. O prefixo 'stealth/' e CATEGORIA de provedor do ambiente, nao parte do modelo: o registro de proveniencia (llm/model_registry.py,scripts/ops/AgentCalibrationProvenance.ps1) resolve veiculo pela FAMILIA antes do hifen, e nenhuma categoria compoe alias. 'modelo' sao entao 'space-bunny-alpha' e 'nome' mantem o mesmo rotulo legivel, que e o que o Git exibe e o que a linha Assinatura precisa casar."
     }
   ],
   "nunca": [

@@ -206,7 +206,7 @@ export default function SmartSniperPage() {
 							</div>
 							<Link
 								href="/biblioteca/validacao-smart-sniper"
-								className="inline-flex items-center gap-4 px-12 py-5 rounded-full bg-accent-indigo text-white font-black uppercase tracking-[0.3em] text-[0.8rem] transition-all duration-500 hover:shadow-[0_0_50px_rgba(99,102,241,0.6)] hover:-translate-y-1 active:scale-95 group/btn"
+								className="inline-flex items-center gap-4 px-12 py-5 rounded-full bg-accent-indigo-surface text-white font-black uppercase tracking-[0.3em] text-[0.8rem] transition-all duration-500 hover:shadow-[0_0_50px_rgba(99,102,241,0.6)] hover:-translate-y-1 active:scale-95 group/btn"
 							>
 								Validar Protocolo{' '}
 								<i className="fa-solid fa-arrow-right-long group-hover/btn:translate-x-2 transition-transform" />

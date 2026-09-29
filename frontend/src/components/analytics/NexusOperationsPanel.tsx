@@ -26,7 +26,7 @@ const STATUS_STYLE: Record<TaskStatus, string> = {
   running: 'border-sky-400/30 bg-sky-400/10 text-sky-200',
   completed: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
   failed: 'border-rose-400/30 bg-rose-400/10 text-rose-200',
-  cancelled: 'border-slate-400/30 bg-slate-400/10 text-slate-200',
+  cancelled: 'border-slate-400/30 bg-slate-400/10 text-text-bright',
 };
 
 function formatDate(value: string): string {
@@ -195,7 +195,7 @@ export function NexusOperationsPanel() {
               <span className="text-text-muted text-xs">{description.length}/4000 · despacho via QueueManager</span>
               <button
                 disabled={submitting || !description.trim()}
-                className="bg-accent-indigo rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                className="bg-accent-indigo-surface rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {submitting ? 'Enviando…' : 'Enfileirar tarefa'}
               </button>

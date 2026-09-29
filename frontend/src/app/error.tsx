@@ -29,8 +29,8 @@ export default function AppError({ error, reset }: Readonly<ErrorProps>) {
 
 	return (
 		<div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-12 text-center">
-			<div className="border-border-subtle bg-bg-panel/60 mx-auto max-w-lg rounded-2xl border p-8 shadow-2xl backdrop-blur-md">
-				<div className="bg-accent-rose/10 text-accent-rose mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full text-2xl">
+			<div className="border-white/10 bg-bg-panel/60 mx-auto max-w-lg rounded-2xl border p-8 shadow-2xl backdrop-blur-md">
+				<div className="bg-accent-rose-surface/10 text-accent-rose mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full text-2xl">
 					<i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
 				</div>
 				<h1 className="font-heading text-text-bright mb-3 text-2xl font-bold tracking-tight">
@@ -41,7 +41,7 @@ export default function AppError({ error, reset }: Readonly<ErrorProps>) {
 					registrado na telemetria neural para análise e contingência.
 				</p>
 				{error.digest && (
-					<p className="border-border-subtle/50 text-text-dim bg-bg-deep/50 mb-6 rounded-md border px-3 py-1.5 font-mono text-xs">
+					<p className="border-white/10 text-text-dim bg-bg-deep/50 mb-6 rounded-md border px-3 py-1.5 font-mono text-xs">
 						Digest ID: {error.digest}
 					</p>
 				)}
@@ -49,14 +49,14 @@ export default function AppError({ error, reset }: Readonly<ErrorProps>) {
 					<button
 						type="button"
 						onClick={() => reset()}
-						className="bg-accent-indigo hover:bg-accent-indigo-light inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-accent-indigo/50"
+						className="bg-accent-indigo-surface hover:bg-accent-indigo-surface-active inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-accent-indigo/50"
 					>
 						<i className="fa-solid fa-rotate-right" aria-hidden="true" />
 						<span>Recalibrar Execução</span>
 					</button>
 					<Link
 						href="/"
-						className="border-border-subtle text-text-main hover:bg-bg-elevated hover:text-text-bright inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors"
+						className="border-white/10 text-text-main hover:bg-bg-elevated hover:text-text-bright inline-flex items-center justify-center gap-2 rounded-lg border px-5 py-2.5 text-sm font-medium transition-colors"
 					>
 						<i className="fa-solid fa-house" aria-hidden="true" />
 						<span>Retornar ao Início</span>

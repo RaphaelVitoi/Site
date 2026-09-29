@@ -38,7 +38,7 @@ export default function TournamentConditionsPanel({ value, onChange, canonicalUn
   value: TournamentConditions; onChange: (next: TournamentConditions) => void;
   canonicalUnits?: boolean;
 }>) {
-  return <fieldset className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-light">
+  return <fieldset className="space-y-3 rounded-xl border border-white/15 p-4 text-sm text-text-main">
     <legend className="px-2 font-semibold">Contexto do MTT · No-Limit Texas Hold’em</legend>
     <p>Parâmetros do seu cenário. Os valores iniciais são defaults editáveis de toy game; substitua-os pelos dados do torneio.</p>
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

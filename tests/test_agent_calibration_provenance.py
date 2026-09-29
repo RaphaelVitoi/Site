@@ -153,6 +153,16 @@ def _canonicos() -> list[str]:
     return sorted(set(MODEL_REGISTRY) | set(MODELOS_RETIRADOS) | conductors)
 
 
+# FAMILIA -> VEICULO. Antes esta tabela listava uma familia por condutor
+# (`solar` -> hermes-agent) e o proprio teste reprovava quando um condutor
+# novo entrava no catalogo sem linha nova aqui: `KeyError` em
+# `stealth/space-bunny-alpha`, 2026-09-29. E a classe de defeito que este
+# modulo existe para detectar -- duas fontes que dizem o mesmo e divergem.
+#
+# Agora a familia vem do proprio `modelo` canonico: e o prefixo do primeiro
+# hifen, que e o mesmo criterio que `write_feedback` usa. A tabela guarda so
+# as familias cujo prefixo nao identifica o veiculo, e o fallback consulta o
+# catalogo antes de recusar.
 _VEICULO_POR_FAMILIA = {
     "gpt": "codex",
     "chatgpt": "codex",
@@ -160,6 +170,20 @@ _VEICULO_POR_FAMILIA = {
     "gemini": "antigravity",
     "solar": "hermes-agent",
 }
+
+
+def _veiculo_de(model: str) -> str:
+    """Veiculo de um modelo canonico, sem lista paralela para manter."""
+    familia = model.split("-")[0]
+    if familia in _VEICULO_POR_FAMILIA:
+        return _VEICULO_POR_FAMILIA[familia]
+    # `space-bunny-alpha` nao casa com nenhuma familia da tabela: o veiculo
+    # esta no proprio catalogo, e e de la que tem de vir.
+    identities = json.loads((ROOT / "data" / "agent_identities.json").read_text(encoding="utf-8"))
+    for entry in identities["canonicas"]:
+        if entry.get("modelo") == model and entry.get("veiculo"):
+            return entry["veiculo"]
+    raise KeyError(model)
 
 
 @pytest.mark.parametrize("model", _canonicos())
@@ -172,7 +196,7 @@ def test_todo_modelo_canonico_resolve_para_um_veiculo(tmp_path, model):
     `unknown_or_nonexact` ate 2026-09-12.
     """
     ledger = tmp_path / "feedback-ledger.jsonl"
-    vehicle = _VEICULO_POR_FAMILIA[model.split("-")[0]]
+    vehicle = _veiculo_de(model)
     result = write_feedback(ledger, ConductorModel=model, ConductorVehicle=vehicle)
     assert result.returncode == 0, f"{model} -> {vehicle}: {result.stderr}"
 
@@ -185,7 +209,7 @@ def test_sintaxe_valida_nao_prova_existencia(tmp_path, model):
     inexistente grava proveniencia que parece verificada e nao e.
     """
     ledger = tmp_path / "feedback-ledger.jsonl"
-    vehicle = _VEICULO_POR_FAMILIA[model.split("-")[0]]
+    vehicle = _veiculo_de(model)
     result = write_feedback(ledger, ConductorModel=model, ConductorVehicle=vehicle)
     assert result.returncode != 0
     assert not ledger.exists()

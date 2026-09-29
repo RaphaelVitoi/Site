@@ -1,4 +1,5 @@
 ---
+
 id: handoff-2026-09-25-pool-rotacional-gemini-flash-lite
 tipo: handoff
 escopo: Site -- pool rotacional adaptativo gemini 3.5 flash-lite, especializacao tripla e avaliacao de impacto de sessao
@@ -36,13 +37,12 @@ verificado:
 nao_verificado:
   - "esgotamento simultaneo das 5 cotas de RPM em concorrencia distribuida extrema"
 revisoes_de_ancora:
-  - registro: registro-2026-09-25-pool-rotacional-gemini-flash-lite
+  - registro: handoff-2026-09-25-pool-rotacional-gemini-flash-lite
     caminhos:
-      - llm/gemini.py
-      - llm/gemini_pool.py
-      - scripts/ops/Set-GeminiKeyPool.ps1
       - tests/test_gemini_pool.py
-    parecer: "Handoff consolidado do pool rotacional Gemini Flash-Lite. Codigo, testes e registros estao 100% sincronizados."
+    parecer: >-
+      Handoff consolidado do pool rotacional Gemini Flash-Lite. Codigo, testes e registros estao 100% sincronizados. Revisado em 2026-09-29; diff desta revisada: +3/-7.
+
 ---
 
 # RELATÓRIO OFICIAL DE HANDOFF — POOL ROTACIONAL GEMINI 3.5 FLASH-LITE

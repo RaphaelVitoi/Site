@@ -168,7 +168,7 @@ export function GeminiVoicePlayer({
 				onChange={(e) => setText(e.target.value)}
 				rows={2}
 				placeholder="Digite ou selecione o texto para narração..."
-				className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-[0.7rem] font-mono text-text-light placeholder:text-text-darker focus:outline-none focus:border-accent-indigo transition-all shadow-inner resize-none"
+				className="w-full bg-black/60 border border-white/10 rounded-xl p-3 text-[0.7rem] font-mono text-text-main placeholder:text-text-darker focus:outline-none focus:border-accent-indigo transition-all shadow-inner resize-none"
 			/>
 
 			{/* Animação Waveform quando ativo */}

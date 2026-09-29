@@ -125,7 +125,7 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ questions, onQuizRestart
 										initial={{ opacity: 0, x: 20 }}
 										animate={{ opacity: 1, x: 0 }}
 										onClick={handleNext}
-										className="px-8 py-4 bg-accent-indigo text-white border border-accent-indigo-light/20 rounded-2xl cursor-pointer font-black transition-all uppercase tracking-widest text-[0.7rem] flex items-center gap-4 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] active:scale-95"
+										className="px-8 py-4 bg-accent-indigo-surface text-white border border-accent-indigo-light/20 rounded-2xl cursor-pointer font-black transition-all uppercase tracking-widest text-[0.7rem] flex items-center gap-4 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] active:scale-95"
 									>
 										{currentIndex === safeQuestions.length - 1
 											? 'Analisar Perfil'

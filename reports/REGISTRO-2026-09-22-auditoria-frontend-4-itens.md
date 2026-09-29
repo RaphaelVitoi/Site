@@ -1,4 +1,5 @@
 ---
+
 id: 2026-09-22-auditoria-frontend-4-itens
 tipo: registro
 escopo: Site
@@ -31,17 +32,15 @@ verificado:
   - 'VRT full-page homepage: video paused + RAF frozen para screenshot deterministico'
 nao_verificado:
   - Percy/Chromatic integration (Playwright VRT foi usado como substituto local)
+
+supersede: null
 revisoes_de_ancora:
-  - registro: handoff-2026-09-23-ci-ram-e-rustfmt-staged
+  - registro: 2026-09-22-auditoria-frontend-4-itens
     caminhos:
       - frontend/src/components/ui/layout/SotaMarkdown.tsx
     parecer: >-
-      Revisado. A alteracao neste commit adiciona um indicador visual de scroll
-      (gradient overlay) ao wrapper da tabela em SotaMarkdown.tsx — nao toca
-      a logica de lazy-load do KaTeX (item 2) nem a nenhum outro item auditado.
-      O useEffect import de katex.min.css permanece inalterado. A auditoria
-      original (4 itens) segue integralmente valida e canonica.
-supersede: null
+      Revisado. A alteracao neste commit adiciona um indicador visual de scroll (gradient overlay) ao wrapper da tabela em SotaMarkdown.tsx — nao toca a logica de lazy-load do KaTeX (item 2) nem a nenhum outro item auditado. O useEffect import de katex.min.css permanece inalterado. A auditoria original (4 itens) segue integralmente valida e canonica. Revisado em 2026-09-29; diff desta revisada: +2/-2.
+
 ---
 
 # Auditoria Frontend SOTA v8.0 GOLD — 4 itens

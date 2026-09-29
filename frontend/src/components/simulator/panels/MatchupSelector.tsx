@@ -206,7 +206,7 @@ export default function MatchupSelector() {
 					)}
 
 					{rp !== null && (
-						<div className="p-5 rounded-2xl bg-accent-indigo/5 border border-accent-indigo/10 text-[0.75rem] text-text-muted leading-relaxed shadow-lg border-l-4 border-l-accent-indigo">
+						<div className="p-5 rounded-2xl bg-accent-indigo-surface/5 border border-accent-indigo/10 text-[0.75rem] text-text-muted leading-relaxed shadow-lg border-l-4 border-l-accent-indigo">
 							{rp >= 40 && (
 								<p className="m-0 font-medium">
 									RP ≥ 40%:{' '}

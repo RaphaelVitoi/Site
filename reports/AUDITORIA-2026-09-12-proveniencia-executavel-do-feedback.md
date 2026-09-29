@@ -1,4 +1,6 @@
 ---
+
+
 id: auditoria-2026-09-12-proveniencia-executavel-do-feedback
 tipo: auditoria
 escopo: Site
@@ -26,6 +28,7 @@ config_medida:
   feedback_records_effective: 22
   eligible_current_cycle: 1
   historical_excluded: 9
+
 verificado:
   - 44 testes direcionados aprovados em 51.71s sem warnings
   - 10 testes TimesFM aprovados em 5.45s sem warnings
@@ -36,14 +39,25 @@ nao_verificado:
   - suite integral e pre-commit nao executados
   - sem commit ou push
   - regime de supervisao de sete registros historicos nao comprovado pelas fontes consultadas
+
+supersede: null
 revisoes_de_ancora:
   - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
-    caminhos: [CLAUDE.md, scripts/ops/AgentCalibrationProvenance.ps1]
-    parecer: "As modificacoes de 2026-09-20 expandem o conjunto de condutores validos ( Hermes Agent/hermes-agent, Ollama/ollama, llama.cpp/llama-cpp ) no AgentCalibrationProvenance.ps1 e documentam o mapeamento no CLAUDE.md. O contrato de proveniencia permanece fail-closed: o script rejeita qualquer veiculo nao listado e qualquer modelo sem familia de provedor reconhecida. A expansao e coerente com o contrato que esta auditoria validou, e o script continua recusando o que nao esta na whitelist."
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado em 2026-09-29 e mantido valido. Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. As conclusoes deste registro sobre a piramide e sobre proveniencia seguem valendo. Diff desta revisada: +290/-259 linhas. Revisado em 2026-09-29; diff desta revisada: +290/-259.
   - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
-    caminhos: [tests/test_calibracao_fechamento_do_ciclo.py]
-    parecer: "test_calibracao_fechamento_do_ciclo.py corrigido time-bomb: 3 datas hardcoded (2026-09-21/22/23) substituidas por timedelta dinamico. Valida fechamento por sequencia, nao por relogio. Ancora de proveniancia intacta -- causa-raiz eliminada sem alterar logica de ancoragem."
-supersede: null
+    caminhos:
+      - scripts/ops/AgentCalibrationProvenance.ps1
+    parecer: >-
+      Revisado em 2026-09-29 e mantido valido. Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. As conclusoes deste registro sobre a piramide e sobre proveniencia seguem valendo. Diff desta revisada: +290/-259 linhas. Revisado em 2026-09-29; diff desta revisada: +34/-2.
+  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
+    caminhos:
+      - tests/test_agent_calibration_provenance.py
+    parecer: >-
+      Revisado em 2026-09-29 e mantido valido. Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. As conclusoes deste registro sobre a piramide e sobre proveniencia seguem valendo. Diff desta revisada: +290/-259 linhas. Revisado em 2026-09-29; diff desta revisada: +26/-2.
+
 ---
 
 # Proveniência executável — auditoria e preservação histórica

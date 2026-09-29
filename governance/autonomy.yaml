@@ -1,7 +1,30 @@
 version: 1
 
+# ============================================================================
+# ATENÇÃO — este arquivo NÃO é aplicado por código. Medido em 2026-09-29.
+# ============================================================================
+# `agents/autonomy.py` não importa `yaml` e não menciona `autonomy.yaml`.
+#
+# O que É aplicado, e onde de fato:
+#   forbidden_tokens           -> literal em _validate_command()
+#   state_changing_commands    -> literal em _validate_command()
+#   os 5 modos + resolucao     -> literais em _resolve_effective_mode()
+#   modo efetivo               -> system_state.autonomy_mode (queue/tasks.db)
+#
+# O que NÃO tem enforcement em nenhum .py do repositório:
+#   protected_paths, approval_gates, write_rules, privileged_agent_classes,
+#   e o `deny_state_changing_commands` de cada modo (o código só checa
+#   state_changing_commands quando o modo é exatamente 'partial', e o modo
+#   'sandbox' nem passa por _validate_command).
+#
+# Ler este arquivo como política vigente é ler uma intenção. Isto é
+# documentação de intenção, não instrumento de execução. Ver
+# `governance/KERNEL.md` §3 e `tests/test_autonomia_politica_declarada.py`,
+# que travam a distância e avisam se ela fechar sem revisão.
+# ============================================================================
+
 authority:
-  doctrine: governance/KERNEL.md
+  doctrine: ../CLAUDE.md
   policy: governance/autonomy.yaml
   environment: governance/environment.md
   runtime_role: enforcement_only
@@ -57,7 +80,7 @@ command_policies:
     - rm -rf /
     - del /s c:\
     - diskpart
-    - format 
+    - 'format ' # espaco final e SEMANTICO: sem ele o token casa com `npm run format`
     - mkfs
     - vssadmin
   shell_chaining_tokens:

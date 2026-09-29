@@ -80,7 +80,7 @@ function getStatusThemeClass(status: string | undefined): string {
     case 'bubble':
       return 'text-accent-indigo border-indigo-500/20 bg-indigo-500/10 shadow-indigo-500/5';
     default:
-      return 'text-slate-400 border-white/5 bg-black/40';
+      return 'text-text-muted border-white/5 bg-black/40';
   }
 }
 
@@ -534,7 +534,7 @@ export default function PerspectivePanel({
           <div className="border-l-text-darker group/layer relative flex flex-col items-start justify-between overflow-hidden rounded-4xl border border-l-8 border-white/5 bg-slate-950/40 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-700 hover:-translate-y-2 hover:bg-slate-900/60 md:flex-row md:items-center lg:p-10">
             <div className="pointer-events-none absolute inset-0 bg-radial-[at_top_right] from-white/5 to-transparent opacity-0 transition-opacity group-hover/layer:opacity-100" />
             <div className="relative z-10 space-y-2">
-              <span className="text-text-muted group-hover/layer:text-text-light text-[0.8rem] font-black tracking-[0.4em] uppercase transition-all group-hover/layer:tracking-[0.45em]">
+              <span className="text-text-muted group-hover/layer:text-text-main text-[0.8rem] font-black tracking-[0.4em] uppercase transition-all group-hover/layer:tracking-[0.45em]">
                 {LABELS.layer1Title}
               </span>
               <p className="text-text-darker group-hover/layer:text-text-dim m-0 text-[0.75rem] leading-relaxed font-medium transition-colors">
@@ -567,7 +567,7 @@ export default function PerspectivePanel({
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
                     {LABELS.valuationFactor}
                   </span>
-                  <strong className="text-accent-amber bg-accent-amber/10 border-accent-amber/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
+                  <strong className="text-accent-amber bg-accent-amber-surface/10 border-accent-amber/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     {result.valuation.toFixed(2)}x
                   </strong>
                 </div>
@@ -576,7 +576,7 @@ export default function PerspectivePanel({
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
                     {LABELS.rioLiability}
                   </span>
-                  <strong className="text-accent-amber bg-accent-amber/10 border-accent-amber/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
+                  <strong className="text-accent-amber bg-accent-amber-surface/10 border-accent-amber/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     -{result.rioLiability.toFixed(2)}%
                   </strong>
                 </div>
@@ -608,7 +608,7 @@ export default function PerspectivePanel({
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
                     {LABELS.floorEvFold}
                   </span>
-                  <strong className="text-accent-emerald bg-accent-emerald/10 border-accent-emerald/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
+                  <strong className="text-accent-emerald bg-accent-emerald-surface/10 border-accent-emerald/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     {result.dynamicEvFold.toFixed(2)}%
                   </strong>
                 </div>
@@ -617,7 +617,7 @@ export default function PerspectivePanel({
                   <span className="text-text-darker text-[0.55rem] font-black tracking-[0.3em] uppercase">
                     {LABELS.fgsHealth}
                   </span>
-                  <strong className="text-accent-emerald bg-accent-emerald/10 border-accent-emerald/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
+                  <strong className="text-accent-emerald bg-accent-emerald-surface/10 border-accent-emerald/20 rounded-xl border px-3.5 py-1 font-mono text-lg font-black tabular-nums shadow-inner">
                     {result.fgsHealth.toFixed(2)}x
                   </strong>
                 </div>

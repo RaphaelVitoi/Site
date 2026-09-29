@@ -20,13 +20,13 @@ export function SotaHubNavbar() {
 				<nav aria-label="Navegação do hub de simulação" className="flex items-center justify-center gap-2 flex-wrap w-full lg:w-auto">
 					<Link
 						href="/simulador"
-						className={`px-4 py-2 rounded-full text-[0.65rem] font-black uppercase tracking-widest transition-all ${isActive('/simulador') ? 'bg-accent-indigo text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}
+						className={`px-4 py-2 rounded-full text-[0.65rem] font-black uppercase tracking-widest transition-all ${isActive('/simulador') ? 'bg-accent-indigo-surface text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]' : 'bg-white/5 text-text-muted hover:text-white hover:bg-white/10'}`}
 					>
 						<i className="fa-solid fa-microchip mr-2"></i> Motor Mestre
 					</Link>
 					<Link
 						href="/simulador/gto-cfr"
-						className={`px-4 py-2 rounded-full text-[0.65rem] font-black uppercase tracking-widest transition-all ${isActive('/simulador/gto-cfr') ? 'bg-accent-indigo text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]' : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'}`}
+						className={`px-4 py-2 rounded-full text-[0.65rem] font-black uppercase tracking-widest transition-all ${isActive('/simulador/gto-cfr') ? 'bg-accent-indigo-surface text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]' : 'bg-white/5 text-text-muted hover:text-white hover:bg-white/10'}`}
 					>
 						<i className="fa-solid fa-brain mr-2"></i> Laboratório CFR
 					</Link>

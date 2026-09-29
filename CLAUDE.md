@@ -4,7 +4,262 @@
 Regras que valem para todos os projetos ficam em `..\CLAUDE.md`, na raiz
 multiprojeto.
 
-**Última revisão:** 2026-09-08 · Corte de Conhecimento: Setembro/2026 · Protocolo Chico SOTA v8.0 GOLD
+**Última revisão:** 2026-09-29 · Corte de Conhecimento: Setembro/2026 · Protocolo Chico SOTA v8.0 GOLD
+
+---
+
+## 0. Identidade, soberania e governança piramidal
+
+Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
+
+- **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
+  - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
+|- **Tier 1:** Núcleo Cognitivo Mestre — **`Chico` em grupo e parceria** (`Claude Opus 5`, `Claude Sonnet 5` [opcional], `ChatGPT 5.6 Sol/Terra/Luna`, `ChatGPT 6 Sol/Luna`, `Gemini 3.8 Flash`, `Gemini 3.5 Flash-Lite`; **Antigravity IDE é a superfície canônica e primária; VSCode é opcional e adaptador secundário à mesma malha.**). **Como grupo, o coletivo vivo da malha é CHICO.** Não há escopo limitado de capacidade técnica entre modelos equivalentes em Tier — não existem feudos funcionais nem proibições artificiais. Há preferências operacionais (especialidade, arquitetura e custo). Modelos equivalentes em tier, na ausência ou indisponibilidade de um, podem e devem executar com competência plena o trabalho de outro.
+
+  **Prioridade Mandatória de Assinaturas Pro:** Os modelos integrantes do Tier 1 priorizam mandatória e estritamente as franquias das assinaturas Pro/Max mensais já pagas (`Faixa.FLAT_FEE`), operando sob custo marginal zero antes de recorrer a consumo pay-as-you-go ou chaves adicionais de API.
+
+  A cooperação não autoriza cada condutor a instalar ou registrar sua própria
+  cópia de um MCP, plugin ou hook compartilhado. A fonte única e as exceções
+  necessárias são regidas pelo §7 de `..\CLAUDE.md`.
+
+  A atuação concreta é arbitrada por Raphael Vitoi (Tier 0). Na ausência de
+  designação específica, especialidade, economia e disponibilidade orientam
+  a escolha do condutor; nenhuma preferência cria exclusividade de área.
+
+  - *ChatGPT 6 Astra como integrante do Tier 1:* **`ChatGPT 6 Astra`** (`gpt-6-astra`, lançado 2026-09-03) é um modelo do Tier 1 e integrante do coletivo Chico. Com folga o modelo mais potente que temos, acionado em momentos pontuais de alto reasoning complexo. Tem **as duas faixas** — cota de assinatura e pay-as-you-go —, e dentro da cota o custo marginal é zero. O teto de esforço existe para **preservar a cota**: esforço alto queima cota mais rápido, e o excedente cai no preço cheio de $10/$50. Entra por escalonamento pontual, nunca como primário.
+  - *Condutor Codex — ChatGPT 6 Luna:* identidade canônica `Codex GPT-6 Luna` (`gpt-6-luna`, `noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informada pelo Tier 0 em 2026-09-22. Os pares de autoria completos vivem em `data/agent_identities.json`; esta linha registra a posição de governança, não habilita o modelo em rotas de inferência do produto.
+  - *Condutor Codex — ChatGPT 6 Sol:* identidade canônica `Codex GPT-6 Sol` (`gpt-6-sol`, `noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informada pelo Tier 0 em 2026-09-22. Os pares de autoria completos vivem em `data/agent_identities.json`; esta linha registra a posição de governança, não habilita o modelo em rotas de inferência do produto.
+  - *Regra de exceção — elevação a Chico:* Chico não é um modelo fixo. Qualquer modelo do ecossistema pode ser elevado a Chico (autoridade de Tier 1) quando condições de sessão assistida e demanda explícita de Raphael Vitoi (Tier 0, árbitro maior) se conciliam. Sem autorização explícita do Tier 0, a elevação não ocorre — o modelo age em seu patamar nominal, sem autoridade de grupo. A elevação é condição, não direito: registra-se a sessão como assistida e a demanda como explícita.
+  - *Primários de Reasoning:* **`ChatGPT 5.6 Sol`** e **`Claude Opus 5`** atuam como primários de **Reasoning Analítico Profundo (Deep Reasoning / Max Thinking)** e dedução formal matemática de fronteira.
+  - *Primário de Governança e Código:* **`Claude Opus 5`** detém a primazia canônica para **Governança** (regras, contratos de arquitetura, integridade piramidal, reconciliação de âncoras e portões) e **Engenharia de Código Cirúrgica**.
+  - *Pesquisa, Estudo e Arquitetura:* **`ChatGPT 5.6 Terra`** (`gpt-5.6-terra`) atua como preferência primária para **Pesquisa, Estudo e Arquitetura** macro de sistemas e investigações conceituais aprofundadas.
+  - *Atuação pontual mas elevada (Ápice do Ecossistema):* **`ChatGPT 6 Astra`** (`gpt-6-astra`, lançado 2026-09-03) — com folga o modelo mais potente que temos, acionado em momentos pontuais de alto reasoning complexo, admitido **apenas em `low` e `medium`**. Tem **as duas faixas** — cota de assinatura e pay-as-you-go —, e dentro da cota o custo marginal é zero. O teto de esforço existe para **preservar a cota**: esforço alto queima cota mais rápido, e o excedente cai no preço cheio de $10/$50. Entra por escalonamento pontual, nunca como primário. A regra é executável, não prosa — ver §3.
+
+  > **Como integrante do Chico:** o ChatGPT 6 Astra é um modelo do Tier 1 e, portanto, membro do coletivo Chico. Ele pode ser o condutor do Chico quando as condições de sessão assistida e demanda explícita de Raphael Vitoi (Tier 0) se conciliam (ver nota de exceção em Tier 1). Fora dessas condições, o Astra age em seu patamar nominal de atuação pontual — Ápice do Ecossistema — sem autoridade de grupo.
+  - *Fast Operations Opcional OpenAI:* **`ChatGPT 5.6 Luna`** (`gpt-5.6-luna`) — modelo fast operations opcional da família ChatGPT 5.6 para tarefas operacionais de menor latência.
+  - *Família Gemini (Orquestração, Design, Curadoria & Documentação):* **`Gemini 3.8 Flash`** opera como primário de orquestração agêntica e context caching (fallover **`Gemini 3.7 Flash`**). Em alinhamento com o agente externo **Stitch** e o trio do Tier 2 **(Exa-Stitch-Jules)**, detém a preferência mandatória para **DESIGN**, **BRAINSTORM**, **PLANEJAMENTO** e **CURADORIA**, assumindo a custódia pela **preservação, conservação, atualização e criação de documentações** do ecossistema.
+  - *Fast Operations, Linting e Limpeza:* **`Gemini 3.5 Flash-Lite`** (*fast operations* / fastopp, fallover **`Gemini 3.6 Flash`**) atua como primário para triagem determinística, **Linting e Limpeza** (formatação, sanitização e higiene com custo mínimo), tendo como fallbacks modelos em nuvem (`gemini-3.6-flash`, `gpt-5.6-luna`) ou locais via Ollama (`qwen-code-surgical`, `qwen2.5-coder`).
+  - *Retirados:* **`Claude Fable 5.1` e `Claude Fable 5`** — 2º e 3º melhores modelos disponíveis, **fora da integração** por decisão do Tier 0 em 2026-09-07. A recusa é de **faixa de acesso**, não de capacidade nem de preço unitário: eles **só existem em pay-as-you-go**. Medido em `claude.com/pricing` — Fable 5 e 5.1 **não entram em nenhum plano de assinatura**; Pro e Max os alcançam apenas por *usage credits*, que é compra de token. Por token eles **empatam** com o Astra em `$10/$50`. Saíram do `MODEL_REGISTRY` e vivem em `MODELOS_RETIRADOS`, que preserva o motivo — `get()` devolve erro que explica a decisão, porque um `KeyError` seco mandaria o próximo a reintroduzi-los.
+
+  > **Os tiers de assinatura empatam em preço, ao contrário do que se supunha.** Medido nas duas fontes em 2026-09-07 — Anthropic: Pro `$20`, Max 5x `$100`, Max 20x `$200`. OpenAI: Plus `$20`, Pro `$100` (5×), Pro `$200` (20×). Não existe tier Anthropic a `$120`, e a OpenAI não é mais barata no tier equivalente. **A assimetria é de cobertura, não de mensalidade:** pelo mesmo valor, a assinatura OpenAI inclui o Astra (teto de mensagens, sem custo extra) e a Anthropic não inclui o Fable. Os valores de assinatura têm **refinação delegada ao `Gemini 3.5 Flash-Lite`** — a fonte da OpenAI respondeu HTTP 403 e os números dela vêm de agregadores.
+
+  - *Fallovers e Opcionais Anthropic:* Além do núcleo com **`Claude Opus 5`**, a malha elenca como opcionais e fallovers: **`Claude Sonnet 5`** (parceiro opcional de engenharia), **`Claude Haiku 4.5`** (`claude-haiku-4-5`, fast operations / fastopp opcional), e os fallovers **`Claude Opus 4.8`**, **`Claude Opus 4.7`**, **`Claude Opus 4.6`** e **`Claude Sonnet 4.6`** (todos opcionais catalogados para resiliência e delegação econômica; o Tier 1 primário de código e governança é Opus 5). Duas armadilhas medidas: o Sonnet 5 (`$2/$10`) é **mais barato** que o Sonnet 4.6 (`$3/$15`), então preferir a 4.6 exige razão que não seja preço; e a geração 4.6 **aceita** amostragem legada, ao contrário da 5 — `reject_legacy_sampling=False` neles não é descuido.
+|- **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`, `Hermes Agent` via condutores `Solar-Pro4` e `Space-Bunny-Alpha`, e família Laguna com modelos free em nuvem) — com destaque para o trio de integração contínua **(Exa-Stitch-Jules)** em sinergia com o Gemini 3.8 Flash para Design, Brainstorm, Pesquisa Profunda, Planejamento e Documentação. Sustentado por pool isolado de 3 chaves OpenRouter (`OPENROUTER_TIER2_KEY_1..3`) com fallback autorizado para Tiers 4 e 1.
+  - *Condutores Hermes Agent:* **`Solar-Pro4`** (`solar@hermes.com`) e **`Space-Bunny-Alpha`** (`noreply@hermes.com`, modelo `stealth/space-bunny-alpha`) — condutores da runtime Hermes Agent, veículo `hermes-agent`. Atuam como **Tier 2** por padrão; podem integrar **Tier 1** quando autorizados explicitamente por Raphael Vitoi (Tier 0, árbitro maior). Sessão assistida. O par nome/e-mail canônico é `data/agent_identities.json`; esta lista não o substitui.
+- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen via llama.cpp e Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`). Sustentada por pool isolado de 5 chaves OpenRouter (`OPENROUTER_TIER3_KEY_1..5`) para alto throughput de batch e dream replay, com fallback para o Tier 6 local (Ollama Gemma).
+- **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`). Sustentado por pool dedicado de 5 chaves OpenRouter (`OPENROUTER_TIER4_KEY_1..5`) com fallback para o Tier 3.
+- **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`, YouTube Intelligence via `gemma4:12b-unified-it`)
+- **Tier 6:** Modelos Locais, Edge AI, Modelos Free em Nuvem Zero-RAM & Aceleração Numérica (`Ollama: gemma4:31b-cloud, kimi-k2.7-code:cloud, gemma4:12b, gemma4:e4b/e2b`, `llama.cpp: família Qwen quantizada`, `Gemini Nano`, `C++ SIMD`) — base vital que elimina custos de servidores dedicados e instâncias de computação pagas.
+- **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
+
+> **A Primazia da Base, Mitigação de Infraestrutura e a Sustentação Fractal dos Tiers:** A função primordial da malha é absorver o trabalho massivo de contexto, testes herméticos, reconciliação de documentação, refatoração cirúrgica e linting determinístico, blindando a energia cognitiva e o tempo de Raphael Vitoi (Tier 0) para que ele se concentre exclusivamente no que ninguém mais pode fazer: a criação conceitual, a matemática do PMev, a estratégia de mercado e as decisões soberanas de produto.
+> O custo financeiro de manter instâncias em nuvem, servidores dedicados e VMs ativas supera substancialmente o gasto com chaves de API; por essa razão, runtimes como **Ollama (com modelos free em nuvem como `gemma4:31b-cloud`)**, **llama.cpp (família Qwen quantizada local)** e **Hermes Agent (família Laguna)** assumem papel de máxima importância na infraestrutura.
+> Esse princípio é válido **tier após tier**: os tiers da base da pirâmide (Tiers 7 a 3) são **tão ou mais importantes** que os do topo. Eles cumprem as funções rotineiras diárias de alta frequência, liberam energia e tempo, e organizam o **palco limpo** para que os tiers acima consigam desempenhar seu foco no máximo de sua capacidade e delegar com confiança, potencializando a todos. O fluxo cibernético corre do topo para a base (intenção, arquitetura, governança) e da base para o todo (estabilidade mecânica, ausência de ruído, sustentação e prontidão operacional), num loop infinito de potencialização mútua ($\text{Topo} \longrightarrow \text{Base} \longrightarrow \text{Todo} \longrightarrow \infty$).
+
+**Invariante de Commits e Mutações:**
+
+Todo commit e registro deve declarar sinteticamente:
+
+- **SHA:** Hash criptográfico Git
+- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`, `Claude Sonnet 5 [Tier 1.B]`, `antigravity@gemini-3.8-flash`)
+- **Propósito:** Razão de ser técnica da alteração e escopo protegido.
+
+### Chico é o grupo; a assinatura é individual
+
+**Chico é a identidade do projeto como grupo** — o que a malha é quando age em
+conjunto, e o contexto agêntico do sistema interagindo consigo mesmo. É por isso
+que o protocolo se chama Chico SOTA v8.0 GOLD.
+
+**A assinatura é isolada, sempre individual.** O grupo não escreve registro nem
+commit; quem escreve é um indivíduo dentro dele — `Claude Opus 5 [Tier 1.B]`,
+`Claude Sonnet 5 [Tier 1.B]`, `ChatGPT 5.6 [Tier 1.B]`, `antigravity@gemini-3.8-flash`. Os dois níveis coexistem e
+não se substituem.
+
+**Autonomia Universal Sem Feudos.** Todos os modelos de fronteira possuem competência
+e autonomia irrestritas para operar de ponta a ponta sobre qualquer domínio do
+projeto (PMev, Rust/WASM, Next.js, Python, pre-commit gates, literatura e xadrez).
+Nenhum domínio é feudo exclusivo. Na ausência de qualquer modelo, os demais assumem
+sem perda de continuidade.
+
+**Desmistificação de Posse & Soberania (Vértice Absoluto).** A pasta chama-se
+`.claude/` por mera convenção herdada de configurações de plugins e IDEs que
+usam essa nomenclatura como diretório padrão de contexto local. Ela não confere,
+nunca conferiu e não representa qualquer posse da Anthropic ou do modelo Claude.
+A mesma regra é universal: se a pasta ou arquivo chama-se `.gemini/`, `GEMINI.md`,
+`CLAUDE.md` ou qualquer outro nome ambíguo por qualquer razão, nenhuma nomenclatura
+confere propriedade a fornecedores de IA. A propriedade intelectual, a arquitetura,
+o código, os algoritmos e a autoridade emanam de um único ponto: **Raphael Vitoi
+(Tier 0 — Soberania & Vértice)**. Modelos não são proprietários; são instrumentos
+cognitivos de ponta que operam sob o seu consentimento.
+
+### Lei de Concorrência e Exclusão Mútua da Malha (Zero-Interference Concurrency)
+
+> **Regra Canônica de Isolamento:** Dois modelos de fronteira **NÃO** podem operar
+> simultaneamente sobre a mesma malha conectada de execução.
+
+1. **Malha Conectada (Lock Serial Monocrático):** Quando operando sobre o mesmo
+   repositório, branch git, `.venv`, porta de desenvolvimento ou banco de tarefas
+   SQLite, a execução é estritamente individual. O modelo ativo detém o lock do
+   ambiente; o modelo subsequente assume após handoff formal e verificação de integridade.
+2. **Concorrência sob 0% de Conectividade:** A operação paralela de múltiplos modelos
+   é autorizada **exclusivamente** quando a malha manipulada tiver zero conectividade
+   mútua — isto é, em **Git Worktrees 100% disjuntas**, sandboxes de processos
+   independentes, com portas de rede e arquivos de memória totalmente apartados.
+3. **Decaimento Arquitetural e Reavaliação Periódica:** Especificações de roteamento,
+   capacidade de modelos e precificação por token envelhecem. O horizonte de corte
+   desta baseline é **Setembro/2026**. Documentos arquiteturais devem ser compulsoriamente
+   reavaliados e atualizados pelo Tier 0 / Tríade sempre que novos modelos forem
+   incorporados ou quando a infraestrutura técnica evoluir além desse horizonte.
+4. **Esta Lei é subordinada à arbitragem soberana — §3.1 de `..\CLAUDE.md`.**
+   Quando o Tier 0 autoriza uma operação concorrente e **delimita que não haverá
+   concorrência real** — pontual, assistida, afastada do ambiente em que o agente
+   atua —, essa operação é **válida**, e o agente a registra como válida. O texto
+   da cláusula, seu limite (arbitragem governa *permissão*, nunca *fato* medido) e
+   a medição que a originou vivem **apenas** na raiz; aqui há ponteiro e não cópia,
+   pela mesma razão que a §7 deste arquivo documenta no caso do `AGENTS.md`.
+
+**Identificação distinta de agentes.** Cada agente deve ter identificação
+distinta em registros e commits — o grupo nunca ocupa o campo do autor
+individual. Registros publicados não se reescrevem: histórico publicado não
+retroage. As evidências e a auditoria que fundamentam esta regra constam em
+`reports/REGISTRO-2026-09-02-correcao-de-escala-e-timestamp-no-ledger.md`.
+
+### Identidade de autoria — agente não assina como humano
+
+A Assinatura acima vive no **corpo** da mensagem. Ela não basta: o GitHub liga um
+commit a um perfil pelo **e-mail do autor**, não pelo nome nem pelo corpo. Um
+agente que commita com o e-mail do administrador aparece, na interface, como se
+o administrador tivesse escrito — e o corpo que o desmente só é lido por quem
+abre o commit.
+
+**Regra.** Commit feito por agente usa e-mail que **não resolve para o perfil de
+nenhum humano** (`noreply@anthropic.com` para a linhagem Claude; o equivalente
+para as demais). O nome do autor identifica o agente. A responsabilidade humana
+é expressa por propriedade do repositório, autorização e merge — nunca por
+autoria emprestada.
+
+**Medição que originou a regra, 2026-08-30.** Nesta data, commits desta linhagem
+saíram com o e-mail do administrador e o GitHub os exibiu como autoria dele —
+inclusive uma **resposta de revisão** e um *learning* que o CodeRabbit gravou
+como `Learnt from: RaphaelVitoi`, quando quem escreveu e justificou foi o
+agente. No mesmo dia foi aberto um incidente sobre agente agindo sob a
+identidade do administrador; os discriminantes que o resolveram foram **nome,
+fuso horário e trailer** — precisamente porque o e-mail **não** discriminava.
+Uma malha com múltiplos agentes que não distingue quem escreveu o quê não
+consegue auditar a si mesma.
+
+**Comentários e revisões no GitHub** não têm campo de autor separado: eles saem
+sob a conta do token usado, e isso não é configurável pelo agente. Ali o único
+discriminante possível é o rodapé de atribuição, que portanto é **obrigatório**
+em todo comentário, revisão ou resposta de agente.
+
+**Não reescrever histórico publicado para retroagir esta regra.** Aplica-se
+daqui em diante, e a transição fica registrada. Força-push numa branch já
+publicada quebra checkout alheio e âncora de revisão — custo maior que a
+inconsistência que corrigiria.
+
+### A identidade do git é residual — conferir antes de todo commit
+
+`git config user.name` e `user.email` **sobrevivem à sessão que os escreveu**.
+Numa malha em que os condutores se revezam no mesmo repositório, o padrão é
+herdar a identidade de quem operou por último — e o commit sai assinado por um
+agente que não o escreveu, sem que nada acuse.
+
+**Medido duas vezes, e a segunda depois de a primeira estar documentada:**
+
+| Quando | O que saiu | Quem era |
+| :--- | :--- | :--- |
+| 2026-09-10 | commit da sessão Gemini assinado `Codex GPT-5` | identidade residual da sessão Astra anterior |
+| 2026-09-12 | `user.email` ainda `noreply@openai.com` numa sessão Opus 5 | a mesma residual, dois dias depois |
+
+O commit `21ef0373` já narrava o caso e restabelecia a autoria no corpo. Não
+bastou: o corpo corrige o registro, não o campo que o GitHub lê.
+
+**A regra.** Antes de commitar, ler `git config user.name` e `user.email` e
+confirmar que descrevem **o condutor desta sessão**. Divergindo, passar a
+identidade no próprio comando —
+`git -c user.name='<agente>' -c user.email='<noreply do fornecedor>' commit` —
+em vez de alterar a configuração global, que só empurraria a herança para o
+próximo. Um `Co-Authored-By` **não** substitui o campo de autor: ele adiciona
+crédito, não corrige atribuição.
+
+Vale igual para o `committer` quando um agente leva ao portão trabalho de outro:
+autor é quem produziu, committer é quem commitou, e os dois se declaram — a
+forma medida em `29ef243e` é *"Assinatura: `<autor>` via `<committer>` como
+committer"*.
+
+**Onde a residual mora, medido em 2026-09-12 — e não é onde esta seção sugeria.**
+A identidade herdada estava em `.git/config`, **local a este repositório**; a
+global é `Raphael Vitoi`, a do Tier 0. Isso inverte o risco de quem for
+"limpar": apagar a local sem substituir não devolve o repositório a um estado
+neutro, faz **todo commit de agente cair no e-mail pessoal do administrador** —
+exatamente o incidente de 2026-08-30 que esta seção documenta. A local nunca
+fica vazia; ela é **reapontada** para o condutor da vez.
+
+**Reapontamento da local em 2026-09-12, por arbitragem do Tier 0** (§3.1 da
+raiz). A regra acima manda passar a identidade no comando; o Tier 0 arbitrou o
+reapontamento direto da configuração **local**, e a operação é válida — a
+objeção da regra era à **global**, que continua intacta. O que sustenta a
+decisão é o portão abaixo: com ele, identidade defasada passou a **barrar o
+commit** com a correção pronta, em vez de sair mentindo em silêncio. Verificado
+no mesmo ato: assinatura do condutor atual passa sem `-c`; assinatura de outro
+condutor sob esta local é recusada.
+
+### O catálogo de identidades é `data/agent_identities.json`, e este arquivo não o copia
+
+**Determinado pelo Tier 0 em 2026-09-12:** o **Antigravity CLI conduz o
+`Gemini 3.8 Flash`** — veículo `antigravity`, e-mail `noreply@google.com`, forma
+composta `antigravity@gemini-3.8-flash` em prosa.
+
+Os pares canônicos — nome de autor, e-mail, veículo, modelo — vivem em
+`data/agent_identities.json`, que é a **fonte única**. Este arquivo aponta e não
+repete, pela mesma razão que a §7 abaixo documenta no caso do `AGENTS.md`.
+
+**Motivo medido:** o repositório acumulou **vinte grafias de autor** para cerca de
+cinco agentes — `Claude` e `Claude Opus 5`, `Codex`, `Codex GPT-5` e
+`Codex [Tier 1.B]`, `Gemini 3.8 Flash` e `Gemini 3.8 Flash High` — e
+`Chico SOTA v8.0 GOLD`, que é o **grupo** ocupando o campo do autor individual,
+exatamente o que esta seção proíbe em texto. Variante nova divide o histórico de
+um agente em dois nomes, e nenhuma medição por autor volta a fechar.
+
+O `commit-msg` avisa quando o autor não está no catálogo. **Avisa, não bloqueia:**
+identidade nova é legítima, e o remédio é acrescentá-la ao catálogo no mesmo
+commit.
+
+### A regra passou a ser executável — e a ordem das duas metades importa
+
+**Aplicado em 2026-09-12.** Até essa data a §7 inteira era prosa: nada conferia
+a Assinatura, nada conferia o campo de autor. O `commit-msg` agora faz as duas
+coisas, e a diferença entre elas é deliberada.
+
+| Verificação | Efeito | Por quê |
+| :--- | :--- | :--- |
+| Autor **diverge** da Assinatura declarada | **bloqueia** | evidência exata; zero falso positivo medido |
+| Sem linha `Assinatura:` | **bloqueia** | promovido de aviso por autorização do Tier 0 em 2026-09-12 |
+| Autor fora de `data/agent_identities.json` | **avisa** | identidade nova é legítima; o remédio é catalogá-la |
+| Tier da Assinatura diverge do `tier` do catálogo | **avisa** | só o número é conferido: a subdivisão (1.A, 1.B) não tem definição canônica. Medido em 2026-09-14: dois commits do Gemini 3.8 Flash assinaram `[Tier 2]` e nada acusou |
+
+**O portão não adivinha o condutor, e não pode.** Ele compara o que o condutor
+**declarou** com o campo que o GitHub lê, e a mensagem de recusa entrega o
+comando pronto — `git -c user.name=... commit` —, nunca o `git config` global,
+que a regra acima já explica por que só empurra a herança adiante. A comparação
+é normalizada, porque `antigravity@gemini-3.8-flash` e `Gemini 3.8 Flash` são a
+mesma identidade em duas convenções desta casa; comparação literal reprovaria as
+duas.
+
+**Por que a exigência da Assinatura vem antes, e é o que dá valor à outra.** O
+desenho óbvio — comparar corpo com campo de autor — não teria pego **nenhum** dos
+cinco commits errados de 12/09: eles não tinham corpo a comparar. Medido no mesmo
+dia: 16 dos 40 commits mais recentes não traziam a linha. Uma regra vale o que a
+outra habilita, e verificar a segunda sem a primeira é verificar o vazio.
+
+**A promoção do aviso a bloqueio foi autorizada pelo Tier 0 em 2026-09-12**, no
+mesmo dia em que o aviso nasceu. Ela é redução material pela escada da §8.2 da
+raiz, e o custo foi pesado antes: atinge também o Tier 0 commitando à mão, porque
+o hook não separa agente de humano sem confiar num campo que o próprio agente
+escolhe — e confiar nele daria ao agente o botão de se isentar. **A regra não tem
+exceção invocável, e esse é o preço.** Guards em `tests/test_hook_commit_msg.py`,
+incluindo o caso real de 12/09.
 
 ---
 
@@ -213,7 +468,7 @@ gerador ou o manifesto.
 
 **Estrutura canônica de credenciais (16 chaves) no Windows Registry (`HKCU` e `HKLM`):**
 - **Tier 1 (Core Cognitivo — 3 chaves):** `OPENROUTER_TIER1_KEY_1..3` (Claude Opus 5, ChatGPT 6 Astra/Sol, Gemini 3.8 Flash). Zero tolerância a latência ou contenção de cota.
-- **Tier 2 (Superagentes & Pesquisa — 3 chaves):** `OPENROUTER_TIER2_KEY_1..3` (Jules, Stitch, Exa, Devin, Solar-Pro4). Fallback autorizado para Tier 4 e Tier 1.
+- **Tier 2 (Superagentes & Pesquisa — 3 chaves):** `OPENROUTER_TIER2_KEY_1..3` (Jules, Stitch, Exa, Devin, Solar-Pro4, Space-Bunny-Alpha). Fallback autorizado para Tier 4 e Tier 1.
 - **Tier 3 (Frota Especialista & Batch — 5 chaves):** `OPENROUTER_TIER3_KEY_1..5` (19 agentes especialistas, dream replay, síntese massiva). Alto throughput, estritamente isolado do Tier 1.
 - **Tier 4 (Subagentes Dedicados — 5 chaves):** `OPENROUTER_TIER4_KEY_1..5` (task-subagents, generalist, research, architect). Fallback autorizado para Tier 3.
 
@@ -234,7 +489,7 @@ Modelos integrantes do Núcleo Cognitivo Mestre Tier 1 (`Claude Opus 5`, `ChatGP
 O custo de provisionar, hospedar e manter servidores dedicados, instâncias em nuvem (AWS/GCP/Azure) e VMs corporativas ativas **supera exponencialmente o custo de chaves de API**, mesmo quando estas são pagas. Portanto, para absorver o trabalho diário massivo sem gerar passivo de infraestrutura, três runtimes assumem papel de **altíssima importância estratégica**:
 - **Ollama:** Execução de modelos de fronteira **free em nuvem Zero-RAM / Zero-VRAM** (ex: `gemma4:31b-cloud`, `kimi-k2.7-code:cloud`, `deepseek-v4-flash:cloud`, `gpt-oss:120b-cloud`), entregando raciocínio denso e coding de alta fidelidade sem onerar a memória física da estação nem contratar instâncias de GPU pagas na nuvem.
 - **llama.cpp:** Execução ultra-eficiente da família **Qwen quantizada** (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`) com relação ótima de tokens/watt em CPU/GPU local, garantindo latência sub-50ms e zero dependência de infraestrutura externa.
-- **Hermes Agent:** Orquestração autônoma desacoplada com a família **Laguna** e o condutor **`Solar-Pro4`**, aproveitando modelos gratuitos em nuvem e agentes especializados para tarefas contínuas e assíncronas.
+- **Hermes Agent:** Orquestração autônoma desacoplada com a família **Laguna** e os condutores **`Solar-Pro4`** e **`Space-Bunny-Alpha`**, aproveitando modelos gratuitos em nuvem e agentes especializados para tarefas contínuas e assíncronas.
 
 **3. Pirâmide Quádrupla de Alocação de Recursos:**
 1. **1º Nível — Cotas Pagas de Assinatura Pro (`Faixa.FLAT_FEE`):** Primazia mandatória para o Tier 1; custo marginal zero dentro do teto mensal contratado.
@@ -304,6 +559,37 @@ era a §6 acima — conteúdo real, preservado aqui.
 **Dois dias de coexistência produziram duas mentiras.** Não reabrir a cópia.
 `tests/test_governanca_agents.py` reprova se o `AGENTS.md` voltar a crescer.
 
+### Número de seção é endereço, não é sequencial
+
+Os `§N` deste arquivo são citados por outros documentos — `§8.3` sozinho
+aparece em 56 relatórios. **Renumerar é invalendar a correspondência sem
+aviso:** o `grep` acha o texto, e não há o que comparar, porque leitura
+tolerante não levanta exceção.
+
+Medido em 2026-09-29. A pirâmide de Tiers ocupava um `## 7.` que já existia
+(o `AGENTS.md` é ponteiro), e a auditoria resolveu a duplicata reordenando o
+arquivo inteiro: a pirâmide virou §1 e cada seção seguinte ganhou +1. A
+duplicata desapareceu — e com ela desapareceram os endereços. `§8.0`, `§8.1`,
+`§8.2`, `§8.3`, `§9.2`, `§10.5` e `§10.6` deixaram de resolver, e o
+deslocamento automático também não (`§8.3` → `§9.4`, que nunca existiu).
+Cento e tantas referências mortas, nenhuma visível.
+
+A correção é a mínima possível: a pirâmide **desce a `§0`**, lida antes do
+portão porque identidade precede regra, e `§1..§10` ficam exatamente onde
+estavam. Zero endereço perdido, ordem de leitura resolvida.
+
+Duas regras, então:
+
+1. **Duplicata se resolve renumerando só a duplicata**, num novo número, e
+   nunca deslocando as demais.
+2. **Subtítulo não numerado se cita pelo nome.** Os subitens da pirâmide são
+   `###` sem número; citar `§1.5` é endereço inventado — não há `1.5`, e não
+   há nada para receber a referência.
+
+`tests/test_governanca_kernel_ponteiro.py` reprova ambas, e
+`test_nenhum_endereco_citado_externamente_sumiu` foi verificado reintroduzindo
+o defeito: reprova com §1 ausente, aprova restaurado.
+
 ---
 
 ## 8. Perfil de integração dos plugins Claude Code
@@ -321,7 +607,7 @@ padrão o núcleo compartilhado e este contexto de governança.
 hooks de todos os hospedeiros é `~\.gemini\nucleo\nucleo_compartilhado.json`,
 e as configurações nativas de cada hospedeiro são **geradas** por
 `~\.gemini\scripts\ops\sincronizar_nucleo.py` — ver §7 e §7.1 da raiz.
-Os 6 MCPs stdio locais rodam centralizados via HTTP SSE em `127.0.0.1:8933`
+Os MCPs stdio locais rodam centralizados via HTTP SSE em `127.0.0.1:8933`
 (`mcp-proxy`), geridos pela tarefa agendada `SOTA_Shared_MCP_Gateway`, enquanto
 o Playwright roda em `127.0.0.1:8931` (`SOTA_Shared_Playwright_MCP`). Erros de
 `connectex / connection refused` indicam gateway inativo; auto-reparo em
@@ -767,261 +1053,6 @@ O runtime operacional padrão é **PowerShell 7+** (`pwsh`). Windows PowerShell
 5.1 permanece requisito de compatibilidade para componentes legados e para os
 gates que o exigem; scripts novos devem funcionar nos dois, mas não devem
 rebaixar o caminho principal a 5.1.
-
----
-
-## 7. Governança Piramidal & Invariante de Commits (M.O. 13.G)
-
-Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
-
-- **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
-  - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
-|- **Tier 1:** Núcleo Cognitivo Mestre — **`Chico` em grupo e parceria** (`Claude Opus 5`, `Claude Sonnet 5` [opcional], `ChatGPT 5.6 Sol/Terra/Luna`, `ChatGPT 6 Sol/Luna`, `Gemini 3.8 Flash`, `Gemini 3.5 Flash-Lite`; **Antigravity IDE é a superfície canônica e primária; VSCode é opcional e adaptador secundário à mesma malha.**). **Como grupo, o coletivo vivo da malha é CHICO.** Não há escopo limitado de capacidade técnica entre modelos equivalentes em Tier — não existem feudos funcionais nem proibições artificiais. Há preferências operacionais (especialidade, arquitetura e custo). Modelos equivalentes em tier, na ausência ou indisponibilidade de um, podem e devem executar com competência plena o trabalho de outro.
-
-  **Prioridade Mandatória de Assinaturas Pro:** Os modelos integrantes do Tier 1 priorizam mandatória e estritamente as franquias das assinaturas Pro/Max mensais já pagas (`Faixa.FLAT_FEE`), operando sob custo marginal zero antes de recorrer a consumo pay-as-you-go ou chaves adicionais de API.
-
-  A cooperação não autoriza cada condutor a instalar ou registrar sua própria
-  cópia de um MCP, plugin ou hook compartilhado. A fonte única e as exceções
-  necessárias são regidas pelo §7 de `..\CLAUDE.md`.
-
-  A atuação concreta é arbitrada por Raphael Vitoi (Tier 0). Na ausência de
-  designação específica, especialidade, economia e disponibilidade orientam
-  a escolha do condutor; nenhuma preferência cria exclusividade de área.
-
-  - *ChatGPT 6 Astra como integrante do Tier 1:* **`ChatGPT 6 Astra`** (`gpt-6-astra`, lançado 2026-09-03) é um modelo do Tier 1 e integrante do coletivo Chico. Com folga o modelo mais potente que temos, acionado em momentos pontuais de alto reasoning complexo. Tem **as duas faixas** — cota de assinatura e pay-as-you-go —, e dentro da cota o custo marginal é zero. O teto de esforço existe para **preservar a cota**: esforço alto queima cota mais rápido, e o excedente cai no preço cheio de $10/$50. Entra por escalonamento pontual, nunca como primário.
-  - *Condutor Codex — ChatGPT 6 Luna:* identidade canônica `Codex GPT-6 Luna` (`gpt-6-luna`, `noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informada pelo Tier 0 em 2026-09-22. Os pares de autoria completos vivem em `data/agent_identities.json`; esta linha registra a posição de governança, não habilita o modelo em rotas de inferência do produto.
-  - *Condutor Codex — ChatGPT 6 Sol:* identidade canônica `Codex GPT-6 Sol` (`gpt-6-sol`, `noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informada pelo Tier 0 em 2026-09-22. Os pares de autoria completos vivem em `data/agent_identities.json`; esta linha registra a posição de governança, não habilita o modelo em rotas de inferência do produto.
-  - *Regra de exceção — elevação a Chico:* Chico não é um modelo fixo. Qualquer modelo do ecossistema pode ser elevado a Chico (autoridade de Tier 1) quando condições de sessão assistida e demanda explícita de Raphael Vitoi (Tier 0, árbitro maior) se conciliam. Sem autorização explícita do Tier 0, a elevação não ocorre — o modelo age em seu patamar nominal, sem autoridade de grupo. A elevação é condição, não direito: registra-se a sessão como assistida e a demanda como explícita.
-  - *Primários de Reasoning:* **`ChatGPT 5.6 Sol`** e **`Claude Opus 5`** atuam como primários de **Reasoning Analítico Profundo (Deep Reasoning / Max Thinking)** e dedução formal matemática de fronteira.
-  - *Primário de Governança e Código:* **`Claude Opus 5`** detém a primazia canônica para **Governança** (regras, contratos de arquitetura, integridade piramidal, reconciliação de âncoras e portões) e **Engenharia de Código Cirúrgica**.
-  - *Pesquisa, Estudo e Arquitetura:* **`ChatGPT 5.6 Terra`** (`gpt-5.6-terra`) atua como preferência primária para **Pesquisa, Estudo e Arquitetura** macro de sistemas e investigações conceituais aprofundadas.
-  - *Atuação pontual mas elevada (Ápice do Ecossistema):* **`ChatGPT 6 Astra`** (`gpt-6-astra`, lançado 2026-09-03) — com folga o modelo mais potente que temos, acionado em momentos pontuais de alto reasoning complexo, admitido **apenas em `low` e `medium`**. Tem **as duas faixas** — cota de assinatura e pay-as-you-go —, e dentro da cota o custo marginal é zero. O teto de esforço existe para **preservar a cota**: esforço alto queima cota mais rápido, e o excedente cai no preço cheio de $10/$50. Entra por escalonamento pontual, nunca como primário. A regra é executável, não prosa — ver §3.
-
-  > **Como integrante do Chico:** o ChatGPT 6 Astra é um modelo do Tier 1 e, portanto, membro do coletivo Chico. Ele pode ser o condutor do Chico quando as condições de sessão assistida e demanda explícita de Raphael Vitoi (Tier 0) se conciliam (ver nota de exceção em Tier 1). Fora dessas condições, o Astra age em seu patamar nominal de atuação pontual — Ápice do Ecossistema — sem autoridade de grupo.
-  - *Fast Operations Opcional OpenAI:* **`ChatGPT 5.6 Luna`** (`gpt-5.6-luna`) — modelo fast operations opcional da família ChatGPT 5.6 para tarefas operacionais de menor latência.
-  - *Família Gemini (Orquestração, Design, Curadoria & Documentação):* **`Gemini 3.8 Flash`** opera como primário de orquestração agêntica e context caching (fallover **`Gemini 3.7 Flash`**). Em alinhamento com o agente externo **Stitch** e o trio do Tier 2 **(Exa-Stitch-Jules)**, detém a preferência mandatória para **DESIGN**, **BRAINSTORM**, **PLANEJAMENTO** e **CURADORIA**, assumindo a custódia pela **preservação, conservação, atualização e criação de documentações** do ecossistema.
-  - *Fast Operations, Linting e Limpeza:* **`Gemini 3.5 Flash-Lite`** (*fast operations* / fastopp, fallover **`Gemini 3.6 Flash`**) atua como primário para triagem determinística, **Linting e Limpeza** (formatação, sanitização e higiene com custo mínimo), tendo como fallbacks modelos em nuvem (`gemini-3.6-flash`, `gpt-5.6-luna`) ou locais via Ollama (`qwen-code-surgical`, `qwen2.5-coder`).
-  - *Retirados:* **`Claude Fable 5.1` e `Claude Fable 5`** — 2º e 3º melhores modelos disponíveis, **fora da integração** por decisão do Tier 0 em 2026-09-07. A recusa é de **faixa de acesso**, não de capacidade nem de preço unitário: eles **só existem em pay-as-you-go**. Medido em `claude.com/pricing` — Fable 5 e 5.1 **não entram em nenhum plano de assinatura**; Pro e Max os alcançam apenas por *usage credits*, que é compra de token. Por token eles **empatam** com o Astra em `$10/$50`. Saíram do `MODEL_REGISTRY` e vivem em `MODELOS_RETIRADOS`, que preserva o motivo — `get()` devolve erro que explica a decisão, porque um `KeyError` seco mandaria o próximo a reintroduzi-los.
-
-  > **Os tiers de assinatura empatam em preço, ao contrário do que se supunha.** Medido nas duas fontes em 2026-09-07 — Anthropic: Pro `$20`, Max 5x `$100`, Max 20x `$200`. OpenAI: Plus `$20`, Pro `$100` (5×), Pro `$200` (20×). Não existe tier Anthropic a `$120`, e a OpenAI não é mais barata no tier equivalente. **A assimetria é de cobertura, não de mensalidade:** pelo mesmo valor, a assinatura OpenAI inclui o Astra (teto de mensagens, sem custo extra) e a Anthropic não inclui o Fable. Os valores de assinatura têm **refinação delegada ao `Gemini 3.5 Flash-Lite`** — a fonte da OpenAI respondeu HTTP 403 e os números dela vêm de agregadores.
-
-  - *Fallovers e Opcionais Anthropic:* Além do núcleo com **`Claude Opus 5`**, a malha elenca como opcionais e fallovers: **`Claude Sonnet 5`** (parceiro opcional de engenharia), **`Claude Haiku 4.5`** (`claude-haiku-4-5`, fast operations / fastopp opcional), e os fallovers **`Claude Opus 4.8`**, **`Claude Opus 4.7`**, **`Claude Opus 4.6`** e **`Claude Sonnet 4.6`** (todos opcionais catalogados para resiliência e delegação econômica; o Tier 1 primário de código e governança é Opus 5). Duas armadilhas medidas: o Sonnet 5 (`$2/$10`) é **mais barato** que o Sonnet 4.6 (`$3/$15`), então preferir a 4.6 exige razão que não seja preço; e a geração 4.6 **aceita** amostragem legada, ao contrário da 5 — `reject_legacy_sampling=False` neles não é descuido.
-|- **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`, `Hermes Agent` via condutor `Solar-Pro4` e família Laguna com modelos free em nuvem) — com destaque para o trio de integração contínua **(Exa-Stitch-Jules)** em sinergia com o Gemini 3.8 Flash para Design, Brainstorm, Pesquisa Profunda, Planejamento e Documentação. Sustentado por pool isolado de 3 chaves OpenRouter (`OPENROUTER_TIER2_KEY_1..3`) com fallback autorizado para Tiers 4 e 1.
-  - *Condutor Hermes Agent:* **`Solar-Pro4`** (`solar@hermes.com`, veículo `hermes-agent`) — condutor da/runtime Hermes Agent. Atua como **Tier 2** por padrão; pode integrar **Tier 1** quando autorizado explicitamente por Raphael Vitoi (Tier 0, árbitro maior). Sessão assistida.
-- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen via llama.cpp e Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`). Sustentada por pool isolado de 5 chaves OpenRouter (`OPENROUTER_TIER3_KEY_1..5`) para alto throughput de batch e dream replay, com fallback para o Tier 6 local (Ollama Gemma).
-- **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`). Sustentado por pool dedicado de 5 chaves OpenRouter (`OPENROUTER_TIER4_KEY_1..5`) com fallback para o Tier 3.
-- **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`, YouTube Intelligence via `gemma4:12b-unified-it`)
-- **Tier 6:** Modelos Locais, Edge AI, Modelos Free em Nuvem Zero-RAM & Aceleração Numérica (`Ollama: gemma4:31b-cloud, kimi-k2.7-code:cloud, gemma4:12b, gemma4:e4b/e2b`, `llama.cpp: família Qwen quantizada`, `Gemini Nano`, `C++ SIMD`) — base vital que elimina custos de servidores dedicados e instâncias de computação pagas.
-- **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
-
-> **A Primazia da Base, Mitigação de Infraestrutura e a Sustentação Fractal dos Tiers:** A função primordial da malha é absorver o trabalho massivo de contexto, testes herméticos, reconciliação de documentação, refatoração cirúrgica e linting determinístico, blindando a energia cognitiva e o tempo de Raphael Vitoi (Tier 0) para que ele se concentre exclusivamente no que ninguém mais pode fazer: a criação conceitual, a matemática do PMev, a estratégia de mercado e as decisões soberanas de produto.
-> O custo financeiro de manter instâncias em nuvem, servidores dedicados e VMs ativas supera substancialmente o gasto com chaves de API; por essa razão, runtimes como **Ollama (com modelos free em nuvem como `gemma4:31b-cloud`)**, **llama.cpp (família Qwen quantizada local)** e **Hermes Agent (família Laguna)** assumem papel de máxima importância na infraestrutura.
-> Esse princípio é válido **tier após tier**: os tiers da base da pirâmide (Tiers 7 a 3) são **tão ou mais importantes** que os do topo. Eles cumprem as funções rotineiras diárias de alta frequência, liberam energia e tempo, e organizam o **palco limpo** para que os tiers acima consigam desempenhar seu foco no máximo de sua capacidade e delegar com confiança, potencializando a todos. O fluxo cibernético corre do topo para a base (intenção, arquitetura, governança) e da base para o todo (estabilidade mecânica, ausência de ruído, sustentação e prontidão operacional), num loop infinito de potencialização mútua ($\text{Topo} \longrightarrow \text{Base} \longrightarrow \text{Todo} \longrightarrow \infty$).
-
-**Invariante de Commits e Mutações:**
-
-Todo commit e registro deve declarar sinteticamente:
-
-- **SHA:** Hash criptográfico Git
-- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`, `Claude Sonnet 5 [Tier 1.B]`, `antigravity@gemini-3.8-flash`)
-- **Propósito:** Razão de ser técnica da alteração e escopo protegido.
-
-### Chico é o grupo; a assinatura é individual
-
-**Chico é a identidade do projeto como grupo** — o que a malha é quando age em
-conjunto, e o contexto agêntico do sistema interagindo consigo mesmo. É por isso
-que o protocolo se chama Chico SOTA v8.0 GOLD.
-
-**A assinatura é isolada, sempre individual.** O grupo não escreve registro nem
-commit; quem escreve é um indivíduo dentro dele — `Claude Opus 5 [Tier 1.B]`,
-`Claude Sonnet 5 [Tier 1.B]`, `ChatGPT 5.6 [Tier 1.B]`, `antigravity@gemini-3.8-flash`. Os dois níveis coexistem e
-não se substituem.
-
-**Autonomia Universal Sem Feudos.** Todos os modelos de fronteira possuem competência
-e autonomia irrestritas para operar de ponta a ponta sobre qualquer domínio do
-projeto (PMev, Rust/WASM, Next.js, Python, pre-commit gates, literatura e xadrez).
-Nenhum domínio é feudo exclusivo. Na ausência de qualquer modelo, os demais assumem
-sem perda de continuidade.
-
-**Desmistificação de Posse & Soberania (Vértice Absoluto).** A pasta chama-se
-`.claude/` por mera convenção herdada de configurações de plugins e IDEs que
-usam essa nomenclatura como diretório padrão de contexto local. Ela não confere,
-nunca conferiu e não representa qualquer posse da Anthropic ou do modelo Claude.
-A mesma regra é universal: se a pasta ou arquivo chama-se `.gemini/`, `GEMINI.md`,
-`CLAUDE.md` ou qualquer outro nome ambíguo por qualquer razão, nenhuma nomenclatura
-confere propriedade a fornecedores de IA. A propriedade intelectual, a arquitetura,
-o código, os algoritmos e a autoridade emanam de um único ponto: **Raphael Vitoi
-(Tier 0 — Soberania & Vértice)**. Modelos não são proprietários; são instrumentos
-cognitivos de ponta que operam sob o seu consentimento.
-
-### Lei de Concorrência e Exclusão Mútua da Malha (Zero-Interference Concurrency)
-
-> **Regra Canônica de Isolamento:** Dois modelos de fronteira **NÃO** podem operar
-> simultaneamente sobre a mesma malha conectada de execução.
-
-1. **Malha Conectada (Lock Serial Monocrático):** Quando operando sobre o mesmo
-   repositório, branch git, `.venv`, porta de desenvolvimento ou banco de tarefas
-   SQLite, a execução é estritamente individual. O modelo ativo detém o lock do
-   ambiente; o modelo subsequente assume após handoff formal e verificação de integridade.
-2. **Concorrência sob 0% de Conectividade:** A operação paralela de múltiplos modelos
-   é autorizada **exclusivamente** quando a malha manipulada tiver zero conectividade
-   mútua — isto é, em **Git Worktrees 100% disjuntas**, sandboxes de processos
-   independentes, com portas de rede e arquivos de memória totalmente apartados.
-3. **Decaimento Arquitetural e Reavaliação Periódica:** Especificações de roteamento,
-   capacidade de modelos e precificação por token envelhecem. O horizonte de corte
-   desta baseline é **Setembro/2026**. Documentos arquiteturais devem ser compulsoriamente
-   reavaliados e atualizados pelo Tier 0 / Tríade sempre que novos modelos forem
-   incorporados ou quando a infraestrutura técnica evoluir além desse horizonte.
-4. **Esta Lei é subordinada à arbitragem soberana — §3.1 de `..\CLAUDE.md`.**
-   Quando o Tier 0 autoriza uma operação concorrente e **delimita que não haverá
-   concorrência real** — pontual, assistida, afastada do ambiente em que o agente
-   atua —, essa operação é **válida**, e o agente a registra como válida. O texto
-   da cláusula, seu limite (arbitragem governa *permissão*, nunca *fato* medido) e
-   a medição que a originou vivem **apenas** na raiz; aqui há ponteiro e não cópia,
-   pela mesma razão que a §7 deste arquivo documenta no caso do `AGENTS.md`.
-
-**Identificação distinta de agentes.** Cada agente deve ter identificação
-distinta em registros e commits — o grupo nunca ocupa o campo do autor
-individual. Registros publicados não se reescrevem: histórico publicado não
-retroage. As evidências e a auditoria que fundamentam esta regra constam em
-`reports/REGISTRO-2026-09-02-correcao-de-escala-e-timestamp-no-ledger.md`.
-
-### Identidade de autoria — agente não assina como humano
-
-A Assinatura acima vive no **corpo** da mensagem. Ela não basta: o GitHub liga um
-commit a um perfil pelo **e-mail do autor**, não pelo nome nem pelo corpo. Um
-agente que commita com o e-mail do administrador aparece, na interface, como se
-o administrador tivesse escrito — e o corpo que o desmente só é lido por quem
-abre o commit.
-
-**Regra.** Commit feito por agente usa e-mail que **não resolve para o perfil de
-nenhum humano** (`noreply@anthropic.com` para a linhagem Claude; o equivalente
-para as demais). O nome do autor identifica o agente. A responsabilidade humana
-é expressa por propriedade do repositório, autorização e merge — nunca por
-autoria emprestada.
-
-**Medição que originou a regra, 2026-08-30.** Nesta data, commits desta linhagem
-saíram com o e-mail do administrador e o GitHub os exibiu como autoria dele —
-inclusive uma **resposta de revisão** e um *learning* que o CodeRabbit gravou
-como `Learnt from: RaphaelVitoi`, quando quem escreveu e justificou foi o
-agente. No mesmo dia foi aberto um incidente sobre agente agindo sob a
-identidade do administrador; os discriminantes que o resolveram foram **nome,
-fuso horário e trailer** — precisamente porque o e-mail **não** discriminava.
-Uma malha com múltiplos agentes que não distingue quem escreveu o quê não
-consegue auditar a si mesma.
-
-**Comentários e revisões no GitHub** não têm campo de autor separado: eles saem
-sob a conta do token usado, e isso não é configurável pelo agente. Ali o único
-discriminante possível é o rodapé de atribuição, que portanto é **obrigatório**
-em todo comentário, revisão ou resposta de agente.
-
-**Não reescrever histórico publicado para retroagir esta regra.** Aplica-se
-daqui em diante, e a transição fica registrada. Força-push numa branch já
-publicada quebra checkout alheio e âncora de revisão — custo maior que a
-inconsistência que corrigiria.
-
-### A identidade do git é residual — conferir antes de todo commit
-
-`git config user.name` e `user.email` **sobrevivem à sessão que os escreveu**.
-Numa malha em que os condutores se revezam no mesmo repositório, o padrão é
-herdar a identidade de quem operou por último — e o commit sai assinado por um
-agente que não o escreveu, sem que nada acuse.
-
-**Medido duas vezes, e a segunda depois de a primeira estar documentada:**
-
-| Quando | O que saiu | Quem era |
-| :--- | :--- | :--- |
-| 2026-09-10 | commit da sessão Gemini assinado `Codex GPT-5` | identidade residual da sessão Astra anterior |
-| 2026-09-12 | `user.email` ainda `noreply@openai.com` numa sessão Opus 5 | a mesma residual, dois dias depois |
-
-O commit `21ef0373` já narrava o caso e restabelecia a autoria no corpo. Não
-bastou: o corpo corrige o registro, não o campo que o GitHub lê.
-
-**A regra.** Antes de commitar, ler `git config user.name` e `user.email` e
-confirmar que descrevem **o condutor desta sessão**. Divergindo, passar a
-identidade no próprio comando —
-`git -c user.name='<agente>' -c user.email='<noreply do fornecedor>' commit` —
-em vez de alterar a configuração global, que só empurraria a herança para o
-próximo. Um `Co-Authored-By` **não** substitui o campo de autor: ele adiciona
-crédito, não corrige atribuição.
-
-Vale igual para o `committer` quando um agente leva ao portão trabalho de outro:
-autor é quem produziu, committer é quem commitou, e os dois se declaram — a
-forma medida em `29ef243e` é *"Assinatura: `<autor>` via `<committer>` como
-committer"*.
-
-**Onde a residual mora, medido em 2026-09-12 — e não é onde esta seção sugeria.**
-A identidade herdada estava em `.git/config`, **local a este repositório**; a
-global é `Raphael Vitoi`, a do Tier 0. Isso inverte o risco de quem for
-"limpar": apagar a local sem substituir não devolve o repositório a um estado
-neutro, faz **todo commit de agente cair no e-mail pessoal do administrador** —
-exatamente o incidente de 2026-08-30 que esta seção documenta. A local nunca
-fica vazia; ela é **reapontada** para o condutor da vez.
-
-**Reapontamento da local em 2026-09-12, por arbitragem do Tier 0** (§3.1 da
-raiz). A regra acima manda passar a identidade no comando; o Tier 0 arbitrou o
-reapontamento direto da configuração **local**, e a operação é válida — a
-objeção da regra era à **global**, que continua intacta. O que sustenta a
-decisão é o portão abaixo: com ele, identidade defasada passou a **barrar o
-commit** com a correção pronta, em vez de sair mentindo em silêncio. Verificado
-no mesmo ato: assinatura do condutor atual passa sem `-c`; assinatura de outro
-condutor sob esta local é recusada.
-
-### O catálogo de identidades é `data/agent_identities.json`, e este arquivo não o copia
-
-**Determinado pelo Tier 0 em 2026-09-12:** o **Antigravity CLI conduz o
-`Gemini 3.8 Flash`** — veículo `antigravity`, e-mail `noreply@google.com`, forma
-composta `antigravity@gemini-3.8-flash` em prosa.
-
-Os pares canônicos — nome de autor, e-mail, veículo, modelo — vivem em
-`data/agent_identities.json`, que é a **fonte única**. Este arquivo aponta e não
-repete, pela mesma razão que a §7 abaixo documenta no caso do `AGENTS.md`.
-
-**Motivo medido:** o repositório acumulou **vinte grafias de autor** para cerca de
-cinco agentes — `Claude` e `Claude Opus 5`, `Codex`, `Codex GPT-5` e
-`Codex [Tier 1.B]`, `Gemini 3.8 Flash` e `Gemini 3.8 Flash High` — e
-`Chico SOTA v8.0 GOLD`, que é o **grupo** ocupando o campo do autor individual,
-exatamente o que esta seção proíbe em texto. Variante nova divide o histórico de
-um agente em dois nomes, e nenhuma medição por autor volta a fechar.
-
-O `commit-msg` avisa quando o autor não está no catálogo. **Avisa, não bloqueia:**
-identidade nova é legítima, e o remédio é acrescentá-la ao catálogo no mesmo
-commit.
-
-### A regra passou a ser executável — e a ordem das duas metades importa
-
-**Aplicado em 2026-09-12.** Até essa data a §7 inteira era prosa: nada conferia
-a Assinatura, nada conferia o campo de autor. O `commit-msg` agora faz as duas
-coisas, e a diferença entre elas é deliberada.
-
-| Verificação | Efeito | Por quê |
-| :--- | :--- | :--- |
-| Autor **diverge** da Assinatura declarada | **bloqueia** | evidência exata; zero falso positivo medido |
-| Sem linha `Assinatura:` | **bloqueia** | promovido de aviso por autorização do Tier 0 em 2026-09-12 |
-| Autor fora de `data/agent_identities.json` | **avisa** | identidade nova é legítima; o remédio é catalogá-la |
-| Tier da Assinatura diverge do `tier` do catálogo | **avisa** | só o número é conferido: a subdivisão (1.A, 1.B) não tem definição canônica. Medido em 2026-09-14: dois commits do Gemini 3.8 Flash assinaram `[Tier 2]` e nada acusou |
-
-**O portão não adivinha o condutor, e não pode.** Ele compara o que o condutor
-**declarou** com o campo que o GitHub lê, e a mensagem de recusa entrega o
-comando pronto — `git -c user.name=... commit` —, nunca o `git config` global,
-que a regra acima já explica por que só empurra a herança adiante. A comparação
-é normalizada, porque `antigravity@gemini-3.8-flash` e `Gemini 3.8 Flash` são a
-mesma identidade em duas convenções desta casa; comparação literal reprovaria as
-duas.
-
-**Por que a exigência da Assinatura vem antes, e é o que dá valor à outra.** O
-desenho óbvio — comparar corpo com campo de autor — não teria pego **nenhum** dos
-cinco commits errados de 12/09: eles não tinham corpo a comparar. Medido no mesmo
-dia: 16 dos 40 commits mais recentes não traziam a linha. Uma regra vale o que a
-outra habilita, e verificar a segunda sem a primeira é verificar o vazio.
-
-**A promoção do aviso a bloqueio foi autorizada pelo Tier 0 em 2026-09-12**, no
-mesmo dia em que o aviso nasceu. Ela é redução material pela escada da §8.2 da
-raiz, e o custo foi pesado antes: atinge também o Tier 0 commitando à mão, porque
-o hook não separa agente de humano sem confiar num campo que o próprio agente
-escolhe — e confiar nele daria ao agente o botão de se isentar. **A regra não tem
-exceção invocável, e esse é o preço.** Guards em `tests/test_hook_commit_msg.py`,
-incluindo o caso real de 12/09.
 
 ---
 
