@@ -105,8 +105,8 @@ def _collect_all_gemini_keys() -> list[str]:
         for k in gemini_pool_manager._keys:
             if k not in keys:
                 keys.append(k)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("Falha ao coletar chaves adicionais do gemini_pool_manager: %s", exc)
     return keys
 
 
