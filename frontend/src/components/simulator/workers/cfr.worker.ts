@@ -133,7 +133,9 @@ globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
 
     iterationCount += 1;
     let positiveRegretTotal = 0;
-    for (const regret of regretSum ?? []) {
+    const len = regretSum?.length ?? 0;
+    for (let j = 0; j < len; j++) {
+      const regret = regretSum![j] ?? 0;
       positiveRegretTotal += Math.max(0, regret);
     }
     const regretScale = Math.max(Math.abs(pot), Math.abs(stack), 1);

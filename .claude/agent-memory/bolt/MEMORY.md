@@ -72,3 +72,8 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+## 2024-10-24 - Erradicando iterator overhead em hot loops
+
+**Learning:** O uso de loops `for...of` em TypedArrays no ambiente JavaScript/V8 invoca o iterador nativo, o que adiciona overhead de chamada de função e potencial alocação na hot loop, deteriorando o desempenho se comparado a um loop C-style clássico `for (let i = 0; i < arr.length; i++)`.
+
+**Action:** Para arrays e buffers primitivos, em caminhos críticos (como no CFR ou Monte Carlo), sempre preferir laços `for` baseados em índices invés de construções modernas sintáticas de iteração.
