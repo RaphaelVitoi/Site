@@ -134,9 +134,9 @@ export default function AulaICMPage() {
 						</p>
 
 						<div className="bg-accent-amber/10 border-l-4 border-accent-amber p-8 my-10 rounded-r-2xl">
-							<h4 className="mt-0 text-accent-amber font-bold text-lg mb-4 font-heading italic text-shadow-glow">
+							<h3 className="mt-0 text-accent-amber font-bold text-lg mb-4 font-heading italic [text-shadow:0_0_14px_rgba(245,159,10,0.5)]">
 								Heads-Up: O Pote vs. O Final
-							</h4>
+							</h3>
 							<p className="text-text-main m-0 leading-relaxed text-sm">
 								Um pote heads-up com 9 jogadores ativos{' '}
 								<strong className="text-text-bright">
@@ -172,7 +172,7 @@ export default function AulaICMPage() {
 					{/* Arquétipo I */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-emerald hover:border-accent-emerald/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
-							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-emerald/10 flex items-center justify-center text-accent-emerald text-xl group-hover:scale-110 transition-transform duration-500">
+							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-emerald-surface/10 flex items-center justify-center text-accent-emerald text-xl group-hover:scale-110 transition-transform duration-500">
 								<i className="fa-solid fa-handshake" />
 							</div>
 							<div>
@@ -197,7 +197,7 @@ export default function AulaICMPage() {
 							</p>
 							<div className="mt-4 p-4 rounded-xl bg-accent-emerald/5 border border-accent-emerald/10">
 								<p className="m-0 text-accent-emerald-light italic">
-									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
+									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic text-text-dim">
 										Resolução Nash:
 									</strong>{' '}
 									A agressividade pré-flop desaparece. Ranges de flat call inflam
@@ -211,7 +211,7 @@ export default function AulaICMPage() {
 					{/* Arquétipo II */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-rose hover:border-accent-rose/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
-							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-rose/10 flex items-center justify-center text-accent-rose text-xl group-hover:scale-110 transition-transform duration-500">
+							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-rose-surface/10 flex items-center justify-center text-accent-rose text-xl group-hover:scale-110 transition-transform duration-500">
 								<i className="fa-solid fa-scale-unbalanced" />
 							</div>
 							<div>
@@ -236,7 +236,7 @@ export default function AulaICMPage() {
 							</p>
 							<div className="mt-4 p-4 rounded-xl bg-accent-rose/5 border border-accent-rose/10">
 								<p className="m-0 text-accent-rose-light italic">
-									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
+									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic text-text-dim">
 										Resolução Nash:
 									</strong>{' '}
 									A agressão do BTN é estrangulada. A matemática corta sua
@@ -251,7 +251,7 @@ export default function AulaICMPage() {
 					{/* Arquétipo III */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-amber hover:border-accent-amber/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
-							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-amber/10 flex items-center justify-center text-accent-amber text-xl group-hover:scale-110 transition-transform duration-500">
+							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-amber-surface/10 flex items-center justify-center text-accent-amber text-xl group-hover:scale-110 transition-transform duration-500">
 								<i className="fa-solid fa-person-falling-burst" />
 							</div>
 							<div>
@@ -275,7 +275,7 @@ export default function AulaICMPage() {
 							</p>
 							<div className="mt-4 p-4 rounded-xl bg-accent-amber/5 border border-accent-amber/10">
 								<p className="m-0 text-accent-amber-light italic">
-									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
+									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic text-text-dim">
 										Resolução Nash:
 									</strong>{' '}
 									Falso. O laddering passivo impera. Foldar rende dinheiro limpo a
@@ -289,7 +289,7 @@ export default function AulaICMPage() {
 					{/* Arquétipo IV */}
 					<div className="p-8 rounded-3xl bg-white/2 border border-white/5 border-t-4 border-t-accent-indigo hover:border-accent-indigo/30 hover:bg-white/4 transition-all group flex flex-col">
 						<div className="flex items-center gap-4 mb-6">
-							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-indigo/10 flex items-center justify-center text-accent-indigo text-xl group-hover:scale-110 transition-transform duration-500">
+							<div className="w-12 h-12 shrink-0 rounded-full bg-accent-indigo-surface/10 flex items-center justify-center text-accent-indigo text-xl group-hover:scale-110 transition-transform duration-500">
 								<i className="fa-solid fa-chess-king" />
 							</div>
 							<div>
@@ -313,7 +313,7 @@ export default function AulaICMPage() {
 							</p>
 							<div className="mt-4 p-4 rounded-xl bg-accent-indigo/5 border border-accent-indigo/10">
 								<p className="m-0 text-accent-indigo-light italic">
-									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic opacity-70">
+									<strong className="uppercase text-[0.6rem] tracking-widest block mb-1 not-italic text-text-dim">
 										Resolução Nash:
 									</strong>{' '}
 									O ecossistema FGS impõe um RP substancial (~12%) ao CL. Se o
@@ -327,7 +327,7 @@ export default function AulaICMPage() {
 
 					{/* Arquétipo V (Span Completo) */}
 					<div className="p-8 rounded-3xl bg-linear-to-br from-white/5 to-transparent border border-white/5 border-t-4 border-t-accent-violet hover:border-accent-violet/30 hover:from-white/10 transition-all md:col-span-2 group flex flex-col sm:flex-row items-center sm:items-start gap-8">
-						<div className="w-16 h-16 shrink-0 rounded-full bg-accent-violet/10 flex items-center justify-center text-accent-violet text-2xl group-hover:scale-110 transition-transform duration-500">
+						<div className="w-16 h-16 shrink-0 rounded-full bg-accent-violet-surface/10 flex items-center justify-center text-accent-violet text-2xl group-hover:scale-110 transition-transform duration-500">
 							<i className="fa-solid fa-fire-flame-curved" />
 						</div>
 						<div className="space-y-4 text-sm text-text-muted leading-relaxed flex-1 text-center sm:text-left">

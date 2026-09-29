@@ -1,4 +1,5 @@
 ---
+
 id: handoff-2026-09-25-governanca-pools-openrouter-e-impacto
 tipo: handoff
 escopo: Site -- institucionalizacao da governanca de pools multi-tier openrouter, skill de impacto de sessao e handoff oficial
@@ -37,31 +38,12 @@ nao_verificado:
 referencias_nao_resolviveis:
   - nucleo/nucleo_compartilhado.json
 revisoes_de_ancora:
-  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+  - registro: handoff-2026-09-25-governanca-pools-openrouter-e-impacto
     caminhos:
       - CLAUDE.md
     parecer: >-
-      Revisado e mantido valido. A adicao da secao 3.1 e atualizacao das secoes 7 e 9.3 ao CLAUDE.md formalizam a governanca de pools multi-tier e a avaliacao factual de impacto de sessao sem alterar a taxonomia estrutural de pastas ou regras de relatorios.
-  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A nova secao 9.3 em CLAUDE.md preserva a proveniencia executavel do feedback da secao 8.3, servindo como medicao complementar de impacto ao final da sessao.
-  - registro: checkpoint-2026-06-14-infrastructure-hardening
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. O endurecimento de infraestrutura e integralmente preservado; a mudanca em CLAUDE.md restringe-se a adicao da regra de avaliacao factual de sessao e governanca de pools OpenRouter.
-  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. As diretrizes de handoff precedentes permanecem validas e sao estendidas para incluir metricas factuais objetivas e pools multi-tier em todo encerramento anunciado.
-  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. Registro historico mantido integro; a clarificacao operacional reforca a governanca e o rigor de medicao do ecossistema SOTA v8.0 Gold.
+      Revisado e mantido valido. Registro historico mantido integro; a clarificacao operacional reforca a governanca e o rigor de medicao do ecossistema SOTA v8.0 Gold. Revisado em 2026-09-29; diff desta revisada: +290/-259.
+
 ---
 
 # Handoff Oficial: Governanca de Pools Multi-Tier OpenRouter e Avaliacao Factual de Impacto

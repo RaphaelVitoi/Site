@@ -86,7 +86,7 @@ export default function ComparisonRadar({
 							value={compareId}
 							onChange={handleScenarioChange}
 							aria-label="Selecionar Cenário de Comparação"
-							className="w-full bg-slate-950/80 border border-white/10 rounded-xl text-text-light px-4 py-2.5 text-[0.72rem] font-bold focus:ring-1 focus:ring-accent-indigo focus:border-accent-indigo outline-none transition-all cursor-pointer appearance-none pr-10 shadow-inner"
+							className="w-full bg-slate-950/80 border border-white/10 rounded-xl text-text-main px-4 py-2.5 text-[0.72rem] font-bold focus:ring-1 focus:ring-accent-indigo focus:border-accent-indigo outline-none transition-all cursor-pointer appearance-none pr-10 shadow-inner"
 						>
 							<option value="" className="bg-slate-950 text-text-dim">
 								Injetar Cenário de Comparação (Overlay)...
@@ -381,7 +381,7 @@ export default function ComparisonRadar({
 							<span className="text-[0.55rem] font-black uppercase tracking-wider text-accent-indigo block">
 								Diretriz Tática (Axioma Lipe Piv):
 							</span>
-							<p className="text-[0.68rem] text-text-light leading-relaxed m-0 italic">
+							<p className="text-[0.68rem] text-text-main leading-relaxed m-0 italic">
 								&quot;{metricsA.exploitDirectives[0]}&quot;
 							</p>
 						</div>
@@ -431,7 +431,7 @@ export default function ComparisonRadar({
 									<span className="text-[0.55rem] font-black uppercase tracking-wider text-accent-rose block">
 										Diretriz Tática (Axioma Lipe Piv):
 									</span>
-									<p className="text-[0.68rem] text-text-light leading-relaxed m-0 italic">
+									<p className="text-[0.68rem] text-text-main leading-relaxed m-0 italic">
 										&quot;{metricsB.exploitDirectives[0]}&quot;
 									</p>
 								</div>

@@ -160,7 +160,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 							Malmuth-Harville SOTA
 						</span>
 					</div>
-					<p className="text-xs text-slate-400 mt-1">
+					<p className="text-xs text-text-muted mt-1">
 						Derivação exata de $EV, &Delta;$EV(Perda) / &Delta;$EV(Ganho) e acoplamento em tempo real com o Profiler de Nash
 					</p>
 				</div>
@@ -173,7 +173,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 						className={`px-3 py-1.5 rounded-md font-bold transition-all ${
 							displayMode === 'RP'
 								? 'bg-indigo-600 text-white shadow'
-								: 'text-slate-400 hover:text-slate-200'
+								: 'text-text-muted hover:text-text-bright'
 						}`}
 					>
 						Risk Premium (%)
@@ -184,7 +184,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 						className={`px-3 py-1.5 rounded-md font-bold transition-all ${
 							displayMode === 'BF'
 								? 'bg-indigo-600 text-white shadow'
-								: 'text-slate-400 hover:text-slate-200'
+								: 'text-text-muted hover:text-text-bright'
 						}`}
 					>
 						Bubble Factor (x)
@@ -195,7 +195,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 						className={`px-3 py-1.5 rounded-md font-bold transition-all ${
 							displayMode === 'REQ_EQ'
 								? 'bg-indigo-600 text-white shadow'
-								: 'text-slate-400 hover:text-slate-200'
+								: 'text-text-muted hover:text-text-bright'
 						}`}
 					>
 						Equidade Requerida
@@ -205,7 +205,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 			{/* Presets de Torneios Reais do Circuito */}
 			<div className="space-y-2">
-				<div className="text-xs text-slate-400 font-bold uppercase tracking-wider block">
+				<div className="text-xs text-text-muted font-bold uppercase tracking-wider block">
 					Estruturas Reais de Torneios &amp; Mesas Finais:
 				</div>
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
@@ -217,11 +217,11 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 							className={`p-2.5 text-left rounded-lg border text-xs transition-all ${
 								activePreset.id === p.id
 									? 'bg-indigo-950/60 border-indigo-400 text-indigo-200 shadow-md ring-1 ring-indigo-500/50'
-									: 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700 hover:bg-slate-800/40'
+									: 'bg-slate-900/60 border-slate-800 text-text-main hover:border-slate-700 hover:bg-slate-800/40'
 							}`}
 						>
 							<div className="font-bold">{p.name}</div>
-							<div className="text-[10px] text-slate-400 truncate mt-0.5">{p.category}</div>
+							<div className="text-[10px] text-text-muted truncate mt-0.5">{p.category}</div>
 							<div className="text-[10px] text-indigo-400 mt-1">
 								{p.defaultStacks.length} Jogadores | Total: $
 								{p.payouts.reduce((a, b) => a + b, 0).toLocaleString()}
@@ -233,7 +233,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 			{/* Grid da Matriz Heatmap */}
 			<div className="overflow-x-auto bg-slate-950 p-4 rounded-xl border border-slate-800">
-				<div className="text-xs text-slate-400 mb-2 flex items-center justify-between">
+				<div className="text-xs text-text-muted mb-2 flex items-center justify-between">
 					<span>
 						<strong className="text-indigo-400">{UI_I18N.matrix.rows}</strong> {UI_I18N.matrix.heroRole} &times;{' '}
 						<strong className="text-indigo-400">{UI_I18N.matrix.cols}</strong> {UI_I18N.matrix.villainRole}
@@ -246,13 +246,13 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 				<table className="w-full text-center text-xs border-collapse">
 					<thead>
 						<tr>
-							<th className="p-2 text-left text-slate-400 font-bold bg-slate-900/80 border border-slate-800">
+							<th className="p-2 text-left text-text-muted font-bold bg-slate-900/80 border border-slate-800">
 								{UI_I18N.matrix.heroVsVillain}
 							</th>
 							{matrixResult.playerNames.map((name, j) => (
 								<th
 									key={`head-col-${name}-${j}`}
-									className="p-2 text-slate-300 font-bold bg-slate-900/80 border border-slate-800 min-w-21.25"
+									className="p-2 text-text-main font-bold bg-slate-900/80 border border-slate-800 min-w-21.25"
 								>
 									{name.split(' ')[0]}
 								</th>
@@ -262,9 +262,9 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 					<tbody>
 						{matrixResult.playerNames.map((rowName, i) => (
 							<tr key={`row-${rowName}-${i}`}>
-								<td className="p-2 text-left font-bold text-slate-300 bg-slate-900/60 border border-slate-800 whitespace-nowrap">
+								<td className="p-2 text-left font-bold text-text-main bg-slate-900/60 border border-slate-800 whitespace-nowrap">
 									{rowName}
-									<span className="block text-[10px] text-slate-500 font-normal">
+									<span className="block text-[10px] text-text-dim font-normal">
 										${requireItem(matrixResult.baseEv, i, 'baseEv').toLocaleString()} $EV
 									</span>
 								</td>
@@ -341,21 +341,21 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 
 				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.bubbleFactor}</div>
+						<div className="text-[10px] text-text-muted">{UI_I18N.metrics.bubbleFactor}</div>
 						<div className="text-lg font-black text-indigo-400 mt-0.5">
 							{matchupDetail.bubbleFactor.toFixed(3)}x
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.heroRp}</div>
+						<div className="text-[10px] text-text-muted">{UI_I18N.metrics.heroRp}</div>
 						<div className="text-lg font-black text-rose-400 mt-0.5">
 							+{matchupDetail.riskPremium.toFixed(1)}%
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.villainRp}</div>
+						<div className="text-[10px] text-text-muted">{UI_I18N.metrics.villainRp}</div>
 						<div className="text-lg font-black text-amber-400 mt-0.5">
 							+
 							{requireCell(
@@ -369,21 +369,21 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.gainDelta}</div>
+						<div className="text-[10px] text-text-muted">{UI_I18N.metrics.gainDelta}</div>
 						<div className="text-sm font-bold text-emerald-400 mt-1">
 							+${matchupDetail.deltaWin.toLocaleString()}
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.lossDelta}</div>
+						<div className="text-[10px] text-text-muted">{UI_I18N.metrics.lossDelta}</div>
 						<div className="text-sm font-bold text-rose-400 mt-1">
 							-${matchupDetail.deltaLose.toLocaleString()}
 						</div>
 					</div>
 
 					<div className="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
-						<div className="text-[10px] text-slate-400">{UI_I18N.metrics.riskAsymmetry}</div>
+						<div className="text-[10px] text-text-muted">{UI_I18N.metrics.riskAsymmetry}</div>
 						<div className="text-sm font-bold text-purple-400 mt-1">
 							{matchupDetail.riskAsymmetry > 0
 								? `+${matchupDetail.riskAsymmetry}`
@@ -393,7 +393,7 @@ export const BubbleFactorMatrix: React.FC<BubbleFactorMatrixProps> = ({
 					</div>
 				</div>
 
-				<div className="p-3 bg-slate-950/80 rounded-lg border border-indigo-500/20 text-xs text-slate-300 flex items-center justify-between">
+				<div className="p-3 bg-slate-950/80 rounded-lg border border-indigo-500/20 text-xs text-text-main flex items-center justify-between">
 					<div>
 						<strong className="text-indigo-400">{UI_I18N.matrix.sotaGuideline}</strong>{' '}
 						{matchupDetail.tacticalAdvice}

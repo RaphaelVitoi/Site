@@ -723,9 +723,9 @@ export default function DashboardSOTA({
                 <span className="text-text-muted mb-1 block text-[0.6rem] tracking-widest uppercase">
                   OOP Call (ChipEV)
                 </span>
-                <span className="font-mono text-xl font-black text-slate-400">50.0%</span>
+                <span className="font-mono text-xl font-black text-text-muted">50.0%</span>
               </div>
-              <div className="bg-accent-rose/10 border-accent-rose/20 flex flex-col items-center justify-center rounded-2xl border p-4 text-center shadow-[0_0_20px_rgba(244,63,94,0.1)]">
+              <div className="bg-accent-rose-surface/10 border-accent-rose/20 flex flex-col items-center justify-center rounded-2xl border p-4 text-center shadow-[0_0_20px_rgba(244,63,94,0.1)]">
                 <span className="text-accent-rose mb-1 block text-[0.6rem] tracking-widest uppercase">
                   OOP Call (SOTA)
                 </span>

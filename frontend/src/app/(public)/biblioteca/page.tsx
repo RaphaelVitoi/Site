@@ -379,7 +379,7 @@ export default function BibliotecaIndexPage() {
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex items-center gap-2.5">
-                            <div className="bg-text-darker group-hover/art:bg-accent-indigo h-1.5 w-1.5 rounded-full transition-colors" />
+                            <div className="bg-text-darker group-hover/art:bg-accent-indigo-surface h-1.5 w-1.5 rounded-full transition-colors" />
                             <span className="text-text-main text-xs font-bold tracking-tight transition-colors group-hover/art:text-white">
                               {article.title}
                             </span>
@@ -447,7 +447,7 @@ function PathBadge({ step, label, href }: Readonly<{ step: string; label: string
       href={href}
       className="bg-bg-panel/40 hover:border-accent-indigo/40 hover:bg-bg-panel/60 group/badge flex items-center gap-3 rounded-2xl border border-white/5 px-4 py-3 transition-all"
     >
-      <span className="bg-accent-indigo/10 text-accent-indigo-light border-accent-indigo/20 flex h-6 w-6 items-center justify-center rounded-lg border text-[0.65rem] font-black transition-colors group-hover/badge:bg-[#3730A3] group-hover/badge:text-white">
+      <span className="bg-accent-indigo-surface/10 text-accent-indigo-light border-accent-indigo/20 flex h-6 w-6 items-center justify-center rounded-lg border text-[0.65rem] font-black transition-colors group-hover/badge:bg-[#3730A3] group-hover/badge:text-white">
         {step}
       </span>
       <span className="text-text-dim text-[0.7rem] font-black tracking-widest uppercase transition-colors group-hover/badge:text-white">

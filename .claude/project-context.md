@@ -43,11 +43,19 @@ comprova conformidade com o requisito do projeto.
 
 O ultimo relatorio de backend disponivel nesta atualizacao e
 `reports/AUDITORIA-2026-09-21-backend-padrao-ouro.md`: registra commit-base
-`5e14c63e` e Python 3.11.16. O checkout observado esta em `3505fed4` e o
-manifesto exige Python 3.12+. Portanto, os resultados do relatorio sao
-historicos, nao verificacao do estado atual. O mesmo relatorio informa 80%
-overall e aproximadamente 64% para o core; os escopos precisam ser reconciliados
-antes de comparar ou declarar um percentual unico.
+`5e14c63e` e Python 3.11.16. **O commit observado na auditoria de 2026-09-29 era
+`b173e47e`, e o runtime medido e Python 3.14.7** — que satisfaz o `>=3.12` do
+manifesto, ao contrario do 3.11.16 do relatorio. Portanto, os resultados do
+relatorio sao historicos, nao verificacao do estado atual. O mesmo relatorio
+informa 80% overall e aproximadamente 64% para o core; os escopos precisam ser
+reconciliados antes de comparar ou declarar um percentual unico.
+
+**O commit e a versao sao medidos na auditoria, nao gravados aqui.** O proprio
+documento adverte, na secao de fontes canonicas: nao manter aqui resultado sem
+medicao atual e escopo identificado. Um SHA congelado no contexto e exatamente
+o que envelhece em silencio: em 2026-09-29 ele declarava `3505fed4` contra um
+checkout em `b173e47e`, sem que nada acusasse. Quem precisar do valor, mede com
+`git rev-parse --short HEAD` e `python --version` no momento da tarefa.
 
 ## Fontes canonicas
 

@@ -1,4 +1,5 @@
 ---
+
 id: registro-2026-09-25-precedencia-economica-assinaturas-pro-e-nuvem-free
 tipo: registro
 escopo: Site -- formalizacao da precedencia economica de cotas pro no tier 1 e mitigacao de custos de infraestrutura via ollama cloud, llama.cpp e hermes agent
@@ -34,39 +35,12 @@ verificado:
 nao_verificado:
   - "estresse de carga simultanea em mais de 100 sessoes concorrentes consumindo a mesma franquia Pro"
 revisoes_de_ancora:
-  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+  - registro: registro-2026-09-25-precedencia-economica-assinaturas-pro-e-nuvem-free
     caminhos:
       - CLAUDE.md
     parecer: >-
-      Revisado e mantido valido. A adicao da secao 3.2 e refinamento da secao 7 no CLAUDE.md estabelecem a precedencia economica e o papel critico de modelos free em nuvem e edge sem alterar a taxonomia de documentacao ou estrutura de relatorios.
-  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A secao 8.3 e a proveniencia executavel do feedback permanecem intactas; as diretrizes economicas atuam como criterio de roteamento orcamentario de modelos.
-  - registro: checkpoint-2026-06-14-infrastructure-hardening
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. O endurecimento de infraestrutura e reforcado pela mitigacao ativa de custos de servidores e VMs atraves de inferencia Zero-RAM e runtimes locais de alta eficiencia.
-  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A harmonizacao de handoff incorpora a 7a dimensao de avaliacao de sessao preservando integralmente o fluxo de governanca e calibracao.
-  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A governanca v8.0 Gold e preservada e fortalecida com a piramide de alocacao economica de 4 niveis.
-  - registro: handoff-2026-09-25-governanca-pools-openrouter-e-impacto
-    caminhos:
-      - .agents/skills/session-impact-evaluator/SKILL.md
-      - .agents/skills/site-session-handoff/SKILL.md
-      - CLAUDE.md
-      - scripts/ops/avaliar_impacto_sessao.py
-    parecer: >-
-      Revisado e mantido valido. A governanca de pools OpenRouter multi-tier e os instrumentos de avaliacao de impacto sao expandidos com a 7a dimensao economica (prioridade de cotas Pro no Tier 1 e runtimes free em nuvem Ollama, llama.cpp e Hermes Agent), preservando integralmente todas as determinacoes do handoff precedente.
+      Revisado e mantido valido. A governanca de pools OpenRouter multi-tier e os instrumentos de avaliacao de impacto sao expandidos com a 7a dimensao economica (prioridade de cotas Pro no Tier 1 e runtimes free em nuvem Ollama, llama.cpp e Hermes Agent), preservando integralmente todas as determinacoes do handoff precedente. Revisado em 2026-09-29; diff desta revisada: +290/-259.
+
 ---
 
 # Registro: Precedencia Economica de Assinaturas Pro e Mitigacao de Custos de Infraestrutura

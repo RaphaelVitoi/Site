@@ -1,4 +1,6 @@
 ---
+
+
 id: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
 tipo: handoff
 escopo: Site
@@ -33,173 +35,8 @@ config_medida:
   eligible_current_cycle: 1
   feedback_handoff_literal: 9.8
   feedback_source: instrucao explicita recebida da tarefa coordenadora 01a09547-c8df-7641-87b5-83723b4b645d
-revisoes_de_ancora:
-  - registro: taxonomia-canonica-de-documentacao-e-relatorios
-    caminhos: [CLAUDE.md]
-    parecer: A taxonomia permanece vigente; a adicao local formaliza proveniencia de feedback sem mudar diretorios, papéis ou esquema documental.
-  - registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl, scripts/ops/Register-AgentCalibrationFeedback.ps1, tests/test_agent_calibration_feedback.py]
-    parecer: O feedback 7.5 e sua crítica histórica permanecem literais; o ledger recebeu apenas appends e o escritor agora exige proveniência para registros futuros.
-  - registro: auditoria-2026-09-02-curadoria-mcp-e-processos-residuais
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A nota da curadoria e sua correção permanecem no encadeamento; a revisão só explicita seu handoff efetivo por correção append-only.
-  - registro: auditoria-2026-09-02-retrospectiva-e-observacao-de-calibracao
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A retrospectiva conserva a escala corrigida e suas inferências históricas; os novos appends não reescrevem a série observada.
-  - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
-    caminhos: [CLAUDE.md, scripts/ops/New-AgentCalibrationDailyEvidence.ps1, scripts/ops/Register-AgentCalibrationFeedback.ps1]
-    parecer: A auditoria já exigia modelo e supervisão; a mudança torna a exigência fail-closed e separa a elegibilidade de proveniência da estatística histórica.
-  - registro: auditoria-2026-09-05-trabalho-assistido-do-gemini-no-ide
-    caminhos: [scripts/ops/New-AgentCalibrationDailyEvidence.ps1]
-    parecer: O achado sobre trabalho assistido continua histórico; o gerador agora declara explicitamente que IDE compartilhada não prova o conector.
-  - registro: auditoria-2026-09-08-massa-de-fichas-fonte-nao-unica-e-desvio-de-foco
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A âncora do ledger preserva seus feedbacks e outliers; as correções de scope são apêndices rastreáveis, não alteração da evidência de desvio.
-  - registro: auditoria-2026-09-12-a-tarefa-que-ficou-em-aberto-e-a-memoria-de-curto-prazo
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O diagnóstico de memória curta e seus outliers permanece; a nova leitura efetiva evita confundir campos originais ausentes com arbitragens já registradas.
-  - registro: checkpoint-2026-06-14-infrastructure-hardening
-    caminhos: [CLAUDE.md]
-    parecer: O checkpoint de infraestrutura não é invalidado; a governança acrescenta contrato de calibração sem reclassificar seus controles.
-  - registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
-    caminhos: [CLAUDE.md]
-    parecer: O handoff de governança segue histórico; a cláusula nova apenas especializa rastreabilidade do feedback e não altera a hierarquia declarada.
-  - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
-    caminhos: [CLAUDE.md]
-    parecer: A âncora de governança continua válida; proveniência de condutor é adição ao processo de calibração, não alteração de LFS ou da malha auditada.
-  - registro: handoff-2026-09-01-prioridade-pmev-continuacao
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl, scripts/ops/Register-AgentCalibrationFeedback.ps1, tests/test_agent_calibration_feedback.py]
-    parecer: O handoff preserva nota 7.5 e prioridade PMev; o escritor e seu teste agora registram proveniência obrigatória sem converter a nota histórica.
-  - registro: handoff-2026-09-02-curadoria-mcp-quarentena-e-roteamento-lazy
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A sessão de curadoria foi confirmada como handoff por fontes citadas; a correção de scope não altera a quarentena, seus processos ou a nota corrigida.
-  - registro: handoff-2026-09-03-guarda-de-governanca-camada-anthropic-e-cobertura-cve
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O registro da nota 9.5 e da cadeia permanece válido; a elegibilidade nova preserva o evento, mas não presume supervisão ausente.
-  - registro: handoff-2026-09-03-procedencia-de-solve-e-portao-de-reprodutibilidade
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: As confirmações históricas do padrão continuam evidência; futura corroboração exige ainda proveniência efetiva no ciclo corrente.
-  - registro: handoff-2026-09-04-pmev-credenciais-e-submodulos
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O handoff PMev não é reavaliado por esta mudança; o ledger conserva a nota e ganha somente regras para uso futuro da evidência.
-  - registro: handoff-2026-09-04-refinamento-sota-radar-telemetria-e-mcps-google
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O refinamento e sua nota permanecem imutáveis; a cadeia passa a distinguir retenção histórica de autorização para calibrar.
-  - registro: handoff-2026-09-05-fechamento-do-ciclo-e-regua-do-jules
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O fechamento registrado continua sendo o marco sequencial; a proveniência restringe a amostra seguinte, sem reabrir ciclo concluído.
-  - registro: handoff-2026-09-07-integracao-astra-e-calibracao-de-procedimento
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A integração Astra segue documentada; correções sucessivas de modelo continuam aplicadas antes da elegibilidade, sem usar valor superado.
-  - registro: handoff-2026-09-07-orquestrador-free-tier-e-calibracao-9-0
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A nota 9.0 e a evidência do orquestrador são mantidas; o novo contrato não infere conector ou supervisão de rótulos de sessão.
-  - registro: handoff-2026-09-10-raiz-versionada-e-o-portao-que-media-outra-pagina
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A lição de medir o alvo real permanece aplicável; o ledger continua append-only e sua nova leitura expõe, em vez de ocultar, inelegibilidade.
-  - registro: registro-2026-08-29-governanca-piramidal-sota
-    caminhos: [CLAUDE.md]
-    parecer: A governança piramidal não muda; o contrato reconhece arbitragem Tier 0 como fonte de correções efetivas, sem transformar permissão em fato medido.
-  - registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
-    caminhos: [CLAUDE.md]
-    parecer: A regra de âncora permanece; esta revisão centralizada declara cada caminho afetado e seu parecer, em vez de suprimir revisões por volume.
-  - registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
-    caminhos: [tests/test_record_gate_merge.py]
-    parecer: A semântica do guard de merge é preservada; a atribuição direta de RAIZ substitui setattr constante por exigência do Ruff, sem alterar o repositório isolado ou a regra testada.
-  - registro: auditoria-2026-08-31-integridade-e-integracao-antigravity
-    caminhos: [tests/test_cwv_gate_truthfulness.py]
-    parecer: A separação entre cobertura ausente e aprovação permanece inalterada; a prova executa as mesmas fases e só ganha prazo compatível com a bateria integral do ambiente Windows.
-  - registro: auditoria-cwv-lighthouse-2026-09-01
-    caminhos: [tests/test_cwv_gate_truthfulness.py]
-    parecer: O teste continua recusando selo verde sem CDP e não altera a distinção entre observação de runtime, Lighthouse e revisão humana documentada.
-  - registro: registro-2026-09-07-procedencia-do-timesfm-e-json-do-cli
-    caminhos: [tests/test_cwv_gate_truthfulness.py]
-    parecer: A ampliação do limite do subprocesso não altera procedência, JSON ou CLI; ela evita classificar como falha um gate que ainda está executando suas verificações reais.
-  - registro: registro-2026-09-08-auditoria-de-tipagem-e-recorte-do-fingerprint
-    caminhos: [tests/test_cwv_gate_truthfulness.py]
-    parecer: O recorte de fingerprint e a exigência de incerteza verificável persistem; nenhum artefato Lighthouse é aceito, gerado ou reinterpretado por esta mudança de fixture.
-  - registro: registro-2026-09-08-ruff-format-e-o-ci-vermelho
-    caminhos: [tests/test_cwv_gate_truthfulness.py]
-    parecer: A alteração foi formatada e mantém o teste sob a verificação do CI; o escopo é o timeout de uma integração real, não uma exceção de formato ou qualidade.
-  - registro: registro-2026-09-10-o-encoding-que-matava-a-thread-leitora
-    caminhos: [tests/test_cwv_gate_truthfulness.py]
-    parecer: A codificação explícita e errors=replace, que preservam a leitura do output PowerShell, permanecem intactos; só o tempo máximo para receber esse output foi ajustado à execução medida.
-  - registro: registro-2026-09-02-adapters-ligado-ao-caminho-real-anthropic
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A âncora conserva sua ligação de adapters; os appends de calibração não alteram o diagnóstico de import ou o conteúdo original do feedback.
-  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
-    caminhos: [CLAUDE.md, reports/agent-calibration/feedback-ledger.jsonl, scripts/ops/New-AgentCalibrationDailyEvidence.ps1]
-    parecer: A correção de escala e leitura antes da análise continuam válidas; agora correções também precedem a decisão de proveniência e elegibilidade.
-  - registro: registro-2026-09-02-cultura-invariante-no-gerador-de-evidencia
-    caminhos: [scripts/ops/New-AgentCalibrationDailyEvidence.ps1, tests/test_calibracao_portao_por_sessao.py]
-    parecer: A leitura cultural invariável permanece; os novos testes acrescentam proveniência e preservam o contrato de contagem por sessão.
-  - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
-    caminhos: [CLAUDE.md, scripts/ops/New-AgentCalibrationDailyEvidence.ps1, scripts/ops/Register-AgentCalibrationFeedback.ps1, tests/test_calibracao_portao_por_sessao.py]
-    parecer: O mínimo de três sessões não mudou; a revisão alinha o heartbeat e exige que só feedbacks com handoff e proveniência possam compor esse mínimo.
-  - registro: registro-2026-09-03-nota-10-e-outlier-de-aceleracao
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A nota e o outlier permanecem preservados; registro de outlier não é promovido a handoff pela nova regra.
-  - registro: registro-2026-09-03-triade-fronteira-chico-e-concorrencia
-    caminhos: [CLAUDE.md]
-    parecer: A tríade de fronteira não é alterada; o conector do condutor é explicitamente separado da IDE compartilhada para evitar falsa atribuição.
-  - registro: registro-2026-09-04-nota-9-5-e-analise-paralela-de-nos
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A análise e nota preservam o contexto paralelo; o ledger não teve evento histórico reescrito, apenas correções anexadas.
-  - registro: registro-2026-09-05-fechamento-do-ciclo-de-calibracao
-    caminhos: [scripts/ops/New-AgentCalibrationDailyEvidence.ps1, scripts/ops/Record-AgentCalibration.ps1, tests/test_calibracao_fechamento_do_ciclo.py]
-    parecer: O ciclo continua fechado por sequência; o registrador passa a checar a lista elegível sob lock antes de aceitar corroborações.
-  - registro: registro-2026-09-05-regua-para-agente-autonomo-de-nuvem
-    caminhos: [CLAUDE.md]
-    parecer: A régua para agentes autônomos continua vigente; o heartbeat externo é reconciliado sem conferir autorização automática para calibração.
-  - registro: registro-2026-09-05-saneamento-nexus-ollama-e-auto-diagnostico
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O saneamento e seu diagnóstico não são alterados; a série do ledger mantém dados históricos separados da amostra elegível.
-  - registro: registro-2026-09-07-integracao-gpt6-astra-e-retirada-do-fable
-    caminhos: [CLAUDE.md]
-    parecer: A integração histórica permanece, inclusive sua correção posterior de modelo; a governança agora exige não deduzir modelo ausente.
-  - registro: registro-2026-09-08-arbitragem-soberana-sobre-a-lei-de-concorrencia
-    caminhos: [CLAUDE.md]
-    parecer: A arbitragem soberana é aplicada como correção aditiva auditável; a implementação não a usa para ocultar lacunas sem fonte específica.
-  - registro: registro-2026-09-08-o-padrao-de-desvio-de-foco
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O padrão histórico permanece no ledger; corroboração futura exige registros elegíveis distintos e não suaviza outliers.
-  - registro: registro-2026-09-09-o-teste-media-o-ledger-da-maquina
-    caminhos: [scripts/ops/New-AgentCalibrationDailyEvidence.ps1]
-    parecer: A medição do ledger permanece efetiva; o gerador agora publica exclusões de proveniência ao lado de suas métricas, sem tratá-las como zero.
-  - registro: registro-2026-09-09-saneamento-medicao-datada-identificacao-agentes
-    caminhos: [CLAUDE.md]
-    parecer: A identificação medida de agentes continua válida; a regra nova preserva a separação entre modelo, veículo e superfície compartilhada.
-  - registro: registro-2026-09-10-feedback-9-5-multimodal-sota
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A nota multimodal segue literal; a identidade da sessão foi corrigida por append e a elegibilidade não inventa supervisão ausente.
-  - registro: registro-2026-09-11-fechamento-automatico-do-dia-10-e-o-outlier-sem-sessao
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: O outlier sem sessão permanece separado; a correção posterior de session_id é aplicada no estado efetivo antes da contagem.
-  - registro: registro-2026-09-11-teoria-sota-e-saneamento-multimodal
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl]
-    parecer: A teoria e o saneamento continuam documentados; o ledger conserva os fatos e restringe apenas seu emprego em calibração futura.
-  - registro: registro-2026-09-12-preludio-o-instrumento-que-sabia-abrir-e-nao-fechar
-    caminhos: [CLAUDE.md, reports/agent-calibration/feedback-ledger.jsonl, scripts/ops/Register-AgentCalibrationFeedback.ps1]
-    parecer: O prelúdio mantém uma sessão até o handoff; a nota 9.8 deste encerramento é literal e o escritor agora torna campos de proveniência obrigatórios.
-  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
-    caminhos: [CLAUDE.md]
-    parecer: A auditoria de harmonização segue histórica; o acréscimo de proveniência não modifica sua evidência ou suas conclusões de infraestrutura.
-  - registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
-    caminhos: [CLAUDE.md]
-    parecer: A análise integral preserva seu escopo; a governança recebeu regra específica de evidência de feedback, sem revisão de ecossistema não relacionada.
-  - registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
-    caminhos: [CLAUDE.md]
-    parecer: O relatório de impacto continua descritivo do seu corte; a mudança torna futuros dados de calibração mais atribuíveis sem retrofabricar métricas.
-  - registro: agent-calibration-daily-2026-09-02
-    caminhos: [reports/agent-calibration/feedback-ledger.jsonl, scripts/ops/New-AgentCalibrationDailyEvidence.ps1, tests/test_calibracao_portao_por_sessao.py]
-    parecer: O snapshot diário permanece uma fotografia histórica; o leitor atual preserva seu ledger e acrescenta elegibilidade acumulativa por proveniência.
-  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
-    caminhos: [CLAUDE.md, scripts/ops/AgentCalibrationProvenance.ps1, reports/AUDITORIA-2026-09-12-proveniencia-executavel-do-feedback.md]
-    parecer: "As modificacoes de 2026-09-20 expandem o conjunto de condutores validos (Hermes Agent/hermes-agent, Ollama/ollama, llama.cpp/llama-cpp) no AgentCalibrationProvenance.ps1 e documentam o mapeamento no CLAUDE.md. O registro AUDITORIA-2026-09-12-proveniencia-executavel-do-feedback.md recebe revisoes_de_ancora confirmando que a expansao e coerente com seu contrato fail-closed. Nenhuma das tres modificacoes invalida os contratos existentes; todas sao aditivas."
 
-  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
-    caminhos: [tests/test_calibracao_fechamento_do_ciclo.py]
-    parecer: "test_calibracao_fechamento_do_ciclo.py corrigido time-bomb: 3 datas hardcoded (2026-09-21/22/23) substituidas por timedelta dinamico. Valida fechamento por sequencia, nao por relogio. Ancora de proveniancia do handoff intacta -- causa-raiz eliminada sem alterar logica de ancoragem."
+
 verificado:
   - configuracao persistida da automacao relida e regra acumulativa confirmada
   - duas cadeias validadas novamente em pwsh nesta consolidacao
@@ -215,6 +52,28 @@ nao_verificado:
   - ausencia de comprovacao especifica do regime de supervisao em sete registros efetivos
   - feedback 9.8 documentado neste relatorio sem novo append ao ledger nesta etapa
 supersede: null
+revisoes_de_ancora:
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado em 2026-09-29 e mantido valido. Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. As conclusoes deste registro sobre a piramide e sobre proveniencia seguem valendo. Diff desta revisada: +290/-259 linhas. Revisado em 2026-09-29; diff desta revisada: +290/-259.
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos:
+      - scripts/ops/AgentCalibrationProvenance.ps1
+    parecer: >-
+      Revisado em 2026-09-29 e mantido valido. Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. As conclusoes deste registro sobre a piramide e sobre proveniencia seguem valendo. Diff desta revisada: +290/-259 linhas. Revisado em 2026-09-29; diff desta revisada: +34/-2.
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos:
+      - reports/AUDITORIA-2026-09-12-proveniencia-executavel-do-feedback.md
+    parecer: >-
+      Este registro foi consolidado: as duas copias de `revisoes_de_ancora` no frontmatter foram unidas em uma, e a perda silenciosa da primeira -- o parser aceita chave duplicada e a ultima vence -- foi o que o portao reprovou. Nenhum veredito mudou. Revisado em 2026-09-29; diff: +15/-0 linhas.
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos:
+      - tests/test_agent_calibration_provenance.py
+    parecer: >-
+      Revisado em 2026-09-29 e mantido valido. Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. As conclusoes deste registro sobre a piramide e sobre proveniencia seguem valendo. Diff desta revisada: +290/-259 linhas. Revisado em 2026-09-29; diff desta revisada: +26/-2.
+
 ---
 
 # Handoff — reconciliação da calibração e proveniência efetiva do feedback

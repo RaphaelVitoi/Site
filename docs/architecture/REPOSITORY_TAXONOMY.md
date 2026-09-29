@@ -1,4 +1,5 @@
 ---
+
 id: taxonomia-canonica-de-documentacao-e-relatorios
 tipo: especificacao
 escopo: Site
@@ -25,11 +26,25 @@ verificado:
   - esquemas de frontmatter validados e compatíveis com pre-commit gate
 nao_verificado:
   - nenhuma modificacao destrutiva em arquivos legados
+
+supersede: null
 revisoes_de_ancora:
   - registro: taxonomia-canonica-de-documentacao-e-relatorios
-    caminhos: [CLAUDE.md]
-    parecer: "As modificacoes de 2026-09-20 a CLAUDE.md (adicionar Hermes Agent, Ollama e llama.cpp como condutores validos no AgentCalibrationProvenance.ps1, ChatGPT 6 Astra como integrante do Tier 1, e Solar-Pro4 como condutor Hermes Agent no Tier 2) sao aditivas ao contrato existente e nao alteram a estrutura de diretorios, papéis ou esquema documental definidos pela taxonomia. A taxonomia permanece vigente."
-supersede: null
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. Revisado em 2026-09-29; diff: +290/-259 linhas.
+  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+    caminhos:
+      - reports/
+    parecer: >-
+      Diretorio: novos registros de 2026-09-29 e consolidacao de `revisoes_de_ancora` em 12 registros. Estrutura de diretorios, papeis e esquema documental nao mudou; a taxonomia permanece vigente. Revisado em 2026-09-29; diff: +15/-0 linhas.
+  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+    caminhos:
+      - docs/
+    parecer: >-
+      Diretorio: `docs/INDEX.md` deixa de apresentar ordem de leitura como ordem de autoridade, e o link morto de MCP_ECOSYSTEM_TOPOLOGY foi corrigido. Nenhum papel, esquema ou contrato documental mudou. Revisado em 2026-09-29; diff: +28/-18 linhas.
+
 ---
 
 # TAXONOMIA CANÔNICA DE DOCUMENTAÇÃO, RELATÓRIOS E MEMÓRIA

@@ -41,6 +41,108 @@
   --color-accent-cyan: hsl(187, 92%, 69%);
   --color-accent-pink: hsl(330, 81%, 60%);
 
+  /*
+     * PASSO `-light` COMPLETO — 2026-09-29.
+     *
+     * Ate aqui so `indigo`, `emerald`, `rose` e `danger` tinham par `-light`.
+     * `text-accent-amber-light`, `text-accent-violet-light` e
+     * `text-accent-pink-light` eram usadas em 10 lugares e NAO EXISTIAM:
+     * Tailwind nao emite a classe, o texto herda a cor do corpo e o
+     *_realce_ pretendido nunca acontece. Nenhum relatorio de
+     * acessibilidade acusa isso — o texto herdado tem contraste valido.
+     * O defeito e AUSENCIA de efeito, e auditoria de acesso so mede
+     * presenca.
+     *
+     * Derivacao: os 4 tokens que existiam medem H~0, S+6..+9, L+11
+     * (3 de 4). Aplicado o mesmo passo aos 6 que faltavam. Contrastes
+     * medidos sobre `bg-base` (#0f1729), todos bem acima de AA 4.5:1:
+     *
+     *   amber  #ffb638  10.21:1      cyan    #99f3ff  14.14:1
+     *   gold   #ffd261  12.46:1      violet  #b58bfe   6.88:1
+     *   pink   #f872b5   6.86:1      sky     #30bcfd   8.29:1
+     *
+     * `-light` e para TEXTO e BORDA. Para fundo que carrega texto branco,
+     * a cor certa e a da camada de superficie, logo abaixo.
+     */
+  --color-accent-amber-light: hsl(38, 97%, 61%);
+  --color-accent-gold-light: hsl(43, 100%, 69%);
+  --color-accent-violet-light: hsl(262, 94%, 73%);
+  --color-accent-sky-light: hsl(199, 94%, 59%);
+  --color-accent-cyan-light: hsl(187, 97%, 80%);
+  --color-accent-pink-light: hsl(330, 86%, 67%);
+
+  /*
+     * CAMADA DE SUPERFICIE — a cor que CARREGA TEXTO, nao a cor que decora.
+     *
+     * MEDIDO EM 2026-09-29, por axe-core no DOM renderizado: os 14 tokens de
+     * acento acima reprovam contra texto branco. Nenhum passa de 4.5:1 —
+     * `cyan` marca 1.450:1, `gold` 1.656:1, `emerald` 2.654:1, e o proprio
+     * `indigo`, 4.408:1, que reprovava `.bg-accent-indigo > span` em 7 rotas.
+     *
+     * Atentativa de resolver abaixando o `L` do acento foi REJEITADA por
+     * medicao: os tokens de acento sao usados 400+ vezes como `text-accent-*`
+     * e borda sobre fundo escuro, onde o contraste sobra. Escurece-los para
+     * servir de fundo apagaria a identidade visual em 133 usos de
+     * `text-accent-indigo-light` e 104 de `text-accent-emerald`, para consertar
+     * 7 botoes. O remedio destruiria a cura.
+     *
+     * A solucao e a mesma que o piso de texto acima ja expressa, aplicada ao
+     * outro lado da relacao: acento continua acento, e a superficie que leva
+     * texto ganha token proprio. Mesma matiz (h) e mesma saturacao (s) do
+     * acento; muda SO a luminosidade, e SO o necessario para >= 4.6:1.
+     *
+     *   superficie = `bg-accent-*-surface`   (>= 4.6:1 com texto branco)
+     *   hover      = `hover:bg-accent-*-surface-active` (>= 5.5:1)
+     *
+     * O hover escurece em vez de clarear porque clarear REDUZ o contraste do
+     * texto branco. `hover:bg-accent-indigo-light` media 2.903:1 -- pior que a
+     * base -- e o axe nao o ve, porque axe inspeciona o estado atual e nao
+     * pseudo-classes. Fixo em teste.
+     *
+     * REGRA DE USO: fundo de botao, chip e badge -> `*-surface`.
+     * Acento puro -> texto, icone, borda, glow, regua, gradiente.
+     */
+  --color-accent-indigo-surface: hsl(239, 84%, 66%);
+  --color-accent-indigo-surface-active: hsl(239, 84%, 62%);
+  --color-accent-emerald-surface: hsl(158, 82%, 28%);
+  --color-accent-emerald-surface-active: hsl(158, 82%, 25%);
+  --color-accent-rose-surface: hsl(349, 89%, 48%);
+  --color-accent-rose-surface-active: hsl(349, 89%, 43%);
+  --color-accent-amber-surface: hsl(38, 92%, 33%);
+  --color-accent-amber-surface-active: hsl(38, 92%, 29%);
+  --color-accent-danger-surface: hsl(0, 84%, 49%);
+  --color-accent-danger-surface-active: hsl(0, 84%, 44%);
+  --color-accent-violet-surface: hsl(262, 89%, 63%);
+  --color-accent-violet-surface-active: hsl(262, 89%, 59%);
+  --color-accent-sky-surface: hsl(199, 89%, 36%);
+  --color-accent-sky-surface-active: hsl(199, 89%, 32%);
+
+  /*
+     * PALETA PARALELA — por que `slate-950` e `amber-400` continuam.
+     *
+     * MEDIDO EM 2026-09-29: 53 cores distintas da paleta implicita do
+     * Tailwind, 786 usos. Cada uma foi medida contra os 5 fundos reais do
+     * tema (`bg-base`, `bg-deep`, `bg-panel`, preto, branco) com o
+     * limiar WCAG correto — 4.5:1 carregando TEXTO, 3.0:1 em fundo e
+     * borda. **ZERO reprovam.** A mais apertada e `indigo-500` a 4.70:1,
+     * e ela nao carrega texto.
+     *
+     * Entao migrar esses 786 usos para os tokens do tema NAO e uma
+     * correcao: e reformatar. Trocaria `slate-950` (papel: superficie
+     * profunda) por `bg-deep`, que e a MESMA cor com outro nome, e
+     * `amber-400` (papel: estado de alerta) por `accent-amber-light`, que
+     * e um tom DIFERENTE — a migracao trocaria a cor que o autor escolheu
+     * por outra, alterando a leitura da tela sem corrigir nada.
+     *
+     * O que E defeito ja foi corrigido e tem guarda: 7 classes que o
+     * Tailwind nao emitia (ver tests/test_classes_de_cor_nao_emitidas.py)
+     * e os tokens `-light`/`-surface` que faltavam. Cor que existe e tem
+     * contraste valido e ESCOLHA, nao falha.
+     *
+     * Se um dia a paleta paralela for drenada, e por decisao de design
+     * system — nao por auditoria de acessibilidade.
+     */
+
   --radius-4xl: 2rem;
   --radius-5xl: 3rem;
 

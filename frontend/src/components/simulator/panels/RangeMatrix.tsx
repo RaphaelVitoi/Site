@@ -90,7 +90,7 @@ export default function RangeMatrix({
 			if (feReq <= 0.50) {
 				return 'bg-amber-950/80 text-amber-300 border-amber-500/40 hover:bg-amber-800/90 hover:border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.15)]';
 			}
-			return 'bg-slate-950/80 text-slate-500 border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
+			return 'bg-slate-950/80 text-text-dim border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
 		}
 
 		switch (detail.verdict) {
@@ -102,7 +102,7 @@ export default function RangeMatrix({
 				return 'bg-indigo-950/80 text-indigo-300 border-indigo-500/30 hover:bg-indigo-900/90 hover:border-indigo-300';
 			case 'DEATH_FOLD':
 			default:
-				return 'bg-slate-950/80 text-slate-500 border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
+				return 'bg-slate-950/80 text-text-dim border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
 		}
 	};
 
@@ -236,7 +236,7 @@ export default function RangeMatrix({
 							({summary.callPercentage}%)
 						</span>
 					</div>
-					<span className="text-[0.46rem] text-slate-400 mt-1 font-mono leading-none">
+					<span className="text-[0.46rem] text-text-muted mt-1 font-mono leading-none">
 						{summary.coreCallCombos} core + {summary.marginalCallCombos} marginais
 					</span>
 				</div>
@@ -253,7 +253,7 @@ export default function RangeMatrix({
 							({summary.foldPercentage}%)
 						</span>
 					</div>
-					<span className="text-[0.46rem] text-slate-400 mt-1 font-mono leading-none">
+					<span className="text-[0.46rem] text-text-muted mt-1 font-mono leading-none">
 						{summary.deathFoldCombos} death + {summary.riskyFoldCombos} risco ICM
 					</span>
 				</div>
@@ -343,7 +343,7 @@ export default function RangeMatrix({
 											</span>
 										)}
 										{displayMode === 'EQUITY' && (
-											<span className="text-[0.38rem] sm:text-[0.48rem] md:text-[0.52rem] font-bold mt-0.5 leading-none text-slate-300">
+											<span className="text-[0.38rem] sm:text-[0.48rem] md:text-[0.52rem] font-bold mt-0.5 leading-none text-text-main">
 												{detail.equity.toFixed(0)}%
 											</span>
 										)}
@@ -393,7 +393,7 @@ export default function RangeMatrix({
 									Preview
 								</span>
 							</div>
-							<span className="text-[0.68rem] font-mono font-bold text-slate-300 leading-none mt-1">
+							<span className="text-[0.68rem] font-mono font-bold text-text-main leading-none mt-1">
 								{inspectedDetail.combos} combinações
 							</span>
 						</div>

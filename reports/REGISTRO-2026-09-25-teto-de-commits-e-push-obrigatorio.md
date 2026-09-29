@@ -1,4 +1,5 @@
 ---
+
 id: registro-2026-09-25-teto-de-commits-e-push-obrigatorio
 tipo: registro
 escopo: Site -- formalizacao do teto de commits locais sem push e obrigacao de push no 2o commit
@@ -37,41 +38,12 @@ verificado:
 nao_verificado:
   - "intercepcao automatica de hook client-side antes da verificacao de politica (governanca manual e procedimental vinculante)"
 revisoes_de_ancora:
-  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+  - registro: registro-2026-09-25-teto-de-commits-e-push-obrigatorio
     caminhos:
       - CLAUDE.md
     parecer: >-
-      Revisado e mantido valido. A inclusao da Secao 1.3 no CLAUDE.md estabelece o teto de acumulo de commits locais sem push sem alterar a taxonomia e estrutura de relatorios e documentos da base.
-  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A proveniencia do feedback 9.9 segue o rastro executavel formal via Register-AgentCalibrationFeedback.ps1 e a nova regra de push atende ao motivo qualitativo do avaliador.
-  - registro: checkpoint-2026-06-14-infrastructure-hardening
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. O endurecimento de infraestrutura e reforcado pela reducao do delta entre branches locais e remotas atraves do push obrigatorio.
-  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A harmonizacao de calibracao e proveniencia permanece preservada; a disciplina de sincronizacao com origin mitiga divergencias de arvore.
-  - registro: handoff-2026-09-25-governanca-pools-openrouter-e-impacto
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A integracao dos pools OpenRouter e metricas de impacto seguem validas e ativas sob o novo teto de publicacao remota.
-  - registro: registro-2026-09-25-precedencia-economica-assinaturas-pro-e-nuvem-free
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. As diretrizes de precedencia de cotas Pro no Tier 1 e runtimes free em nuvem (Ollama, llama.cpp, Hermes Agent) permanecem intactas e agora contam com a disciplina de push no 2o commit.
-  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
-    caminhos:
-      - CLAUDE.md
-    parecer: >-
-      Revisado e mantido valido. A governanca v8.0 Gold e respeitada integralmente, incorporando a salvaguarda de publicacao remota frequente.
+      Revisado e mantido valido. A governanca v8.0 Gold e respeitada integralmente, incorporando a salvaguarda de publicacao remota frequente. Revisado em 2026-09-29; diff desta revisada: +290/-259.
+
 ---
 
 # Registro: Teto de Acumulo de Commits Locais e Obrigacao de Push (Regra do 2o Commit)

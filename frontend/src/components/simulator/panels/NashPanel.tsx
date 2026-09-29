@@ -363,7 +363,7 @@ export default function NashPanel({
             type="button"
             aria-pressed="true"
             onClick={() => onPayjumpToggle(false)}
-            className="group/btn bg-accent-emerald/10 border-accent-emerald/40 text-accent-emerald flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-4 py-5 text-sm font-bold tracking-wide shadow-2xl shadow-emerald-500/10 transition-all duration-500 active:scale-95"
+            className="group/btn bg-accent-emerald-surface/10 border-accent-emerald/40 text-accent-emerald flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-4 py-5 text-sm font-bold tracking-wide shadow-2xl shadow-emerald-500/10 transition-all duration-500 active:scale-95"
           >
             <div className="bg-accent-emerald h-2 w-2 scale-110 rounded-full shadow-[0_0_15px_var(--accent-emerald)] transition-all duration-500" />
             Payjump Iminente
@@ -385,7 +385,7 @@ export default function NashPanel({
             type="button"
             aria-pressed="true"
             onClick={() => onBlindsToggle(false)}
-            className="group/btn bg-accent-danger/10 border-accent-danger/40 text-accent-danger flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-4 py-5 text-sm font-bold tracking-wide shadow-2xl shadow-rose-500/10 transition-all duration-500 active:scale-95"
+            className="group/btn bg-accent-danger-surface/10 border-accent-danger/40 text-accent-danger flex cursor-pointer items-center justify-center gap-4 rounded-2xl border px-4 py-5 text-sm font-bold tracking-wide shadow-2xl shadow-rose-500/10 transition-all duration-500 active:scale-95"
           >
             <div className="bg-accent-danger h-2 w-2 scale-110 animate-pulse rounded-full shadow-[0_0_15px_var(--accent-danger)] transition-all duration-500" />
             Blinds Subindo

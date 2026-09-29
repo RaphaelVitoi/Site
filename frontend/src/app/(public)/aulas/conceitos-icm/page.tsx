@@ -85,9 +85,9 @@ export default function ConceitosICM() {
 										{label}
 									</span>
 								</div>
-								<h4 className="text-sm font-bold text-text-main mb-1 group-hover:text-text-bright transition-colors">
+								<p className="text-sm font-bold text-text-main mb-1 group-hover:text-text-bright transition-colors">
 									{title}
-								</h4>
+								</p>
 								<p className="text-[0.7rem] text-text-muted leading-relaxed line-clamp-2">
 									{desc}
 								</p>
@@ -124,9 +124,9 @@ export default function ConceitosICM() {
 							</p>
 
 							<div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-10 rounded-r-2xl">
-								<h4 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading italic">
+								<h3 className="mt-0 text-accent-emerald font-bold text-lg mb-4 font-heading italic">
 									Relação Matemática
-								</h4>
+								</h3>
 								<p className="font-mono text-sm text-accent-indigo-light mb-4">
 									BF = 100 / (100 &minus; RP)
 								</p>
@@ -163,9 +163,9 @@ export default function ConceitosICM() {
 							</p>
 
 							<div className="bg-bg-elevated/50 border border-white/5 p-8 my-10 rounded-2xl">
-								<h4 className="mt-0 text-accent-indigo font-bold text-lg mb-4 font-heading">
+								<h3 className="mt-0 text-accent-indigo font-bold text-lg mb-4 font-heading">
 									Equação de Decisão
-								</h4>
+								</h3>
 								<p className="font-mono text-xs text-text-muted mb-0 leading-relaxed">
 									Esperança(ação) = P(ganhar) &times; <span>&Delta;Perspectiva<sub>ganho</sub></span>{' '}
 									+ P(perder) &times; <span>&Delta;Perspectiva<sub>perda</sub></span>
@@ -233,9 +233,9 @@ export default function ConceitosICM() {
 							</p>
 
 							<div className="bg-bg-elevated/50 border border-accent-indigo/20 p-8 my-10 rounded-2xl">
-								<h4 className="mt-0 text-accent-indigo font-bold text-lg mb-4 font-heading">
+								<h3 className="mt-0 text-accent-indigo font-bold text-lg mb-4 font-heading">
 									Equação Formal
-								</h4>
+								</h3>
 								<p className="font-mono text-xs text-accent-indigo-light mb-0 leading-relaxed">
 									PM = [(Equity &times; R) &times; Valuation_stack] &minus;
 									[EV_fold + RIO<sub>mw</sub>]

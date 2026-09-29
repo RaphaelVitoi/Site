@@ -29,7 +29,7 @@ export interface SotaButtonProps {
 function getButtonVariantClass(variant: string) {
 	switch (variant) {
 		case 'secondary':
-			return 'bg-accent-emerald text-white shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.5)] border border-white/10 hover:border-white/20 hover:text-glow-emerald';
+			return 'bg-accent-emerald text-white shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.5)] border border-white/10 hover:border-white/20 hover:text-text-bright';
 		case 'danger':
 			return 'bg-rose-600 text-white shadow-[0_4px_15px_rgba(225,29,72,0.3)] hover:shadow-[0_8px_30px_rgba(225,29,72,0.5)] border border-white/10 hover:border-white/20';
 		case 'outline':
@@ -37,7 +37,7 @@ function getButtonVariantClass(variant: string) {
 		case 'ghost':
 			return 'bg-transparent text-text-muted hover:bg-white/5 hover:text-white';
 		case 'indigo':
-			return 'bg-accent-indigo text-white shadow-[0_4px_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.5)] border border-white/10 hover:border-white/20 hover:text-glow-indigo';
+			return 'bg-accent-indigo text-white shadow-[0_4px_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.5)] border border-white/10 hover:border-white/20 hover:text-text-bright';
 		case 'gold':
 		case 'primary':
 		default:

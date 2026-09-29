@@ -58,7 +58,7 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
 						}
 					} else {
 						btnClasses +=
-							' cursor-pointer border-white/10 bg-slate-900/40 text-text-light hover:border-accent-indigo/50 hover:bg-slate-900/60 hover:-translate-y-1 hover:shadow-2xl';
+							' cursor-pointer border-white/10 bg-slate-900/40 text-text-main hover:border-accent-indigo/50 hover:bg-slate-900/60 hover:-translate-y-1 hover:shadow-2xl';
 					}
 
 					return (

@@ -546,7 +546,7 @@ export default function PmLensPanel({
                   setActiveNodelock((prev) => (prev ? null : { type: 'block_bet', sizePct: 0.2, freqOverride: 1 }))
                 }
                 aria-pressed={Boolean(activeNodelock)}
-                className={`cursor-pointer rounded-xl border px-6 py-3 text-[0.65rem] font-black tracking-widest uppercase transition-all active:scale-95 ${activeNodelock ? 'bg-accent-indigo/20 border-accent-indigo text-accent-indigo-light shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'text-text-dim border-white/10 bg-transparent hover:border-white/30 hover:text-white'}`}
+                className={`cursor-pointer rounded-xl border px-6 py-3 text-[0.65rem] font-black tracking-widest uppercase transition-all active:scale-95 ${activeNodelock ? 'bg-accent-indigo-surface/20 border-accent-indigo text-accent-indigo-light shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'text-text-dim border-white/10 bg-transparent hover:border-white/30 hover:text-white'}`}
               >
                 {activeNodelock ? 'Nodelock B20 Ativo' : 'Ativar Block Bet 20%'}
               </button>
@@ -675,7 +675,7 @@ export default function PmLensPanel({
                   type="button"
                   onClick={handleCalculateEquity}
                   disabled={isCalculatingEq || !heroRange || !villainRange}
-                  className="bg-accent-indigo border-accent-indigo-light/30 shadow-accent-indigo/20 w-full rounded-2xl border py-5 text-[0.8rem] font-black tracking-[0.3em] text-white uppercase shadow-2xl transition-all hover:bg-indigo-500 hover:shadow-indigo-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-accent-indigo-surface border-accent-indigo-light/30 shadow-accent-indigo/20 w-full rounded-2xl border py-5 text-[0.8rem] font-black tracking-[0.3em] text-white uppercase shadow-2xl transition-all hover:bg-indigo-500 hover:shadow-indigo-500/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isCalculatingEq ? 'Calculando cenário...' : 'Calcular cenário'}
                 </button>

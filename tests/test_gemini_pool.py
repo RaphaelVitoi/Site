@@ -5,21 +5,17 @@ Protocolo Chico SOTA v8.0 GOLD.
 
 from __future__ import annotations
 
-import asyncio
-from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from llm.gemini import call_gemini, call_gemini_flash_lite
+from llm.gemini import call_gemini_flash_lite
 from llm.gemini_pool import (
     GeminiPoolManager,
     GeminiWorkload,
     _key_sha8,
 )
-
-
-import os
 
 
 @pytest.fixture

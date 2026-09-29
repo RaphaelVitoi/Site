@@ -135,7 +135,7 @@ export default function GenealogiaSolversPage() {
 						</div>
 						<Link
 							href={ROUTES.SIMULADOR_GTO}
-							className="px-6 py-3 rounded-2xl bg-accent-indigo hover:bg-accent-indigo-light text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-accent-indigo/30 shrink-0"
+							className="px-6 py-3 rounded-2xl bg-accent-indigo-surface hover:bg-accent-indigo-surface-active text-white font-bold text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-accent-indigo/30 shrink-0"
 						>
 							Abrir Simulador GTO
 						</Link>

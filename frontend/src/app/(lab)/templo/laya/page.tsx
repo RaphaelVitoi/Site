@@ -350,7 +350,7 @@ export default function LayaSolverBridgePage() {
 										}}
 									>
 										{PRESET_SCENARIOS.map((p, idx) => (
-											<option key={p.label} value={idx} className="bg-bg-surface text-text-bright">
+											<option key={p.label} value={idx} className="bg-bg-elevated text-text-bright">
 												{p.label}
 											</option>
 										))}

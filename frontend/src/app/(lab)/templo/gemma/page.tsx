@@ -812,7 +812,7 @@ export default function GemmaPortal() {
           {/* Feed de Mensagens */}
           <div
             ref={scrollRef}
-            className="selection:bg-accent-indigo/30 mb-6 max-h-160 min-h-100 overflow-y-auto scroll-smooth rounded-xl border border-white/5 bg-black/40 p-6 font-mono text-sm leading-relaxed"
+            className="selection:bg-accent-indigo-surface/30 mb-6 max-h-160 min-h-100 overflow-y-auto scroll-smooth rounded-xl border border-white/5 bg-black/40 p-6 font-mono text-sm leading-relaxed"
           >
             {messages.length === 0 && !streamedText && !isStreaming ? (
               <div className="text-text-muted flex h-80 flex-col items-center justify-center gap-3 italic">
@@ -1244,7 +1244,7 @@ export default function GemmaPortal() {
               )}
 
               {activeModalAttachment.type === 'doc' && (
-                <pre className="max-h-[65vh] w-full overflow-auto rounded-xl border border-white/10 bg-black/90 p-4 font-mono text-xs whitespace-pre-wrap text-slate-300">
+                <pre className="max-h-[65vh] w-full overflow-auto rounded-xl border border-white/10 bg-black/90 p-4 font-mono text-xs whitespace-pre-wrap text-text-main">
                   {activeModalAttachment.textContent || '(Documento vazio ou binário)'}
                 </pre>
               )}

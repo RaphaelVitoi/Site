@@ -180,7 +180,7 @@ export function UniversalDocumentViewer({
           <a
             href={downloadUrl}
             download={selectedFile.name}
-            className="flex items-center space-x-1.5 rounded-lg bg-accent-indigo px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-indigo/80"
+            className="flex items-center space-x-1.5 rounded-lg bg-accent-indigo-surface px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-indigo/80"
           >
             <i className="fa-solid fa-download"></i>
             <span>Baixar Arquivo</span>
@@ -339,7 +339,7 @@ export function UniversalDocumentViewer({
                     href={rawUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-lg bg-accent-indigo px-3 py-1.5 text-xs font-medium text-white shadow"
+                    className="rounded-lg bg-accent-indigo-surface px-3 py-1.5 text-xs font-medium text-white shadow"
                   >
                     Abrir PDF em Nova Aba
                   </a>
@@ -362,7 +362,7 @@ export function UniversalDocumentViewer({
         (fileContent?.type === 'document' && selectedFile.category !== 'pdf')) && (
         <div className="flex grow flex-col space-y-3">
           {/* Barra Editorial do Leitor */}
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-accent-indigo/20 bg-accent-indigo/5 px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-accent-indigo/20 bg-accent-indigo-surface/5 px-3 py-2 text-xs">
             <div className="flex items-center space-x-2">
               <i className="fa-solid fa-wand-magic-sparkles text-accent-indigo-light"></i>
               <span className="font-semibold text-accent-indigo-light">
@@ -647,7 +647,7 @@ export function UniversalDocumentViewer({
                   href={rawUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-block rounded-lg bg-accent-indigo px-3 py-1.5 text-xs text-white"
+                  className="mt-3 inline-block rounded-lg bg-accent-indigo-surface px-3 py-1.5 text-xs text-white"
                 >
                   Abrir Imagem Completa
                 </a>

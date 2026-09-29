@@ -246,7 +246,7 @@ export function DynamicFoldEquityWidget({
 									: 'bg-rose-950/30 border-rose-500/20 text-accent-danger hover:border-rose-500/40'
 							}`}
 						>
-							<span className="text-xs font-bold text-text-light">
+							<span className="text-xs font-bold text-text-main">
 								{(point.betRatio * 100).toFixed(0)}% Pote
 							</span>
 							<span className="text-xs text-text-muted mt-0.5">

@@ -374,7 +374,7 @@ export default function PostFlopPanel({
             type="button"
             onClick={() => setIsLocked(!isLocked)}
             aria-pressed={isLocked}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[0.55rem] font-black tracking-[0.2em] uppercase transition-all ${isLocked ? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-text-dim bg-transparent hover:text-white'}`}
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-[0.55rem] font-black tracking-[0.2em] uppercase transition-all ${isLocked ? 'bg-accent-indigo-surface text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' : 'text-text-dim bg-transparent hover:text-white'}`}
           >
             <i className={`fa-solid ${isLocked ? 'fa-link' : 'fa-link-slash'} text-[0.6rem]`} />
             {isLocked ? 'Sincronizado' : 'Manual (Lab)'}
@@ -454,7 +454,7 @@ export default function PostFlopPanel({
                     setIsLocked(false);
                   }}
                   aria-pressed={numPlayers === n}
-                  className={`flex-1 rounded-xl border py-2 text-[0.6rem] font-black transition-all duration-500 ${numPlayers === n ? 'bg-accent-violet border-accent-violet text-black' : 'text-text-muted border-transparent bg-transparent hover:text-white'}`}
+                  className={`flex-1 rounded-xl border py-2 text-[0.6rem] font-black transition-all duration-500 ${numPlayers === n ? 'bg-accent-violet-surface border-accent-violet text-black' : 'text-text-muted border-transparent bg-transparent hover:text-white'}`}
                 >
                   {n}
                   {n > 2 ? ' MW' : ' HU'}
@@ -542,7 +542,7 @@ export default function PostFlopPanel({
               <span className="text-text-muted">{POSTFLOP_LABELS.wasmLens}</span>
             </strong>
             <span
-              className={`rounded-lg border px-3 py-1 font-mono text-[0.55rem] font-black tabular-nums ${isLocked ? 'bg-accent-indigo/10 border-accent-indigo/30 text-accent-indigo-light' : 'text-text-muted border-white/10 bg-white/5'}`}
+              className={`rounded-lg border px-3 py-1 font-mono text-[0.55rem] font-black tabular-nums ${isLocked ? 'bg-accent-indigo-surface/10 border-accent-indigo/30 text-accent-indigo-light' : 'text-text-muted border-white/10 bg-white/5'}`}
             >
               {isLocked ? 'SINCRONIZADO' : 'VÁCUO (LAB)'}
             </span>

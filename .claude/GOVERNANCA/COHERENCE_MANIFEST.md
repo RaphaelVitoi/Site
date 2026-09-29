@@ -20,7 +20,7 @@ Cada um dos **19 agentes** funciona como parte de um **ecossistema coeso e harmo
 
 ### Camada 1: IDENTIDADE & COMPORTAMENTO GLOBAL
 
-**Arquivo:** `.claude/CLAUDE.md`
+**Arquivo:** `CLAUDE.md` (raiz do repositorio)
 
 Todos os 19 agentes absorvem:
 
@@ -32,7 +32,7 @@ Todos os 19 agentes absorvem:
 
 ### Camada 2: INSTRUCOES DO PROJETO GLOBAIS
 
-**Arquivo:** `GLOBAL_INSTRUCTIONS.md`
+**Arquivo:** `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md`
 
 Todos os 19 agentes absorvem:
 
@@ -79,7 +79,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/architect.md` | Documentado |
 | `.claude/agent-memory/architect/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE 00 claro |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@planner** (FASE 01 - Planejamento Detalhado SOTA)
 
@@ -88,7 +88,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/planner.md` | Documentado |
 | `.claude/agent-memory/planner/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE 01 claro |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@pesquisador** (FASE 02 - Exploracao Especializada)
 
@@ -97,7 +97,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/pesquisador.md` | Documentado |
 | `.claude/agent-memory/pesquisador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE 02 claro |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@prompter** (FASE 03 - Estruturacao de Prompt)
 
@@ -106,7 +106,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/prompter.md` | Documentado |
 | `.claude/agent-memory/prompter/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE 03 claro |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@auditor** (FASE 04 - Bloqueador Unico)
 
@@ -115,7 +115,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/auditor.md` | Documentado |
 | `.claude/agent-memory/auditor/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE 04 claro (bloqueador) |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@implementor** (FASE 05 - Execucao)
 
@@ -124,7 +124,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/implementor.md` | Documentado |
 | `.claude/agent-memory/implementor/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE 05 claro |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@verifier** (FASE 06 - QA Final)
 
@@ -133,7 +133,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/verifier.md` | Documentado |
 | `.claude/agent-memory/verifier/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE 06 claro |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 ### CONSULTIVOS PARALELOS (4 agentes)
 
@@ -144,7 +144,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/curator.md` | Documentado |
 | `.claude/agent-memory/curator/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Consultivo |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@validador** (Conteudo Especializado)
 
@@ -153,7 +153,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/validador.md` | Documentado |
 | `.claude/agent-memory/validador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Consultivo |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@securitychief** (Seguranca & Privacy)
 
@@ -162,7 +162,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/securitychief.md` | Documentado |
 | `.claude/agent-memory/securitychief/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Consultivo |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@bibliotecario** (RAG & Banco Vetorial - Memoria Coletiva)
 
@@ -171,7 +171,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/bibliotecario.md` | Documentado |
 | `.claude/agent-memory/bibliotecario/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Consultivo |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@gemma4** (Oraculo de Borda e Sentinela de Inferencia Local)
 
@@ -180,7 +180,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/gemma4.md` | Documentado |
 | `.claude/agent-memory/gemma4/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Consultivo |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 ### SUPER-AGENTES TRANSVERSAIS (2 super-agentes)
 
@@ -191,7 +191,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/maverick.md` | Documentado |
 | `.claude/agent-memory/maverick/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Lideranca Intelectual Transversal 24/7 |
-| `GLOBAL_INSTRUCTIONS.md` | SUPER-AGENT |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | SUPER-AGENT |
 
 **CHICO** (Administrador/Gerente, Executor Digno)
 
@@ -199,8 +199,8 @@ Cada um dos 19 agentes tem:
 | --- | --- |
 | `.claude/agents/chico.md` | Documentado |
 | `.claude/agent-memory/chico/MEMORY.md` | Ativo com referencia harmonica |
-| `GLOBAL_INSTRUCTIONS.md` | Identidade da raiz, Triade de Governanca |
-| `.claude/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md` | Documentacao estrutural completa |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Identidade da raiz, Triade de Governanca |
+| `.claude/GOVERNANCA/LIDERANCA_GOVERNANCE_RAPHAEL_MAVERICK_CHICO.md` | Documentacao estrutural completa |
 
 ### OPERACIONAIS 24/7 (4 agentes)
 
@@ -211,7 +211,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/organizador.md` | Documentado |
 | `.claude/agent-memory/organizador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Operacional 24/7 |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@sequenciador** (Maestro de Dependencias e Controle de Fila)
 
@@ -220,7 +220,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/sequenciador.md` | Documentado |
 | `.claude/agent-memory/sequenciador/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Operacional 24/7 |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@skillmaster** (Executor Agendado - Backups/Sync/Cleanup)
 
@@ -229,7 +229,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/skillmaster.md` | Documentado |
 | `.claude/agent-memory/skillmaster/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Operacional 24/7 |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 **@historian** (Registro Akashico e Analise de Performance)
 
@@ -238,7 +238,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/historian.md` | Documentado |
 | `.claude/agent-memory/historian/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | Operacional 24/7 |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 ### ENTRADA (1 agente de triagem)
 
@@ -249,7 +249,7 @@ Cada um dos 19 agentes tem:
 | `.claude/agents/dispatcher.md` | Documentado |
 | `.claude/agent-memory/dispatcher/MEMORY.md` | Ativo com referencia harmonica |
 | `project-context.md` | FASE ENTRADA claro |
-| `GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
+| `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` | Tabela de integracao |
 
 ---
 
@@ -266,8 +266,8 @@ Cada um dos 19 agentes tem:
 
 Cada agente absorve:
 
-- [X] `.claude/CLAUDE.md` - Identidade & Principios
-- [X] `GLOBAL_INSTRUCTIONS.md` - Instrucoes Globais
+- [X] `CLAUDE.md` (raiz do repositorio) - Identidade & Principios
+- [X] `.claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md` - Instrucoes Globais
 - [X] `.claude/project-context.md` - Contexto & Papel
 - [X] `.claude/agent-memory/<seu-nome>/MEMORY.md` - Sua Inteligencia
 

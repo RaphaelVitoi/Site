@@ -70,9 +70,9 @@ export default function TeoriaICMPage() {
 						</ul>
 
 						<div className="bg-accent-emerald/10 border-l-4 border-accent-emerald p-8 my-8 rounded-r-2xl">
-							<h4 className="mt-0 text-accent-emerald font-bold font-heading">
+							<h3 className="mt-0 text-accent-emerald font-bold font-heading">
 								Relação Matemática
-							</h4>
+							</h3>
 							<p className="font-mono text-sm text-accent-indigo-light leading-relaxed">
 								RP = 100 &times; (BF &minus; 1) / BF
 							</p>
@@ -268,10 +268,9 @@ export default function TeoriaICMPage() {
 			{/* Referências e Atribuições */}
 			<div className="sota-container pb-12">
 				<div className="px-8 py-6 rounded-xl bg-slate-900/40 border border-white/5">
-					<h4 className="m-0 mb-4 text-[0.65rem] font-black text-text-muted uppercase tracking-[0.15em]">
+					<h3 className="m-0 mb-4 text-[0.65rem] font-black text-text-muted uppercase tracking-[0.15em]">
 						Referências e Atribuições
-					</h4>
-					<ul className="m-0 pl-5 list-disc flex flex-col gap-2 text-[0.7rem] text-text-dim leading-relaxed">
+					</h3>					<ul className="m-0 pl-5 list-disc flex flex-col gap-2 text-[0.7rem] text-text-dim leading-relaxed">
 						<li>
 							<strong className="text-text-muted">Downward Drift</strong> — Dara
 							O&apos;Kearney &amp; Barry Carter.

@@ -1,4 +1,6 @@
 ---
+
+
 id: checkpoint-2026-06-14-infrastructure-hardening
 tipo: relatorio
 escopo: Site
@@ -11,15 +13,20 @@ classes: [interno, historico]
 caminhos:
   - CLAUDE.md
   - MODUS_OPERANDI.md
+
 verificado:
   - consolidacao de infraestrutura e paridade de governanca v7.0.4-gold
 nao_verificado:
   - benchmark em hardware legado
+
+supersede: null
 revisoes_de_ancora:
   - registro: checkpoint-2026-06-14-infrastructure-hardening
-    caminhos: [CLAUDE.md]
-    parecer: "As modificacoes de 2026-09-20 a CLAUDE.md sao de nivel de governanca e modelo (condutores, tiers, Metacritic), nao de infraestrutura fisica ou de hardening. O checkpoint de infraestrutura de 2026-06-14 permanece vigente; suas verificacoes de hardware, banco de dados e estabilidade de build nao foram alteradas."
-supersede: null
+    caminhos:
+      - CLAUDE.md
+    parecer: >-
+      Revisado em 2026-09-29 e mantido valido. Alteracoes aditivas e pontuais: registro do condutor Space-Bunny-Alpha em 4 pontos (SS7 piramide, SS3 pools, Hermes/Orquestracao) e remocao de contagem de MCP na SS8.0. Nenhuma regra, tier ou threshold alterado. As conclusoes deste registro sobre a piramide e sobre proveniencia seguem valendo. Diff desta revisada: +290/-259 linhas. Revisado em 2026-09-29; diff desta revisada: +290/-259.
+
 ---
 
 # CHECKPOINT SOTA v7.0 GOLD - INFRASTRUCTURE HARDENING & GOVERNANCE PARITY
