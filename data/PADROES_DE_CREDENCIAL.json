@@ -13,8 +13,12 @@
     "Token Slack": "xox[baprs]-[A-Za-z0-9-]{10,}",
     "Chave Anthropic": "sk-ant-[A-Za-z0-9_-]{20,}",
     "Chave privada PEM": "-----BEGIN [A-Z ]*PRIVATE KEY-----",
-    "Chave Google (formato AQ)": "AQ\\.[A-Za-z0-9_-]{45,}"
+    "Chave Google (formato AQ)": "AQ\\.[A-Za-z0-9_-]{45,}",
+    "JWT (token de sessao ou acesso)": "eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}",
+    "Refresh token (par OAuth)": "(?:access_token|refresh_token|id_token)\\s*[\"']?\\s*[:=]\\s*[\"']?[A-Za-z0-9._~+/=-]{20,}"
   },
+  "_por_que_o_patron_oauth_aceita_das_aspas": "MEDIDO em 2026-09-30, escrevendo o teste deste padrao: a forma original era `(?:access_token|refresh_token)\\s*[:=]\\s*[\"']?VALOR` e casava com YAML (`refresh_token: abc`) mas NAO com JSON (`\"access_token\": \"abc\"`) -- sao DUAS aspas, a da chave e a do valor, e o padrao aceitava uma so. Um token em JSON e a forma mais comum de onde esse par vaza, entao o padrao erra justo no caso que mais importa. A correcao deixa a aspa da chave opcional ANTES do `:` e a do valor depois, e ambos os formatos casam.",
+  "_por_que_o_padrao_jwt_foi_acrescentado": "MEDIDO em 2026-09-30, na auditoria de backend: `.semgrep/guardian.yml` estava rastreado com um `access_token` JWT RS256 de 911 chars e um `refresh_token` de 25 chars, e os DOIS portoes de credencial passaram em verde. A causa era dupla e nenhuma das metades bastava sozinha: nenhum padrao casava com `eyJ` (o grep contava zero ocorrencias no arquivo inteiro), e `.lock` nao estava na lista de extensoes lidas por `tests/test_credenciais.py`. Acrescentar so o padrao deixaria o `.lock` passar; acrescentar so a extensao deixaria o JWT passar. As duas metades entraram juntas.",
   "_por_que_o_arquivo_nao_se_denuncia": "O padrao PEM contem, literalmente, o texto que ele procura. A saida NAO e isentar este arquivo -- isentar cria ponto cego no unico lugar que descreve os segredos. A saida e uma propriedade do ACHADO: credencial de verdade nao contem metacaractere de regex. O que casar trazendo colchete, chave, asterisco, mais ou contrabarra e PADRAO, nao segredo.",
   "metacaracteres_que_denunciam_um_padrao": [
     "[",
@@ -32,7 +36,8 @@
     "YOUR_API_KEY",
     "CHANGEME",
     "REPLACE_ME",
-    "CHAVE_SINTETICA"
+    "CHAVE_SINTETICA",
+    "TOKEN_SINTETICO_NAO_E_CREDENCIAL"
   ],
   "nao_verificado": [
     "Nenhuma chave foi validada contra o provedor. A governanca proibe verificacao que pressuponha chamada real a provedor de LLM, entao FORMA de credencial e o que se mede -- nunca se ela esta viva."

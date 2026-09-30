@@ -1,6 +1,23 @@
 /**
  * @jest-environment node
  */
+
+// FASE 6 / opção C (2026-09-30): `nexus-proxy.ts` passou a importar
+// `next-auth/jwt`, que é ESM puro. O jest não converte módulo de `node_modules`
+// por padrão, e sem este mock a SUÍTE INTEIRA não carrega —
+// "Must use import to load ES Module: next-auth/jwt.js", 0 testes executados.
+//
+// MEDIDO que a alternativa não resolve: declarar `transformIgnorePatterns` no
+// `jest.config.js` é inútil aqui, porque o `next/jest` constrói a config final
+// e sobrescreve a chave. E a outra via — `require(esm)` nativo — exige Node
+// >= 24.9, contra os `engines.node >= 22` que o projeto declara.
+//
+// O mock é o menor escopo que funciona, e é o mesmo padrão que o projeto já
+// usa em `auth-secret.test.ts:1` (`jest.mock('server-only', ...)`). Este teste
+// não exercita o `getToken` — ele verifica o encaminhamento e a exigência de
+// sessão, e o `obterToken` é injetável justamente para isso.
+jest.mock('next-auth/jwt', () => ({ getToken: jest.fn(async () => null) }));
+
 import { encaminharAoNexus, identificadorDoVisitante } from '@/lib/server/nexus-proxy';
 
 const comSessao = () => Promise.resolve({ user: { id: 'u1' } });

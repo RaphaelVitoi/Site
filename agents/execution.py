@@ -374,7 +374,8 @@ async def _handle_task_failure(
 
         resonance_id = f"RESONANCE-{task.id}"
         resonance_desc = (
-            f"[AUDITORIA FRACTAL | LEI ZERO]\nA tarefa '{task.id}' quebrou. Steelmaning do bug obrigatorio."
+            f"[AUDITORIA FRACTAL | LEI ZERO]\nA tarefa '{task.id}' quebrou. Steelmaning do bug obrigatorio.\n"
+            f"Erro: {safe_err_msg}\nResposta original: {safe_response}"
         )
         await _create_system_task(manager, resonance_id, resonance_desc, AGENT_MAVERICK, "high")
 

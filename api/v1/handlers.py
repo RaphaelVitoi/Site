@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 import re
 import time
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, get_args
 from urllib.parse import quote
 from uuid import uuid4
 import zipfile
@@ -107,6 +107,22 @@ from utils.web_search import get_search_engine_from_env
 
 BASE_WORKSPACE_DIR: Path = Path(__file__).resolve().parent.parent.parent
 INVALID_JSON_BODY = "Invalid JSON body"
+
+#: SEC-06/SEC-10 (auditoria 2026-09-30): limites e allowlist de `/api/web-search`.
+#: `max_results` ja era limitado no handler (20); a query nao era, e o
+#: `provider` chegava sem validacao com o `Literal` desligado por `# type: ignore`.
+#: As duas regras sao declaradas aqui, ao lado das demais constantes do modulo,
+#: porque sao contrato de entrada -- e contrato declarado em um so lugar e o que
+#: sobrevive a proxima refatoracao.
+MAX_WEB_SEARCH_QUERY_CHARS = 512
+
+#: O tipo e a allowlist sao derives um do outro por construcao, nao por
+#: convencao: `frozenset(get_args(SearchProvider))` nao pode divergir de
+#: `SearchProvider`, porque um dos dois e funcao do outro. Duas listas
+#: declaradas em paralelo e a forma como o defeito de SEC-06 entrou --
+#: validador aceitando o que o tipo nao previa, e nada reclamando.
+SearchProvider = Literal["tavily", "duckduckgo", "auto"]
+ALLOWED_SEARCH_PROVIDERS = frozenset(get_args(SearchProvider))
 
 logger = logging.getLogger(__name__)
 
@@ -790,8 +806,27 @@ def _parse_image(file_path: Path) -> dict[str, Any]:
 #: inclusive segredos e historico git. Estes nomes ficam fora mesmo para a
 #: credencial de servico -- e para qualquer processo local quando nenhum token
 #: esta configurado. `.env.example` e modelo sem valor, e continua legivel.
-_SENSITIVE_DIR_COMPONENTS = frozenset({".git", ".secrets", ".ssh", ".gnupg", ".aws"})
-_SENSITIVE_SUFFIXES = frozenset({".pem", ".key", ".p12", ".pfx", ".keystore", ".jks"})
+#:
+#: SEC-02 (auditoria 2026-09-30): a lista listava `.secrets` COM PONTO, e o
+#: `docker-compose.yml:2-3` monta o segredo do gateway em
+#: `.claude/secrets/auth_secret.txt` -- diretorio `secrets`, SEM ponto. Nao
+#: casava, e como o compose tambem monta `./.claude:/app/.claude`, o
+#: `AUTH_SECRET` (o mesmo que assina a sessao NextAuth) ficava legivel por
+#: `/api/files/view` dentro do container. Medido executando a cadeia exata:
+#: `/app/.claude/secrets/auth_secret.txt` devolvia servivel=SIM.
+#:
+#: A correcao nao e so acrescentar `secrets`: e derivar a lista do que o
+#: `docker-compose.yml` realmente monta, porque literal novo nasce coberto por
+#: acidente -- que e a mesma razao que fez A-01 existir.
+_MOUNTED_SECRET_DIRS = ("secrets", "queue")
+_SENSITIVE_DIR_COMPONENTS = frozenset({".git", ".secrets", ".ssh", ".gnupg", ".aws", *_MOUNTED_SECRET_DIRS})
+#: SEC-02: `queue/` e `./tasks.db` sao montados no container e `.gitignore:80`
+#: declara `queue/tasks.db` e `*.db` -- o estado da fila (prompts, respostas,
+#: metadata) e leitura de servico hoje. Formato de banco por SUFIXO, porque e
+#: o que o `.gitignore` ja proibe: as duas listas medem o mesmo fato.
+_SENSITIVE_SUFFIXES = frozenset(
+    {".pem", ".key", ".p12", ".pfx", ".keystore", ".jks", ".db", ".sqlite", ".sqlite3", ".lance"}
+)
 _SENSITIVE_NAMES = frozenset({"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", ".netrc", ".npmrc", ".pypirc"})
 
 #: A-01 (auditoria 2026-09-29): a familia de arquivo de ambiente e reconhecida
@@ -835,9 +870,21 @@ def _is_sensitive_path(file_path: Path) -> bool:
     # Ponto e espaco finais sao descartados pelo Windows ao abrir o arquivo.
     parts = [p.rstrip(". ").lower() for p in file_path.parts]
     name = parts[-1] if parts else ""
+    # SEC-02 (auditoria 2026-09-30): `parts[:-1]` exclui o PROPRIO nome, entao um
+    # volume que e ele mesmo um diretorio sensivel nao casava -- `/app/queue`
+    # devolvia servivel, ainda que `/app/queue/tasks.db` fosse recusado. O
+    # arquivo dentro ja era barrado; o caminho do volume, nao. Medido pelo teste
+    # `test_todo_volume_de_segredo_do_compose_esta_bloqueado`, que deriva os
+    # volumes do `docker-compose.yml` em vez de hardcodar o caso.
+    #
+    # Inclui o proprio nome DEPOIS do nome exato e do sufixo, para nao alterar o
+    # que ja era decidido: um arquivo chamado `queue` na raiz continua caindo
+    # pela regra de nome/sufixo, e um diretorio sensivel ganha a regra nova.
     if any(p in _SENSITIVE_DIR_COMPONENTS for p in parts[:-1]):
         return True
     if name in _SENSITIVE_NAMES or file_path.suffix.lower() in _SENSITIVE_SUFFIXES:
+        return True
+    if name in _SENSITIVE_DIR_COMPONENTS and file_path.is_dir():
         return True
     if _nome_e_da_familia_ambiente(name):
         return not _e_modelo_publico(name)
@@ -1004,6 +1051,12 @@ async def handle_web_search(request: web.Request) -> web.Response:
         query = request.rel_url.query.get("q", "").strip()
         if not query:
             return web.json_response({"error": "Query parameter 'q' is required"}, status=400)
+        # SEC-10 (auditoria 2026-09-30): `max_results` tinha teto (20) e a query
+        # nao. Tavily e DDG cobram por chamada, entao o teto ausente e
+        # superficie de custo, nao de seguranca -- mas e do mesmo modo de falha:
+        # entrada sem limite numa rota que chama servico externo.
+        if len(query) > MAX_WEB_SEARCH_QUERY_CHARS:
+            return web.json_response({"error": f"Query excede {MAX_WEB_SEARCH_QUERY_CHARS} caracteres."}, status=400)
 
         max_results_str = request.rel_url.query.get("max", "5")
         try:
@@ -1011,11 +1064,32 @@ async def handle_web_search(request: web.Request) -> web.Response:
         except ValueError:
             max_results = 5
 
-        provider = request.rel_url.query.get("provider", "auto")
+        # SEC-06 (auditoria 2026-09-30): `provider` chegava sem validacao e com
+        # `# type: ignore` apagando o `Literal` que o type checker leria. O
+        # `if/elif/else` de `WebSearchEngine.search` e fail-safe -- valor
+        # desconhecido cai no ramo `else` e vai para o DDG -- entao nao havia
+        # SSRF nem bypass de provedor. O defeito era a supressao esconder a
+        # violacao: o compilador via o erro e o comentario o desligava.
+        # A allowlist abaixo e a mesma escolha de `rotas_e_de_produto`: o que
+        # nao e declarado nao passa.
+        raw_provider = request.rel_url.query.get("provider", "auto").strip().lower()
+        if raw_provider not in ALLOWED_SEARCH_PROVIDERS:
+            return web.json_response(
+                {"error": f"provider invalido. Use um de: {', '.join(sorted(ALLOWED_SEARCH_PROVIDERS))}."},
+                status=400,
+            )
+        # O `cast` e o que fecha o `reportArgumentType` que o pyright acusava
+        # nesta linha. A allowlist acima ja provou que o valor e um dos tres
+        # declarados, mas o type checker nao estreita `frozenset[str]` para
+        # `Literal[...]` -- e a unica forma de expressar isso e nomear o tipo.
+        # `cast` declara o que a VALIDACAO acima ja provou; `# type: ignore`
+        # desligaria o proprio sinal que detects a validacao, e era o que
+        # escondia o defeito antes (o comentario medido em SEC-06).
+        provider = cast(SearchProvider, raw_provider)
 
         engine = get_search_engine_from_env()
 
-        resp = await engine.search(query, max_results=max_results, preferred_provider=provider)  # type: ignore
+        resp = await engine.search(query, max_results=max_results, preferred_provider=provider)
 
         if resp.error:
             # O texto do provedor pode trazer detalhe de conta ou de chave (BK-15): fica no log.
