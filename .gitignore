@@ -161,6 +161,23 @@ frontend/.env.local
 prisma/.env
 .claude/secrets/
 
+# Estado de login do Semgrep CLI, e do Semgrep Guardian.
+#
+# MEDIDO em 2026-09-30: `.semgrep/guardian.yml` e `.semgrep/guardian.yml.lock`
+# estavam RASTREADOS com `access_token` (JWT RS256, 911 chars) e `refresh_token`
+# em texto claro. O par e de conta pessoal (org raphavitoi-personal-org, id
+# 29913) e o refresh_token nao expira por conta propria -- sobe de access token
+# novo quando chamado. A chave foi REVOGADA pelo Tier 0 em 2026-09-30.
+#
+# O arquivo e estado de autenticacao de maquina: depende de login local e nao e
+# reproduzivel em outro clone. E o `.lock` e cache de sessao, que nao e fonte
+# para lugar nenhum.
+#
+# Ignorar o CONTEUDO e nao o diretorio, pela mesma razao de `reports/cwv/`: com
+# `.semgrep/` o git nao desce na pasta e o `!` nunca e avaliado.
+.semgrep/*
+!.semgrep/guardian.yml.example
+
 # 8. FERRAMENTAS & CACHE DE LINTERS ───────────────────────────────────────────
 .pytest_cache/
 .ruff_cache/

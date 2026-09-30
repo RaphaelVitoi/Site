@@ -45,6 +45,12 @@ TEXTO = {
     ".ini",
     ".env",
     ".example",
+    # MEDIDO em 2026-09-30: `.lock` nao era lido, e `.semgrep/guardian.yml.lock`
+    # guardava um `refresh_token` de 25 chars em texto claro -- que nao expira por
+    # conta propria. A varredura era cega exatamente no arquivo de cache de
+    # sessao, que e onde token opaco costuma aparecer. A lista e por SUFIXO e
+    # nao por diretorio: o padrao que decide e o do conteudo.
+    ".lock",
 }
 
 
@@ -132,6 +138,95 @@ def test_o_padrao_google_nao_casa_variacao_de_caixa():
     assert not google.search(base64_do_lighthouse), (
         "o padrao passou a casar variacao de caixa e voltou a produzir falso positivo"
     )
+
+
+def test_o_padrao_jwt_existe_e_casa_com_token_real():
+    """SEC-01 (auditoria 2026-09-30): a fonte de padroes nao cobria `eyJ`.
+
+    Medido antes da correcao: `grep -c 'eyJ' data/PADROES_DE_CREDENCIAL.json`
+    contava ZERO. Um par de tokens Semgrep (`access_token` JWT de 911 chars +
+    `refresh_token` de 25) vivia rastreado em `.semgrep/guardian.yml`, e este
+    arquivo inteiro passava em VERDE.
+
+    A forma do JWT e a mesma em qualquer emissor: tres segmentos base64url
+    separados por ponto, o primeiro decodificando para um cabecalho JSON que
+    comeca por `{"`. O que segue abaixo e a MESMA estrutura do token que estava
+    no disco -- com o valor trocado, porque relatorio de credencial que repete
+    a credencial e o proprio vazamento.
+    """
+    fonte = _fonte()
+    padroes = {nome: re.compile(rx) for nome, rx in fonte["padroes"].items()}
+
+    jwt = (
+        "eyJhbGciOiJSUzI1NiIsImtpZCI6InNzb19vaWRjX2tleV9wYWlyXzExSldYWFpYNUhGRkZBQjFLQXBZWDhNUkEifQ"
+        ".eyJzdWIiOiIxMjM0NTY3ODkwIiwicm9sZSI6ImFkbWluIiwiZXhwIjo5OTk5OTk5OTk5fQ"
+        ".c2lnbmF0dXJlLXBsYWNlaG9sZGVy"
+    )
+    jwt_rx = re.compile(padroes["JWT (token de sessao ou acesso)"].pattern)
+
+    achados = [nome for nome, rx in padroes.items() if rx.search(jwt)]
+    assert "JWT (token de sessao ou acesso)" in achados, (
+        f"o padrao JWT deixou de casar com token de tres segmentos; casou so com: {achados}"
+    )
+    assert jwt_rx.search(jwt), "o padrao declarado na fonte nao casa com o token que ele descreve"
+
+
+def test_o_padrao_de_refresh_token_existe_e_nao_casa_com_placeholder():
+    """A segunda metade da lacuna: o token opaco de OAuth, e nao o JWT.
+
+    `refresh_token` e o que mantem o par vivo: `access_token` expirou em
+    2026-09-05, e o `refresh_token` nao expira por conta propria -- chamado, ele
+    emite um `access_token` novo. Um padrao que so enxerga JWT nao ve esse.
+
+    O valor aqui e SINTETICO e por isso mesmo esta em `placeholders_conhecidos`:
+    um literal alfanumerico puro de 25 chars -- a forma exata do token real --
+    seria reprovado por `test_nenhum_arquivo_rastreado_carrega_credencial`, que
+    o classifica como segredo. Isso foi medido: a primeira versao deste teste
+    plantou o valor em claro e o portao acusou o proprio teste. O portao estava
+    certo; o teste e que devia carregar o marcador.
+    """
+    fonte = _fonte()
+    rx = re.compile(fonte["padroes"]["Refresh token (par OAuth)"])
+    placeholders = tuple(fonte["placeholders_conhecidos"])
+
+    # O marcador tem que CASAR com o padrao -- e o que permite que um token de
+    # teste em claro nao seja reprovado pela varredura de arvore inteira. Por
+    # isso o criterio e "casa nos DOIS formatos", e nao "e alfanumerico": metade
+    # dos placeholders historicos (your_key_here, CHANGEME) tem underscore e nao
+    # casa. E `next()` sobre so um dos formatos pegaria `COLOQUE_A_NOVA_CHAVE_AQUI`
+    # (que casa no formato `chave: valor` mas nao no JSON entre aspas) -- medido,
+    # foi a primeira falha deste teste.
+    def _casa_nos_dois(p: str) -> bool:
+        return bool(rx.search(f"refresh_token: {p}")) and bool(rx.search(f'"access_token": "{p}"'))
+
+    sintetico = next((p for p in placeholders if len(p) >= 20 and _casa_nos_dois(p)), None)
+    assert sintetico is not None, (
+        "nenhum marcador casa com token opaco nos dois formatos (YAML e JSON); "
+        "um teste de padrao sem marcador reativa a reprovacao da varredura de arvore"
+    )
+
+    assert rx.search(f"refresh_token: {sintetico}"), "padrao nao casa com refresh_token opaco"
+    assert rx.search(f'"access_token": "{sintetico}"'), "padrao nao casa com access_token em JSON"
+    # O proprio arquivo de padroes contem o nome da chave: o que casar e PADRAO.
+    metacaracteres = tuple(fonte["metacaracteres_que_denunciam_um_padrao"])
+    achado = rx.search(fonte["padroes"]["Refresh token (par OAuth)"])
+    assert achado is None or any(c in achado.group(0) for c in metacaracteres), (
+        "o padrao de refresh_token casou com o proprio texto do padrao"
+    )
+    # O marcador precisa ser reconhecido pela varredura de arvore inteira, ou o
+    # teste acima voltaria a reprovar a si mesmo.
+    assert any(p in " ".join(placeholders) for p in placeholders), "placeholders vazio"
+
+
+def test_a_varredura_le_lock_e_nao_so_yml():
+    """A outra metade: o arquivo onde o refresh_token estava nao era lido.
+
+    Acrescentar o padrao sem acrescentar a extensao deixaria o `.lock` passar
+    em silencio -- que e como a lacuna sobreviveu a dois portoes. Este teste
+    fixa a extensao, e a mutacao dele (remover `.lock` de TEXTO) reprova.
+    """
+    assert ".lock" in TEXTO, ".lock saiu da lista de extensoes lidas: o cache de sessao volta a ser cego"
+    assert ".yml" in TEXTO, "a extensao .yml saiu da lista -- saneamento sem causa"
 
 
 def test_nenhum_arquivo_rastreado_carrega_credencial():

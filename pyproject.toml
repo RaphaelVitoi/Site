@@ -195,6 +195,37 @@ constraint-dependencies = [
     "torch>=2.13.0",
     "transformers>=5.10.0",
     "httpx2>=2.12.0",
+    # MEDIDO em 2026-09-30 (auditoria de backend, SEC-13). O `pip-audit` deste
+    # projeto roda por `python -m pip_audit` e DEVIA estar barrando isso no
+    # pre-commit -- mas `npm run python:audit` falhava com `uv trampoline failed
+    # to canonicalize script path`, entao nao barrava nada ha tempo. Um ano de
+    # verde sem medicao.
+    #
+    # pyjwt 2.13.0 tem 7 advisories. A grave e CVE-2026-102273: chave JWK
+    # publica aceita como segredo HMAC, o que permite forjar token HS256 quando
+    # a aplicacao mistura algoritmos simetricos e assimetricos num mesmo
+    # caminho de verificacao. Corrigida em 2.14.0 (2026-09-11).
+    #
+    # ALCANCE, medido e nao presumido: o backend NAO usa PyJWT. O verificador
+    # de JWT do projeto e stdlib pura (`api/v1/middleware.py:104-184`), e e
+    # justamente por isso que `_header_is_hs256` existe e exige `alg` declarado.
+    # `git grep PyJWKClient|PyJWKSet|from_jwk` devolve ZERO. A lib entra por
+    # `mcp` (usado so em `scripts/mcp_dynamic_server.py`, que e servidor MCP de
+    # rede -- nao script morto) e por `google-auth` (nao importado).
+    #
+    # Ainda assim entra no piso, por tres motivos medidos: (1) o `pyproject.toml`
+    # ja declara, por escrito, que falhar alto e o comportamento desejado;
+    # (2) o `cryptography` JA estava no piso por causa do `pyjwt` -- a entrada
+    # existia, a dependencia que a justificava nao; (3) deixar `pyjwt` sem piso
+    # num projeto que ja tem sete no piso e o que o proximo `uv lock` desfaz.
+    #
+    # COMPATIBILIDADE conferida: `mcp==2.0.0` exige `pyjwt[crypto]>=2.10.1` e
+    # `google-auth==2.58.0` exige `pyjwt>=2.0` -- 2.14.0 satisfaz os dois, sem
+    # breaking change. Por isso `constraint-dependencies` e nao
+    # `override-dependencies`: um piso que falha a resolucao e o comportamento
+    # certo quando a combinacao nao existe.
+    "pyjwt>=2.14.0",
+    "oauthlib>=4.0.0",
 ]
 
 # ==============================================================================

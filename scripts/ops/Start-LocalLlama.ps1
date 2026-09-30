@@ -95,24 +95,27 @@ function Show-Status {
     # G9v3
     $g9Online = Test-LlamaHealth $PortG9
     $g9Color = if ($g9Online) { 'Green' } else { 'DarkGray' }
+    $g9Text = if ($g9Online) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }
     Write-Host "1. AI9Stars G9v3-3B (Porta $PortG9): " -NoNewline
-    Write-Host (if ($g9Online) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }) -ForegroundColor $g9Color
+    Write-Host $g9Text -ForegroundColor $g9Color
     Write-Host "   Arquivo: $G9ModelPath"
     Write-Host "   Existe em disco: $(Test-Path $G9ModelPath)"
 
     # Ling 3.0
     $lingOnline = Test-LlamaHealth $PortLing
     $lingColor = if ($lingOnline) { 'Green' } else { 'DarkGray' }
+    $lingText = if ($lingOnline) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }
     Write-Host "`n2. Ling-3.0-tiny MoE (Porta $PortLing): " -NoNewline
-    Write-Host (if ($lingOnline) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }) -ForegroundColor $lingColor
+    Write-Host $lingText -ForegroundColor $lingColor
     Write-Host "   Arquivo: $LingModelPath"
     Write-Host "   Existe em disco: $(Test-Path $LingModelPath)"
 
     # Qwen 2.5 Coder
     $qwenOnline = Test-LlamaHealth $PortQwen
     $qwenColor = if ($qwenOnline) { 'Green' } else { 'DarkGray' }
+    $qwenText = if ($qwenOnline) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }
     Write-Host "`n3. Qwen2.5-Coder-1.5B Q8_0 (Porta $PortQwen): " -NoNewline
-    Write-Host (if ($qwenOnline) { 'ONLINE (Disponivel)' } else { 'OFFLINE' }) -ForegroundColor $qwenColor
+    Write-Host $qwenText -ForegroundColor $qwenColor
     Write-Host "   Arquivo: $QwenModelPath"
     Write-Host "   Existe em disco: $(Test-Path $QwenModelPath)"
     Write-Host "===========================================`n"
