@@ -292,7 +292,7 @@ class LocalLlamaVulkanClient:
 class GeminiCloudClient:
     """Cliente nativo assincrono para a API Gemini utilizando google-genai SDK."""
 
-    def __init__(self, api_key: str | None = None, model_id: str = "gemini-2.5-flash") -> None:
+    def __init__(self, api_key: str | None = None, model_id: str = "gemini-3.7-flash") -> None:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
         self.model_id = model_id
         self._client: genai.Client | None = None
@@ -465,7 +465,7 @@ local_llama_client = LocalLlamaVulkanClient(
 )
 gemini_cloud_client = GeminiCloudClient(
     api_key=os.getenv("GEMINI_API_KEY"),
-    model_id=os.getenv("GEMINI_MODEL_ID", "gemini-2.5-flash"),
+    model_id=os.getenv("GEMINI_MODEL_ID", "gemini-3.7-flash"),
 )
 analyzer = ComplexityAnalyzer(
     local_max_tokens=int(os.getenv("LOCAL_MAX_TOKENS", "2048")),

@@ -5,7 +5,8 @@
 
 ## Reflexoes e Insight SOTA
 
-- A aguardar a primeira interacao expansiva no novo Kernel.
+- **[DIAGNOSTICO-DASH-01]**: Falhas em rotas e rotinas assincronas de telemetria estao correlacionadas a contencao de transacoes no SQLite WAL sob polling agressivo ou falhas de escape sintatico em shells de execucao nativa (Windows cmd/PowerShell).
+- **[INVARIANTE]**: Aplicar backoff exponencial e transacoes atomicas isoladas em endpoints de telemetria em tempo real; padronizar invocacoes CLI via Python puro/QueueManager eliminando escaping fragil de aspas.
 
 ## Propostas Evolutivas
 

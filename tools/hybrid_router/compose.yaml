@@ -45,7 +45,7 @@ services:
     environment:
       - LOCAL_LLAMA_URL=http://llama-vulkan:8080/v1
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GEMINI_MODEL_ID=${GEMINI_MODEL_ID:-gemini-2.5-flash}
+      - GEMINI_MODEL_ID=${GEMINI_MODEL_ID:-gemini-3.7-flash}
       - LOCAL_MAX_TOKENS=${LOCAL_MAX_TOKENS:-2048}
       - COMPLEXITY_THRESHOLD=${COMPLEXITY_THRESHOLD:-0.45}
     ports:

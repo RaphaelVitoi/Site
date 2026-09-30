@@ -361,7 +361,7 @@ class SOTAUnifiedFreeRouter:
         messages.append({"role": "user", "content": prompt})
 
         payload = {
-            "model": "google/gemini-2.0-flash-exp:free",
+            "model": "poolside/laguna-xs-2.1:free",
             "messages": messages,
             "max_tokens": 2048,
         }
@@ -373,7 +373,7 @@ class SOTAUnifiedFreeRouter:
                 content = data["choices"][0]["message"]["content"]
                 return {
                     "provider": "openrouter-free",
-                    "model": "gemini-2.0-flash-exp:free",
+                    "model": "poolside/laguna-xs-2.1:free",
                     "output": content or "",
                 }
             except Exception as exc:

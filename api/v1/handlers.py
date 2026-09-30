@@ -308,6 +308,23 @@ async def handle_get_task_result(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_get_task_result")
 
 
+#: A-07 (auditoria 2026-09-29): `/state` aceitava chave LIVRE, e o worker le
+#: `hibernation_until` para dormir enquanto o timestamp for futuro
+#: (`worker/loop.py:105`). Bastava a credencial de servico para paralisar a fila
+#: inteira sem precisar de mais nada.
+#:
+#: A lista nao e politica minha: e o fecho por AST das chamadas
+#: `get_system_state`/`set_system_state` do proprio repositorio. Medido em
+#: 2026-09-29, sao exatamente estas quatro chaves. Chave nova que o sistema
+#: comece a ler precisa ser declarada aqui -- e a falha e visivel, em vez de um
+#: escritor silencioso decidir o valor de um campo que o loop consome.
+#:
+#: Leitura e mais permissiva que escrita de proposito: `GET /state?key=<outra>`
+#: devolve `None` inofensivo, enquanto `POST /state` com chave desconhecida vira
+#: linha nova na tabela que ninguem le. O date de escrita e a superficie.
+CHAVES_DE_ESTADO = frozenset({"autonomy_mode", "hibernation_until", "keys_last_audit", "watchdog_last_metrics"})
+
+
 async def handle_get_state(request: web.Request) -> web.Response:
     """Recupera uma variavel de estado dinamico do sistema."""
     manager = request.app[MANAGER_KEY]
@@ -330,6 +347,13 @@ async def handle_set_state(request: web.Request) -> web.Response:
         value = data.get("value")
         if not key:
             return web.json_response({"error": "key missing"}, status=400)
+        if not isinstance(key, str):
+            return web.json_response({"error": "key deve ser string."}, status=400)
+        if key not in CHAVES_DE_ESTADO:
+            return web.json_response(
+                {"error": f"Chave de estado nao declarada: {key}. Consultar CHAVES_DE_ESTADO."},
+                status=400,
+            )
         await manager.set_system_state(key, value)
         return web.json_response({"status": "SUCCESS"})
     except Exception as e:  # noqa: BLE001
@@ -770,6 +794,42 @@ _SENSITIVE_DIR_COMPONENTS = frozenset({".git", ".secrets", ".ssh", ".gnupg", ".a
 _SENSITIVE_SUFFIXES = frozenset({".pem", ".key", ".p12", ".pfx", ".keystore", ".jks"})
 _SENSITIVE_NAMES = frozenset({"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", ".netrc", ".npmrc", ".pypirc"})
 
+#: A-01 (auditoria 2026-09-29): a familia de arquivo de ambiente e reconhecida
+#: por PADRAO, e nao por literal. A regra anterior era `(name == ".env" or
+#: name.startswith(".env.")) and name != ".env.example"` -- literal exato mais
+#: prefixo, com excecao SUBTRAIDA. Literal novo nasce coberto por acidente: e
+#: assim que `_env.ps1` passou a ser servido. Medido antes da correcao:
+#: `_is_file_access_allowed("<raiz>/_env.ps1")` devolvia True, e esse arquivo e
+#: a segunda fonte canonica de credenciais do projeto (declarada em
+#: `_env.example.ps1`, ignorada em `.gitignore:157`), com `API_SECRET_TOKEN` e
+#: `AUTH_SECRET` em claro. Quem tem a credencial de servico — a unica que
+#: alcanca esta rota — lia o segredo que o proprio sistema entrega.
+#:
+#: Tres particoes, e cada uma fecha uma familia:
+#: - `ext.startswith("env")`: `.env`, `.env.local`, `.envrc`, `nexus.env`
+#: - `stem in {"env", "_env"}`: `env.sh`, `_env.ps1`
+#: - `stem.endswith(("_env", "-env"))`: `nexus_env.ps1`
+#:
+#: O que NAO e familia e continua servivel: `environment.ts`, `env_loader.py`,
+#: `settings.json`, `CLAUDE.md`. A regra grew por medicao, nao por volumen.
+_ENV_TEMPLATE_MARKERS = (".example", ".sample", ".template", ".dist", ".tpl")
+
+
+def _nome_e_da_familia_ambiente(name: str) -> bool:
+    """Diz se o nome do arquivo pertence a familia de arquivo de ambiente."""
+    stem, _, ext = name.partition(".")
+    return ext.startswith("env") or stem in {"env", "_env"} or stem.endswith(("_env", "-env"))
+
+
+def _e_modelo_publico(name: str) -> bool:
+    """Modelo de ambiente sem valor: legivel de proposito, e a unica excepcao.
+
+    A excecao e DECLARADA por marcador, e nao deduzida. Excecao subtraida
+    (`.env.example` menos um) morre em silencio quando o nome muda de forma;
+    excecao declarada aparece quando o nome novo nao casa com nenhum marcador.
+    """
+    return any(marker in name for marker in _ENV_TEMPLATE_MARKERS)
+
 
 def _is_sensitive_path(file_path: Path) -> bool:
     # Ponto e espaco finais sao descartados pelo Windows ao abrir o arquivo.
@@ -779,7 +839,9 @@ def _is_sensitive_path(file_path: Path) -> bool:
         return True
     if name in _SENSITIVE_NAMES or file_path.suffix.lower() in _SENSITIVE_SUFFIXES:
         return True
-    return (name == ".env" or name.startswith(".env.")) and name != ".env.example"
+    if _nome_e_da_familia_ambiente(name):
+        return not _e_modelo_publico(name)
+    return False
 
 
 def _is_file_access_allowed(file_path: Path) -> bool:

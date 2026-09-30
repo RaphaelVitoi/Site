@@ -36,7 +36,7 @@ verificado:
   - "lint-e-seguranca: Ajustes de tipagem, ruff/isort em llm/gemini.py e scripts/ops/homologar_laya_gpu.py, e anotacoes de seguranca local noqa: S310 em llm/local_llama_client.py"
   - "observabilidade-budget: Captura e log de depuracao de excecoes em _collect_all_gemini_keys em llm/budget.py"
   - "estilo-fontawesome: Declaracao de fallback fisico float left/right para propriedades logicas inline-start/inline-end no css do FontAwesome"
-  - "memoria-gemma4: Consolidacao da memoria de @gemma4 para inferencia local Vulkan na RX 570"
+  - "memoria-gemma4: Consolidacao da memoria de @gemma4 para inferencia local Vulkan na RX 570. CORRIGIDO em 2026-09-30: este item descrevia so a ADICAO, mas o diff do commit b173e47e tambem REMOVIA a linha de proveniencia `// [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization` — o rastro de auditoria que `agents/context_builder.py:398` instrui o agente a injetar em arquivo alterado significativamente. A remocao nao foi declarada e nao aparece em nenhum campo deste registro. Marcador restaurado em 2026-09-30 com nota de proveniencia no proprio arquivo."
   - "calibracao-diaria: Inclusao do relatorio de lastro diario reports/agent-calibration/daily/2026-09-28.json"
   - "bateria-pytest: 8/8 testes de gemini_pool, 7/7 testes de openrouter_pools e 11/11 testes de laya aprovados com zero erros e zero warnings"
 nao_verificado:

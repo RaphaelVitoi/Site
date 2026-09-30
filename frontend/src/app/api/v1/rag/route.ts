@@ -129,7 +129,7 @@ export async function POST(request: Request) {
 
 		const geminiRes = await fetch(
 			// Chave no header, nunca na URL (BK-21, auditoria 2026-09-16).
-			'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+			'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent',
 			{
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },

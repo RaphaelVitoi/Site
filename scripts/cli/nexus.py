@@ -2500,7 +2500,7 @@ def run_maintenance():
     console.print(f"\n[bold green][SUCESSO] As {total_executaveis} etapas executaveis da manutencao concluiram.[/]")
 
 
-HELP_MODEL_CHOICES = "Modelo: 31b, 31b_cloud, 12b, 4b, 8b, llama3_8b, qwen, granite"
+HELP_MODEL_CHOICES = "Modelo: 31b, 31b_cloud, 12b, 4b, 8b, llama3_8b, qwen, laguna"
 
 
 @ops_app.command("start-gemma")

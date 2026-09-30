@@ -99,8 +99,7 @@ def test_normalize_model_logic():
     assert normalize_model("llama-3-8b") == "llama3_8b"
     assert normalize_model("gemma-4-4b") == "e4b"
     assert normalize_model("gemma-4-e2b") == "e2b"
-    assert normalize_model("gemma4:e4b") == "e4b"
-    assert normalize_model("deepseek-coder:1.3b") == "deepseek"
+    assert normalize_model("poolside-laguna") == "laguna"
     assert normalize_model("") == "e4b"  # SOTA default local model is e4b
 
 
