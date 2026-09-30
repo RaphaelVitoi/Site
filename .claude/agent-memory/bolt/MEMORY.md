@@ -72,3 +72,6 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+## 2024-05-30 - Removing TypedArray nullish coalescing in hot loops
+**Learning:** Using `?? 0` on bounded `TypedArray` (e.g. `Float32Array`) accesses inside a CFR Monte Carlo hot loop introduces severe branching and type-check overhead, slowing down the engine. TypedArray bounds safely return a primitive number.
+**Action:** Always trust bounded index accesses on TypedArrays in hot loops and avoid redundant fallback checks like `?? 0`.
