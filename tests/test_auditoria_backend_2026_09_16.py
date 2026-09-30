@@ -546,6 +546,16 @@ def test_bk18_cache_sem_persistencia_nao_escreve_em_disco(tmp_path) -> None:
         "x/.ssh/id_ed25519",
         ".npmrc",
         ".npmrc.",
+        # A-01 (auditoria 2026-09-29): a familia de arquivo de ambiente e
+        # reconhecida por padrao. `_env.ps1` e a segunda fonte canonica de
+        # credenciais do projeto e devolvia allowed=True antes da correcao --
+        # medido executando a funcao de producao, nao por leitura.
+        "_env.ps1",
+        ".envrc",
+        "env.sh",
+        "nexus_env.ps1",
+        ".env.production",
+        "my-env.config",
     ],
 )
 def test_bk19_arquivo_sensivel_nao_e_servido(relativo: str) -> None:
@@ -556,6 +566,37 @@ def test_bk19_arquivo_sensivel_nao_e_servido(relativo: str) -> None:
 def test_bk19_modelo_de_ambiente_continua_legivel() -> None:
     raiz = Path(handlers.__file__).resolve().parent.parent.parent
     assert handlers._is_file_access_allowed((raiz / ".env.example").resolve()) is True
+    # O segundo modelo canonico tambem: declarado em `_env.example.ps1` e
+    # rastreado por `.gitignore` como `!_env.example.ps1`.
+    assert handlers._is_file_access_allowed((raiz / "_env.example.ps1").resolve()) is True
+
+
+@pytest.mark.parametrize(
+    "nome",
+    ["environment.ts", "env_loader.py", "settings.json", "docker-compose.yml", "CLAUDE.md"],
+)
+def test_a01_regra_nao_engol_arqivo_legitimo(nome: str) -> None:
+    """A regra cresce por medicao, nao por volumen.
+
+    Um guard que bloqueia arquivo inofensivo e defeito do guard, nao defeito do
+    alvo: o `/api/files/view` e ferramenta de trabalho do dashboard, e um arquivo
+    de codigo ilexivel inutiliza o produto.
+    """
+    raiz = Path(handlers.__file__).resolve().parent.parent.parent
+    assert handlers._is_file_access_allowed((raiz / nome).resolve()) is True
+
+
+def test_a01_excecao_e_declarada_e_nao_deduzida() -> None:
+    """`secret.example` e modelo; `secret` e segredo.
+
+    A excecao antes vivia como `name != ".env.example"` -- subtrair um literal.
+    Aqui ela e um marcador declarado, entao um nome novo aparece no teste em vez
+    de mudar de classificacao em silencio.
+    """
+    assert handlers._e_modelo_publico("anything.example.ps1") is True
+    assert handlers._e_modelo_publico(".env.tpl") is True
+    assert handlers._e_modelo_publico("_env.ps1") is False
+    assert handlers._e_modelo_publico("secret.ps1") is False
 
 
 # --- BK-20 --------------------------------------------------------------------

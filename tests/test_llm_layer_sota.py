@@ -202,9 +202,9 @@ async def test_async_token_bucket() -> None:
 @pytest.mark.parametrize(
     ("model", "expected_provider"),
     [
-        ("gemini-2.5-pro", "gemini"),
+        ("gemini-3.7-flash", "gemini"),
         ("anthropic/claude-3-opus", "anthropic"),
-        ("meta-llama/llama-3.1-8b-instruct", "openrouter"),
+        ("meta-llama/llama-3.3-70b-instruct", "openrouter"),
         ("gemma-2-27b-it", "local"),
         ("unknown-model", None),
     ],
@@ -217,12 +217,12 @@ def test_infer_provider_for_model(model: str, expected_provider: str | None) -> 
 @pytest.mark.unit
 def test_reorder_models_for_economy() -> None:
     """Valida reordenacao economica priorizando custo/local."""
-    models = ["meta-llama/llama-3.1-8b-instruct", "gemini-2.5-flash", "gemini-2.5-pro"]
+    models = ["meta-llama/llama-3.3-70b-instruct:free", "gemini-3.5-flash-lite", "gemini-3.7-flash"]
 
     with patch("core.runtime._feature_enabled", return_value=True):
         reordered = routing._reorder_models_for_economy(models, prefer_local=False)
-        # Gemini Flash deve ser o primeiro (mais economico)
-        assert reordered[0] == "gemini-2.5-flash"
+        # Gemini 3.5 Flash Lite deve ser o primeiro (mais economico)
+        assert reordered[0] == "gemini-3.5-flash-lite"
 
 
 @pytest.mark.asyncio

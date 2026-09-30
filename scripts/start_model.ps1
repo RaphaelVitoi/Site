@@ -41,9 +41,9 @@ if ($OllamaTags.Count -eq 0) {
         "4b"        = "gemma4:latest"
         "31b_cloud" = "gemma4:31b-cloud"
         "31b"       = "gemma4:31b"
-        "llama3_8b" = "llama3.1:8b"
-        "qwen"      = "qwen2.5-coder:3b"
-        "granite"   = "granite3.3:8b"
+        "qwen"      = "qwen2.5-coder:7b-instruct-q5_K_M"
+        "qwen_1_5b" = "qwen2.5-coder:1.5b"
+        "laguna"    = "poolside/laguna-s-2.1:free"
     }
 }
 

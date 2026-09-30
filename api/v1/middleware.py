@@ -387,7 +387,19 @@ async def rate_limit_middleware(request, handler):
     _ip_blocks[ip] = record
 
     if int(record["count"]) > MAX_REQUESTS_PER_WINDOW:
-        return web.json_response({"error": "Rate limit excedido. Defesa de entropia ativada."}, status=429)
+        # A-10 (auditoria 2026-09-29): 429 sem `Retry-After` obriga o cliente a
+        # adivinhar o balde, e adivinhando ele volta cedo e produz o retry storm
+        # que o limite existe para impedir. O valor declarado e o que o cliente
+        # PRECISA esperar, nao o que ele espera se sair bem.
+        return web.json_response(
+            {"error": "Rate limit excedido. Defesa de entropia ativada."},
+            status=429,
+            headers={
+                "Retry-After": str(RATE_LIMIT_WINDOW),
+                "X-RateLimit-Limit": str(MAX_REQUESTS_PER_WINDOW),
+                "X-RateLimit-Window": str(RATE_LIMIT_WINDOW),
+            },
+        )
 
     return await handler(request)
 
@@ -469,10 +481,26 @@ SECURITY_HEADERS: dict[str, str] = {
     "X-Frame-Options": "DENY",
 }
 
+#: A-05 (auditoria 2026-09-29): o backend nao emitia `Cache-Control`, e o gateway
+#: Next.js so o fazia nos seus proprios corpo (`frontend/src/lib/server/
+#: operator-gateway.ts`). Duas camadas, um contrato incompleto: uma resposta do
+#: backend que chegasse ao cache do navegador servia dados de operador
+#: (`/status`, `/db-summary`, `/state`) a partir de cache.
+#:
+#: HSTS entra aqui com uma ressalva medida: o backend escuta em HTTP puro
+#: (Cloud Run/CDN termina TLS), e por isso nao emite HSTS. A politica fica no
+#: edge, que e onde TLS existe. Ver `frontend/next.config.js` (`headers()`).
+CACHE_CONTROL_NO_STORE = "no-store"
+
 
 def _apply_security_headers(headers) -> None:
     for name, value in SECURITY_HEADERS.items():
         headers.setdefault(name, value)
+    # Operador por padrao: dado de fila, orcamento, arquivo e estado nao sao
+    # publicos, e nenhum deles muda de valor entre duas leituras -- guardar em
+    # cache so pode servir dado velho. `setdefault` preserva quem ja declarou.
+    headers.setdefault("Cache-Control", CACHE_CONTROL_NO_STORE)
+    headers.setdefault("Pragma", "no-cache")
 
 
 @web.middleware

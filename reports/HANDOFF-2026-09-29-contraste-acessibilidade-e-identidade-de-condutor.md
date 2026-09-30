@@ -189,6 +189,14 @@ veredito no inventário no mesmo commit — remover foi mais honesto que declara
 `master` @ `b173e47e`, 76 arquivos alterados, commit e push autorizados pelo Tier 0 em
 2026-09-29. Ver `git log -1` para o SHA.
 
+## Achado no pre-push
+
+O primeiro `git push` foi **bloqueado** por `test_sentinela_delecoes.py::test_captura_a_delecao_e_nomeia_suspeitos`, que estava verde em todas as medicoes anteriores -- incluindo a `suite_verde.py` que o pre-commit rodou sobre a arvore exata que foi commitada.
+
+O teste e um watcher de filesystem: cria uma isca e espera o sentinela PowerShell nomea-la, com `-IntervaloMs 200` e `-MaximoDeCiclos 50`. Sob `SOTA_SUITE_WORKERS=4` o pre-push roda a suite em paralelo, e o ciclo de 200 ms pode nao observar a isca a tempo. **3 execucoes isoladas passaram**; o que falhou foi a corrida, nao a logica.
+
+Nao ha correcao de codigo a fazer aqui: mexer no intervalo mascararia a sensibilidade em vez de medir. A mitigacao e reduzir a concorrencia no push, e o teste continua sendo a prova de que o sentinela funciona.
+
 ## Trabalho aberto
 
 1. **As duas pendências de autonomia seguem abertas** e exigem autorização do Tier 0:

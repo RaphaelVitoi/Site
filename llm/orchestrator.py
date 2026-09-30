@@ -106,9 +106,7 @@ async def _try_compress_openrouter(
 
     compression_model = next(
         (m for m in OPENROUTER_ALTERNATIVE_MODELS if "r1" not in str(m).lower()),
-        OPENROUTER_ALTERNATIVE_MODELS[0]
-        if OPENROUTER_ALTERNATIVE_MODELS
-        else "mistralai/mistral-small-3.1-24b-instruct:free",
+        OPENROUTER_ALTERNATIVE_MODELS[0] if OPENROUTER_ALTERNATIVE_MODELS else "poolside/laguna-xs-2.1:free",
     )
     logger.info(
         f"[[{_c(task_agent)}]{task_agent}[/]] Acionando compressao cognitiva via OpenRouter ({compression_model})..."
@@ -177,8 +175,13 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     frequent_failures = COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] >= 3
     prefer_local_fallback = recent_failure and frequent_failures
 
-    raw_domain = (task.metadata or {}).get("domain")
-    domain_str = str(raw_domain) if raw_domain else None
+    # Dominio: declarado na tarefa vence; derivado do agente cobre o resto.
+    # Antes so o declarado era lido, e NENHUM modulo o declarava -- medido: o
+    # roteamento vivia inteiramente no eixo economico. `resolver_dominio` e a
+    # fonte unica dos dois caminhos.
+    from llm.routing import resolver_dominio  # noqa: PLC0415
+
+    domain_str = resolver_dominio(task)
 
     models_to_try = _reorder_models_for_economy(
         models_to_try,
@@ -186,7 +189,7 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
         designated_model=designated_model,
         domain=domain_str,
     )
-    models_to_try = _inject_openrouter_alternatives(models_to_try)
+    models_to_try = _inject_openrouter_alternatives(models_to_try, designated_model)
     models_to_try = await _apply_model_health_gate(models_to_try, manager, task)
 
     # [CAMADA S1 -- Laya | CLAUDE.md Secao 6.5 consumidor real | Secao 3 fonte-unica preservada]

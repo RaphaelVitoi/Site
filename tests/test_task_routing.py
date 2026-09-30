@@ -20,36 +20,38 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 # ==============================================================================
 
 MOCK_AGENTS_MANIFEST = {
-    "architect": {"routing_pattern": "design|conceito", "primary_model": "gemini-2.5-pro"},
-    "maverick": {"routing_pattern": "estrategi|inova", "primary_model": "gemini-2.5-pro"},
-    "pesquisador": {"routing_pattern": "pesquis|busc", "primary_model": "gemini-2.5-pro"},
-    "planner": {"routing_pattern": "planej|prd", "primary_model": "gemini-2.5-pro"},
-    "securitychief": {"routing_pattern": "seguran|privacy", "primary_model": "gemini-2.5-pro"},
-    "validador": {"routing_pattern": "matematic|icm", "primary_model": "gemini-2.5-pro"},
-    "implementor": {"routing_pattern": "codar|implement", "primary_model": "gemini-2.5-flash"},
-    "verifier": {"routing_pattern": "test|bug", "primary_model": "gemini-2.5-flash"},
-    "curator": {"routing_pattern": "estetic|ux", "primary_model": "gemini-2.5-pro"},
-    "chico": {"routing_pattern": "sintese|orquestra", "primary_model": "gemini-2.5-pro"},
-    "sequenciador": {"routing_pattern": "sequenci|fila", "primary_model": "gemini-2.5-flash"},
-    "organizador": {"routing_pattern": "organiz|documenta", "primary_model": "meta-llama/llama-3.1-8b-instruct"},
-    "dispatcher": {"routing_pattern": "backlog|ideias", "primary_model": "gemini-2.5-flash"},
+    "architect": {"routing_pattern": "design|conceito", "primary_model": "claude-sonnet-5"},
+    "maverick": {"routing_pattern": "estrategi|inova", "primary_model": "gemini-3.7-flash"},
+    "pesquisador": {"routing_pattern": "pesquis|busc", "primary_model": "gemini-3.7-flash"},
+    "planner": {"routing_pattern": "planej|prd", "primary_model": "gemini-3.5-flash-lite"},
+    "securitychief": {"routing_pattern": "seguran|privacy", "primary_model": "gemini-3.7-flash"},
+    "validador": {"routing_pattern": "matematic|icm", "primary_model": "qwen2.5-coder:7b-instruct-q5_K_M"},
+    "implementor": {"routing_pattern": "codar|implement", "primary_model": "qwen2.5-coder:7b-instruct-q5_K_M"},
+    "verifier": {"routing_pattern": "test|bug", "primary_model": "qwen2.5-coder:7b-instruct-q5_K_M"},
+    "curator": {"routing_pattern": "estetic|ux", "primary_model": "gpt-oss:120b-cloud"},
+    "chico": {"routing_pattern": "sintese|orquestra", "primary_model": "gemini-3.5-flash-lite"},
+    "sequenciador": {"routing_pattern": "sequenci|fila", "primary_model": "gemini-3.5-flash-lite"},
+    "organizador": {"routing_pattern": "organiz|documenta", "primary_model": "gemini-3.5-flash-lite"},
+    "dispatcher": {"routing_pattern": "backlog|ideias", "primary_model": "gemini-3.5-flash-lite"},
 }
 
 MOCK_VALID_AGENTS = [f"@{name}" for name in MOCK_AGENTS_MANIFEST]
 
 KNOWN_VALID_MODEL_PREFIXES = (
     "gemini-3.",
-    "gemini-2.",
     "claude-",
     "meta-llama/",
     "deepseek/",
     "mistralai/",
     "qwen",
     "gemma",
+    "poolside/",
+    "stealth/",
 )
 
 GHOST_MODEL_PATTERNS = (
     "gemini-1.",  # descontinuado
+    "gemini-2.",  # descontinuado
 )
 
 
@@ -151,7 +153,7 @@ def test_routing_map_sem_modelos_fantasma() -> None:
         for ghost in GHOST_MODEL_PATTERNS:
             assert ghost not in model, (
                 f"Modelo fantasma detectado em routing_map.json: '{model}' contem '{ghost}'. "
-                "Atualizar para gemini-2.5-pro ou gemini-2.5-flash."
+                "Atualizar para gemini-3.5-flash-lite ou gemini-3.7-flash."
             )
 
 
@@ -180,9 +182,10 @@ def test_routing_map_modelos_conhecidos() -> None:
 @pytest.mark.parametrize(
     "model",
     [
-        "gemini-2.5-pro",
-        "gemini-2.5-flash",
-        "meta-llama/llama-3.1-8b-instruct",
+        "gemini-3.7-flash",
+        "gemini-3.5-flash-lite",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "poolside/laguna-s-2.1:free",
     ],
 )
 def test_known_model_prefixes_accept_valid_models(model: str) -> None:

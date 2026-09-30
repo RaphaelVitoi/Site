@@ -234,13 +234,13 @@ def _reload_system_config() -> bool:
                 DEEP_THINKING_MODELS = tuple(
                     MODEL_ROUTING.get(
                         "deep_thinking",
-                        (MODEL_GEMINI_FLASH, "deepseek/deepseek-r1:free"),
+                        (MODEL_GEMINI_FLASH, "gemma4:31b-cloud", "poolside/laguna-s-2.1:free"),
                     )
                 )
                 FAST_OPERATIONS_MODELS = tuple(
                     MODEL_ROUTING.get(
                         "fast_operations",
-                        (MODEL_GEMINI_FLASH, "meta-llama/llama-3.1-8b-instruct"),
+                        (MODEL_GEMINI_FLASH, "qwen2.5-coder:1.5b", "poolside/laguna-xs-2.1:free"),
                     )
                 )
                 PROTECTED_AGENTS_FROM_CLEANUP = tuple(

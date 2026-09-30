@@ -295,10 +295,11 @@ CLOUD_MODEL_MAP = {
     "4b": "gemma-4-e4b-it",
     "31b_cloud": "gemma-4-31b-it",
     "31b": "gemma-4-31b-it",
-    "llama3_8b": "meta-llama/llama-3.1-8b-instruct",
+    "llama3_70b": "meta-llama/llama-3.3-70b-instruct",
+    "laguna": "poolside/laguna-s-2.1:free",
+    "laguna_xs": "poolside/laguna-xs-2.1:free",
     "qwen": "qwen/qwen-2.5-coder-32b-instruct",
-    "granite": "ibm/granite-3.3-8b-instruct",
-    "deepseek": "deepseek/deepseek-chat",
+    "gpt_oss": "gpt-oss:120b-cloud",
 }
 
 # Fallback embutido. A fonte de verdade e data/ollama_models.json, carregado
@@ -312,9 +313,10 @@ OLLAMA_MODEL_MAP = {
     "e2b": "gemma4:e2b",
     "4b": "gemma4:latest",
     "llama3_8b": "llama3.1:8b",
-    "qwen": "qwen2.5-coder:3b",
-    "granite": "granite3.3:8b",
-    "deepseek": "deepseek-coder:1.3b",
+    "qwen": "qwen2.5-coder:7b-instruct-q5_K_M",
+    "qwen_1_5b": "qwen2.5-coder:1.5b",
+    "qwen_surgical": "qwen-code-surgical:latest",
+    "qwen_pmev": "qwen-pmev-math:latest",
 }
 
 OLLAMA_MODELS_MANIFEST = Path(PROJECT_ROOT) / "data" / "ollama_models.json"
@@ -404,22 +406,13 @@ MODEL_INFERENCE_PARAMS = {
         "num_predict": 4096,
         "num_thread": 8,
     },
-    "granite": {
-        "num_ctx": 16384,
-        "temperature": 0.4,
+    "laguna": {
+        "num_ctx": 32768,
+        "temperature": 0.3,
         "top_p": 0.9,
         "top_k": 40,
-        "repeat_penalty": 1.1,
-        "num_predict": 2048,
-        "num_thread": 8,
-    },
-    "deepseek": {
-        "num_ctx": 16384,
-        "temperature": 0.2,
-        "top_p": 0.9,
-        "top_k": 40,
-        "repeat_penalty": 1.1,
-        "num_predict": 2048,
+        "repeat_penalty": 1.05,
+        "num_predict": 4096,
         "num_thread": 8,
     },
 }
@@ -439,10 +432,10 @@ def _resolve_heuristica(model_name_lower: str) -> str | None:
         return "llama3_8b"
     if "qwen" in model_name_lower:
         return "qwen"
-    if "granite" in model_name_lower:
-        return "granite"
-    if "deepseek" in model_name_lower:
-        return "deepseek"
+    if "laguna" in model_name_lower:
+        return "laguna"
+    if "oss" in model_name_lower:
+        return "gpt_oss"
     return None
 
 
@@ -765,7 +758,6 @@ def _validate_thermodynamic_hardware(model_name: str) -> str | None:
         "8b": 3.0,
         "llama3_8b": 3.0,
         "qwen": 3.0,
-        "granite": 3.0,
     }
     required_vram_gb = next((v for k, v in vram_map.items() if k in model_name), 0.0)
 
