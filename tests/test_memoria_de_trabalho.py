@@ -151,3 +151,50 @@ def test_o_estado_do_notepad_ainda_e_a_fixture_do_smoke_test():
         f"o estado do notepad deixou de ser so a fixture: blocos {sorted(blocos)}, "
         f"na fixture {sorted(chaves_da_fixture)}. Algo passou a escrever ali. {PISTA}"
     )
+
+
+def test_os_consumidores_de_notepad_active_md_estao_mapeados_e_defensivos(declaracao):
+    """Garante que os pontos vivos de injecao de notepad_active.md sao conhecidos e defensivos."""
+    notepad_entry = next(
+        e for e in declaracao["modulos_escritos_e_NAO_ligados"] if e["caminho"] == "memory/notepad_memory.py"
+    )
+    consumidores = notepad_entry["estado_em_disco"]["consumidores_de_texto"]
+    assert len(consumidores) == 3
+
+    for rel_path in consumidores:
+        caminho = RAIZ / rel_path
+        assert caminho.exists(), f"Consumidor de notepad declarado nao existe: {rel_path}"
+        conteudo = caminho.read_text(encoding="utf-8", errors="ignore")
+        # Todos os 3 consumidores devem conter verificacao defensiva antes de ler
+        assert "notepad_active.md" in conteudo
+        assert "exists" in conteudo or "Test-Path" in conteudo, (
+            f"Consumidor {rel_path} deve validar existencia antes da ingestao."
+        )
+
+
+def test_coerencia_de_versao_sota_v8_em_todos_os_artefatos_de_notepad():
+    """Erradica a divergencia historica (7.0 vs 8.0) entre modulo, json e markdown."""
+    modulo_txt = (RAIZ / "memory" / "notepad_memory.py").read_text(encoding="utf-8")
+    assert '"8.0.0-GOLD"' in modulo_txt
+    assert "Protocolo Chico v8.0 GOLD" in modulo_txt
+
+    json_txt = (RAIZ / "memory" / "notepad_state.json").read_text(encoding="utf-8")
+    assert '"version": "8.0.0-GOLD"' in json_txt
+
+    md_txt = (RAIZ / "memory" / "notepad_active.md").read_text(encoding="utf-8")
+    assert "Protocolo Chico v8.0 GOLD" in md_txt
+
+
+def test_notepad_state_e_markdown_estao_em_paridade_estrutural():
+    """Verifica paridade biunivoca entre o estado JSON e o markdown renderizado."""
+    estado_path = RAIZ / "memory" / "notepad_state.json"
+    md_path = RAIZ / "memory" / "notepad_active.md"
+
+    dados = json.loads(estado_path.read_text(encoding="utf-8"))
+    blocos = dados.get("blocks", [])
+    md_conteudo = md_path.read_text(encoding="utf-8")
+
+    assert len(blocos) > 0, "Notepad state deve conter ao menos um bloco de referencia"
+    for b in blocos:
+        chave = b["key"]
+        assert f"## [{chave}]" in md_conteudo, f"Bloco {chave} presente no JSON mas ausente no Markdown"

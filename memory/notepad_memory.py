@@ -78,13 +78,18 @@ class NotepadMemory:
         with self._lock:
             self._evict_expired_internal()
             data = {
-                "version": "7.0.0-GOLD",
+                "version": "8.0.0-GOLD",
                 "timestamp": time.time(),
                 "total_blocks": len(self._blocks),
                 "blocks": [b.to_dict() for b in self._blocks.values()],
             }
-            self.storage_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-            self.markdown_path.write_text(self.render_markdown(), encoding="utf-8")
+            tmp_storage = self.storage_path.with_suffix(".tmp")
+            tmp_storage.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            tmp_storage.replace(self.storage_path)
+
+            tmp_markdown = self.markdown_path.with_suffix(".tmp")
+            tmp_markdown.write_text(self.render_markdown(), encoding="utf-8")
+            tmp_markdown.replace(self.markdown_path)
 
     def write_block(
         self, key: str, title: str, content: str, tags: list[str] | None = None, ttl_seconds: int | None = None
@@ -137,7 +142,7 @@ class NotepadMemory:
         with self._lock:
             lines = [
                 "# SOTA Working Memory & Notepad Scratchpad",
-                f"> **Protocolo Chico v7.0 GOLD** | Ultima Atualizacao: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+                f"> **Protocolo Chico v8.0 GOLD** | Ultima Atualizacao: {time.strftime('%Y-%m-%d %H:%M:%S')}",
                 "",
                 f"**Total de Blocos Ativos:** `{len(self._blocks)}`",
                 "---",
@@ -161,14 +166,14 @@ class NotepadMemory:
 
 def test_notepad():
     print("=" * 60)
-    print("  TESTE DO MOTOR NOTEPAD WORKING MEMORY (CHICO v7.0)")
+    print("  TESTE DO MOTOR NOTEPAD WORKING MEMORY (CHICO v8.0)")
     print("=" * 60)
 
     mem = NotepadMemory()
     mem.write_block(
         key="PLAN_CURRENT",
         title="Plano de Otimizacao Sistemica SOTA",
-        content="1. Memoria Notepad e Replay Memory integradas.\n2. Clustering de Agentes calibrado.\n3. Sanitizacao de Entropia concluida.",
+        content="1. Memoria de Trabalho canonica operando via task.metadata (SQLite BEGIN EXCLUSIVE).\n2. Scratchpad efemero sincronizado sob Protocolo Chico v8.0 GOLD.\n3. Entropia de contexto mitigada via Eficiencia de Shannon.",
         tags=["plan", "sota", "active"],
     )
     mem.write_block(

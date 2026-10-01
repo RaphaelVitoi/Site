@@ -1,19 +1,19 @@
 {
-  "version": "7.0.0-GOLD",
-  "timestamp": 1786722952.8539398,
+  "version": "8.0.0-GOLD",
+  "timestamp": 1790858733.7269287,
   "total_blocks": 2,
   "blocks": [
     {
       "key": "PLAN_CURRENT",
-      "title": "Plano de Otimização Sistêmica SOTA",
-      "content": "1. Memória Notepad e Replay Memory integradas.\n2. Clustering de Agentes calibrado.\n3. Sanitização de Entropia concluída.",
+      "title": "Plano de Otimizacao Sistemica SOTA",
+      "content": "1. Memoria de Trabalho canonica operando via task.metadata (SQLite BEGIN EXCLUSIVE).\n2. Scratchpad efemero sincronizado sob Protocolo Chico v8.0 GOLD.\n3. Entropia de contexto mitigada via Eficiencia de Shannon.",
       "tags": [
         "plan",
         "sota",
         "active"
       ],
       "created_at": 1786722952.852324,
-      "updated_at": 1786722952.852324,
+      "updated_at": 1790858733.7231135,
       "ttl_seconds": null
     },
     {
@@ -25,7 +25,7 @@
         "topology"
       ],
       "created_at": 1786722952.8539357,
-      "updated_at": 1786722952.8539357,
+      "updated_at": 1790858733.7269225,
       "ttl_seconds": null
     }
   ]
