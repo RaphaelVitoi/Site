@@ -328,7 +328,7 @@ AGENTES: dict[str, tuple[TierAgente, ClasseTarefa]] = {
 }
 
 # ==============================================================================
-# OS 6 NIVEIS DE SUBAGENTE  core.subagents_mesh.SubagentTier
+# SUBAGENTES — core.subagents_mesh.SubagentTier
 # ==============================================================================
 # Cobertos porque o mesh os despacha em paralelo: sem rota propria, herdariam a
 # do pai e uma varredura de seguranca poderia cair num modelo de triagem.
