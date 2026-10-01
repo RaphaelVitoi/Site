@@ -198,16 +198,18 @@ async def call_gemma_local(
     api_key: str | None = None,
     response_format: dict | None = None,
 ) -> tuple[str, dict[str, Any]]:
-    """Invocacao do Oraculo de Borda (Gemma 4 Local Server) usando aiohttp."""
+    """Invocacao do Oraculo de Borda (Gemma 4 Local Server / Ollama) usando aiohttp com resiliencia dual."""
     from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
     system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     if not api_key:
         api_key = os.environ.get("API_SECRET_TOKEN") or os.environ.get("VITOI_AUTH_TOKEN")
-    if not api_key:
-        raise RuntimeError("Nenhum token (API_SECRET_TOKEN ou VITOI_AUTH_TOKEN) configurado no ambiente.")
-    url = "http://127.0.0.1:17043/generate"  # Roteado para o Proxy SOTA
-    headers = {"Content-Type": CONTENT_TYPE_JSON, "X-Vitoi-Auth": api_key}
+
+    # 1. Tentativa Primaria: Proxy SOTA (Porta 17043)
+    proxy_url = "http://127.0.0.1:17043/generate"
+    headers = {"Content-Type": CONTENT_TYPE_JSON}
+    if api_key:
+        headers["X-Vitoi-Auth"] = api_key
     data: dict[str, Any] = {
         "prompt": user_prompt,
         "system_prompt": system_prompt,
@@ -216,14 +218,54 @@ async def call_gemma_local(
     }
     if response_format:
         data["response_format"] = response_format
-    async with session.post(url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=120)) as response:
+
+    try:
+        async with session.post(
+            proxy_url, json=data, headers=headers, timeout=aiohttp.ClientTimeout(total=60, sock_connect=3.0)
+        ) as response:
+            if response.ok:
+                text = await response.text()
+                usage = {
+                    "prompt_tokens": len(user_prompt) // 4,
+                    "completion_tokens": len(text) // 4,
+                }
+                return text, usage
+            logger.debug("[LOCAL PROXY] 17043 retornou HTTP %d. Tentando fallback Ollama direto...", response.status)
+    except Exception as proxy_err:
+        logger.debug(
+            "[LOCAL PROXY] Falha ao conectar na porta 17043: %s. Acionando fallback Ollama direto...", proxy_err
+        )
+
+    # 2. Fallback Secundario: Inferencia Direta no Daemon Ollama (Porta 11434)
+    ollama_base = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
+    ollama_url = f"{ollama_base}/api/chat"
+    resolved_model = model.replace("google/", "")
+    ollama_data: dict[str, Any] = {
+        "model": resolved_model,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "stream": False,
+        "options": {"num_predict": 1024},
+    }
+    if response_format:
+        ollama_data["format"] = "json"
+
+    async with session.post(
+        ollama_url,
+        json=ollama_data,
+        headers={"Content-Type": CONTENT_TYPE_JSON},
+        timeout=aiohttp.ClientTimeout(total=90, sock_connect=3.0),
+    ) as response:
         if not response.ok:
             error_text = await response.text()
-            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_text}")
-        text = await response.text()
+            raise RuntimeError(f"Ollama HTTP {response.status}: {response.reason} - {error_text}")
+        result = await response.json()
+        text = result.get("message", {}).get("content", "")
         usage = {
-            "prompt_tokens": len(user_prompt) // 4,
-            "completion_tokens": len(text) // 4,
+            "prompt_tokens": result.get("prompt_eval_count", len(user_prompt) // 4),
+            "completion_tokens": result.get("eval_count", len(text) // 4),
         }
         return text, usage
 
@@ -501,6 +543,36 @@ async def _dispatch_provider_call(
                 return res
             except Exception as e:  # pylint: disable=broad-exception-caught
                 logger.warning("Falha no Motor Gemma Local: %s. Tentando roteamento externo...", e)
+                # Resiliencia SOTA: Triagem externa via cota livre Gemini se motor local falhar
+                if gemini_keys:
+                    logger.info("[ROTEAMENTO SOTA] Triagem externa ativada via gemini-3.5-flash-lite para '%s'", model)
+                    return await _try_provider(
+                        session,
+                        "gemini",
+                        call_gemini,
+                        "gemini-3.5-flash-lite",
+                        system_prompt,
+                        user_prompt,
+                        gemini_keys,
+                        task,
+                        manager,
+                        max_retries=2,
+                        usage_keys=("promptTokenCount", "candidatesTokenCount"),
+                        response_format=response_format,
+                    )
+
+        if "g9v3" in model_l or "ai9stars" in model_l or "ling" in model_l:
+            try:
+                from llm.local_llama_client import DEFAULT_G9_PORT, DEFAULT_LING_PORT, LocalLlamaClient  # noqa: PLC0415
+
+                target_port = DEFAULT_LING_PORT if "ling" in model_l else DEFAULT_G9_PORT
+                llama_client = LocalLlamaClient(port=target_port)
+                if llama_client.is_healthy():
+                    res = llama_client.complete(f"{system_prompt}\n\n{user_prompt}")
+                    if res:
+                        return res
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                logger.debug("Falha na chamada ao LocalLlama: %s", e)
 
         if "/" in model or "deepseek" in model or "llama" in model:
             return await _try_provider(
@@ -547,6 +619,22 @@ async def _dispatch_provider_call(
                 usage_keys=("input_tokens", "output_tokens"),
                 response_format=response_format,
             )
+    if "gemma" in model.lower() and gemini_keys:
+        logger.info("[ROTEAMENTO SOTA] Triagem externa de contingencia via gemini-3.5-flash-lite para '%s'", model)
+        return await _try_provider(
+            session,
+            "gemini",
+            call_gemini,
+            "gemini-3.5-flash-lite",
+            system_prompt,
+            user_prompt,
+            gemini_keys,
+            task,
+            manager,
+            max_retries=2,
+            usage_keys=("promptTokenCount", "candidatesTokenCount"),
+            response_format=response_format,
+        )
     logger.warning("Modelo desconhecido '%s' no pipeline, pulando.", model)
     return None
 
