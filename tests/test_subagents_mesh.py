@@ -1,11 +1,14 @@
 """
-Testes unitarios para a malha de subagentes SOTA v7.0 GOLD (core/subagents_mesh.py).
+Testes unitarios para a malha de subagentes SOTA v8.0 GOLD (core/subagents_mesh.py).
 """
+
+from __future__ import annotations
 
 import pytest
 
 from core.schemas import Task
 from core.subagents_mesh import (
+    SUBAGENT_MODEL_MAP,
     SubagentMeshController,
     SubagentMissionRequest,
     SubagentMissionResult,
@@ -34,6 +37,14 @@ async def test_subagents_mesh_routing_heuristics():
     )
     assert controller.route_task_to_subagent(task_math) == SubagentTier.MATH
 
+    task_poetics = Task(
+        id="T_POET",
+        description="Compor ensaio e reflexao sobre poesia e filosofia da mente",
+        agent="@curator",
+        timestamp="2026-08-18T13:50:00Z",
+    )
+    assert controller.route_task_to_subagent(task_poetics) == SubagentTier.POETICS
+
     task_wasm = Task(
         id="T_WASM",
         description="Optimize WASM zero-copy memory buffer",
@@ -57,6 +68,22 @@ async def test_subagents_mesh_routing_heuristics():
         timestamp="2026-08-18T13:50:00Z",
     )
     assert controller.route_task_to_subagent(task_rsrch) == SubagentTier.RESEARCH
+
+    task_fim = Task(
+        id="T_FIM",
+        description="Autocomplete inline de codigo via fim e streaming",
+        agent="@implementor",
+        timestamp="2026-08-18T13:50:00Z",
+    )
+    assert controller.route_task_to_subagent(task_fim) == SubagentTier.STREAMING_FIM
+
+    task_a11y = Task(
+        id="T_A11Y",
+        description="Auditoria de acessibilidade flutter wcag e semantics",
+        agent="@auditor",
+        timestamp="2026-08-18T13:50:00Z",
+    )
+    assert controller.route_task_to_subagent(task_a11y) == SubagentTier.FLUTTER_A11Y
 
     task_gen = Task(
         id="T_GEN", description="General system maintenance routine", agent="@chico", timestamp="2026-08-18T13:50:00Z"
@@ -90,3 +117,13 @@ async def test_subagents_mesh_execution_pipeline():
 async def test_subagents_mesh_singleton_import():
     assert subagents_mesh is not None
     assert isinstance(subagents_mesh, SubagentMeshController)
+
+
+def test_subagents_mesh_tier_integrity():
+    """Valida que todos os 15 niveis de SubagentTier possuem modelo local mapeado
+    e estao devidamente configurados no SUBAGENT_MODEL_MAP."""
+    assert len(SubagentTier) == 15
+    for tier in SubagentTier:
+        assert tier in SUBAGENT_MODEL_MAP
+        assert isinstance(SUBAGENT_MODEL_MAP[tier], str)
+        assert len(SUBAGENT_MODEL_MAP[tier]) > 0
