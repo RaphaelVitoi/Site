@@ -2,6 +2,17 @@
 import { POST } from './route';
 
 describe('API SOTA Laya Solve: modulação de solvers via System-1', () => {
+	const originalFetch = global.fetch;
+
+	beforeEach(() => {
+		// Por padrão, simula microserviço offline (connection refused) para testar o fallback determinístico sem delay de rede
+		global.fetch = jest.fn().mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:8192'));
+	});
+
+	afterEach(() => {
+		global.fetch = originalFetch;
+	});
+
 	it('retorna 400 se state e prediction estiverem ausentes', async () => {
 		const request = new Request('http://localhost/api/sota/laya/solve', {
 			method: 'POST',
@@ -102,5 +113,48 @@ describe('API SOTA Laya Solve: modulação de solvers via System-1', () => {
 		expect(json.status).toBe('SUCCESS');
 		expect(json.bridge_result.target_solver).toBe('pluribus');
 		expect(json.bridge_result.provenia.weights_loaded).toBeDefined();
+	});
+
+	it('modula solver CFR+ consumindo resposta bem-sucedida do microserviço upstream quando disponível', async () => {
+		const mockBridge = {
+			target_solver: 'cfr-plus',
+			adapted_parameters: { iterations: 2500 },
+			modulation_factors: {},
+			framework_signals: {},
+			provenia: {
+				engine_id: 'laya-upstream-cuda',
+				implementation_level: 'production',
+				runtime_used: 'fastapi-cuda',
+				model_used: 'laya-multilingual',
+				intended_model: 'multilingual',
+				weights_loaded: true,
+				fallback_used: false,
+				assumptions: [],
+				limitations: [],
+				units: [],
+			},
+		};
+		global.fetch = jest.fn().mockResolvedValue({
+			ok: true,
+			json: async () => ({ status: 'SUCCESS', bridge_result: mockBridge }),
+		} as unknown as Response);
+
+		const request = new Request('http://localhost/api/sota/laya/solve', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				solver_name: 'cfr-plus',
+				state: 'flop_pot_100_bet_50',
+			}),
+		});
+
+		const response = await POST(request);
+		const json = await response.json();
+
+		expect(response.status).toBe(200);
+		expect(json.status).toBe('SUCCESS');
+		expect(json.bridge_result.target_solver).toBe('cfr-plus');
+		expect(json.bridge_result.provenia.fallback_used).toBe(false);
+		expect(json.bridge_result.adapted_parameters.iterations).toBe(2500);
 	});
 });
