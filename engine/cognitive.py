@@ -88,7 +88,7 @@ async def _build_infra_ctx(task: Task | None, task_files: list | None) -> str:
     notepad_file = Path(__file__).parent.parent / "memory" / "notepad_active.md"
     if notepad_file.exists() and notepad_file.stat().st_size > 0:
         try:
-            async with aiofiles.open(notepad_file, encoding="ascii", errors="ignore") as nf:
+            async with aiofiles.open(notepad_file, encoding="utf-8", errors="replace") as nf:
                 scratchpad_data = await nf.read()
                 if scratchpad_data.strip():
                     infra_ctx += f"=== WORKING SCRATCHPAD (NOTEPAD MEMORY ATIVA) ===\n{scratchpad_data}\n\n"

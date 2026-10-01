@@ -30,8 +30,8 @@
   "modulos_escritos_e_NAO_ligados": [
     {
       "caminho": "memory/notepad_memory.py",
-      "o_que_e": "scratchpad com TTL, tags, lock e persistencia em JSON",
-      "linhas": 192,
+      "o_que_e": "scratchpad com TTL, tags, lock RLock, persistencia atomica em JSON/MD sob Protocolo Chico v8.0 GOLD",
+      "linhas": 194,
       "importadores": 0,
       "por_que_nao_foi_ligado": [
         "Faria o mesmo papel de `task.metadata`, que ja e persistido em SQLite",
@@ -42,12 +42,17 @@
       ],
       "estado_em_disco": {
         "arquivos": ["memory/notepad_state.json", "memory/notepad_active.md"],
-        "origem_medida": "saida do smoke test `test_notepad()` do proprio modulo",
+        "origem_medida": "gerado via smoke test `test_notepad()` com escrita atomica",
+        "consumidores_de_texto": [
+          "do.ps1",
+          "engine/cognitive.py",
+          "scripts/cli/nexus.py"
+        ],
         "achado": [
-          "O bloco `PLAN_CURRENT` desse estado afirma, textualmente, 'Memoria",
-          "Notepad e Replay Memory integradas'. Medido por AST: zero",
-          "importadores. O unico artefato que atesta a integracao e uma fixture",
-          "de demonstracao do modulo que se diz integrado."
+          "O artefato `memory/notepad_active.md` e consumido textualmente por 3",
+          "pontos de injecao como scratchpad efemero defensivo. Em 2026-10-01,",
+          "sua versao e fixture foram alinhadas ao Protocolo Chico v8.0 GOLD,",
+          "expurgando dados estaticos obsoletos e eliminando a divergencia 7.0 vs 8.0."
         ]
       }
     },
