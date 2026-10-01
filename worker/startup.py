@@ -25,17 +25,11 @@ async def start_worker_and_api():
 
     manager = QueueManager()
 
-    # SOTA: Ativacao persistente do modo WAL (Write-Ahead Logging)
-    # Otimiza o disco para latencia zero em altissima concorrencia assincrona.
+    # SOTA v8.0: Ativacao persistente do modo WAL e checkpoint no cabecalho do banco
     try:
         async with manager._get_async_db() as db:  # pylint: disable=protected-access
             await db.execute("PRAGMA journal_mode=WAL;")
-            await db.execute("PRAGMA synchronous=NORMAL;")
             await db.execute("PRAGMA wal_autocheckpoint=1000;")
-            await db.execute("PRAGMA busy_timeout=5000;")
-            await db.execute("PRAGMA temp_store=MEMORY;")
-            await db.execute("PRAGMA mmap_size=2147483648;")
-            await db.execute("PRAGMA cache_size=-64000;")
             await db.commit()
     except Exception:  # noqa: BLE001
         logger.exception("[SISTEMA] Falha ao configurar SQLite WAL")

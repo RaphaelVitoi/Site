@@ -120,7 +120,9 @@ class LanceDBBackend:
             try:
                 for j in range(0, len(id_list), 50):
                     chunk_ids = id_list[j : j + 50]
-                    pred = " OR ".join([f"id = '{x}'" for x in chunk_ids])
+                    # SOTA v8.0: Sanitizacao estrita de aspas simples para predicados SQL LanceDB/DataFusion
+                    escaped_ids = [x.replace("'", "''") for x in chunk_ids]
+                    pred = " OR ".join([f"id = '{eid}'" for eid in escaped_ids])
                     self.table.delete(pred)
             except Exception as e:
                 logger.debug("[LANCEDB] Falha ao expurgar lote de ids: %s", e)
@@ -132,8 +134,10 @@ class LanceDBBackend:
         query_text: str,
         limit: int = 5,
     ) -> list[dict]:
-        """Busca hibrida vetorial + lexical BM25 no LanceDB."""
-        vec_results = self.table.search(query_vector).limit(limit * 2).to_list()
+        """Busca hibrida vetorial + lexical BM25 no LanceDB com reranking ponderado."""
+        # SOTA v8.0: Pool de candidatos expandido para garantir captura otima de termos lexicais
+        candidate_limit = max(limit * 3, 20)
+        vec_results = self.table.search(query_vector).limit(candidate_limit).to_list()
         scored_docs = []
         query_terms = set(re.findall(WORD_PATTERN, query_text.lower()))
         for r in vec_results:

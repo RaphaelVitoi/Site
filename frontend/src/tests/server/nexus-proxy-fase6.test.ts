@@ -165,10 +165,17 @@ describe('FASE 6 — X-User-Token no contrato gateway→backend', () => {
 	it('uma exceção ao ler o token não derruba a rota', async () => {
 		// `getToken` pode levantar por cookie corrompido. Propagar o erro
 		// transformaria sessão expirada em indisponibilidade do produto.
+		const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 		capturarFetch();
 		const resp = await encaminhar(async () => {
 			throw new Error('cookie invalido');
 		});
 		expect(resp.status).toBe(200);
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining('[nexus-proxy] token do usuário ilegível'),
+			expect.any(Error),
+		);
+		warnSpy.mockRestore();
 	});
 });
+

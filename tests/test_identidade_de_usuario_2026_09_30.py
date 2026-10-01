@@ -301,3 +301,43 @@ def test_o_registro_nao_contem_o_token():
     finally:
         logger.removeHandler(manipulador)
     assert AUTH_SECRET not in stream.getvalue()
+
+
+# ── Evolução SOTA v8.0: Derivação determinística e CORS ─────────────────────
+
+
+def test_derivacao_deterministica_do_edge_sem_registro_em_memoria():
+    """SOTA v8.0: Valida que a derivação sha256(sub)[:32] emitida pelo nexus-proxy.ts
+    permite a autenticação do usuário sem exigir o registro manual em USUARIOS_DE_SESSAO.
+    """
+    sub = "usuario-uuid-0001"
+    cliente_deterministico = hashlib.sha256(sub.encode("utf-8")).hexdigest()[:32]
+    # Certifica que o dicionário está limpo (sem mock)
+    assert cliente_deterministico not in middleware.USUARIOS_DE_SESSAO
+    req = _request(token_usuario=_token_de_sessao(sub=sub), cliente=cliente_deterministico)
+    assert middleware._identidade_do_usuario(req) == sub
+
+
+async def test_cors_preflight_inclui_cabecalhos_canonicos_sota():
+    """SOTA v8.0: Garante que OPTIONS expõe X-Nexus-Client-Id, X-User-Token e X-Request-Id."""
+    from aiohttp import web
+
+    app = web.Application(middlewares=[middleware.cors_middleware])
+
+    async def _dummy_handler(_r):
+        return web.Response(text="ok")
+
+    app.router.add_route("GET", "/test", _dummy_handler)
+    app.router.add_route("OPTIONS", "/test", _dummy_handler)
+
+    # Simula preflight OPTIONS
+    req = _Req()
+    req.method = "OPTIONS"
+    req.path = "/test"
+    req.headers["Origin"] = "http://localhost:3000"
+
+    resp = await middleware.cors_middleware(req, _dummy_handler)
+    allow_headers = resp.headers.get("Access-Control-Allow-Headers", "")
+    assert "X-Nexus-Client-Id" in allow_headers
+    assert "X-User-Token" in allow_headers
+    assert "X-Request-Id" in allow_headers

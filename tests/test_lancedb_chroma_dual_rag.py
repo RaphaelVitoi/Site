@@ -202,3 +202,20 @@ async def test_storage_health_records_local_snapshot_without_forecasting_early(m
     assert result["chroma_count"] == result["lance_count"] == 1
     assert result["history_days"] == 1
     assert result["forecast_status"] == "insufficient_history"
+
+
+def test_lancedb_upsert_handles_single_quotes(temp_lance_dir: Path):
+    """SOTA v8.0: Valida que caminhos com aspas simples/apóstrofos não corrompem o predicado SQL."""
+    backend = LanceDBBackend(db_path=temp_lance_dir)
+    ids = ["docs/Raphael's Strategy.md#chunk0", "notes/O'Reilly's Guide.md#chunk1"]
+    texts = ["Texto com apostrofo no caminho.", "Outro texto seguro."]
+    vectors = [[0.05] * 384, [-0.05] * 384]
+    metadatas = [{"agent": "chico", "source": "test"}, {"agent": "chico", "source": "test"}]
+
+    # Inserção inicial
+    backend.upsert_records(ids=ids, texts=texts, vectors=vectors, metadatas=metadatas)
+    # Re-inserção (deve deletar os anteriores sem levantar erro de SQL)
+    backend.upsert_records(ids=ids, texts=texts, vectors=vectors, metadatas=metadatas)
+
+    results = backend.search_hybrid(query_vector=vectors[0], query_text="apostrofo", limit=2)
+    assert len(results) > 0
