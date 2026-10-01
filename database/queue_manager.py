@@ -134,6 +134,10 @@ class QueueManager:
         # desempenho. O custo dominante e a conexao nova (6,8 ms contra 1,4 ms numa
         # conexao persistente), e manter uma conexao ancora aberta NAO o reduziu.
         await conn.execute(_PRAGMA_BUSY_TIMEOUT)
+        # SOTA v8.0: Otimizacao termodinamica de conexao (cache de 64MB e temp_store em RAM)
+        # Reduz overhead de I/O em CTEs e consultas DAG sem comprometer a durabilidade ACID do WAL.
+        await conn.execute("PRAGMA temp_store=MEMORY;")
+        await conn.execute("PRAGMA cache_size=-64000;")
         return conn
 
     @contextlib.asynccontextmanager

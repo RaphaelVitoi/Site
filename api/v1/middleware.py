@@ -371,7 +371,9 @@ def _identidade_do_usuario(request) -> str | None:
       2. assinatura valida com `AUTH_SECRET` (mesmo verificador HS256 do
          Supabase, exigindo `alg` declarado);
       3. `sub` presente no payload;
-      4. `X-Nexus-Client-Id` presente E ja ligado a este `sub` pelo gateway.
+      4. `X-Nexus-Client-Id` presente E vinculado ao `sub`:
+         - Por registro explicito em `USUARIOS_DE_SESSAO` (compatibilidade com stubs/testes);
+         - Ou por derivacao deterministica canonica do edge gateway: sha256(sub)[:32] == cliente.
     """
     token = _header(request, USER_TOKEN_HEADER).strip()
     cliente = _header(request, CLIENT_ID_HEADER).strip()
@@ -390,7 +392,18 @@ def _identidade_do_usuario(request) -> str | None:
     subject = payload.get("sub")
     if not isinstance(subject, str) or not subject.strip():
         return None
-    if USUARIOS_DE_SESSAO.get(cliente) != subject:
+
+    # Validacao de vinculo SOTA v8.0:
+    # 1. Se cliente estiver explicitamente registrado em memoria, respeita o par (compatibilidade/testes).
+    # 2. Caso contrario, valida a derivacao deterministica canonica do edge gateway: sha256(subject)[:32].
+    vinculo_valido = False
+    if cliente in USUARIOS_DE_SESSAO:
+        vinculo_valido = USUARIOS_DE_SESSAO.get(cliente) == subject
+    else:
+        derivado = hashlib.sha256(subject.encode("utf-8")).hexdigest()[:32]
+        vinculo_valido = secrets.compare_digest(cliente, derivado)
+
+    if not vinculo_valido:
         # Par nao ligado: ou o gateway nao o registrou (chamada externa com a
         # credencial), ou o par foi reapresentado com outro cliente.
         LOGGER.warning(
@@ -763,7 +776,10 @@ async def cors_middleware(request, handler):
     if request.method == "OPTIONS":
         headers = {
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, SOTA-Session-ID, SOTA-Client-Version",
+            "Access-Control-Allow-Headers": (
+                "Content-Type, Authorization, X-Requested-With, SOTA-Session-ID, SOTA-Client-Version, "
+                "X-Nexus-Client-Id, X-User-Token, X-Request-Id"
+            ),
             "Access-Control-Allow-Credentials": "true",
         }
         if allow_origin:

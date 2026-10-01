@@ -45,7 +45,7 @@
     "dev:all": "concurrently -n \"NEXT,RUFF,TEST\" -c \"cyan,yellow,green\" \"npm run dev\" \"npm run python:watch\" \"npm run python:test:watch\""
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.3.5",
+    "@next/bundle-analyzer": "^16.3.8",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "concurrently": "10.0.5",
@@ -62,7 +62,7 @@
   },
   "overrides": {
     "postcss": "8.5.28",
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.16",
     "@hono/node-server": "^1.19.15",
     "hono": "^4.12.34",
     "js-yaml": "^4.3.2",

@@ -10,12 +10,13 @@ import { auth } from '@/auth';
 import { TelemetryPayloadSchema, PerspectiveMetricSchema } from '@/lib/schemas';
 import { resolveTelemetryIdentity } from '@/lib/server/telemetry-identity';
 
-// SOTA: Caminho absoluto para o buffer de telemetria compartilhado com o motor Python
-const SHARED_TELEMETRY_PATH = path.resolve(
-	process.cwd(),
-	'..',
-	'.claude/logs/wasm_telemetry_dump.jsonl',
-);
+// SOTA v8.0: Caminho absoluto resiliente para o buffer de telemetria compartilhado com o motor Python
+function resolveSharedTelemetryPath(): string {
+	const cwd = process.cwd();
+	const siteRoot = path.basename(cwd).toLowerCase() === 'frontend' ? path.resolve(cwd, '..') : cwd;
+	return path.resolve(siteRoot, '.claude', 'logs', 'wasm_telemetry_dump.jsonl');
+}
+const SHARED_TELEMETRY_PATH = resolveSharedTelemetryPath();
 
 function logToOrchestrator(payload: Record<string, unknown>) {
 	try {
