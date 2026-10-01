@@ -186,13 +186,10 @@ app.add_middleware(
 )
 
 # SOTA: Constantes de modelo para expurgo de literais duplicados (S1192)
-# Definido ANTES de MODEL_ID de proposito: a constante nasceu para eliminar a
-# duplicacao do literal e a unica duplicata ficou tres linhas acima dela, o que
-# a deixou orfa cumprindo zero do proprio proposito. Agora ela e usada.
-_MODEL_31B = "gemma4:31b"
+_MODEL_31B_CLOUD = "gemma4:31b-cloud"
 
 # SOTA: Apontado para a instancia de 31B Cloud ativa no seu terminal
-MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", _MODEL_31B)
+MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", _MODEL_31B_CLOUD)
 _SSE_PREFIX = "data: "
 _SSE_DONE = "[DONE]"
 _JSON_CONTENT = "application/json"
@@ -420,6 +417,8 @@ MODEL_INFERENCE_PARAMS = {
 
 def _resolve_heuristica(model_name_lower: str) -> str | None:
     """Resolve pedidos vagos via heuristica de substring (fallback)."""
+    if "triagem" in model_name_lower or "triage" in model_name_lower or "fast" in model_name_lower:
+        return "e2b"
     if "31b" in model_name_lower or "cloud" in model_name_lower:
         return "31b_cloud"
     if "26b" in model_name_lower or "12b" in model_name_lower:
@@ -521,11 +520,14 @@ def _names_local_engine(requested_model: str | None) -> bool:
 
 
 @app.get("/")
+@app.get("/health")
 def root_health_check() -> dict[str, str]:
+    backend = "Ollama Cloud (Zero-RAM)" if "cloud" in MODEL_ID.lower() else "Ollama GGUF (Local)"
     return {
         "status": "Motor SOTA Operacional",
+        "health": "ok",
         "modelo": MODEL_ID,
-        "backend": "Ollama GGUF",
+        "backend": backend,
     }
 
 
