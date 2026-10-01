@@ -599,6 +599,12 @@ export default function LayaSolverBridgePage() {
 															: 'false (Inferência Neural Direta)'}
 													</span>
 												</div>
+												{bridgeResult.s1_prediction?.latency_ms !== undefined && (
+													<div>
+														<span className="text-white/60">Latência Neural:</span>{' '}
+														<span className="text-cyan-300 font-bold">{bridgeResult.s1_prediction.latency_ms.toFixed(1)} ms</span>
+													</div>
+												)}
 												<div className="text-[10px] text-text-muted pt-1 truncate">
 													Assunções: {bridgeResult.provenia.assumptions.join(', ')}
 												</div>
@@ -606,26 +612,62 @@ export default function LayaSolverBridgePage() {
 
 											{/* Callout de Mitigação / Status dos Pesos */}
 											{!bridgeResult.provenia.weights_loaded ? (
-												<div className="mt-3 p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/30 text-[11px]">
-													<div className="font-bold text-amber-300 flex items-center gap-1.5 mb-1">
-														<i className="fa-solid fa-lightbulb" />
-														Para ativar Pesos Carregados = true:
-													</div>
-													<p className="text-text-muted leading-tight mb-2">
-														O microserviço de pesos reais (322M) opera na porta 8192. Para iniciá-lo no host:
-													</p>
-													<div className="flex items-center justify-between bg-black/60 rounded px-2 py-1 font-mono text-[10px] text-cyan-300 border border-white/5">
-														<span className="truncate">pwsh scripts/ops/Start-LayaService.ps1</span>
+												serviceStatus.status === 'ONLINE' ? (
+													<div className="mt-3 p-2.5 rounded-lg bg-cyan-950/30 border border-cyan-500/30 text-[11px]">
+														<div className="font-bold text-cyan-300 flex items-center justify-between gap-1.5 mb-1">
+															<span className="flex items-center gap-1.5">
+																<i className="fa-solid fa-circle-info" />
+																Microserviço 322M Online na Porta 8192
+															</span>
+															<span className="text-[10px] font-mono text-cyan-400 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/30">
+																{serviceStatus.latency_ms ? `${serviceStatus.latency_ms}ms` : 'Ativo'}
+															</span>
+														</div>
+														<p className="text-text-muted leading-tight mb-2">
+															O microserviço está ativo no host. Esta execução anterior utilizou a simulação Edge. Clique abaixo para executar diretamente com os tensores neurais reais.
+														</p>
 														<button
 															type="button"
-															onClick={() => copyToClipboard('pwsh scripts/ops/Start-LayaService.ps1', 'start-service')}
-															className="text-white/60 hover:text-white ml-2 shrink-0"
-															title="Copiar comando"
+															onClick={handleExecuteBridge}
+															disabled={loading}
+															className="w-full flex items-center justify-center gap-2 bg-cyan-500/20 hover:bg-white/10 border border-cyan-400/40 text-cyan-200 hover:text-white rounded px-2.5 py-1.5 font-bold transition-all text-xs"
 														>
-															<i className={`fa-solid ${copiedKey === 'start-service' ? 'fa-check text-emerald-400' : 'fa-copy'}`} />
+															<i className="fa-solid fa-bolt" />
+															Re-executar com Pesos Reais (322M)
 														</button>
 													</div>
-												</div>
+												) : (
+													<div className="mt-3 p-2.5 rounded-lg bg-amber-950/30 border border-amber-500/30 text-[11px]">
+														<div className="font-bold text-amber-300 flex items-center justify-between gap-1.5 mb-1">
+															<span className="flex items-center gap-1.5">
+																<i className="fa-solid fa-lightbulb" />
+																Para ativar Pesos Carregados = true:
+															</span>
+															<button
+																type="button"
+																onClick={refreshServiceStatus}
+																title="Verificar status agora"
+																className="text-amber-300/80 hover:text-white text-[10px] underline"
+															>
+																Verificar Status
+															</button>
+														</div>
+														<p className="text-text-muted leading-tight mb-2">
+															O microserviço de pesos reais (322M) opera na porta 8192. Para iniciá-lo no host:
+														</p>
+														<div className="flex items-center justify-between bg-black/60 rounded px-2 py-1 font-mono text-[10px] text-cyan-300 border border-white/5">
+															<span className="truncate">pwsh scripts/ops/Start-LayaService.ps1</span>
+															<button
+																type="button"
+																onClick={() => copyToClipboard('pwsh scripts/ops/Start-LayaService.ps1', 'start-service')}
+																className="text-white/60 hover:text-white ml-2 shrink-0"
+																title="Copiar comando"
+															>
+																<i className={`fa-solid ${copiedKey === 'start-service' ? 'fa-check text-emerald-400' : 'fa-copy'}`} />
+															</button>
+														</div>
+													</div>
+												)
 											) : (
 												<div className="mt-3 p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-[11px]">
 													<div className="font-bold text-emerald-300 flex items-center gap-1.5">
