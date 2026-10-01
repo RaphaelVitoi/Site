@@ -83,6 +83,7 @@ function simulatePredictForSolve(
 }
 
 const LAYA_SERVICE_BASE = process.env['LAYA_SERVICE_URL'] || 'http://127.0.0.1:8192';
+const UPSTREAM_TIMEOUT_MS = Number(process.env['LAYA_UPSTREAM_TIMEOUT_MS']) || 4500;
 
 async function tryFetchUpstreamSolve(
 	solverName: string,
@@ -100,7 +101,7 @@ async function tryFetchUpstreamSolve(
 				base_parameters: baseParameters,
 				model: model || CANONICAL_LAYA_MODEL,
 			}),
-			signal: AbortSignal.timeout(1000),
+			signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
 			cache: 'no-store',
 		});
 		if (!res.ok) return null;
