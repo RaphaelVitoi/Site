@@ -5,11 +5,11 @@
  * BINDING: [src/app/page.tsx, globals.css]
  */
 import { AuthProvider } from '@/AuthProvider';
+import { SotaGlobalSyncProvider } from '@/components/simulator/hooks/useSotaSync';
 import ScrollToTop from '@/components/ui/layout/ScrollToTop';
 import Footer from '@/components/ui/layout/Footer';
 import Header from '@/components/ui/layout/Header';
 import JsonLd from '@/components/seo/JsonLd';
-import { SotaGlobalSyncProvider } from '@/components/simulator/hooks/useSotaSync';
 import SotaBackground from '@/components/ui/layout/SotaBackground';
 // Subconjunto gerado por scripts/fontawesome-subset.py: so os icones citados em src (19 KB de fonte contra 247 KB).
 import '@/styles/fontawesome/fontawesome-subset.css';
@@ -120,8 +120,8 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <AuthProvider>
-          <SotaBackground />
           <SotaGlobalSyncProvider>
+            <SotaBackground />
             <JsonLd data={rootSchema} />
             <Header />
             <main className="relative flex grow flex-col pt-(--header-height)">{children}</main>

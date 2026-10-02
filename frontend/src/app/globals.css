@@ -215,6 +215,48 @@
     /* Variante operacional do simulador: logo de 40px + 2 × py-3 + borda. */
     --simulator-header-height: 65px;
     --container-width: 1600px;
+
+    /* SOTA Aliases: Retrocompatibilidade de Tokens Tailwind v4 para SVG, Recharts e inline styles */
+    --accent-indigo: var(--color-accent-indigo);
+    --accent-indigo-light: var(--color-accent-indigo-light);
+    --accent-indigo-surface: var(--color-accent-indigo-surface);
+    --accent-indigo-surface-active: var(--color-accent-indigo-surface-active);
+    --accent-emerald: var(--color-accent-emerald);
+    --accent-emerald-light: var(--color-accent-emerald-light);
+    --accent-emerald-surface: var(--color-accent-emerald-surface);
+    --accent-emerald-surface-active: var(--color-accent-emerald-surface-active);
+    --accent-rose: var(--color-accent-rose);
+    --accent-rose-light: var(--color-accent-rose-light);
+    --accent-rose-surface: var(--color-accent-rose-surface);
+    --accent-danger: var(--color-accent-danger);
+    --accent-danger-light: var(--color-accent-danger-light);
+    --accent-danger-surface: var(--color-accent-danger-surface);
+    --accent-amber: var(--color-accent-amber);
+    --accent-amber-light: var(--color-accent-amber-light);
+    --accent-amber-surface: var(--color-accent-amber-surface);
+    --accent-gold: var(--color-accent-gold);
+    --accent-gold-light: var(--color-accent-gold-light);
+    --accent-violet: var(--color-accent-violet);
+    --accent-violet-light: var(--color-accent-violet-light);
+    --accent-sky: var(--color-accent-sky);
+    --accent-sky-light: var(--color-accent-sky-light);
+    --accent-cyan: var(--color-accent-cyan);
+    --accent-cyan-light: var(--color-accent-cyan-light);
+    --accent-pink: var(--color-accent-pink);
+    --accent-pink-light: var(--color-accent-pink-light);
+
+    --bg-base: var(--color-bg-base);
+    --bg-deep: var(--color-bg-deep);
+    --bg-panel: var(--color-bg-panel);
+    --bg-elevated: var(--color-bg-elevated);
+
+    --text-main: var(--color-text-main);
+    --text-bright: var(--color-text-bright);
+    --text-muted: var(--color-text-muted);
+    --text-dim: var(--color-text-dim);
+    --text-darker: var(--color-text-darker);
+
+    --color-border: rgba(255, 255, 255, 0.1);
   }
 
   body {
@@ -410,7 +452,7 @@ body:has(.simulator-immersive) main.grow {
 
   /* O Botão Primário SOTA */
   .btn-primary {
-    @apply bg-accent-indigo hover:bg-accent-indigo-light flex items-center justify-center border border-white/10 text-white;
+    @apply bg-accent-indigo-surface hover:bg-accent-indigo-surface-active flex items-center justify-center border border-white/10 text-white transition-colors duration-200;
   }
 
   /* O Botão Ouro SOTA (Design System v8.0 GOLD) */

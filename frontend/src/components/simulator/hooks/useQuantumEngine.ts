@@ -95,20 +95,35 @@ export function useQuantumEngine({
   const ipIndex = 0;
   const oopIndex = 1;
 
-  // SOTA FIX: Selagem de Referências (Evita vazamento de rerenders e GC Thrashing O(N^3))
+  // SOTA FIX: Selagem de Referências via useRef (Evita vazamento de rerenders e satisfaz exhaustive-deps)
+  const stacksRef = useRef(scenario.stacks || []);
   const stableStacksStr = scenario.stacks?.join('|') || '';
-  const stableStacks = useMemo(() => scenario.stacks || [], [stableStacksStr]);
+  if (stacksRef.current.join('|') !== stableStacksStr) {
+    stacksRef.current = scenario.stacks || [];
+  }
+  const stableStacks = stacksRef.current;
 
+  const prizesRef = useRef(scenario.prizes || []);
   const stablePrizesStr = scenario.prizes?.join('|') || '';
-  const stablePrizes = useMemo(() => scenario.prizes || [], [stablePrizesStr]);
+  if (prizesRef.current.join('|') !== stablePrizesStr) {
+    prizesRef.current = scenario.prizes || [];
+  }
+  const stablePrizes = prizesRef.current;
 
+  const sprDataRef = useRef(scenario.sprData || []);
   const stableSprDataStr = scenario.sprData?.map((s) => `${s.name}:${s.potSize}`).join('|') || '';
-  const stableSprData = useMemo(() => scenario.sprData || [], [stableSprDataStr]);
+  if (sprDataRef.current.map((s) => `${s.name}:${s.potSize}`).join('|') !== stableSprDataStr) {
+    sprDataRef.current = scenario.sprData || [];
+  }
+  const stableSprData = sprDataRef.current;
 
-  // SOTA FIX: Selagem Profunda para o objeto complexo de Frequências (Evita default param leakage)
+  // SOTA FIX: Selagem Profunda para o objeto complexo de Frequências
+  const streetFreqsRef = useRef(streetFreqs);
   const stableStreetFreqsStr = JSON.stringify(streetFreqs);
-
-  const stableStreetFreqs = useMemo(() => streetFreqs, [stableStreetFreqsStr]);
+  if (JSON.stringify(streetFreqsRef.current) !== stableStreetFreqsStr) {
+    streetFreqsRef.current = streetFreqs;
+  }
+  const stableStreetFreqs = streetFreqsRef.current;
 
   const numPlayers = useMemo(() => stableStacks.length || 2, [stableStacks]);
   const anteInBb = useMemo(() => anteSize / 100, [anteSize]);

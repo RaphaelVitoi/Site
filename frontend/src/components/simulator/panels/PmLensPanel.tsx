@@ -187,12 +187,12 @@ export default function PmLensPanel({
   initialStacks = DEFAULT_STACKS,
   initialPrizes = DEFAULT_PRIZES,
 }: Readonly<PmLensPanelProps>) {
-  const getInitialHeroIdx = () => {
+  const getInitialHeroIdx = useCallback(() => {
     if (_heroPosition === 'BB') return Math.min(8, initialStacks.length - 1);
     if (_heroPosition === 'SB') return Math.min(7, initialStacks.length - 2);
     if (_heroPosition === 'IP') return Math.min(6, initialStacks.length - 3);
     return Math.min(0, initialStacks.length - 1);
-  };
+  }, [_heroPosition, initialStacks.length]);
   const [heroIdx, setHeroIdx] = useState(getInitialHeroIdx);
   const [villainIndices, setVillainIndices] = useState<number[]>(() => {
     const numVillains = Math.max(1, _activePlayers - 1);
@@ -246,7 +246,7 @@ export default function PmLensPanel({
 
   useEffect(() => {
     setHeroIdx(getInitialHeroIdx());
-  }, [_heroPosition, initialStacks.length]);
+  }, [getInitialHeroIdx]);
 
   useEffect(() => {
     const numVillains = Math.max(1, _activePlayers - 1);

@@ -142,10 +142,7 @@ export default function MasterSimulator() {
     }
   }, [
     isSyncHydrated,
-    physics?.pot,
-    physics?.heroInvested,
-    physics?.position,
-    physics?.edgeFactor,
+    physics,
     currentPot,
     heroInvested,
     heroPosition,
@@ -621,7 +618,6 @@ export default function MasterSimulator() {
     nativeRangeMetric.equity,
     insolvencyRadarData,
     apiQuantumMetrics?.threshEq,
-    apiQuantumMetrics?.riskAdvantage,
     spotSubView,
     setHeroPosition,
     updatePhysics,

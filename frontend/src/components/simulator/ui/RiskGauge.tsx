@@ -90,6 +90,16 @@ export function RiskGauge({
   const [currentState, setCurrentState] = useState<GaugeState>('normal');
   const audioCtxRef = useRef<AudioContext | null>(null);
 
+  // SOTA Cleanup: Desaloca AudioContext na desmontagem para evitar esgotamento de contextos
+  useEffect(() => {
+    return () => {
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+        audioCtxRef.current = null;
+      }
+    };
+  }, []);
+
   const safeValue = Number.isNaN(value) ? 0 : value;
   const safeOpponentValue = Number.isNaN(opponentValue) ? 0 : opponentValue;
   const isCritical = threshold !== undefined && safeValue >= threshold;
