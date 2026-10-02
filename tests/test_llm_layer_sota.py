@@ -257,3 +257,62 @@ async def test_apply_model_health_gate() -> None:
             filtered = await routing._apply_model_health_gate(models, mock_manager, task)
             # Apenas o saudavel (model-b) deve restar
             assert filtered == ["openrouter/model-b:free"]
+
+
+# ==============================================================================
+# Testes SOTA de Resolucao de Modelos, Hermes Harness e Ollama Cloud
+# ==============================================================================
+
+
+@pytest.mark.unit
+def test_resolve_model_provider_and_target_sota() -> None:
+    """Valida mapeamento deterministico de modelos locais, Cloud Ollama, Hermes/Nous e APIs."""
+    from engine.llm_api import _resolve_model_provider_and_target
+
+    gemini_keys = ["CHAVE_SINTETICA_GEMINI_POOL_01"]
+    anthropic_keys = ["CHAVE_SINTETICA_ANTHROPIC_01"]
+    openrouter_keys = ["CHAVE_SINTETICA_OPENROUTER_01"]
+    nous_keys = ["CHAVE_SINTETICA_NOUS_TOKEN_01"]
+
+    cases = [
+        ("poolside/laguna-s-2.1:free", "nous", "poolside/laguna-s-2.1:free"),
+        ("laguna", "nous", "poolside/laguna-s-2.1:free"),
+        ("stealth/space-bunny-alpha", "nous", "stealth/space-bunny-alpha"),
+        ("hermes", "nous", "nousresearch/hermes-3-llama-3.1-70b"),
+        ("gpt-oss:120b", "ollama", "gpt-oss:120b-cloud"),
+        ("gpt-oss:20b", "ollama", "gpt-oss:20b-cloud"),
+        ("gemma4:31b", "ollama", "gemma4:31b-cloud"),
+        ("glm-5.1:cloud", "ollama", "glm-5.1:cloud"),
+        ("ai9stars_G9v3-3B", "local_llama", "ai9stars_G9v3-3B"),
+        ("qwen2.5-coder-1.5b", "local_llama", "qwen2.5-coder-1.5b"),
+        ("gemini-3.5-flash-lite", "gemini", "gemini-3.5-flash-lite"),
+        ("claude-sonnet-5", "anthropic", "claude-sonnet-5"),
+    ]
+
+    for model, expected_prov, expected_target in cases:
+        prov, target = _resolve_model_provider_and_target(
+            model, gemini_keys, anthropic_keys, openrouter_keys, nous_keys=nous_keys
+        )
+        assert prov == expected_prov, f"Falha para modelo {model}: esperado {expected_prov}, obteve {prov}"
+        assert target == expected_target, f"Falha para modelo {model}: esperado {expected_target}, obteve {target}"
+
+
+@pytest.mark.unit
+def test_extract_provider_keys_filters_project_ids() -> None:
+    """Valida que _extract_provider_keys descarta poluição de variaveis de projeto."""
+    from engine.llm_api import _extract_provider_keys
+
+    dummy_env = {
+        "GEMINI_PROJECT_ID": "projects/my-test-project-12345",
+        "GEMINI_PROJECT_NAME": "original-my-project-name",
+        "GEMINI_API_KEY": "CHAVE_SINTETICA_GEMINI_POOL_01",
+        "OPENROUTER_API_KEY": "CHAVE_SINTETICA_OPENROUTER_01",
+        "NOUS_API_KEY": "CHAVE_SINTETICA_NOUS_TOKEN_01",
+    }
+
+    gemini_keys, anthropic_keys, openrouter_keys, nous_keys = _extract_provider_keys(dummy_env)
+    assert len(gemini_keys) == 1
+    assert gemini_keys[0] == "CHAVE_SINTETICA_GEMINI_POOL_01"
+    assert "projects/my-test-project-12345" not in gemini_keys
+    assert len(openrouter_keys) == 1
+    assert len(nous_keys) == 1
