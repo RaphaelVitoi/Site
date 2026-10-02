@@ -127,6 +127,7 @@ export function useSotaSpeech() {
 
 		return () => {
 			if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+				window.speechSynthesis.onvoiceschanged = null;
 				window.speechSynthesis.cancel();
 			}
 		};

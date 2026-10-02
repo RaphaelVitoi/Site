@@ -11,7 +11,7 @@
 .shareTitle {
     font-size: 1rem;
     font-weight: 500;
-    color: #888;
+    color: var(--color-text-muted, #94a3b8);
     font-family: var(--font-mono);
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -47,14 +47,17 @@
 .twitter:hover {
     background-color: #1DA1F2;
     border-color: #1DA1F2;
+    color: #ffffff;
 }
 
 .linkedin:hover {
     background-color: #0A66C2;
     border-color: #0A66C2;
+    color: #ffffff;
 }
 
 .whatsapp:hover {
     background-color: #25D366;
     border-color: #25D366;
+    color: #064e3b;
 }

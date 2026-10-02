@@ -560,10 +560,10 @@ function _buildDiagnostico(params: {
 // === A EQUAÇÃO UNIFICADA SOTA ===
 
 export function calculatePerspectivaVitoi(input: PerspectivaInput): PerspectivaResult {
-	// Layer 0: Validação Semântica SOTA (Antevisão de Erros)
-	const validation = PerspectivaInputSchema.safeParse(input);
-	if (!validation.success) {
-		if (process.env['NODE_ENV'] !== 'production') {
+	// Layer 0: Validação Semântica SOTA (Antevisão de Erros em Dev/Test)
+	if (process.env['NODE_ENV'] !== 'production') {
+		const validation = PerspectivaInputSchema.safeParse(input);
+		if (!validation.success) {
 			console.warn(
 				'[VITOI-QUANTUM] Sanitizing input due to validation mismatch:',
 				validation.error.issues,

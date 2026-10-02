@@ -29,7 +29,7 @@ export interface SotaButtonProps {
 function getButtonVariantClass(variant: string) {
 	switch (variant) {
 		case 'secondary':
-			return 'bg-accent-emerald text-white shadow-[0_4px_15px_rgba(16,185,129,0.3)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.5)] border border-white/10 hover:border-white/20 hover:text-text-bright';
+			return 'bg-accent-emerald-surface hover:bg-accent-emerald-surface-active text-white shadow-[0_4px_15px_rgba(16,185,129,0.25)] hover:shadow-[0_8px_30px_rgba(16,185,129,0.4)] border border-white/10 hover:border-white/20 hover:text-text-bright';
 		case 'danger':
 			return 'bg-rose-600 text-white shadow-[0_4px_15px_rgba(225,29,72,0.3)] hover:shadow-[0_8px_30px_rgba(225,29,72,0.5)] border border-white/10 hover:border-white/20';
 		case 'outline':
@@ -37,7 +37,7 @@ function getButtonVariantClass(variant: string) {
 		case 'ghost':
 			return 'bg-transparent text-text-muted hover:bg-white/5 hover:text-white';
 		case 'indigo':
-			return 'bg-accent-indigo text-white shadow-[0_4px_15px_rgba(99,102,241,0.3)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.5)] border border-white/10 hover:border-white/20 hover:text-text-bright';
+			return 'bg-accent-indigo-surface hover:bg-accent-indigo-surface-active text-white shadow-[0_4px_15px_rgba(99,102,241,0.25)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.4)] border border-white/10 hover:border-white/20 hover:text-text-bright';
 		case 'gold':
 		case 'primary':
 		default:
@@ -48,7 +48,7 @@ function getButtonVariantClass(variant: string) {
 function getButtonSizeClass(size: string) {
 	switch (size) {
 		case 'sm':
-			return 'px-5 py-2.5 text-[0.65rem]';
+			return 'px-5 py-2.5 min-h-[38px] text-[0.7rem] sm:text-xs';
 		case 'lg':
 			return 'px-12 py-5 text-sm';
 		default:
@@ -73,7 +73,7 @@ export const SotaButton: React.FC<SotaButtonProps> = ({
 	'aria-label': ariaLabel,
 }) => {
 	const baseStyles =
-		'relative inline-flex items-center justify-center gap-3 font-heading font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 overflow-hidden active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none select-none group';
+		'relative inline-flex items-center justify-center gap-3 font-heading font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 overflow-hidden active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base select-none group';
 
 	const variantClass = getButtonVariantClass(variant);
 	const sizeClass = getButtonSizeClass(size);

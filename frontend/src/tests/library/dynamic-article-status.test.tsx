@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import DynamicArticlePage from '@/app/(public)/biblioteca/[slug]/page';
+import DynamicArticleClient from '@/app/(public)/biblioteca/[slug]/DynamicArticleClient';
 
 const mockUseSWR = jest.fn();
 
@@ -53,7 +53,7 @@ describe('Página dinâmica de biblioteca — status epistemológico', () => {
 	});
 
 	it('não certifica conteúdo dinâmico como validado sem metadado de evidência', () => {
-		render(<DynamicArticlePage />);
+		render(<DynamicArticleClient />);
 
 		expect(screen.getByText('Conteúdo dinâmico')).toBeInTheDocument();
 		expect(screen.getByText('Contrato API v1')).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('Página dinâmica de biblioteca — status epistemológico', () => {
 	it('distingue catálogo protegido de slug inexistente', () => {
 		mockUseSWR.mockReturnValue({ error: Object.assign(new Error('Unauthorized'), { status: 401 }) });
 
-		render(<DynamicArticlePage />);
+		render(<DynamicArticleClient />);
 
 		expect(screen.getByText(/sessão autorizada/i)).toBeInTheDocument();
 		expect(screen.queryByText(/não existe na base de dados/i)).not.toBeInTheDocument();

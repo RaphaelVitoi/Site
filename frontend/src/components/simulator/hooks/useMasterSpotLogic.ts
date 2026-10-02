@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import type { Scenario, HeroPosition, QuantumMetrics } from '../solver/types';
 import { calculateActionMetrics, calculateBaseFgsErosion, createSpotData } from '../solver/utils';
 import type { PerspectivaResult } from '@/lib/perspectiva';
@@ -249,9 +249,9 @@ export function useMasterSpotLogic({
 		],
 	);
 
-	const setManualEquity = (val: number) => {
+	const setManualEquity = useCallback((val: number) => {
 		setNativeRangeMetric({ equity: val, isCalculating: false });
-	};
+	}, [setNativeRangeMetric]);
 
 	const wasmContextValue = useMemo(
 		() => ({
@@ -268,6 +268,7 @@ export function useMasterSpotLogic({
 			isCalculatingInsolvency,
 			dispatchInsolvencyMatrix,
 			nashResults,
+			setManualEquity,
 		],
 	);
 

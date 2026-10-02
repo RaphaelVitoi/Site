@@ -229,7 +229,7 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
     : 'relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-black/20 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(255,255,255,0.03)] transition-all duration-700 group-hover:border-white/20 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]';
 
   return (
-    <Link href="/" className="group relative flex items-center gap-3 focus:outline-none">
+    <Link href="/" className="group relative flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 rounded-xl">
       <div className={logoContainerClass}>
         <div
           className={`absolute inset-0 bg-linear-to-br ${
@@ -412,6 +412,15 @@ const HeaderMobileDrawer: React.FC<{
   isLightPage: boolean;
   onClose: () => void;
 }> = ({ isOpen, isLightPage, onClose }) => {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -425,6 +434,9 @@ const HeaderMobileDrawer: React.FC<{
             onClick={onClose}
           />
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu principal de navegação"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -435,7 +447,7 @@ const HeaderMobileDrawer: React.FC<{
           >
             <button
               type="button"
-              className={`absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-xl transition-all focus:outline-none ${
+              className={`absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 ${
                 isLightPage
                   ? 'text-light-text-muted hover:text-light-text-main border border-black/10 bg-black/5 hover:bg-black/10'
                   : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
@@ -451,7 +463,7 @@ const HeaderMobileDrawer: React.FC<{
                 <div key={item.label} className="flex flex-col gap-3">
                   <span
                     className={`border-b pb-2 text-[0.65rem] font-black tracking-[0.25em] uppercase ${
-                      isLightPage ? 'border-black/5 text-[#B09460]' : 'text-accent-indigo border-white/5'
+                      isLightPage ? 'border-black/5 text-light-text-accent' : 'text-accent-indigo border-white/5'
                     }`}
                   >
                     {item.label}
@@ -586,7 +598,7 @@ export const Header: React.FC = () => {
 
             <button
               type="button"
-              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all focus:outline-none lg:hidden ${
+              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 lg:hidden ${
                 isLightPage
                   ? 'text-light-text-muted hover:text-light-text-main border border-black/10 bg-black/5 hover:bg-black/10'
                   : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
