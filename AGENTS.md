@@ -23,7 +23,15 @@ Para CHICO, identidades Tier 1 e ausência de feudos funcionais, leia o §0
 como ponteiro — não é a pirâmide.
 
 A governança multiprojeto, que vale para todos os projetos sob `~/.gemini`,
-está em `../CLAUDE.md`.
+está em `../CLAUDE.md`. A memória canônica do harness Hermes Agent — ambiente
+medido, regras de tratamento, feudo do condutor — está em
+`../memoria/HERMES.md`, e é o índice pré-sessão dele.
+
+Se você é um agente que roda **no harness Hermes**, `.hermes.md` neste diretório
+é o seu slot de contexto: ele carrega o essencial (§0 resumido, Lei de
+Concorrência, autoria) e Indexa `CLAUDE.md` por seção para leitura sob demanda.
+`CLAUDE.md` tem 86.178 chars contra um teto de 48.000 — carregá-lo inteiro trunca
+em silêncio.
 
 ## Se você é um agente de nuvem (Jules / `Bolt ⚡`)
 
