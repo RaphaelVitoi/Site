@@ -1,6 +1,7 @@
 # ruff: noqa: D100, D101, D103, BLE001, G004, PLW0603, PLW0621, ASYNC240
 # pylint: disable=global-statement, import-outside-toplevel
 
+import asyncio
 from datetime import UTC, datetime
 import json
 import logging
@@ -410,3 +411,12 @@ async def process_agent_task(task: Task, manager: QueueManager):
 
     if task.agent == DISPATCHER_AGENT:
         await _process_dispatcher_result(task, manager, response_text)
+
+    await manager.update_task_status(task.id, "completed")
+    try:
+        from agents.execution import _set_task_completed_at_sync  # noqa: PLC0415
+
+        await asyncio.to_thread(_set_task_completed_at_sync, manager.db_path, task.id)
+    except Exception:
+        pass
+    logger.info("[bold green][OK] SIMETRIA ALCANCADA[/] [cyan]%s[/] concluida por %s", task.id, task.agent)

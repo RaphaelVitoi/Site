@@ -545,6 +545,9 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
         logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)...")
         try:
             await local_engine.process_agent_task(task, manager)
+            await manager.update_task_status(task.id, "completed")
+            with contextlib.suppress(Exception):
+                await asyncio.to_thread(_set_task_completed_at_sync, manager.db_path, task.id)
             return
         except Exception as e:
             logger.warning(f"Falha no Motor Local: {e}. Tentando workflow padrao como fallback...")
