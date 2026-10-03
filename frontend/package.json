@@ -67,6 +67,7 @@
 		"eslint-config-prettier": "10.1.8",
 		"jest": "30.5.1",
 		"jest-environment-jsdom": "30.5.1",
+		"lighthouse": "^13.5.0",
 		"postcss": "8.5.28",
 		"prettier-plugin-tailwindcss": "0.8.1",
 		"prisma": "7.10.0",

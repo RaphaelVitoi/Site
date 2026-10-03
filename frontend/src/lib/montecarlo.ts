@@ -83,7 +83,7 @@ function pickWinnerWithBusted(
 	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
 		if (isBusted[playerIdx] === 0) {
 			lastActiveIdx = playerIdx;
-			cumulative += stacks[playerIdx] ?? 0;
+			cumulative += stacks[playerIdx]!;
 			if (r <= cumulative) return playerIdx;
 		}
 	}
@@ -101,7 +101,7 @@ function pickWinnerWithMask(
 	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
 		if ((availablePlayers & (1 << playerIdx)) !== 0) {
 			lastActiveIdx = playerIdx;
-			cumulative += stacks[playerIdx] ?? 0;
+			cumulative += stacks[playerIdx]!;
 			if (r <= cumulative) return playerIdx;
 		}
 	}
@@ -163,14 +163,14 @@ function runSingleMonteCarloIteration(
 
 		// Distribui o prêmio e remove o jogador da pool
 		if (winnerIdx !== -1) {
-			const prize = activePrizes[j] ?? 0;
-			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + prize;
-			sumSquares[winnerIdx] = (sumSquares[winnerIdx] ?? 0) + prize * prize;
+			const prize = activePrizes[j]!;
+			totalEquity[winnerIdx] = totalEquity[winnerIdx]! + prize;
+			sumSquares[winnerIdx] = sumSquares[winnerIdx]! + prize * prize;
 			const pRow = placementCounts[winnerIdx];
 			if (pRow) {
-				pRow[j] = (pRow[j] ?? 0) + 1;
+				pRow[j] = pRow[j]! + 1;
 			}
-			remainingTotalChips -= stacks[winnerIdx] || 0;
+			remainingTotalChips -= stacks[winnerIdx]!;
 
 			if (isBusted) {
 				isBusted[winnerIdx] = 1;
@@ -236,7 +236,7 @@ export function calculateIcmMonteCarlo(
 	const activeIndices: number[] = [];
 	const zeroIndices: number[] = [];
 	for (let i = 0; i < numPlayers; i++) {
-		if ((stacks[i] ?? 0) > 0) {
+		if (stacks[i]! > 0) {
 			activeIndices.push(i);
 		} else {
 			zeroIndices.push(i);
@@ -254,7 +254,7 @@ export function calculateIcmMonteCarlo(
 			? remainingPrizes.reduce((a, b) => a + b, 0) / zeroIndices.length
 			: 0;
 
-		const activeStacks = activeIndices.map((i) => stacks[i] ?? 0);
+		const activeStacks = activeIndices.map((i) => stacks[i]!);
 		const numActive = activeIndices.length;
 		const totalActiveEquity = new Array(numActive).fill(0);
 		const sumActiveSquares = new Array(numActive).fill(0);
@@ -286,7 +286,7 @@ export function calculateIcmMonteCarlo(
 			equities[origIdx] = eq;
 
 			if (iterations > 1) {
-				const sumSq = sumActiveSquares[a] ?? 0;
+				const sumSq = sumActiveSquares[a]!;
 				const s2 = Math.max(0, (sumSq - (totalActiveEquity[a]! * totalActiveEquity[a]!) / iterations) / (iterations - 1));
 				variancePerPlayer[origIdx] = Number(s2.toFixed(4));
 				stdErrorPerPlayer[origIdx] = Number(Math.sqrt(s2 / iterations).toFixed(4));
@@ -296,7 +296,7 @@ export function calculateIcmMonteCarlo(
 			const targetRow = placementDistribution[origIdx];
 			if (activePlacementRow && targetRow) {
 				for (let j = 0; j < kActive; j++) {
-					targetRow[j] = (activePlacementRow[j] ?? 0) / iterations;
+					targetRow[j] = activePlacementRow[j]! / iterations;
 				}
 			}
 		}
@@ -353,7 +353,7 @@ export function calculateIcmMonteCarlo(
 	const equities = totalEquity.map((e) => e / iterations);
 	const variancePerPlayer = totalEquity.map((tot, i) => {
 		if (iterations <= 1) return 0;
-		const sumSq = sumSquares[i] ?? 0;
+		const sumSq = sumSquares[i]!;
 		const s2 = Math.max(0, (sumSq - (tot * tot) / iterations) / (iterations - 1));
 		return Number(s2.toFixed(4));
 	});
