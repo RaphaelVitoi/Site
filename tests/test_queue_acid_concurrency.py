@@ -21,7 +21,7 @@ def disable_desktop_notifications(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def temp_queue_manager():
+async def temp_queue_manager():
     """Fixture que cria uma instancia isolada de QueueManager dentro da arvore do projeto."""
     db_id = uuid.uuid4().hex[:8]
     temp_dir = Path("temp") / "pytest_dbs"
@@ -30,6 +30,8 @@ def temp_queue_manager():
 
     qm = QueueManager(queue_path=str(db_path))
     yield qm
+
+    await qm.close()
 
     # Cleanup apos os testes
     try:
