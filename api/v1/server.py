@@ -10,6 +10,7 @@ import time
 
 from aiohttp import web
 
+from api.v1.access_log import RequestCorrelationAccessLogger
 from api.v1.handlers import (
     handle_add_task,
     handle_ask_oracle,
@@ -48,6 +49,7 @@ from api.v1.handlers import (
     handle_view_file,
     handle_web_search,
 )
+from api.v1.http_metrics import HTTP_METRICS_KEY, RequestMetricsRegistry, http_metrics_middleware
 from api.v1.keys import AUDIT_ENGINE_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 from api.v1.middleware import (
     auth_middleware,
@@ -56,6 +58,7 @@ from api.v1.middleware import (
     rate_limit_middleware,
     security_headers_middleware,
 )
+from api.v1.middleware_correlation import request_correlation_middleware, request_id_response_prepare
 from database.lab_manager import LabManager
 from database.queue_manager import QueueManager
 
@@ -104,21 +107,25 @@ async def handle_predictive_profile(_request: web.Request) -> web.Response:
 def create_app(manager: QueueManager) -> web.Application:
     """Monta a aplicacao aiohttp com middlewares, estado e tabela de rotas."""
     app = web.Application(
-        # O primeiro da lista e o mais EXTERNO. security_headers era o ultimo, e por
-        # isso as recusas 401/403/429 dos middlewares de fora saiam sem nosniff nem
-        # X-Frame-Options (BK-20). Agora envolve todos.
+        # O primeiro da lista e o mais EXTERNO. security_headers envolve as recusas
+        # dos demais middlewares e adiciona nosniff/X-Frame-Options (BK-20).
+        # Correlation atribui o ID antes de rate limit/auth.
         middlewares=[
             security_headers_middleware,
+            request_correlation_middleware,
+            http_metrics_middleware,
             cors_middleware,
             rate_limit_middleware,
             auth_middleware,
             cookie_middleware,
         ]
     )
+    app.on_response_prepare.append(request_id_response_prepare)
     app[MANAGER_KEY] = manager
     app[LAB_MANAGER_KEY] = LabManager()  # Instancia o DAO do Laboratorio SOTA
     app[AUDIT_ENGINE_KEY] = AuditEngine(manager)  # Instancia o Motor de Auditoria SOTA
     app[START_TIME_KEY] = time.time()
+    app[HTTP_METRICS_KEY] = RequestMetricsRegistry()
     app.add_routes(
         [
             web.get("/", handle_root),
@@ -185,7 +192,7 @@ async def start_api_server(manager: QueueManager, port: int = 17042):
 
     app = create_app(manager)
 
-    runner = web.AppRunner(app)
+    runner = web.AppRunner(app, access_log_class=RequestCorrelationAccessLogger)
     await runner.setup()
     site = web.TCPSite(runner, bind_host, bind_port, reuse_address=True, backlog=4096)
     try:

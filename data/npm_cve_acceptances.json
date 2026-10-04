@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "proposito": "Aceites de CVE npm sem versao de correcao disponivel no registro oficial. Um aceite e estritamente vinculado ao ID, ao pacote e a versao; qualquer divergencia expira o aceite e devolve o item para revisao. Aceite NAO e supressao: o portao continua contando a CVE e exigindo que ela esteja declarada aqui, com parecer, autoridade e evidencia de alcance.",
+  "acceptances": [
+    {
+      "id": "braces-stack-exhaustion-dev-lint-20261004",
+      "status": "accepted",
+      "accepted_at": "2026-10-04",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "braces",
+      "version": "3.0.3",
+      "vulnerability_ids": [
+        "GHSA-vfj7-8cjw-p6xm"
+      ],
+      "evidence": {
+        "vetor": "Denial of service por estouro de pilha ao processar padroes aninhados com chaves no parser do braces.",
+        "alcance_medido": "Grep em todo o codigo de producao do frontend (frontend/src, app, components, lib) confirma zero consumo direto de braces ou micromatch. A dependencia e estritamente transitiva de desenvolvimento via @next/eslint-plugin-next -> fast-glob -> micromatch -> braces.",
+        "consumo_real": "Ferramenta de lint estatico em desenvolvimento local/CI (eslint .). Nao e empacotado no build de producao do Next.js nem executado no runtime de producao.",
+        "ausencia_de_correcao": "A versao 3.0.3 e a ultima versao publicada de braces no registro npm, e o advisory GHSA-vfj7-8cjw-p6xm marca range <=3.0.3 com patched_versions nulo. Nao existe versao corrigida disponivel no npm.",
+        "registro": "reports/REGISTRO-2026-10-04-http-metrics-correlation-e-worker-shutdown.md"
+      },
+      "expira_se": "Qualquer versao corrigida (>3.0.3) for publicada no npm, ou braces for introduzido em dependencias de producao.",
+      "revisar_em": "2026-12-31"
+    }
+  ]
+}
