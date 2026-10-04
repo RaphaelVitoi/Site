@@ -133,8 +133,12 @@ globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
 
     iterationCount += 1;
     let positiveRegretTotal = 0;
-    for (const regret of regretSum ?? []) {
-      positiveRegretTotal += Math.max(0, regret);
+    // SOTA BOLT: Using standard primitive for-loop over TypedArray instead of for...of to avoid iterator overhead and object allocation
+    if (regretSum) {
+      for (let j = 0; j < regretSum.length; j++) {
+        // Safe bound access, avoids ?? 0 degradation on TypedArrays
+        positiveRegretTotal += Math.max(0, regretSum[j]);
+      }
     }
     const regretScale = Math.max(Math.abs(pot), Math.abs(stack), 1);
     const meanPositiveRegret = positiveRegretTotal / Math.max(1, regretSum?.length ?? 0) / regretScale;
