@@ -156,11 +156,10 @@ app = FastAPI(
 # [SOTA RAG] INTEGRACAO LANCEDB (BUSCA VETORIAL - FRICCAO ZERO)
 # ==============================================================================
 RAG_AVAILABLE = False
-rag_engine: MemoryRAG | None = None
 try:
     from memory_rag import MemoryRAG
 
-    rag_engine = MemoryRAG()
+    rag_engine: MemoryRAG | None = MemoryRAG()
     RAG_AVAILABLE = True
 except Exception as e:  # noqa: BLE001
     rag_engine = None

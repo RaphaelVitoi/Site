@@ -137,7 +137,7 @@ globalThis.onmessage = (e: MessageEvent<CfrMessageData>) => {
     if (regretSum) {
       for (let j = 0; j < regretSum.length; j++) {
         // Safe bound access, avoids ?? 0 degradation on TypedArrays
-        positiveRegretTotal += Math.max(0, regretSum[j]);
+        positiveRegretTotal += Math.max(0, regretSum[j] as number);
       }
     }
     const regretScale = Math.max(Math.abs(pot), Math.abs(stack), 1);
