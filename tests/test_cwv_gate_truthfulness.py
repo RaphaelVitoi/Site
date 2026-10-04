@@ -28,6 +28,40 @@ A11Y_REVIEW_BASELINE = RAIZ / "data" / "a11y_manual_review_baselines.json"
 CWV_MANUAL_REVIEW = RAIZ / "data" / "cwv_manual_review_records.json"
 LIGHTHOUSE_CWV_AUDIT = RAIZ / "scripts" / "ops" / "lighthouse_cwv_audit.mjs"
 LIGHTHOUSE_PRODUCTION_RUNNER = RAIZ / "scripts" / "ops" / "invoke_lighthouse_production_audit.ps1"
+_CVE_GATE_ERRORS = frozenset(
+    {
+        "security.CRITICAL_CVE_COUNT",
+        "security.HIGH_CVE_COUNT",
+        "security.TOTAL_VULNERABILITY",
+        "security.PY_CVE_ABERTAS",
+    }
+)
+
+
+def _assert_gate_status_is_only_cve_blocked(returncode: int, output: str) -> None:
+    """Keep CWV tests focused while preserving any real security rejection."""
+    errors = re.findall(r"^\[\d+\] ERROR -> Componente: '([^']+)'", output, re.MULTILINE)
+    if returncode == 0:
+        assert not errors, output
+        return
+
+    assert returncode == 1, output
+    assert errors, output
+    assert set(errors) <= _CVE_GATE_ERRORS, output
+    assert "FALHOU (VERMELHO)" in output, output
+
+
+def test_gate_result_helper_only_tolerates_real_cve_failures() -> None:
+    cve_output = "[1] ERROR -> Componente: 'security.HIGH_CVE_COUNT'\nFALHOU (VERMELHO)"
+    _assert_gate_status_is_only_cve_blocked(1, cve_output)
+
+    with pytest.raises(AssertionError):
+        _assert_gate_status_is_only_cve_blocked(0, cve_output)
+    with pytest.raises(AssertionError):
+        _assert_gate_status_is_only_cve_blocked(
+            1,
+            cve_output.replace("security.HIGH_CVE_COUNT", "cwv.cobertura"),
+        )
 
 
 @pytest.mark.skipif(shutil.which("powershell") is None, reason="PowerShell 5.1 ausente do PATH")
@@ -70,9 +104,10 @@ def test_gate_sem_cdp_declara_cwv_e_a11y_nao_medidos(tmp_path: Path) -> None:
     )
 
     output = result.stdout + result.stderr
-    assert result.returncode == 0, output
+    _assert_gate_status_is_only_cve_blocked(result.returncode, output)
     assert "NAO MEDIDO" in output
-    assert "FRAGIL (AMARELO)" in output
+    expected_status = "FRAGIL (AMARELO)" if result.returncode == 0 else "FALHOU (VERMELHO)"
+    assert expected_status in output
     assert "APPROVED (SOTA GOLD)" not in output
     # Este processo e lancado pelo Python, que -- ao contrario do pwsh -- repassa
     # ao 5.1 o PSModulePath do PowerShell 7. E o caminho em que o cache de CVE
@@ -137,7 +172,7 @@ def test_gate_sem_cdp_expoe_motivo_e_acao_para_estado_fragil(tmp_path: Path) -> 
     output = result.stdout + result.stderr
     report = (tmp_path / "latest_cwv_report.md").read_text(encoding="utf-8")
 
-    assert result.returncode == 0, output
+    _assert_gate_status_is_only_cve_blocked(result.returncode, output)
     assert "MOTIVOS E ACOES PARA ESTADOS NAO VERDES" in output
     assert "Componente: 'cwv.cobertura'" in output
     assert "Motivo: nenhuma porta CDP canonica respondeu" in output
@@ -406,7 +441,7 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
     output = result.stdout + result.stderr
     report = (tmp_path / "latest_cwv_report.md").read_text(encoding="utf-8")
 
-    assert result.returncode == 0, output
+    _assert_gate_status_is_only_cve_blocked(result.returncode, output)
     assert "[CWV] Observacao humana positiva registrada" in output
     assert "## 1.1 Observacao humana de responsividade" in report
     assert "INP atestado manualmente: 16 ms local / 106 ms p75 de campo." in report
@@ -422,7 +457,7 @@ def test_gate_reports_positive_cwv_human_review_without_turning_it_into_coverage
         report
     )
     assert "TBT atestado manualmente" not in report
-    assert "FRAGILE" in report
+    assert "NAO MEDIDO INTEGRALMENTE" in report
 
 
 def test_lighthouse_cwv_extractor_requires_real_tbt_and_preserves_numeric_metrics() -> None:
@@ -563,12 +598,12 @@ def test_gate_reads_only_a_hash_bound_lighthouse_tbt_artifact(tmp_path: Path) ->
     )
     report_path = tmp_path / "latest_cwv_report.md"
 
-    assert result.returncode == 0, result.stdout + result.stderr
+    _assert_gate_status_is_only_cve_blocked(result.returncode, result.stdout + result.stderr)
     assert report_path.is_file(), result.stdout + result.stderr
     report = report_path.read_text(encoding="utf-8")
     assert "TBT_MS" in report
     assert "99 ms" in report
-    assert "FRAGILE" in report
+    assert "NAO MEDIDO INTEGRALMENTE" in report
 
 
 def test_production_lighthouse_runner_declares_browser_isolation_and_cleanup() -> None:

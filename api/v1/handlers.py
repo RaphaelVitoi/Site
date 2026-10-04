@@ -29,20 +29,24 @@ except ImportError:
 from aiohttp import web
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, ValidationInfo, field_validator
 
-from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
-from core.canonical_theory_schemas import (
-    ChenAKQGameRequest,
-    ChenAKQGameResponse,
-    ChenClairvoyanceRequest,
-    ChenClairvoyanceResponse,
-    JandaBluffRatioRequest,
-    JandaBluffRatioResponse,
-    JandaGeometricSizingRequest,
-    JandaGeometricSizingResponse,
-    JandaGeometricStepSchema,
-    JandaMDFRequest,
-    JandaMDFResponse,
+from api.v1.handler_support import _internal_error, _with_execution_provenance
+from api.v1.handlers_canonical import (
+    handle_canonical_akq as handle_canonical_akq,
 )
+from api.v1.handlers_canonical import (
+    handle_canonical_bluff_ratios as handle_canonical_bluff_ratios,
+)
+from api.v1.handlers_canonical import (
+    handle_canonical_clairvoyance as handle_canonical_clairvoyance,
+)
+from api.v1.handlers_canonical import (
+    handle_canonical_geometric_sizing as handle_canonical_geometric_sizing,
+)
+from api.v1.handlers_canonical import (
+    handle_canonical_janda_mdf as handle_canonical_janda_mdf,
+)
+from api.v1.http_metrics import HTTP_METRICS_KEY
+from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 from core.game_theory_schemas import (
     ClaudicoTranslateRequest,
     ClaudicoTranslateResponse,
@@ -66,13 +70,6 @@ import core.runtime as _te
 from core.schemas import RAGQuery, Task
 from database.lab_manager import LabPersistenceUnavailableError
 from engine.bayesian_range import calculate_pmev_call_threshold
-from engine.canonical_poker_theory import (
-    ChenAKQGameSolver,
-    ChenClairvoyanceSolver,
-    JandaGeometricBetSizing,
-    JandaMDFCalculator,
-    JandaStreetBluffValueRatio,
-)
 from engine.capability_registry import load_engine_capability_manifest
 from engine.game_theory_solvers import (
     ClaudicoActionTranslator,
@@ -125,54 +122,6 @@ SearchProvider = Literal["tavily", "duckduckgo", "auto"]
 ALLOWED_SEARCH_PROVIDERS = frozenset(get_args(SearchProvider))
 
 logger = logging.getLogger(__name__)
-
-
-def _internal_error(exc: BaseException, contexto: str, **extra: Any) -> web.Response:
-    """Loga a excecao com um id de correlacao e devolve resposta 500 sem detalhe interno.
-
-    O texto de `exc` pode conter caminho de disco, SQL, nome de chave e stack de
-    provider. Nada disso atravessa a fronteira HTTP: o cliente recebe apenas o id.
-    """
-    error_id = uuid4().hex[:12]
-    logger.error("[%s] %s: %s", error_id, contexto, exc, exc_info=exc)
-    payload: dict[str, Any] = {
-        "error": "Erro interno do servidor.",
-        "error_id": error_id,
-        **extra,
-    }
-    return web.json_response(payload, status=500)
-
-
-def _with_execution_provenance(
-    payload: dict[str, Any],
-    engine_id: str,
-    *,
-    runtime_used: str = "python",
-    model_used: str | None = None,
-    intended_model: str | None = None,
-    weights_loaded: bool = False,
-    fallback_used: bool = False,
-) -> dict[str, Any]:
-    """Anexa identidade executada; o nome da linhagem nunca substitui a prova."""
-    manifest = load_engine_capability_manifest()
-    selected = next((item for item in manifest.capabilities if item.engine_id == engine_id), None)
-    if selected is None:
-        raise KeyError(f"unknown engine capability: {engine_id}")
-    return {
-        **payload,
-        "execution_provenance": {
-            "engine_id": selected.engine_id,
-            "implementation_level": selected.implementation_level.value,
-            "runtime_used": runtime_used,
-            "model_used": model_used or selected.engine_id,
-            "intended_model": intended_model,
-            "weights_loaded": weights_loaded,
-            "fallback_used": fallback_used,
-            "assumptions": selected.assumptions,
-            "limitations": selected.limitations,
-            "units": selected.units,
-        },
-    }
 
 
 def _get_bg_tasks(app: web.Application) -> set[asyncio.Task[Any]]:
@@ -1596,142 +1545,6 @@ async def handle_claudico_translate_action(request: web.Request) -> web.Response
         return _internal_error(e, "handle_claudico_translate_action", status="ERROR")
 
 
-async def handle_canonical_clairvoyance(request: web.Request) -> web.Response:
-    """Resolve o Clairvoyance Game [0, 1] analiticamente (Chen & Ankenman, Cap. 11)."""
-    try:
-        data = await request.json()
-        req = ChenClairvoyanceRequest.model_validate(data)
-        sol = ChenClairvoyanceSolver.solve(pot=req.pot, bet=req.bet)
-        resp = ChenClairvoyanceResponse(
-            status="SUCCESS",
-            pot=sol.pot,
-            bet=sol.bet,
-            alpha=sol.alpha,
-            defense_frequency=sol.defense_frequency,
-            value_bet_cutoff=sol.value_bet_cutoff,
-            bluff_cutoff=sol.bluff_cutoff,
-            game_value_player_x=sol.game_value_player_x,
-            bluff_to_value_ratio=sol.bluff_to_value_ratio,
-        )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "chen-ankenman-analytic"))
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-    except Exception as e:
-        return _internal_error(e, "handle_canonical_clairvoyance", status="ERROR")
-
-
-async def handle_canonical_akq(request: web.Request) -> web.Response:
-    """Resolve o Jogo AKQ analiticamente (Chen & Ankenman, Cap. 13 & 15)."""
-    try:
-        data = await request.json()
-        req = ChenAKQGameRequest.model_validate(data)
-        sol = ChenAKQGameSolver.solve(pot=req.pot, bet=req.bet)
-        resp = ChenAKQGameResponse(
-            status="SUCCESS",
-            pot=sol.pot,
-            bet=sol.bet,
-            hero_bet_ace_freq=sol.hero_bet_ace_freq,
-            hero_check_king_freq=sol.hero_check_king_freq,
-            hero_bluff_queen_freq=sol.hero_bluff_queen_freq,
-            villain_call_ace_freq=sol.villain_call_ace_freq,
-            villain_call_king_freq=sol.villain_call_king_freq,
-            villain_fold_queen_freq=sol.villain_fold_queen_freq,
-            game_value_hero=sol.game_value_hero,
-        )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "chen-ankenman-analytic"))
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-    except Exception as e:
-        return _internal_error(e, "handle_canonical_akq", status="ERROR")
-
-
-async def handle_canonical_janda_mdf(request: web.Request) -> web.Response:
-    """Calcula a Minimum Defense Frequency (MDF) e responsabilidade multiway (Janda, Partes 1 & 12)."""
-    try:
-        data = await request.json()
-        req = JandaMDFRequest.model_validate(data)
-        res = JandaMDFCalculator.calculate_mdf(pot=req.pot, bet=req.bet, num_defenders=req.num_defenders)
-        resp = JandaMDFResponse(
-            status="SUCCESS",
-            pot=res.pot,
-            bet=res.bet,
-            alpha=res.alpha,
-            mdf=res.mdf,
-            mdf_percentage=res.mdf_percentage,
-            pot_odds_percentage=res.pot_odds_percentage,
-            is_multiway=res.is_multiway,
-            num_defenders=res.num_defenders,
-            individual_mdf=res.individual_mdf,
-        )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "janda-analytic"))
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-    except Exception as e:
-        return _internal_error(e, "handle_canonical_janda_mdf", status="ERROR")
-
-
-async def handle_canonical_geometric_sizing(request: web.Request) -> web.Response:
-    """Calcula o Dimensionamento Geometrico de Apostas multi-rua (Janda, Partes 3 & 14)."""
-    try:
-        data = await request.json()
-        req = JandaGeometricSizingRequest.model_validate(data)
-        res = JandaGeometricBetSizing.calculate_geometric_sizing(
-            pot=req.pot,
-            effective_stack=req.effective_stack,
-            num_streets=req.num_streets,
-        )
-        resp = JandaGeometricSizingResponse(
-            status="SUCCESS",
-            starting_pot=res.starting_pot,
-            effective_stack=res.effective_stack,
-            target_final_pot=res.target_final_pot,
-            num_streets=res.num_streets,
-            constant_pot_fraction=res.constant_pot_fraction,
-            pot_fraction_percentage=res.pot_fraction_percentage,
-            steps=[
-                JandaGeometricStepSchema(
-                    street_index=s.street_index,
-                    street_name=s.street_name,
-                    starting_pot=s.starting_pot,
-                    bet_size=s.bet_size,
-                    pot_fraction=s.pot_fraction,
-                    final_pot_if_called=s.final_pot_if_called,
-                    remaining_stack_after_bet=s.remaining_stack_after_bet,
-                )
-                for s in res.steps
-            ],
-        )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "janda-analytic"))
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-    except Exception as e:
-        return _internal_error(e, "handle_canonical_geometric_sizing", status="ERROR")
-
-
-async def handle_canonical_bluff_ratios(request: web.Request) -> web.Response:
-    """Calcula as razoes de blefe para valor por rua (Janda, Parte 5)."""
-    try:
-        data = await request.json()
-        req = JandaBluffRatioRequest.model_validate(data)
-        res = JandaStreetBluffValueRatio.calculate_ratios(bet_fraction=req.bet_fraction_of_pot)
-        resp = JandaBluffRatioResponse(
-            status="SUCCESS",
-            bet_fraction_of_pot=res.bet_fraction_of_pot,
-            alpha=res.alpha,
-            river_bluff_to_value_ratio=res.river_bluff_to_value_ratio,
-            river_bluff_percentage=res.river_bluff_percentage,
-            turn_bluff_to_value_ratio=res.turn_bluff_to_value_ratio,
-            turn_bluff_percentage=res.turn_bluff_percentage,
-            flop_bluff_to_value_ratio=res.flop_bluff_to_value_ratio,
-            flop_bluff_percentage=res.flop_bluff_percentage,
-        )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "janda-analytic"))
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-    except Exception as e:
-        return _internal_error(e, "handle_canonical_bluff_ratios", status="ERROR")
-
-
 async def handle_engine_capabilities(_request: web.Request) -> web.Response:
     """Publica o contrato estatico sem alegar que houve probe de runtime."""
     try:
@@ -1805,6 +1618,9 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
             f"nexus_hardware_ram_free_mb {ram_free_mb:.1f}",
             "",
         ]
+    http_metrics = request.app.get(HTTP_METRICS_KEY)
+    if http_metrics is not None:
+        lines.extend(http_metrics.render().splitlines())
     return web.Response(
         text="\n".join(lines) + "\n",
         content_type="text/plain",

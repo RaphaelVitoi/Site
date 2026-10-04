@@ -14,10 +14,10 @@ import re
 import secrets
 import time
 from urllib.parse import urlsplit
-import uuid
 
 from aiohttp import web
 
+from api.v1.middleware_correlation import CORRELATION_HEADER, correlation_id_for
 from llm.budget import API_SECRET_TOKEN
 
 # SOTA: Estado do Rate Limiter (IP -> {count, window_start})
@@ -293,13 +293,6 @@ def _is_loopback(remote: str | None) -> bool:
 #: distingue "sem token" de "token invalido" de "rota de operador".
 LOGGER = logging.getLogger(__name__)
 
-#: Cabecalho de correlacao aceito do proxy de borda. Gerado aqui quando
-#: ausente, e devolvido na resposta para que um 401 do log possa ser casado com
-#: o acesso no proxy. Gerar no servidor e melhor que gerar no cliente: o cliente
-#: nao precisa saber que existe, e o id continua presente mesmo quando o proxy
-#: nao o manda.
-CORRELATION_HEADER = "X-Request-Id"
-
 #: Declarado AQUI, e nao na secao de rate limit mais abaixo, porque `_recusa`
 #: o le. A definicao original vivia depois do primeiro uso -- resolvia em tempo
 #: de chamada e funcionava por acaso, que e a forma como constante depende da
@@ -421,10 +414,7 @@ def _header(request, nome: str, padrao: str = "") -> str:
 
 
 def _correlacao(request) -> str:
-    recebido = _header(request, CORRELATION_HEADER).strip()
-    if recebido and re.fullmatch(r"[A-Za-z0-9._:-]{1,128}", recebido):
-        return recebido
-    return uuid.uuid4().hex[:16]
+    return correlation_id_for(request)
 
 
 def _recusa(request, status: int, motivo: str, mensagem: str | None = None) -> web.Response:

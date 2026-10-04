@@ -688,7 +688,7 @@ $cveCacheErro = $null
 $cveCachePath = Join-Path $RepoRoot '.git\sota-cve-cache.json'
 if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
     try {
-        $insumosCve = @($lockfilesRastreados | Where-Object { $_ }) + @('requirements.txt', 'data/python_cve_acceptances.json')
+        $insumosCve = @($lockfilesRastreados | Where-Object { $_ }) + @('requirements.txt', 'data/python_cve_acceptances.json', 'data/npm_cve_acceptances.json')
         $cveCacheChave = (@(foreach ($rel in $insumosCve) {
             $abs = Join-Path $RepoRoot $rel
             if (Test-Path -LiteralPath $abs -PathType Leaf) { "$rel=" + (Get-Sha256Hex -LiteralPath $abs) } else { "$rel=ausente" }
@@ -706,6 +706,56 @@ if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
         # Cache indisponivel nao reprova (a fase mede do zero), mas aparece.
         $cveCacheHit = $false
         $cveCacheErro = $_.Exception.Message
+    }
+}
+
+function Test-NpmVulnAceita {
+    param($v, $allVulns, [string[]]$Aceites)
+    if ($null -eq $v) { return $false }
+    foreach ($aceite in $Aceites) {
+        $partes = $aceite -split '\|'
+        if ($partes[0] -eq $v.name) { return $true }
+    }
+    foreach ($viaItem in @($v.via)) {
+        if ($viaItem -is [string]) {
+            foreach ($aceite in $Aceites) {
+                $partes = $aceite -split '\|'
+                if ($partes[0] -eq $viaItem) { return $true }
+            }
+            if ($allVulns -and $allVulns.PSObject.Properties[$viaItem]) {
+                if (Test-NpmVulnAceita -v $allVulns.PSObject.Properties[$viaItem].Value -allVulns $allVulns -Aceites $Aceites) {
+                    return $true
+                }
+            }
+        } elseif ($null -ne $viaItem) {
+            $viaPkg = [string]$viaItem.name
+            $url = [string]$viaItem.url
+            foreach ($aceite in $Aceites) {
+                $partes = $aceite -split '\|'
+                $aceitePkg = $partes[0]
+                $aceiteVid = if ($partes.Length -gt 2) { $partes[2] } else { '' }
+                if ($aceitePkg -eq $viaPkg -or ($aceiteVid -and $url -like ('*' + $aceiteVid + '*'))) {
+                    return $true
+                }
+            }
+        }
+    }
+    return $false
+}
+
+$npmAceites = @()
+$npmAceitesPath = Join-Path $RepoRoot 'data\npm_cve_acceptances.json'
+if (Test-Path -LiteralPath $npmAceitesPath -PathType Leaf) {
+    try {
+        $npmAceitesDoc = Get-Content -LiteralPath $npmAceitesPath -Raw -Encoding utf8 | ConvertFrom-Json
+        foreach ($a in @($npmAceitesDoc.acceptances)) {
+            if ($a.status -ne 'accepted') { continue }
+            foreach ($vid in @($a.vulnerability_ids)) {
+                $npmAceites += "$($a.package)|$($a.version)|$vid"
+            }
+        }
+    } catch {
+        $cveErro = "arquivo de aceites npm ilegivel: $($_.Exception.Message)"
     }
 }
 
@@ -740,9 +790,22 @@ if ($cveCacheHit) {
                 $auditJson = $jsonOnly | ConvertFrom-Json
                 $metadata = $auditJson.metadata.vulnerabilities
                 if ($null -ne $metadata) {
-                    $cveCritico += [int]($metadata.critical)
-                    $cveAlto    += [int]($metadata.high)
-                    $cveTotal   += [int]($metadata.total)
+                    if ($npmAceites.Count -eq 0 -or $null -eq $auditJson.vulnerabilities) {
+                        $cveCritico += [int]($metadata.critical)
+                        $cveAlto    += [int]($metadata.high)
+                        $cveTotal   += [int]($metadata.total)
+                    } else {
+                        foreach ($prop in $auditJson.vulnerabilities.PSObject.Properties) {
+                            $vuln = $prop.Value
+                            $ehAceita = Test-NpmVulnAceita -v $vuln -allVulns $auditJson.vulnerabilities -Aceites $npmAceites
+                            if (-not $ehAceita) {
+                                $sev = [string]$vuln.severity
+                                if ($sev -eq 'critical') { $cveCritico++ }
+                                elseif ($sev -eq 'high') { $cveAlto++ }
+                                $cveTotal++
+                            }
+                        }
+                    }
                 } else {
                     $cveFalhas += "$manifesto : JSON sem metadata.vulnerabilities"
                 }
@@ -888,6 +951,7 @@ if ($cveCacheErro) {
 $pyStatus = if ($pyCveMedido) { "[PASS]" } else { "[FAIL]" }
 $pyColor  = if ($pyCveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_AUDIT_EXECUTADO', $(if ($pyCveMedido) { 'sim' } else { 'NAO' }), 'sim', $pyStatus) -ForegroundColor $pyColor
+Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'NPM_CVE_ACEITAS', "$($npmAceites.Count) aceites", '-', 'INFO') -ForegroundColor DarkGray
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_ACEITAS', "$($pyAceites.Count) aceites", '-', 'INFO') -ForegroundColor DarkGray
 if (-not $pyCveMedido) {
     Write-Host "   motivo: $pyCveErro" -ForegroundColor Red
