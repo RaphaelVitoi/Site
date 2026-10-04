@@ -153,6 +153,11 @@ async def test_telemetry_table_zero_plaintext_leak(mock_pool_keys):
 @pytest.mark.asyncio
 async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
     """Testa se call_gemini_flash_lite failover rotaciona chave quando ocorre erro 429."""
+
+    # Reload the keys from the patched environment into the global singleton
+    from llm.gemini_pool import gemini_pool_manager
+    gemini_pool_manager.__init__(read_registry=False)
+
     mock_session = MagicMock()
 
     call_count = 0
