@@ -156,6 +156,7 @@ async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
 
     # Reload the keys from the patched environment into the global singleton
     from llm.gemini_pool import gemini_pool_manager
+
     gemini_pool_manager.__init__(read_registry=False)
 
     mock_session = MagicMock()
