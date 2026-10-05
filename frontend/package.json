@@ -21,6 +21,7 @@
 		"typecheck:audit": "tsc -p tsconfig.audit.json --pretty false",
 		"test": "jest",
 		"test:visual": "playwright test --config=playwright.config.ts",
+		"test:quality": "playwright test --config=playwright.quality.config.ts",
 		"test:visual:report": "playwright show-report --config=playwright.config.ts",
 		"seed": "ts-node prisma/seed.ts"
 	},

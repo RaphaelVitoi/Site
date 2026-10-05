@@ -104,9 +104,9 @@ jobs:
           uv run --python "${{ matrix.python-version }}" pytest --cov=engine --cov-fail-under=10
 
   frontend-build-and-typecheck:
-    name: ⚛️ Frontend TypeScript & Next.js Build
+    name: ⚛️ Frontend Quality, Accessibility & Performance
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: 📥 Checkout Codebase
@@ -168,6 +168,12 @@ jobs:
           npm exec --workspace frontend -- next typegen
           npm run typecheck
           npm run build
+
+      - name: 🧩 Install Playwright Chromium and system dependencies
+        run: npm exec --workspace frontend -- playwright install --with-deps chromium
+
+      - name: ♿ Run WCAG 2.2 AA and responsive simulator checks
+        run: npm run test:quality --workspace frontend
 
   security-and-architecture-gate:
     name: 🛡️ Security Headers & Architecture Quality Gate
