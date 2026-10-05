@@ -53,6 +53,18 @@ verificado:
 nao_verificado:
   - "CI remoto do GitHub nao foi executado localmente; sera acionado no push"
   - "docker build da imagem de producao nao executado localmente devido a ausencia de Docker daemon no host Windows"
+revisoes_de_ancora:
+  - registro: registro-2026-10-05-resolucao-de-modelo-ollama-e-schema-json
+    caminhos:
+      - engine/llm_api.py
+      - tests/test_llm_layer_sota.py
+    parecer: >-
+      Revisado em 2026-10-05. O expurgo de modelos obsoletos permanece integralmente valido:
+      a resolucao de alias passou a consultar OLLAMA_MODEL_MAP e normalize_model de
+      engine/gemma_server.py, o que CONSOLIDA data/ollama_models.json como fonte unica
+      de alias em vez de suplantar o mapeamento deste registro. A precedencia de alias
+      exato preserva a medicao de 2026-09-03, em que os seis modelos qwen instalados
+      resolviam errado.
 ---
 
 # Handoff — Expurgo de Modelos Obsoletos, Harmonização Qwen e Calibração

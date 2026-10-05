@@ -205,7 +205,21 @@ async def call_ollama(
     system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     ollama_base = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
     ollama_url = f"{ollama_base}/api/chat"
-    resolved_model = model.replace("google/", "")
+    clean_model = model.replace("google/", "").strip()
+    try:
+        from engine.gemma_server import GEMMA4_E4B, OLLAMA_MODEL_MAP, normalize_model  # noqa: PLC0415
+
+        if clean_model in OLLAMA_MODEL_MAP:
+            resolved_model = OLLAMA_MODEL_MAP[clean_model]
+        elif ":" in clean_model or any(t.lower() == clean_model.lower() for t in OLLAMA_MODEL_MAP.values()):
+            resolved_model = clean_model
+        else:
+            alias = normalize_model(clean_model)
+            resolved_model = OLLAMA_MODEL_MAP.get(alias, clean_model or GEMMA4_E4B)
+    except Exception as e:
+        logger.debug("Falha na resolucao de modelo Ollama via gemma_server: %s", e)
+        resolved_model = clean_model
+
     ollama_data: dict[str, Any] = {
         "model": resolved_model,
         "messages": [
@@ -216,7 +230,7 @@ async def call_ollama(
         "options": {"num_predict": 1024},
     }
     if response_format:
-        ollama_data["format"] = "json"
+        ollama_data["format"] = response_format
 
     headers = {"Content-Type": CONTENT_TYPE_JSON}
     ollama_key = os.environ.get("OLLAMA_API_KEY")
@@ -797,7 +811,7 @@ async def _dispatch_provider_call(
             )
             if res:
                 return res
-            # Fallback de resiliência: se o modelo 3.5 deu 503, tenta alternativas na mesma família
+            # Fallback de resiliencia: se o modelo 3.5 deu 503, tenta alternativas na mesma familia
             for alt_model in ["gemini-3.6-flash", "gemini-3.8-flash"]:
                 if alt_model != target_model:
                     logger.info("[GEMINI SOTA] Tentando alternativa na familia Gemini: '%s'", alt_model)
@@ -864,7 +878,7 @@ async def _dispatch_provider_call(
 
         # 7. Provedor OpenRouter
         if provider == "openrouter" and openrouter_keys:
-            return await _try_provider(
+            res = await _try_provider(
                 session,
                 "openrouter",
                 call_openrouter,
@@ -878,6 +892,28 @@ async def _dispatch_provider_call(
                 usage_keys=("prompt_tokens", "completion_tokens"),
                 response_format=response_format,
             )
+            if res:
+                return res
+
+        # Fallback de contingencia Gemini para modelos Gemma/overrides antes de fechar a sessao
+        if "gemma" in model.lower() and gemini_keys:
+            logger.info("[ROTEAMENTO SOTA] Triagem externa de contingencia via gemini-3.5-flash-lite para '%s'", model)
+            res = await _try_provider(
+                session,
+                "gemini",
+                call_gemini,
+                "gemini-3.5-flash-lite",
+                system_prompt,
+                user_prompt,
+                gemini_keys,
+                task,
+                manager,
+                max_retries=2,
+                usage_keys=("promptTokenCount", "candidatesTokenCount"),
+                response_format=response_format,
+            )
+            if res:
+                return res
 
     logger.warning("Modelo '%s' (resolvido como '%s' via '%s') nao pode ser executado.", model, target_model, provider)
     return None

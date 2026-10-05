@@ -52,6 +52,16 @@ revisoes_de_ancora:
       - engine/llm_api.py
     parecer: >-
       Revisado em 2026-10-01 e mantido valido. Expansao das capacidades com chamada autenticada ao Ollama Cloud via OLLAMA_API_KEY no header Authorization Bearer e integracao nativa da API REST do Nous Research.
+  - registro: registro-2026-10-05-resolucao-de-modelo-ollama-e-schema-json
+    caminhos:
+      - engine/llm_api.py
+      - tests/test_llm_layer_sota.py
+    parecer: >-
+      Revisado em 2026-10-05. O suporte a Ollama Cloud e a Nous Research permanece
+      integro: a autenticacao por OLLAMA_API_KEY e o mapeamento das tags cloud nao foram
+      tocados. A resolucao de alias do caminho LOCAL passou a consultar OLLAMA_MODEL_MAP,
+      e o fallback de contingencia via gemini-3.5-flash-lite so e acionado quando ha
+      credencial Gemini disponivel.
 ---
 
 # Registro: Integracao de Ollama Cloud, Hermes Harness e Chaves de Registro

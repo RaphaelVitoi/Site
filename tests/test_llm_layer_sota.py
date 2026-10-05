@@ -7,9 +7,11 @@ Testes SOTA para a camada LLM (session.py, budget.py, routing.py) do Nexus Orche
 import asyncio
 from datetime import UTC, datetime, timedelta
 import json
+from typing import cast
 from unittest.mock import AsyncMock, MagicMock, patch
 import urllib.error
 
+import aiohttp
 import pytest
 
 import core.config
@@ -299,7 +301,7 @@ def test_resolve_model_provider_and_target_sota() -> None:
 
 @pytest.mark.unit
 def test_extract_provider_keys_filters_project_ids() -> None:
-    """Valida que _extract_provider_keys descarta poluição de variaveis de projeto."""
+    """Valida que _extract_provider_keys descarta poluicao de variaveis de projeto."""
     from engine.llm_api import _extract_provider_keys
 
     dummy_env = {
@@ -316,3 +318,86 @@ def test_extract_provider_keys_filters_project_ids() -> None:
     assert "projects/my-test-project-12345" not in gemini_keys
     assert len(openrouter_keys) == 1
     assert len(nous_keys) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_call_ollama_model_resolution_and_schema_format() -> None:
+    """Valida resolucao de modelos via manifesto e propagacao do response_format no call_ollama."""
+    from engine.llm_api import call_ollama
+
+    captured_payloads = []
+
+    class DummyResponse:
+        ok = True
+        status = 200
+        reason = "OK"
+
+        async def json(self):
+            return {"message": {"content": "ok"}, "prompt_eval_count": 10, "eval_count": 5}
+
+    class DummySession:
+        def post(self, url, json, headers, timeout):
+            captured_payloads.append(json)
+            mock_ctx = AsyncMock()
+            mock_ctx.__aenter__.return_value = DummyResponse()
+            mock_ctx.__aexit__.return_value = None
+            return mock_ctx
+
+    # `DummySession` implementa o MESMO protocolo de `aiohttp.ClientSession` de
+    # que `call_ollama` precisa (`post` devolvendo um gerenciador de contexto
+    # assincrono), mas nao e uma subclasse. `cast` declara essa equivalencia
+    # contratual ao verificador de tipos -- o padrao do projeto para doubles de
+    # sessao -- em vez de relaxar a assinatura do codigo de producao.
+    sess = cast(aiohttp.ClientSession, DummySession())
+    schema = {"type": "object", "properties": {"ans": {"type": "string"}}}
+
+    # 1. Exact alias resolved to manifest tag
+    await call_ollama(sess, "qwen", "sys", "user", response_format=schema)
+    assert captured_payloads[-1]["model"] == "qwen2.5-coder:7b-instruct-q5_K_M"
+    assert captured_payloads[-1]["format"] == schema
+
+    # 2. Exact tag preserved
+    await call_ollama(sess, "qwen2.5-coder:0.5b", "sys", "user")
+    assert captured_payloads[-1]["model"] == "qwen2.5-coder:0.5b"
+    assert "format" not in captured_payloads[-1]
+
+    # 3. Routing hint with google/ prefix resolved to available Ollama model
+    await call_ollama(sess, "google/gemma-4-e4b-it", "sys", "user")
+    assert captured_payloads[-1]["model"] == "gemma4:e4b"
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_dispatch_provider_call_gemini_fallback_for_custom_gemma() -> None:
+    """Valida que override como custom-gemma executa fallback do Gemini com sessao aberta."""
+    from engine.llm_api import _dispatch_provider_call
+
+    task = Task(id="T-FALLBACK", description="test", agent="@chico", timestamp=datetime.now(UTC).isoformat())
+    mock_manager = MagicMock()
+
+    session_open_during_call = []
+
+    async def fake_try(session, *args, **kwargs):
+        session_open_during_call.append(not session.closed)
+        return "gemini fallback response"
+
+    with (
+        patch("engine.llm_api.call_gemma_local", side_effect=RuntimeError("Proxy down")),
+        patch("engine.llm_api._try_provider", side_effect=fake_try) as mock_try,
+    ):
+        res = await _dispatch_provider_call(
+            model="custom-gemma",
+            system_prompt="sys",
+            user_prompt="user",
+            gemini_keys=["CHAVE_GEMINI_TESTE_SOTA_01"],
+            anthropic_keys=[],
+            openrouter_keys=[],
+            task=task,
+            manager=mock_manager,
+        )
+
+        assert res == "gemini fallback response"
+        assert mock_try.call_count >= 1
+        assert session_open_during_call
+        assert all(session_open_during_call)
