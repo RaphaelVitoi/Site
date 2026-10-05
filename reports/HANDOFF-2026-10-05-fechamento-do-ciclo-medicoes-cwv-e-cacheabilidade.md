@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: Space-Bunny-Alpha <noreply@hermes.com>
 co_autoria: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-10-05T07:35:00-03:00'
-atualizado_em: '2026-10-05T07:35:00-03:00'
+atualizado_em: '2026-10-05T09:15:00-03:00'
 commit: HEAD
 classes: [interno, medido, governanca, handoff, quality-gate, cwv, acessibilidade, seguranca, cache]
 caminhos:
@@ -18,6 +18,7 @@ caminhos:
   - reports/REGISTRO-2026-09-25-laya-warmup-persistencia-e-timeout-s1.md
   - engine/llm_api.py
   - tests/test_llm_layer_sota.py
+  - tests/test_llm_ollama_integracao_real.py
   - scripts/ops/cwv_gate.ps1
   - scripts/ops/suite_verde.py
 config_medida:
@@ -56,6 +57,17 @@ revisoes_de_ancora:
       reais do portao e com a declaracao dos relatorios diarios de calibracao de
       2026-10-04 e 2026-10-05, sem alterar nenhum verificado anterior. O registro Laya
       de 2026-09-25 recebeu apenas normalizacao de formatacao, sem mudanca de conteudo.
+  - registro: registro-2026-10-05-resolucao-de-modelo-ollama-e-schema-json
+    caminhos:
+      - reports/REGISTRO-2026-10-05-resolucao-de-modelo-ollama-e-schema-json.md
+      - tests/test_llm_ollama_integracao_real.py
+    parecer: >-
+      Revisado em 2026-10-05. A secao 5 deste handoff declarava o caminho Ollama como
+      LIMITADO por medicao -- apenas contrato e forma do corpo, sem chamada real ao
+      daemon. Esse limite deixou de valer: o registro agora traz 5 testes de integracao
+      contra 127.0.0.1:11434, medidos, e a tabela de resolucao foi reprovada com os
+      26 aliases do manifesto conferindo tag instalada. O que continua aberto e apenas
+      o que este registro nunca cobriu: provedores externos e producao multi-host.
 ---
 
 # Handoff: Fechamento do Ciclo de Medicao CWV e Cacheabilidade
@@ -148,6 +160,11 @@ declarada porque as duas identidades produziram o conteudo efetivamente commitad
 
 ## 5. Limites
 
-O caminho Ollama foi testado com sessao e resposta substituidas. **Nenhuma chamada
-real ao daemon em `127.0.0.1:11434` foi feita**, e nenhuma a provedor externo. O que
-esta registrado e o contrato e a forma do corpo, nao o comportamento em producao.
+O caminho Ollama foi medido contra o daemon real em `127.0.0.1:11434`: inferencia
+com schema, inferencia sem schema, traducao do erro do daemon e conferencia dos
+26 aliases do manifesto contra as tags instaladas. Detalhe em
+`REGISTRO-2026-10-05-resolucao-de-modelo-ollama-e-schema-json.md`, secao 3.1.
+
+**O que continua sem medicao:** provedores externos (Nous Research e cloud) e
+execucao em producao distribuida multi-host. Nenhum dos dois foi alterado por este
+lote -- a revisao tocou apenas o caminho local.
