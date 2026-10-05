@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-05T16:44:54-03:00",
+  "title": "Design System: PokerRacional SOTA GOLD",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "glass-panel",
+        "value": "inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 40px 80px -20px rgba(0, 0, 0, 0.7)",
+        "purpose": "Sombra estrutural aplicada ao painel de vidro, sem espalhar elevação pelos cards de dados."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fade-in",
+        "value": "0.5s ease-out",
+        "purpose": "Entrada curta para conteúdo que aparece após carregamento."
+      },
+      {
+        "name": "fade-up",
+        "value": "0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Entrada com deslocamento para seções de hierarquia alta."
+      },
+      {
+        "name": "sota-in",
+        "value": "1s cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Entrada da área de trabalho; evite aplicar repetidamente a dados em atualização."
+      },
+      {
+        "name": "pulse-glow",
+        "value": "3s infinite",
+        "purpose": "Realce ambiental do CTA primário existente."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Painel de vidro",
+      "kind": "card",
+      "refersTo": "glass-panel",
+      "description": "Superfície estrutural para agrupar um bloco de análise; não aplicar a cada card de dado.",
+      "html": "<section class=\"ds-glass-panel\"><h2>Leitura estratégica</h2><p>Contexto, decisão e resultado permanecem no mesmo plano.</p></section>",
+      "css": ".ds-glass-panel{position:relative;border-radius:2rem;padding:2rem;backdrop-filter:blur(64px);transition-duration:700ms;background:linear-gradient(180deg,rgba(15,23,42,.7) 0%,rgba(2,6,23,.9) 100%);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 40px 80px -20px rgba(0,0,0,.7);color:var(--color-text-main)}@media(min-width:1024px){.ds-glass-panel{padding:3rem}}"
+    },
+    {
+      "name": "Ação primária",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "CTA indigo com foreground branco; o estado de hover usa a superfície mais escura.",
+      "html": "<button type=\"button\" class=\"ds-button-primary\">TESTAR MOTOR D6</button>",
+      "css": ".ds-button-primary{display:inline-flex;align-items:center;justify-content:center;padding:1rem 3rem;border:1px solid rgba(255,255,255,.1);border-radius:1rem;background:var(--color-accent-indigo-surface);color:#fff;font-size:.875rem;font-weight:900;letter-spacing:.1em;transition:background-color 200ms,color 200ms,border-color 200ms;animation:ds-pulse-glow 3s infinite}@keyframes ds-pulse-glow{0%,100%{filter:drop-shadow(0 0 10px rgba(99,102,241,.4))}50%{filter:drop-shadow(0 0 20px rgba(99,102,241,.8)}}.ds-button-primary:hover{background:var(--color-accent-indigo-surface-active)}"
+    },
+    {
+      "name": "CTA ouro",
+      "kind": "button",
+      "description": "Ação premium em gradiente amber, com texto escuro e escala de pressão no estado ativo.",
+      "html": "<button type=\"button\" class=\"ds-button-gold\">CONTINUAR</button>",
+      "css": ".ds-button-gold{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.5rem;border:1px solid rgba(251,191,36,.4);border-radius:.75rem;background:linear-gradient(90deg,#f59e0b,#d97706);color:#020617;font-size:.875rem;font-weight:700;box-shadow:0 4px 6px -1px rgba(245,158,11,.2);transition:all 200ms}.ds-button-gold:hover{background:linear-gradient(90deg,#fbbf24,#f59e0b);box-shadow:0 10px 15px -3px rgba(245,158,11,.3)}.ds-button-gold:active{transform:scale(.95)}"
+    },
+    {
+      "name": "Cabeçalho de família do Atlas",
+      "kind": "custom",
+      "refersTo": "scenario-atlas-summary",
+      "description": "Resumo de categoria expansível, com alvo tátil de 44px e anel de foco interno.",
+      "html": "<details class=\"ds-atlas-family ds-atlas-family--active\" open><summary class=\"ds-atlas-summary\"><span class=\"ds-atlas-label\">Casos clínicos</span><span class=\"ds-atlas-count\">8 cenários</span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></summary></details>",
+      "css": ".ds-atlas-family{overflow:hidden;border:1px solid color-mix(in oklab,white 5%,transparent);border-radius:.75rem;background:color-mix(in oklab,black 15%,transparent);transition:border-color 200ms,background-color 200ms}.ds-atlas-family--active{border-color:color-mix(in oklab,var(--color-accent-indigo) 20%,transparent);background:color-mix(in oklab,#020617 40%,transparent)}.ds-atlas-summary{display:flex;min-height:44px;align-items:center;gap:.5rem;padding:.5rem .75rem;cursor:pointer;color:#fff}.ds-atlas-summary:focus-visible{outline:2px solid color-mix(in oklab,var(--color-accent-indigo) 70%,transparent);outline-offset:-2px}.ds-atlas-label{flex:1;min-width:0;font-family:var(--font-heading);font-size:.75rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase}.ds-atlas-count{flex:none;border:1px solid color-mix(in oklab,white 5%,transparent);border-radius:.375rem;background:color-mix(in oklab,black 20%,transparent);padding:.125rem .5rem;color:var(--color-text-dim);font-family:var(--font-mono);font-size:.6rem}.ds-atlas-summary svg{width:.75rem;height:.75rem;flex:none;stroke:currentColor;fill:none;stroke-width:2;transition:transform 200ms}.ds-atlas-family[open] .ds-atlas-summary svg{transform:rotate(180deg)}"
+    },
+    {
+      "name": "Card de cenário do Atlas",
+      "kind": "button",
+      "refersTo": "scenario-atlas-card",
+      "description": "Botão de seleção com estado ativo redundante e foco de teclado visível.",
+      "html": "<button type=\"button\" class=\"ds-atlas-card ds-atlas-card--active\" aria-pressed=\"true\"><span class=\"ds-atlas-index\">03</span><span class=\"ds-atlas-title\">Paradoxo do Valuation</span><span class=\"ds-atlas-subtitle\">Mid vs Big Stack</span></button>",
+      "css": ".ds-atlas-card{position:relative;display:flex;flex-direction:column;justify-content:space-between;min-width:0;padding:.75rem;border:1px solid color-mix(in oklab,white 5%,transparent);border-radius:.75rem;background:color-mix(in oklab,black 25%,transparent);color:var(--color-text-muted);text-align:left;cursor:pointer;transition:all 200ms}.ds-atlas-card:hover{border-color:color-mix(in oklab,white 15%,transparent);background:color-mix(in oklab,black 40%,transparent)}.ds-atlas-card:focus-visible{outline:2px solid color-mix(in oklab,var(--color-accent-indigo) 70%,transparent);outline-offset:-2px}.ds-atlas-card--active{border-color:color-mix(in oklab,var(--color-accent-indigo) 50%,transparent);background:color-mix(in oklab,var(--color-accent-indigo) 15%,transparent);box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 0 0 1px color-mix(in oklab,var(--color-accent-indigo) 30%,transparent);color:#fff}.ds-atlas-index,.ds-atlas-subtitle{font-family:var(--font-mono);font-size:.5rem}.ds-atlas-title{font-size:.62rem;font-weight:900;line-height:1.15}.ds-atlas-subtitle{display:block;margin-top:.125rem;color:var(--color-text-dim);text-transform:uppercase;letter-spacing:.08em}"
+    },
+    {
+      "name": "Superfície editorial",
+      "kind": "custom",
+      "refersTo": "editorial-canvas",
+      "description": "Tema claro para leitura longa, com tinta e famílias tipográficas próprias.",
+      "html": "<main class=\"ds-editorial\"><h2>Perspectiva matemática</h2><p>Uma superfície de leitura longa, sem opacidade como compensação de contraste.</p></main>",
+      "css": ".ds-editorial{background:var(--color-light-canvas);color:var(--color-light-text-main);font-family:var(--font-garamond),Georgia,serif}.ds-editorial h2{color:var(--color-light-text-main);font-family:var(--font-playfair),Georgia,serif;font-weight:700}.ds-editorial p{color:var(--color-light-text-muted)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Cockpit Analítico SOTA GOLD",
+    "overview": "A interface trata o estudo de poker como um cockpit analítico: navy profundo organiza a informação, acentos semânticos codificam estados e tipografia compacta mantém métricas comparáveis sem sacrificar hierarquia. A superfície editorial clara oferece um modo distinto para leitura longa, sem dissolver a identidade principal.",
+    "keyCharacteristics": [
+      "Navy em camadas, com indigo como acento primário e cores semânticas complementares.",
+      "Tipografia operacional Inter/Montserrat/JetBrains Mono; Playfair Display/EB Garamond na superfície editorial.",
+      "Controles com estado ativo explícito, foco visível e alvos de toque generosos.",
+      "Densidade resolvida com agrupamento e revelação progressiva, mantendo as 12 situações do Atlas."
+    ],
+    "rules": [
+      { "name": "Cockpit Clarity Rule", "body": "Densidade profissional é organizada por prioridade e revelação progressiva; não se resolve removendo ferramentas nem reduzindo texto essencial.", "section": "overview" },
+      { "name": "Accent Is Not a Surface Rule", "body": "Acentos puros são para texto, ícones, bordas, glow e gradientes; fundos que carregam texto usam o token *-surface.", "section": "colors" },
+      { "name": "Surface Contrast Rule", "body": "Combine *-surface e *-surface-active com o token white, não com text-bright; em indigo, a medição é 4,663:1 com branco e 4,456:1 com off-white. O estado ativo escurece em vez de clarear.", "section": "colors" },
+      { "name": "Instrument Readability Rule", "body": "Use monoespaçada onde o alinhamento numérico importa; não use uma fonte de display para dados que precisem ser comparados rapidamente.", "section": "typography" },
+      { "name": "Progressive Disclosure Rule", "body": "Reduza a carga inicial de escolhas agrupando opções; nunca remova uma ferramenta profissional apenas para simplificar visualmente a tela.", "section": "layout" },
+      { "name": "Glass Is Structural Rule", "body": "Reserve blur e sombra ampla para painéis que organizam conteúdo; não empilhe glow, gradiente e elevação em cada card.", "section": "elevation" },
+      { "name": "Active-State Redundancy Rule", "body": "Estado selecionado comunica-se por semântica, forma e cor; nunca dependa só de uma tonalidade.", "section": "components" },
+      { "name": "Keyboard Parity Rule", "body": "Resumos e cards precisam continuar operáveis por teclado, com foco visível equivalente ao estado de ponteiro.", "section": "components" }
+    ],
+    "dos": [
+      "Do consumir os tokens de frontend/src/app/globals.css como fonte de verdade.",
+      "Do usar white sobre fundos *-surface e testar contraste no estado renderizado.",
+      "Do preservar foco visível, alvos táteis e hierarquia de dados nas três larguras do Atlas.",
+      "Do agrupar opções profissionais antes de considerar ocultar ou remover uma ferramenta."
+    ],
+    "donts": [
+      "Don't usar acento puro como superfície que carrega texto.",
+      "Don't usar text-bright sobre accent-indigo-surface nem clarear o hover.",
+      "Don't tornar animação necessária para compreender o estado ou os dados.",
+      "Don't substituir a paleta SOTA GOLD por cores genéricas de dashboard ou reescrever tons aprovados sem medição."
+    ]
+  }
+}

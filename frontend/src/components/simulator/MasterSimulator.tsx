@@ -679,7 +679,7 @@ export default function MasterSimulator() {
             <div className="w-full flex-1 py-6">
               {activeWorkspaceTab === 'laboratorio' && (
                 <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5 animate-sota-in" aria-label="Cockpit Estratégico & Cenários">
-                  {/* Seletor Rápido dos 8 Cenários */}
+                  {/* Atlas: cenários organizados por família estratégica */}
                   <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-4 sm:p-5 shadow-lg">
                     <ScenarioQuickSelector
                       scenarios={scenarios}
