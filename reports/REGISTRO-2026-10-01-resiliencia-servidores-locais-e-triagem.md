@@ -51,6 +51,15 @@ revisoes_de_ancora:
       - engine/llm_api.py
     parecer: >-
       Revisado em 2026-10-01 e mantido valido. Reconciliacao formal das rotas de execucao locais e cloud para assegurar alta disponibilidade sem violar a matriz holografica de roteamento.
+  - registro: registro-2026-10-05-resolucao-de-modelo-ollama-e-schema-json
+    caminhos:
+      - engine/llm_api.py
+    parecer: >-
+      Revisado em 2026-10-05. A resiliencia dual entre proxy 17043 e Ollama 11434 e o
+      fallback de triagem externa em gemini-3.5-flash-lite, definidos aqui, seguem
+      vigentes: o fallback de contingencia desta revisao OCORRE no mesmo ramo e com o
+      mesmo provedor, apenas depois de o ramo OpenRouter devolver vazio em vez de
+      encerrar a sessao. Nenhuma credencial de servico passou a ser usada como chave.
 ---
 
 # Registro: Resiliencia dos Servidores Locais e Otimizacao de Triagem

@@ -75,6 +75,15 @@ revisoes_de_ancora:
       - .claude/agent-memory/chico/MEMORY.md
     parecer: >-
       Revisado em 2026-09-30 e mantido valido. A disciplina de staging explicito e soberania de commit/push governada pelo Tier 0 permanece integralmente em vigor e cumprida neste ciclo.
+  - registro: registro-2026-10-05-resolucao-de-modelo-ollama-e-schema-json
+    caminhos:
+      - engine/llm_api.py
+    parecer: >-
+      Revisado em 2026-10-05. O expurgo e a reconciliacao de ancoras seguem validos e a
+      revisao REFORCA o registro: em vez de um quarto mapa de alias hardcoded, a
+      resolucao do caminho local passou a ler OLLAMA_MODEL_MAP e normalize_model de
+      engine/gemma_server.py. Nenhum modelo expurgado voltou, e o mapeamento estrito
+      contra falsos positivos de substring e o que este registro exigiu.
 ---
 
 # Registro: Expurgo de Modelos Obsoletos e Reconciliacao de Ancoras

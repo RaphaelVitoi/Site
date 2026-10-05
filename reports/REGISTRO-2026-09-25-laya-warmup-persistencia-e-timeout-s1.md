@@ -52,11 +52,13 @@ revisoes_de_ancora:
 # REGISTRO DE GOVERNANCA E DIAGNOSTICO: WARMUP MANDATORIO E PERSISTENCIA LAYA S1
 
 ## 1. Contexto e Diagnostico da Causa Raiz
+
 O usuario reportou que a interface `(lab)/templo/laya` exibia:
 `Pesos Carregados: false (Fallback Heuristico S1)`
 a despeito do cabecalho acusar `Pesos Neurais: Pesos 322M Ativos (Porta 8192)`.
 
 ### Diagnostico Tecnico:
+
 1. **Cold Start Extenso em CPU:** O modelo canonico `convaiinnovations/laya-multilingual` (mmBERT-base, 322M) leva **31.07 segundos** para carregar os pesos do disco, verificar integridade no HuggingFace e instanciar o grafo computacional no PyTorch.
 2. **Ausencia de Warmup no Startup:** O microservico FastAPI (`scripts/ops/homologar_laya_gpu.py`) instanciava o Router de forma preguicosa (lazy), aguardando o primeiro request HTTP para carregar o modelo.
 3. **Falsa Prontidao no Endpoint `/health`:** O endpoint `/health` retornava `weights_ready: True` instantaneamente (5 ms) baseado apenas na permissao de CPU (`CHICO_LAYA_PREDICT_ALLOW_CPU`), sem checar se os tensores estavam realmente em RAM.
@@ -91,7 +93,7 @@ a despeito do cabecalho acusar `Pesos Neurais: Pesos 322M Ativos (Porta 8192)`.
 | **Startup / Warmup** | Lazy (0 ms, cold start no request) | Eager Lifespan (29.29 s no boot) | Resolvido |
 | **Latencia `/solve` (Warm)** | Fallback (timeout > 1800 ms) | **227.4 ms** (Pesos Reais 322M) | Aceleracao de 136x |
 | **Latencia `/predict` (Warm)** | Fallback (timeout > 1800 ms) | **248.0 ms** (Pesos Reais 322M) | Aceleracao de 125x |
-| **Pesos Carregados (`/solve`)** | `false (Fallback Heuristico)` | `true (mmBERT 322M)` | Padrão-Ouro |
+| **Pesos Carregados (`/solve`)** | `false (Fallback Heuristico)` | `true (mmBERT 322M)` | Padrao-Ouro |
 | **Engine ID** | `laya-s1-predict-ts-simulation` | `laya-solver-adapter-cfr-plus` | Conforme SS4 |
 | **Runtime Used** | `nextjs-typescript` | `transformers+torch (cpu)` | Autentico |
 | **Fallback Ativo** | `true` | `false` | Conforme |
