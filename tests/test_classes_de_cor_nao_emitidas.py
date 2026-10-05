@@ -48,8 +48,10 @@ SRC = RAIZ / "frontend" / "src"
 # `.next/static/chunks`, dev para `.next/dev/static/chunks`.
 CANDIDATOS = (
     RAIZ / "frontend" / ".next" / "static" / "chunks",
+    RAIZ / "frontend" / ".next" / "static" / "css",
     RAIZ / "frontend" / ".next" / "dev" / "static" / "chunks",
     RAIZ / "frontend" / ".next" / "build" / "chunks",
+    RAIZ / "frontend" / ".next",
 )
 
 # Utilitario de cor, com variante opcional. `group-hover/btn:bg-...` casa.
