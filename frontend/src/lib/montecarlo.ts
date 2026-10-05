@@ -83,6 +83,7 @@ function pickWinnerWithBusted(
 	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
 		if (isBusted[playerIdx] === 0) {
 			lastActiveIdx = playerIdx;
+			// Opt: direct cast avoids JIT deopt branching
 			cumulative += stacks[playerIdx] as number;
 			if (r <= cumulative) return playerIdx;
 		}
@@ -163,12 +164,12 @@ function runSingleMonteCarloIteration(
 
 		// Distribui o prêmio e remove o jogador da pool
 		if (winnerIdx !== -1) {
-			const prize = activePrizes[j] as number;
+			const prize = activePrizes[j] ?? 0;
 			totalEquity[winnerIdx] = (totalEquity[winnerIdx] as number) + prize;
 			sumSquares[winnerIdx] = (sumSquares[winnerIdx] as number) + prize * prize;
 			const pRow = placementCounts[winnerIdx];
 			if (pRow) {
-				pRow[j] = (pRow[j] as number) + 1;
+				pRow[j] = (pRow[j] ?? 0) + 1;
 			}
 			remainingTotalChips -= stacks[winnerIdx] as number;
 
@@ -254,6 +255,7 @@ export function calculateIcmMonteCarlo(
 			? remainingPrizes.reduce((a, b) => a + b, 0) / zeroIndices.length
 			: 0;
 
+		// Opt: 'as number' used instead of '?? 0' to bypass V8 runtime branching overhead
 		const activeStacks = activeIndices.map((i) => stacks[i] as number);
 		const numActive = activeIndices.length;
 		const totalActiveEquity = new Array(numActive).fill(0);
@@ -296,7 +298,7 @@ export function calculateIcmMonteCarlo(
 			const targetRow = placementDistribution[origIdx];
 			if (activePlacementRow && targetRow) {
 				for (let j = 0; j < kActive; j++) {
-					targetRow[j] = (activePlacementRow[j] as number) / iterations;
+					targetRow[j] = (activePlacementRow[j] ?? 0) / iterations;
 				}
 			}
 		}

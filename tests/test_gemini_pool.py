@@ -154,8 +154,7 @@ async def test_telemetry_table_zero_plaintext_leak(mock_pool_keys):
 async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
     from llm.gemini_pool import gemini_pool_manager
 
-    # The global gemini_pool_manager must be reloaded with the mocked keys for this test
-    gemini_pool_manager.reload_from_environment(read_registry=False)
+    gemini_pool_manager.__init__(read_registry=False)
     """Testa se call_gemini_flash_lite failover rotaciona chave quando ocorre erro 429."""
     mock_session = MagicMock()
 
