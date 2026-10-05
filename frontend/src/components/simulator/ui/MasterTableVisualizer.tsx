@@ -23,10 +23,76 @@ function toRad(deg: number) {
   return (deg * Math.PI) / 180;
 }
 
-function getHeroPosName(heroPosition: HeroPosition, scenario: Scenario): string {
-  if (heroPosition === 'IP') return scenario.ipPos || 'BTN';
-  if (heroPosition === 'OOP') return scenario.oopPos || 'BB';
-  return heroPosition;
+export interface ResolvedTableSpot {
+  ipSeat: string;
+  oopSeat: string;
+  ipRole: string;
+  oopRole: string;
+  heroSeat: string;
+  heroRole: string;
+  heroRp: number;
+  villainSeat: string;
+  villainRole: string;
+  villainRp: number;
+  isHeroIp: boolean;
+}
+
+export function resolveTableSpot(
+  scenario: Scenario,
+  heroPosition: HeroPosition,
+  effectiveIpRp: number,
+  effectiveOopRp: number
+): ResolvedTableSpot {
+  const ipPos = scenario.ipPos || 'BTN';
+  const oopPos = scenario.oopPos || 'BB';
+
+  // 1. Resolver assento físico IP na mesa de 9 jogadores
+  let ipSeat = 'BTN';
+  if (scenario.id === 'pacto' || ipPos.includes('Vice') || ipPos.includes('CO')) {
+    ipSeat = 'CO';
+  } else if (scenario.id === 'batata' || ipPos.includes('UTG')) {
+    ipSeat = 'UTG';
+  } else if (scenario.id === 'sniper' || ipPos.startsWith('SB')) {
+    ipSeat = 'SB';
+  } else if (ipPos.includes('BTN')) {
+    ipSeat = 'BTN';
+  }
+
+  // 2. Resolver assento físico OOP na mesa de 9 jogadores
+  let oopSeat = 'BB';
+  if (oopPos.includes('SB') && !oopPos.includes('BB')) {
+    oopSeat = 'SB';
+  } else {
+    oopSeat = 'BB';
+  }
+
+  // 3. Vincular Hero e Villain de acordo com heroPosition ('IP' | 'OOP' | 'BB' | 'SB')
+  const isHeroIp =
+    heroPosition === 'IP' ||
+    heroPosition === ipSeat ||
+    (ipSeat === 'SB' && heroPosition === 'SB');
+
+  const heroSeat = isHeroIp ? ipSeat : oopSeat;
+  const heroRole = isHeroIp ? ipPos : oopPos;
+  const heroRp = isHeroIp ? effectiveIpRp : effectiveOopRp;
+
+  const villainSeat = isHeroIp ? oopSeat : ipSeat;
+  const villainRole = isHeroIp ? oopPos : ipPos;
+  const villainRp = isHeroIp ? effectiveOopRp : effectiveIpRp;
+
+  return {
+    ipSeat,
+    oopSeat,
+    ipRole: ipPos,
+    oopRole: oopPos,
+    heroSeat,
+    heroRole,
+    heroRp,
+    villainSeat,
+    villainRole,
+    villainRp,
+    isHeroIp,
+  };
 }
 
 const POSITION_INDEX_MAP: ReadonlyMap<string, number> = new Map([
@@ -39,22 +105,36 @@ const POSITION_INDEX_MAP: ReadonlyMap<string, number> = new Map([
   ['SB', 8],
 ]);
 
-function getPlayerStack(pName: string, scenario: Scenario, defaultStack: number): number {
-  if (!Array.isArray(scenario.stacks) || scenario.stacks.length !== 9) {
+function getPlayerStack(
+  pName: string,
+  scenario: Scenario,
+  defaultStack: number,
+  ipSeat: string,
+  oopSeat: string
+): number {
+  if (!Array.isArray(scenario.stacks) || scenario.stacks.length === 0) {
     return defaultStack;
   }
-  const ipPos = scenario.ipPos || 'BTN';
-  const oopPos = scenario.oopPos || 'BB';
-
-  if (pName === ipPos || (ipPos.includes('BTN') && pName === 'BTN') || (ipPos.includes('Vice') && pName === 'CO')) {
+  if (pName === ipSeat) {
     return scenario.stacks[0] ?? defaultStack;
   }
-  if (pName === oopPos || (oopPos.includes('BB') && pName === 'BB') || (oopPos.includes('CL') && pName === 'BB')) {
+  if (pName === oopSeat) {
     return scenario.stacks[1] ?? defaultStack;
   }
-  const mappedIdx = POSITION_INDEX_MAP.get(pName);
-  if (mappedIdx !== undefined) {
-    return scenario.stacks[mappedIdx] ?? defaultStack;
+  if (scenario.stacks.length === 9) {
+    if (pName === 'BTN' && ipSeat === 'CO') {
+      return scenario.stacks[7] ?? defaultStack;
+    }
+    if (pName === 'BTN' && ipSeat === 'SB') {
+      return scenario.stacks[8] ?? defaultStack;
+    }
+    if (pName === 'BTN' && ipSeat === 'UTG') {
+      return scenario.stacks[2] ?? defaultStack;
+    }
+    const mappedIdx = POSITION_INDEX_MAP.get(pName);
+    if (mappedIdx !== undefined) {
+      return scenario.stacks[mappedIdx] ?? defaultStack;
+    }
   }
   return defaultStack;
 }
@@ -66,6 +146,13 @@ const BOARD_CARDS = [
   { rank: '2', suit: '♦', color: '#38bdf8', bg: '#082f49', border: 'rgba(56, 189, 248, 0.4)' },
   { rank: '3', suit: '♦', color: '#38bdf8', bg: '#082f49', border: 'rgba(56, 189, 248, 0.4)' },
 ];
+
+export function formatBb(val: number): string {
+  if (Number.isInteger(val) || Math.round(val * 10) % 10 === 0) {
+    return `${Math.round(val)} BB`;
+  }
+  return `${val.toFixed(1)} BB`;
+}
 
 export function MasterTableVisualizer({
   scenario,
@@ -82,10 +169,7 @@ export function MasterTableVisualizer({
   const cx = W / 2;
   const cy = H / 2;
 
-  const heroPosName = getHeroPosName(heroPosition, scenario);
-  const defaultOpponent = scenario.oopPos || 'BB';
-  const villainPosName = heroPosName === (scenario.ipPos || 'BTN') ? defaultOpponent : (scenario.ipPos || 'BTN');
-
+  const spot = resolveTableSpot(scenario, heroPosition, effectiveIpRp, effectiveOopRp);
   const deltaRp = effectiveIpRp - effectiveOopRp;
 
   return (
@@ -104,11 +188,11 @@ export function MasterTableVisualizer({
         <div className="flex flex-wrap items-center gap-2 font-mono text-[0.62rem]">
           <span className="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            Hero ({heroPosName}): {effectiveIpRp.toFixed(1)}% RP
+            Hero ({spot.heroSeat}{spot.heroRole !== spot.heroSeat ? ` · ${spot.heroRole}` : ''}): {spot.heroRp.toFixed(1)}% RP
           </span>
           <span className="px-2.5 py-1 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-bold flex items-center gap-1.5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-            Villain ({villainPosName}): {effectiveOopRp.toFixed(1)}% RP
+            Villain ({spot.villainSeat}{spot.villainRole !== spot.villainSeat ? ` · ${spot.villainRole}` : ''}): {spot.villainRp.toFixed(1)}% RP
           </span>
           <span className="px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold">
             ΔRP: {deltaRp >= 0 ? `+${deltaRp.toFixed(1)}%` : `${deltaRp.toFixed(1)}%`}
@@ -256,7 +340,7 @@ export function MasterTableVisualizer({
               fill="#ffffff"
               className="text-[0.7rem] font-mono font-black tracking-tight"
             >
-              {currentPot.toFixed(1)} BB
+              {formatBb(currentPot)}
             </text>
           </g>
 
@@ -265,15 +349,15 @@ export function MasterTableVisualizer({
             const angle = p.angle;
             const x = cx + rx * Math.cos(toRad(angle));
             const y = cy + ry * Math.sin(toRad(angle));
-            const isHero = p.name === heroPosName;
-            const isVillain = p.name === villainPosName;
+            const isHero = p.name === spot.heroSeat;
+            const isVillain = p.name === spot.villainSeat;
 
-            const playerStack = getPlayerStack(p.name, scenario, p.stack);
+            const playerStack = getPlayerStack(p.name, scenario, p.stack, spot.ipSeat, spot.oopSeat);
 
             let strokeColor = '#334155';
             let fillColor = '#020617';
             let textColor = '#94a3b8';
-            const stackText = `${playerStack.toFixed(1)} BB`;
+            const stackText = formatBb(playerStack);
 
             if (isHero) {
               strokeColor = '#10b981';
@@ -285,10 +369,25 @@ export function MasterTableVisualizer({
               textColor = '#818cf8';
             }
 
+            const roleText = isHero ? spot.heroRole : spot.villainRole;
+            const showRolePill = (isHero || isVillain) && roleText && roleText !== p.name;
+
             return (
               <g
                 key={p.name}
-                onClick={() => onSelectPosition?.(p.name as HeroPosition)}
+                onClick={() => {
+                  if (p.name === spot.ipSeat) {
+                    onSelectPosition?.('IP');
+                  } else if (p.name === spot.oopSeat) {
+                    onSelectPosition?.(spot.oopSeat === 'SB' ? 'SB' : 'BB');
+                  } else if (p.name === 'SB') {
+                    onSelectPosition?.('SB');
+                  } else if (p.name === 'BB') {
+                    onSelectPosition?.('BB');
+                  } else {
+                    onSelectPosition?.('OOP');
+                  }
+                }}
                 className="group/player cursor-pointer transition-all duration-300 hover:scale-110"
                 style={{ transformOrigin: `${x}px ${y}px` }}
               >
@@ -303,6 +402,33 @@ export function MasterTableVisualizer({
                     strokeWidth="3.5"
                     filter="url(#tableGlowSota)"
                   />
+                )}
+
+                {/* Mini-pill do Papel Tático (ex: CL, Vice CL, Micro) */}
+                {showRolePill && (
+                  <g transform={`translate(${x}, ${y - 36})`}>
+                    <rect
+                      x="-28"
+                      y="-7"
+                      width="56"
+                      height="14"
+                      rx="7"
+                      fill="#020617"
+                      stroke={isHero ? '#10b981' : '#6366f1'}
+                      strokeWidth="1.2"
+                      strokeOpacity="0.8"
+                      filter="url(#chipShadowSota)"
+                    />
+                    <text
+                      x="0"
+                      y="3.5"
+                      textAnchor="middle"
+                      fill={isHero ? '#6ee7b7' : '#a5b4fc'}
+                      className="text-[0.44rem] font-mono font-black uppercase tracking-wider select-none"
+                    >
+                      {roleText}
+                    </text>
+                  </g>
                 )}
 
                 {/* Base do Chip */}
@@ -353,23 +479,24 @@ export function MasterTableVisualizer({
                 {isHero && (
                   <g transform={`translate(${x}, ${y + 38})`}>
                     <rect
-                      x="-30"
+                      x="-32"
                       y="-8"
-                      width="60"
-                      height="16"
-                      rx="8"
+                      width="64"
+                      height="17"
+                      rx="8.5"
                       fill="#020617"
                       stroke="#10b981"
                       strokeWidth="1.5"
+                      filter="url(#chipShadowSota)"
                     />
                     <text
                       x="0"
                       y="3.5"
                       textAnchor="middle"
                       fill="#34d399"
-                      className="text-[0.48rem] font-mono font-black"
+                      className="text-[0.48rem] font-mono font-black select-none"
                     >
-                      RP {effectiveIpRp.toFixed(1)}%
+                      RP {spot.heroRp.toFixed(1)}%
                     </text>
                   </g>
                 )}
@@ -377,23 +504,24 @@ export function MasterTableVisualizer({
                 {isVillain && (
                   <g transform={`translate(${x}, ${y + 38})`}>
                     <rect
-                      x="-30"
+                      x="-32"
                       y="-8"
-                      width="60"
-                      height="16"
-                      rx="8"
+                      width="64"
+                      height="17"
+                      rx="8.5"
                       fill="#020617"
                       stroke="#6366f1"
                       strokeWidth="1.5"
+                      filter="url(#chipShadowSota)"
                     />
                     <text
                       x="0"
                       y="3.5"
                       textAnchor="middle"
                       fill="#818cf8"
-                      className="text-[0.48rem] font-mono font-black"
+                      className="text-[0.48rem] font-mono font-black select-none"
                     >
-                      RP {effectiveOopRp.toFixed(1)}%
+                      RP {spot.villainRp.toFixed(1)}%
                     </text>
                   </g>
                 )}

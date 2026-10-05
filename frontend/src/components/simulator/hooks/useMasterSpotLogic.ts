@@ -69,7 +69,7 @@ export function useMasterSpotLogic({
 	aggFactor,
 }: UseMasterSpotLogicParams) {
 	const isBaseline =
-		scenario.category === 'baseline' || !scenario.prizes || scenario.prizes.length <= 1;
+		scenario.id === 'chipev' || !scenario.prizes || scenario.prizes.length <= 1;
 
 	const isIp = heroPosition === 'IP';
 	const finalIpRp = isBaseline ? 0 : effectiveIpRp;

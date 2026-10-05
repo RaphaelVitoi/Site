@@ -135,8 +135,8 @@ export function useQuantumEngine({
 
   // SOTA: Economia Generalizada (Cálculo único de baseline para o ciclo de renderização)
   const isBaseline = useMemo(
-    () => scenario.category === 'baseline' || resolvedPrizes.length <= 1,
-    [scenario.category, resolvedPrizes.length],
+    () => scenario.id === 'chipev' || resolvedPrizes.length <= 1,
+    [scenario.id, resolvedPrizes.length],
   );
 
   // SOTA: Estados e Refs do Web Worker de Insolvência

@@ -46,7 +46,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Dogma do EV Fold = 0',
     narrativeSubtitle: 'ICM Tradicional',
     icon: 'fa-camera', color: 'blue',
-    theory: `O ICM EV calcula o valor monetário da stack <em>como se o torneio terminasse agora</em>. É um snapshot financeiro — correto no instante, mas cego para o fluxo. Não captura o salto de blinds iminente, a posição na próxima mão, nem o impacto futuro de ganhar ou perder o pot. O EV_fold é tratado como zero, quando na realidade pode ser positivo (payjumps passivos) ou violentamente negativo (pot entrapment pós-flop). É a base necessária, mas insuficiente.`,
+    theory: `O ICM EV calcula o valor monetário da stack *como se o torneio terminasse agora*. É um snapshot financeiro — correto no instante, mas cego para o fluxo. Não captura o salto de blinds iminente, a posição na próxima mão, nem o impacto futuro de ganhar ou perder o pot. O EV_fold é tratado como zero, quando na realidade pode ser positivo (payjumps passivos) ou violentamente negativo (pot entrapment pós-flop). É a base necessária, mas insuficiente.`,
     exploit: [ 'Identifique a Rigidez: O modelo ignora blinds subindo e posição futura.', 'O EV_fold nunca é zero em torneios — use o threshold correto.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 18.5 }, { name: 'FLOP', potSize: 7.5, rpValue: 14.2 }, { name: 'TURN', potSize: 22.5, rpValue: 8.4 }, { name: 'RIVER', potSize: 25, rpValue: 3.1 } ],
     defaultStreetFreqs: {
@@ -115,7 +115,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Peso de Agir Primeiro',
     narrativeSubtitle: 'A Dinâmica do Shove',
     icon: 'fa-fire-flame-curved', color: 'amber',
-    theory: `O open-shove de 20bb não é apenas uma aposta — é uma <strong>transferência de peso volitivo</strong>. O agressor acopla Fold Equity ao RP e retira do BB a capacidade de re-agressão. O defensor colapsa para overfold matemático forçado pelo custo binário da eliminação. O BB (RP 19.5%) precisa de equity significativamente acima dos pot odds para justificar o call — o "fardo" do ICM é transferido inteiramente para quem defende.`,
+    theory: `O open-shove de 20bb não é apenas uma aposta — é uma **transferência de peso volitivo**. O agressor acopla Fold Equity ao RP e retira do BB a capacidade de re-agressão. O defensor colapsa para overfold matemático forçado pelo custo binário da eliminação. O BB (RP 19.5%) precisa de equity significativamente acima dos pot odds para justificar o call — o "fardo" do ICM é transferido inteiramente para quem defende.`,
     exploit: [ 'Alpha Real: Expanda o range de shove até o teto matemático.', 'O defensor carrega o fardo — cada mão que ele folda é lucro estrutural.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 19.5 }, { name: 'FLOP', potSize: 7, rpValue: 13 }, { name: 'TURN', potSize: 14, rpValue: 5.5 }, { name: 'RIVER', potSize: 20, rpValue: 1.9 } ],
     defaultStreetFreqs: {
@@ -184,7 +184,7 @@ export const SCENARIOS: Scenario[] = [
     narrativeTitle: 'O Limite do God Mode',
     narrativeSubtitle: 'Dominância Absoluta',
     icon: 'fa-crown', color: 'fuchsia',
-    theory: `O CL (90bb, RP 12%) parece invencível, mas carrega um risco orgânico: dobrar o vice (25bb → 50bb) <strong>devolve a complexidade da árvore de decisão ao oponente</strong> (Risco de Ressurreição). O vice com 50bb ganha ferramentas (3bet, float, multi-barrel) que com 25bb não tinha. Paradoxalmente, o CL deve extrair thin value agressivo de quem se auto-restringe pelo RP, mas evitar confrontos que criem um rival com arsenal restaurado.`,
+    theory: `O CL (90bb, RP 12%) parece invencível, mas carrega um risco orgânico: dobrar o vice (25bb → 50bb) **devolve a complexidade da árvore de decisão ao oponente** (Risco de Ressurreição). O vice com 50bb ganha ferramentas (3bet, float, multi-barrel) que com 25bb não tinha. Paradoxalmente, o CL deve extrair thin value agressivo de quem se auto-restringe pelo RP, mas evitar confrontos que criem um rival com arsenal restaurado.`,
     exploit: [ 'Thin Value Mandatório: extraia de quem se auto-restringe.', 'Cuidado com Ressurreição: dobrar o vice cria um rival perigoso.' ],
     sprData: [ { name: 'PRE', potSize: 2.5, rpValue: 21 }, { name: 'FLOP', potSize: 7.5, rpValue: 14.5 }, { name: 'TURN', potSize: 22.5, rpValue: 1.9 }, { name: 'RIVER', potSize: 25, rpValue: 1.2 } ],
     defaultStreetFreqs: {
