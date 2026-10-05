@@ -49,6 +49,17 @@ nao_verificado:
   - "as duas pendencias de autonomia continuam abertas e exigem autorizacao do Tier 0; foram registradas, nao corrigidas"
   - "a paleta paralela do Tailwind (53 cores, 786 usos) nao foi drenada: a medicao mostrou zero reprovacoes, entao a migracao seria reformatacao visual em massa sem ganho de acessibilidade"
   - "1 teste permanece PULADO por desenho: test_ingestao_superseded.py::test_arvore_superada_do_repositorio_fica_fora, porque nenhuma arvore esta declarada superada no repositorio. Nao e aprovacao: e ausencia de caso"
+revisoes_de_ancora:
+  - registro: registro-2026-10-05-regua-de-tier-efetivo-no-catalogo-de-identidade
+    caminhos:
+      - data/agent_identities.json
+    parecer: >-
+      Revisado em 2026-10-05. O achado deste handoff sobre o catalogo -- que ele precisa
+      EXISTIR e ser conferido pelo hook, e nao apenas documentado -- permanece valido e
+      foi reforcado: quando a identidade Space-Bunny-Alpha foi promovida a Tier 1 pelo
+      Tier 0, o catalogo mantinha o tier PADRAO e nao o EFETIVO, e o hook de commit-msg
+      acusou a divergencia. A promessa de conferir a autoria so se sustenta com o valor
+      real. Solar-Pro4 e google-labs-jules[bot] seguem em Tier 2.
 ---
 
 # Handoff — contraste, headings e identidade de condutor
