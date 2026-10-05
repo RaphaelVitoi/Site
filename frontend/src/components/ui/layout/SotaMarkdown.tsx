@@ -250,6 +250,10 @@ export function SotaMarkdown({ content }: Readonly<SotaMarkdownProps>) {
 
   if (!content) return null;
 
+  const normalizedContent = content
+    .replace(/<\/?(?:strong|b)>/gi, '**')
+    .replace(/<\/?(?:em|i)>/gi, '*');
+
   return (
     <div className="text-text-main sota-markdown-content animate-fade-in max-w-full font-sans leading-relaxed [&_.katex-display]:scrollbar-thin [&_.katex-display]:scrollbar-thumb-white/20 [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2">
       <ReactMarkdown
@@ -257,7 +261,7 @@ export function SotaMarkdown({ content }: Readonly<SotaMarkdownProps>) {
         rehypePlugins={[rehypeSlug, [rehypeKatex, { strict: false }]]}
         components={markdownComponents}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );
