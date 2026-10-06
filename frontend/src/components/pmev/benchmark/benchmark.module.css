@@ -206,33 +206,127 @@
 }
 
 .places {
-	margin-block-start: 2rem;
+	margin-block-start: 2.75rem;
+	padding-block-start: 1.75rem;
+	border-block-start: 1px dashed var(--line);
 }
 
-.places figcaption {
-	font-size: 0.9rem;
+.placesCaption {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem 1.5rem;
+	margin-block-end: 1.75rem;
+}
+
+.placesCaptionText {
+	display: grid;
+	gap: 0.25rem;
+}
+
+.placesTitle {
+	font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+	font-weight: 700;
+	font-size: 1.05rem;
+	color: var(--color-text-bright);
+	letter-spacing: -0.01em;
+}
+
+.placesSubtitle {
+	font-size: 0.88rem;
 	color: var(--color-text-muted);
-	margin-block-end: 0.75rem;
+}
+
+.placesLegend {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1.25rem;
+	font-size: 0.82rem;
+	color: var(--color-text-muted);
+}
+
+.placesLegendItem {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.legendDot {
+	display: inline-block;
+	inline-size: 0.65rem;
+	block-size: 0.65rem;
+	border-radius: 999px;
+	flex-shrink: 0;
+}
+
+.legendPaid {
+	background: color-mix(in oklab, var(--icm) 75%, transparent);
+	box-shadow: 0 0 6px color-mix(in oklab, var(--icm) 40%, transparent);
+}
+
+.legendUnpaid {
+	background: color-mix(in oklab, var(--uniform) 60%, transparent);
+}
+
+.legendActual {
+	background: var(--reality);
+	box-shadow: 0 0 8px color-mix(in oklab, var(--reality) 60%, transparent);
 }
 
 .placeBars {
 	display: grid;
 	grid-auto-flow: column;
 	grid-auto-columns: minmax(0, 1fr);
-	gap: 0.4rem;
-	block-size: 9rem;
+	gap: clamp(0.35rem, 1vw, 0.75rem);
 	list-style: none;
 	padding: 0;
 	margin: 0;
+	align-items: end;
 }
 
 .place {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.45rem;
+}
+
+.placePct {
+	display: block;
+	inline-size: 100%;
+	min-block-size: 1.25rem;
+	font-size: 0.78rem;
+	font-weight: 500;
+	white-space: nowrap;
+	text-align: center;
+	color: var(--color-text-dim);
+	font-variant-numeric: tabular-nums;
+	transition: color 250ms ease;
+}
+
+.placePaid .placePct {
+	color: color-mix(in oklab, var(--icm) 90%, var(--color-text-dim));
+}
+
+.placeActual .placePct {
+	color: var(--reality);
+	font-weight: 700;
+}
+
+.placeTrack {
 	position: relative;
+	inline-size: 100%;
+	block-size: 8.5rem;
 	display: flex;
 	flex-direction: column;
 	justify-content: flex-end;
 	align-items: center;
-	border-block-end: 1px solid var(--line);
+	background: color-mix(in oklab, var(--color-text-dim) 5%, transparent);
+	border-radius: 0.45rem 0.45rem 0 0;
+	border-block-end: 2px solid var(--line);
+	overflow: hidden;
 }
 
 .placeFill {
@@ -240,46 +334,52 @@
 	inline-size: 100%;
 	border-radius: 0.35rem 0.35rem 0 0;
 	background: color-mix(in oklab, var(--uniform) 45%, transparent);
-	transition: background-color 400ms ease;
+	transition: background-color 400ms ease, block-size 400ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .placePaid .placeFill {
 	background: color-mix(in oklab, var(--icm) 60%, transparent);
 }
 
-.placeActual .placeFill {
-	background: var(--reality);
-	box-shadow: 0 0 1.5rem color-mix(in oklab, var(--reality) 45%, transparent);
+.placeActual .placeTrack {
+	border-block-end-color: var(--reality);
 }
 
-.placePct {
-	margin-block-end: 0.3rem;
-	font-size: 0.72rem;
-	white-space: nowrap;
-	color: var(--color-text-dim);
-	font-variant-numeric: tabular-nums;
+.placeActual .placeFill {
+	background: var(--reality);
+	box-shadow: 0 0 14px color-mix(in oklab, var(--reality) 35%, transparent), 0 0 2px var(--reality);
 }
 
 .placeLabel {
-	position: absolute;
-	inset-block-end: -1.5rem;
-	font-size: 0.8rem;
+	display: block;
+	margin-block-start: 0.2rem;
+	font-size: 0.82rem;
+	font-weight: 500;
 	color: var(--color-text-muted);
+	text-align: center;
+	transition: color 250ms ease;
+}
+
+.placeActual .placeLabel {
+	color: var(--reality);
+	font-weight: 700;
 }
 
 .actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.75rem;
-	margin-block-start: 2.75rem;
+	margin-block-start: 2rem;
 }
 
 .reveal,
 .next {
-	padding: 0.7rem 1.2rem;
+	padding: 0.65rem 1.25rem;
 	border-radius: 0.75rem;
+	font-size: 0.92rem;
 	font-weight: 600;
 	cursor: pointer;
+	transition: all 180ms ease;
 }
 
 .reveal {
@@ -288,9 +388,15 @@
 	border: 1px solid var(--reality);
 }
 
+.reveal:hover:not(:disabled) {
+	background: color-mix(in oklab, var(--reality) 90%, black);
+	transform: translateY(-1px);
+}
+
 .reveal:disabled {
-	opacity: 0.45;
+	opacity: 0.4;
 	cursor: default;
+	transform: none;
 }
 
 .next {
@@ -299,12 +405,36 @@
 	border: 1px solid var(--line);
 }
 
-.outcome {
+.next:hover {
+	border-color: color-mix(in oklab, var(--color-text-main) 35%, transparent);
+	background: color-mix(in oklab, var(--reality) 5%, transparent);
+	transform: translateY(-1px);
+}
+
+.outcomeBox {
 	margin-block-start: 1.25rem;
-	min-block-size: 3.2em;
+	padding: 1.1rem 1.35rem;
+	border-radius: 0.85rem;
+	border: 1px solid var(--line);
+	background: color-mix(in oklab, var(--surface) 80%, transparent);
+	transition: all 300ms ease;
+}
+
+.outcomeBoxRevealed {
+	border-color: color-mix(in oklab, var(--reality) 30%, transparent);
+	background:
+		radial-gradient(100% 100% at 0% 0%, color-mix(in oklab, var(--reality) 8%, transparent), transparent 70%),
+		color-mix(in oklab, var(--surface) 95%, transparent);
+	box-shadow: 0 4px 20px color-mix(in oklab, black 30%, transparent);
+}
+
+.outcome {
+	min-block-size: 1.6em;
 	font-family: var(--font-garamond), Georgia, serif;
 	font-size: 1.2rem;
+	line-height: 1.5;
 	color: var(--color-text-bright);
+	margin: 0;
 }
 
 .format:focus-visible,
@@ -378,7 +508,7 @@
 .caption {
 	display: grid;
 	gap: 0.35rem;
-	margin-block-end: 0.75rem;
+	margin-block-end: 1.25rem;
 	font-size: 0.92rem;
 	color: var(--color-text-muted);
 }
@@ -584,6 +714,23 @@
 
 	.moneyIcm {
 		grid-area: icm;
+	}
+
+	.placeBars {
+		gap: 0.25rem;
+	}
+
+	.placePct {
+		font-size: 0.68rem;
+	}
+
+	.placeLabel {
+		font-size: 0.75rem;
+	}
+
+	.placesLegend {
+		gap: 0.75rem;
+		font-size: 0.76rem;
 	}
 }
 

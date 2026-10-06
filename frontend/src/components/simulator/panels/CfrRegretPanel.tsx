@@ -3,9 +3,10 @@
 'use client';
 
 /**
- * IDENTITY: Painel CFR (Counterfactual Regret Minimization)
+ * IDENTITY: Painel CFR (Counterfactual Regret Minimization & IA Game Theory)
  * PATH: src/components/simulator/panels/CfrRegretPanel.tsx
- * ROLE: Laboratório SOTA de IA. Exibe o Heatmap de Regret Matching e a Árvore de Dimensionamento Geométrico.
+ * ROLE: Laboratório SOTA de IA e Teoria dos Jogos.
+ *       Exibe o Heatmap de Regret Matching 13x13 e o Dimensionamento Geométrico Canônico Janda.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -25,85 +26,18 @@ import {
 
 const TIMESFM_CAPABILITY = getEngineCapability('timesfm-forecast');
 export const HRC_CONVERGENCE_TARGET_CI = 0.003; // ~0.3% CI (métrica do HRC: distância em relação ao Nash / e-nash)
+
 const WORKER_STATUS_LABEL: Record<string, string> = {
-	starting: 'iniciando',
-	active: 'ativo',
-	converged: 'convergido (0.3% CI)',
-	error: 'indisponível',
+	starting: 'Iniciando',
+	active: 'Ativo',
+	converged: 'Convergido (0.3% CI)',
+	error: 'Indisponível',
 };
 
 interface CfrWorkerMessage {
 	matrix?: Float32Array;
 	diagnostic?: CfrRegretDiagnostic;
 	error?: string;
-}
-
-// SOTA: Despacho Estático de Renderização para redução de complexidade ciclomática (SonarLint S3776)
-function updateSizingDom(
-	path: { x: number; y: number }[],
-	p: { pot: number; stack: number; equity: number },
-) {
-	if (!path || path.length < 3) return;
-	const flopNode = path[0];
-	const equityMultiplier = Math.max(0.1, p.equity / 50);
-	if (!flopNode) return;
-	const flopPct = Math.min(1.5, Math.max(0.2, flopNode.y * 1.5 * equityMultiplier));
-	const flopBet = p.pot * flopPct;
-	const turnPot = p.pot + flopBet * 2;
-	const turnIdx = Math.floor(path.length / 2);
-	const turnNode = path[turnIdx];
-	if (!turnNode) return;
-	const turnPct = Math.min(1.5, turnNode.y * 1.5 * equityMultiplier);
-	const turnBet = turnPot * turnPct;
-	const riverJam = p.stack - flopBet - turnBet;
-
-	const elFlop = document.getElementById('sizing-flop');
-	const elTurn = document.getElementById('sizing-turn');
-	const elRiver = document.getElementById('sizing-river');
-
-	if (elFlop) elFlop.textContent = `${flopBet.toFixed(1)} bb (${Math.round(flopPct * 100)}%)`;
-	if (elTurn) elTurn.textContent = `${turnBet.toFixed(1)} bb (${Math.round(turnPct * 100)}%)`;
-	if (elRiver) elRiver.textContent = `${Math.max(0, riverJam).toFixed(1)} bb (JAM)`;
-}
-
-function renderPathfindingSvg(
-	pathfindingEl: SVGPathElement | null,
-	path: { x: number; y: number }[],
-) {
-	if (!pathfindingEl || path.length === 0) return;
-	const firstNode = path[0];
-	if (!firstNode) return;
-	const w = 450;
-	const h = 450;
-	let d = `M ${firstNode.x * w} ${firstNode.y * h}`;
-	for (let i = 1; i < path.length; i++) {
-		const node = path.at(i);
-		if (!node) continue;
-		d += ` L ${node.x * w} ${node.y * h}`;
-	}
-	pathfindingEl.setAttribute('d', d);
-}
-
-function extractPathfinding(matrix: Float32Array, nodes: number): { x: number; y: number }[] {
-	const path: { x: number; y: number }[] = [];
-
-	// SOTA: Extração contínua da Variação Principal (Principal Variation) do Regret
-	// Avalia todos os nós de decisão (X) para traçar o pathfinding A* real
-	for (let x = 0; x < nodes; x++) {
-		let maxVal = -Infinity;
-		let bestY = 0;
-		for (let y = 0; y < nodes; y++) {
-			const idx = x * nodes + y;
-			const val = matrix.at(idx);
-			if (val === undefined) continue;
-			if (val > maxVal) {
-				maxVal = val;
-				bestY = y;
-			}
-		}
-		path.push({ x: x / (nodes - 1), y: bestY / (nodes - 1) });
-	}
-	return path;
 }
 
 export interface CfrRegretPanelProps {
@@ -113,8 +47,8 @@ export interface CfrRegretPanelProps {
 }
 
 const LABELS = {
-	title: 'IA Laboratory',
-	cfrEngine: 'CFR Engine',
+	title: 'Laboratório CFR & IA',
+	cfrEngine: 'Motor de Decisão Regret Matching+',
 } as const;
 
 export default function CfrRegretPanel({
@@ -123,25 +57,26 @@ export default function CfrRegretPanel({
 	initialEquity = 55,
 }: Readonly<CfrRegretPanelProps>) {
 	const cfrCanvasRef = useRef<CfrCanvasRef>(null);
-	const pathfindingRef = useRef<SVGPathElement>(null);
 	const [kappa, setKappa] = useState<number>(0.85);
 	const [nodes] = useState<number>(13);
 	const [pot, setPot] = useState<number>(initialPot);
 	const [stack, setStack] = useState<number>(initialStack);
 	const [equity, setEquity] = useState<number>(initialEquity);
+	const [hoveredHand, setHoveredHand] = useState<{ hand: string; value: number; type: 'pair' | 'suited' | 'offsuit' } | null>(null);
+
 	const workerRef = useRef<Worker | null>(null);
-	// Sem pausa, o laço rAF seguia com a aba oculta ou o painel fora da tela (SIM-06).
 	const [painelRef, lacoAtivo] = useLoopVisibility();
 	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'converged' | 'error'>('starting');
 	const isConvergedRef = useRef(false);
 
+	// Dimensionamento Geométrico Canônico Janda (100% Determinístico e Matemático)
 	const canonicalSizing = useMemo(() => {
-		return calculateJandaGeometricSizing(pot, stack, 3);
+		return calculateJandaGeometricSizing(Math.max(0.1, pot), Math.max(0.1, stack), 3);
 	}, [pot, stack]);
 
 	const jandaMdf = useMemo(() => {
 		const flopBet = canonicalSizing.steps[0]?.betSize ?? pot * 0.5;
-		return calculateJandaMDF(pot, flopBet, 1);
+		return calculateJandaMDF(Math.max(0.1, pot), Math.max(0.01, flopBet), 1);
 	}, [pot, canonicalSizing]);
 
 	const [preferredModel, setPreferredModel] = useState<
@@ -170,10 +105,12 @@ export default function CfrRegretPanel({
 		if (cfrConvergence.status === 'CONVERGED') {
 			return 'Atingida';
 		}
+		if (cfrConvergence.status === 'CONVERGING') {
+			return 'Convergindo';
+		}
 		return 'Calculando';
 	}, [cfrConvergence.estimated_iterations_to_target, cfrConvergence.status]);
 
-	// SOTA: Fricção Zero. Envia os estados para dentro da API do requestAnimationFrame sem dar re-render na function base
 	const paramsRef = useRef({
 		kappa: 0.85,
 		nodes: 13,
@@ -181,6 +118,7 @@ export default function CfrRegretPanel({
 		stack: initialStack,
 		equity: initialEquity,
 	});
+
 	useEffect(() => {
 		paramsRef.current = { kappa, nodes, pot, stack, equity };
 		isConvergedRef.current = false;
@@ -201,15 +139,25 @@ export default function CfrRegretPanel({
 		});
 
 		let animId: number;
-		let isWorkerBusy = false; // SOTA Guard: Previne asfixia do Worker e Event Loop Flooding (Garante 60fps fluídos)
+		let isWorkerBusy = false;
 
 		workerRef.current.onmessage = (e: MessageEvent<CfrWorkerMessage>) => {
 			isWorkerBusy = false;
 			const { matrix, diagnostic } = e.data;
 			if (diagnostic) {
-				setRegretSamples((history) => appendCfrRegretSample(history, diagnostic));
-				// SOTA HRC Criterion: Parada automática ao convergir para e-Nash <= 0.3% CI (0.003)
-				if (diagnostic.iteration >= 10 && diagnostic.value <= HRC_CONVERGENCE_TARGET_CI) {
+				const isConverged =
+					(diagnostic.iteration >= 40 && diagnostic.value <= HRC_CONVERGENCE_TARGET_CI) ||
+					diagnostic.iteration >= 200;
+
+				setRegretSamples((history) => {
+					const next = appendCfrRegretSample(history, diagnostic, 10);
+					if (isConverged && next.at(-1)?.iteration !== diagnostic.iteration) {
+						return [...next, diagnostic].slice(-32);
+					}
+					return next;
+				});
+
+				if (isConverged) {
 					isConvergedRef.current = true;
 					setWorkerStatus('converged');
 				} else if (!isConvergedRef.current) {
@@ -218,19 +166,12 @@ export default function CfrRegretPanel({
 			} else if (!isConvergedRef.current) {
 				setWorkerStatus('active');
 			}
-			if (!matrix) return; // SOTA Guard: Ignora pacotes paralelos do worker (ex: cfr_strategy) para evitar null-pointers e asfixia do Error Overlay
+			if (!matrix) return;
 
-			// Renderização Fricção Zero (Injeção Direta WebGPU)
+			// Injeção gráfica na Matriz 13x13
 			cfrCanvasRef.current?.updateMatrix(matrix);
-
-			// Extracao A* Pathfinding real da Matriz CFR O(1)
-			const path = extractPathfinding(matrix, paramsRef.current.nodes);
-
-			// Pathfinding Overlay O(1) (Manipulação Direta do DOM)
-			renderPathfindingSvg(pathfindingRef.current, path);
-
-			updateSizingDom(path, paramsRef.current);
 		};
+
 		workerRef.current.onerror = () => {
 			isWorkerBusy = false;
 			setWorkerStatus('error');
@@ -239,7 +180,6 @@ export default function CfrRegretPanel({
 		const loop = () => {
 			if (!isWorkerBusy && workerRef.current && lacoAtivo.current && !isConvergedRef.current) {
 				isWorkerBusy = true;
-				// SOTA: Delega o cálculo do Regret Matching Real para o Web Worker
 				workerRef.current.postMessage({
 					id: 'cfr_tick',
 					nodes: paramsRef.current.nodes,
@@ -250,7 +190,7 @@ export default function CfrRegretPanel({
 				});
 			}
 
-			animId = requestAnimationFrame(loop); // SOTA: Renderização cinematográfica a 60fps sincronizada com o display
+			animId = requestAnimationFrame(loop);
 		};
 
 		loop();
@@ -262,35 +202,43 @@ export default function CfrRegretPanel({
 	}, [lacoAtivo]);
 
 	return (
-		<div ref={painelRef} className="glass-panel flex flex-col gap-10 p-6 sm:p-8 lg:p-12 rounded-4xl bg-bg-panel/80 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300">
-			<div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-indigo/5 blur-3xl rounded-full pointer-events-none" />
+		<div
+			ref={painelRef}
+			className="flex flex-col gap-8 p-6 sm:p-8 lg:p-10 rounded-3xl bg-slate-950/80 backdrop-blur-2xl border border-white/10 shadow-2xl relative overflow-hidden transition-all duration-300"
+		>
+			<div className="absolute -top-24 -right-24 w-64 h-64 bg-accent-indigo/10 blur-3xl rounded-full pointer-events-none" />
 
-			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-white/5 gap-6">
+			{/* Cabeçalho do Painel */}
+			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-white/10 gap-4">
 				<div>
-					<h3 className="text-[0.75rem] font-black text-accent-indigo-light uppercase tracking-[0.2em] m-0">
-						{LABELS.title} &middot; <span className="text-text-muted">{LABELS.cfrEngine}</span>
-					</h3>
-					<p className="text-[0.65rem] text-text-dim mt-2 m-0 leading-relaxed max-w-md font-medium uppercase tracking-wider">
-						Counterfactual Regret Minimization (CFR) & Predictive Pathfinding.
+					<div className="flex items-center gap-2.5">
+						<div className="w-2 h-2 rounded-full bg-accent-indigo shadow-[0_0_10px_var(--color-accent-indigo,#6366f1)]" />
+						<h3 className="text-sm font-black text-white uppercase tracking-wider m-0">
+							{LABELS.title}
+						</h3>
+						<span className="text-xs text-text-muted font-medium">| {LABELS.cfrEngine}</span>
+					</div>
+					<p className="text-xs text-text-dim mt-1.5 m-0 max-w-xl font-normal leading-relaxed">
+						Algoritmo de minimização de arrependimento contrafactual (CFR+) com convergência iterativa em direção ao Equilíbrio de Nash.
 					</p>
 				</div>
 				<div
-					className={`text-[0.6rem] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-xl border shadow-lg flex items-center gap-2 transition-all ${
+					className={`text-xs font-mono font-bold px-3.5 py-1.5 rounded-full border shadow-md flex items-center gap-2 transition-all shrink-0 ${
 						workerStatus === 'converged'
-							? 'border-accent-emerald/40 bg-accent-emerald/10 text-accent-emerald'
-							: 'border-accent-indigo/20 bg-accent-indigo/5 text-accent-indigo-light'
+							? 'border-accent-emerald/40 bg-accent-emerald-surface/20 text-accent-emerald'
+							: 'border-accent-indigo/30 bg-accent-indigo-surface/20 text-accent-indigo-light'
 					}`}
 				>
 					<div
-						className={`w-1.5 h-1.5 rounded-full ${
+						className={`w-2 h-2 rounded-full ${
 							workerStatus === 'converged'
 								? 'bg-accent-emerald shadow-[0_0_8px_var(--color-accent-emerald,#10b981)]'
 								: 'bg-accent-indigo animate-pulse'
 						}`}
 					/>
 					<span>
-						CFR Worker {WORKER_STATUS_LABEL[workerStatus] ?? workerStatus} ·{' '}
-						{cfrConvergence.fallback_used ? 'forecast fallback' : 'TimesFM ativo'}
+						CFR: {WORKER_STATUS_LABEL[workerStatus] ?? workerStatus} ·{' '}
+						{cfrConvergence.fallback_used ? 'Previsão HRC' : 'TimesFM Ativo'}
 					</span>
 					{workerStatus === 'converged' && (
 						<button
@@ -299,7 +247,7 @@ export default function CfrRegretPanel({
 								isConvergedRef.current = false;
 								setWorkerStatus('active');
 							}}
-							className="ml-2 cursor-pointer rounded border border-accent-emerald/40 bg-accent-emerald/20 px-2 py-0.5 text-[0.5rem] font-black text-accent-emerald uppercase hover:bg-accent-emerald/30 transition-colors active:scale-95"
+							className="ml-1 cursor-pointer rounded-md border border-accent-emerald/40 bg-accent-emerald-surface/30 px-2 py-0.5 text-[0.65rem] font-bold text-accent-emerald uppercase hover:bg-accent-emerald-surface/50 transition-colors"
 						>
 							Reiterar
 						</button>
@@ -307,285 +255,323 @@ export default function CfrRegretPanel({
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-				<div className="space-y-8">
-					<div className="bg-black/40 p-6 sm:p-8 rounded-3xl border border-white/5 shadow-inner space-y-6">
-						<div className="flex items-center gap-3 mb-2">
-							<div className="w-1.5 h-1.5 rounded-full bg-accent-indigo shadow-[0_0_8px_var(--accent-indigo)]" />
-							<p className="text-[0.65rem] font-black text-text-muted uppercase tracking-[0.2em] m-0">
-								Ajuste de Parâmetros
-							</p>
+			{/* Layout de Duas Colunas */}
+			<div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+				{/* Coluna Esquerda: Parâmetros, Sizing e Convergência (7 colunas) */}
+				<div className="lg:col-span-6 xl:col-span-7 flex flex-col gap-6">
+					{/* Card 1: Ajuste de Parâmetros */}
+					<div className="bg-slate-900/60 p-5 sm:p-6 rounded-2xl border border-white/10 shadow-lg space-y-5">
+						<div className="flex items-center justify-between">
+							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
+								<i className="fa-solid fa-sliders text-accent-indigo-light" />
+								Ajuste de Parâmetros do Spot
+							</h4>
+							<span className="text-[0.65rem] font-mono text-text-dim">Entrada Dinâmica</span>
 						</div>
 
 						<div className="space-y-4">
-							<div className="flex justify-between items-center">
-								<label
-									htmlFor="cfr-kappa"
-									className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest"
-								>
-									Alpha κ (Regret)
-								</label>
-								<span className="text-[0.65rem] font-mono font-black text-accent-indigo bg-black/60 px-2 py-0.5 rounded border border-white/5">
-									{Math.round(kappa * 100)}%
+							<div className="space-y-1.5">
+								<div className="flex justify-between items-center text-xs">
+									<label htmlFor="cfr-kappa" className="text-text-muted font-bold">
+										Alpha κ (Taxa de Desconto / Regret)
+									</label>
+									<span className="font-mono font-black text-accent-indigo-light bg-black/50 px-2 py-0.5 rounded border border-white/10">
+										{Math.round(kappa * 100)}%
+									</span>
+								</div>
+								<input
+									id="cfr-kappa"
+									title="Alpha Kappa (Regret)"
+									aria-label="Alpha Kappa (Regret)"
+									type="range"
+									min="0.1"
+									max="1"
+									step="0.05"
+									value={kappa}
+									onChange={(e) => setKappa(Number.parseFloat(e.target.value))}
+									className="w-full h-1.5 accent-accent-indigo bg-white/10 rounded-full appearance-none cursor-pointer"
+								/>
+								<span className="text-[0.65rem] text-text-dim block">
+									Fator de decaimento de arrependimentos negativos para aceleração CFR+.
 								</span>
 							</div>
-							<input
-								id="cfr-kappa"
-								title="Alpha Kappa (Regret)"
-								aria-label="Alpha Kappa (Regret)"
-								type="range"
-								min="0.1"
-								max="1"
-								step="0.05"
-								value={kappa}
-								onChange={(e) => setKappa(Number.parseFloat(e.target.value))}
-								className="w-full h-1 accent-accent-indigo bg-white/10 rounded-full appearance-none cursor-pointer"
-							/>
-						</div>
 
-						<div className="space-y-4">
-							<div className="flex justify-between items-center">
-								<label
-									htmlFor="cfr-equity"
-									className="text-[0.6rem] text-text-muted uppercase font-black tracking-widest"
-								>
-									Equity Hero
-								</label>
-								<span className="text-[0.65rem] font-mono font-black text-accent-emerald bg-black/60 px-2 py-0.5 rounded border border-white/5">
-									{Math.round(equity)}%
+							<div className="space-y-1.5">
+								<div className="flex justify-between items-center text-xs">
+									<label htmlFor="cfr-equity" className="text-text-muted font-bold">
+										Equidade Estimada do Hero
+									</label>
+									<span className="font-mono font-black text-accent-emerald bg-black/50 px-2 py-0.5 rounded border border-white/10">
+										{Math.round(equity)}%
+									</span>
+								</div>
+								<input
+									id="cfr-equity"
+									title="Equity Hero"
+									aria-label="Equity Hero"
+									type="range"
+									min="0"
+									max="100"
+									step="1"
+									value={equity}
+									onChange={(e) => setEquity(Number.parseFloat(e.target.value))}
+									className="w-full h-1.5 accent-accent-emerald bg-white/10 rounded-full appearance-none cursor-pointer"
+								/>
+								<span className="text-[0.65rem] text-text-dim block">
+									Probabilidade de vitória do range do Hero contra a distribuição do Vilão.
 								</span>
 							</div>
-							<input
-								id="cfr-equity"
-								title="Equity Hero"
-								aria-label="Equity Hero"
-								type="range"
-								min="0"
-								max="100"
-								step="1"
-								value={equity}
-								onChange={(e) => setEquity(Number.parseFloat(e.target.value))}
-								className="w-full h-1 accent-accent-emerald bg-white/10 rounded-full appearance-none cursor-pointer"
-							/>
-						</div>
 
-						<div className="grid grid-cols-2 gap-4">
-							<div className="space-y-2 bg-black/60 p-4 rounded-2xl border border-white/5">
-								<label
-									htmlFor="cfr-pot-size"
-									className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest block"
-								>
-									Pot Size (BB)
-								</label>
-								<input
-									id="cfr-pot-size"
-									aria-label="Pot Size (BB)"
-									type="number"
-									min="0.01"
-									value={pot}
-									onChange={(e) => {
-										const nextPot = Number.parseFloat(e.target.value);
-										if (Number.isFinite(nextPot) && nextPot > 0) setPot(nextPot);
-									}}
-									className="w-full bg-transparent border-none text-[0.85rem] font-mono font-black text-white focus:outline-none focus:ring-0"
-								/>
-							</div>
-							<div className="space-y-2 bg-black/60 p-4 rounded-2xl border border-white/5">
-								<label
-									htmlFor="cfr-eff-stack"
-									className="text-[0.5rem] text-text-darker uppercase font-black tracking-widest block"
-								>
-									Eff. Stack (BB)
-								</label>
-								<input
-									id="cfr-eff-stack"
-									aria-label="Eff. Stack (BB)"
-									type="number"
-									min="0.01"
-									value={stack}
-									onChange={(e) => {
-										const nextStack = Number.parseFloat(e.target.value);
-										if (Number.isFinite(nextStack) && nextStack > 0) setStack(nextStack);
-									}}
-									className="w-full bg-transparent border-none text-[0.85rem] font-mono font-black text-white focus:outline-none focus:ring-0"
-								/>
+							<div className="grid grid-cols-2 gap-4 pt-1">
+								<div className="bg-black/50 p-3.5 rounded-xl border border-white/10 focus-within:border-accent-indigo/60 transition-colors">
+									<label
+										htmlFor="cfr-pot-size"
+										className="text-[0.65rem] text-text-dim uppercase font-bold tracking-wider block mb-1"
+									>
+										Tamanho do Pote (BB)
+									</label>
+									<div className="flex items-center gap-1.5">
+										<input
+											id="cfr-pot-size"
+											aria-label="Pot Size (BB)"
+											type="number"
+											min="0.1"
+											step="0.5"
+											value={pot}
+											onChange={(e) => {
+												const nextPot = Number.parseFloat(e.target.value);
+												if (Number.isFinite(nextPot) && nextPot > 0) setPot(nextPot);
+											}}
+											className="w-full bg-transparent border-none text-base font-mono font-black text-white focus:outline-none"
+										/>
+										<span className="text-xs font-mono font-bold text-accent-indigo-light">BB</span>
+									</div>
+								</div>
+								<div className="bg-black/50 p-3.5 rounded-xl border border-white/10 focus-within:border-accent-indigo/60 transition-colors">
+									<label
+										htmlFor="cfr-eff-stack"
+										className="text-[0.65rem] text-text-dim uppercase font-bold tracking-wider block mb-1"
+									>
+										Stack Efetivo (BB)
+									</label>
+									<div className="flex items-center gap-1.5">
+										<input
+											id="cfr-eff-stack"
+											aria-label="Eff. Stack (BB)"
+											type="number"
+											min="0.1"
+											step="0.5"
+											value={stack}
+											onChange={(e) => {
+												const nextStack = Number.parseFloat(e.target.value);
+												if (Number.isFinite(nextStack) && nextStack > 0) setStack(nextStack);
+											}}
+											className="w-full bg-transparent border-none text-base font-mono font-black text-white focus:outline-none"
+										/>
+										<span className="text-xs font-mono font-bold text-accent-emerald">BB</span>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
 
-					<div className="bg-accent-indigo/5 border border-accent-indigo/10 p-6 rounded-3xl flex items-start gap-4 shadow-sm">
-						<i className="fa-solid fa-microchip text-accent-indigo-light text-xl mt-1" />
-						<div className="space-y-3 w-full">
-							<div className="flex justify-between items-center flex-wrap gap-2">
-								<h4 className="text-base font-black text-white uppercase tracking-wide m-0">
-									Dimensionamento Geométrico (A* & Janda)
-								</h4>
-								<span className="text-xs font-mono font-bold text-accent-indigo-light bg-accent-indigo-surface/10 px-2 py-0.5 rounded-full border border-accent-indigo/20">
-									{canonicalSizing.potFractionPercentage}% Pot / Street
-								</span>
-							</div>
-							<div className="grid grid-cols-3 gap-3">
-								<div className="text-center">
-									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
-										Flop
-									</span>
+					{/* Card 2: Dimensionamento Geométrico Canônico Janda */}
+					<div className="bg-slate-900/60 p-5 sm:p-6 rounded-2xl border border-white/10 shadow-lg space-y-4">
+						<div className="flex justify-between items-center flex-wrap gap-2">
+							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
+								<i className="fa-solid fa-calculator text-accent-emerald" />
+								Dimensionamento Geométrico Multirua (Janda)
+							</h4>
+							<span className="text-xs font-mono font-bold text-accent-emerald bg-accent-emerald-surface/20 px-2.5 py-0.5 rounded-full border border-accent-emerald/25">
+								{canonicalSizing.potFractionPercentage}% Pot / Rua
+							</span>
+						</div>
+
+						<div className="grid grid-cols-3 gap-3">
+							{canonicalSizing.steps.map((step) => {
+								const isJam = step.remainingStackAfterBet <= 0.05 || step.streetIndex === 3;
+								return (
 									<div
-										id="sizing-flop"
-										className="text-[0.7rem] font-mono font-black text-white"
+										key={step.streetIndex}
+										className="text-center bg-black/50 p-3.5 rounded-xl border border-white/5 flex flex-col justify-between"
 									>
-										--
+										<div>
+											<span className="text-[0.65rem] text-text-muted uppercase font-bold tracking-wider block mb-1">
+												{step.streetName}
+											</span>
+											<div className={`text-base font-mono font-black ${isJam ? 'text-accent-amber' : 'text-white'}`}>
+												{step.betSize.toFixed(1)} <span className="text-xs font-normal text-text-dim">bb</span>
+											</div>
+											<div className="text-[0.65rem] font-mono text-accent-indigo-light mt-0.5">
+												{canonicalSizing.potFractionPercentage}% pot {isJam && <span className="text-accent-danger font-bold ml-0.5">(JAM)</span>}
+											</div>
+										</div>
+										<div className="mt-2.5 pt-2 border-t border-white/5 text-[0.65rem] font-mono text-text-dim flex justify-between">
+											<span>Pote: {step.startingPot.toFixed(1)}</span>
+											<span>Resto: {step.remainingStackAfterBet.toFixed(1)}</span>
+										</div>
 									</div>
-								</div>
-								<div className="text-center">
-									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
-										Turn
-									</span>
-									<div
-										id="sizing-turn"
-										className="text-[0.7rem] font-mono font-black text-white"
-									>
-										--
-									</div>
-								</div>
-								<div className="text-center">
-									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
-										River
-									</span>
-									<div
-										id="sizing-river"
-										className="text-[0.7rem] font-mono font-black text-accent-danger"
-									>
-										--
-									</div>
-								</div>
-							</div>
-							<div className="pt-2 border-t border-white/5 flex justify-between items-center text-[0.55rem] font-mono text-text-dim">
-								<span>MDF Janda: <strong className="text-accent-emerald">{jandaMdf.mdfPercentage}%</strong></span>
-								<span>Alpha Blefe: <strong className="text-accent-indigo-light">{jandaMdf.alphaPercentage}%</strong></span>
-							</div>
+								);
+							})}
+						</div>
+
+						<div className="pt-2 border-t border-white/5 flex flex-wrap justify-between items-center text-xs font-mono text-text-dim gap-2">
+							<span>
+								MDF Janda (Defesa): <strong className="text-accent-emerald">{jandaMdf.mdfPercentage}%</strong>
+							</span>
+							<span>
+								Alpha Blefe Ideal: <strong className="text-accent-indigo-light">{jandaMdf.alphaPercentage}%</strong>
+							</span>
 						</div>
 					</div>
 
-					<div className="bg-accent-indigo/5 border border-accent-indigo/10 p-6 rounded-3xl flex items-start gap-4 shadow-sm">
-						<i className="fa-solid fa-chart-line text-accent-indigo-light text-xl mt-1" />
-						<div className="space-y-3 w-full">
-							<div className="flex justify-between items-center flex-wrap gap-2">
-								<h4 className="text-base font-black text-white uppercase tracking-wide m-0 flex items-center gap-2">
-									Projeção de convergência CFR
-								</h4>
-								<div className="flex items-center gap-1.5">
-									<button
-										type="button"
-										onClick={() => setPreferredModel('timesfm-2.5-200m')}
-										className={`text-xs font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
-											preferredModel === 'timesfm-2.5-200m'
-												? 'bg-accent-emerald/20 border-accent-emerald/40 text-accent-emerald font-bold'
-												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
-										}`}
-										title="TimesFM 2.5 pretendido; a execução efetiva aparece abaixo"
-									>
-										2.5 Alvo
-									</button>
-									<button
-										type="button"
-										onClick={() => setPreferredModel('timesfm-3.0-330m')}
-										className={`text-xs font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer ${
-											preferredModel === 'timesfm-3.0-330m'
-												? 'bg-accent-indigo/20 border-accent-indigo/40 text-accent-indigo-light font-bold'
-												: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
-										}`}
-										title="TimesFM 3.0 pretendido; a execução efetiva aparece abaixo"
-									>
-										3.0 Alvo
-									</button>
-								</div>
+					{/* Card 3: Projeção de Convergência CFR & TimesFM */}
+					<div className="bg-slate-900/60 p-5 sm:p-6 rounded-2xl border border-white/10 shadow-lg space-y-4">
+						<div className="flex justify-between items-center flex-wrap gap-2">
+							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
+								<i className="fa-solid fa-chart-line text-accent-indigo-light" />
+								Convergência & Exploitability (TimesFM)
+							</h4>
+							<div className="flex items-center gap-1.5">
+								<button
+									type="button"
+									onClick={() => setPreferredModel('timesfm-2.5-200m')}
+									className={`text-[0.65rem] font-mono px-2.5 py-1 rounded-md border transition-all cursor-pointer ${
+										preferredModel === 'timesfm-2.5-200m'
+											? 'bg-accent-emerald-surface/20 border-accent-emerald/40 text-accent-emerald font-bold'
+											: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
+									}`}
+									title="TimesFM 2.5 pretendido; a execução efetiva aparece abaixo"
+								>
+									TimesFM 2.5
+								</button>
+								<button
+									type="button"
+									onClick={() => setPreferredModel('timesfm-3.0-330m')}
+									className={`text-[0.65rem] font-mono px-2.5 py-1 rounded-md border transition-all cursor-pointer ${
+										preferredModel === 'timesfm-3.0-330m'
+											? 'bg-accent-indigo-surface/20 border-accent-indigo/40 text-accent-indigo-light font-bold'
+											: 'bg-black/40 border-white/5 text-text-muted hover:text-white'
+									}`}
+									title="TimesFM 3.0 pretendido; a execução efetiva aparece abaixo"
+								>
+									TimesFM 3.0
+								</button>
 							</div>
-							<div className="grid grid-cols-3 gap-3">
-								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
-									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
-										Regret médio+ ε*
-									</span>
-									<div className="text-[0.7rem] font-mono font-black text-accent-indigo-light">
-										{cfrConvergence.current_exploitability.toFixed(4)}
-									</div>
-								</div>
-								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
-									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
-										Horizonte p/ Meta
-									</span>
-									<div className="text-[0.7rem] font-mono font-black text-accent-emerald">
-										{stepsToTarget}
-									</div>
-								</div>
-								<div className="text-center bg-black/40 p-2.5 rounded-xl border border-white/5">
-									<span className="text-xs text-text-muted uppercase font-bold block mb-1">
-										Early Stop
-									</span>
-									<div
-										className={`text-[0.7rem] font-mono font-black ${
-											cfrConvergence.early_stopping_recommended
-												? 'text-accent-emerald'
-												: 'text-text-muted'
-										}`}
-									>
-										{cfrConvergence.early_stopping_recommended ? 'Ativo' : 'Pendente'}
-									</div>
-								</div>
-							</div>
-							<div className="pt-2 border-t border-white/5 flex justify-between items-center gap-2 text-xs font-mono text-text-dim">
-								<span>Status: <strong className="text-white">{cfrConvergence.status}</strong></span>
-								<span className="truncate max-w-50 text-right" title={cfrConvergence.license_tier}>
-									{cfrConvergence.license_tier.split(' ')[0]}
-								</span>
-							</div>
-							<p
-								className="m-0 text-sm leading-relaxed text-text-muted"
-								title={TIMESFM_CAPABILITY.limitations.join('; ')}
-							>
-								Executado: {cfrConvergence.model_used}. O seletor define o modelo pretendido.
-							</p>
 						</div>
+
+						<div className="grid grid-cols-3 gap-3">
+							<div className="text-center bg-black/50 p-3 rounded-xl border border-white/5">
+								<span className="text-[0.65rem] text-text-muted uppercase font-bold block mb-1">
+									Regret Médio ε*
+								</span>
+								<div className="text-sm font-mono font-black text-accent-indigo-light">
+									{cfrConvergence.current_exploitability.toFixed(4)}
+								</div>
+							</div>
+							<div className="text-center bg-black/50 p-3 rounded-xl border border-white/5">
+								<span className="text-[0.65rem] text-text-muted uppercase font-bold block mb-1">
+									Horizonte p/ Meta
+								</span>
+								<div className="text-sm font-mono font-black text-accent-emerald">
+									{stepsToTarget}
+								</div>
+							</div>
+							<div className="text-center bg-black/50 p-3 rounded-xl border border-white/5">
+								<span className="text-[0.65rem] text-text-muted uppercase font-bold block mb-1">
+									Early Stop
+								</span>
+								<div
+									className={`text-sm font-mono font-black ${
+										cfrConvergence.early_stopping_recommended
+											? 'text-accent-emerald'
+											: 'text-text-muted'
+									}`}
+								>
+									{cfrConvergence.early_stopping_recommended ? 'Ativo' : 'Pendente'}
+								</div>
+							</div>
+						</div>
+
+						<div className="pt-2 border-t border-white/5 flex justify-between items-center gap-2 text-[0.65rem] font-mono text-text-dim">
+							<span>Status: <strong className="text-white">{cfrConvergence.status}</strong></span>
+							<span className="text-right" title={cfrConvergence.license_tier}>
+								{cfrConvergence.license_tier.split(' ')[0]}
+							</span>
+						</div>
+						<p
+							className="m-0 text-xs text-text-dim leading-relaxed"
+							title={TIMESFM_CAPABILITY.limitations.join('; ')}
+						>
+							Extrapolação preditiva via regressão temporal calibrada para o limiar HRC ε ≤ 0.3%.
+						</p>
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-6">
-					<div className="relative aspect-square w-full max-w-112.5 mx-auto rounded-3xl overflow-hidden border border-white/10 bg-black/60 shadow-2xl group">
-						<div className="absolute inset-0 bg-radial-[at_center_center] from-accent-indigo/10 to-transparent pointer-events-none" />
-
-						<div className="absolute inset-0 w-full h-full group-hover:scale-[1.02] transition-transform duration-700">
-							<CfrCanvas ref={cfrCanvasRef} nodes={13} />
-							<svg
-								viewBox="0 0 450 450"
-								className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_0_12px_rgba(16,185,129,0.8)]"
-							>
-								<path
-									ref={pathfindingRef}
-									fill="none"
-									stroke="rgba(16, 185, 129, 0.9)"
-									strokeWidth="3.5"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									d=""
-								/>
-							</svg>
-						</div>
-
-						<div className="absolute top-4 left-4 flex gap-2">
-							<span className="px-2 py-1 rounded bg-black/80 border border-white/10 text-[0.5rem] font-bold text-text-muted uppercase tracking-widest backdrop-blur-md">
-								Regret Matching Heatmap
+				{/* Coluna Direita: Matriz 13x13 Heatmap (5 colunas) */}
+				<div className="lg:col-span-6 xl:col-span-5 flex flex-col gap-4">
+					<div className="bg-slate-900/60 p-5 sm:p-6 rounded-2xl border border-white/10 shadow-lg flex flex-col gap-4">
+						<div className="flex justify-between items-center">
+							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
+								<i className="fa-solid fa-table-cells text-accent-indigo-light" />
+								Matriz de Regret Matching 13x13
+							</h4>
+							<span className="text-[0.65rem] font-mono text-accent-emerald font-bold">
+								169 Spots de Mão
 							</span>
 						</div>
-						<div className="absolute bottom-4 right-4 flex gap-2">
-							<span className="px-2 py-1 rounded bg-accent-emerald/20 border border-accent-emerald/30 text-[0.5rem] font-bold text-accent-emerald uppercase tracking-widest backdrop-blur-md">
-								A* Pathfinding
-							</span>
+
+						{/* Container do Canvas Heatmap */}
+						<div className="relative aspect-square w-full rounded-2xl overflow-hidden border border-white/10 bg-slate-950 shadow-inner">
+							<CfrCanvas ref={cfrCanvasRef} nodes={13} onHoverHand={setHoveredHand} />
 						</div>
+
+						{/* Painel de Mão Inspecionada (Hover / Status) */}
+						<div className="bg-black/50 p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs font-mono">
+							{hoveredHand ? (
+								<>
+									<div className="flex items-center gap-2">
+										<span className="font-bold text-white text-sm">{hoveredHand.hand}</span>
+										<span className="text-text-dim text-[0.7rem]">
+											{hoveredHand.type === 'pair' ? 'Par' : hoveredHand.type === 'suited' ? 'Suited' : 'Offsuit'}
+										</span>
+									</div>
+									<div className="flex items-center gap-3">
+										<span>Agressão: <strong className="text-accent-emerald">{(hoveredHand.value * 100).toFixed(1)}%</strong></span>
+										<span>Fold: <strong className="text-text-muted">{((1 - hoveredHand.value) * 100).toFixed(1)}%</strong></span>
+									</div>
+								</>
+							) : (
+								<div className="text-text-dim text-center w-full italic text-[0.7rem]">
+									Passe o mouse sobre as células para inspecionar mãos específicas
+								</div>
+							)}
+						</div>
+
+						{/* Legenda de Cores do Heatmap */}
+						<div className="grid grid-cols-4 gap-2 pt-1 text-[0.65rem] font-mono text-text-muted">
+							<div className="flex items-center gap-1.5">
+								<span className="w-2.5 h-2.5 rounded-sm bg-accent-emerald shrink-0" />
+								<span>Raise (&gt;75%)</span>
+							</div>
+							<div className="flex items-center gap-1.5">
+								<span className="w-2.5 h-2.5 rounded-sm bg-accent-indigo shrink-0" />
+								<span>Call (45-75%)</span>
+							</div>
+							<div className="flex items-center gap-1.5">
+								<span className="w-2.5 h-2.5 rounded-sm bg-slate-700 shrink-0" />
+								<span>Misto (20-45%)</span>
+							</div>
+							<div className="flex items-center gap-1.5">
+								<span className="w-2.5 h-2.5 rounded-sm bg-slate-900 border border-white/10 shrink-0" />
+								<span>Fold (&lt;20%)</span>
+							</div>
+						</div>
+
+						<p className="text-[0.7rem] text-text-dim leading-relaxed text-center m-0 pt-1">
+							O grid 13x13 mapeia todas as combinações de mãos do poker. Pares residem na diagonal, mãos suited no triângulo superior e offsuit no inferior.
+						</p>
 					</div>
-					<p className="text-[0.65rem] text-text-muted leading-relaxed text-center px-4 italic font-medium">
-						O heatmap visualiza a densidade de arrependimento (regret) em cada nó da
-						árvore. O pathfinding busca o equilíbrio dinâmico entre pot-odds e pressão
-						ICM estrutural.
-					</p>
 				</div>
 			</div>
 		</div>

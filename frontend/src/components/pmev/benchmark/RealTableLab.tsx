@@ -152,31 +152,58 @@ export default function RealTableLab({ structures }: Readonly<RealTableLabProps>
 			</div>
 
 			<figure className={styles['places']}>
-				<figcaption>Chance de o dono das mãos terminar em cada lugar, segundo o ICM. Em verde, os lugares pagos.</figcaption>
+				<figcaption className={styles['placesCaption']}>
+					<div className={styles['placesCaptionText']}>
+						<span className={styles['placesTitle']}>Chance de terminar em cada lugar</span>
+						<span className={styles['placesSubtitle']}>
+							Projeção do modelo ICM com base nos stacks da mesa. Em verde, os lugares pagos.
+						</span>
+					</div>
+					<div className={styles['placesLegend']} aria-hidden="true">
+						<span className={styles['placesLegendItem']}>
+							<span className={cx(styles['legendDot'], styles['legendPaid'])} /> Lugares pagos ({paid === 1 ? '1º' : `1º a ${ordinal(paid)}`})
+						</span>
+						{paid < sample.stacks.length && (
+							<span className={styles['placesLegendItem']}>
+								<span className={cx(styles['legendDot'], styles['legendUnpaid'])} /> Fora da premiação
+							</span>
+						)}
+						{revealed && (
+							<span className={styles['placesLegendItem']}>
+								<span className={cx(styles['legendDot'], styles['legendActual'])} /> Desfecho real ({ordinal(sample.lugar_final)})
+							</span>
+						)}
+					</div>
+				</figcaption>
 				<ol className={styles['placeBars']}>
-					{view.placeChances.map((item) => (
-						<li
-							key={item.placeKey}
-							className={cx(
-								styles['place'],
-								item.place <= paid && styles['placePaid'],
-								revealed && item.place === sample.lugar_final && styles['placeActual'],
-							)}
-							aria-label={`${ordinal(item.place)} lugar: ${pct(item.probability)}`}
-						>
-							<span className={styles['placePct']} aria-hidden="true">
-								{pct(item.probability)}
-							</span>
-							<span
-								className={styles['placeFill']}
-								style={{ blockSize: `${Math.max((item.probability / view.maxProbability) * 100, 2)}%` }}
-								aria-hidden="true"
-							/>
-							<span className={styles['placeLabel']} aria-hidden="true">
-								{ordinal(item.place)}
-							</span>
-						</li>
-					))}
+					{view.placeChances.map((item) => {
+						const isActual = revealed && item.place === sample.lugar_final;
+						const isPaid = item.place <= paid;
+						return (
+							<li
+								key={item.placeKey}
+								className={cx(
+									styles['place'],
+									isPaid && styles['placePaid'],
+									isActual && styles['placeActual'],
+								)}
+								aria-label={`${ordinal(item.place)} lugar: ${pct(item.probability)}${isActual ? ' (resultado real)' : ''}`}
+							>
+								<span className={styles['placePct']} aria-hidden="true">
+									{pct(item.probability)}
+								</span>
+								<div className={styles['placeTrack']} aria-hidden="true">
+									<span
+										className={styles['placeFill']}
+										style={{ blockSize: `${Math.max((item.probability / view.maxProbability) * 100, 2)}%` }}
+									/>
+								</div>
+								<span className={styles['placeLabel']} aria-hidden="true">
+									{ordinal(item.place)}
+								</span>
+							</li>
+						);
+					})}
 				</ol>
 			</figure>
 
@@ -189,9 +216,11 @@ export default function RealTableLab({ structures }: Readonly<RealTableLabProps>
 				</button>
 			</div>
 
-			<p aria-live="polite" className={styles['outcome']}>
-				{outcomeText}
-			</p>
+			<div aria-live="polite" className={cx(styles['outcomeBox'], revealed && styles['outcomeBoxRevealed'])}>
+				<p className={styles['outcome']}>
+					{outcomeText}
+				</p>
+			</div>
 		</section>
 	);
 }
