@@ -156,7 +156,7 @@ app = FastAPI(
 # [SOTA RAG] INTEGRACAO LANCEDB (BUSCA VETORIAL - FRICCAO ZERO)
 # ==============================================================================
 RAG_AVAILABLE = False
-rag_engine: MemoryRAG | None = None
+rag_engine: 'MemoryRAG | None' = None
 try:
     from memory_rag import MemoryRAG
 
