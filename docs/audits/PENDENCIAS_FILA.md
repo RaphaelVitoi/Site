@@ -1,7 +1,7 @@
 # PENDENCIAS — Fila de bloqueio do Site
 
 Escopo: itens que **nao** bloqueiam o portao de commit, mas nao estao fechados.
-Ordem: conforme agreed com o usuario. `HandRanks` e explicitamente a ULTIMA.
+Ordem: conforme agreed com o usuario. Os tres itens foram fechados em 2026-09-17.
 
 ---
 
@@ -126,14 +126,26 @@ morreram por motivos diferentes (hardware e versao do runtime), medidos acima.
 
 ---
 
-## 3. Auditoria de layout do `HandRanks.dat` — ⏳ ULTIMA POR DECISAO DO USUARIO
+## 3. `HandRanks.dat` — ✅ FECHADO POR REMOCAO (2026-09-17)
 
-Ver documento proprio: `docs/audits/PENDENCIA_handranks_layout_audit.md`
+Ver `docs/audits/REMOCAO_handranks_dat.md`, que tem a procedencia completa.
 
-**Resumo:** o blob tem 129.951.336 bytes / 32.487.834 slots uint32, nenhum
-produtor no repo, nenhum consumidor. O `perfect_hash_key` de
-`engine/hand_evaluator.py` **nao** endereca esse layout (documentado no
-docstring da funcao). Verificar `sha256` contra o upstream do Kenny.
+**A auditoria refutou a propria hipotese.** O blob NAO estava truncado nem
+corrompido: sha256 `ad00f397…` identico ao upstream Two Plus Two, CRC32
+`7808da57` conforme a documentacao. Estava integro, sem produtor e sem
+consumidor.
+
+**Origem:** commit `6a63ec61`, um refactor de UI com 1026 arquivos. A pasta
+`frontend/public/wasm/` tem `.gitignore` com `*` -- o blob so estava
+versionado por um `git add -f` sobre o ignore.
+
+**Removido** com o sha256 e a URL de origem registrados, para recuperacao em
+minutos caso alguem precise.
+
+**O que ficou em aberto, deliberadamente:** nao foi possivel reconciliar o
+layout da tabela com o `evaluate_7` deste repositorio. Isso nao bloqueou a
+decisao -- um arquivo que ninguem le nao precisa concordar com nada para ser
+removido -- e nao esta afirmado em codigo nenhum.
 
 ---
 
@@ -153,7 +165,7 @@ Estado da fila:
 |---|---|---|
 | 1 | Harness ICM/ChipEV | ✅ FECHADO |
 | 2 | Ling via Ollama | ✅ FECHADO POR DECISAO |
-| 3 | Auditoria de layout do `HandRanks.dat` | ⏳ ULTIMA (por decisao do usuario) |
+| 3 | `HandRanks.dat` | ✅ FECHADO POR REMOCAO |
 
 Resta uma. Duas fechadas com o mesmo padrao: **medir antes de decidir**, e
 registrar a decisao com o numero que a motivou, para que da proxima vez nao se

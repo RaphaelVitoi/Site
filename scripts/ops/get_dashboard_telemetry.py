@@ -71,6 +71,13 @@ def get_model_status() -> dict:
             "installed": gemma_31b_cloud_installed,
             "status": "ACCESSIBLE (Cloud / Local Sync)" if gemma_31b_cloud_installed else "CONFIGURED",
         },
+        "strata_moe_125b": {
+            "name": "Strata MoE 125B Coder",
+            "tag": "strata:coder-iq1m",
+            "tier": "local_moe",
+            "installed": is_port_open(8080) or (Path.home() / "Strata").exists(),
+            "status": "ONLINE (Port 8080)" if is_port_open(8080) else "STANDBY (Pronto)",
+        },
     }
 
 

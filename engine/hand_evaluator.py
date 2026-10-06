@@ -2,18 +2,17 @@
 
 WHY THIS EXISTS
 ---------------
-`engine/vitoi_perspective_engine.py:248` declares the B06/F07 limit and needs
-equilibrium equity, but nothing in the repository can answer the only question
-that number depends on: *which 5 of these 7 cards is the best hand*. Hand
-strength was absent: `pmev_hh_canon.py` parses hands into `HandState`,
-`bayesian_range.py` categorises preflop ranges, `pmev_*` computes MDF/SPR/ICM --
-none of them ranks cards against each other.
+Nothing in the repository ranked cards against each other: `pmev_hh_canon.py`
+parses hands into `HandState`, `bayesian_range.py` categorises preflop ranges,
+`pmev_*` computes MDF/SPR/ICM. So "which 5 of these 7 cards is the best hand"
+had no in-process answer.
 
-`frontend/public/wasm/HandRanks.dat` (129,951,336 bytes) was sitting in the
-repo with zero consumers and no generator. That table is a precomputed
-TwoPlusTwo lookup: O(1) rank lookup paid for with 129 MB of disk and a build
-step nobody had. This module computes the same answer from the two-prime hash
-directly, so the 129 MB becomes optional acceleration instead of a dependency.
+The nearest thing was `frontend/public/wasm/HandRanks.dat` (129,951,336 bytes,
+verified byte-identical to the canonical Two Plus Two file). It had zero
+consumers, no generator, and sat in a folder whose `.gitignore` is `*`; it was
+removed on 2026-09-17 -- see docs/audits/REMOCAO_handranks_dat.md. This module
+computes the same answer from the two-prime hash directly, in process, with no
+table and no build step.
 
 CONTRACT
 --------
@@ -44,7 +43,8 @@ __all__ = [
 CARD_COUNT: Final[int] = 52
 MAX_RANK_7: Final[int] = 7462
 
-# Two-prime product constants (Cactus Kev / RayW, the original HandRanks).
+# Two-prime product constants (Cactus Kev / Ray Wotton lineage). Unrelated to
+# the removed Two Plus Two table: different index, different layout.
 _P7: Final[int] = 137438953
 _P6: Final[int] = 33333377
 _P5: Final[int] = 1000003
@@ -105,10 +105,11 @@ def perfect_hash_key(cards: list[int] | tuple[int, ...]) -> int:
     share a key are the same hand. Order-independent.
 
     This is the Kenny/Shanahan-style prime-product index used by precomputed
-    hand-strength tables. It is NOT confirmed to address the `HandRanks.dat`
-    blob in this repo: a probe of that file found 32,487,834 uint16 entries
-    whose layout does not match this hash. See the pending layout audit
-    before assuming the two are interchangeable.
+    hand-strength tables. It is NOT the Two Plus Two `HandRanks.dat` index:
+    that file (129,951,336 bytes, 32,487,834 uint32 slots) was removed from
+    this repo on 2026-09-17 as an unused import -- see
+    docs/audits/REMOCAO_handranks_dat.md. Its layout was never reconciled
+    with this hash, so do not assume the two are interchangeable.
     """
     n = len(cards)
     if n == 7:

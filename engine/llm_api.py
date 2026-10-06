@@ -622,6 +622,10 @@ def _resolve_model_provider_and_target(
     model_l = model.lower()
     has_nous = bool(nous_keys)
 
+    # 0. Strata Engine Local (MoE 125B Qwen3.8-Flash-Next / Coder)
+    if "strata" in model_l or "qwen3.8" in model_l:
+        return "strata", model
+
     # 1. Modelos dedicados llama.cpp locais (Hardware / Vulkan)
     if "g9v3" in model_l or "ai9stars" in model_l or "ling" in model_l:
         return "local_llama", model
@@ -729,6 +733,20 @@ async def _dispatch_provider_call(
     )
 
     async with aiohttp.ClientSession() as session:
+        # 0. Strata Engine Local (Porta 8080 - MoE 125B Qwen3.8-Flash-Next / Coder)
+        if provider == "strata":
+            try:
+                from llm.strata_client import LocalStrataClient  # noqa: PLC0415
+
+                strata_client = LocalStrataClient()
+                if strata_client.is_healthy():
+                    res = strata_client.complete(f"{system_prompt}\n\n{user_prompt}")
+                    if res:
+                        return res
+            except Exception as e:
+                logger.debug("Falha na chamada ao Strata Local (%s): %s. Recorrendo a fallback...", target_model, e)
+            provider = "ollama"
+
         # 1. Llama-server local (portas 8081, 8082, 8083)
         if provider == "local_llama":
             try:
