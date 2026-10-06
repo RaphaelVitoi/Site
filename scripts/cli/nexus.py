@@ -635,6 +635,17 @@ def _get_worker_alive_status() -> bool:
     return False
 
 
+def _is_port_open(port: int, host: str = "127.0.0.1") -> bool:
+    import socket
+
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(0.2)
+            return s.connect_ex((host, port)) == 0
+    except Exception:
+        return False
+
+
 def _build_system_status_panel() -> Panel:
     sys_table = Table.grid(expand=True, padding=(0, 1))
     sys_table.add_column(style=STYLE_BOLD_WHITE, justify="left", width=16)
@@ -732,6 +743,9 @@ def _build_metrics_panel() -> Panel:
     table.add_row("CLI Version", "[bold #f8f8f2]v8.0 GOLD[/]")
     table.add_row("Cortex Override", "[dim #6272a4]Standby[/]")
     table.add_row("Quantum Metrics", "[bold #8be9fd]ATIVO[/]")
+    strata_alive = _is_port_open(8080)
+    strata_status = "[bold #50fa7b]ONLINE (:8080)[/]" if strata_alive else "[dim #6272a4]STANDBY[/]"
+    table.add_row("Strata 125B MoE", strata_status)
 
     return Panel(
         table, title="[bold #bd93f9]PARAMETROS VITOI[/]", border_style="#bd93f9", padding=(1, 2), box=box.ROUNDED
@@ -1046,6 +1060,7 @@ def _build_footer_panel() -> Panel:
         "[3] [bold #50fa7b]nexus ops sanitize[/]\n[dim #6272a4]    Higiene SOTA[/]\n\n"
         "[4] [bold #50fa7b]nexus ops quality-gate[/]\n[dim #6272a4]    Validar Pipeline CI[/]\n\n"
         "[R] [bold #50fa7b]nexus ops optimize-ram[/]\n[dim #6272a4]    Esvaziar e Otimizar RAM[/]\n\n"
+        "[X] [bold #50fa7b]nexus ops strata[/]\n[dim #6272a4]    Strata MoE 125B[/]\n\n"
         "[M] [bold #50fa7b]nexus ops maintenance[/]\n[dim #6272a4]    Manutencao Geral SOTA[/]\n\n"
         "[A] [bold #50fa7b]nexus ops check-ascii[/]\n[dim #6272a4]    Blindagem ASCII[/]"
     )
@@ -1151,6 +1166,7 @@ def _execute_shortcut(key: str):
         "t": [sys.executable, __file__, "stats", "timesfm"],
         "a": [sys.executable, __file__, "ops", "check-ascii"],
         "p": [sys.executable, __file__, "triad", "status"],
+        "x": [sys.executable, __file__, "ops", "strata"],
     }
     if key in cmd_map:
         console.clear()
@@ -1185,6 +1201,7 @@ async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
         "t",
         "a",
         "p",
+        "x",
         "q",
     }
     for _ in range(50):
@@ -2503,6 +2520,47 @@ def run_maintenance():
 HELP_MODEL_CHOICES = "Modelo: 31b, 31b_cloud, 12b, 4b, 8b, llama3_8b, qwen, laguna"
 
 
+@ops_app.command("strata")
+@ops_app.command("start-strata")
+def start_strata(
+    dry_run: bool = typer.Option(
+        False, "--dry-run", "-d", help="Valida configuracao e pre-flight sem iniciar o processo"
+    ),
+    install: bool = typer.Option(
+        False, "--install", "-i", help="Clona e instala o repositorio Strata automaticamente se ausente"
+    ),
+    family: str = typer.Option("coder", "--family", help="Familia: coder, qwen, swift"),
+    model: str = typer.Option("IQ1_M", "--model", help="Variante: IQ1_M, Q2_0, IQ2_XS"),
+    port: int = typer.Option(8080, "--port", "-p", help="Porta local HTTP"),
+):
+    """Gatilho de ignicao do Servidor de Inferencia Local Strata MoE 125B (v0.1.39)."""
+    script_caminho = BASE_DIR.parent / "scripts" / "ops" / "Start-StrataNode.ps1"
+    if not script_caminho.exists():
+        script_caminho = Path.home() / ".gemini" / "scripts" / "ops" / "Start-StrataNode.ps1"
+
+    cmd = [
+        "pwsh",
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        str(script_caminho),
+        "-Port",
+        str(port),
+        "-Family",
+        family,
+        "-Model",
+        model,
+    ]
+    if install:
+        cmd.append("-Install")
+    if dry_run:
+        cmd.append("-DryRun")
+
+    console.print(f"[bold cyan]Disparando inicializacao do no Strata ({family} {model}) na porta {port}...[/]")
+    subprocess.run(cmd, check=False)
+
+
 @ops_app.command("start-gemma")
 def start_gemma(
     force: bool = typer.Option(False, "--force", "-f", help="Mata instancias penduradas antes de iniciar"),
@@ -2555,14 +2613,6 @@ def start_gemma(
             env=env,
         )
     console.print("[bold magenta]Servidor Gemma 4 desperto em background na porta 17043.[/]")
-
-
-def _is_port_open(port: int) -> bool:
-    import socket
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.settimeout(0.2)
-        return s.connect_ex(("127.0.0.1", port)) == 0
 
 
 def _ensure_active_model(model: str, wait_proxy: bool = False) -> None:

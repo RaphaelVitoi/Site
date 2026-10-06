@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Nexus Dashboard SOTA v8.0 GOLD - Visualizador de Telemetria, Modelos e Pipeline de Operacoes em Tempo Real.
     Governanca: Raphael Vitoi | Avatar: Chico (Tier 1).
@@ -74,6 +74,8 @@ while ($true) {
         $gemma4b = $data.models.gemma4_4b
         $gemma31b = $data.models.gemma4_31b_cloud
 
+        $strata = $data.models.strata_moe_125b
+
         $qColor = "Yellow"
         if ($qwen.installed) { $qColor = "Green" }
 
@@ -83,6 +85,9 @@ while ($true) {
         $g31Color = "Cyan"
         if ($gemma31b.installed) { $g31Color = "Green" }
 
+        $sColor = "DarkCyan"
+        if ($strata.status -match "ONLINE") { $sColor = "Green" } elseif ($strata.installed) { $sColor = "Cyan" }
+
         Write-Host "    * Qwen 2.5 7B Local : " -NoNewline -ForegroundColor White
         Write-Host "$($qwen.tag) -> [$($qwen.status)]" -ForegroundColor $qColor
 
@@ -91,6 +96,11 @@ while ($true) {
 
         Write-Host "    * Gemma 4 31B Cloud : " -NoNewline -ForegroundColor White
         Write-Host "$($gemma31b.tag) -> [$($gemma31b.status)]" -ForegroundColor $g31Color
+
+        if ($strata) {
+            Write-Host "    * Strata 125B MoE   : " -NoNewline -ForegroundColor White
+            Write-Host "$($strata.tag) -> [$($strata.status)]" -ForegroundColor $sColor
+        }
     } else {
         Write-Host "    * Verificando status dos modelos..." -ForegroundColor DarkGray
     }

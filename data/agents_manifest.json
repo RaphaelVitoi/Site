@@ -43,6 +43,7 @@
       "agy-customizations",
       "windows-system-maintenance",
       "windows-visual-tuning",
+      "strata-inference-engine",
       "session-impact-evaluator",
       "site-session-handoff"
     ],

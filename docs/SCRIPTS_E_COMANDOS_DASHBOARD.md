@@ -1,4 +1,4 @@
-﻿# ðŸ› ï¸ Painel de Comandos e Scripts do CEO (Raphael Vitoi)
+# ðŸ› ï¸ Painel de Comandos e Scripts do CEO (Raphael Vitoi)
 >
 > **NEXUS SOTA GOD MODE v7.5** â€” Guia rÃ¡pido de referÃªncia operacional e atalhos do ecossistema.
 
@@ -32,6 +32,8 @@ exus-hub
   * **DescriÃ§Ã£o:** Inicializa o executor de background ( ask_executor.py) com persistÃªncia.
 * stop-worker
   * **DescriÃ§Ã£o:** Paralisa o executor de background com seguranÃ§a (SIGINT gracioso).
+* start-strata ou nexus ops strata [Atalho X no Dashboard]
+  * **DescriÃ§Ã£o:** Inicializa o nÃ³ local de inferÃªncia Strata MoE 125B (v0.1.39) com prioridade normal e pre-flight de porta.
 *
 
 exus-watch
