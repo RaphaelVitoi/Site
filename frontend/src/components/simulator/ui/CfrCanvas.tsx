@@ -1,304 +1,256 @@
 'use client';
 
 /**
- * IDENTITY: CfrCanvas (WebGPU Render Bridge)
+ * IDENTITY: CfrCanvas (High-Performance Poker Range & CFR Heatmap)
  * PATH: src/components/simulator/ui/CfrCanvas.tsx
- * ROLE: Renderizador ultrarrápido SOTA. Consome a matriz de regret (Zero-Copy) e injeta direto no pipeline WebGPU.
- * PRINCIPLE: Fricção Zero (Main Thread liberada, renderização de pixels delegada à GPU via Fragment Shader).
+ * ROLE: Renderizador gráfico de alta precisão para a Matriz 13x13 de Regret Matching.
+ *       Garante 100% de compatibilidade em todos os navegadores com aceleração 2D e suporte HiDPI.
  */
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-
-// SOTA FIX: Selando a tipagem WebGPU para o TypeScript (Ambientes sem @types/webgpu global)
-declare const GPUBufferUsage: {
-  readonly MAP_READ: 0x0001;
-  readonly MAP_WRITE: 0x0002;
-  readonly COPY_SRC: 0x0004;
-  readonly COPY_DST: 0x0008;
-  readonly INDEX: 0x0010;
-  readonly VERTEX: 0x0020;
-  readonly UNIFORM: 0x0040;
-  readonly STORAGE: 0x0080;
-};
-
-const WGSL_SHADER = `
-struct Uniforms {
-  nodes: f32,
-};
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage, read> matrix: array<f32>;
-
-struct VertexOut {
-  @builtin(position) position: vec4<f32>,
-  @location(0) uv: vec2<f32>,
-};
-
-// SOTA: Renderização de um Quad fullscreen sem necessidade de Vertex Buffers
-@vertex
-fn vs_main(@builtin(vertex_index) vertexIndex: u32) -> VertexOut {
-  var pos = array<vec2<f32>, 6>(
-    vec2<f32>(-1.0, -1.0), vec2<f32>(1.0, -1.0), vec2<f32>(-1.0, 1.0),
-    vec2<f32>(-1.0, 1.0), vec2<f32>(1.0, -1.0), vec2<f32>(1.0, 1.0)
-  );
-  var uv = array<vec2<f32>, 6>(
-    vec2<f32>(0.0, 1.0), vec2<f32>(1.0, 1.0), vec2<f32>(0.0, 0.0),
-    vec2<f32>(0.0, 0.0), vec2<f32>(1.0, 1.0), vec2<f32>(1.0, 0.0)
-  );
-  var out: VertexOut;
-  out.position = vec4<f32>(pos[vertexIndex], 0.0, 1.0);
-  out.uv = uv[vertexIndex];
-  return out;
-}
-
-@fragment
-fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-  // Extração O(1) do índice vetorial baseada na coordenada UV e grid
-  let x = u32(in.uv.x * uniforms.nodes);
-  let y = u32(in.uv.y * uniforms.nodes);
-  let idx = x * u32(uniforms.nodes) + y;
-
-  let val = matrix[idx];
-
-  // SOTA: Colorimetria SOTA Gold & Indigo (Heatmap Sutil)
-  let r = val * 0.4 + 0.02;
-  let g = val * 0.45 + 0.02;
-  let b = (1.0 - val) * 0.6 + 0.05;
-  let a = 0.04 + (val * 0.2); // Transparência refinada para estética Glassmorphism
-
-  return vec4<f32>(r, g, b, a);
-}
-`;
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
 export interface CfrCanvasProps {
-  nodes: number;
+  nodes?: number;
+  onHoverHand?: (handInfo: { hand: string; value: number; type: 'pair' | 'suited' | 'offsuit' } | null) => void;
 }
 
 export interface CfrCanvasRef {
   updateMatrix: (matrix: Float32Array) => void;
 }
 
-// SOTA: Interfaces mínimas para blindagem de tipos WebGPU sem dependências externas
-interface SotaWebGpuContext {
-  configure(config: { device: unknown; format: string; alphaMode: string }): void;
-  getCurrentTexture(): { createView(): unknown };
+const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+function getHandLabel(row: number, col: number): { name: string; type: 'pair' | 'suited' | 'offsuit' } {
+  const r1 = RANKS[row] ?? '2';
+  const r2 = RANKS[col] ?? '2';
+  if (row === col) {
+    return { name: `${r1}${r2}`, type: 'pair' };
+  }
+  if (row < col) {
+    return { name: `${r1}${r2}s`, type: 'suited' };
+  }
+  return { name: `${r2}${r1}o`, type: 'offsuit' };
 }
 
-interface SotaGpuDevice {
-  createShaderModule(desc: { label: string; code: string }): unknown;
-  createRenderPipeline(desc: Record<string, unknown>): {
-    getBindGroupLayout(index: number): unknown;
-  };
-  createBuffer(desc: { size: number; usage: number }): unknown;
-  queue: {
-    writeBuffer(buffer: unknown, offset: number, data: Float32Array): void;
-    submit(commands: unknown[]): void;
-  };
-  createBindGroup(desc: Record<string, unknown>): unknown;
-  createCommandEncoder(): {
-    beginRenderPass(desc: Record<string, unknown>): {
-      setPipeline(pipeline: unknown): void;
-      setBindGroup(index: number, bindGroup: unknown): void;
-      draw(v: number, i: number, v1: number, v2: number): void;
-      end(): void;
+function getCellColor(val: number): { bg: string; text: string } {
+  // Clamped entre 0 e 1
+  const v = Math.max(0, Math.min(1, val));
+
+  if (v >= 0.75) {
+    // Agressão alta / Frequência dominante (Verde Esmeralda SOTA)
+    return {
+      bg: `rgba(16, 185, 129, ${0.4 + v * 0.55})`,
+      text: '#ffffff',
     };
-    finish(): unknown;
+  }
+  if (v >= 0.45) {
+    // Decisão mista / Call-Raise moderado (Índigo / Azul Vibrante)
+    return {
+      bg: `rgba(79, 70, 229, ${0.35 + v * 0.45})`,
+      text: '#e2e8f0',
+    };
+  }
+  if (v >= 0.2) {
+    // Frequência baixa / Ação marginal (Azul ardósia escuro)
+    return {
+      bg: `rgba(30, 41, 59, ${0.4 + v * 0.4})`,
+      text: '#94a3b8',
+    };
+  }
+  // Fold quase puro (Preto / Ardósia Profundo)
+  return {
+    bg: 'rgba(15, 23, 42, 0.75)',
+    text: '#64748b',
   };
-  destroy(): void;
 }
 
-export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ nodes }, ref) => {
+export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ nodes = 13, onHoverHand }, ref) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const deviceRef = useRef<SotaGpuDevice | null>(null);
-  const pipelineRef = useRef<unknown>(null);
-  const matrixBufferRef = useRef<unknown>(null);
-  const uniformBufferRef = useRef<unknown>(null);
-  const bindGroupRef = useRef<unknown>(null);
+  const matrixRef = useRef<Float32Array | null>(null);
+  const hoveredCellRef = useRef<{ row: number; col: number } | null>(null);
+  const [tooltipInfo, setTooltipInfo] = useState<{
+    name: string;
+    value: number;
+    type: 'pair' | 'suited' | 'offsuit';
+    x: number;
+    y: number;
+  } | null>(null);
 
-  const [isReady, setIsReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const renderGrid = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-  useEffect(() => {
-    let isCancelled = false;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const width = rect.width;
+    const height = rect.height;
 
-    async function initWebGPU() {
-      const navigatorGpu = (navigator as unknown as Record<string, unknown>)['gpu'] as
-        | {
-            requestAdapter(options?: Record<string, unknown>): Promise<{
-              requestDevice(): Promise<SotaGpuDevice>;
-            } | null>;
-            getPreferredCanvasFormat(): string;
-          }
-        | undefined;
+    if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+    }
 
-      if (!navigatorGpu) {
-        setError('WebGPU não suportado neste navegador. Verifique a compatibilidade e aceleração de hardware.');
-        return;
-      }
+    ctx.save();
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
 
-      try {
-        const adapter = await navigatorGpu.requestAdapter({
-          powerPreference: 'high-performance',
-        });
-        if (!adapter) throw new Error('Adaptador WebGPU negou o pedido de contexto.');
+    const matrix = matrixRef.current;
+    const n = Math.min(nodes, 13);
+    const cellW = width / n;
+    const cellH = height / n;
+    const hovered = hoveredCellRef.current;
 
-        const device = await adapter.requestDevice();
-        if (isCancelled) return;
-        deviceRef.current = device;
+    // 1. Desenhar Células da Matriz 13x13
+    for (let r = 0; r < n; r++) {
+      for (let c = 0; c < n; c++) {
+        const idx = r * n + c;
+        const val = matrix ? (matrix[idx] ?? 0) : 0.5;
+        const { name, type } = getHandLabel(r, c);
+        const { bg, text } = getCellColor(val);
+        const x = c * cellW;
+        const y = r * cellH;
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+        // Fundo da célula
+        ctx.fillStyle = bg;
+        ctx.fillRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
 
-        // Cast blindado para anular a cegueira tipográfica do TS sobre WebGPU
-        const context = canvas.getContext('webgpu') as unknown as SotaWebGpuContext;
-        if (!context) throw new Error('Falha ao ancorar o contexto de desenho WebGPU no DOM.');
+        // Borda de célula
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
 
-        const presentationFormat = navigatorGpu.getPreferredCanvasFormat();
-        context.configure({
-          device,
-          format: presentationFormat,
-          alphaMode: 'premultiplied',
-        });
+        // Rótulo da mão
+        const fontSize = Math.max(8, Math.min(11, Math.floor(cellW * 0.38)));
+        ctx.font = `${type === 'pair' ? 'bold' : '600'} ${fontSize}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = text;
+        ctx.fillText(name, x + cellW / 2, y + cellH / 2);
 
-        const shaderModule = device.createShaderModule({
-          label: 'CFR Heatmap Shader',
-          code: WGSL_SHADER,
-        });
-
-        const pipeline = device.createRenderPipeline({
-          label: 'CFR Render Pipeline',
-          layout: 'auto',
-          vertex: { module: shaderModule, entryPoint: 'vs_main' },
-          fragment: {
-            module: shaderModule,
-            entryPoint: 'fs_main',
-            targets: [
-              {
-                format: presentationFormat,
-                blend: {
-                  color: {
-                    srcFactor: 'src-alpha',
-                    dstFactor: 'one-minus-src-alpha',
-                    operation: 'add',
-                  },
-                  alpha: {
-                    srcFactor: 'one',
-                    dstFactor: 'one-minus-src-alpha',
-                    operation: 'add',
-                  },
-                },
-              },
-            ],
-          },
-          primitive: { topology: 'triangle-list' },
-        });
-
-        pipelineRef.current = pipeline;
-
-        // Homeostase de VRAM: O Uniform e o Storage são imutáveis em tamanho no ciclo de vida
-        const uBuffer = device.createBuffer({
-          size: 4,
-          usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-        device.queue.writeBuffer(uBuffer, 0, new Float32Array([nodes]));
-        uniformBufferRef.current = uBuffer;
-
-        const maxNodes = 100 * 100; // Limite arquitetural estrito
-        const mBuffer = device.createBuffer({
-          size: maxNodes * 4,
-          usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-        });
-        matrixBufferRef.current = mBuffer;
-
-        bindGroupRef.current = device.createBindGroup({
-          layout: pipeline.getBindGroupLayout(0),
-          entries: [
-            { binding: 0, resource: { buffer: uBuffer } },
-            { binding: 1, resource: { buffer: mBuffer } },
-          ],
-        });
-
-        setIsReady(true);
-      } catch (err: unknown) {
-        setError((err as Error).message || 'Entropia detectada na ponte WebGPU');
+        // Indicador de tipo sutil (diagonal ou par)
+        if (type === 'pair') {
+          ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2);
+        }
       }
     }
 
-    initWebGPU();
+    // 2. Realce da Célula sob o Mouse (Hover)
+    if (hovered && hovered.row < n && hovered.col < n) {
+      const hx = hovered.col * cellW;
+      const hy = hovered.row * cellH;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowBlur = 8;
+      ctx.strokeRect(hx + 1, hy + 1, cellW - 2, cellH - 2);
+      ctx.shadowBlur = 0;
+    }
 
-    return () => {
-      isCancelled = true;
-      if (uniformBufferRef.current) (uniformBufferRef.current as { destroy(): void }).destroy();
-      if (matrixBufferRef.current) (matrixBufferRef.current as { destroy(): void }).destroy();
-      if (deviceRef.current) (deviceRef.current as { destroy(): void }).destroy();
-    };
+    ctx.restore();
   }, [nodes]);
 
   useImperativeHandle(
     ref,
     () => ({
       updateMatrix: (newMatrix: Float32Array) => {
-        if (!isReady || !deviceRef.current || !pipelineRef.current || !matrixBufferRef.current || !bindGroupRef.current)
-          return;
-
-        const device = deviceRef.current as {
-          queue: {
-            writeBuffer(buffer: unknown, offset: number, data: Float32Array): void;
-            submit(commands: unknown[]): void;
-          };
-          createCommandEncoder(): {
-            beginRenderPass(desc: Record<string, unknown>): {
-              setPipeline(pipeline: unknown): void;
-              setBindGroup(index: number, bindGroup: unknown): void;
-              draw(v: number, i: number, v1: number, v2: number): void;
-              end(): void;
-            };
-            finish(): unknown;
-          };
-        };
-        const context = canvasRef.current?.getContext('webgpu') as unknown as SotaWebGpuContext;
-        if (!context) return;
-
-        // Fricção Zero: Injeção direta da matriz (Zero-Copy)
-        device.queue.writeBuffer(matrixBufferRef.current, 0, newMatrix);
-
-        const commandEncoder = device.createCommandEncoder();
-        const textureView = context.getCurrentTexture().createView();
-
-        const renderPass = commandEncoder.beginRenderPass({
-          colorAttachments: [
-            {
-              view: textureView,
-              clearValue: { r: 0, g: 0, b: 0, a: 0 }, // Fundo transparente SOTA (Glassmorphism integration)
-              loadOp: 'clear',
-              storeOp: 'store',
-            },
-          ],
-        });
-
-        renderPass.setPipeline(pipelineRef.current);
-        renderPass.setBindGroup(0, bindGroupRef.current);
-        renderPass.draw(6, 1, 0, 0);
-        renderPass.end();
-
-        device.queue.submit([commandEncoder.finish()]);
+        matrixRef.current = newMatrix;
+        renderGrid();
       },
     }),
-    [isReady],
+    [renderGrid],
   );
 
-  if (error) {
-    return (
-      <div className="border-accent-danger/20 bg-accent-danger-surface/5 text-accent-danger flex h-full w-full items-center justify-center rounded-3xl border p-4 text-center font-mono text-[0.6rem]">
-        {error}
-      </div>
-    );
-  }
+  useEffect(() => {
+    renderGrid();
+    window.addEventListener('resize', renderGrid);
+    return () => window.removeEventListener('resize', renderGrid);
+  }, [renderGrid]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const n = Math.min(nodes, 13);
+    const cellW = rect.width / n;
+    const cellH = rect.height / n;
+    const col = Math.floor(x / cellW);
+    const row = Math.floor(y / cellH);
+
+    if (row >= 0 && row < n && col >= 0 && col < n) {
+      hoveredCellRef.current = { row, col };
+      const idx = row * n + col;
+      const val = matrixRef.current ? (matrixRef.current[idx] ?? 0) : 0.5;
+      const { name, type } = getHandLabel(row, col);
+
+      setTooltipInfo({
+        name,
+        value: val,
+        type,
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+
+      onHoverHand?.({ hand: name, value: val, type });
+      renderGrid();
+    } else {
+      handleMouseLeave();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    hoveredCellRef.current = null;
+    setTooltipInfo(null);
+    onHoverHand?.(null);
+    renderGrid();
+  };
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 h-full w-full opacity-40 mix-blend-screen transition-opacity duration-1000"
-    />
+    <div ref={containerRef} className="relative w-full h-full aspect-square select-none">
+      <canvas
+        ref={canvasRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="w-full h-full block rounded-2xl cursor-crosshair"
+      />
+
+      {tooltipInfo && (
+        <div
+          className="pointer-events-none absolute z-30 transform -translate-x-1/2 -translate-y-full mb-2 bg-slate-950/95 border border-white/20 rounded-xl px-3 py-1.5 shadow-2xl backdrop-blur-md text-[0.7rem] font-mono whitespace-nowrap"
+          style={{
+            left: `${Math.max(40, Math.min(tooltipInfo.x, 380))}px`,
+            top: `${Math.max(28, tooltipInfo.y - 8)}px`,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="font-black text-white text-xs">{tooltipInfo.name}</span>
+            <span
+              className={`text-[0.6rem] px-1.5 py-0.2 rounded font-bold uppercase ${
+                tooltipInfo.type === 'pair'
+                  ? 'bg-accent-amber/20 text-accent-amber'
+                  : tooltipInfo.type === 'suited'
+                    ? 'bg-accent-emerald/20 text-accent-emerald'
+                    : 'bg-accent-indigo/20 text-accent-indigo-light'
+              }`}
+            >
+              {tooltipInfo.type === 'pair' ? 'Par' : tooltipInfo.type === 'suited' ? 'Suited' : 'Offsuit'}
+            </span>
+          </div>
+          <div className="text-[0.65rem] text-text-muted mt-0.5 flex gap-2">
+            <span>Ação: <strong className="text-accent-emerald">{(tooltipInfo.value * 100).toFixed(1)}%</strong></span>
+            <span>Fold: <strong className="text-text-dim">{((1 - tooltipInfo.value) * 100).toFixed(1)}%</strong></span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 });
+
 CfrCanvas.displayName = 'CfrCanvas';

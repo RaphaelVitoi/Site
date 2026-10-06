@@ -4,7 +4,7 @@ export interface CfrRegretDiagnostic {
 	value: number;
 }
 
-const DEFAULT_SAMPLE_INTERVAL = 300;
+const DEFAULT_SAMPLE_INTERVAL = 10;
 const DEFAULT_MAX_SAMPLES = 32;
 
 /**
