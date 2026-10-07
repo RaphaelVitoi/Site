@@ -1,48 +1,10 @@
-"""Harness de paridade do benchmark publico ICM x ChipEV.
-
-## O que este harness e
-
-O artefato `data/pmev_benchmark_icm_chipev.v1.json` foi gerado por
-`scripts/validation/exportar_benchmark_icm_publico.py` a partir de hand
-histories LOCAIS que **nao sao versionadas** e nao saem da maquina. Isso cria
-um buraco de verificacao: nada no repositorio conseguia responder "esse
-artefato ainda corresponde ao motor atual?".
-
-Este harness fecha esse buraco usando o que o proprio artefato publica: a
-amostra pequena de estados reais, com stacks, blinds e lugar final. Ele
-**reexecuta** o kernel sobre essa amostra e compara com as metricas
-agregadas gravadas, dentro do intervalo que o artefato declara.
-
-O que ele NAO faz, e nao pode:
-
-- Nao recalcula as 15.459 estados. O artefato so publica agregados com
-  intervalo de bootstrap, nao registros por estado. Recalcular exigiria as
-  maos de origem.
-- Nao valida o IC do bootstrap. `metodo.intervalo` diz 2000 reamostragens com
-  semente 20260914, mas o resampleo e por torneio e os nomes dos torneios
-  tambem nao saem da maquina. O harness confere o **ponto central** das
-  metricas e que o intervalo declarado **contem** o valor do motor, nao que
-  o intervalo foi reamostrado igual.
-
-Essas duas limitacoes sao deliberadas e aparecem no relatorio, para que
-ninguem leia um verde como "o benchmark inteiro foi revalidado".
-
-## Uso
-
-    .venv/Scripts/python.exe -m engine.pmev_harness_icm --report
-    .venv/Scripts/python.exe -m engine.pmev_harness_icm --json
-
-Sai com codigo 1 se qualquer verificacao falhar, para servir de portao.
-"""
-
-from __future__ import annotations
-
 import argparse
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 import json
 import math
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
 
