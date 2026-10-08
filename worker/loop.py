@@ -184,7 +184,16 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
         if callable(safe_release):
             safe_release()
         await asyncio.sleep(yield_time)
-        await manager.update_task_status(task.id, "pending")
+        try:
+            await manager.update_task_status(task.id, "pending")
+        except Exception as db_err:  # noqa: BLE001
+            logger.error(
+                "[[%s]%s] Falha ao retornar tarefa %s para pending no SQLite: %s",
+                getattr(te, "_c", lambda _: "")(task.agent),
+                task.agent,
+                task.id,
+                db_err,
+            )
         return
 
     if any(
@@ -202,7 +211,16 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
         if callable(safe_release):
             safe_release()
         await asyncio.sleep(yield_time)
-        await manager.update_task_status(task.id, "pending")
+        try:
+            await manager.update_task_status(task.id, "pending")
+        except Exception as db_err:  # noqa: BLE001
+            logger.error(
+                "[[%s]%s] Falha ao retornar tarefa %s para pending no SQLite: %s",
+                getattr(te, "_c", lambda _: "")(task.agent),
+                task.agent,
+                task.id,
+                db_err,
+            )
         return
 
     logger.error(
@@ -211,6 +229,27 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
         task.agent,
         e,
     )
+    if callable(safe_release):
+        safe_release()
+    try:
+        await manager.update_task_status(task.id, "failed")
+        await manager.update_task_metadata(
+            task.id,
+            {
+                "workflow_status": "failed",
+                "last_error_class": error_class,
+                "last_error_message": str(e)[:400],
+            },
+            merge=True,
+        )
+    except Exception as db_err:  # noqa: BLE001
+        logger.error(
+            "[[%s]%s] Falha ao persistir status 'failed' para tarefa %s no SQLite: %s",
+            getattr(te, "_c", lambda _: "")(task.agent),
+            task.agent,
+            task.id,
+            db_err,
+        )
 
 
 async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphore) -> None:

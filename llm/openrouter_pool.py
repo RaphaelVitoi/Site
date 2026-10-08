@@ -21,7 +21,7 @@ import logging
 import os
 import re
 import sys
-from typing import NamedTuple
+from typing import NamedTuple, TypedDict
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +50,18 @@ class KeyHealth(NamedTuple):
     is_revoked: bool
 
 
+class KeyStats(TypedDict):
+    key: str
+    tier: int
+    attempts: int
+    successes: int
+    failures: int
+    consecutive_failures: int
+    avg_latency_ms: float
+    blocked_until: datetime | None
+    is_revoked: bool
+
+
 class OpenRouterPoolManager:
     """
     Gerenciador com isolamento de cotas por Tier, selecao adaptativa e circuit breaker.
@@ -59,7 +71,7 @@ class OpenRouterPoolManager:
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
         self._pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
-        self._stats: dict[str, dict[str, float | int | datetime | bool | None]] = {}
+        self._stats: dict[str, KeyStats] = {}
         self.reload_from_environment()
 
     def reload_from_environment(self) -> None:
@@ -142,17 +154,17 @@ class OpenRouterPoolManager:
         data = self._stats.get(s8)
         if not data:
             return 50.0
-        if data.get("is_revoked"):
+        if data["is_revoked"]:
             return -1000.0
 
-        blocked_until = data.get("blocked_until")
-        if blocked_until and isinstance(blocked_until, datetime) and datetime.now(UTC) < blocked_until:
+        blocked_until = data["blocked_until"]
+        if blocked_until and datetime.now(UTC) < blocked_until:
             return -500.0  # Em cooldown
 
-        attempts = int(data.get("attempts", 0))
-        successes = int(data.get("successes", 0))
-        consecutive_failures = int(data.get("consecutive_failures", 0))
-        latency = float(data.get("avg_latency_ms", 500.0))
+        attempts = data["attempts"]
+        successes = data["successes"]
+        consecutive_failures = data["consecutive_failures"]
+        latency = data["avg_latency_ms"]
 
         if attempts == 0:
             return 80.0  # Chave limpa pronta para uso
@@ -210,13 +222,13 @@ class OpenRouterPoolManager:
             if s8 not in self._stats:
                 return
             st = self._stats[s8]
-            st["attempts"] = int(st["attempts"]) + 1
-            st["successes"] = int(st["successes"]) + 1
+            st["attempts"] += 1
+            st["successes"] += 1
             st["consecutive_failures"] = 0
             st["blocked_until"] = None
 
             # Media movel exponencial para latencia
-            old_lat = float(st["avg_latency_ms"])
+            old_lat = st["avg_latency_ms"]
             st["avg_latency_ms"] = (old_lat * 0.7) + (latency_ms * 0.3)
 
     async def mark_failure(self, key: str, status_code: int = 500, retry_after_s: float = 0.0) -> None:
@@ -227,9 +239,9 @@ class OpenRouterPoolManager:
             if s8 not in self._stats:
                 return
             st = self._stats[s8]
-            st["attempts"] = int(st["attempts"]) + 1
-            st["failures"] = int(st["failures"]) + 1
-            st["consecutive_failures"] = int(st["consecutive_failures"]) + 1
+            st["attempts"] += 1
+            st["failures"] += 1
+            st["consecutive_failures"] += 1
 
             if status_code in (401, 403):
                 # Chave invalida ou revogada: banimento definitivo
@@ -253,20 +265,20 @@ class OpenRouterPoolManager:
         summary: list[dict[str, str | int | float | bool]] = []
         for s8, st in sorted(self._stats.items(), key=lambda x: (x[1]["tier"], x[0])):
             blocked = False
-            b_until = st.get("blocked_until")
+            b_until = st["blocked_until"]
             if b_until and isinstance(b_until, datetime):
                 blocked = datetime.now(UTC) < b_until
 
             summary.append(
                 {
                     "sha8": s8,
-                    "tier": int(st["tier"]),
-                    "attempts": int(st["attempts"]),
-                    "successes": int(st["successes"]),
-                    "failures": int(st["failures"]),
-                    "avg_latency_ms": round(float(st["avg_latency_ms"]), 1),
+                    "tier": st["tier"],
+                    "attempts": st["attempts"],
+                    "successes": st["successes"],
+                    "failures": st["failures"],
+                    "avg_latency_ms": round(st["avg_latency_ms"], 1),
                     "is_blocked": blocked,
-                    "is_revoked": bool(st["is_revoked"]),
+                    "is_revoked": st["is_revoked"],
                     "score": round(self._score_key(s8), 1),
                 }
             )
@@ -275,3 +287,8 @@ class OpenRouterPoolManager:
 
 # Instancia singleton para uso em todo o backend
 openrouter_pool_manager = OpenRouterPoolManager()
+
+
+def get_openrouter_pool() -> OpenRouterPoolManager:
+    """Retorna a instancia singleton do gerenciador de pool."""
+    return openrouter_pool_manager

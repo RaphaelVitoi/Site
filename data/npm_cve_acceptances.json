@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "proposito": "Aceites de CVE npm sem versao de correcao disponivel no registro oficial. Um aceite e estritamente vinculado ao ID, ao pacote e a versao; qualquer divergencia expira o aceite e devolve o item para revisao. Aceite NAO e supressao: o portao continua contando a CVE e exigindo que ela esteja declarada aqui, com parecer, autoridade e evidencia de alcance.",
+  "proposito": "Aceites de CVE npm sem versao de correcao disponivel no registro oficial ou com correcao em versao major incompativel com dependencias transitivas. Um aceite e estritamente vinculado ao ID, ao pacote e a versao; qualquer divergencia expira o aceite e devolve o item para revisao. Aceite NAO e supressao: o portao continua contando a CVE e exigindo que ela esteja declarada aqui, com parecer, autoridade e evidencia de alcance.",
   "acceptances": [
     {
       "id": "braces-stack-exhaustion-dev-lint-20261004",
@@ -20,6 +20,86 @@
         "registro": "reports/REGISTRO-2026-10-04-http-metrics-correlation-e-worker-shutdown.md"
       },
       "expira_se": "Qualquer versao corrigida (>3.0.3) for publicada no npm, ou braces for introduzido em dependencias de producao.",
+      "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "shell-quote-command-injection-dev-concurrently-20261008",
+      "status": "accepted",
+      "accepted_at": "2026-10-08",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "shell-quote",
+      "version": "1.9.0",
+      "vulnerability_ids": [
+        "GHSA-pqg4-j6r4-53mv"
+      ],
+      "evidence": {
+        "vetor": "Command injection via terminador de linha em token apos token de comentario no metodo quote() do shell-quote.",
+        "alcance_medido": "Grep em todo o codigo do projeto confirma zero uso direto de shell-quote. A dependencia e estritamente transitiva da ferramenta de desenvolvimento concurrently@10.0.5 nos scripts auxiliares watch:all e dev:all do monorepo.",
+        "consumo_real": "Utilizado exclusivamente em scripts locais de desenvolvimento para execucao paralela de processos CLI. Nao empacotado no build Next.js, nem no runtime Python, nem em producao.",
+        "ausencia_de_correcao": "concurrently@10.0.5 fixa a versao shell-quote@1.9.0; atualizacao forcada para shell-quote >=1.11.0 exigiria patch upstream do concurrently.",
+        "registro": "reports/REGISTRO-2026-10-08-auditoria-e-remediacao-backend.md"
+      },
+      "expira_se": "concurrently publicar versao com shell-quote corrigido (>1.10.0), ou shell-quote for introduzido em dependencias de producao.",
+      "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "katex-prototype-pollution-math-rendering-20261008",
+      "status": "accepted",
+      "accepted_at": "2026-10-08",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "katex",
+      "version": "0.16.47",
+      "vulnerability_ids": [
+        "GHSA-238p-pmpm-9mq7"
+      ],
+      "evidence": {
+        "vetor": "Poluicao de prototipo existente pode contornar restricoes de confianca no parser de formulas matematicas do KaTeX.",
+        "alcance_medido": "Consumo transitivo atraves de mermaid, rehype-katex e micromark-extension-math para renderizacao de diagramas e formulas educacionais em Markdown. Todas as formulas renderizadas sao de templates estaticos internos ou sanitizadas por politicas rigorosas de Markdown.",
+        "consumo_real": "Renderizacao de formulas em componentes de UI documental. Nenhum usuario externo nao autenticado submete formulas arbitrarias com execucao em ambiente de servidor.",
+        "ausencia_de_correcao": "mermaid@11.16.1 fixa dependencia transitiva em katex@0.16.x; versao corrigida upstream de mermaid ainda nao integrou katex 0.19.0 sem quebra de compatibilidade.",
+        "registro": "reports/REGISTRO-2026-10-08-auditoria-e-remediacao-backend.md"
+      },
+      "expira_se": "mermaid ou rehype-katex atualizarem para versoes compativeis com katex >=0.18.2 sem quebra de build.",
+      "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "postcss-selector-parser-quadratic-complexity-dev-20261008",
+      "status": "accepted",
+      "accepted_at": "2026-10-08",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "postcss-selector-parser",
+      "version": "6.0.10",
+      "vulnerability_ids": [
+        "GHSA-rj75-hqrm-r3gf"
+      ],
+      "evidence": {
+        "vetor": "Complexidade quadratica no parser de seletores planos permite esgotamento de CPU ao analisar seletores altamente aninhados/repetidos.",
+        "alcance_medido": "Dependencia transitiva da ferramenta de estilizacao @tailwindcss/typography@0.5.20 utilizada durante o build/transpilacao de CSS estatico.",
+        "consumo_real": "Executado estritamente em tempo de compilacao do Next.js/Tailwind sobre folhas de estilo controladas pelo repositorio. Nao avalia seletores CSS fornecidos em runtime por usuarios.",
+        "ausencia_de_correcao": "A versao corrigida e 7.1.6 (major bump com breaking changes), nao compativel nativamente com a cadeia atual de @tailwindcss/typography 0.5.x.",
+        "registro": "reports/REGISTRO-2026-10-08-auditoria-e-remediacao-backend.md"
+      },
+      "expira_se": "@tailwindcss/typography migrar para postcss-selector-parser ^7.x compativel.",
+      "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "smol-toml-quadratic-parsing-dev-markdownlint-20261008",
+      "status": "accepted",
+      "accepted_at": "2026-10-08",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "smol-toml",
+      "version": "1.7.2",
+      "vulnerability_ids": [
+        "GHSA-r4xh-jqrq-34v2"
+      ],
+      "evidence": {
+        "vetor": "Tempo de execucao quadratico em parse() devido ao re-escaneamento de chaves ate o final do documento em smol-toml <=1.8.0.",
+        "alcance_medido": "Dependencia transitiva de markdownlint-cli@0.49.1 para parser de frontmatter TOML em arquivos Markdown locais.",
+        "consumo_real": "Ferramenta de lint estatico em desenvolvimento local (npm run lint:md). Zero presenca em runtime de producao.",
+        "ausencia_de_correcao": "markdownlint-cli@0.49.1 fixa smol-toml 1.7.2 em sua arvore interna de dependencias transitivas.",
+        "registro": "reports/REGISTRO-2026-10-08-auditoria-e-remediacao-backend.md"
+      },
+      "expira_se": "markdownlint-cli publicar versao atualizada adotando smol-toml >=1.9.0.",
       "revisar_em": "2026-12-31"
     }
   ]

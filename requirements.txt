@@ -9,6 +9,7 @@ aiofiles>=24.1.0
 aiohttp>=3.11.0
 aiosqlite>=0.21.0
 fastapi>=0.115.0
+multidict>=6.9.1
 uvicorn[standard]>=0.34.0
 
 # ── PYDANTIC & SETTINGS ───────────────────────────────────────────────────────
