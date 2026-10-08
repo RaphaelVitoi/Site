@@ -150,7 +150,7 @@ export default function TheoryPanel({
 							onClick={() => setActiveLens(tab.id as TheoryLens)}
 							className={`w-full py-2 sm:py-2.5 px-1 sm:px-2 rounded-xl text-[0.62rem] sm:text-[0.7rem] font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer border ${
 								isActive
-									? 'bg-accent-indigo text-white border-accent-indigo-light shadow-lg shadow-indigo-500/25 ring-1 ring-white/20'
+									? 'bg-accent-indigo-surface text-white border-accent-indigo-light shadow-lg shadow-indigo-500/25 ring-1 ring-white/20'
 									: 'bg-slate-900/60 hover:bg-slate-800 text-text-dim hover:text-white border-white/5 hover:border-white/15'
 							}`}
 						>

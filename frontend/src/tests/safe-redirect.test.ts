@@ -1,4 +1,4 @@
-import { safeRedirectPath } from './redirect';
+import { safeRedirectPath } from '@/lib/safe-redirect';
 
 describe('safeRedirectPath', () => {
 	it.each(['/', '/dashboard', '/biblioteca?tab=recent'])('accepts an internal path: %s', (candidate) => {

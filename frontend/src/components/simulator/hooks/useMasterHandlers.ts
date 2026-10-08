@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback } from 'react';
 import type { Scenario, HeroPosition } from '../solver/types';
@@ -13,6 +13,8 @@ interface UseMasterHandlersParams {
 	resetState: (scenario: Scenario) => void;
 	updatePhysics: (partial: Partial<SotaPhysicsState>) => void;
 	startTransition: (scope: () => void) => void;
+	setHeroPosition?: (pos: HeroPosition) => void;
+	setHeroInvested?: (invested: number) => void;
 }
 
 /**
@@ -28,6 +30,8 @@ export function useMasterHandlers({
 	resetState,
 	updatePhysics,
 	startTransition,
+	setHeroPosition,
+	setHeroInvested,
 }: UseMasterHandlersParams) {
 	const handleScenarioSelect = useCallback(
 		(id: string) => {
@@ -72,9 +76,11 @@ export function useMasterHandlers({
 				OOP: 0,
 			};
 			const heroInvested = anteBb + (posOffset[pos] ?? 0);
+			setHeroPosition?.(pos);
+			setHeroInvested?.(heroInvested);
 			updatePhysics({ position: pos, heroInvested });
 		},
-		[anteSize, updatePhysics],
+		[anteSize, updatePhysics, setHeroPosition, setHeroInvested],
 	);
 
 	return {

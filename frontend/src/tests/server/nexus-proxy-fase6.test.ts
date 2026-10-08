@@ -177,5 +177,23 @@ describe('FASE 6 — X-User-Token no contrato gateway→backend', () => {
 		);
 		warnSpy.mockRestore();
 	});
+
+	it('retorna 413 quando o corpo excede o teto de 2 MB', async () => {
+		capturarFetch();
+		const headers = new Headers();
+		headers.set('content-length', String(3 * 1024 * 1024));
+		const reqGrande = {
+			json: async () => ({}),
+			headers,
+			body: null,
+		} as unknown as Request;
+
+		const resp = await encaminharAoNexus(reqGrande, '/api/v1/timesfm/forecast', {
+			obterSessao: auth,
+			rotulo: 'TimesFM',
+			obterToken: async () => null,
+		});
+		expect(resp.status).toBe(413);
+	});
 });
 

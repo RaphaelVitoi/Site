@@ -18,6 +18,9 @@ import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 import { buildNexusServerUrl } from '@/lib/api-contract';
 import { resolveAuthSecret } from '@/lib/server/auth-secret';
+import { CorpoExcedeLimiteError, lerCorpoComLimite } from '@/lib/server/limited-body';
+
+const MAX_PROXY_BODY_BYTES = 2 * 1024 * 1024; // 2 MB
 
 /**
  * Extrai o token JWT da sessão, ou `null` se não houver.
@@ -122,8 +125,21 @@ export async function encaminharAoNexus(
 
 	let body: unknown;
 	try {
-		body = await req.json();
-	} catch {
+		const texto = await lerCorpoComLimite(req, MAX_PROXY_BODY_BYTES);
+		if (texto) {
+			body = JSON.parse(texto);
+		} else if (typeof req.json === 'function') {
+			body = await req.json();
+		} else {
+			body = {};
+		}
+	} catch (error) {
+		if (error instanceof CorpoExcedeLimiteError) {
+			return NextResponse.json(
+				{ status: 'ERROR', error: `${rotulo}: corpo da requisição excede o limite de 2 MB.` },
+				{ status: 413 },
+			);
+		}
 		return NextResponse.json({ status: 'ERROR', error: `${rotulo}: JSON inválido.` }, { status: 400 });
 	}
 

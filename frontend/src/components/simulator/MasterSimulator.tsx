@@ -29,6 +29,7 @@ import useSWR from 'swr';
 
 import { MasterTableVisualizer } from './ui/MasterTableVisualizer';
 import { ScenarioQuickSelector } from './ui/ScenarioQuickSelector';
+import { generateDynamicICMQuiz } from '../quiz/icmQuizGenerator';
 
 // SOTA: Dynamic imports with ssr: false for WASM/Worker safety
 const EquityCalculator = dynamic(() => import('./panels/EquityCalculator'), {
@@ -70,6 +71,9 @@ const DashboardSOTA = dynamic(() => import('./DashboardSOTA'), { ssr: false });
 const InsolvencyRadar = dynamic(() => import('./ui/InsolvencyRadar'), {
   ssr: false,
 });
+const QuizEngine = dynamic(() => import('../quiz/QuizEngine').then((mod) => mod.QuizEngine), {
+  ssr: false,
+});
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -89,7 +93,7 @@ export default function MasterSimulator() {
   const { scenario, setScenario, scenarios } = useScenario();
   const [isPending, startTransition] = useTransition();
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'laboratorio' | 'dashboard' | 'referencial' | 'lente'>('laboratorio');
-  const [spotSubView, setSpotSubView] = useState<'nash' | 'insolvency' | 'ranges' | 'theory'>('nash');
+  const [spotSubView, setSpotSubView] = useState<'nash' | 'insolvency' | 'ranges' | 'theory' | 'quiz'>('nash');
 
   const { data: predictiveData } = useSWR('/api/v1/predictive', fetcher, {
     revalidateOnFocus: false,
@@ -125,6 +129,8 @@ export default function MasterSimulator() {
   } = state;
 
   // SOTA: Sincronização de Física Transversal (Universal Table Physics)
+  // Pot e HeroInvested sincronizam com o contexto; posição e agressão são
+  // orquestradas na origem dos eventos para preservar a reatividade do simulador.
   useEffect(() => {
     if (isSyncHydrated && physics) {
       if (currentPot !== physics.pot && typeof setCurrentPot === 'function') {
@@ -133,24 +139,14 @@ export default function MasterSimulator() {
       if (heroInvested !== physics.heroInvested && typeof setHeroInvested === 'function') {
         setHeroInvested(physics.heroInvested);
       }
-      if (heroPosition !== physics.position && typeof setHeroPosition === 'function') {
-        setHeroPosition(physics.position);
-      }
-      if (aggressionFactor !== (physics.edgeFactor ?? 1) && typeof setAggressionFactor === 'function') {
-        setAggressionFactor(physics.edgeFactor ?? 1);
-      }
     }
   }, [
     isSyncHydrated,
     physics,
     currentPot,
     heroInvested,
-    heroPosition,
-    aggressionFactor,
     setCurrentPot,
     setHeroInvested,
-    setHeroPosition,
-    setAggressionFactor,
   ]);
 
   const { handleStreetFreqChange } = useFrequencyPropagation(setStreetFreqs);
@@ -263,6 +259,14 @@ export default function MasterSimulator() {
     aggFactor: aggressionFactor,
   });
 
+  const dynamicQuizQuestions = useMemo(() => {
+    return generateDynamicICMQuiz({
+      stacks: scenario.stacks,
+      prizes: scenario.prizes,
+      predictiveProfile: stablePredictiveProfile ?? undefined,
+    });
+  }, [scenario.stacks, scenario.prizes, stablePredictiveProfile]);
+
   const { handleScenarioSelect, handleExportHRC, handleHeroPositionChange } = useMasterHandlers({
     scenario,
     scenarios,
@@ -271,6 +275,8 @@ export default function MasterSimulator() {
     resetState,
     updatePhysics,
     startTransition,
+    setHeroPosition,
+    setHeroInvested,
   });
 
   const insolvencyRadarData = useInsolvencyRadar(apiQuantumMetrics);
@@ -293,7 +299,10 @@ export default function MasterSimulator() {
                   currentPot={safeCurrentPot}
                   effectiveIpRp={finalIpRp}
                   effectiveOopRp={finalOopRp}
-                  onSelectPosition={(pos) => setHeroPosition(pos)}
+                  onSelectPosition={(pos) => {
+                    setHeroPosition(pos);
+                    updatePhysics({ position: pos as 'IP' | 'OOP' | 'BB' | 'SB' });
+                  }}
                 />
               </div>
 
@@ -321,16 +330,17 @@ export default function MasterSimulator() {
                   { id: 'insolvency', label: 'Insolvência', icon: 'fa-satellite-dish' },
                   { id: 'ranges', label: 'Matriz 169', icon: 'fa-table-cells' },
                   { id: 'theory', label: 'Teoria', icon: 'fa-book-open' },
+                  { id: 'quiz', label: 'Quiz ICM', icon: 'fa-graduation-cap' },
                 ].map((sub) => {
                   const isSubActive = spotSubView === sub.id;
                   return (
                     <button
                       key={sub.id}
                       type="button"
-                      onClick={() => setSpotSubView(sub.id as 'nash' | 'insolvency' | 'ranges' | 'theory')}
+                      onClick={() => setSpotSubView(sub.id as 'nash' | 'insolvency' | 'ranges' | 'theory' | 'quiz')}
                       className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                         isSubActive
-                          ? 'bg-accent-indigo/20 text-white border border-accent-indigo/40 shadow-md shadow-indigo-500/10'
+                          ? 'bg-accent-indigo-surface/20 text-white border border-accent-indigo/40 shadow-md shadow-indigo-500/10'
                           : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
                       }`}
                     >
@@ -362,7 +372,10 @@ export default function MasterSimulator() {
                         blindsRisingSoon={blindsRisingSoon}
                         isBaseline={isBaseline}
                         onStreetFreqChange={handleStreetFreqChange}
-                        onAggressionChange={setAggressionFactor}
+                        onAggressionChange={(factor) => {
+                          setAggressionFactor(factor);
+                          updatePhysics({ edgeFactor: factor });
+                        }}
                         onPkoChange={setPkoValue}
                         onPayjumpToggle={setIsNearPayjump}
                         onBlindsToggle={setBlindsRisingSoon}
@@ -422,6 +435,27 @@ export default function MasterSimulator() {
                     effectiveIpRp={finalIpRp}
                     effectiveOopRp={finalOopRp}
                   />
+                </div>
+              )}
+
+              {spotSubView === 'quiz' && (
+                <div className="w-full animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
+                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-indigo-surface/10 border border-accent-indigo/20 text-accent-indigo text-xs">
+                        <i className="fa-solid fa-graduation-cap" />
+                      </div>
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider m-0">
+                        Laboratório Didático ICM · {scenario.name}
+                      </h4>
+                    </div>
+                    <span className="text-[0.52rem] font-mono text-accent-indigo-light uppercase tracking-widest bg-accent-indigo-surface/10 px-2 py-0.5 rounded border border-accent-indigo/30">
+                      Quiz Dinâmico SOTA
+                    </span>
+                  </div>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <QuizEngine key={scenario.id} questions={dynamicQuizQuestions} />
+                  </Suspense>
                 </div>
               )}
             </div>
@@ -621,6 +655,7 @@ export default function MasterSimulator() {
     spotSubView,
     setHeroPosition,
     updatePhysics,
+    dynamicQuizQuestions,
   ]);
 
   const getWorkspaceTabMeta = (tab: 'laboratorio' | 'dashboard' | 'referencial' | 'lente') => {

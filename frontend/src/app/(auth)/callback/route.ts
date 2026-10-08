@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { safeRedirectPath } from './redirect';
+import { safeRedirectPath } from '@/lib/safe-redirect';
 
 export async function GET(request: Request) {
 	const { searchParams, origin } = new URL(request.url);
@@ -9,9 +9,11 @@ export async function GET(request: Request) {
 
 	if (code) {
 		const supabase = await createClient();
-		const { error } = await supabase.auth.exchangeCodeForSession(code);
-		if (!error) {
-			return NextResponse.redirect(new URL(next, origin));
+		if (supabase?.auth) {
+			const { error } = await supabase.auth.exchangeCodeForSession(code);
+			if (!error) {
+				return NextResponse.redirect(new URL(next, origin));
+			}
 		}
 	}
 

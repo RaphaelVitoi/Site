@@ -8,15 +8,20 @@ export interface SimulatorState {
 
 export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 	const { stacks, prizes } = state;
+	if (!stacks || !Array.isArray(stacks) || stacks.length === 0) {
+		return [];
+	}
+
+	const safePrizes = Array.isArray(prizes) ? prizes : [];
 	const totalChips = stacks.reduce((a, b) => a + b, 0);
-	const totalPrizes = prizes.reduce((a, b) => a + b, 0);
+	const totalPrizes = safePrizes.reduce((a, b) => a + b, 0);
 
 	// Heurísticas de detecção de cenário (Context-Awareness SOTA)
-	const isBubble = prizes.length > 0 && stacks.length === prizes.length + 1;
+	const isBubble = safePrizes.length > 1 && stacks.length === safePrizes.length + 1;
 	const sortedStacks = [...stacks].sort((a, b) => b - a);
 	const isMassiveChipleader =
 		sortedStacks.length > 0 && totalChips > 0 && (sortedStacks[0] ?? 0) > totalChips * 0.4;
-	const isTopHeavy = totalPrizes > 0 && (prizes[0] ?? 0) / totalPrizes > 0.35;
+	const isTopHeavy = safePrizes.length > 1 && totalPrizes > 0 && (safePrizes[0] ?? 0) / totalPrizes > 0.35;
 	const lastStack = sortedStacks.at(-1);
 	const hasCriticalShortStack =
 		sortedStacks.length > 0 &&
@@ -28,7 +33,7 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 
 	// Pergunta 1: Fundamento ICM (Sempre gerada)
 	questions.push({
-		id: `q-dyn-1-${Date.now()}`,
+		id: 'q-dyn-fundamentos',
 		text: `A topologia atual possui ${stacks.length} jogadores distribuindo ${totalChips} fichas. Sob a ótica absoluta do ICM, como a função de utilidade dessas fichas se comporta em relação à equidade em dólares ($EV)?`,
 		options: [
 			{
@@ -57,8 +62,8 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 	// Pergunta 2: Pressão de Bolha Extrema (Condicional)
 	if (isBubble) {
 		questions.push({
-			id: `q-dyn-2-${Date.now()}`,
-			text: `Alerta Estrutural: A configuração reflete a Bolha exata (${prizes.length} premiados para ${stacks.length} sobreviventes). Qual fenômeno de pressão o modelo matemático impõe violentamente aos stacks médios?`,
+			id: 'q-dyn-bubble',
+			text: `Alerta Estrutural: A configuração reflete a Bolha exata (${safePrizes.length} premiados para ${stacks.length} sobreviventes). Qual fenômeno de pressão o modelo matemático impõe violentamente aos stacks médios?`,
 			options: [
 				{
 					id: 'opt1',
@@ -87,7 +92,7 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 	// Pergunta 3: Liderança Predatória Absoluta (Condicional)
 	if (isMassiveChipleader && stacks.length > 2) {
 		questions.push({
-			id: `q-dyn-3-${Date.now()}`,
+			id: 'q-dyn-chipleader',
 			text: `Assimetria Grave Detectada: O Chip Leader monopoliza mais de 40% das fichas globais (Sua Stack: ${sortedStacks[0] ?? 0}bb). Como a arquitetura SOTA define o seu protocolo de execução?`,
 			options: [
 				{
@@ -109,7 +114,7 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 			],
 			correctOptionId: 'opt2',
 			explanation:
-				'A assimetria no ICM é letal: a dor que o Chip Leader sente ao perder uma mão é minúscula em porentagem (RP baixo), mas a dor sentida pelo oponente mediano ao pagar a aposta é colossal. O Predador ataca o topo do abismo.',
+				'A assimetria no ICM é letal: a dor que o Chip Leader sente ao perder uma mão é minúscula em porcentagem (RP baixo), mas a dor sentida pelo oponente mediano ao pagar a aposta é colossal. O Predador ataca o topo do abismo.',
 			category: 'Risk Premium',
 		});
 	}
@@ -117,8 +122,8 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 	// Pergunta 4: Estrutura Top-Heavy (Condicional)
 	if (isTopHeavy) {
 		questions.push({
-			id: `q-dyn-4-${Date.now()}`,
-			text: `Análise de Payouts: A estrutura atual é identificada como "Top-Heavy" (O 1º lugar concentra ${(((prizes[0] ?? 0) / totalPrizes) * 100).toFixed(1)}% do prêmio). Como isso afeta a dinâmica fundamental do Risk Premium global?`,
+			id: 'q-dyn-topheavy',
+			text: `Análise de Payouts: A estrutura atual é identificada como "Top-Heavy" (O 1º lugar concentra ${(((safePrizes[0] ?? 0) / totalPrizes) * 100).toFixed(1)}% do prêmio). Como isso afeta a dinâmica fundamental do Risk Premium global?`,
 			options: [
 				{
 					id: 'opt1',
@@ -147,7 +152,7 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 	// Pergunta 5: Dinâmica do Short Stack Crítico (Condicional)
 	if (hasCriticalShortStack && stacks.length > 2) {
 		questions.push({
-			id: `q-dyn-5-${Date.now()}`,
+			id: 'q-dyn-shortstack',
 			text: `Ecossistema em Tensão: Há um Short Stack crítico respirando por aparelhos (com menos de 10% das fichas globais). Sob o prisma SOTA, como a "Externalidade" afeta os stacks medianos agora?`,
 			options: [
 				{
@@ -177,11 +182,16 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 	// SOTA: Aplicação do Random Forest (CFR) para reordenação dinâmica
 	if (state.predictiveProfile) {
 		const profile = state.predictiveProfile;
+		const parseWeight = (cat: string): number => {
+			if (Object.hasOwn(profile, cat)) {
+				const val = Number(Reflect.get(profile, cat));
+				return Number.isFinite(val) ? val : 0.5;
+			}
+			return 0.5;
+		};
 		questions.sort((a, b) => {
-			const catA = a.category ?? '';
-			const catB = b.category ?? '';
-			const weightA = Object.hasOwn(profile, catA) ? Number(Reflect.get(profile, catA)) : 0.5;
-			const weightB = Object.hasOwn(profile, catB) ? Number(Reflect.get(profile, catB)) : 0.5;
+			const weightA = parseWeight(a.category ?? '');
+			const weightB = parseWeight(b.category ?? '');
 			// Pesos maiores indicam deficiência probabilística detectada pela Random Forest
 			return weightB - weightA;
 		});

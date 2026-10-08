@@ -196,7 +196,7 @@ export function GeminiVoicePlayer({
 						className={`px-4 py-2 rounded-xl text-[0.65rem] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${
 							isPlaying
 								? 'bg-accent-amber text-black hover:bg-amber-400'
-								: 'bg-accent-indigo text-white hover:bg-indigo-500 shadow-lg shadow-accent-indigo/20 active:scale-95'
+								: 'bg-accent-indigo-surface text-white hover:bg-indigo-500 shadow-lg shadow-accent-indigo/20 active:scale-95'
 						}`}
 					>
 						<i className={`fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'} text-xs`} />
