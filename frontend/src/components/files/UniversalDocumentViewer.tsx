@@ -210,7 +210,7 @@ export function UniversalDocumentViewer({
                 onClick={() => setPdfTab('visual')}
                 className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   pdfTab === 'visual'
-                    ? 'bg-accent-indigo text-white shadow-sm'
+                    ? 'bg-accent-indigo-surface text-white shadow-sm'
                     : 'text-text-muted hover:text-white'
                 }`}
               >
@@ -222,7 +222,7 @@ export function UniversalDocumentViewer({
                 onClick={() => setPdfTab('text')}
                 className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   pdfTab === 'text'
-                    ? 'bg-accent-indigo text-white shadow-sm'
+                    ? 'bg-accent-indigo-surface text-white shadow-sm'
                     : 'text-text-muted hover:text-white'
                 }`}
               >
@@ -240,7 +240,7 @@ export function UniversalDocumentViewer({
                 onClick={() => setMdTab('formatted')}
                 className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   mdTab === 'formatted'
-                    ? 'bg-accent-indigo text-white shadow-sm'
+                    ? 'bg-accent-indigo-surface text-white shadow-sm'
                     : 'text-text-muted hover:text-white'
                 }`}
               >
@@ -252,7 +252,7 @@ export function UniversalDocumentViewer({
                 onClick={() => setMdTab('raw')}
                 className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   mdTab === 'raw'
-                    ? 'bg-accent-indigo text-white shadow-sm'
+                    ? 'bg-accent-indigo-surface text-white shadow-sm'
                     : 'text-text-muted hover:text-white'
                 }`}
               >
@@ -394,7 +394,7 @@ export function UniversalDocumentViewer({
                   type="button"
                   onClick={() => setFontSize('sm')}
                   className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
-                    fontSize === 'sm' ? 'bg-accent-indigo text-white' : 'text-text-muted hover:text-white'
+                    fontSize === 'sm' ? 'bg-accent-indigo-surface text-white' : 'text-text-muted hover:text-white'
                   }`}
                   title="Fonte pequena"
                 >
@@ -404,7 +404,7 @@ export function UniversalDocumentViewer({
                   type="button"
                   onClick={() => setFontSize('base')}
                   className={`rounded px-1.5 py-0.5 text-xs font-bold ${
-                    fontSize === 'base' ? 'bg-accent-indigo text-white' : 'text-text-muted hover:text-white'
+                    fontSize === 'base' ? 'bg-accent-indigo-surface text-white' : 'text-text-muted hover:text-white'
                   }`}
                   title="Fonte média"
                 >
@@ -414,7 +414,7 @@ export function UniversalDocumentViewer({
                   type="button"
                   onClick={() => setFontSize('lg')}
                   className={`rounded px-1.5 py-0.5 text-sm font-bold ${
-                    fontSize === 'lg' ? 'bg-accent-indigo text-white' : 'text-text-muted hover:text-white'
+                    fontSize === 'lg' ? 'bg-accent-indigo-surface text-white' : 'text-text-muted hover:text-white'
                   }`}
                   title="Fonte grande"
                 >

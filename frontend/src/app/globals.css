@@ -531,6 +531,18 @@ body:has(.simulator-immersive) main.grow {
   animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-sota-in,
+  .animate-fade-up {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .pulse-glow {
+    animation: none !important;
+  }
+}
+
 @keyframes pulseGlow {
   0%,
   100% {

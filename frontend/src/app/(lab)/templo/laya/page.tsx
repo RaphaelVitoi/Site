@@ -248,7 +248,7 @@ export default function LayaSolverBridgePage() {
 						onClick={() => setActiveTab('workbench')}
 						className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
 							activeTab === 'workbench'
-								? 'bg-accent-indigo text-white shadow-lg shadow-indigo-500/20'
+								? 'bg-accent-indigo-surface text-white shadow-lg shadow-indigo-500/20'
 								: 'text-text-muted hover:text-white hover:bg-white/5'
 						}`}
 					>
@@ -261,7 +261,7 @@ export default function LayaSolverBridgePage() {
 						onClick={() => setActiveTab('telemetria')}
 						className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
 							activeTab === 'telemetria'
-								? 'bg-accent-indigo text-white shadow-lg shadow-indigo-500/20'
+								? 'bg-accent-indigo-surface text-white shadow-lg shadow-indigo-500/20'
 								: 'text-text-muted hover:text-white hover:bg-white/5'
 						}`}
 					>
@@ -274,7 +274,7 @@ export default function LayaSolverBridgePage() {
 						onClick={() => setActiveTab('deploy')}
 						className={`px-4 py-2 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${
 							activeTab === 'deploy'
-								? 'bg-accent-indigo text-white shadow-lg shadow-indigo-500/20'
+								? 'bg-accent-indigo-surface text-white shadow-lg shadow-indigo-500/20'
 								: 'text-text-muted hover:text-white hover:bg-white/5'
 						}`}
 					>

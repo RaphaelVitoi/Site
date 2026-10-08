@@ -210,7 +210,7 @@ export function MonteCarloConvergenceWidget({
 						onClick={() => setIterations(it)}
 						className={`px-3 py-1 rounded-lg text-[0.55rem] font-mono font-bold transition-all border ${
 							iterations === it
-								? 'bg-accent-indigo text-white border-accent-indigo shadow-md'
+								? 'bg-accent-indigo-surface text-white border-accent-indigo shadow-md'
 								: 'bg-black/40 text-text-muted border-white/5 hover:text-white'
 						}`}
 					>

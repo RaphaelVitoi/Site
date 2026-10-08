@@ -27,6 +27,7 @@ for (const route of auditedRoutes) {
   test(`${route.name} has no axe WCAG 2.2 A/AA violations`, async ({ page }) => {
     const response = await page.goto(route.path, { waitUntil: 'load' });
     expect(response?.status()).toBe(200);
+    await page.waitForLoadState('networkidle');
     await page.evaluate(async () => {
       await document.fonts.ready;
     });
@@ -115,3 +116,30 @@ test('scenario atlas preserves mobile targets, category behavior, and viewport b
   const documentWidth = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(documentWidth).toBeLessThanOrEqual(viewportWidth);
 });
+
+test('simulator activates Quiz ICM lens, renders interactive quiz, and preserves accessibility', async ({ page }) => {
+  const response = await page.goto('/simulador', { waitUntil: 'load' });
+  expect(response?.status()).toBe(200);
+  await page.waitForLoadState('networkidle');
+
+  const quizTab = page.getByRole('button', { name: /Quiz ICM/i });
+  await expect(quizTab).toBeVisible();
+  await quizTab.click();
+
+  await expect(page.getByText(/Laboratório Didático ICM/i)).toBeVisible();
+  await expect(page.getByText(/Quiz Dinâmico SOTA/i)).toBeVisible();
+
+  await page.addScriptTag({ path: require.resolve('axe-core') });
+  const results = await page.evaluate(async () => {
+    if (!window.axe) throw new Error('axe-core failed to load');
+    return window.axe.run(document, {
+      runOnly: {
+        type: 'tag',
+        values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'],
+      },
+    });
+  });
+
+  expect(results.violations).toEqual([]);
+});
+

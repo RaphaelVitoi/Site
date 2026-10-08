@@ -19,7 +19,7 @@ import { useSearchParams } from 'next/navigation';
 import { getProviders, signIn, useSession } from 'next-auth/react';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaButton } from '@/components/ui/layout/SotaButton';
-import { safeRedirectPath } from '@/app/(auth)/callback/redirect';
+import { safeRedirectPath } from '@/lib/safe-redirect';
 
 const ICONE_DO_PROVEDOR: Record<string, string> = {
 	google: 'fa-brands fa-google',

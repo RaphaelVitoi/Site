@@ -223,17 +223,37 @@ const markdownComponents: Components = {
       {children}
     </th>
   ),
-  img: ({ src, alt, width, height }) => (
-    <img
-      src={src}
-      alt={alt || ''}
-      width={width}
-      height={height}
-      loading="lazy"
-      decoding="async"
-      className="my-8 h-auto max-w-full rounded-3xl border border-white/10 shadow-2xl"
-    />
-  ),
+  img: ({ src, alt, width, height }) => {
+    let resolvedWidth = width;
+    let resolvedHeight = height;
+    let cleanAlt = alt || '';
+
+    // SOTA: Blindagem de CLS com resolução de aspecto intrínseco por props ou sintaxe alt (ex: ![Fig|16:9](...) ou ![Fig | 16:9](...))
+    const dimMatch = cleanAlt.match(/\|\s*(\d+)\s*(?:x|:)\s*(\d+)/);
+    if (dimMatch && (!resolvedWidth || !resolvedHeight)) {
+      resolvedWidth = Number(dimMatch[1]);
+      resolvedHeight = Number(dimMatch[2]);
+      cleanAlt = cleanAlt.replace(/\|\s*(\d+)\s*(?:x|:)\s*(\d+)/, '').trim();
+    }
+
+    const aspectRatio =
+      resolvedWidth && resolvedHeight
+        ? `${resolvedWidth} / ${resolvedHeight}`
+        : undefined;
+
+    return (
+      <img
+        src={src}
+        alt={cleanAlt}
+        width={resolvedWidth}
+        height={resolvedHeight}
+        loading="lazy"
+        decoding="async"
+        style={aspectRatio ? { aspectRatio } : undefined}
+        className="my-8 h-auto max-w-full rounded-3xl border border-white/10 shadow-2xl bg-white/5"
+      />
+    );
+  },
   td: ({ children, align }) => (
     <td align={align} className="text-text-main border-b border-white/5 p-5 font-mono whitespace-nowrap opacity-90">
       {children}

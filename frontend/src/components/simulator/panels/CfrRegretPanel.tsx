@@ -68,6 +68,7 @@ export default function CfrRegretPanel({
 	const [painelRef, lacoAtivo] = useLoopVisibility();
 	const [workerStatus, setWorkerStatus] = useState<'starting' | 'active' | 'converged' | 'error'>('starting');
 	const isConvergedRef = useRef(false);
+	const startLoopRef = useRef<(() => void) | null>(null);
 
 	// Dimensionamento Geométrico Canônico Janda (100% Determinístico e Matemático)
 	const canonicalSizing = useMemo(() => {
@@ -123,6 +124,7 @@ export default function CfrRegretPanel({
 		paramsRef.current = { kappa, nodes, pot, stack, equity };
 		isConvergedRef.current = false;
 		setWorkerStatus('active');
+		startLoopRef.current?.();
 	}, [kappa, nodes, pot, stack, equity]);
 
 	useEffect(() => {
@@ -131,6 +133,7 @@ export default function CfrRegretPanel({
 		setEquity(initialEquity);
 		isConvergedRef.current = false;
 		setWorkerStatus('active');
+		startLoopRef.current?.();
 	}, [initialPot, initialStack, initialEquity]);
 
 	useEffect(() => {
@@ -138,7 +141,7 @@ export default function CfrRegretPanel({
 			type: 'module',
 		});
 
-		let animId: number;
+		let animId: number | null = null;
 		let isWorkerBusy = false;
 
 		workerRef.current.onmessage = (e: MessageEvent<CfrWorkerMessage>) => {
@@ -178,7 +181,13 @@ export default function CfrRegretPanel({
 		};
 
 		const loop = () => {
-			if (!isWorkerBusy && workerRef.current && lacoAtivo.current && !isConvergedRef.current) {
+			animId = null;
+			// SOTA: Interrompe o agendamento recursivo de rAF quando pausado ou convergido
+			if (isConvergedRef.current || !lacoAtivo.current) {
+				return;
+			}
+
+			if (!isWorkerBusy && workerRef.current) {
 				isWorkerBusy = true;
 				workerRef.current.postMessage({
 					id: 'cfr_tick',
@@ -193,11 +202,31 @@ export default function CfrRegretPanel({
 			animId = requestAnimationFrame(loop);
 		};
 
-		loop();
+		const startLoop = () => {
+			if (animId === null && !isConvergedRef.current && lacoAtivo.current) {
+				animId = requestAnimationFrame(loop);
+			}
+		};
+
+		startLoopRef.current = startLoop;
+
+		const handleVisibilityOrFocus = () => {
+			if (lacoAtivo.current && !isConvergedRef.current) {
+				startLoop();
+			}
+		};
+		window.addEventListener('focus', handleVisibilityOrFocus);
+		document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+		startLoop();
+
 		return () => {
-			cancelAnimationFrame(animId);
+			if (animId !== null) cancelAnimationFrame(animId);
+			window.removeEventListener('focus', handleVisibilityOrFocus);
+			document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
 			workerRef.current?.terminate();
 			workerRef.current = null;
+			startLoopRef.current = null;
 		};
 	}, [lacoAtivo]);
 

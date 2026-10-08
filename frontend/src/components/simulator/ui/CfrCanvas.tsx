@@ -69,12 +69,15 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const matrixRef = useRef<Float32Array | null>(null);
   const hoveredCellRef = useRef<{ row: number; col: number } | null>(null);
+  const coordsRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  const rafRef = useRef<number | null>(null);
   const [tooltipInfo, setTooltipInfo] = useState<{
     name: string;
     value: number;
     type: 'pair' | 'suited' | 'offsuit';
     x: number;
     y: number;
+    placement: 'top' | 'bottom';
   } | null>(null);
 
   const renderGrid = useCallback(() => {
@@ -171,62 +174,148 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
     return () => window.removeEventListener('resize', renderGrid);
   }, [renderGrid]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const n = Math.min(nodes, 13);
-    const cellW = rect.width / n;
-    const cellH = rect.height / n;
-    const col = Math.floor(x / cellW);
-    const row = Math.floor(y / cellH);
-
-    if (row >= 0 && row < n && col >= 0 && col < n) {
-      hoveredCellRef.current = { row, col };
-      const idx = row * n + col;
-      const val = matrixRef.current ? (matrixRef.current[idx] ?? 0) : 0.5;
-      const { name, type } = getHandLabel(row, col);
-
-      setTooltipInfo({
-        name,
-        value: val,
-        type,
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-
-      onHoverHand?.({ hand: name, value: val, type });
-      renderGrid();
-    } else {
-      handleMouseLeave();
+  const handleMouseLeave = useCallback(() => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
     }
-  };
-
-  const handleMouseLeave = () => {
+    coordsRef.current = null;
     hoveredCellRef.current = null;
     setTooltipInfo(null);
     onHoverHand?.(null);
     renderGrid();
+  }, [onHoverHand, renderGrid]);
+
+  const processMove = useCallback(
+    (clientX: number, clientY: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      const n = Math.min(nodes, 13);
+      const cellW = rect.width / n;
+      const cellH = rect.height / n;
+      const col = Math.floor(x / cellW);
+      const row = Math.floor(y / cellH);
+
+      if (row >= 0 && row < n && col >= 0 && col < n) {
+        hoveredCellRef.current = { row, col };
+        const idx = row * n + col;
+        const val = matrixRef.current ? (matrixRef.current[idx] ?? 0) : 0.5;
+        const { name, type } = getHandLabel(row, col);
+
+        // Clamping dinâmico baseado na largura e altura real do container
+        const clampedX = Math.max(48, Math.min(x, rect.width - 48));
+        const showBelow = y < 55;
+        const clampedY = showBelow ? Math.min(rect.height - 28, y + cellH + 8) : Math.max(28, y - 8);
+
+        setTooltipInfo({
+          name,
+          value: val,
+          type,
+          x: clampedX,
+          y: clampedY,
+          placement: showBelow ? 'bottom' : 'top',
+        });
+
+        onHoverHand?.({ hand: name, value: val, type });
+        renderGrid();
+      } else {
+        handleMouseLeave();
+      }
+    },
+    [handleMouseLeave, nodes, onHoverHand, renderGrid],
+  );
+
+  const handlePointerMove = useCallback(
+    (clientX: number, clientY: number) => {
+      coordsRef.current = { clientX, clientY };
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
+          if (coordsRef.current) {
+            processMove(coordsRef.current.clientX, coordsRef.current.clientY);
+          }
+        });
+      }
+    },
+    [processMove],
+  );
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    handlePointerMove(e.clientX, e.clientY);
   };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const touch = e.touches[0];
+    if (touch) {
+      handlePointerMove(touch.clientX, touch.clientY);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div ref={containerRef} className="relative w-full h-full aspect-square select-none">
+      {/* Tabela acessível para leitores de tela (WCAG 2.1 AA / 2.2 AA) */}
+      <table className="sr-only">
+        <caption>Matriz CFR de Regret Matching 13x13 (Frequências de Decisão Estratégica)</caption>
+        <thead>
+          <tr>
+            <th scope="col">Mão</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Frequência de Ação</th>
+            <th scope="col">Frequência de Fold</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: Math.min(nodes, 13) }, (_, r) =>
+            Array.from({ length: Math.min(nodes, 13) }, (_, c) => {
+              const { name, type } = getHandLabel(r, c);
+              const idx = r * Math.min(nodes, 13) + c;
+              const val = matrixRef.current ? (matrixRef.current[idx] ?? 0.5) : 0.5;
+              return (
+                <tr key={`${r}-${c}`}>
+                  <th scope="row">{name}</th>
+                  <td>{type === 'pair' ? 'Par' : type === 'suited' ? 'Suited' : 'Offsuit'}</td>
+                  <td>{(val * 100).toFixed(1)}%</td>
+                  <td>{((1 - val) * 100).toFixed(1)}%</td>
+                </tr>
+              );
+            }),
+          )}
+        </tbody>
+      </table>
+
       <canvas
         ref={canvasRef}
+        role="img"
+        aria-label="Matriz CFR de Regret Matching 13x13. Dados acessíveis disponíveis na tabela estruturada."
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="w-full h-full block rounded-2xl cursor-crosshair"
+        onTouchStart={handleTouchMove}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleMouseLeave}
+        onTouchCancel={handleMouseLeave}
+        className="w-full h-full block rounded-2xl cursor-crosshair touch-none"
       />
 
       {tooltipInfo && (
         <div
-          className="pointer-events-none absolute z-30 transform -translate-x-1/2 -translate-y-full mb-2 bg-slate-950/95 border border-white/20 rounded-xl px-3 py-1.5 shadow-2xl backdrop-blur-md text-[0.7rem] font-mono whitespace-nowrap"
+          className={`pointer-events-none absolute z-30 transform -translate-x-1/2 ${
+            tooltipInfo.placement === 'bottom' ? 'translate-y-0 mt-2' : '-translate-y-full mb-2'
+          } bg-slate-950/95 border border-white/20 rounded-xl px-3 py-1.5 shadow-2xl backdrop-blur-md text-[0.7rem] font-mono whitespace-nowrap`}
           style={{
-            left: `${Math.max(40, Math.min(tooltipInfo.x, 380))}px`,
-            top: `${Math.max(28, tooltipInfo.y - 8)}px`,
+            left: `${tooltipInfo.x}px`,
+            top: `${tooltipInfo.y}px`,
           }}
         >
           <div className="flex items-center gap-2">

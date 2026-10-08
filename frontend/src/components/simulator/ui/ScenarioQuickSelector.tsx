@@ -78,7 +78,7 @@ export function ScenarioQuickSelector({
                     return next;
                   });
                 }}
-                className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 px-3 py-2 transition-colors hover:bg-white/3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo"
+                className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-3 py-3 transition-colors hover:bg-white/3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo"
               >
                 <span className="min-w-0 flex-1 text-xs font-black uppercase tracking-[0.14em] text-white">
                   {CATEGORY_LABELS[category]}

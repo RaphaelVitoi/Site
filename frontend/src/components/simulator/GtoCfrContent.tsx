@@ -35,7 +35,7 @@ function GtoCfrContentInner({
 						onClick={() => setSolverMode('heads_up')}
 						className={`flex min-h-12 min-w-0 items-center justify-center gap-2.5 rounded-xl px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide transition-all sm:px-4 ${
 							solverMode === 'heads_up'
-								? 'bg-accent-indigo text-white shadow-[0_0_15px_rgba(99,102,241,0.35)]'
+								? 'bg-accent-indigo-surface text-white shadow-[0_0_15px_rgba(99,102,241,0.35)]'
 								: 'text-text-dim hover:text-white hover:bg-white/5'
 						}`}
 					>
