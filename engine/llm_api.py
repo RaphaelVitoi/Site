@@ -981,9 +981,9 @@ def _extract_provider_keys(
 
     if not openrouter_keys:
         try:
-            from llm.openrouter_pool import get_openrouter_pool  # noqa: PLC0415
+            from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
 
-            pool = get_openrouter_pool()
+            pool = openrouter_pool_manager
             for t in (1, 2, 3, 4):
                 for k in pool.get_pool_keys(t):
                     if k not in openrouter_keys:

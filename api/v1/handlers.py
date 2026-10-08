@@ -12,6 +12,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import math
+import mimetypes
 import os
 from pathlib import Path
 import re
@@ -854,26 +855,36 @@ def _is_file_access_allowed(file_path: Path) -> bool:
     return False
 
 
+RAW_MIME_TYPES: dict[str, str] = {
+    ".pdf": "application/pdf",
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".mkv": "video/x-matroska",
+    ".avi": "video/x-msvideo",
+    ".mp3": "audio/mpeg",
+    ".wav": "audio/wav",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".json": "application/json",
+    ".txt": "text/plain",
+    ".md": "text/markdown",
+    ".csv": "text/csv",
+    ".html": "text/html",
+    ".htm": "text/html",
+    ".zip": "application/zip",
+}
+
+
 def _get_raw_content_type(ext: str) -> str:
-    if ext == ".pdf":
-        return "application/pdf"
-    if ext == ".mp4":
-        return "video/mp4"
-    if ext == ".mov":
-        return "video/quicktime"
-    if ext == ".mkv":
-        return "video/x-matroska"
-    if ext == ".avi":
-        return "video/x-msvideo"
-    if ext == ".mp3":
-        return "audio/mpeg"
-    if ext == ".wav":
-        return "audio/wav"
-    if ext in IMAGE_EXTS:
-        if ext == ".svg":
-            return "image/svg+xml"
-        return "image/png"
-    return "application/octet-stream"
+    ext_lower = ext.lower()
+    if ext_lower in RAW_MIME_TYPES:
+        return RAW_MIME_TYPES[ext_lower]
+    guessed, _ = mimetypes.guess_type(f"file{ext_lower}")
+    return guessed or "application/octet-stream"
 
 
 def _content_disposition(filename: str, *, download: bool) -> str:

@@ -322,11 +322,11 @@ def describe(cards: list[int] | tuple[int, ...]) -> str:
     pairs.sort(reverse=True)
     singles.sort(reverse=True)
 
-    if cat == _CAT_QUADS:
+    if cat == _CAT_QUADS and quad is not None:
         return f"four {names[quad - 2]}, {names[singles[0] - 2]} kicker"
-    if cat == _CAT_FULL:
+    if cat == _CAT_FULL and trip is not None and pairs:
         return f"full house, {names[trip - 2]} full of {names[pairs[0] - 2]}"
-    if cat == _CAT_TRIPS:
+    if cat == _CAT_TRIPS and trip is not None:
         k = "".join(names[r - 2] for r in singles)
         return f"three {names[trip - 2]}, {k} kickers"
     if cat == _CAT_TWO_PAIR:

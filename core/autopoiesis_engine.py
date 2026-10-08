@@ -54,29 +54,38 @@ class AutopoiesisEngine:
         self.nexus_zone = self.base_dir / "temp" / "nexus_zone"
         self.nexus_zone.mkdir(parents=True, exist_ok=True)
         (self.nexus_zone / "logs").mkdir(parents=True, exist_ok=True)
+        if LOCK_FILE != BASE_DIR / "temp" / "nexus_zone" / "homeostasis.lock":
+            self.lock_file = LOCK_FILE
+        else:
+            self.lock_file = self.nexus_zone / "homeostasis.lock"
+
+        if TELEMETRY_LOG != BASE_DIR / "temp" / "nexus_zone" / "logs" / "homeostasis_telemetry.jsonl":
+            self.telemetry_log = TELEMETRY_LOG
+        else:
+            self.telemetry_log = self.nexus_zone / "logs" / "homeostasis_telemetry.jsonl"
 
     def _acquire_lock(self) -> bool:
         """Adquire trava de processo anti-concorrencia."""
-        if LOCK_FILE.exists():
+        if self.lock_file.exists():
             try:
-                pid = int(LOCK_FILE.read_text().strip())
+                pid = int(self.lock_file.read_text().strip())
                 # Checa se o processo ainda esta vivo
                 if pid != os.getpid():
                     # No Windows, checamos via tasklist ou tratamento defensivo
                     # Se o lock for mais velho que 60 segundos, consideramos stale
-                    if time.time() - LOCK_FILE.stat().st_mtime > 60:
-                        LOCK_FILE.unlink(missing_ok=True)
+                    if time.time() - self.lock_file.stat().st_mtime > 60:
+                        self.lock_file.unlink(missing_ok=True)
                     else:
                         return False
             except Exception:
-                LOCK_FILE.unlink(missing_ok=True)
+                self.lock_file.unlink(missing_ok=True)
 
-        LOCK_FILE.write_text(str(os.getpid()))
+        self.lock_file.write_text(str(os.getpid()))
         return True
 
     def _release_lock(self):
         """Libera trava de processo."""
-        LOCK_FILE.unlink(missing_ok=True)
+        self.lock_file.unlink(missing_ok=True)
 
     def check_and_heal_agents_drift(self) -> tuple[bool, str]:
         """Detecta se a realidade dos agentes esta desatualizada e sincroniza proativamente."""
@@ -282,7 +291,7 @@ class AutopoiesisEngine:
                 )
                 + "\n"
             )
-            with contextlib.suppress(Exception), open(TELEMETRY_LOG, "a", encoding="utf-8") as f:
+            with contextlib.suppress(Exception), open(self.telemetry_log, "a", encoding="utf-8") as f:
                 f.write(line)
 
             return report

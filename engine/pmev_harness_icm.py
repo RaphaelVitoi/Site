@@ -38,11 +38,12 @@ Sai com codigo 1 se qualquer verificacao falhar, para servir de portao.
 from __future__ import annotations
 
 import argparse
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 import json
 import math
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 from engine.icm_matrix import calculate_malmuth_harville_icm
 
@@ -147,7 +148,7 @@ def _pagamentos_do_estado(
 
 def verificar_estrutura(
     est: Mapping[str, Any],
-    amostras: Mapping[str, list[Mapping[str, Any]]],
+    amostras: Mapping[str, Sequence[Mapping[str, Any]]],
 ) -> Relatorio:
     """Roda o kernel sobre a amostra publicada e compara com `icm_ev`.
 

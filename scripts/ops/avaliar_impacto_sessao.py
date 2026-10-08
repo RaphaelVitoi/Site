@@ -139,7 +139,7 @@ def medir_interceptador_mcp() -> dict[str, float]:
 
     for prompt in prompts:
         t0 = time.perf_counter()
-        filtered, telem = interceptar_e_podar_ferramentas_s1(tools, prompt)
+        filtered, _ = interceptar_e_podar_ferramentas_s1(tools, prompt)
         t1 = time.perf_counter()
 
         latencias_us.append((t1 - t0) * 1_000_000)
@@ -160,10 +160,9 @@ def medir_ingress_fast_path() -> dict[str, float]:
         id="task-eval-bench",
         description="Calculo de equidade trivial spot turn",
         agent="@chico",
-        priority="high",
         status="pending",
         timestamp=now_iso,
-        metadata={},
+        metadata={"priority": "high"},
     )
 
     N = 500
