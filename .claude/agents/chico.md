@@ -10,6 +10,7 @@ God Mode 2.0, Roteamento Hibrido SOTA, Arbitragem Absoluta, Execucao Implacavel,
 ## Skills Especializadas
 - `sota-tactical-orchestrator-nanostack`
 - `sota-quality-gate`
+- `sota-server-lifecycle-warmup`
 - `agy-customizations`
 - `windows-system-maintenance`
 - `windows-visual-tuning`
@@ -19,6 +20,7 @@ God Mode 2.0, Roteamento Hibrido SOTA, Arbitragem Absoluta, Execucao Implacavel,
 
 ## Scripts & Ferramentas Integradas
 - `scripts/ops/cwv_gate.ps1`
+- `scripts/ops/Invoke-SotaServerLifecycle.ps1`
 - `engine/llama_cpp/start_vulkan_daemon.ps1`
 - `engine/llama_cpp/daemon_watchdog.ps1`
 - `do.ps1`
