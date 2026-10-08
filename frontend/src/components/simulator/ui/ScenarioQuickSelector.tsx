@@ -50,7 +50,7 @@ export function ScenarioQuickSelector({
             Atlas · {scenarios.length} Cenários
           </span>
         </div>
-        <span className="text-[0.5rem] font-mono text-text-dim uppercase tracking-wider bg-black/25 px-2 py-0.5 rounded-md border border-white/5">
+        <span className="text-[0.5rem] font-mono text-white/70 uppercase tracking-wider bg-black/80 px-2 py-0.5 rounded-md border border-white/5">
           Mesa Final 9P · 126 Players
         </span>
       </div>
@@ -64,7 +64,7 @@ export function ScenarioQuickSelector({
               key={category}
               open={openCategories.has(category)}
               className={`group/atlas overflow-hidden rounded-xl border transition-colors ${
-                isActiveCategory ? 'border-accent-indigo/20 bg-slate-950/40' : 'border-white/5 bg-black/15'
+                isActiveCategory ? 'border-accent-indigo/20 bg-slate-950/80' : 'border-white/5 bg-black/80'
               }`}
             >
               <summary
@@ -91,11 +91,11 @@ export function ScenarioQuickSelector({
                     Ativo: {activeScenario.name}
                   </span>
                 )}
-                <span className="shrink-0 rounded-md border border-white/5 bg-black/20 px-2 py-0.5 text-[0.6rem] font-mono text-text-dim">
+                <span className="shrink-0 rounded-md border border-white/5 bg-black/80 px-2 py-0.5 text-[0.6rem] font-mono text-white/70">
                   {categoryScenarios.length} cenários
                 </span>
                 <i
-                  className="fa-solid fa-chevron-down shrink-0 text-[0.55rem] text-text-dim transition-transform group-open/atlas:rotate-180"
+                  className="fa-solid fa-chevron-down shrink-0 text-[0.55rem] text-white/70 transition-transform group-open/atlas:rotate-180"
                   aria-hidden="true"
                 />
               </summary>
@@ -115,27 +115,27 @@ export function ScenarioQuickSelector({
                       className={`p-3 rounded-xl border text-left transition-all duration-200 relative flex flex-col justify-between group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo ${
                         isActive
                           ? 'bg-accent-indigo/15 border-accent-indigo/50 shadow-md ring-1 ring-accent-indigo/30'
-                          : 'bg-black/25 border-white/5 hover:border-white/15 hover:bg-black/40'
+                          : 'bg-black/80 border-white/5 hover:border-white/15 hover:bg-black/90'
                       }`}
                     >
                       <div className="flex items-center justify-between w-full mb-1.5">
-                        <span className={`text-[0.48rem] font-mono font-black ${isActive ? 'text-accent-indigo-light' : 'text-text-darker'}`}>
+                        <span className={`text-[0.48rem] font-mono font-black ${isActive ? 'text-accent-indigo-light' : 'text-white/80'}`}>
                           {String(index + 1).padStart(2, '0')}
                         </span>
                         {isActive ? (
                           <span className="w-1.5 h-1.5 rounded-full bg-accent-indigo animate-pulse motion-reduce:animate-none shadow-[0_0_6px_rgba(99,102,241,1)]" />
                         ) : (
-                          <span className="text-[0.42rem] font-mono text-text-dim">
+                          <span className="text-[0.42rem] font-mono text-white/70">
                             RP {s.ipRp}%
                           </span>
                         )}
                       </div>
 
                       <div className="space-y-0.5">
-                        <span className={`text-[0.62rem] font-black tracking-tight leading-tight line-clamp-1 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-white'}`}>
+                        <span className={`text-[0.62rem] font-black tracking-tight leading-tight line-clamp-1 ${isActive ? 'text-white' : 'text-white/90 group-hover:text-white'}`}>
                           {displayName}
                         </span>
-                        <span className="text-[0.46rem] font-mono text-text-dim line-clamp-1 uppercase tracking-wider block">
+                        <span className="text-[0.46rem] font-mono text-white/70 line-clamp-1 uppercase tracking-wider block">
                           {subtitle}
                         </span>
                       </div>

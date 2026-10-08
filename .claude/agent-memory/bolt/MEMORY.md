@@ -72,3 +72,7 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+## 2024-05-18 - [TypedArray Bounds Checking and V8 Optimization]
+**Learning:** Using nullish coalescing (`?? 0`) on array accesses in V8 (even when bounded) forces unnecessary branching and type-evaluations, which can significantly degrade performance in hot loops like Monte Carlo simulations. In TypeScript, explicitly casting the array access (`as number`) resolves TS warnings (e.g. `noUncheckedIndexedAccess`) while emitting zero runtime overhead, unlike the nullish coalesce.
+**Action:** When working in high-frequency mathematical engines where the array bounds and population are trusted, replace nullish coalesce fallbacks (`?? 0`) with explicit type casts (`as number`) to eliminate V8 branching overhead and speed up the simulation.
