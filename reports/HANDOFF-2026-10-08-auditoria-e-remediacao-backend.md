@@ -28,6 +28,8 @@ caminhos:
   - worker/loop.py
   - tests/test_auditoria_backend_remediation_2026_10.py
   - uv.lock
+referencias_nao_resolviveis:
+  - math/rio_extended.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master

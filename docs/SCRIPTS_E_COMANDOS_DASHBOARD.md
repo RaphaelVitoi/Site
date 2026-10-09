@@ -1,119 +1,85 @@
-# ðŸ› ï¸ Painel de Comandos e Scripts do CEO (Raphael Vitoi)
->
-> **NEXUS SOTA GOD MODE v7.5** â€” Guia rÃ¡pido de referÃªncia operacional e atalhos do ecossistema.
+# 🛠️ Painel de Comandos e Scripts do CEO (Raphael Vitoi)
+> **NEXUS SOTA GOD MODE v7.5** — Guia rápido de referência operacional e atalhos do ecossistema.
 
 ---
 
-## ðŸ§  CogniÃ§Ã£o e ExecuÃ§Ã£o de Tarefas
-
-*
-
-exus "sua tarefa" ou sota "sua tarefa"
-    *   **DescriÃ§Ã£o:** Enfileira uma nova tarefa assÃ­ncrona na malha para processamento.
-
-* sk "sua pergunta"
-  * **DescriÃ§Ã£o:** Consulta a base RAG vetorial do orÃ¡culo local.
-*
-
-exus-list
-    ***DescriÃ§Ã£o:** Lista as Ãºltimas tarefas cadastradas no DAL.
-*
-exus-status ou
-exus-hub
-    *   **DescriÃ§Ã£o:** Exibe o painel rÃ¡pido de status das tarefas e orÃ§amento de cotas de APIs.
+## 🧠 Cognição e Execução de Tarefas
+*   `nexus "sua tarefa"` ou `sota "sua tarefa"`
+    *   **Descrição:** Enfileira uma nova tarefa assíncrona na malha para processamento.
+*   `ask "sua pergunta"`
+    *   **Descrição:** Consulta a base RAG vetorial do oráculo local.
+*   `nexus-list`
+    *   **Descrição:** Lista as últimas tarefas cadastradas no DAL.
+*   `nexus-status` ou `nexus-hub`
+    *   **Descrição:** Exibe o painel rápido de status das tarefas e orçamento de cotas de APIs.
 
 ---
 
-## ðŸ–¥ï¸ Painel de Controle e OrquestraÃ§Ã£o
-
-* dashboard ou itoi_dashboard
-  * **DescriÃ§Ã£o:** Abre a **Membrana Cognitiva SOTA (God Mode Dashboard)** interativa em tela cheia com atalhos de teclado de 0 a 9.
-* start-worker
-  * **DescriÃ§Ã£o:** Inicializa o executor de background ( ask_executor.py) com persistÃªncia.
-* stop-worker
-  * **DescriÃ§Ã£o:** Paralisa o executor de background com seguranÃ§a (SIGINT gracioso).
-* start-strata ou nexus ops strata [Atalho X no Dashboard]
-  * **DescriÃ§Ã£o:** Inicializa o nÃ³ local de inferÃªncia Strata MoE 125B (v0.1.39) com prioridade normal e pre-flight de porta.
-*
-
-exus-watch
-    ***DescriÃ§Ã£o:** Inicia a vigÃ­lia ativa de arquivos (.md, .py, etc.) acionando re-ingestÃ£o e sincronia debounced.
-*
-exus-cli [args]
-    *   **DescriÃ§Ã£o:** Executa comandos diretos no Kernel Python.
+## 🖥️ Painel de Controle e Orquestração
+*   `dashboard` ou `vitoi_dashboard`
+    *   **Descrição:** Abre a **Membrana Cognitiva SOTA (God Mode Dashboard)** interativa em tela cheia com atalhos de teclado de 0 a 9.
+*   `start-worker`
+    *   **Descrição:** Inicializa o executor de background (`task_executor.py`) com persistência.
+*   `stop-worker`
+    *   **Descrição:** Paralisa o executor de background com segurança (SIGINT gracioso).
+*   `start-strata` ou `nexus ops strata` [Atalho X no Dashboard]
+    *   **Descrição:** Inicializa o nó local de inferência Strata MoE 125B (v0.1.39) com prioridade normal e pre-flight de porta.
+*   `nexus-watch`
+    *   **Descrição:** Inicia a vigília ativa de arquivos (.md, .py, etc.) acionando re-ingestão e sincronia debounced.
+*   `nexus-cli [args]`
+    *   **Descrição:** Executa comandos diretos no Kernel Python.
 
 ---
 
-## ðŸ”’ GovernanÃ§a de Autonomia (God Mode)
-
-* utonomy-full
-  * **DescriÃ§Ã£o:** Ativa o nÃ­vel **W3 (God Mode irrestrito)** para execuÃ§Ã£o livre de comandos e alteraÃ§Ãµes.
-* utonomy-partial
-  * **DescriÃ§Ã£o:** Ativa o nÃ­vel **W2 (Estrategista de Impacto)**, bloqueando comandos mutadores/destrutivos.
-* utonomy-default
-  * **DescriÃ§Ã£o:** Ativa o nÃ­vel **W1 (Homeostase)**, permitindo apenas escrita e modificaÃ§Ã£o de arquivos.
-* utonomy-stop
-  * **DescriÃ§Ã£o:** Ativa o nÃ­vel **W0 (ObservaÃ§Ã£o Pura)**, suspendendo qualquer alteraÃ§Ã£o ou execuÃ§Ã£o.
-
----
-
-## ðŸ“Š DiagnÃ³stico, SeguranÃ§a e Redes
-
-*
-
-exus-keys
-    ***DescriÃ§Ã£o:** Audita chaves de API e executa diagnÃ³stico de conectividade com as APIs do Google.
-*
-exus-fallback
-    ***DescriÃ§Ã£o:** Exibe as mÃ©tricas de cooldown e fallback dos modelos.
-*
-exus-route-health
-    ***DescriÃ§Ã£o:** Analisa a latÃªncia e o status de saÃºde das rotas ativas na malha.
-*
-exus-gemini-health
-    ***DescriÃ§Ã£o:** Executa testes de estresse e validaÃ§Ã£o profunda de cotas da API Gemini.
-*
-exus-diag-net
-    ***DescriÃ§Ã£o:** DiagnÃ³stico rÃ¡pido de conectividade geral.
-*
-exus-audit
-    *   **DescriÃ§Ã£o:** Dispara uma Auditoria SOTA Adaptativa (Smart MDA).
+## 🔒 Governança de Autonomia (God Mode)
+*   `autonomy-full`
+    *   **Descrição:** Ativa o nível **W3 (God Mode irrestrito)** para execução livre de comandos e alterações.
+*   `autonomy-partial`
+    *   **Descrição:** Ativa o nível **W2 (Estrategista de Impacto)**, bloqueando comandos mutadores/destrutivos.
+*   `autonomy-default`
+    *   **Descrição:** Ativa o nível **W1 (Homeostase)**, permitindo apenas escrita e modificação de arquivos.
+*   `autonomy-stop`
+    *   **Descrição:** Ativa o nível **W0 (Observação Pura)**, suspendendo qualquer alteração ou execução.
 
 ---
 
-## ðŸ’¾ Banco de Dados e ManutenÃ§Ã£o (DAL)
-
-*
-
-exus-db [subcomando]
-    ***DescriÃ§Ã£o:** Executa operaÃ§Ãµes diretas no SQLite (ex: acuum, purge-orphans, clear-pending).
-*
-exus-checkdb
-    ***DescriÃ§Ã£o:** Audita a integridade fÃ­sica e lÃ³gica do banco de dados do Nexus.
-*
-exus-backup
-    ***DescriÃ§Ã£o:** ForÃ§a um backup imediato dos bancos de dados, arquivos de agentes e variÃ¡veis.
-*
-exus-schedule
-    *   **DescriÃ§Ã£o:** Registra as tarefas automÃ¡ticas de manutenÃ§Ã£o no Agendador de Tarefas.
+## 📊 Diagnóstico, Segurança e Redes
+*   `nexus-keys`
+    *   **Descrição:** Audita chaves de API e executa diagnóstico de conectividade com as APIs do Google.
+*   `nexus-fallback`
+    *   **Descrição:** Exibe as métricas de cooldown e fallback dos modelos.
+*   `nexus-route-health`
+    *   **Descrição:** Analisa a latência e o status de saúde das rotas ativas na malha.
+*   `nexus-gemini-health`
+    *   **Descrição:** Executa testes de estresse e validação profunda de cotas da API Gemini.
+*   `nexus-diag-net`
+    *   **Descrição:** Diagnóstico rápido de conectividade geral.
+*   `nexus-audit`
+    *   **Descrição:** Dispara uma Auditoria SOTA Adaptativa (Smart MDA).
 
 ---
 
-## ðŸ—ºï¸ VisualizaÃ§Ã£o e Autopoiese
-
-*
-
-exus-sync
-    ***DescriÃ§Ã£o:** Sincroniza o Manifesto (Gera/atualiza arquivos fÃ­sicos dos agentes).
-*
-exus-map
-    ***DescriÃ§Ã£o:** Abre a Arquitetura de ReferÃªncia do Sistema.
-*
-exus-reflect
-    ***DescriÃ§Ã£o:** Dispara o Despertar Cognitivo e a reflexÃ£o auto-regenerativa da Mente Coletiva.
-*
-exus-scripts-refresh
-    *   **DescriÃ§Ã£o:** Atualiza e regenera este arquivo de documentaÃ§Ã£o.
+## 💾 Banco de Dados e Manutenção (DAL)
+*   `nexus-db [subcomando]`
+    *   **Descrição:** Executa operações diretas no SQLite (ex: `vacuum`, `purge-orphans`, `clear-pending`).
+*   `nexus-checkdb`
+    *   **Descrição:** Audita a integridade física e lógica do banco de dados do Nexus.
+*   `nexus-backup`
+    *   **Descrição:** Força um backup imediato dos bancos de dados, arquivos de agentes e variáveis.
+*   `nexus-schedule`
+    *   **Descrição:** Registra as tarefas automáticas de manutenção no Agendador de Tarefas.
 
 ---
-*Dashboard de Comandos atualizado com sucesso em 2026-06-19 13:48:38*.
+
+## 🗺️ Visualização e Autopoiese
+*   `nexus-sync`
+    *   **Descrição:** Sincroniza o Manifesto (Gera/atualiza arquivos físicos dos agentes).
+*   `nexus-map`
+    *   **Descrição:** Abre a Arquitetura de Referência do Sistema.
+*   `nexus-reflect`
+    *   **Descrição:** Dispara o Despertar Cognitivo e a reflexão auto-regenerativa da Mente Coletiva.
+*   `nexus-scripts-refresh`
+    *   **Descrição:** Atualiza e regenera este arquivo de documentação.
+
+---
+*Dashboard de Comandos atualizado com sucesso em 2026-10-09 17:59:16*.
