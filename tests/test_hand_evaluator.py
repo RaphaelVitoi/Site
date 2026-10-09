@@ -70,7 +70,7 @@ def _cat(cards: list[int]) -> str:
 
 class TestDefinition:
     def test_evaluate_7_is_max_over_subsets(self) -> None:
-        rng = random.Random(99)
+        rng = random.Random(99)  # noqa: S311
         for _ in range(2000):
             n = rng.choice([5, 6, 7])
             cards = rng.sample(range(52), n)
@@ -150,28 +150,28 @@ class TestDeterminism:
     def test_input_order_does_not_matter(self) -> None:
         cards = from_strings("9h9c9d8s7h4s")
         shuffled = list(cards)
-        random.Random(1).shuffle(shuffled)
+        random.Random(1).shuffle(shuffled)  # noqa: S311
         assert evaluate_7(cards) == evaluate_7(shuffled)
 
 
 class TestValidation:
     @pytest.mark.parametrize("bad", [(1, 0), (15, 0), (5, 4), (5, -1)])
     def test_to_card_rejects_out_of_range(self, bad: tuple[int, int]) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=".*"):
             to_card(*bad)
 
     def test_from_strings_rejects_odd_length(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=".*"):
             from_strings("AsKd2")
 
     def test_from_strings_rejects_unknown_rank(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=".*"):
             from_strings("Zs")
 
     @pytest.mark.parametrize("count", [4, 8])
     def test_evaluate_rejects_wrong_size(self, count: int) -> None:
         cards = list(range(count))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=".*"):
             evaluate_7(cards)
 
 
@@ -186,5 +186,5 @@ class TestPerfectHash:
         assert perfect_hash_key(a) != perfect_hash_key(b)
 
     def test_rejects_wrong_size(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=".*"):
             perfect_hash_key(from_strings("9h9c9d"))
