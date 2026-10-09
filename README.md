@@ -1,10 +1,10 @@
-# 🏛️ NEXUS ORCHESTRATOR — SISTEMA SOTA v7.0 GOLD
+# 🏛️ NEXUS ORCHESTRATOR — SISTEMA SOTA v8.0 GOLD
 >
 > "A excelência não é um ato, mas um hábito. O Estado da Arte é a Cosmovisão executada no seu ápice."
 
 **Governança:** Raphael Vitoi (Tier 0 — Liderança / CEO)  
-**Orquestração & Execução:** Chico (Tier 1 — Avatar do Sistema / Soberania W3)  
-**Data da Versão:** 2026-08-15 | **Release:** SOTA 7.0.4 GOLD Hardened
+**Orquestração & Execução:** Chico (Tier 1 — Avatar do Sistema / Coletivo de Fronteira)  
+**Data da Versão:** 2026-10-09 | **Release:** SOTA v8.0 GOLD Hardened
 
 ---
 
@@ -12,13 +12,12 @@
 
 ```text
 C:\Users\rapha\.gemini\Site\
-├── .cerebro/                 ← Membrana de inteligência holográfica, memórias de agentes e córtex
-│   ├── agent-memory/         ← Memórias individuais dos 19 agentes especializados
+├── .claude/                  ← Membrana de inteligência holográfica, memórias de agentes e córtex
+│   ├── agent-memory/         ← Memórias individuais dos agentes especializados
 │   ├── agents/               ← Definições e personas do esquadrão cognitivo
 │   ├── architecture/         ← Protocolos de roteamento, invariantes e arquitetura híbrida
 │   ├── governance/           ← Diretrizes soberanas, liderança e manifesto de coerência
-│   ├── math-theory/          ← Paradigma Vitoi, bíblia técnica e frameworks matemáticos
-│   └── philosophy/           ← Cosmovisão, ética e aprendizado generativo
+│   └── math-theory/          ← Paradigma Vitoi, bíblia técnica e frameworks matemáticos
 ├── api/                      ← Endpoints e contratos de comunicação backend (FastAPI)
 ├── core/                     ← Núcleo executivo, schemas isomórficos e guardiões de runtime
 ├── engine/                   ← Motores analíticos (PySpark, Vitoi Perspective Engine, Math SOTA)
@@ -28,7 +27,7 @@ C:\Users\rapha\.gemini\Site\
 ├── llm/                      ← Roteamento dinâmico (Gemini 3.7 / 3.1), fallback nativo e budgets
 ├── reports/                  ← Relatórios de auditoria, cobertura de testes e Core Web Vitals
 ├── scripts/                  ← Utilitários operacionais, rotinas de saneamento e automações
-└── tests/                    ← Suíte de testes unitários e de integração (239 testes aprovados)
+└── tests/                    ← Suíte de testes unitários e de integração
 ```
 
 ---
@@ -73,12 +72,10 @@ python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
 
 | Categoria | Documento Principal | Propósito |
 | :--- | :--- | :--- |
-| **Arquitetura Geral** | [`AGNOSTIC_SYSTEM.md`](AGNOSTIC_SYSTEM.md) | Princípios de independência de SO, caminhos portáveis e Pure ASCII. |
+| **Governança Canônica** | [`CLAUDE.md`](CLAUDE.md) | Regras constitucionais, soberania piramidal, Tiers e qualidade. |
 | **Rotas do Frontend** | [`ROUTES.md`](ROUTES.md) | Mapeamento das 49 páginas estáticas/dinâmicas e laboratórios interativos. |
-| **Persistência de Memória**| [`MEMORY.md`](MEMORY.md) | Fonte de verdade sobre o estado atual do sistema, hardware e banco de dados. |
-| **Status Executivo** | [`CONTEXT_CHECKPOINT.md`](CONTEXT_CHECKPOINT.md) | Checkpoint consolidado da infraestrutura e paridade de modelos. |
-| **Córtex do Sistema** | [`.claude/`](.claude/) | Portal de navegação do córtex cognitivo e manifestos matemáticos. |
-| **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.8/3.7 Flash e Chat GPT 5.6-Sol. |
+| **Córtex & Memória** | [`.claude/`](.claude/) | Portal de navegação do córtex cognitivo, memórias e manifestos matemáticos. |
+| **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.7 Flash e arquitetura híbrida. |
 
 ---
 
@@ -92,4 +89,4 @@ python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
 - [Regras mestras do repositório](governance/REPOSITORY_RULES.md)
 
 ---
-*Nexus Orchestrator SOTA v7.0 GOLD — Sistema 100% Operacional e Blindado.*
+*Nexus Orchestrator SOTA v8.0 GOLD — Sistema 100% Operacional e Blindado.*

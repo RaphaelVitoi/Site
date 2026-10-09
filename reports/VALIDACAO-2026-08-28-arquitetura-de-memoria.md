@@ -15,6 +15,8 @@ caminhos:
   - scripts/utils/ingest_rag.py
   - scripts/mcp_dynamic_server.py
   - llm/session.py
+referencias_nao_resolviveis:
+  - math/rio_extended.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master

@@ -19,6 +19,8 @@ caminhos:
   - requirements.txt
   - scripts/ops/avaliar_impacto_sessao.py
   - worker/loop.py
+referencias_nao_resolviveis:
+  - math/rio_extended.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master

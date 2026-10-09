@@ -4,7 +4,7 @@ Use esta matriz antes de alterar arquivos. Ela evita mudanças transversais sem 
 
 | Tipo de mudança | Fonte primária | Interfaces afetadas | Gates mínimos |
 |---|---|---|---|
-| Fórmula PMev, ICM, equity ou valuation | `math/`, `core/`, `engine/` | `schemas/`, API, simulador | testes determinísticos, invariantes e regressão numérica |
+| Fórmula PMev, ICM, equity ou valuation | `core/`, `engine/` | `schemas/`, API, simulador | testes determinísticos, invariantes e regressão numérica |
 | Simulador e UX de poker | `frontend/` | API, contratos de domínio | lint, typecheck, testes de componente e build |
 | Endpoint ou contrato | `api/`, `schemas/` | frontend, banco, worker | validação de schema, teste de integração e autorização |
 | Persistência ou migração | `database/`, `data/` | API, worker e monitoramento | migração reversível, teste de integração e backup validado |
