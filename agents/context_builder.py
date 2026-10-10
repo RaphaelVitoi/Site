@@ -54,6 +54,7 @@ AGENT_BIBLIOTECARIO = "@bibliotecario"
 AGENT_VALIDADOR = "@validador"
 AGENT_VERIFIER = "@verifier"
 AGENT_AUDITOR = "@auditor"
+AGENT_GEMMA4 = "@gemma4"
 PUNCTUATION_STRIP = "()[]{},;\"'"
 
 

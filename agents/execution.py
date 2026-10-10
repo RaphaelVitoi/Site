@@ -60,6 +60,7 @@ AGENT_SECURITYCHIEF = "@securitychief"
 AGENT_BIBLIOTECARIO = "@bibliotecario"
 AGENT_SKILLMASTER = "@skillmaster"
 AGENT_HISTORIAN = "@historian"
+AGENT_GEMMA4 = "@gemma4"
 
 
 async def _create_system_task(
@@ -541,7 +542,7 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
         return
 
     # --- SOTA DELEGATION: Oraculo de Borda (@gemma4) ---
-    if task.agent in ("@gemma4", "@gemma"):
+    if task.agent in (AGENT_GEMMA4, "@gemma"):
         logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)...")
         try:
             await local_engine.process_agent_task(task, manager)
@@ -551,6 +552,54 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
             return
         except Exception as e:
             logger.warning(f"Falha no Motor Local: {e}. Tentando workflow padrao como fallback...")
+
+    # --- SOTA DELEGATION: Malha de Subagentes (Custo Zero Local) ---
+    is_subagent_task = bool(
+        task.metadata
+        and (
+            task.metadata.get("delegate_subagent")
+            or task.metadata.get("subagent_tier")
+            or task.metadata.get("use_subagents_mesh")
+        )
+    ) or bool(task.agent and task.agent.startswith("@sub_"))
+
+    if is_subagent_task:
+        from core.subagents_mesh import SubagentMissionRequest, SubagentTier, subagents_mesh  # noqa: PLC0415
+
+        logger.info(
+            f"[[{te._c(task.agent)}]{task.agent}[/]] [SUBAGENTS MESH] Delegando missao para a malha de subagentes..."
+        )
+        try:
+            start_time = time.monotonic()
+            tier_val = (task.metadata or {}).get("subagent_tier")
+            tier = SubagentTier(tier_val) if tier_val else subagents_mesh.route_task_to_subagent(task)
+            target_files = (task.metadata or {}).get("target_files", [])
+            mission_req = SubagentMissionRequest(
+                mission_id=f"MISSION-{task.id}",
+                tier=tier,
+                prompt=task.description,
+                target_files=target_files if isinstance(target_files, list) else [],
+            )
+            mission_res = await subagents_mesh.execute_subagent_pipeline(mission_req)
+            if mission_res.status == "SUCCESS":
+                response_text = mission_res.report
+                await asyncio.to_thread(_save_task_result_sync, task.id, task.agent, response_text)
+                await manager.update_task_metadata(
+                    task.id,
+                    {
+                        "subagent_execution": mission_res.model_dump(),
+                        "workflow_status": "completed",
+                    },
+                    merge=True,
+                )
+                await _finish_task_success(task, manager, start_time, mission_res.files_modified, {})
+                await _process_observers_and_handoff(task, manager)
+                gc.collect()
+                return
+        except Exception as e_sub:
+            logger.warning(
+                f"[SUBAGENTS MESH] Delegacao para {task.id} falhou ({e_sub}). Prosseguindo com workflow padrao."
+            )
 
     start_time = time.monotonic()
     timing_metrics = {}
@@ -576,3 +625,28 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
 
     except Exception as e:  # noqa: BLE001
         await _handle_task_failure(e, task, manager, start_time, timing_metrics, response_text)
+
+
+async def delegate_subtask_to_mesh(
+    task_id: str,
+    description: str,
+    tier: str | None = None,
+    target_files: list[str] | None = None,
+) -> Any:
+    """Delega diretamente uma sub-tarefa cirurgica para a malha de subagentes locais com custo zero."""
+    from core.subagents_mesh import SubagentMissionRequest, SubagentTier, subagents_mesh  # noqa: PLC0415
+
+    resolved_tier = (
+        SubagentTier(tier)
+        if tier
+        else subagents_mesh.route_task_to_subagent(
+            Task(id=task_id, description=description, agent="@subagent", timestamp=datetime.now(UTC).isoformat())
+        )
+    )
+    req = SubagentMissionRequest(
+        mission_id=task_id,
+        tier=resolved_tier,
+        prompt=description,
+        target_files=target_files or [],
+    )
+    return await subagents_mesh.execute_subagent_pipeline(req)

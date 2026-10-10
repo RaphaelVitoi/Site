@@ -243,16 +243,96 @@ class GemmaLocalStrategy(LLMProviderStrategy):
         )
 
 
+class StrataStrategy(LLMProviderStrategy):
+    """Strategy implementation for local Strata MoE 125B engine (port 8080)."""
+
+    def __init__(self, host: str = "127.0.0.1", port: int = 8080) -> None:
+        self.host = host
+        self.port = port
+
+    @property
+    def name(self) -> str:
+        return "Strata"
+
+    @property
+    def token_keys(self) -> tuple[str, str]:
+        return ("prompt_tokens", "completion_tokens")
+
+    async def check_quarantine(self, model: str, key: str) -> bool:
+        """Verifica se o servidor Strata esta offline ou insalubre."""
+        del model, key
+        try:
+            from llm.strata_client import LocalStrataClient  # noqa: PLC0415
+
+            client = LocalStrataClient(host=self.host, port=self.port, timeout=2.0)
+            return not client.is_healthy()
+        except Exception:
+            return True
+
+    async def call(
+        self,
+        session: aiohttp.ClientSession,
+        model: str,
+        system_prompt: str,
+        user_prompt: str,
+        key: str,
+        client_timeout: aiohttp.ClientTimeout | None,
+        require_json: bool,
+        **kwargs: Any,
+    ) -> tuple[str, dict[str, Any]]:
+        """Executa chamada ao Strata MoE via LocalStrataClient na porta 8080."""
+        del session, key, client_timeout
+        from llm.strata_client import LocalStrataClient  # noqa: PLC0415
+
+        client = LocalStrataClient(host=self.host, port=self.port)
+        if not client.is_healthy():
+            raise ConnectionError(
+                f"Strata MoE offline ou insalubre na porta {self.port}. Inicie via scripts/ops/Start-StrataNode.ps1"
+            )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+        response_format = {"type": "json_object"} if require_json else None
+        temperature = float(kwargs.get("temperature", 0.2))
+        max_tokens = int(kwargs.get("max_tokens", 1024))
+
+        result = await asyncio.to_thread(
+            client.chat_completion,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format=response_format,
+        )
+
+        content = ""
+        if "choices" in result and result["choices"]:
+            choice = result["choices"][0]
+            content = choice.get("message", {}).get("content", "")
+
+        usage = result.get(
+            "usage",
+            {
+                "prompt_tokens": len(user_prompt) // 4,
+                "completion_tokens": len(content) // 4,
+            },
+        )
+        return content, usage
+
+
 # Singletons de Strategies instanciados no nivel do modulo para evitar overhead de alocacao
 _STRATEGY_GEMINI = GeminiStrategy()
 _STRATEGY_OPENROUTER = OpenRouterStrategy()
 _STRATEGY_LOCAL = GemmaLocalStrategy()
+_STRATEGY_STRATA = StrataStrategy()
 
 # Tabela Hash O(1) imutavel. Evita alocacao de dicionario no Event Loop a cada inferencia.
 _STRATEGIES_MAP = {
     "gemini": _STRATEGY_GEMINI,
     "openrouter": _STRATEGY_OPENROUTER,
     "local": _STRATEGY_LOCAL,
+    "strata": _STRATEGY_STRATA,
 }
 
 

@@ -344,9 +344,11 @@ async def _dispatch_llm_provider(
         keys = ANTHROPIC_KEYS
     elif provider == "local":
         keys = ["local-dummy-key"]
+    elif provider == "strata":
+        keys = ["strata-local-key"]
     else:
         return None
-    retries = 1 if provider == "local" else provider_retries
+    retries = 1 if provider in ("local", "strata") else provider_retries
     return await _try_provider(
         session,
         provider,

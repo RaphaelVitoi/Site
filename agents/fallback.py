@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 AGENT_ARCHITECT = "@architect"
 AGENT_CURATOR = "@curator"
+AGENT_GEMMA4 = "@gemma4"
 AGENT_IMPLEMENTOR = "@implementor"
 AGENT_MAVERICK = "@maverick"
 AGENT_PESQUISADOR = "@pesquisador"

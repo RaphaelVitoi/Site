@@ -96,7 +96,9 @@ def test_ponte_antigravity_descobre_a_fonte_versionada_sem_copia():
         "entries": [
             {
                 "path": ".agents/skills",
-                "include_only": ["^(pmev-game-theory-engine|site-session-handoff|sota-quality-gate|sota-triad-mesh)$"],
+                "include_only": [
+                    "^(chrome-devtools-agent-sota|google-jules-cloud|google-stitch-design|google-workspace|mcp-toolbox-database|pmev-game-theory-engine|poker-pmev-knowledge-engine|session-impact-evaluator|site-session-handoff|sota-quality-gate|sota-server-lifecycle-warmup|strata-inference-engine|timesfm-forecasting)$"
+                ],
             }
         ]
     }, (
