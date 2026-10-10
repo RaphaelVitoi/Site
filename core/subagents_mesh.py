@@ -12,9 +12,11 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 import logging
+import os
 import re
 from typing import Any
 
+import aiohttp
 from pydantic import BaseModel, ConfigDict, Field
 
 import core.config as cfg
@@ -260,22 +262,90 @@ class SubagentMeshController:
                 ttl_seconds=request.timeout_seconds,
             )
 
-            # Execucao deterministica
-            await asyncio.sleep(0.01)
+            # Inferencia real assincrona conectada ao Ollama local (127.0.0.1:11434)
+            ollama_base = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
+            ollama_url = f"{ollama_base}/api/chat"
+            system_instruction = (
+                f"Voce e o subagente especializado '{request.tier.value}'. "
+                f"Execute a missao com maxima precisao cirurgica, sem entropia e com economia generalizada."
+            )
+            payload = {
+                "model": assigned_model,
+                "messages": [
+                    {"role": "system", "content": system_instruction},
+                    {"role": "user", "content": request.prompt},
+                ],
+                "stream": False,
+                "options": {
+                    "temperature": 0.2,
+                    "num_predict": 1024,
+                },
+            }
+
+            response_content: str | None = None
+            metadata: dict[str, Any] = {
+                "agent_source": cfg.AGENT_SOURCE or "antigravity_core",
+                "cache_signature": bucket.hash_signature,
+            }
+
+            try:
+                timeout = aiohttp.ClientTimeout(total=min(float(request.timeout_seconds), 5.0), sock_connect=1.0)
+                async with aiohttp.ClientSession(timeout=timeout) as session:
+                    async with session.post(ollama_url, json=payload) as resp:
+                        if resp.status == 200:
+                            data = await resp.json()
+                            raw_content = data.get("message", {}).get("content", "").strip()
+                            if raw_content:
+                                response_content = raw_content
+                            metadata.update(
+                                {
+                                    "inference_mode": "real_ollama",
+                                    "prompt_eval_count": data.get("prompt_eval_count", 0),
+                                    "eval_count": data.get("eval_count", 0),
+                                }
+                            )
+                        else:
+                            err_body = await resp.text()
+                            logger.warning(
+                                "[SUBAGENTS MESH] Ollama HTTP %d para modelo '%s': %s. Ativando fallback gracioso.",
+                                resp.status,
+                                assigned_model,
+                                err_body[:200],
+                            )
+                            metadata.update(
+                                {
+                                    "inference_mode": "fallback_deterministic",
+                                    "fallback_reason": f"HTTP {resp.status}",
+                                }
+                            )
+            except Exception as e_ollama:
+                logger.warning(
+                    "[SUBAGENTS MESH] Inferencia real via Ollama (127.0.0.1:11434) para modelo '%s' falhou (%s). Ativando fallback gracioso.",
+                    assigned_model,
+                    e_ollama,
+                )
+                metadata.update(
+                    {
+                        "inference_mode": "fallback_deterministic",
+                        "fallback_reason": str(e_ollama),
+                    }
+                )
+
             duration_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+
+            report = response_content or (
+                f"Missao '{request.mission_id}' concluida com exito pelo subagente '{request.tier.value}' usando '{assigned_model}'."
+            )
 
             result = SubagentMissionResult(
                 mission_id=request.mission_id,
                 tier=request.tier,
                 assigned_model=assigned_model,
                 status="SUCCESS",
-                report=f"Missao '{request.mission_id}' concluida com exito pelo subagente '{request.tier.value}' usando '{assigned_model}'.",
+                report=report,
                 execution_time_ms=round(duration_ms, 3),
                 files_modified=request.target_files,
-                metadata={
-                    "agent_source": cfg.AGENT_SOURCE or "antigravity_core",
-                    "cache_signature": bucket.hash_signature,
-                },
+                metadata=metadata,
             )
 
             # Hook INSPECT: Telemetria pos-execucao

@@ -305,6 +305,8 @@ def _infer_provider_for_model(model: str) -> str | None:
     model_l = model.lower()
     if "space-bunny" in model_l or model_l.startswith("hermes/"):
         return "hermes"
+    if "strata" in model_l:
+        return "strata"
     if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
         return "local"
     if "qwen" in model_l and "/" not in model_l:
