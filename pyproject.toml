@@ -115,7 +115,7 @@ requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math", "scripts", "scripts.cli"]
+packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "scripts", "scripts.cli"]
 
 
 [project.optional-dependencies]
@@ -259,8 +259,7 @@ pythonpath = [
     "monitoring",
     "governance",
     "conductor",
-    "tools",
-    "math"
+    "tools"
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -448,8 +447,7 @@ include = [
     "governance",
     "conductor",
     "tools",
-    "cli",
-    "math"
+    "cli"
 ]
 extraPaths = [
     ".",
@@ -464,8 +462,7 @@ extraPaths = [
     "monitoring",
     "governance",
     "conductor",
-    "tools",
-    "math"
+    "tools"
 ]
 exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info", "core/vendor"]
 venvPath = "."

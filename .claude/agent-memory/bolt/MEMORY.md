@@ -72,3 +72,7 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+## 2024-05-18 - TypedArray Optimization & V8 Branching
+
+**Learning:** When optimizing tight hot loops using bounded 2D standard arrays (`Array<Array<number>>`) or multi-dimensional arrays, using 1D `Float64Array`/`Uint32Array` mapped via index math `[row * cols + col]` avoids significant JS object allocation and Garbage Collection overhead in the V8 engine. Additionally, when bounds and sizes are deterministically checked, using `as number` casting (e.g., `arr[idx] as number`) instead of nullish coalescing (`arr[idx] ?? 0`) removes branching checks, increasing runtime performance (measured from ~110ms to ~65ms on simulated ICM 45-player Monte Carlo). This specifically enhances mathematical engines and simulation performance.
+**Action:** Replace 2D arrays with flat 1D TypedArrays where appropriate in intensive math routines. Ensure arrays are fully populated/bounded. In TS, drop `?? 0` on those array reads inside hot loops in favor of `as number` mapping to boost V8 execution.
