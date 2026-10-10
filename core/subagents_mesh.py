@@ -114,6 +114,23 @@ class SubagentTier(StrEnum):
     FLUTTER_A11Y = "flutter_a11y_agent"
 
 
+def resolve_subagent_tier(value: Any) -> SubagentTier | None:
+    """Resolve com seguranca strings de tier (por valor ou por nome de membro)."""
+    if isinstance(value, SubagentTier):
+        return value
+    if not isinstance(value, str) or not value.strip():
+        return None
+    val_clean = value.strip()
+    try:
+        return SubagentTier(val_clean)
+    except ValueError:
+        pass
+    try:
+        return SubagentTier[val_clean.upper()]
+    except KeyError:
+        return None
+
+
 SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.APPSEC: "qwen-code-surgical:latest",
     SubagentTier.MATH: "qwen-pmev-math:latest",
@@ -289,45 +306,51 @@ class SubagentMeshController:
             }
 
             try:
-                timeout = aiohttp.ClientTimeout(total=min(float(request.timeout_seconds), 5.0), sock_connect=1.0)
-                async with aiohttp.ClientSession(timeout=timeout) as session:
-                    async with session.post(ollama_url, json=payload) as resp:
-                        if resp.status == 200:
-                            data = await resp.json()
-                            raw_content = data.get("message", {}).get("content", "").strip()
-                            if raw_content:
-                                response_content = raw_content
-                            metadata.update(
-                                {
-                                    "inference_mode": "real_ollama",
-                                    "prompt_eval_count": data.get("prompt_eval_count", 0),
-                                    "eval_count": data.get("eval_count", 0),
-                                }
-                            )
-                        else:
-                            err_body = await resp.text()
-                            logger.warning(
-                                "[SUBAGENTS MESH] Ollama HTTP %d para modelo '%s': %s. Ativando fallback gracioso.",
-                                resp.status,
-                                assigned_model,
-                                err_body[:200],
-                            )
-                            metadata.update(
-                                {
-                                    "inference_mode": "fallback_deterministic",
-                                    "fallback_reason": f"HTTP {resp.status}",
-                                }
-                            )
+                ollama_timeout = float(
+                    os.environ.get("OLLAMA_TIMEOUT_SECONDS", str(min(float(request.timeout_seconds), 45.0)))
+                )
+                timeout = aiohttp.ClientTimeout(total=ollama_timeout, sock_connect=2.0)
+                async with (
+                    aiohttp.ClientSession(timeout=timeout) as session,
+                    session.post(ollama_url, json=payload) as resp,
+                ):
+                    if resp.status == 200:
+                        data = await resp.json()
+                        raw_content = data.get("message", {}).get("content", "").strip()
+                        if raw_content:
+                            response_content = raw_content
+                        metadata.update(
+                            {
+                                "inference_mode": "real_ollama",
+                                "prompt_eval_count": data.get("prompt_eval_count", 0),
+                                "eval_count": data.get("eval_count", 0),
+                            }
+                        )
+                    else:
+                        err_body = await resp.text()
+                        logger.warning(
+                            "[SUBAGENTS MESH] Ollama HTTP %d para modelo '%s': %s. Ativando fallback gracioso.",
+                            resp.status,
+                            assigned_model,
+                            err_body[:200],
+                        )
+                        metadata.update(
+                            {
+                                "inference_mode": "fallback_deterministic",
+                                "fallback_reason": f"HTTP {resp.status}",
+                            }
+                        )
             except Exception as e_ollama:
+                err_detail = str(e_ollama).strip() or type(e_ollama).__name__
                 logger.warning(
                     "[SUBAGENTS MESH] Inferencia real via Ollama (127.0.0.1:11434) para modelo '%s' falhou (%s). Ativando fallback gracioso.",
                     assigned_model,
-                    e_ollama,
+                    err_detail,
                 )
                 metadata.update(
                     {
                         "inference_mode": "fallback_deterministic",
-                        "fallback_reason": str(e_ollama),
+                        "fallback_reason": err_detail,
                     }
                 )
 

@@ -571,3 +571,79 @@ async def test_handle_task_failures_and_autofix() -> None:
         mock_manager.update_task_status.assert_any_call("T_FAIL", "failed")
         # Deve ter criado a tarefa AUTOFIX-T_FAIL
         assert mock_sys_task.called
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_execute_task_workflow_subagents_mesh_delegation() -> None:
+    """Valida delegacao de tarefas para a malha de subagentes SOTA."""
+    mock_manager = MagicMock(spec=QueueManager)
+    mock_manager.get_system_state = AsyncMock(return_value=None)
+    mock_manager.update_task_status = AsyncMock()
+    mock_manager.update_task_metadata = AsyncMock()
+    mock_manager.db_path = "test.db"
+
+    task_sub = Task(
+        id="T_SUB_01",
+        description="Audit code for security vulnerabilities",
+        agent="@subagent",
+        timestamp="2026-10-10",
+        metadata={"delegate_subagent": True, "subagent_tier": "APPSEC"},
+    )
+
+    from core.subagents_mesh import SubagentMissionResult, SubagentTier
+
+    mock_result = SubagentMissionResult(
+        mission_id="MISSION-T_SUB_01",
+        tier=SubagentTier.APPSEC,
+        assigned_model="qwen-code-surgical:latest",
+        status="SUCCESS",
+        report="Security audit completed cleanly.",
+        execution_time_ms=120.0,
+        files_modified=["core/config.py"],
+        metadata={"inference_mode": "mock_test"},
+    )
+
+    with (
+        patch("core.subagents_mesh.subagents_mesh.execute_subagent_pipeline", new_callable=AsyncMock) as mock_pipe,
+        patch("agents.execution._save_task_result_sync"),
+        patch("agents.execution._set_task_completed_at_sync"),
+    ):
+        mock_pipe.return_value = mock_result
+        await execution.execute_task_workflow(task_sub, mock_manager)
+        assert mock_pipe.called
+        mock_manager.update_task_status.assert_any_call("T_SUB_01", "completed")
+        assert mock_manager.update_task_metadata.called
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_delegate_subtask_and_executor_helpers() -> None:
+    """Valida helpers de delegacao direta em task_executor e execution."""
+    from core.subagents_mesh import SubagentMissionResult, SubagentTier
+    import task_executor as te_mod
+
+    mock_res = SubagentMissionResult(
+        mission_id="T_DIRECT",
+        tier=SubagentTier.MATH,
+        assigned_model="qwen-pmev-math:latest",
+        status="SUCCESS",
+        report="Math checked.",
+        execution_time_ms=50.0,
+        files_modified=[],
+    )
+
+    with patch("core.subagents_mesh.subagents_mesh.execute_subagent_pipeline", new_callable=AsyncMock) as mock_p:
+        mock_p.return_value = mock_res
+        res1 = await te_mod.delegate_subagent_task(
+            Task(id="T_DIRECT", description="calc pmev", agent="@subagent", timestamp="2026-10-10"),
+            tier="MATH",
+        )
+        assert res1.status == "SUCCESS"
+
+        res2 = await execution.delegate_subtask_to_mesh(
+            task_id="T_DIRECT_2",
+            description="Audit appsec",
+            tier="appsec_gatekeeper",
+        )
+        assert res2.status == "SUCCESS"

@@ -127,3 +127,16 @@ def test_subagents_mesh_tier_integrity():
         assert tier in SUBAGENT_MODEL_MAP
         assert isinstance(SUBAGENT_MODEL_MAP[tier], str)
         assert len(SUBAGENT_MODEL_MAP[tier]) > 0
+
+
+def test_resolve_subagent_tier():
+    from core.subagents_mesh import resolve_subagent_tier
+
+    assert resolve_subagent_tier(SubagentTier.APPSEC) == SubagentTier.APPSEC
+    assert resolve_subagent_tier("appsec_gatekeeper") == SubagentTier.APPSEC
+    assert resolve_subagent_tier("APPSEC") == SubagentTier.APPSEC
+    assert resolve_subagent_tier("math") == SubagentTier.MATH
+    assert resolve_subagent_tier("MATH") == SubagentTier.MATH
+    assert resolve_subagent_tier("invalid_tier") is None
+    assert resolve_subagent_tier(None) is None
+    assert resolve_subagent_tier("") is None

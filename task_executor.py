@@ -251,12 +251,12 @@ def intelligent_route_task(description: str, explicit_agent: str | None = None) 
     # SOTA 8.0: Avaliacao de Subagentes Mesh para tarefas especializadas cirurgicas (Custo Zero)
     if metadata.get("delegate_subagent") or explicit_agent in ("@subagent", "@subagents"):
         try:
-            from core.subagents_mesh import subagents_mesh, Task as CoreTask  # noqa: PLC0415
+            import core.subagents_mesh as csm  # noqa: PLC0415
 
-            temp_task = CoreTask(
+            temp_task = csm.Task(
                 id="PROBE", description=description, agent="@subagent", timestamp=datetime.now(UTC).isoformat()
             )
-            tier = subagents_mesh.route_task_to_subagent(temp_task)
+            tier = csm.subagents_mesh.route_task_to_subagent(temp_task)
             metadata["delegate_subagent"] = True
             metadata["subagent_tier"] = tier.value
         except Exception as exc:
@@ -271,13 +271,18 @@ async def delegate_subagent_task(
     target_files: list[str] | None = None,
 ) -> Any:
     """Delega execucao diretamente para a malha de subagentes SOTA (Custo Zero Local)."""
-    from core.subagents_mesh import SubagentMissionRequest, SubagentTier, subagents_mesh  # noqa: PLC0415
+    from core.subagents_mesh import (  # noqa: PLC0415
+        SubagentMissionRequest,
+        resolve_subagent_tier,
+        subagents_mesh,
+    )
 
-    resolved_tier = SubagentTier(tier) if tier else subagents_mesh.route_task_to_subagent(task)
+    resolved_tier = resolve_subagent_tier(tier) or subagents_mesh.route_task_to_subagent(task)
+    prompt = task.description if len(task.description) >= 10 else f"{task.description} (subagent execution)"
     req = SubagentMissionRequest(
         mission_id=task.id,
         tier=resolved_tier,
-        prompt=task.description,
+        prompt=prompt,
         target_files=target_files or [],
     )
     return await subagents_mesh.execute_subagent_pipeline(req)

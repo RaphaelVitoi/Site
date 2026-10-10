@@ -561,10 +561,21 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
             or task.metadata.get("subagent_tier")
             or task.metadata.get("use_subagents_mesh")
         )
-    ) or bool(task.agent and task.agent.startswith("@sub_"))
+    ) or bool(
+        task.agent
+        and (
+            task.agent in ("@subagent", "@subagents")
+            or task.agent.startswith("@sub_")
+            or task.agent.startswith("@subagent")
+        )
+    )
 
     if is_subagent_task:
-        from core.subagents_mesh import SubagentMissionRequest, SubagentTier, subagents_mesh  # noqa: PLC0415
+        from core.subagents_mesh import (  # noqa: PLC0415
+            SubagentMissionRequest,
+            resolve_subagent_tier,
+            subagents_mesh,
+        )
 
         logger.info(
             f"[[{te._c(task.agent)}]{task.agent}[/]] [SUBAGENTS MESH] Delegando missao para a malha de subagentes..."
@@ -572,12 +583,15 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
         try:
             start_time = time.monotonic()
             tier_val = (task.metadata or {}).get("subagent_tier")
-            tier = SubagentTier(tier_val) if tier_val else subagents_mesh.route_task_to_subagent(task)
+            tier = resolve_subagent_tier(tier_val) or subagents_mesh.route_task_to_subagent(task)
             target_files = (task.metadata or {}).get("target_files", [])
+            prompt_text = (
+                task.description if len(task.description) >= 10 else f"{task.description} (subagent execution)"
+            )
             mission_req = SubagentMissionRequest(
                 mission_id=f"MISSION-{task.id}",
                 tier=tier,
-                prompt=task.description,
+                prompt=prompt_text,
                 target_files=target_files if isinstance(target_files, list) else [],
             )
             mission_res = await subagents_mesh.execute_subagent_pipeline(mission_req)
@@ -634,19 +648,20 @@ async def delegate_subtask_to_mesh(
     target_files: list[str] | None = None,
 ) -> Any:
     """Delega diretamente uma sub-tarefa cirurgica para a malha de subagentes locais com custo zero."""
-    from core.subagents_mesh import SubagentMissionRequest, SubagentTier, subagents_mesh  # noqa: PLC0415
-
-    resolved_tier = (
-        SubagentTier(tier)
-        if tier
-        else subagents_mesh.route_task_to_subagent(
-            Task(id=task_id, description=description, agent="@subagent", timestamp=datetime.now(UTC).isoformat())
-        )
+    from core.subagents_mesh import (  # noqa: PLC0415
+        SubagentMissionRequest,
+        resolve_subagent_tier,
+        subagents_mesh,
     )
+
+    resolved_tier = resolve_subagent_tier(tier) or subagents_mesh.route_task_to_subagent(
+        Task(id=task_id, description=description, agent="@subagent", timestamp=datetime.now(UTC).isoformat())
+    )
+    prompt_text = description if len(description) >= 10 else f"{description} (subagent execution)"
     req = SubagentMissionRequest(
         mission_id=task_id,
         tier=resolved_tier,
-        prompt=description,
+        prompt=prompt_text,
         target_files=target_files or [],
     )
     return await subagents_mesh.execute_subagent_pipeline(req)

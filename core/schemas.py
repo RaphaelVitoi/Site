@@ -31,6 +31,9 @@ class Task(BaseModel):
         # pylint: disable=import-outside-toplevel
         from core.config import VALID_AGENTS as _LIVE_AGENTS  # noqa: PLC0415
 
+        if v in ("@subagent", "@subagents") or v.startswith("@sub_"):
+            return v
+
         if v not in _LIVE_AGENTS:
             raise ValueError(f"Agente desconhecido: {v}")
         return v

@@ -281,7 +281,7 @@ class StrataStrategy(LLMProviderStrategy):
         **kwargs: Any,
     ) -> tuple[str, dict[str, Any]]:
         """Executa chamada ao Strata MoE via LocalStrataClient na porta 8080."""
-        del session, key, client_timeout
+        del session, key, client_timeout, model
         from llm.strata_client import LocalStrataClient  # noqa: PLC0415
 
         client = LocalStrataClient(host=self.host, port=self.port)
