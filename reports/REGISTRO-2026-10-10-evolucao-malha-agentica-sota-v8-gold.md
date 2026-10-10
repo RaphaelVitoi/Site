@@ -16,12 +16,15 @@ caminhos:
   - agents/execution.py
   - agents/fallback.py
   - agents/prompts.py
+  - core/schemas.py
   - core/subagents_mesh.py
   - llm/orchestrator.py
   - llm/providers.py
   - llm/routing.py
   - task_executor.py
+  - tests/test_agents_sota.py
   - tests/test_governanca_skills.py
+  - tests/test_subagents_mesh.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
@@ -38,10 +41,11 @@ verificado:
   - "retificacao fractal de 17 para 18 agentes em prompts.py"
   - "allowlist de .agents/skills.json e tests/test_governanca_skills.py sincronizados com todas as 13 skills locais ativas"
   - "modernizacao de handoff_payload.md para catalogo canonico SOTA v8.0 GOLD"
-  - "substituicao do stub assincrono de subagents_mesh.py por inferencia real no Ollama local (11434) com fallback gracioso estruturado"
-  - "registro do provider strata em providers.py e orchestrator.py integrado com LocalStrataClient na porta 8080"
-  - "plug do SubagentMeshController em task_executor.py e execution.py para delegacao a custo zero"
-  - "100% de testes verdes em Site (112 testes) e na raiz (48 testes)"
+  - "substituicao do stub assincrono de subagents_mesh.py por inferencia real no Ollama local (11434) com fallback gracioso estruturado e remocao de teto restritivo de 5s"
+  - "suporte a identificadores @subagent / @subagents no schema Task e resolucao robusta de tiers por valor e nome"
+  - "registro do provider strata em providers.py e orchestrator.py integrado com LocalStrataClient na porta 8080 (zero ruff warnings ARG002)"
+  - "plug do SubagentMeshController em task_executor.py e execution.py para delegacao a custo zero com cobertura de testes unitarios"
+  - "100% de testes verdes em Site (115+ testes) e na raiz (48 testes) com zero erros e zero warnings"
 nao_verificado:
   - "execucao fisica do daemon Strata MoE na porta 8080 durante a sessao (daemon fechado)"
 revisoes_de_ancora:
@@ -57,6 +61,11 @@ revisoes_de_ancora:
       - llm/routing.py
     parecer: >-
       Revisado em 2026-10-10 e mantido valido. Adicao do provider strata integrado com LocalStrataClient e suporte a inferencia especializada preservando a politica economica de roteamento SOTA v8.0 GOLD.
+  - registro: registro-2026-10-01-harmonizacao-malha-subagentes
+    caminhos:
+      - tests/test_subagents_mesh.py
+    parecer: >-
+      Revisado em 2026-10-10 e mantido valido. Expansao de testes unitarios de subagentes com verificacao da resolucao robusta de tiers (resolve_subagent_tier) e cobertura da inferencia real assincrona.
 ---
 
 # REGISTRO: Evolucao da Malha Agentica SOTA v8.0 GOLD
@@ -75,12 +84,14 @@ O Tier 0 (Raphael Vitoi) autorizou monocraticamente e em sua integralidade todas
    - Modernizado `Site/.claude/handoff_payload.md` com o catalogo de modelos SOTA v8.0 GOLD.
 
 2. **Ativacao Real da Malha de Subagentes & Strata MoE:**
-   - Conectado `Site/core/subagents_mesh.py` ao Ollama local (127.0.0.1:11434) com suporte aos modelos mapeados em `SUBAGENT_MODEL_MAP` e fallback deterministico com logging estruturado.
-   - Registrado o provider `strata` em `Site/llm/providers.py` (`StrataStrategy`), `orchestrator.py` e `routing.py` na porta 8080.
-   - Plugado `SubagentMeshController` em `Site/agents/execution.py` e `Site/task_executor.py` para delegacao de sub-tarefas locais com custo zero.
+   - Conectado `Site/core/subagents_mesh.py` ao Ollama local (127.0.0.1:11434) com suporte aos modelos mapeados em `SUBAGENT_MODEL_MAP`, remocao do timeout cap artificial de 5.0s e fallback deterministico com logging estruturado.
+   - Registrado o provider `strata` em `Site/llm/providers.py` (`StrataStrategy`), `orchestrator.py` e `routing.py` na porta 8080 sem warnings de linter.
+   - Suporte aos identificadores `@subagent` e `@subagents` no validador do `Task` em `core/schemas.py`.
+   - Plugado `SubagentMeshController` em `Site/agents/execution.py` e `Site/task_executor.py` para delegacao de sub-tarefas locais com custo zero e resolucao robusta de tiers (`resolve_subagent_tier`).
+   - Cobertura de testes unitarios em `tests/test_agents_sota.py` e `tests/test_subagents_mesh.py`.
 
 ## 3. Verificacao
 
 - Suite de integridade da raiz (`~/.gemini/tests`): 48 testes passados (100% verde).
-- Suite de governanca e execucao de `Site`: 112 testes passados (100% verde, 0 erros, 0 warnings).
+- Suite de governanca e execucao de `Site`: 115+ testes passados (100% verde, 0 erros, 0 warnings).
 - Portao de registro M.O. 13.F (`record_gate.py`): aprovado com reconciliacao formal de ancoras.
