@@ -44,7 +44,7 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
 							btnClasses +=
 								' border-accent-emerald/40 bg-accent-emerald/10 text-accent-emerald-light shadow-[0_0_20px_rgba(16,185,129,0.1)] cursor-default';
 							icon = (
-								<i className="fa-solid fa-circle-check text-xl text-accent-emerald" />
+								<i className="fa-solid fa-circle-check text-xl text-accent-emerald-light" />
 							);
 						} else if (isSelected && !isCorrect) {
 							btnClasses +=
@@ -54,7 +54,7 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
 							);
 						} else {
 							btnClasses +=
-								' border-white/5 bg-white/3 text-text-darker cursor-default opacity-40 grayscale';
+								' border-white/5 bg-white/3 text-text-dim cursor-default opacity-40 grayscale';
 						}
 					} else {
 						btnClasses +=
@@ -105,14 +105,14 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
 
 						<div className="flex items-center gap-4 mb-6 relative z-10">
 							<div
-								className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-lg ${isUserCorrect ? 'bg-accent-emerald/20 border-accent-emerald/30 text-accent-emerald' : 'bg-accent-danger/20 border-accent-danger/30 text-accent-danger'}`}
+								className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-lg ${isUserCorrect ? 'bg-accent-emerald/20 border-accent-emerald/30 text-accent-emerald-light' : 'bg-accent-danger/20 border-accent-danger/30 text-accent-danger'}`}
 							>
 								<i
 									className={`fa-solid ${isUserCorrect ? 'fa-check' : 'fa-bolt'} text-sm`}
 								/>
 							</div>
 							<h3
-								className={`uppercase tracking-[0.3em] text-[0.75rem] font-black m-0 ${isUserCorrect ? 'text-accent-emerald' : 'text-accent-danger'}`}
+								className={`uppercase tracking-[0.3em] text-[0.75rem] font-black m-0 ${isUserCorrect ? 'text-accent-emerald-light' : 'text-accent-danger'}`}
 							>
 								{isUserCorrect ? 'Visão SOTA Confirmada' : 'Entropia Detectada'}
 							</h3>
