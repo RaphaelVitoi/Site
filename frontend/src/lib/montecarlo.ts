@@ -83,7 +83,7 @@ function pickWinnerWithBusted(
 	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
 		if (isBusted[playerIdx] === 0) {
 			lastActiveIdx = playerIdx;
-			cumulative += stacks[playerIdx] ?? 0;
+			cumulative += stacks[playerIdx] as number;
 			if (r <= cumulative) return playerIdx;
 		}
 	}
@@ -101,7 +101,7 @@ function pickWinnerWithMask(
 	for (let playerIdx = 0; playerIdx < numPlayers; playerIdx++) {
 		if ((availablePlayers & (1 << playerIdx)) !== 0) {
 			lastActiveIdx = playerIdx;
-			cumulative += stacks[playerIdx] ?? 0;
+			cumulative += stacks[playerIdx] as number;
 			if (r <= cumulative) return playerIdx;
 		}
 	}
@@ -163,12 +163,12 @@ function runSingleMonteCarloIteration(
 
 		// Distribui o prêmio e remove o jogador da pool
 		if (winnerIdx !== -1) {
-			const prize = activePrizes[j] ?? 0;
-			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + prize;
-			sumSquares[winnerIdx] = (sumSquares[winnerIdx] ?? 0) + prize * prize;
+			const prize = activePrizes[j] as number;
+			totalEquity[winnerIdx] = (totalEquity[winnerIdx] as number) + prize;
+			sumSquares[winnerIdx] = (sumSquares[winnerIdx] as number) + prize * prize;
 			const pRow = placementCounts[winnerIdx];
 			if (pRow) {
-				pRow[j] = (pRow[j] ?? 0) + 1;
+				pRow[j] = (pRow[j] as number) + 1;
 			}
 			remainingTotalChips -= stacks[winnerIdx] || 0;
 
@@ -236,7 +236,7 @@ export function calculateIcmMonteCarlo(
 	const activeIndices: number[] = [];
 	const zeroIndices: number[] = [];
 	for (let i = 0; i < numPlayers; i++) {
-		if ((stacks[i] ?? 0) > 0) {
+		if ((stacks[i] as number) > 0) {
 			activeIndices.push(i);
 		} else {
 			zeroIndices.push(i);
@@ -254,10 +254,10 @@ export function calculateIcmMonteCarlo(
 			? remainingPrizes.reduce((a, b) => a + b, 0) / zeroIndices.length
 			: 0;
 
-		const activeStacks = activeIndices.map((i) => stacks[i] ?? 0);
+		const activeStacks = activeIndices.map((i) => stacks[i] as number);
 		const numActive = activeIndices.length;
-		const totalActiveEquity = new Array(numActive).fill(0);
-		const sumActiveSquares = new Array(numActive).fill(0);
+		const totalActiveEquity = new Float64Array(numActive) as unknown as number[];
+		const sumActiveSquares = new Float64Array(numActive) as unknown as number[];
 		const placementActiveCounts: number[][] = Array.from({ length: numActive }, () => new Array(kActive).fill(0));
 		const isBusted = numActive > 30 ? new Uint8Array(numActive) : null;
 
@@ -286,7 +286,7 @@ export function calculateIcmMonteCarlo(
 			equities[origIdx] = eq;
 
 			if (iterations > 1) {
-				const sumSq = sumActiveSquares[a] ?? 0;
+				const sumSq = sumActiveSquares[a] as number;
 				const s2 = Math.max(0, (sumSq - (totalActiveEquity[a]! * totalActiveEquity[a]!) / iterations) / (iterations - 1));
 				variancePerPlayer[origIdx] = Number(s2.toFixed(4));
 				stdErrorPerPlayer[origIdx] = Number(Math.sqrt(s2 / iterations).toFixed(4));
@@ -296,7 +296,7 @@ export function calculateIcmMonteCarlo(
 			const targetRow = placementDistribution[origIdx];
 			if (activePlacementRow && targetRow) {
 				for (let j = 0; j < kActive; j++) {
-					targetRow[j] = (activePlacementRow[j] ?? 0) / iterations;
+					targetRow[j] = (activePlacementRow[j] as number) / iterations;
 				}
 			}
 		}
@@ -325,8 +325,8 @@ export function calculateIcmMonteCarlo(
 	}
 
 	// Caso padrão (todos os stacks estritamente positivos):
-	const totalEquity = new Array(numPlayers).fill(0);
-	const sumSquares = new Array(numPlayers).fill(0);
+	const totalEquity = new Float64Array(numPlayers) as unknown as number[];
+	const sumSquares = new Float64Array(numPlayers) as unknown as number[];
 	const placementCounts: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
 
 	// N > 30: bitmask JS de 32 bits não comporta — usa Uint8Array alocada uma vez.
@@ -350,10 +350,11 @@ export function calculateIcmMonteCarlo(
 	}
 
 	// Estimador de média, variância amostral e erro padrão real
-	const equities = totalEquity.map((e) => e / iterations);
-	const variancePerPlayer = totalEquity.map((tot, i) => {
+	// Convert Float64Array back to Array to preserve API compatibility
+	const equities = Array.from(totalEquity, (e) => e / iterations);
+	const variancePerPlayer = Array.from(totalEquity, (tot, i) => {
 		if (iterations <= 1) return 0;
-		const sumSq = sumSquares[i] ?? 0;
+		const sumSq = sumSquares[i] as number;
 		const s2 = Math.max(0, (sumSq - (tot * tot) / iterations) / (iterations - 1));
 		return Number(s2.toFixed(4));
 	});
