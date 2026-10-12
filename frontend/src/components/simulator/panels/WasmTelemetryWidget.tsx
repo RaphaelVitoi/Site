@@ -77,11 +77,11 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 			</div>
 
 			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-8 relative z-10">
-				<div className="bg-black/50 p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-accent-emerald/30 transition-all duration-300 shadow-inner group/card">
-					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-emerald/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
+				<div className="bg-black/50 p-4 sm:p-5 rounded-2xl border border-white/5 hover:border-accent-emerald-light/30 transition-all duration-300 shadow-inner group/card">
+					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-emerald-light/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
 						Latency
 					</div>
-					<div className="font-mono text-accent-emerald text-lg sm:text-xl font-black tabular-nums tracking-tight">
+					<div className="font-mono text-accent-emerald-light text-lg sm:text-xl font-black tabular-nums tracking-tight">
 						{extractedLatency}<span className="text-[0.65rem] ml-1 opacity-40">ms</span>
 					</div>
 				</div>
@@ -117,7 +117,7 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 					<div className="text-[0.5rem] sm:text-[0.55rem] text-text-darker group-hover/card:text-accent-amber/60 font-black uppercase tracking-[0.25em] mb-2 transition-colors">
 						Insolvency
 					</div>
-					<div className={`font-mono text-lg sm:text-xl font-black tabular-nums tracking-tight ${resultCi < 1 ? 'text-accent-rose' : 'text-accent-emerald'}`}>
+					<div className={`font-mono text-lg sm:text-xl font-black tabular-nums tracking-tight ${resultCi < 1 ? 'text-accent-rose' : 'text-accent-emerald-light'}`}>
 						{resultCi.toFixed(3)}
 					</div>
 				</div>

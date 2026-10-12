@@ -1,4 +1,4 @@
-## 2024-10-12 - TypedArray Return Signatures
+## 2026-10-12 - Accessibility Contrast Learnings
 
-**Learning:** When optimizing highly-iterative arrays like those in a Monte Carlo loop with cache-friendly TypedArrays (`Float64Array`), those arrays often get returned at the end of the simulation. Modifying the return type from `number[]` to `Float64Array` implicitly breaks downstream code assuming standard array prototypes (like `.push()` or `Array.isArray`).
-**Action:** Always map TypedArrays back to native Arrays (`Array.from(typedArray)`) at the return boundary to preserve API compatibility, taking the negligible performance hit there instead of inside the hot loop.
+**Learning:** When using colors for dark themes, WCAG AA requires a 4.5:1 ratio. `text-text-darker` (hsl(215, 18%, 70%)) failed against elevated surfaces (`black/20` over `bg-base`), and `text-accent-emerald` (hsl(158, 82%, 39%)) failed against `bg-base` inside numeric readouts. `text-text-dim` and `text-accent-emerald-light` meet the minimum contrast ratios.
+**Action:** Use `text-text-dim` instead of `text-text-darker` inside interactive components and `text-accent-emerald-light` instead of `text-accent-emerald` inside dark backgrounds.
