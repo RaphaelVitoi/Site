@@ -125,7 +125,7 @@ class GeminiPoolManager:
                             while True:
                                 try:
                                     name, val, _ = winreg.EnumValue(k, idx)
-                                    name_upper = str(name).upper()
+                                    name_upper = name.upper()
                                     if name_upper.startswith(("GEMINI_", "GOOGLE_")):
                                         env_map[name_upper] = str(val).strip()
                                     idx += 1

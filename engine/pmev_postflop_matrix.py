@@ -156,7 +156,7 @@ def aula_1_2_par_2() -> PostflopEvidencePair:
         raise ValueError(f"{PAR_2_KEY}: board e pote precisam estar lidos para medir sizing.")
     return PostflopEvidencePair(
         contract=par.contract,
-        board=str(par.board.value),
+        board=par.board.value,
         pot_bb=par.pot_bb.value,
         chip_ev=RegimeNode.from_side(par.chip_ev),
         icm_ev=RegimeNode.from_side(par.icm_ev),

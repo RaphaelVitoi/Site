@@ -187,13 +187,13 @@
 
 .fa-pull-left,
 .fa-pull-start {
-  float: inline-start;
+  float: left;
   margin-inline-end: var(--fa-pull-margin, 0.3em);
 }
 
 .fa-pull-right,
 .fa-pull-end {
-  float: inline-end;
+  float: right;
   margin-inline-start: var(--fa-pull-margin, 0.3em);
 }
 

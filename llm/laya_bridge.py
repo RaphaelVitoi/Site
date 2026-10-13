@@ -213,7 +213,7 @@ class LayaRouter:
                 non_latin = float(det.get("non_latin_fraction", 0.0))
                 return LayaIntent(
                     idioma=idioma,
-                    script=det.get("script", "unknown"),
+                    script=str(det.get("script", "unknown")),
                     is_english=bool(det.get("is_english", False)),
                     modelo_sugerido=FAMILIA_MODELO_POR_LAYA.get(idioma, "multilingual"),
                     nao_latin_fraction_pct=round(non_latin * 100, 2),

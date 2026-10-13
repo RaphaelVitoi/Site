@@ -13,6 +13,9 @@
 	--caveat: var(--color-accent-rose-light);
 	--line: color-mix(in oklab, var(--color-text-main) 14%, transparent);
 	--surface: color-mix(in oklab, var(--color-bg-deep) 70%, transparent);
+	--place-pct-paid: color-mix(in oklab, var(--icm) 90%, var(--color-text-dim));
+	--next-hover-border: color-mix(in oklab, var(--color-text-main) 35%, transparent);
+	--outcome-revealed-border: color-mix(in oklab, var(--reality) 30%, transparent);
 	padding-block: clamp(2.5rem, 6vw, 5rem) 6rem;
 }
 
@@ -307,7 +310,7 @@
 }
 
 .placePaid .placePct {
-	color: color-mix(in oklab, var(--icm) 90%, var(--color-text-dim));
+	color: var(--place-pct-paid, var(--icm));
 }
 
 .placeActual .placePct {
@@ -406,7 +409,7 @@
 }
 
 .next:hover {
-	border-color: color-mix(in oklab, var(--color-text-main) 35%, transparent);
+	border-color: var(--next-hover-border, var(--color-text-main));
 	background: color-mix(in oklab, var(--reality) 5%, transparent);
 	transform: translateY(-1px);
 }
@@ -421,7 +424,7 @@
 }
 
 .outcomeBoxRevealed {
-	border-color: color-mix(in oklab, var(--reality) 30%, transparent);
+	border-color: var(--outcome-revealed-border, var(--reality));
 	background:
 		radial-gradient(100% 100% at 0% 0%, color-mix(in oklab, var(--reality) 8%, transparent), transparent 70%),
 		color-mix(in oklab, var(--surface) 95%, transparent);

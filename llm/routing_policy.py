@@ -755,7 +755,7 @@ def avaliar_uso_condicional_pro(
         else f"Eficiencia de custo x beneficio: Gemini 3.5 Flash-Lite supre a tarefa com menor latencia (ganho de {ganho_qualidade_esperado_pct:.1f}% nao atinge o limiar Laya de {threshold_ganho:.1f}%)."
     )
 
-    result = {
+    result: dict[str, Any] = {
         "modelo_escolhido": modelo_escolhido,
         "aprovado_pro": aprovado,
         "beneficio_estimado_pct": ganho_qualidade_esperado_pct if aprovado else 0.0,
