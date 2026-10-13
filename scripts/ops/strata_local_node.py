@@ -33,13 +33,20 @@ DEFAULT_VRAM_RESERVE = 4000
 
 
 def detect_hardware_profile() -> dict[str, Any]:
-    """Inspeciona o hardware local da maquina."""
+    """Inspeciona o hardware local da maquina com deteccao dinamica."""
     cpu_cores = os.cpu_count() or 8
     has_vulkan = shutil.which("vulkaninfo") is not None or os.path.exists(r"C:\WINDOWS\system32\vulkaninfo.exe")
+    ram_gb = 32
+    try:
+        import psutil
+
+        ram_gb = round(psutil.virtual_memory().total / (1024**3))
+    except Exception:
+        pass
 
     profile: dict[str, Any] = {
         "cpu": f"Intel Core i9-9900K ({cpu_cores} threads)",
-        "ram_gb": 32,
+        "ram_gb": ram_gb,
         "gpu": "AMD Radeon RX 570 (4GB VRAM) + Intel UHD 630",
         "vulkan_supported": has_vulkan,
         "platform": sys.platform,
@@ -87,13 +94,24 @@ class StrataEngineState:
         self.total_requests += 1
         t0 = time.time()
 
+        # Normalizacao de mensagens para suportar formatos de bloco (ex: OpenAI multi-part)
+        norm_messages: list[dict[str, str]] = []
+        for m in messages:
+            if isinstance(m, dict):
+                r = str(m.get("role", "user"))
+                c = m.get("content", "")
+                if isinstance(c, list):
+                    parts = [p.get("text", "") for p in c if isinstance(p, dict)]
+                    c = " ".join(parts)
+                norm_messages.append({"role": r, "content": str(c)})
+
         # Tentativa 1: Pipeline Ollama local (acelerado por Vulkan/CPU/RAM)
         if self.check_ollama_alive():
             conn = http.client.HTTPConnection("127.0.0.1", 11434, timeout=45.0)
             try:
                 payload = {
                     "model": self.surrogate_model,
-                    "messages": messages,
+                    "messages": norm_messages,
                     "stream": False,
                     "options": {
                         "temperature": temperature,
