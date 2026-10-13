@@ -133,6 +133,7 @@ def create_app(manager: QueueManager) -> web.Application:
             web.get("/metrics", handle_prometheus_metrics),
             web.get("/db-summary", handle_get_db_summary),
             web.get("/health", handle_health),
+            web.get("/api/v1/health", handle_health),
             web.post("/add", handle_add_task),
             web.get("/status", handle_get_status),
             web.get("/key-health-summary", handle_get_key_health_summary),
