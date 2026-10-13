@@ -45,7 +45,7 @@ def _purge_expired_ips(now: float, force: bool = False) -> None:
             _ip_blocks.pop(ip, None)
 
 
-PUBLIC_PROBE_ROUTES: frozenset[str] = frozenset({"/", "/ping", "/health"})
+PUBLIC_PROBE_ROUTES: frozenset[str] = frozenset({"/", "/ping", "/health", "/api/v1/health"})
 
 DEFAULT_TRUSTED_ORIGINS = (
     "http://127.0.0.1:3000",
