@@ -65,8 +65,15 @@ if (-not (Test-Path -LiteralPath $writerScript)) {
 }
 
 # O comando roda em pwsh 7+, runtime operacional padrao (CLAUDE.md SS8.2).
+$pwshLocal = Join-Path $env:LOCALAPPDATA 'Programs\PowerShell\7\pwsh.exe'
 $pwshPath = (Get-Command pwsh -ErrorAction SilentlyContinue)
-$interpreter = if ($pwshPath) { $pwshPath.Source } else { 'pwsh.exe' }
+$interpreter = if (Test-Path -LiteralPath $pwshLocal) {
+    $pwshLocal
+} elseif ($pwshPath) {
+    $pwshPath.Source
+} else {
+    'pwsh.exe'
+}
 
 # -File, NAO -Command. E a diferenca entre funcionar e falhar em silencio.
 #
