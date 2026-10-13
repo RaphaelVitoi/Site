@@ -62,7 +62,7 @@ class DeepSolverImporter(BaseSolverImporter):
             strategy = {self.sanitize_action_name(a): float(f) for a, f in item.get("strategy", {}).items()}
             ev = {self.sanitize_action_name(a): float(e) for a, e in item.get("ev", {}).items()}
             node = SolverNode(
-                node_id=str(nid),
+                node_id=nid,
                 player=str(item.get("player", "IP")),
                 street=str(item.get("street", "flop")).lower(),
                 pot=float(item.get("pot", starting_pot)),
@@ -72,7 +72,7 @@ class DeepSolverImporter(BaseSolverImporter):
                 range_equity=item.get("equity", item.get("range_equity")),
                 children=[str(c) for c in item.get("children", [])],
             )
-            nodes_dict[str(nid)] = node
+            nodes_dict[nid] = node
         return nodes_dict
 
     def _determine_root_id(self, nodes_dict: dict[str, SolverNode]) -> str:

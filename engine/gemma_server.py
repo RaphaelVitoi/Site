@@ -100,10 +100,14 @@ class OpenAIMessage(BaseModel):
         if isinstance(self.content, str):
             return self.content
         if isinstance(self.content, list):
-            text_parts = []
+            text_parts: list[str] = []
             for part in self.content:
                 if isinstance(part, dict) and part.get("type") == "text":
-                    text_parts.append(part.get("text", ""))
+                    text_val = part.get("text")
+                    if isinstance(text_val, str):
+                        text_parts.append(text_val)
+                    elif text_val is not None:
+                        text_parts.append(str(text_val))
             return "\n".join(text_parts)
         return str(self.content) if self.content else ""
 

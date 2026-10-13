@@ -86,7 +86,7 @@ def _load_registry_env() -> dict[str, str]:
                         name, val, _ = winreg.EnumValue(k, idx)
                         idx += 1
                         if name and isinstance(val, str) and val.strip():
-                            reg_keys[str(name)] = str(val).strip()
+                            reg_keys[name] = val.strip()
                     except OSError:
                         break
         except OSError:

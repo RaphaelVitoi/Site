@@ -124,7 +124,7 @@ _RE_PCT: Final[re.Pattern[str]] = re.compile(r"(\d{1,4}(?:[.,]\d{1,3})?) {0,3}%"
 
 def classify_action(label: str) -> ActionClass:
     """Classe pelo rotulo. Porte literal de `classifyAction` do TypeScript."""
-    texto = str(label).strip().lower()
+    texto = label.strip().lower()
     if _RE_FOLD.search(texto):
         return ActionClass.FOLD
     if _RE_CHECK.search(texto):
@@ -156,7 +156,7 @@ def is_free_bet_node(side: EvidenceSide) -> bool:
 
 def label_declared_pot_pct(label: str) -> float | None:
     """Percentual do pote que o proprio rotulo declara (`Bet 2.8 (50%)` -> 50). O HRC nao declara."""
-    achado = _RE_PCT.search(str(label))
+    achado = _RE_PCT.search(label)
     if achado is None:
         return None
     valor = float(achado.group(1).replace(",", "."))

@@ -108,7 +108,7 @@ class SolverProvenance:
         if not self.solver.strip():
             raise ValueError("SolverProvenance exige o nome do solver.")
         build = self.build
-        if isinstance(build, Read) and not str(_read_value(build)).strip():
+        if isinstance(build, Read) and not _read_value(build).strip():
             raise ValueError("Build lido nao pode ser vazio; use Unreadable.")
         e_nash = self.e_nash
         if isinstance(e_nash, Read):

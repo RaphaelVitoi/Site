@@ -221,8 +221,6 @@ async def _apply_s1_advisory(
     Returns (system_prompt, laya_metadata). laya_metadata e None se advisory unavailable.
     """
     _c = te._c
-    if task.metadata is None:
-        task.metadata = {}
     try:
         from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415,I001 -- importo sob demanda para evitar import circular
 
@@ -380,8 +378,6 @@ async def call_llm_api(
 
     # System-1 Laya acompanha a chamada canonica, registra procedencia e compoe
     # o advisory com o LLM sem substituir a fonte unica de roteamento.
-    if task.metadata is None:
-        task.metadata = {}
     try:
         from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 

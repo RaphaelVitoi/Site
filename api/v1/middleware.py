@@ -617,7 +617,7 @@ async def rate_limit_middleware(request, handler):
     record["count"] = int(record["count"]) + 1
     _ip_blocks[ip] = record
 
-    if int(record["count"]) > MAX_REQUESTS_PER_WINDOW:
+    if record["count"] > MAX_REQUESTS_PER_WINDOW:
         # A-10 (auditoria 2026-09-29): 429 sem `Retry-After` obriga o cliente a
         # adivinhar o balde, e adivinhando ele volta cedo e produz o retry storm
         # que o limite existe para impedir. O valor declarado e o que o cliente
