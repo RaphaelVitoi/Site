@@ -21,7 +21,7 @@ fi
 #    YAML valido, TTL externo, config_medida, ancora interna, ampliacao de origem.
 #    A etapa 2 confere campo por regex; regex ve campo, nao ve documento.
 if command -v uv >/dev/null 2>&1; then
-    uv run python "scripts/ops/record_gate.py"
+    uv run --no-sync python "scripts/ops/record_gate.py"
 else
     python "scripts/ops/record_gate.py"
 fi

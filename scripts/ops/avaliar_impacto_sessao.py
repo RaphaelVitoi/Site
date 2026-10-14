@@ -266,7 +266,7 @@ def avaliar_impacto_sessao(
         abertas_atuais = int(pend["abertas"])
         delta_pendencias_pct = round(((pendencias_inicio - abertas_atuais) / pendencias_inicio) * 100.0, 2)
 
-    resultado = {
+    resultado: dict[str, object] = {
         "timestamp": datetime.now(UTC).isoformat(),
         "pendencias": {
             **pend,
