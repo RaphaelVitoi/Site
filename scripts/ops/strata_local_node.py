@@ -98,12 +98,12 @@ class StrataEngineState:
         norm_messages: list[dict[str, str]] = []
         for m in messages:
             if isinstance(m, dict):
-                r = str(m.get("role", "user"))
+                r = m.get("role", "user")
                 c = m.get("content", "")
                 if isinstance(c, list):
                     parts = [p.get("text", "") for p in c if isinstance(p, dict)]
                     c = " ".join(parts)
-                norm_messages.append({"role": r, "content": str(c)})
+                norm_messages.append({"role": r, "content": c})
 
         # Tentativa 1: Pipeline Ollama local (acelerado por Vulkan/CPU/RAM)
         if self.check_ollama_alive():

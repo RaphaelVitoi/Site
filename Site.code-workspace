@@ -68,7 +68,6 @@
       "${workspaceFolder}/.venv/Scripts/python.exe"
     ],
     "ruff.configuration": "${workspaceFolder}/pyproject.toml",
-    "ruff.nativeServer": "on",
     "ruff.importStrategy": "fromEnvironment",
     "ruff.lint.preview": false,
     "ruff.format.preview": false,
@@ -187,7 +186,12 @@
       "core/tensor_engine/build/QuantumTensorEngine.sln",
     ],
     "java.project.exclusionFilters": [
-      "**/scripts/validation/**",
+      "**/scripts/validation/**"
     ],
+    "java.project.resourceFilters": [
+      "node_modules",
+      ".git",
+      "scripts/validation"
+    ]
   },
 }
