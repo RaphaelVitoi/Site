@@ -137,7 +137,8 @@ function runSingleMonteCarloIteration(
 	totalChips: number,
 	totalEquity: number[],
 	sumSquares: number[],
-	placementCounts: number[][],
+	placementCounts: Uint32Array,
+	numPrizesLength: number,
 	isBusted: Uint8Array | null,
 	random: () => number,
 ) {
@@ -148,8 +149,7 @@ function runSingleMonteCarloIteration(
 		isBusted.fill(0);
 	}
 
-	const numPrizes = activePrizes.length;
-	for (let j = 0; j < numPrizes; j++) {
+	for (let j = 0; j < numPrizesLength; j++) {
 		if (remainingTotalChips <= 0) break;
 
 		const winnerIdx = pickWinner(
@@ -166,10 +166,7 @@ function runSingleMonteCarloIteration(
 			const prize = activePrizes[j] ?? 0;
 			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + prize;
 			sumSquares[winnerIdx] = (sumSquares[winnerIdx] ?? 0) + prize * prize;
-			const pRow = placementCounts[winnerIdx];
-			if (pRow) {
-				pRow[j] = (pRow[j] ?? 0) + 1;
-			}
+			placementCounts[winnerIdx * numPrizesLength + j]++;
 			remainingTotalChips -= stacks[winnerIdx] || 0;
 
 			if (isBusted) {
@@ -258,7 +255,7 @@ export function calculateIcmMonteCarlo(
 		const numActive = activeIndices.length;
 		const totalActiveEquity = new Array(numActive).fill(0);
 		const sumActiveSquares = new Array(numActive).fill(0);
-		const placementActiveCounts: number[][] = Array.from({ length: numActive }, () => new Array(kActive).fill(0));
+		const placementActiveCounts = new Uint32Array(numActive * kActive);
 		const isBusted = numActive > 30 ? new Uint8Array(numActive) : null;
 
 		for (let i = 0; i < iterations; i++) {
@@ -270,6 +267,7 @@ export function calculateIcmMonteCarlo(
 				totalActiveEquity,
 				sumActiveSquares,
 				placementActiveCounts,
+				kActive,
 				isBusted,
 				random,
 			);
@@ -292,11 +290,10 @@ export function calculateIcmMonteCarlo(
 				stdErrorPerPlayer[origIdx] = Number(Math.sqrt(s2 / iterations).toFixed(4));
 			}
 
-			const activePlacementRow = placementActiveCounts[a];
 			const targetRow = placementDistribution[origIdx];
-			if (activePlacementRow && targetRow) {
+			if (targetRow) {
 				for (let j = 0; j < kActive; j++) {
-					targetRow[j] = (activePlacementRow[j] ?? 0) / iterations;
+					targetRow[j] = (placementActiveCounts[a * kActive + j] ?? 0) / iterations;
 				}
 			}
 		}
@@ -327,7 +324,7 @@ export function calculateIcmMonteCarlo(
 	// Caso padrão (todos os stacks estritamente positivos):
 	const totalEquity = new Array(numPlayers).fill(0);
 	const sumSquares = new Array(numPlayers).fill(0);
-	const placementCounts: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
+	const placementCounts = new Uint32Array(numPlayers * k);
 
 	// N > 30: bitmask JS de 32 bits não comporta — usa Uint8Array alocada uma vez.
 	const isBusted = numPlayers > 30 ? new Uint8Array(numPlayers) : null;
@@ -344,6 +341,7 @@ export function calculateIcmMonteCarlo(
 			totalEquity,
 			sumSquares,
 			placementCounts,
+			k,
 			isBusted,
 			random,
 		);
@@ -361,9 +359,13 @@ export function calculateIcmMonteCarlo(
 		if (iterations <= 1) return 0;
 		return Number(Math.sqrt(s2 / iterations).toFixed(4));
 	});
-	const placementDistribution: number[][] = placementCounts.map((row) =>
-		row.map((cnt) => cnt / iterations),
-	);
+	const placementDistribution: number[][] = Array.from({ length: numPlayers }, (_, i) => {
+		const row = new Array(k);
+		for (let j = 0; j < k; j++) {
+			row[j] = (placementCounts[i * k + j] ?? 0) / iterations;
+		}
+		return row;
+	});
 
 	return {
 		equities,
