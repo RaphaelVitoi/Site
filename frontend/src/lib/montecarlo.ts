@@ -166,7 +166,7 @@ function runSingleMonteCarloIteration(
 			const prize = activePrizes[j] ?? 0;
 			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + prize;
 			sumSquares[winnerIdx] = (sumSquares[winnerIdx] ?? 0) + prize * prize;
-			placementCounts[winnerIdx * numPrizesLength + j]++;
+			placementCounts[winnerIdx * numPrizesLength + j] = (placementCounts[winnerIdx * numPrizesLength + j] as number) + 1;
 			remainingTotalChips -= stacks[winnerIdx] || 0;
 
 			if (isBusted) {
