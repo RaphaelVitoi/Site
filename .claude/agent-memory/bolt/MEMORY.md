@@ -72,3 +72,10 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+### 2026-09-07 -- Array flattening e eliminação de alocação multidimensional no CFR
+
+Origem: sessao Jules, 2026-09-07.
+
+- ``#aprendizado`` **Alocação de arrays multidimensionais causa overhead em hot loops.** Inicializar e iterar sobre arrays multidimensionais como `number[][]` para manter contagens de posições dentro do laço principal do Monte Carlo adiciona overhead de GC (Garbage Collection) e alocação.
+  **Ação:** Substituir instâncias locais de `number[][]` (como matrizes de contagem) por arrays lineares (ex: `Uint32Array` ou `Float64Array`) indexados por `row * cols + col`. O resultado da flatificação, antes de retornar do módulo, deve ser mapeado de volta à estrutura original para preservar o contrato e a segurança da API a jusante.
