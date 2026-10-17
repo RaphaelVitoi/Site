@@ -15,6 +15,7 @@ from llm.gemini_pool import (
     GeminiPoolManager,
     GeminiWorkload,
     _key_sha8,
+    gemini_pool_manager,
 )
 
 
@@ -164,6 +165,7 @@ async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
             raise RuntimeError("HTTP 429: RESOURCE_EXHAUSTED retry_after=5s")
         return "Edição atômica executada com sucesso", {"totalTokenCount": 42}
 
+    gemini_pool_manager.reload_from_environment(read_registry=False)
     with patch("llm.gemini._execute_primary_request", side_effect=fake_execute_primary):
         text, usage = await call_gemini_flash_lite(
             session=mock_session,
