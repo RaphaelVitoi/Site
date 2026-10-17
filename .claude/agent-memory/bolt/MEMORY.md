@@ -72,3 +72,6 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+## 2026-10-09 - Type Assertions vs Runtime Fallbacks in TypedArrays
+**Learning:** Removing nullish coalescing (`?? 0`) and replacing it with explicit type casting (`as number`) inside bounded hot loops for TypedArrays gives about a 1% performance improvement, however out-of-bounds access on TypedArrays returns `undefined`, which can result in `NaN` propagation and calculation corruption if the arrays are sparse or indices exceed bounds. The memory directive implies safe replacement ONLY for completely bounded access.
+**Action:** Always ensure indices are strictly bounded to the allocated array size when relying on type assertions to avoid `NaN` pollution in numerical algorithms.
