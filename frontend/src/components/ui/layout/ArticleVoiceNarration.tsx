@@ -69,7 +69,7 @@ export function ArticleVoiceNarration({ title, content }: ArticleVoiceNarrationP
 				</div>
 			</div>
 
-			<div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
+			<div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end pt-3 sm:pt-0">
 				{isPlaying && (
 					<div className="flex items-center gap-1 h-4 px-2" aria-hidden="true">
 						{[0.5, 0.9, 1.3, 0.7, 1.1, 0.6, 1.4, 0.8].map((h, i) => (
