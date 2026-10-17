@@ -72,3 +72,6 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+## 2024-05-24 - TypedArray Iterator Overhead in Hot Loops
+**Learning:** Using `for...of` loops on `TypedArray` objects like `Float32Array` within mathematical hot loops incurs significant iterator allocation and overhead, hindering performance compared to traditional C-style `for` loops. Bounded accesses on TypedArrays return guaranteed primitive numbers, meaning `?? 0` operators just introduce branching overhead without adding safety.
+**Action:** Always use traditional `for` loops (`for (let i = 0; i < arr.length; i++)`) for iterating over `TypedArray` elements in performance-critical sections. Eliminate nullish coalescing operators (`?? 0`) when accessing strictly bounded TypedArray indices.
