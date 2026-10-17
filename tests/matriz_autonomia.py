@@ -4,7 +4,7 @@ Executar: .venv/Scripts/python.exe -m pytest tests/matriz_autonomia.py -q
 
 Um guard que nunca falhou nao foi testado. Este arquivo reintroduz, um por
 um, os seis defeitos que `test_autonomia_politica_declarada.py` existe para
-caçar, e exige reprovacao. Medido em 2026-09-29, primeira rodada:
+cacar, e exige reprovacao. Medido em 2026-09-29, primeira rodada:
 
   1. quote de 'format ' removido ....... PEGOU
   2. lista do python divergiu .......... PEGOU
@@ -14,7 +14,7 @@ caçar, e exige reprovacao. Medido em 2026-09-29, primeira rodada:
   6. protected_paths com enforcement ... ESCAPOU  (procurava so em agents/)
 
 Os quatro ESCAPOU viraram guard novo, agora por AST e por escopo explicito.
-Reprovar sem defeito e falha do guard; **passar com defeito e pior** — e o
+Reprovar sem defeito e falha do guard; **passar com defeito e pior** -- e o
 guard virado decoracao, e quem confia nele acredita numa medicao que nao
 ocorreu.
 
@@ -182,7 +182,7 @@ def test_guarda_reprova_cada_defeito_reintroduzido(
 
     assert r.returncode != 0, (
         f"ESCAPOU: {rotulo}.\n"
-        f"  o guard `{teste}` passou com o defeito reintroduzido — o guard "
+        f"  o guard `{teste}` passou com o defeito reintroduzido \u2014 o guard "
         "esta decorativo. Passe a verificar uso (AST) em vez de grafia, e "
         "confirme que o escopo da busca cobre onde o enforcement apareceria."
     )

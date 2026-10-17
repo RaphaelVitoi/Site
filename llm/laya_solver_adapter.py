@@ -19,6 +19,7 @@ Invariantes:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 import math
 from typing import Any
@@ -52,6 +53,110 @@ class LayaSolverBridgeResult:
     provenia: Provenia
 
 
+def _modulate_pluribus(params: dict[str, Any], noul: float, choice: str, ruin_priority: float) -> dict[str, Any]:
+    base_iters = int(params.get("iterations", 500))
+    if noul > 0.7 or choice == "complex":
+        params["iterations"] = int(base_iters * 1.5)
+        params["lambda_factor"] = round(float(params.get("lambda_factor", 1.2)) * ruin_priority, 4)
+    return {"pluribus_depth_multiplier": 1.2 if choice == "complex" else 1.0}
+
+
+def _modulate_deepstack(params: dict[str, Any], noul: float, _choice: str, _ruin_priority: float) -> dict[str, Any]:
+    base_tol = float(params.get("tolerance", 0.01))
+    params["tolerance"] = round(base_tol * (1.0 + noul * 0.5), 6)
+    return {"continual_resolving_tightened": noul > 0.5}
+
+
+def _modulate_pmev_perspective(
+    params: dict[str, Any], _noul: float, _choice: str, ruin_priority: float
+) -> dict[str, Any]:
+    params["ruin_prior"] = ruin_priority
+    return {"pmev_barrier_inflation": round((ruin_priority - 1.0) / 0.30 * 100.0, 2)}
+
+
+def _modulate_cfr_plus(params: dict[str, Any], noul: float, _choice: str, _ruin_priority: float) -> dict[str, Any]:
+    alpha = round(0.6 + 0.3 * (1.0 - noul), 4)
+    params["discount_alpha"] = alpha
+    return {"cfr_regret_matching_plus": True, "cfr_discount_alpha": alpha}
+
+
+def _modulate_monte_carlo(params: dict[str, Any], noul: float, choice: str, ruin_priority: float) -> dict[str, Any]:
+    base_samples = int(params.get("simulations_count", 10000))
+    if noul > 0.6 or choice == "complex":
+        params["simulations_count"] = int(base_samples * 1.5)
+    params["ruin_prior"] = ruin_priority
+    base_conf = float(params.get("confidence_level", 0.95))
+    params["confidence_level"] = round(min(0.99, base_conf + (0.02 if noul > 0.5 else 0.0)), 4)
+    return {
+        "monte_carlo_sample_expansion": noul > 0.6 or choice == "complex",
+        "ruin_barrier_factor": ruin_priority,
+    }
+
+
+def _modulate_timesfm(params: dict[str, Any], noul: float, _choice: str, ruin_priority: float) -> dict[str, Any]:
+    base_horizon = int(params.get("horizon", 5))
+    if noul > 0.5:
+        params["horizon"] = int(base_horizon * (1.0 + noul * 0.5))
+    params["quantile_focus"] = "quantile_90" if ruin_priority > 1.10 else "quantile_50"
+    mode = str(params.get("mode", "commercial")).lower()
+    params["preferred_model"] = "timesfm-3.0-330m" if mode == "research" else "timesfm-2.5-200m"
+    return {
+        "timesfm_volatility_prior": round(noul, 4),
+        "timesfm_ruin_adjusted_horizon": params.get("horizon", base_horizon),
+    }
+
+
+def _modulate_dream(params: dict[str, Any], noul: float, choice: str, ruin_priority: float) -> dict[str, Any]:
+    base_margin = float(params.get("pruning_margin", 0.02))
+    params["pruning_margin"] = round(base_margin * ruin_priority, 4)
+    params["s1_pruning_threshold"] = round(0.20 + 0.15 * (1.0 - noul), 4)
+    params["fast_path_heuristic"] = choice != "complex" and noul < 0.4
+    return {
+        "dream_rsi_pruning_tightened": ruin_priority > 1.10,
+        "s1_pre_filtering_enabled": True,
+    }
+
+
+def _modulate_shannon(_params: dict[str, Any], noul: float, _choice: str, _ruin_priority: float) -> dict[str, Any]:
+    bits = round(-noul * math.log2(max(noul, 1e-6)) if noul > 0 else 0.0, 4)
+    return {"shannon_uncertainty_bits": bits}
+
+
+def _modulate_prospect_theory(
+    params: dict[str, Any], _noul: float, _choice: str, ruin_priority: float
+) -> dict[str, Any]:
+    lambda_loss = float(params.get("loss_aversion_lambda", 2.25))
+    params["loss_aversion_lambda"] = round(lambda_loss * ruin_priority, 4)
+    return {}
+
+
+def _modulate_generic_framework(
+    params: dict[str, Any], noul: float, choice: str, _ruin_priority: float
+) -> dict[str, Any]:
+    params["horizon_expansion_factor"] = round(1.0 + noul * 0.5, 4)
+    return {"framework_cognitive_load": choice}
+
+
+_SOLVER_MODULATORS: dict[str, Callable[[dict[str, Any], float, str, float], dict[str, Any]]] = {
+    "pluribus": _modulate_pluribus,
+    "deepstack": _modulate_deepstack,
+    "pmev-perspective": _modulate_pmev_perspective,
+    "cfr-plus": _modulate_cfr_plus,
+    "monte-carlo": _modulate_monte_carlo,
+    "timesfm": _modulate_timesfm,
+    "timesfm-forecaster": _modulate_timesfm,
+    "dream-rsi": _modulate_dream,
+    "dream-timesfm": _modulate_dream,
+    "pmev-dream": _modulate_dream,
+    "shannon-entropy": _modulate_shannon,
+    "prospect-theory": _modulate_prospect_theory,
+    "libratus": _modulate_generic_framework,
+    "antevisao": _modulate_generic_framework,
+    "systems-theory": _modulate_generic_framework,
+    "universal-importer": _modulate_generic_framework,
+}
+
+
 class LayaSolverAdapter:
     """Adaptador universal que traduz sinais S1 da Laya para parametros de Solvers."""
 
@@ -83,68 +188,8 @@ class LayaSolverAdapter:
         ruin_priority: float,
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         """Extrai a logica de modulacao especifica por solver (reduz complexidade cognitiva)."""
-        signals: dict[str, Any] = {}
-
-        if solver_key == "pluribus":
-            base_iters = int(params.get("iterations", 500))
-            if noul > 0.7 or choice == "complex":
-                params["iterations"] = int(base_iters * 1.5)
-                params["lambda_factor"] = round(float(params.get("lambda_factor", 1.2)) * ruin_priority, 4)
-            signals["pluribus_depth_multiplier"] = 1.2 if choice == "complex" else 1.0
-
-        elif solver_key == "deepstack":
-            base_tol = float(params.get("tolerance", 0.01))
-            params["tolerance"] = round(base_tol * (1.0 + noul * 0.5), 6)
-            signals["continual_resolving_tightened"] = noul > 0.5
-
-        elif solver_key == "pmev-perspective":
-            params["ruin_prior"] = ruin_priority
-            signals["pmev_barrier_inflation"] = round((ruin_priority - 1.0) / 0.30 * 100.0, 2)
-
-        elif solver_key == "cfr-plus":
-            params["discount_alpha"] = round(0.6 + 0.3 * (1.0 - noul), 4)
-            signals["cfr_regret_matching_plus"] = True
-            signals["cfr_discount_alpha"] = params["discount_alpha"]
-
-        elif solver_key == "monte-carlo":
-            base_samples = int(params.get("simulations_count", 10000))
-            if noul > 0.6 or choice == "complex":
-                params["simulations_count"] = int(base_samples * 1.5)
-            params["ruin_prior"] = ruin_priority
-            base_conf = float(params.get("confidence_level", 0.95))
-            params["confidence_level"] = round(min(0.99, base_conf + (0.02 if noul > 0.5 else 0.0)), 4)
-            signals["monte_carlo_sample_expansion"] = noul > 0.6 or choice == "complex"
-            signals["ruin_barrier_factor"] = ruin_priority
-
-        elif solver_key in {"timesfm", "timesfm-forecaster"}:
-            base_horizon = int(params.get("horizon", 5))
-            if noul > 0.5:
-                params["horizon"] = int(base_horizon * (1.0 + noul * 0.5))
-            params["quantile_focus"] = "quantile_90" if ruin_priority > 1.10 else "quantile_50"
-            mode = str(params.get("mode", "commercial")).lower()
-            params["preferred_model"] = "timesfm-3.0-330m" if mode == "research" else "timesfm-2.5-200m"
-            signals["timesfm_volatility_prior"] = round(noul, 4)
-            signals["timesfm_ruin_adjusted_horizon"] = params.get("horizon", base_horizon)
-
-        elif solver_key in {"dream-rsi", "dream-timesfm", "pmev-dream"}:
-            base_margin = float(params.get("pruning_margin", 0.02))
-            params["pruning_margin"] = round(base_margin * ruin_priority, 4)
-            params["s1_pruning_threshold"] = round(0.20 + 0.15 * (1.0 - noul), 4)
-            params["fast_path_heuristic"] = choice != "complex" and noul < 0.4
-            signals["dream_rsi_pruning_tightened"] = ruin_priority > 1.10
-            signals["s1_pre_filtering_enabled"] = True
-
-        elif solver_key == "shannon-entropy":
-            signals["shannon_uncertainty_bits"] = round(-noul * math.log2(max(noul, 1e-6)) if noul > 0 else 0.0, 4)
-
-        elif solver_key == "prospect-theory":
-            lambda_loss = float(params.get("loss_aversion_lambda", 2.25))
-            params["loss_aversion_lambda"] = round(lambda_loss * ruin_priority, 4)
-
-        elif solver_key in {"libratus", "antevisao", "systems-theory", "universal-importer"}:
-            params["horizon_expansion_factor"] = round(1.0 + noul * 0.5, 4)
-            signals["framework_cognitive_load"] = choice
-
+        modulator = _SOLVER_MODULATORS.get(solver_key)
+        signals = modulator(params, noul, choice, ruin_priority) if modulator else {}
         return params, signals
 
     @classmethod

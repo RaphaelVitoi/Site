@@ -286,7 +286,7 @@ class CoherentStateGenerator:
         self.structure = structure
         self.seed = seed
         self.concentration = concentration
-        self._rng = random.Random(seed)  # noqa: S311 - PRNG deterministimo para geracao de estados, nao criptografia  # Record-Id: registro-2026-09-20-hh-canon-coherent-state-rng
+        self._rng = random.Random(seed)  # noqa: S311  # PRNG deterministico para geracao de estados, nao criptografia  # Record-Id: registro-2026-09-20-hh-canon-coherent-state-rng
         self._reais = [
             h
             for h in real_states

@@ -187,7 +187,7 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
         try:
             await manager.update_task_status(task.id, "pending")
         except Exception as db_err:  # noqa: BLE001
-            logger.error(
+            logger.exception(
                 "[[%s]%s] Falha ao retornar tarefa %s para pending no SQLite: %s",
                 getattr(te, "_c", lambda _: "")(task.agent),
                 task.agent,
@@ -214,7 +214,7 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
         try:
             await manager.update_task_status(task.id, "pending")
         except Exception as db_err:  # noqa: BLE001
-            logger.error(
+            logger.exception(
                 "[[%s]%s] Falha ao retornar tarefa %s para pending no SQLite: %s",
                 getattr(te, "_c", lambda _: "")(task.agent),
                 task.agent,
@@ -243,7 +243,7 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
             merge=True,
         )
     except Exception as db_err:  # noqa: BLE001
-        logger.error(
+        logger.exception(
             "[[%s]%s] Falha ao persistir status 'failed' para tarefa %s no SQLite: %s",
             getattr(te, "_c", lambda _: "")(task.agent),
             task.agent,

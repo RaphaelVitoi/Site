@@ -2,12 +2,12 @@
 
 Executar: .venv/Scripts/python.exe -m pytest tests/matriz_frontend.py -q
 
-Um guard que nunca falhou não foi testado. Este arquivo reintroduz, um por um,
+Um guard que nunca falhou nao foi testado. Este arquivo reintroduz, um por um,
 os defeitos que `test_contraste_superficie.py` e `test_ordem_headings.py`
-existem para caçar, e exige reprovação.
+existem para cacar, e exige reprovacao.
 
 Medido em 2026-09-29: 4 de 7 escaparam na primeira rodada. As causas foram
-a mesma nos dois guards — ler **grafia** em vez de **uso**:
+a mesma nos dois guards -- ler **grafia** em vez de **uso**:
 
   1. quote de 'format ' removido ....... PEGOU
   2. acento puro como fundo de texto ... ESCAPOU (guard nao olhava hover)
@@ -17,12 +17,12 @@ a mesma nos dois guards — ler **grafia** em vez de **uso**:
   6. h4 voltando em pagina ............ ESCAPOU (regex nao cobreva o caso)
   7. tag desbalanceada ................ ESCAPOU (regex contava no fonte todo)
 
-Os quatro ESCAPOU viraram guarda. Passar com defeito é pior que reprovar sem
-defeito: o guard vira decoração, e quem confia nele acredita numa medição que
-não ocorreu.
+Os quatro ESCAPOU viraram guarda. Passar com defeito e pior que reprovar sem
+defeito: o guard vira decoracao, e quem confia nele acredita numa medicao que
+nao ocorreu.
 
-A restauração é feita em `try/finally` em cada caso — a primeira versão
-vazou mutação quando o run estourou o timeout no meio.
+A restauracao e feita em `try/finally` em cada caso -- a primeira versao
+vazou mutacao quando o run estourou o timeout no meio.
 """
 
 from __future__ import annotations
@@ -175,7 +175,7 @@ def test_guarda_reprova_cada_defeito_reintroduzido(
 
     assert r.returncode != 0, (
         f"ESCAPOU: {rotulo}.\n"
-        f"  o guard em `{guarda}` passou com o defeito reintroduzido — o guard "
+        f"  o guard em `{guarda}` passou com o defeito reintroduzido \u2014 o guard "
         "esta decorativo. Verifique se a checagem olha uso (classe + texto no "
         "mesmo className) em vez de grafia solta."
     )

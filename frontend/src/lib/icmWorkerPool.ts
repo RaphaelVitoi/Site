@@ -44,6 +44,13 @@ export interface IcmSimulationResult {
 	placementDistribution?: number[][] | undefined;
 }
 
+interface WorkerBatchResult {
+	equities: number[];
+	stdErrorPerPlayer: number[];
+	placementDistribution?: number[][];
+	iterations: number;
+}
+
 export class IcmWorkerPool {
 	private static instance: IcmWorkerPool | null = null;
 	private workers: Worker[] = [];
@@ -123,119 +130,155 @@ export class IcmWorkerPool {
 		const iterationsPerWorker = Math.ceil(iterations / activeWorkers);
 		const baseSeed = seed ?? (deriveSeed() & 0x7fffffff);
 
-		const promises: Promise<{
-			equities: number[];
-			stdErrorPerPlayer: number[];
-			placementDistribution?: number[][];
-			iterations: number;
-		}>[] = [];
+		const promises: Promise<WorkerBatchResult>[] = [];
 
 		for (let i = 0; i < activeWorkers; i++) {
 			const worker = this.workers.at(i);
 			if (!worker) continue;
 
 			const workerSeed = (baseSeed + (i * 1013904223)) >>> 0;
-			const taskPromise = new Promise<{
-				equities: number[];
-				stdErrorPerPlayer: number[];
-				placementDistribution?: number[][];
-				iterations: number;
-			}>((resolve, reject) => {
-				const timer = setTimeout(() => {
-					reject(new Error(`Timeout no ICM Worker thread ${i}`));
-				}, timeoutMs);
-
-				const handler = (e: MessageEvent) => {
-					if (e.data?.simulationId === simulationId && e.data?.type === 'SUCCESS') {
-						clearTimeout(timer);
-						worker.removeEventListener('message', handler);
-						resolve({
-							equities: e.data.equities ?? [],
-							stdErrorPerPlayer: e.data.stdErrorPerPlayer ?? [],
-							placementDistribution: e.data.placementDistribution,
-							iterations: e.data.iterations || iterationsPerWorker,
-						});
-					} else if (e.data?.simulationId === simulationId && e.data?.type === 'ERROR') {
-						clearTimeout(timer);
-						worker.removeEventListener('message', handler);
-						reject(new Error(e.data.error || 'Erro no ICM Worker'));
-					}
-				};
-
-				worker.addEventListener('message', handler);
-				worker.postMessage({
-					type: 'CALCULATE',
+			promises.push(
+				this.dispatchWorkerTask(worker, i, {
+					simulationId,
 					stacks,
 					prizes,
 					iterations: iterationsPerWorker,
-					simulationId,
-					seed: workerSeed,
-					workerIndex: i,
-				});
-			});
-
-			promises.push(taskPromise);
+					workerSeed,
+					timeoutMs,
+				}),
+			);
 		}
 
 		try {
 			const results = await Promise.all(promises);
-
-			let totalIterations = 0;
-			const numPlayers = stacks.length;
-			const weightedEquitySum = new Array<number>(numPlayers).fill(0);
-			const weightedVarianceSum = new Array<number>(numPlayers).fill(0);
-			const k = Math.min(numPlayers, prizes.length);
-			const weightedPlacementSum: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
-			let hasPlacements = false;
-
-			for (const r of results) {
-				const nW = r.iterations;
-				totalIterations += nW;
-				for (let p = 0; p < numPlayers; p++) {
-					weightedEquitySum[p] = (weightedEquitySum[p] ?? 0) + (r.equities[p] ?? 0) * nW;
-					const seW = r.stdErrorPerPlayer[p] ?? 0;
-					// Var(X_comb) = sum(n_w^2 * se_w^2) / n_total^2
-					weightedVarianceSum[p] = (weightedVarianceSum[p] ?? 0) + (nW * nW * seW * seW);
-
-					if (r.placementDistribution?.[p]) {
-						hasPlacements = true;
-						for (let j = 0; j < k; j++) {
-							weightedPlacementSum[p]![j] = (weightedPlacementSum[p]![j] ?? 0) + (r.placementDistribution[p]![j] ?? 0) * nW;
-						}
-					}
-				}
-			}
-
-			const meanEquities = weightedEquitySum.map((sum) => (totalIterations > 0 ? sum / totalIterations : 0));
-			const stdErrorPerPlayer = weightedVarianceSum.map((wVar) => {
-				if (totalIterations <= 0) return 0;
-				return Number(Math.sqrt(wVar / (totalIterations * totalIterations)).toFixed(4));
-			});
-			const placementDistribution = hasPlacements && totalIterations > 0
-				? weightedPlacementSum.map((row) => row.map((sum) => sum / totalIterations))
-				: undefined;
-
-			const latencyMs = Number(
-				((typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0).toFixed(2),
-			);
-			const throughputIps = latencyMs > 0 ? Math.round((totalIterations / latencyMs) * 1000) : 0;
-
-			return {
-				equities: meanEquities,
-				stdErrorPerPlayer,
-				placementDistribution,
-				iterations: totalIterations,
-				seed: baseSeed,
-				latencyMs,
-				throughputIps,
-				concurrency: activeWorkers,
-				mode: 'WORKER_POOL',
+			return this.aggregateWorkerResults(
+				results,
+				stacks.length,
+				prizes.length,
+				baseSeed,
+				activeWorkers,
 				simulationId,
-			};
+				t0,
+			);
 		} catch (err) {
 			console.warn('[IcmWorkerPool] Erro na orquestração paralela. Invocando fallback Single-Thread:', err);
 			return this.runSingleThreadFallback(stacks, prizes, iterations, seed, simulationId, t0);
 		}
+	}
+
+	private aggregateWorkerResults(
+		results: WorkerBatchResult[],
+		numPlayers: number,
+		prizesLength: number,
+		baseSeed: number,
+		activeWorkers: number,
+		simulationId: string,
+		t0: number,
+	): IcmSimulationResult {
+		let totalIterations = 0;
+		const weightedEquitySum = new Array<number>(numPlayers).fill(0);
+		const weightedVarianceSum = new Array<number>(numPlayers).fill(0);
+		const k = Math.min(numPlayers, prizesLength);
+		const weightedPlacementSum: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
+		let hasPlacements = false;
+
+		for (const r of results) {
+			const nW = r.iterations;
+			totalIterations += nW;
+			for (let p = 0; p < numPlayers; p++) {
+				weightedEquitySum[p] = (weightedEquitySum[p] ?? 0) + (r.equities[p] ?? 0) * nW;
+				const seW = r.stdErrorPerPlayer[p] ?? 0;
+				// Var(X_comb) = sum(n_w^2 * se_w^2) / n_total^2
+				weightedVarianceSum[p] = (weightedVarianceSum[p] ?? 0) + (nW * nW * seW * seW);
+
+				if (r.placementDistribution?.[p]) {
+					hasPlacements = true;
+					for (let j = 0; j < k; j++) {
+						weightedPlacementSum[p]![j] = (weightedPlacementSum[p]![j] ?? 0) + (r.placementDistribution[p]![j] ?? 0) * nW;
+					}
+				}
+			}
+		}
+
+		const meanEquities = weightedEquitySum.map((sum) => (totalIterations > 0 ? sum / totalIterations : 0));
+		const stdErrorPerPlayer = weightedVarianceSum.map((wVar) => {
+			if (totalIterations <= 0) return 0;
+			return Number(Math.sqrt(wVar / (totalIterations * totalIterations)).toFixed(4));
+		});
+		const placementDistribution = hasPlacements && totalIterations > 0
+			? weightedPlacementSum.map((row) => row.map((sum) => sum / totalIterations))
+			: undefined;
+
+		const latencyMs = Number(
+			((typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0).toFixed(2),
+		);
+		const throughputIps = latencyMs > 0 ? Math.round((totalIterations / latencyMs) * 1000) : 0;
+
+		return {
+			equities: meanEquities,
+			stdErrorPerPlayer,
+			placementDistribution,
+			iterations: totalIterations,
+			seed: baseSeed,
+			latencyMs,
+			throughputIps,
+			concurrency: activeWorkers,
+			mode: 'WORKER_POOL',
+			simulationId,
+		};
+	}
+
+	private dispatchWorkerTask(
+		worker: Worker,
+		workerIndex: number,
+		payload: {
+			simulationId: string;
+			stacks: number[];
+			prizes: number[];
+			iterations: number;
+			workerSeed: number;
+			timeoutMs: number;
+		},
+	): Promise<{
+		equities: number[];
+		stdErrorPerPlayer: number[];
+		placementDistribution?: number[][];
+		iterations: number;
+	}> {
+		const { simulationId, stacks, prizes, iterations, workerSeed, timeoutMs } = payload;
+		return new Promise((resolve, reject) => {
+			const timer = setTimeout(() => {
+				reject(new Error(`Timeout no ICM Worker thread ${workerIndex}`));
+			}, timeoutMs);
+
+			const handler = (e: MessageEvent) => {
+				if (e.data?.simulationId === simulationId && e.data?.type === 'SUCCESS') {
+					clearTimeout(timer);
+					worker.removeEventListener('message', handler);
+					resolve({
+						equities: e.data.equities ?? [],
+						stdErrorPerPlayer: e.data.stdErrorPerPlayer ?? [],
+						placementDistribution: e.data.placementDistribution,
+						iterations: e.data.iterations || iterations,
+					});
+				} else if (e.data?.simulationId === simulationId && e.data?.type === 'ERROR') {
+					clearTimeout(timer);
+					worker.removeEventListener('message', handler);
+					reject(new Error(e.data.error || 'Erro no ICM Worker'));
+				}
+			};
+
+			worker.addEventListener('message', handler);
+			worker.postMessage({
+				type: 'CALCULATE',
+				stacks,
+				prizes,
+				iterations,
+				simulationId,
+				seed: workerSeed,
+				workerIndex,
+			});
+		});
 	}
 
 	private runSingleThreadFallback(

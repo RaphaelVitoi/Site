@@ -62,6 +62,68 @@ class KeyStats(TypedDict):
     is_revoked: bool
 
 
+def _read_windows_registry_openrouter(env_map: dict[str, str]) -> None:
+    if sys.platform != "win32":
+        return
+    try:
+        import winreg  # noqa: PLC0415
+
+        for hkey, subkey in (
+            (winreg.HKEY_CURRENT_USER, r"Environment"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+        ):
+            try:
+                with winreg.OpenKey(hkey, subkey) as k:
+                    idx = 0
+                    while True:
+                        try:
+                            name, val, _ = winreg.EnumValue(k, idx)
+                            if name.startswith("OPENROUTER_"):
+                                env_map[name] = str(val).strip()
+                            idx += 1
+                        except OSError:
+                            break
+            except OSError:
+                pass
+    except ImportError:
+        pass
+
+
+def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
+    new_pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
+    for var_name, var_value in env_map.items():
+        if not var_value or len(var_value) < 10:
+            continue
+        m = RE_TIER_KEY.match(var_name.upper())
+        if m:
+            tier = int(m.group("tier"))
+            if var_value not in new_pools[tier]:
+                new_pools[tier].append(var_value)
+
+    legacy_key = env_map.get("OPENROUTER_API_KEY", "").strip()
+    if legacy_key and len(legacy_key) >= 10 and not new_pools[1]:
+        new_pools[1].append(legacy_key)
+    return new_pools
+
+
+def _init_key_stats(stats: dict[str, KeyStats], pools: dict[int, list[str]]) -> None:
+    for tier, keys in pools.items():
+        for key in keys:
+            s8 = _key_sha8(key)
+            if s8 not in stats:
+                stats[s8] = {
+                    "key": key,
+                    "tier": tier,
+                    "attempts": 0,
+                    "successes": 0,
+                    "failures": 0,
+                    "consecutive_failures": 0,
+                    "avg_latency_ms": 500.0,
+                    "blocked_until": None,
+                    "is_revoked": False,
+                }
+
+
 class OpenRouterPoolManager:
     """
     Gerenciador com isolamento de cotas por Tier, selecao adaptativa e circuit breaker.
@@ -77,65 +139,9 @@ class OpenRouterPoolManager:
     def reload_from_environment(self) -> None:
         """Carrega todas as chaves por Tier a partir do os.environ e do Registro (HKCU/HKLM no Windows)."""
         env_map: dict[str, str] = dict(os.environ)
-
-        # No Windows, complementa com HKCU e HKLM se disponivel
-        if sys.platform == "win32":
-            try:
-                import winreg  # noqa: PLC0415
-
-                for hkey, subkey in [
-                    (winreg.HKEY_CURRENT_USER, r"Environment"),
-                    (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
-                ]:
-                    try:
-                        with winreg.OpenKey(hkey, subkey) as k:
-                            idx = 0
-                            while True:
-                                try:
-                                    name, val, _ = winreg.EnumValue(k, idx)
-                                    if name.startswith("OPENROUTER_"):
-                                        env_map[name] = str(val).strip()
-                                    idx += 1
-                                except OSError:
-                                    break
-                    except OSError:
-                        pass
-            except ImportError:
-                pass
-
-        new_pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
-        for var_name, var_value in env_map.items():
-            if not var_value or len(var_value) < 10:
-                continue
-            m = RE_TIER_KEY.match(var_name.upper())
-            if m:
-                tier = int(m.group("tier"))
-                if var_value not in new_pools[tier]:
-                    new_pools[tier].append(var_value)
-
-        # Se houver OPENROUTER_API_KEY global legada e o tier 1 estiver vazio, injeta no tier 1
-        legacy_key = env_map.get("OPENROUTER_API_KEY", "").strip()
-        if legacy_key and len(legacy_key) >= 10 and not new_pools[1]:
-            new_pools[1].append(legacy_key)
-
-        self._pools = new_pools
-
-        # Inicializa registros de telemetria para chaves novas
-        for tier, keys in self._pools.items():
-            for key in keys:
-                s8 = _key_sha8(key)
-                if s8 not in self._stats:
-                    self._stats[s8] = {
-                        "key": key,
-                        "tier": tier,
-                        "attempts": 0,
-                        "successes": 0,
-                        "failures": 0,
-                        "consecutive_failures": 0,
-                        "avg_latency_ms": 500.0,
-                        "blocked_until": None,
-                        "is_revoked": False,
-                    }
+        _read_windows_registry_openrouter(env_map)
+        self._pools = _build_openrouter_pools(env_map)
+        _init_key_stats(self._stats, self._pools)
 
         logger.info(
             "[OPENROUTER POOL] Pools carregados: Tier1=%d, Tier2=%d, Tier3=%d, Tier4=%d",

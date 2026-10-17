@@ -457,7 +457,7 @@ body:has(.simulator-immersive) main.grow {
 
   /* O Botão Ouro SOTA (Design System v8.0 GOLD) */
   .btn-gold {
-    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 transition-all duration-200 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/30 active:scale-95 border border-amber-400/40;
+    @apply inline-flex items-center justify-center rounded-xl bg-linear-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 transition-all duration-200 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/30 active:scale-95 border border-amber-400/40;
   }
 
   /* Icone Central de Cards do Hub */
@@ -532,14 +532,14 @@ body:has(.simulator-immersive) main.grow {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-sota-in,
-  .animate-fade-up {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
+  html body .animate-sota-in,
+  html body .animate-fade-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
-  .pulse-glow {
-    animation: none !important;
+  html body .pulse-glow {
+    animation: none;
   }
 }
 
@@ -888,14 +888,14 @@ body:has(.simulator-immersive) main.grow {
 }
 
 /* Escala comum dos três simuladores; a grade de mãos mantém sua densidade de dados. */
-:is(.simulator-immersive, .simulator-gto, .simulator-distortions) p:not(.simulator-matrix *) {
-  font-size: 1rem !important;
-  line-height: 1.6 !important;
+html body :is(.simulator-immersive, .simulator-gto, .simulator-distortions) p:not(.simulator-matrix *) {
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
-:is(.simulator-immersive, .simulator-gto, .simulator-distortions) p[class*="uppercase"]:not(.simulator-matrix *) {
-  font-size: 0.75rem !important;
-  line-height: 1.35 !important;
+html body :is(.simulator-immersive, .simulator-gto, .simulator-distortions) p[class*="uppercase"]:not(.simulator-matrix *) {
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 :is(.simulator-immersive, .simulator-gto, .simulator-distortions) :is(h2, h3):not(.simulator-matrix *) {
@@ -908,7 +908,7 @@ body:has(.simulator-immersive) main.grow {
   line-height: 1.35;
 }
 
-:is(.simulator-immersive, .simulator-gto, .simulator-distortions) :is(
+html body :is(.simulator-immersive, .simulator-gto, .simulator-distortions) :is(
   [class*="text-[0.34rem]"],
   [class*="text-[0.38rem]"],
   [class*="text-[0.44rem]"],
@@ -925,7 +925,7 @@ body:has(.simulator-immersive) main.grow {
   [class*="text-[0.68rem]"],
   [class*="text-[0.7rem]"]
 ):not(p):not(.simulator-matrix *):not(i):not(svg) {
-  font-size: 0.75rem !important;
+  font-size: 0.75rem;
   line-height: 1.35;
 }
 

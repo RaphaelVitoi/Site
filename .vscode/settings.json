@@ -221,13 +221,24 @@
     "jupyter.askForKernelRestart": false,
     "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
     "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
-    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**",
+    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
+    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
     "css.lint.unknownAtRules": "ignore",
     "scss.lint.unknownAtRules": "ignore",
     "vitest.rootConfig": "vitest.config.mjs",
     "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
     "sonarlint.disableTelemetry": true,
+    "vscode-edge-devtools.webhint": false,
     "sonarlint.rules": {
+        "css:S9423": {
+            "level": "off"
+        },
+        "css:S4666": {
+            "level": "off"
+        },
+        "css:S4667": {
+            "level": "off"
+        },
         "javascript:S6853": {
             "level": "off"
         },
@@ -244,6 +255,24 @@
             "level": "off"
         },
         "typescript:S5332": {
+            "level": "off"
+        },
+        "python:S5332": {
+            "level": "off"
+        },
+        "css:S5404": {
+            "level": "off"
+        },
+        "javascript:S2999": {
+            "level": "off"
+        },
+        "typescript:S2999": {
+            "level": "off"
+        },
+        "javascript:S6842": {
+            "level": "off"
+        },
+        "typescript:S6842": {
             "level": "off"
         }
     },
@@ -325,7 +354,7 @@
         "**/.chroma_db/**/*.bin": "default",
         "*.bin": "default",
         "*.svg": "cweijan.officeViewer",
-        "*.pdf": "pdf.preview",
+        "*.pdf": "latex-workshop-pdf-hook",
         "*.xlsx": "cweijan.officeViewer",
         "*.xls": "cweijan.officeViewer",
         "*.docx": "cweijan.officeViewer",
@@ -426,6 +455,9 @@
     "java.import.exclusions": [
         "**/scripts/validation/**"
     ],
+    "java.diagnostic.filter": [
+        "**/scripts/validation/**"
+    ],
     "java.errors.incompleteClasspath.severity": "ignore",
     "sqltools.connections": [
         {
@@ -487,5 +519,44 @@
     "rainbow_csv.enable_separator_autodetection": true,
     "csv-editor.readOption_hasHeader": "true",
     "csv-editor.theme": "auto",
-    "svg.preview.mode": "svg"
+    "svg.preview.mode": "svg",
+    "[r]": {
+        "editor.defaultFormatter": "REditorSupport.r",
+        "editor.formatOnSave": true,
+        "editor.wordBasedSuggestions": "off"
+    },
+    "[rmd]": {
+        "editor.defaultFormatter": "REditorSupport.r",
+        "editor.formatOnSave": true
+    },
+    "r.executablePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.rpath.windows": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.consolePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.consoleArgs": [
+        "--no-save",
+        "--no-restore"
+    ],
+    "r.bracketedPaste": true,
+    "r.sessionWatcher": true,
+    "r.plot.backend": "jgd",
+    "r.interactive.plotBackend": "jgd",
+    "r.plot.jgd.historyLimit": 100,
+    "r.plot.jgd.exportWidth": 8,
+    "r.plot.jgd.exportHeight": 6,
+    "r.plot.jgd.exportDpi": 300,
+    "r.plot.format": "svglite",
+    "r.plot.defaults.colorTheme": "original",
+    "r.plot.defaults.plotPreviewLayout": "multirow",
+    "r.plot.timing.resizeInterval": 100,
+    "r.plot.timing.refreshInterval": 10,
+    "r.lsp.enabled": true,
+    "r.lsp.diagnostics": true,
+    "r.lsp.args": [
+        "--vanilla"
+    ],
+    "r.debugger.checkVersion": "recommended",
+    "playwright.configs": [
+        "frontend/playwright.config.ts",
+        "frontend/playwright.quality.config.ts"
+    ]
 }

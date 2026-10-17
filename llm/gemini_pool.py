@@ -2,14 +2,14 @@
 SOTA Gemini Flash-Lite Adaptive Key Pool Manager.
 
 Implementa um pool rotacional inteligente com circuit breaker reativo, isolamento
-de cotas e telemetria segura (zero plaintext) para a série Google Gemini, com foco
-prioritário em 'gemini-3.5-flash-lite' para:
-  1. Edições pontuais e atômicas (micro-edits cirúrgicos, blocos SEARCH/REPLACE).
-  2. Triagem rápida (fast-path ingress, triagem de tarefas e avaliação de intenção).
-  3. Linting e conformidade (AST checks, validação de tipagem, gates pre-commit).
+de cotas e telemetria segura (zero plaintext) para a serie Google Gemini, com foco
+prioritario em 'gemini-3.5-flash-lite' para:
+  1. Edicoes pontuais e atomicas (micro-edits cirurgicos, blocos SEARCH/REPLACE).
+  2. Triagem rapida (fast-path ingress, triagem de tarefas e avaliacao de intencao).
+  3. Linting e conformidade (AST checks, validacao de tipagem, gates pre-commit).
 
-Respeita as limitações e cotas do Google AI Studio / GCP (projeto projects/913870412920 / original-498419).
-Todas as credenciais são carregadas do ambiente seguro (HKCU:\\Environment no Windows).
+Respeita as limitacoes e cotas do Google AI Studio / GCP (projeto projects/913870412920 / original-498419).
+Todas as credenciais sao carregadas do ambiente seguro (HKCU:\\Environment no Windows).
 """
 
 from __future__ import annotations
@@ -35,16 +35,16 @@ def _key_sha8(key: str) -> str:
 
 
 class GeminiWorkload(StrEnum):
-    """Domínios de carga de trabalho designados para Gemini 3.5 Flash-Lite."""
+    """Dominios de carga de trabalho designados para Gemini 3.5 Flash-Lite."""
 
-    ATOMIC_EDITS = "atomic_edits"  # edições pontuais, micro-patches cirúrgicos
-    TRIAGEM = "triagem"  # classificação rápida, ingress fast-path
-    LINTING = "linting"  # auditoria de código, verificação AST e tipagem
-    GENERAL = "general"  # consultas leves e sumarização rápida
+    ATOMIC_EDITS = "atomic_edits"  # edicoes pontuais, micro-patches cirurgicos
+    TRIAGEM = "triagem"  # classificacao rapida, ingress fast-path
+    LINTING = "linting"  # auditoria de codigo, verificacao AST e tipagem
+    GENERAL = "general"  # consultas leves e sumarizacao rapida
 
 
 class KeyStats:
-    """Estatísticas de saúde e telemetria de uma chave do pool."""
+    """Estatisticas de saude e telemetria de uma chave do pool."""
 
     def __init__(self, key: str, index: int) -> None:
         self.key: str = key
@@ -66,20 +66,20 @@ class KeyStats:
         self.last_used: datetime | None = None
 
     def is_available(self) -> bool:
-        """Verifica se a chave está apta para uso (não revogada e fora de cooldown)."""
+        """Verifica se a chave esta apta para uso (nao revogada e fora de cooldown)."""
         if self.is_revoked:
             return False
         return not (self.blocked_until and datetime.now(UTC) < self.blocked_until)
 
     def calculate_health_score(self) -> float:
-        """Calcula o score de saúde da chave (0 a 100)."""
+        """Calcula o score de saude da chave (0 a 100)."""
         if self.is_revoked:
             return 0.0
         if self.blocked_until and datetime.now(UTC) < self.blocked_until:
             return -500.0
 
         if self.attempts == 0:
-            return 85.0  # Chave limpa e pronta para distribuição
+            return 85.0  # Chave limpa e pronta para distribuicao
 
         success_rate = (self.successes / self.attempts) * 100.0
         latency_penalty = min(self.avg_latency_ms / 100.0, 25.0)
@@ -88,13 +88,57 @@ class KeyStats:
         return max(0.0, success_rate - latency_penalty - failure_penalty)
 
 
+def _read_windows_registry_env(env_map: dict[str, str]) -> None:
+    """Carrega variaveis GEMINI_ e GOOGLE_ do Registro do Windows."""
+    if sys.platform != "win32":
+        return
+    try:
+        import winreg  # noqa: PLC0415
+
+        for hkey, subkey in (
+            (winreg.HKEY_CURRENT_USER, r"Environment"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+        ):
+            try:
+                with winreg.OpenKey(hkey, subkey) as k:
+                    idx = 0
+                    while True:
+                        try:
+                            name, val, _ = winreg.EnumValue(k, idx)
+                            name_upper = name.upper()
+                            if name_upper.startswith(("GEMINI_", "GOOGLE_")):
+                                env_map[name_upper] = str(val).strip()
+                            idx += 1
+                        except OSError:
+                            break
+            except OSError:
+                pass
+    except ImportError:
+        pass
+
+
+def _collect_gemini_keys_from_map(env_map: dict[str, str]) -> list[str]:
+    """Coleta chaves com nomes ordenados (GEMINI_API_KEY_1..20, etc)."""
+    collected: list[str] = []
+    for i in range(1, 21):
+        for prefix in ("GEMINI_API_KEY_", "GEMINI_FLASH_KEY_", "GEMINI_KEY_"):
+            val = env_map.get(f"{prefix}{i}", "").strip()
+            if val and len(val) >= 20 and val not in collected:
+                collected.append(val)
+
+    global_key = env_map.get("GEMINI_API_KEY", "").strip()
+    if global_key and len(global_key) >= 20 and global_key not in collected:
+        collected.append(global_key)
+    return collected
+
+
 class GeminiPoolManager:
     """
     Gerenciador do Pool Rotacional Inteligente de Chaves da Gemini API.
     Oferece:
-      - Rotação Weighted Round-Robin adaptativa.
-      - Circuit breaker para HTTP 429 (Rate Limit) e 401/403 (Revogação).
-      - Isolamento e priorização por tipo de carga (edições atômicas, triagem, linting).
+      - Rotacao Weighted Round-Robin adaptativa.
+      - Circuit breaker para HTTP 429 (Rate Limit) e 401/403 (Revogacao).
+      - Isolamento e priorizacao por tipo de carga (edicoes atomicas, triagem, linting).
       - Thread-safety via asyncio.Lock.
     """
 
@@ -111,30 +155,8 @@ class GeminiPoolManager:
         """Carrega todas as chaves do ambiente e do Registro do Windows (HKCU/HKLM)."""
         env_map: dict[str, str] = dict(os.environ)
 
-        if read_registry and sys.platform == "win32":
-            try:
-                import winreg  # noqa: PLC0415
-
-                for hkey, subkey in [
-                    (winreg.HKEY_CURRENT_USER, r"Environment"),
-                    (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
-                ]:
-                    try:
-                        with winreg.OpenKey(hkey, subkey) as k:
-                            idx = 0
-                            while True:
-                                try:
-                                    name, val, _ = winreg.EnumValue(k, idx)
-                                    name_upper = name.upper()
-                                    if name_upper.startswith(("GEMINI_", "GOOGLE_")):
-                                        env_map[name_upper] = str(val).strip()
-                                    idx += 1
-                                except OSError:
-                                    break
-                    except OSError:
-                        pass
-            except ImportError:
-                pass
+        if read_registry:
+            _read_windows_registry_env(env_map)
 
         # Atualiza metadados do projeto se presentes
         if "GEMINI_PROJECT_ID" in env_map:
@@ -142,23 +164,9 @@ class GeminiPoolManager:
         if "GEMINI_PROJECT_NAME" in env_map:
             self._project_name = env_map["GEMINI_PROJECT_NAME"]
 
-        # Coleta chaves com nomes ordenados
-        collected_keys: list[str] = []
-        # 1. Chaves indexadas GEMINI_API_KEY_1..10
-        for i in range(1, 21):
-            for prefix in ("GEMINI_API_KEY_", "GEMINI_FLASH_KEY_", "GEMINI_KEY_"):
-                val = env_map.get(f"{prefix}{i}", "").strip()
-                if val and len(val) >= 20 and val not in collected_keys:
-                    collected_keys.append(val)
+        self._keys = _collect_gemini_keys_from_map(env_map)
 
-        # 2. Chave global se houver e pool vazio
-        global_key = env_map.get("GEMINI_API_KEY", "").strip()
-        if global_key and len(global_key) >= 20 and global_key not in collected_keys:
-            collected_keys.append(global_key)
-
-        self._keys = collected_keys
-
-        # Inicializa registros de estatística
+        # Inicializa registros de estatistica
         for i, key in enumerate(self._keys):
             sha = _key_sha8(key)
             if sha not in self._stats:
@@ -172,11 +180,11 @@ class GeminiPoolManager:
         )
 
     def total_keys(self) -> int:
-        """Retorna o número total de chaves registradas."""
+        """Retorna o numero total de chaves registradas."""
         return len(self._keys)
 
     def available_keys_count(self) -> int:
-        """Retorna quantas chaves estão aptas a responder no momento."""
+        """Retorna quantas chaves estao aptas a responder no momento."""
         return sum(1 for st in self._stats.values() if st.is_available())
 
     async def get_key_for_workload(self, workload: GeminiWorkload | str = GeminiWorkload.TRIAGEM) -> tuple[str, str]:
@@ -192,7 +200,7 @@ class GeminiPoolManager:
                     "Execute pwsh scripts/ops/Set-GeminiKeyPool.ps1 para provisionar."
                 )
 
-            # Filtra chaves disponíveis
+            # Filtra chaves disponiveis
             available_stats = [st for st in self._stats.values() if st.is_available()]
 
             if not available_stats:
@@ -211,11 +219,11 @@ class GeminiPoolManager:
                     f"devido a limites de cota (429). Proxima chave liberada em {wait_sec:.1f}s."
                 )
 
-            # Filtra chaves saudáveis (score >= 60.0)
+            # Filtra chaves saudaveis (score >= 60.0)
             healthy = [st for st in available_stats if st.calculate_health_score() >= 60.0]
             candidates = healthy if healthy else available_stats
 
-            # Ordena candidatos por índice estável para que o round-robin distribua a carga uniformemente
+            # Ordena candidatos por indice estavel para que o round-robin distribua a carga uniformemente
             candidates.sort(key=lambda st: st.index)
 
             n_cand = len(candidates)
@@ -232,7 +240,7 @@ class GeminiPoolManager:
             return chosen.key, chosen.sha8
 
     async def mark_success(self, key: str, latency_ms: float) -> None:
-        """Registra sucesso na requisição, refinando a média de latência."""
+        """Registra sucesso na requisicao, refinando a media de latencia."""
         sha = _key_sha8(key)
         async with self._lock:
             if sha not in self._stats:
@@ -242,7 +250,7 @@ class GeminiPoolManager:
             st.successes += 1
             st.consecutive_failures = 0
             st.blocked_until = None
-            # Média móvel exponencial (70% anterior, 30% recente)
+            # Media movel exponencial (70% anterior, 30% recente)
             st.avg_latency_ms = (st.avg_latency_ms * 0.7) + (latency_ms * 0.3)
 
     async def mark_failure(
@@ -277,7 +285,7 @@ class GeminiPoolManager:
                 st.blocked_until = now + cooldown
                 logger.warning(
                     "[GEMINI POOL] Chave sha8=%s atingiu limite de cota (HTTP 429). "
-                    "Circuit breaker ativado por %.1fs. Rotacionando para próxima chave.",
+                    "Circuit breaker ativado por %.1fs. Rotacionando para pr\u00f3xima chave.",
                     sha,
                     cooldown.total_seconds(),
                 )
@@ -290,7 +298,7 @@ class GeminiPoolManager:
                 )
 
     def get_telemetry_summary(self) -> list[dict[str, Any]]:
-        """Gera sumário detalhado de telemetria sem expor nenhuma chave em claro."""
+        """Gera sumario detalhado de telemetria sem expor nenhuma chave em claro."""
         now = datetime.now(UTC)
         summary: list[dict[str, Any]] = []
         for sha, st in sorted(self._stats.items(), key=lambda item: item[1].index):
@@ -320,18 +328,18 @@ class GeminiPoolManager:
         return summary
 
     def format_markdown_table(self) -> str:
-        """Formata o sumário de telemetria em tabela Markdown limpa para relatórios."""
+        """Formata o sumario de telemetria em tabela Markdown limpa para relatorios."""
         summary = self.get_telemetry_summary()
         lines = [
-            "| Chave | SHA-8 | Score | Sucessos / Tentativas | Latência | Status | Carga (Edits / Triagem / Lint) |",
+            "| Chave | SHA-8 | Score | Sucessos / Tentativas | Lat\u00eancia | Status | Carga (Edits / Triagem / Lint) |",
             "| :---: | :---: | :---: | :---: | :---: | :---: | :---: |",
         ]
         for s in summary:
-            status_desc = "✅ Ativa"
+            status_desc = "\u2705 Ativa"
             if s["is_revoked"]:
-                status_desc = "⛔ Revogada"
+                status_desc = "\u26d4 Revogada"
             elif s["is_blocked"]:
-                status_desc = f"⏳ Cooldown ({s['cooldown_s']}s)"
+                status_desc = f"\u23f3 Cooldown ({s['cooldown_s']}s)"
 
             carga_desc = f"{s['atomic_edits']} / {s['triagem']} / {s['linting']}"
             lines.append(
@@ -342,5 +350,5 @@ class GeminiPoolManager:
         return "\n".join(lines)
 
 
-# Singleton canônico para todo o ecossistema
+# Singleton canonico para todo o ecossistema
 gemini_pool_manager = GeminiPoolManager()

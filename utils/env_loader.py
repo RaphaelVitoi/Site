@@ -95,52 +95,63 @@ def _load_registry_env() -> dict[str, str]:
     return reg_keys
 
 
+def _parse_env_file(path: Path) -> dict[str, str]:
+    """Extrai pares chave/valor de um arquivo .env ou script de ambiente."""
+    parsed: dict[str, str] = {}
+    if not path.exists():
+        return parsed
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.startswith(("#", "//")):
+                continue
+            key, raw_value = _parse_env_line(line)
+            if not key or not raw_value:
+                continue
+            value = _clean_env_value(raw_value)
+            if value:
+                parsed[key] = value
+    except Exception as err:
+        logger.debug("Falha ao ler arquivo de ambiente %s: %s", path, err)
+    return parsed
+
+
+def _parse_hermes_auth(auth_json: Path) -> dict[str, str]:
+    """Carrega credenciais ativas do auth.json do Hermes (Nous, Codex, etc.)."""
+    keys: dict[str, str] = {}
+    if not auth_json.exists():
+        return keys
+    try:
+        import json  # noqa: PLC0415
+
+        data = json.loads(auth_json.read_text(encoding="utf-8", errors="replace"))
+        providers = data.get("providers", {})
+        nous = providers.get("nous", {})
+        nous_token = nous.get("agent_key") or nous.get("access_token")
+        if nous_token:
+            token_str = str(nous_token).strip()
+            keys["NOUS_API_KEY"] = token_str
+            keys["HERMES_API_KEY"] = token_str
+            inference_base = nous.get("inference_base_url") or "https://inference-api.nousresearch.com/v1"
+            keys["NOUS_BASE_URL"] = str(inference_base).strip()
+    except Exception as err:
+        logger.debug("Falha ao ler hermes auth.json: %s", err)
+    return keys
+
+
 def _load_hermes_harness_env() -> dict[str, str]:
     """Carrega credenciais ativas do harness Hermes Agent ($LOCALAPPDATA/hermes)."""
-    hermes_keys: dict[str, str] = {}
     local_app_data = os.environ.get("LOCALAPPDATA", "")
     if not local_app_data:
-        return hermes_keys
+        return {}
 
     hermes_dir = Path(local_app_data) / "hermes"
     if not hermes_dir.exists():
-        return hermes_keys
+        return {}
 
-    # 1. Carrega variaveis do .env do Hermes
-    hermes_env = hermes_dir / ".env"
-    if hermes_env.exists():
-        try:
-            content = hermes_env.read_text(encoding="utf-8", errors="replace")
-            for line in content.splitlines():
-                line = line.strip()
-                if not line or line.startswith(("#", "//")):
-                    continue
-                k, raw_v = _parse_env_line(line)
-                if k and raw_v:
-                    cleaned = _clean_env_value(raw_v)
-                    if cleaned:
-                        hermes_keys[k] = cleaned
-        except Exception as err:
-            logger.debug("Falha ao ler hermes .env: %s", err)
-
-    # 2. Carrega credenciais ativas do auth.json do Hermes (Nous, Codex, etc.)
-    auth_json = hermes_dir / "auth.json"
-    if auth_json.exists():
-        try:
-            import json  # noqa: PLC0415
-
-            data = json.loads(auth_json.read_text(encoding="utf-8", errors="replace"))
-            providers = data.get("providers", {})
-            nous = providers.get("nous", {})
-            nous_token = nous.get("agent_key") or nous.get("access_token")
-            if nous_token:
-                hermes_keys["NOUS_API_KEY"] = str(nous_token).strip()
-                hermes_keys["HERMES_API_KEY"] = str(nous_token).strip()
-                inference_base = nous.get("inference_base_url") or "https://inference-api.nousresearch.com/v1"
-                hermes_keys["NOUS_BASE_URL"] = str(inference_base).strip()
-        except Exception as err:
-            logger.debug("Falha ao ler hermes auth.json: %s", err)
-
+    hermes_keys = _parse_env_file(hermes_dir / ".env")
+    hermes_keys.update(_parse_hermes_auth(hermes_dir / "auth.json"))
     return hermes_keys
 
 
@@ -152,42 +163,18 @@ def load_env() -> dict[str, str]:
     """
     keys: dict[str, str] = {}
 
-    # 1. Carrega variaveis persistidas em HKCU e HKLM
-    reg_vars = _load_registry_env()
-    for k, v in reg_vars.items():
-        keys[k] = v
-        if k not in os.environ or not os.environ[k]:
-            os.environ[k] = v
-
-    # 2. Carrega credenciais do harness Hermes Agent
-    hermes_vars = _load_hermes_harness_env()
-    for k, v in hermes_vars.items():
-        keys[k] = v
-        if k not in os.environ or not os.environ[k]:
-            os.environ[k] = v
+    for source in (_load_registry_env(), _load_hermes_harness_env()):
+        for k, v in source.items():
+            keys[k] = v
+            if not os.environ.get(k):
+                os.environ[k] = v
 
     base_dir = Path(__file__).parent.parent.resolve()
-
     for file_name in ["_env.ps1", ".env"]:
-        env_path = base_dir / file_name
-        if not env_path.exists():
-            continue
-        try:
-            content = env_path.read_text(encoding="utf-8", errors="replace")
-            for line in content.splitlines():
-                line = line.strip()
-                if not line or line.startswith(("#", "//")):
-                    continue
-
-                key, raw_value = _parse_env_line(line)
-                if not key:
-                    continue
-
-                value = _clean_env_value(raw_value)
-                keys[key] = value
-                os.environ[key] = value
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logger.warning("Falha ao carregar arquivo %s: %s", file_name, e)
+        file_vars = _parse_env_file(base_dir / file_name)
+        for key, value in file_vars.items():
+            keys[key] = value
+            os.environ[key] = value
 
     _apply_platform_guards(keys)
 

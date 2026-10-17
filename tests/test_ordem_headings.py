@@ -9,20 +9,20 @@ duas, com a mesma causa raiz em tres lugares diferentes:
    compartilhado. Endurecer o `h4` para `h3` na pagina teria consertado duas
    telas e deixado o comum esperando a proxima.
 
-2. Callout de "Relação Matemática" e "A Falha na Matriz": `h4` irmao de `h3`.
+2. Callout de "Relacao Matematica" e "A Falha na Matriz": `h4` irmao de `h3`.
 
-3. Bloco de "Referências e Atribuições": `h4` sob um `SectionHeader` que emite
+3. Bloco de "Referencias e Atribuicoes": `h4` sob um `SectionHeader` que emite
    `h2`, sem `h3` entre eles.
 
 Os tres foram corrigidos, e o 1 foi corrigido no comum: o componente agora
 aceita `headingLevel` (2..6, padrao 3), porque um widget compartilhado entre
-templates de documento precisa saber em que nivel esta — nao ha nivel herdavel
+templates de documento precisa saber em que nivel esta -- nao ha nivel herdavel
 em HTML.
 
 Este arquivo fixa a hierarquia no codigo-fonte. Ele NAO substitui a medicao no
 DOM: `SotaMarkdown` renderiza markdown vindo do banco, e nenhum teste em
 TypeScript enxerga o que o navegador montou. O que ele garante e que nenhuma
-**tag** volta a pular nivel — que e a causa dos tres achados.
+**tag** volta a pular nivel -- que e a causa dos tres achados.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ COMUNS = ("components/ui/layout/ShareButtons.tsx",)
 
 
 def _tags(txt: str) -> list[str]:
-    """Tags de heading em ordem de aparição, com aninhamento resolvido.
+    """Tags de heading em ordem de aparicao, com aninhamento resolvido.
 
     A sequencia e a que o leitor de tela percorre, e nao a do fonte: o que
     importa e a ordem no DOM, nao a ordem em que o arquivo foi escrito.
@@ -84,7 +84,7 @@ def test_compartilhado_nao_impoe_nivel_fixo_de_heading() -> None:
         assert not fixos, (
             f"{rel} emite heading de nivel fixo: {fixos}.\n"
             "  Componente compartilhado nao sabe em que nivel a pagina esta. "
-            "Use `headingLevel` (2..6) e um `Tag` derivado — como ja foi feito "
+            "Use `headingLevel` (2..6) e um `Tag` derivado \u2014 como ja foi feito "
             "neste componente em 2026-09-29."
         )
         assert "headingLevel" in txt, f"{rel} nao aceita `headingLevel`; sem prop, ele volta ao nivel fixo."
@@ -113,7 +113,7 @@ def test_tags_de_heading_abrem_e_fecham_em_par() -> None:
     """`h3` aberto e `</h4>` fechado passa em diff e quebrava a pagina.
 
     Aconteceu duas vezes nesta correcao: a troca de tag foi aplicada na
-    abertura e o fechamento ficou orfao. O sintoma no build e silencioso — o
+    abertura e o fechamento ficou orfao. O sintoma no build e silencioso -- o
     navegador fecha a tag por conta propria e a hierarquia renderizada deixa
     de bater com a do fonte.
     """
@@ -139,7 +139,7 @@ def test_paginas_nao_pulam_nivel_no_fonte() -> None:
     `h2` da secao a partir das props `step`/`title`, entao uma pagina pode
     comecar em `h3` no arquivo e sair correta no navegador. Foi o caso de
     `/biblioteca/validacao-smart-sniper`: o fonte vai `h1 -> h3`, o DOM vai
-    `h1 -> h2 "Fundamentação Teórica" -> h3`, e o axe nao reprova. Reprovar o
+    `h1 -> h2 "Fundamentacao Teorica" -> h3`, e o axe nao reprova. Reprovar o
     fonte ali seria Reprovar a pagina por um defeito que nao existe.
 
     Por isso os componentes que EMITEM heading sao descontados da sequencia
@@ -158,18 +158,18 @@ def test_paginas_nao_pulam_nivel_no_fonte() -> None:
         """DESCONTADO do salto, nao pulado.
 
         `SectionHeader` renderiza o `h2` da secao a partir das props, entao
-        uma pagina pode comecar em `h3` no arquivo e sair correta no DOM — foi
+        uma pagina pode comecar em `h3` no arquivo e sair correta no DOM -- foi
         o caso de `/biblioteca/validacao-smart-sniper`, cujo axe nao reprova.
 
         A primeira versao deste guard **p pulava a pagina inteira** quando ela
         delegava, e com isso parava de examinar o conteudo autoral dela. Foi o
-        que deixou o `h4` de "Referencias e Atribuições" passar: a pagina tem
+        que deixou o `h4` de "Referencias e Atribuicoes" passar: a pagina tem
         `SectionHeader` e `ContentPageHeader` no fonte, e o salto `h2 -> h4`
         dela nunca foi lido. Delegar o `h2` da secao nao autoriza `h4` a pular
         logo depois.
 
         O sinal do salto e a tag na propria pagina. Desconta-se o **primeiro**
-        nivel emittedo por delegacao — porque e ele que a pagina nao escreve —
+        nivel emittedo por delegacao -- porque e ele que a pagina nao escreve --
         e a sequencia author'sa e comparada a partir dai.
         """
         txt = caminho.read_text(encoding="utf-8", errors="replace")
@@ -184,7 +184,7 @@ def test_paginas_nao_pulam_nivel_no_fonte() -> None:
         `h1 -> h2 -> h3`, e o axe nao reprova.
 
         E o que acontece em `/biblioteca/validacao-smart-sniper`. Sem descontar
-        esse `h2`, a checagem de fonte reprova uma pagina correta — e um guard
+        esse `h2`, a checagem de fonte reprova uma pagina correta -- e um guard
         que reprova o que funciona treina o leitor a ignora-lo.
 
         O sinal e posicional: `SectionHeader` **entre** o `h1` e o proximo
@@ -243,7 +243,7 @@ def test_o_axe_confirma_a_hierarquia_no_dom() -> None:
     zero `heading-order`. E o unico teste que enxerga o que o navegador montou:
     `SectionHeader`, `SotaMarkdown` e o markdown do banco.
 
-    Pular quando o frontend ou a sonda nao estao no ar e deliberado — medir
+    Pular quando o frontend ou a sonda nao estao no ar e deliberado -- medir
     `NAO MEDIDO` como se fosse `zero violacoes` seria inventar aprovacao. O
     portao (`cwv_gate.ps1`) tem esse mesmo contrato e o declara na saida.
     """
@@ -279,10 +279,7 @@ def test_o_axe_confirma_a_hierarquia_no_dom() -> None:
             text=True,
             timeout=120,
         )
-        try:
-            dados = json.loads(r.stdout)
-        except json.JSONDecodeError:
-            pytest.fail(f"{rota}: a sonda nao devolveu JSON: {r.stdout[:200]!r}")
+        dados = json.loads(r.stdout)
         for det in dados.get("axe", {}).get("violationDetails", []):
             if det.get("id") == "heading-order":
                 reprovou.append(f"{rota}: {det.get('nodes')} no(s)")

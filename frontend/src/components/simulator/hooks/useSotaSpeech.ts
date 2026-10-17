@@ -3,8 +3,8 @@
 /**
  * IDENTITY: Hook de Síntese de Voz Neural SOTA (useSotaSpeech)
  * PATH: src/components/simulator/hooks/useSotaSpeech.ts
- * ROLE: Controlador de fala em tempo real com calibração acústica SAPI/Google,
- *       aceleração in-flight, divisão de sentenças e sanitização KaTeX/Markdown.
+ * ROLE: Controlador de fala híbrido SOTA (Voice Nexus Google Neural Studio :9333 + SAPI Local),
+ *       com normalização fonética para Poker/PMev/ICM/GTO, aceleração in-flight e divisão de sentenças.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,9 +16,11 @@ export interface SotaSpeechState {
 	activeMessageId: string | null;
 	selectedVoiceName: string;
 	availableVoices: SpeechSynthesisVoice[];
+	audioSource: 'nexus' | 'sapi';
+	isNexusActive: boolean;
 }
 
-function cleanTextForSpeech(raw: string): string {
+export function cleanTextForSpeech(raw: string): string {
 	if (!raw) return '';
 	return raw
 		.replace(/```[\s\S]*?```/g, ' [bloco de código omitido] ')
@@ -33,6 +35,38 @@ function cleanTextForSpeech(raw: string): string {
 		.replace(/\[([^\][]+)\]\(([^()]+)\)/g, '$1')
 		.replace(/\|[-:\s|]+\|/g, '')
 		.replaceAll('|', ', ')
+		// Calibração Acústica de Poesia e Versos
+		.replace(/\s+\/\s+/g, ', ')
+		.replace(/\(Linhas\s+(\d+)[–-](\d+)\)/gi, 'Linhas $1 a $2')
+		.replace(/\b(\d+)#\s*/g, 'Ponto $1: ')
+		.replace(/\s*->\s*/g, ' para ')
+		.replace(/\s*=>\s*/g, ' implica ')
+		.replace(/\s*<=\s*/g, ' menor ou igual a ')
+		.replace(/\s*>=\s*/g, ' maior ou igual a ')
+		// Calibração Acústica de Poker, Teoria dos Jogos & PMev
+		.replace(/\bc-bet\b|\bcbet\b/gi, 'continuation bet')
+		.replace(/\bICM\b/g, 'I C M')
+		.replace(/\bchipEV\b/g, 'chip E V')
+		.replace(/\bPMev\b/g, 'P M E V')
+		.replace(/\bEV\b/g, 'E V')
+		.replace(/\bvPIP\b/gi, 'V P I P')
+		.replace(/\bPKO\b/g, 'P K O')
+		.replace(/\bNash\b/g, 'Nésh')
+		.replace(/\bGTO\b/g, 'G T O')
+		.replace(/\br\/c\b/gi, 'raise call')
+		.replace(/\bb\/f\b/gi, 'bet fold')
+		.replace(/\b3-bet\b|\b3bet\b/gi, 'three bet')
+		.replace(/\b4-bet\b|\b4bet\b/gi, 'four bet')
+		.replace(/\bshove\b/gi, 'chove')
+		.replace(/\ball-in\b|\ballin\b/gi, 'ol-in')
+		.replace(/\bBB\b/g, 'big blinds')
+		.replace(/\bSB\b/g, 'small blind')
+		.replace(/\bBTN\b/g, 'button')
+		.replace(/\bCO\b/g, 'cut-off')
+		.replace(/\bHJ\b/g, 'hijack')
+		.replace(/\bUTG\b/g, 'under the gun')
+		.replace(/\bpot odds\b/gi, 'pót odds')
+		.replace(/\bfold equity\b/gi, 'fôuld équiti')
 		.replace(/\s{2,}/g, ' ')
 		.trim();
 }
@@ -74,19 +108,22 @@ function getEffectiveRate(targetRate: number, voice: SpeechSynthesisVoice | null
 }
 
 export function useSotaSpeech() {
-	const [rate, setRate] = useState<number>(1.5);
+	const [rate, setRate] = useState<number>(1.25);
 	const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
 	const [isPlaying, setIsPlaying] = useState<boolean>(false);
 	const [isPaused, setIsPaused] = useState<boolean>(false);
 	const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
 	const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice | null>(null);
+	const [audioSource, setAudioSource] = useState<'nexus' | 'sapi'>('sapi');
+	const [isNexusActive, setIsNexusActive] = useState<boolean>(false);
 
 	const sentencesRef = useRef<string[]>([]);
 	const sentenceIndexRef = useRef<number>(0);
 	const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+	const audioRef = useRef<HTMLAudioElement | null>(null);
 	const activeIdRef = useRef<string | null>(null);
 	const isPausedRef = useRef<boolean>(false);
-	const rateRef = useRef<number>(1.5);
+	const rateRef = useRef<number>(1.25);
 	const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
 	rateRef.current = rate;
@@ -130,12 +167,20 @@ export function useSotaSpeech() {
 				window.speechSynthesis.onvoiceschanged = null;
 				window.speechSynthesis.cancel();
 			}
+			if (audioRef.current) {
+				audioRef.current.pause();
+				audioRef.current.src = '';
+			}
 		};
 	}, [updateVoices]);
 
 	const stop = useCallback(() => {
 		if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 			window.speechSynthesis.cancel();
+		}
+		if (audioRef.current) {
+			audioRef.current.pause();
+			audioRef.current.src = '';
 		}
 		setIsPlaying(false);
 		setIsPaused(false);
@@ -146,8 +191,17 @@ export function useSotaSpeech() {
 		(window as unknown as { _sotaUtterance?: unknown })._sotaUtterance = null;
 	}, []);
 
-	const speakSentence = useCallback((index: number) => {
-		if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+	const speakSentenceWithSapi = useCallback((index: number) => {
+		if (
+			typeof window === 'undefined' ||
+			typeof window.SpeechSynthesisUtterance === 'undefined' ||
+			!('speechSynthesis' in window)
+		) {
+			setIsPlaying(false);
+			setIsPaused(false);
+			setActiveMessageId(null);
+			return;
+		}
 		const synth = window.speechSynthesis;
 
 		if (index >= sentencesRef.current.length) {
@@ -176,6 +230,7 @@ export function useSotaSpeech() {
 		utterance.onstart = () => {
 			setIsPlaying(true);
 			setIsPaused(false);
+			setAudioSource('sapi');
 		};
 
 		utterance.onend = () => {
@@ -188,7 +243,7 @@ export function useSotaSpeech() {
 		utterance.onerror = (err) => {
 			if (currentUtteranceRef.current !== utterance) return;
 			if (err.error === 'interrupted' || err.error === 'canceled') return;
-			console.warn('[useSotaSpeech] Erro na síntese:', err);
+			console.warn('[useSotaSpeech] Erro na síntese SAPI:', err);
 			setIsPlaying(false);
 			setIsPaused(false);
 			setActiveMessageId(null);
@@ -197,11 +252,86 @@ export function useSotaSpeech() {
 		synth.speak(utterance);
 	}, []);
 
+	const speakSentenceWithNexus = useCallback(async (index: number) => {
+		if (index >= sentencesRef.current.length) {
+			setIsPlaying(false);
+			setIsPaused(false);
+			setActiveMessageId(null);
+			return;
+		}
+
+		const sentence = sentencesRef.current[index];
+		if (!sentence) return;
+
+		try {
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+			const res = await fetch('http://127.0.0.1:9333/api/voice/tts', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					text: sentence,
+					voice: 'Kore',
+					rate: rateRef.current,
+					style_prompt: 'Explicação técnica e didática de teoria dos jogos, poker de alta performance e cálculo de equidade com fluência natural.',
+				}),
+				signal: controller.signal,
+			});
+			clearTimeout(timeoutId);
+
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const data = await res.json();
+			if (!data.ok || !data.audioBase64) throw new Error(data.error || 'Audio vazio');
+
+			if (typeof window !== 'undefined' && typeof window.Audio !== 'undefined') {
+				if (!audioRef.current) {
+					audioRef.current = new Audio();
+				}
+				const audio = audioRef.current;
+				const format = data.format || 'wav';
+				audio.src = `data:audio/${format};base64,${data.audioBase64}`;
+				audio.playbackRate = Math.min(2.0, Math.max(0.5, rateRef.current));
+
+				audio.onplay = () => {
+					setIsPlaying(true);
+					setIsPaused(false);
+					setAudioSource('nexus');
+					setIsNexusActive(true);
+				};
+
+				audio.onended = () => {
+					if (isPausedRef.current) return;
+					sentenceIndexRef.current++;
+					speakSentence(sentenceIndexRef.current);
+				};
+
+				audio.onerror = () => {
+					speakSentenceWithSapi(index);
+				};
+
+				await audio.play();
+				return;
+			}
+		} catch (_) {
+			setIsNexusActive(false);
+			speakSentenceWithSapi(index);
+		}
+	}, [speakSentenceWithSapi]);
+
+	const speakSentence = useCallback((index: number) => {
+		speakSentenceWithNexus(index);
+	}, [speakSentenceWithNexus]);
+
 	const applyRate = useCallback((newRate: number) => {
 		setRate(newRate);
 		rateRef.current = newRate;
 
-		// Aceleração Instantânea em Tempo Real (In-Flight Acceleration)
+		if (audioRef.current && isPlaying) {
+			audioRef.current.playbackRate = Math.min(2.0, Math.max(0.5, newRate));
+		}
+
+		// Aceleração Instantânea em Tempo Real (In-Flight Acceleration SAPI)
 		if (
 			typeof window !== 'undefined' &&
 			'speechSynthesis' in window &&
@@ -212,39 +342,54 @@ export function useSotaSpeech() {
 			window.speechSynthesis.cancel();
 			speakSentence(sentenceIndexRef.current);
 		}
-	}, [speakSentence]);
+	}, [isPlaying, speakSentence]);
 
 	const cycleRate = useCallback(() => {
 		const rates = [1.0, 1.25, 1.5, 1.75, 2.0];
 		const current = rateRef.current;
 		const idx = rates.findIndex((r) => Math.abs(r - current) < 0.01);
 		const nextIdx = idx >= 0 && idx < rates.length - 1 ? idx + 1 : 0;
-		applyRate(rates[nextIdx] ?? 1.5);
+		applyRate(rates[nextIdx] ?? 1.25);
 	}, [applyRate]);
 
 	const toggle = useCallback(
 		(messageId: string, text: string) => {
-			if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-			const synth = window.speechSynthesis;
+			if (typeof window === 'undefined') return;
 
 			// Pausar ou Retomar a mesma mensagem
 			if (activeIdRef.current === messageId) {
-				if (synth.speaking && !isPausedRef.current) {
-					synth.pause();
+				if (audioRef.current && !audioRef.current.paused) {
+					audioRef.current.pause();
 					setIsPaused(true);
 					setIsPlaying(false);
 					return;
 				}
-				if (isPausedRef.current) {
-					synth.resume();
+				if (audioRef.current && audioRef.current.paused && isPausedRef.current) {
+					audioRef.current.play().catch(() => {});
 					setIsPaused(false);
 					setIsPlaying(true);
 					return;
 				}
+
+				if ('speechSynthesis' in window) {
+					const synth = window.speechSynthesis;
+					if (synth.speaking && !isPausedRef.current) {
+						synth.pause();
+						setIsPaused(true);
+						setIsPlaying(false);
+						return;
+					}
+					if (isPausedRef.current) {
+						synth.resume();
+						setIsPaused(false);
+						setIsPlaying(true);
+						return;
+					}
+				}
 			}
 
 			// Parar reprodução anterior
-			synth.cancel();
+			stop();
 
 			const clean = cleanTextForSpeech(text);
 			if (!clean) return;
@@ -256,7 +401,7 @@ export function useSotaSpeech() {
 
 			speakSentence(0);
 		},
-		[speakSentence],
+		[speakSentence, stop],
 	);
 
 	return {
@@ -266,6 +411,8 @@ export function useSotaSpeech() {
 		activeMessageId,
 		selectedVoice,
 		voices,
+		audioSource,
+		isNexusActive,
 		toggle,
 		stop,
 		setRate: applyRate,

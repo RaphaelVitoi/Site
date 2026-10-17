@@ -53,8 +53,9 @@ def test_passo_preserva_warnings_e_codigo_de_falha(monkeypatch, codigo: int, sai
     monkeypatch.setattr(nexus, "_read_stream_and_log", AsyncMock(return_value=saida.splitlines()))
     monkeypatch.setattr(nexus.console, "print", Mock())
     if codigo:
+        coro = nexus._execute_step("lint", ["comando-falso"], Path("."))
         with pytest.raises(typer.Exit) as exc:
-            asyncio.run(nexus._execute_step("lint", ["comando-falso"], Path(".")))
+            asyncio.run(coro)
         assert exc.value.exit_code == esperado
     else:
         assert asyncio.run(nexus._execute_step("lint", ["comando-falso"], Path("."))) == esperado

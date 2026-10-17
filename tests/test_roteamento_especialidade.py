@@ -2,14 +2,14 @@
 
 Medido em 29/09/2026: uma auditoria de seguranca enfileirada para
 `@securitychief` saiu no `gemini-3.6-flash`. Nao porque ele fosse o melhor para a
-tarefa — porque `_score_standard_preference` era uma fila unica e plana onde
+tarefa -- porque `_score_standard_preference` era uma fila unica e plana onde
 "mais barato" dominava: `gemini-3.5-flash-lite` (-4) vencia `3.6` (-2), `3.7`
 (-1) e `3.8` (que nem tinha ramo, caindo em `"flash" in m` = 3). E nenhum modulo
 declarava `Task.metadata["domain"]`, entao o eixo de especialidade nunca pontuava
 ninguem: era um parametro morto.
 
 Este guard fixa os quatro eixos e a cobertura dos 19 agentes. Sem ele, a proxima
-alteracao de score volta a威ar o mais barato por acidente — e o defeito so
+alteracao de score volta aar o mais barato por acidente -- e o defeito so
  reaparece quando alguem prestacao conta com o resultado errado.
 """
 
@@ -57,7 +57,7 @@ def test_designacao_vence_tudo() -> None:
     """Quem o manifesto nomeia vence, inclusive sobre especialidade.
 
     A faixa de designacao fica ABAIXO da de especialidade com folga. Medido: com
-    `-100` nas duas, a especialidade de um `-5` chegava a -105 e vencia — o
+    `-100` nas duas, a especialidade de um `-5` chegava a -105 e vencia -- o
     manifesto nomeava o modelo e o roteamento devolvia outro.
     """
     from llm.routing import _FAIXA_DESIGNACAO, _FAIXA_ESPECIALIDADE
@@ -107,7 +107,7 @@ def test_modelos_tier1_reconhecidos_e_bloqueados_em_tarefas_comuns() -> None:
 
 
 def test_triagem_vai_para_o_mais_barato_que_classifica() -> None:
-    """Triagem e classificacao estruturada — nao raciocinio longo.
+    """Triagem e classificacao estruturada -- nao raciocinio longo.
 
     O `@dispatcher` produz JSON validado por
     `agents/dispatcher.py:_parse_dispatcher_subtasks_strict`. Modelo caro aqui e
@@ -162,7 +162,7 @@ def test_especialidade_vence_economia() -> None:
 def test_sem_dominio_a_economia_continua_decidindo() -> None:
     """Ausencia de dominio nao vira adivinhacao.
 
-    O comportamento anterior — mais barato primeiro — continua valendo para quem
+    O comportamento anterior -- mais barato primeiro -- continua valendo para quem
     nao declara dimensao. Trocar um ranking plano por um ranking errado seria
     trocar um defeito por outro.
     """
@@ -172,7 +172,7 @@ def test_sem_dominio_a_economia_continua_decidindo() -> None:
 def test_o_3_8_tem_ramo_proprio() -> None:
     """`gemini-3.8` nao pode mais cair no ramo generico de `flash`.
 
-    Sem ramo proprio, ele pegava `"flash" in m` = 3 — pior que o 3.7 (-1) e que
+    Sem ramo proprio, ele pegava `"flash" in m` = 3 -- pior que o 3.7 (-1) e que
     o proprio 3.6 (-2) na trilha `deep_thinking`. O modelo mais forte da familia
     ficava em ULTIMO na fila economica.
 
@@ -192,8 +192,8 @@ def test_o_3_8_tem_ramo_proprio() -> None:
 def test_todo_agente_do_manifesto_tem_dominio() -> None:
     """Nenhum agente fica sem dimensao declarada.
 
-    Agente sem dominio cai no eixo economico — que e o defeito original. Este
-    teste e o que impede a lista de派生 encolher sem ninguem perceber.
+    Agente sem dominio cai no eixo economico -- que e o defeito original. Este
+    teste e o que impede a lista de encolher sem ninguem perceber.
     """
     agentes = json.loads(MANIFESTO.read_text(encoding="utf-8"))
     sem = [nome for nome in agentes if dominio_do_agente(nome) is None]
@@ -265,7 +265,7 @@ def test_dispatcher_e_triagem_por_trabalho() -> None:
 
     O dispatcher produz JSON de subtarefas validado por parser estrito. Se um dia
     ele passar a produzir analise, este teste tem de falhar para a revisao
-    acontecer — e nao para o roteamento silenciosamente pagar por raciocinio.
+    acontecer -- e nao para o roteamento silenciosamente pagar por raciocinio.
     """
     assert DOMINIO_POR_AGENTE["dispatcher"] == DOMINIO_TRIAGEM
     assert DOMINIO_POR_AGENTE["organizador"] == DOMINIO_TRIAGEM

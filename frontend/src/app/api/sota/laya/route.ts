@@ -145,7 +145,7 @@ export async function POST(request: Request): Promise<NextResponse<LayaRouteResp
 	}
 }
 
-export async function GET(): Promise<NextResponse> {
+export function GET(): NextResponse {
 	return NextResponse.json({
 		status: 'SUCCESS',
 		engine: 'laya-s1-router',

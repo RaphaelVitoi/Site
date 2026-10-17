@@ -115,6 +115,7 @@ ARCHITECTURAL_INVARIANTS_NAME = "ARCHITECTURAL_INVARIANTS.md"
 
 DIR_CLAUDE_NAME = ".claude"
 DIR_CLAUDE = BASE_DIR / DIR_CLAUDE_NAME
+DIR_VENV_NAME = ".venv"
 
 #  Constantes do Orquestrador SOTA
 WORKER_SCRIPT_NAME = "task_executor.py"
@@ -1768,7 +1769,7 @@ def watch_files():
         ignore_list = [
             "__pycache__",
             ".git",
-            ".venv",
+            DIR_VENV_NAME,
             "node_modules",
             ".chroma_db",
             ".claude/logs",
@@ -1828,10 +1829,10 @@ def purify_python():
 
 
 def _is_ignored_dir(name: str) -> bool:
-    if name.startswith((".venv", "venv", ".env")) or name == "site-packages":
+    if name.startswith((DIR_VENV_NAME, "venv", ".env")) or name == "site-packages":
         return True
     return name in {
-        ".venv",
+        DIR_VENV_NAME,
         ".venv-wsl",
         "venv",
         ".env",

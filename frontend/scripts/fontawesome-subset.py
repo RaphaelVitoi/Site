@@ -44,7 +44,7 @@ SAIDA = FRONTEND / "src" / "styles" / "fontawesome"
 EXTENSOES = {".ts", ".tsx", ".js", ".jsx", ".md", ".mdx"}
 IGNORAR_DIRS = {"coverage", "tests", "interativo", "fontawesome"}
 TOKEN = re.compile(r"(?<![\w-])fa-([a-z0-9]+(?:-[a-z0-9]+)*)")
-BLOCO_ICONE = re.compile(r'^\.fa-([a-z0-9-]+) \{\n  --fa: "((?:\\.|[^"\\])+)";\n\}\n', re.MULTILINE)
+BLOCO_ICONE = re.compile(r'^\.fa-([a-z0-9-]+) \{\n {2}--fa: "((?:\\.|[^"\\])+)";\n\}\n', re.MULTILINE)
 FONTES = {"solid": "fa-solid-900", "regular": "fa-regular-400", "brands": "fa-brands-400"}
 
 

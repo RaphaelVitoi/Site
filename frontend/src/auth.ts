@@ -18,7 +18,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 						id: 'dev-operator',
 						name: 'Operador Local (Dev)',
 						credentials: {},
-						async authorize() {
+						authorize() {
 							return {
 								id: 'dev-operator-sota',
 								name: 'Operador Local',

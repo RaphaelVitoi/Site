@@ -5,19 +5,21 @@ Roteamento por ESPECIALIDADE, com economia e velocidade como eixos separados.
 Ate 29/09/2026 o score era uma fila unica e plana (`_score_standard_preference`),
 onde "mais barato" dominava tudo: `gemini-3.5-flash-lite` = -4 vencia `3.6` (-2),
 `3.7` (-1) e `3.8` (sem ramo, caia em `flash` = 3). Medido: uma auditoria de
-seguranca roteada para `@securitychief` (`deep_thinking`) saiu no `3.6` — nao
+seguranca roteada para `@securitychief` (`deep_thinking`) saiu no `3.6` -- nao
 porque ele fosse o melhor para a tarefa, mas porque era o mais barato que ainda
 constava da trilha.
 
 Quatro eixos, nesta ordem de decisao:
-1. DESIGNACAO — quem o manifesto nomeia, vence. Inegociavel.
-2. ESPECIALIDADE — o modelo que serve a dimensao pedida (codigo, matematica,
+1. DESIGNACAO -- quem o manifesto nomeia, vence. Inegociavel.
+2. ESPECIALIDADE -- o modelo que serve a dimensao pedida (codigo, matematica,
   -portugues, raciocinio longo, triagem). E o eixo que faltava.
-3. ECONOMIA — desempate por custo, so entre modelos igualmente capazes.
-4. VELOCIDADE — desempate final por latencia esperada.
+3. ECONOMIA -- desempate por custo, so entre modelos igualmente capazes.
+4. VELOCIDADE -- desempate final por latencia esperada.
 """
 
-# pylint: disable=protected-access
+from __future__ import annotations
+
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 import logging
 import sqlite3
@@ -30,11 +32,11 @@ logger = logging.getLogger(__name__)
 
 FREE_TIER_MARKER = ":free"
 
-#: Eixo 1 — DESIGNACAO (Tier 1). Absoluta e inegociavel: e o Tier 1 nomeando o
+#: Eixo 1 -- DESIGNACAO (Tier 1). Absoluta e inegociavel: e o Tier 1 nomeando o
 #: modelo do agente. Nenhuma troca economica sobrepoe uma decisao do Tier 1.
 _FAIXA_DESIGNACAO = -1000.0
 
-#: Eixo 2 — FAIXA DE ESPECIALIDADE. O modelo especialista no dominio sempre
+#: Eixo 2 -- FAIXA DE ESPECIALIDADE. O modelo especialista no dominio sempre
 #: precede o modelo generico, blindando recursos nobres contra tarefas banais.
 _FAIXA_ESPECIALIDADE = -100.0
 
@@ -42,15 +44,20 @@ _FAIXA_ESPECIALIDADE = -100.0
 #: entrou como head de `@implementor` (uma edicao de codigo delegavel) por via
 #: de `_inject_openrouter_alternatives`, que roda DEPOIS do score e nao passa
 #: por ele. Resultado: o modelo mais caro da frota executando o trabalho mais
-#: simples, e o veredito de "quem faz o quê" virando consequencia de ordem de
+#: simples, e o veredito de "quem faz o que" virando consequencia de ordem de
 #: chamadas em vez de politica.
 #:
 #: O Tier 1 e ORQUESTRADOR, e o topo da piramide: o que e mais critico e
 #: complexo. Ele nao entra como agente customizado desta malha. Esta faixa o
 #: mantem sempre abaixo de qualquer candidato nao-Tier1 em tarefa comum, mas
-#: NAO o exclui quando `designated_model` o nomeia — decisao explicita do
+#: NAO o exclui quando `designated_model` o nomeia -- decisao explicita do
 #: manifesto sempre precede.
 _FAIXA_TIER1_INDISPONIVEL = 1000.0
+
+PREFIX_GEMINI_35 = "gemini-3.5"
+PREFIX_GEMINI_36 = "gemini-3.6"
+PREFIX_GEMINI_37 = "gemini-3.7"
+PREFIX_GEMINI_38 = "gemini-3.8"
 
 #: Modelos de Tier 1: orquestram, nao sao candidatos a executar tarefa comum.
 #:
@@ -60,7 +67,7 @@ _FAIXA_TIER1_INDISPONIVEL = 1000.0
 #: para trabalho delegavel, e o jeito mais caro de nao fazer o trabalho.
 #:
 #: Tier 1 foca em orquestrar e no que e critico e complexo. Tarefa que OUTRO
-#: modelo faz bem nao justifica o Tier 1 — e o criterio e "este modelo e o
+#: modelo faz bem nao justifica o Tier 1 -- e o criterio e "este modelo e o
 #: melhor?", nao "o mais caro serve?".
 MODELOS_TIER1 = (
     "claude-opus-5+",
@@ -68,7 +75,7 @@ MODELOS_TIER1 = (
     "gpt-5.6+",
     "gpt-6+",
     "fable",
-    "gemini-3.8",
+    PREFIX_GEMINI_38,
 )
 
 #: Recurso ESCASSO: modelo potente que e limitado (cota de cloud) e caro, e que
@@ -108,7 +115,7 @@ def _e_recurso_escasso(m: str) -> bool:
 
 #: Quota estrutural que torna um modelo indisponivel para a frota.
 #:
-#: Medido em `key_usage_metrics` (326 registros, 2026-09-30) — a ORDEM real de
+#: Medido em `key_usage_metrics` (326 registros, 2026-09-30) -- a ORDEM real de
 #: entrega, e nao uma estimativa:
 #:   gemini-3.7-flash      1453 ms   n=35
 #:   gemini-3.5-flash-lite 1843 ms   n=88
@@ -118,7 +125,7 @@ def _e_recurso_escasso(m: str) -> bool:
 #: estava errada em dois dos tres.
 #:
 #: E o dado mais duro: os modelos `:free` sao os mais rapidos E os que mais
-#: falham — `mistral-small:free` 46 ms com 38 erros em 38, `llama-3.1-8b:free`
+#: falham -- `mistral-small:free` 46 ms com 38 erros em 38, `llama-3.1-8b:free`
 #: 313 ms com 6 em 6, `deepseek-r1:free` 76 ms com 4 em 4. Cem por cento. Quota
 #: inexistente nao e disponibilidade alta: e indisponibilidade que se apresenta
 #: como resposta rapida. Por isso `:free` NAO leva cota alta aqui.
@@ -151,7 +158,7 @@ def _velocidade(m: str) -> float:
 
     ORDEM MEDIDA em `key_usage_metrics` (2026-09-30, 326 registros), nao
     estimada. A ordem intuitiva (lite < 3.6 < 3.7) estava ERRADA em dois dos
-    tres: o 3.7 responde em 1453 ms e o 3.5-lite em 1843 ms — o "lite" nao e o
+    tres: o 3.7 responde em 1453 ms e o 3.5-lite em 1843 ms -- o "lite" nao e o
     mais rapido da familia. E o 3.6, que eu supunha no meio, e o mais lento
     (5113 ms, 2.8x o 3.7).
     """
@@ -183,12 +190,12 @@ DOMINIO_TRIAGEM = "TRIAGE"
 DOMINIO_PORTUGUES = "PT"
 DOMINIO_RAZONIO = "REASONING"
 #: Curadoria: unificar estetica, memoria e coerencia entre arvores. Trabalho de
-#: juizo longo sobre material heterogeneo, e nao de classificacao — dai um
+#: juizo longo sobre material heterogeneo, e nao de classificacao -- dai um
 #: modelo grande (31b cloud, 120b) em vez do mais barato que classifica bem.
 DOMINIO_CURADORIA = "CURADORIA"
 #: Inteligencia: fundamentar antes de executar. Fundacao, topologia e plano.
 #: Diferente de `DOMINIO_RAZONIO` porque aqui o modelo precisa SEGURAR o plano
-#: inteiro em contexto para nao produzir meia ideia — o gargalo e parametro e
+#: inteiro em contexto para nao produzir meia ideia -- o gargalo e parametro e
 #: coerencia de plano longo, nao velocidade de resposta.
 DOMINIO_INTELIGENCIA = "INTELIGENCIA"
 
@@ -203,6 +210,93 @@ def _dominio_da_tarefa(task: Task | None) -> str | None:
     return str(bruto).upper()
 
 
+def _score_codigo(m: str) -> int:
+    if "coder" in m:
+        return -6
+    if "qwen" in m:
+        return -4
+    if "laguna" in m:
+        return -3
+    if "flash" in m:
+        return -2
+    return 1
+
+
+def _score_math(m: str) -> int:
+    if "31b" in m or "gemma-4-31b" in m:
+        return -5
+    if "r1" in m or "reason" in m or "laguna" in m:
+        return -3
+    return 1
+
+
+def _score_triagem(m: str) -> int:
+    if "lite" in m:
+        return -5
+    if "laguna-xs" in m or "laguna-s" in m:
+        return -4
+    if PREFIX_GEMINI_35 in m or "ai9stars" in m:
+        return -3
+    if "flash" in m:
+        return -1
+    return 2
+
+
+def _score_portugues(m: str) -> int:
+    if "ling" in m:
+        return -5
+    if "gemma" in m:
+        return -3
+    return 1
+
+
+def _score_razonio(m: str) -> int:
+    if "3.7" in m:
+        return -6
+    if "120b" in m or "glm" in m or "r1" in m or "reason" in m:
+        return -4
+    if "laguna" in m:
+        return -3
+    if "3.6" in m:
+        return -2
+    return 1
+
+
+def _score_curadoria(m: str) -> int:
+    if "120b" in m or "glm" in m:
+        return -6
+    if "31b" in m or "gemma-4-31b" in m:
+        return -5
+    if "3.8" in m:
+        return -3
+    if "3.7" in m:
+        return -2
+    return 1
+
+
+def _score_inteligencia(m: str) -> int:
+    if "31b" in m or "gemma-4-31b" in m:
+        return -6
+    if "120b" in m or "glm" in m:
+        return -5
+    if "3.8" in m:
+        return -3
+    if "3.7" in m:
+        return -2
+    return 1
+
+
+_DOMAIN_SCORERS: dict[str, Callable[[str], int]] = {
+    DOMINIO_CODIGO: _score_codigo,
+    DOMINIO_MATH: _score_math,
+    DOMINIO_TRIAGEM: _score_triagem,
+    DOMINIO_PORTUGUES: _score_portugues,
+    DOMINIO_RAZONIO: _score_razonio,
+    DOMINIO_CURADORIA: _score_curadoria,
+    DOMINIO_INTELIGENCIA: _score_inteligencia,
+}
+
+
 def _especialidade(m: str, domain: str | None) -> int:
     """Quanto o modelo serve a dimensao pedida. Menor vence.
 
@@ -213,92 +307,8 @@ def _especialidade(m: str, domain: str | None) -> int:
     """
     if domain is None:
         return 0
-
-    if domain == DOMINIO_CODIGO:
-        # Codigo e edicao: o coder quantizado local e o especialista, e o
-        # primeiro a ser tentado antes de gastar cloud.
-        if "coder" in m:
-            return -6
-        if "qwen" in m:
-            return -4
-        if "laguna" in m:
-            return -3
-        if "flash" in m:
-            return -2
-        return 1
-
-    if domain == DOMINIO_MATH:
-        if "31b" in m or "gemma-4-31b" in m:
-            return -5
-        if "r1" in m or "reason" in m:
-            return -3
-        if "laguna" in m:
-            return -3
-        return 1
-
-    if domain == DOMINIO_TRIAGEM:
-        # Triagem e classificacao curta: o mais barato que classifica bem vence.
-        if "lite" in m:
-            return -5
-        if "laguna-xs" in m or "laguna-s" in m:
-            return -4
-        if "gemini-3.5" in m:
-            return -3
-        if "ai9stars" in m:
-            return -3
-        if "flash" in m:
-            return -1
-        return 2
-
-    if domain == DOMINIO_PORTUGUES:
-        if "ling" in m:
-            return -5
-        if "gemma" in m:
-            return -3
-        return 1
-
-    if domain == DOMINIO_RAZONIO:
-        if "3.7" in m:
-            return -6
-        if "120b" in m or "glm" in m:
-            return -4
-        if "r1" in m or "reason" in m:
-            return -4
-        if "laguna" in m:
-            return -3
-        if "3.6" in m:
-            return -2
-        return 1
-
-    if domain == DOMINIO_CURADORIA:
-        # Curadoria pede juizo, e juizo pede parametro. O 120b e o mais forte da
-        # frota; o 31b o segundo. O `3.5-flash-lite` NAO entra aqui de proposito:
-        # classificar bem e barato; escolher o que unify e barato nao.
-        if "120b" in m or "glm" in m:
-            return -6
-        if "31b" in m or "gemma-4-31b" in m:
-            return -5
-        if "3.8" in m:
-            return -3
-        if "3.7" in m:
-            return -2
-        return 1
-
-    if domain == DOMINIO_INTELIGENCIA:
-        # Fundacao e plano. O gemma 31b segura a arquitetura inteira; o glm oss
-        # (120b) e o segundo por parametro, e ALIADO do 31b aqui — os dois sao
-        # do mesmo porte, entao a diferenca e de tastes, nao de porte.
-        if "31b" in m or "gemma-4-31b" in m:
-            return -6
-        if "120b" in m or "glm" in m:
-            return -5
-        if "3.8" in m:
-            return -3
-        if "3.7" in m:
-            return -2
-        return 1
-
-    return 0
+    scorer = _DOMAIN_SCORERS.get(domain)
+    return scorer(m) if scorer else 0
 
 
 def _infer_provider_for_model(model: str) -> str | None:
@@ -332,13 +342,13 @@ def _score_local_preference(m: str, domain: str | None = None) -> int:
 
     if "gemma-4" in m or "gemma4" in m:
         return 1
-    if "gemini-3.5" in m:
+    if PREFIX_GEMINI_35 in m:
         return 2
     if "gemini-3.1" in m:
         return 3
-    if "gemini-3.6" in m:
+    if PREFIX_GEMINI_36 in m:
         return 4
-    if "gemini-3.7" in m:
+    if PREFIX_GEMINI_37 in m:
         return 5
     if "deepseek-r1" in m:
         return 6
@@ -358,13 +368,13 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
     # capazes. Antes era o unico eixo, e por isso o mais barato vencia o
     # especialista. `gemini-3.8` ganha ramo proprio -- sem ele caia em
     # `"flash" in m` (3), pior que `3.7` (-1) e que o proprio 3.6 (-2).
-    if "gemini-3.5" in m:
+    if PREFIX_GEMINI_35 in m:
         return -4  # Mais barato da familia; especialista em TRIAGE
-    if "gemini-3.8" in m:
+    if PREFIX_GEMINI_38 in m:
         return 0  # Raciocinio mais forte da familia; especialista em RAZONIO
-    if "gemini-3.6" in m:
+    if PREFIX_GEMINI_36 in m:
         return -2  # Workhorse Flash
-    if "gemini-3.7" in m:
+    if PREFIX_GEMINI_37 in m:
         return -1  # Reasoning Flash
     if "gemma-4" in m or "gemma4" in m:
         return 1
@@ -393,7 +403,7 @@ def _custo_relativo(m: str, model: str) -> float:
     if FREE_TIER_MARKER in m or "local" in m or "ai9stars" in m or "ling" in m:
         return 0.0
     if "laguna" in m or "space-bunny" in m:
-        return 0.0  # família laguna / condutor hermes free
+        return 0.0  # familia laguna / condutor hermes free
     if "120b" in m or "glm" in m:
         return 9.0  # o maior da frota
     if "31b" in m or "gemma-4-31b" in m:
@@ -401,13 +411,13 @@ def _custo_relativo(m: str, model: str) -> float:
     p = _infer_provider_for_model(model)
     if p == "local":
         return 0.0
-    if "gemini-3.5" in m:
+    if PREFIX_GEMINI_35 in m:
         return 1.0  # o mais barato do cloud
-    if "gemini-3.6" in m:
+    if PREFIX_GEMINI_36 in m:
         return 2.0
-    if "gemini-3.7" in m:
+    if PREFIX_GEMINI_37 in m:
         return 3.0
-    if "gemini-3.8" in m:
+    if PREFIX_GEMINI_38 in m:
         return 3.5
     if "deepseek" in m:
         return 0.5
@@ -419,7 +429,7 @@ def _ganho_de_especialidade(m: str, domain: str | None) -> float:
 
     ALEM do ganho, ha uma REGRA DE ALOCACAO: recurso escasso sob demanda
     infinita. Um modelo potente que NAO e especialista da dimensao nao ganha
-    nada nela — e,ao inves de receber ganho zero como qualquer outro, ele e
+    nada nela -- e,ao inves de receber ganho zero como qualquer outro, ele e
     **PRESERVADO**: some da corrida para essa dimensao em vez de competir com
     o especialista que resolve igual por menos.
 
@@ -427,8 +437,8 @@ def _ganho_de_especialidade(m: str, domain: str | None) -> float:
     - Sem a regra, `gpt-oss:120b` era escolhido em TRIAGE: desperdicava o recurso
       mais forte da frota no trabalho mais simples e **aposentava o
       `gemini-3.5-flash-lite`**, que e o especialista e resolve a tarefa.
-    - E o simétrico: com o custo sempre punindo cloud, eles NUNCA venciam em
-      CURADORIA nem INTELIGENCIA — as duas areas onde sao os melhores ficavam
+    - E o simetrico: com o custo sempre punindo cloud, eles NUNCA venciam em
+      CURADORIA nem INTELIGENCIA -- as duas areas onde sao os melhores ficavam
       **sem especialista nenhum**.
 
     Ou seja: o mesmo numero de recurso, alocado onde ele rende. Potencia sem
@@ -438,7 +448,7 @@ def _ganho_de_especialidade(m: str, domain: str | None) -> float:
 
     if _e_recurso_escasso(m) and bruto > -_ESPECIALIDADE_MATERIAL:
         # Potente, mas esta dimensao nao e a dele: sai da corrida. 0.0 e o
-        # piso — ele continua disponivel como alternativa se todos cairem.
+        # piso -- ele continua disponivel como alternativa se todos cairem.
         return 0.0
 
     # Quem nao serve a dimensao (bruto > 0) nao ganha nada nela.
@@ -456,18 +466,18 @@ def _score_model(
 ) -> float:
     m = model.lower()
 
-    # Eixo 1 — DESIGNACAO (Tier 1). Absoluta e inegociavel: e o Tier 1 nomeando o
+    # Eixo 1 -- DESIGNACAO (Tier 1). Absoluta e inegociavel: e o Tier 1 nomeando o
     # modelo do agente. Nenhuma troca economica sobrepoe uma decisao do Tier 1.
     if designated_model and m == designated_model.lower():
         return float(_FAIXA_DESIGNACAO)
 
-    # Eixo 1b — TIER 1 NAO E CANDIDATO A TAREFA COMUM.
+    # Eixo 1b -- TIER 1 NAO E CANDIDATO A TAREFA COMUM.
     # O Tier 1 orquestra e foca no topo da piramide. Tarefa comum que outro modelo
     # resolve nao justifica Tier 1 na fila background.
     if _e_tier1(m):
         return float(_FAIXA_TIER1_INDISPONIVEL)
 
-    # Eixo 2 — ESPECIALIDADE & ALOCACAO POR DOMINIO (quando declarado)
+    # Eixo 2 -- ESPECIALIDADE & ALOCACAO POR DOMINIO (quando declarado)
     if domain is not None:
         esp = _especialidade(m, domain)
 
@@ -486,7 +496,7 @@ def _score_model(
                 desempate -= 0.5
             return float(_FAIXA_ESPECIALIDADE + esp + desempate)
 
-    # Eixo 3 — ECONOMIA & MODO STANDARD (sem dominio ou modelo sem especialidade no dominio)
+    # Eixo 3 -- ECONOMIA & MODO STANDARD (sem dominio ou modelo sem especialidade no dominio)
     if prefer_local:
         return float(_score_local_preference(m, domain))
 
@@ -497,14 +507,14 @@ def _score_model(
 #:
 #: Ate 29/09/2026 nenhum modulo declarava `Task.metadata["domain"]`, entao
 #: `_especialidade` nunca pontuava ninguem e a decisao caia inteira no eixo
-#: economico — o comportamento medido que roteou uma auditoria de seguranca para
+#: economico -- o comportamento medido que roteou uma auditoria de seguranca para
 #: `gemini-3.6-flash`. Esta tabela fecha o circuito.
 #:
 #: DERIVADA DO TRABALHO, nao escolhida por preferencia: cada entrada diz o que o
 #: agente produz. `@dispatcher` produz JSON de subtarefas validado por
-#: `agents/dispatcher.py:_parse_dispatcher_subtasks_strict` — classificacao
+#: `agents/dispatcher.py:_parse_dispatcher_subtasks_strict` -- classificacao
 #: estruturada, e por isso TRIAGE, cujo perfil e o `3.5-flash-lite`: o mais
-#: barato que ainda respeita schema. `@implementor` produz codigo — CODE, cujo
+#: barato que ainda respeita schema. `@implementor` produz codigo -- CODE, cujo
 #: especialista e o coder quantizado local, tentado antes do cloud.
 #:
 #: Agente ausente = sem dominio declarado = comportamento economico anterior.
@@ -531,7 +541,7 @@ DOMINIO_POR_AGENTE: dict[str, str] = {
     # Curadoria: unificar estetica, memoria e coerencia entre arvores.
     "curator": DOMINIO_CURADORIA,
     # Inteligencia: fundamentar antes de executar. O gemma 31b/120b e o
-    # especialista — binario grande o bastante para segurar o plano inteiro.
+    # especialista -- binario grande o bastante para segurar o plano inteiro.
     "architect": DOMINIO_INTELIGENCIA,
     "planner": DOMINIO_INTELIGENCIA,
     # Matematica: o caso em que o 31b cloud tambem e o especialista.
@@ -582,12 +592,12 @@ def _inject_openrouter_alternatives(models: list[str], designated_model: str | N
 
     Este roda DEPOIS de `_reorder_models_for_economy`, e por isso o que entra
     aqui nao passa pelo score. Medido em 29/09/2026: era por esta porta que
-    `claude-sonnet-5` e `gpt-5.6-sol` apareciam como head de `@implementor` — o
+    `claude-sonnet-5` e `gpt-5.6-sol` apareciam como head de `@implementor` -- o
     Tier 1 executando edicao de codigo delegavel.
 
     Por isso o filtro: candidato Tier 1 so entra quando e o `designated_model`
     declarado. Caso contrario ele fica de fora da malha, que e onde o Tier 1
-    atua — como orquestrador, no topo, e nao como agente customizado.
+    atua -- como orquestrador, no topo, e nao como agente customizado.
     """
     openrouter_alternative_models = te.OPENROUTER_ALTERNATIVE_MODELS
     if not openrouter_alternative_models:

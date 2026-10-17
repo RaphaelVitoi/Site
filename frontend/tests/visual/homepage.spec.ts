@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Visual Regression — Homepage (SOTA GOLD)', () => {
-  test.setTimeout(60000);
+  test.describe.configure({ timeout: 60000 });
 
   test('homepage — glass panels + DownwardDriftWidget render identically', async ({ page }) => {
     // SOTA GOLD: pausa RAF antes do JS carregar — DownwardDriftWidget
@@ -20,7 +20,7 @@ test.describe('Visual Regression — Homepage (SOTA GOLD)', () => {
     await page.goto('/');
     await page.waitForLoadState('load');
     await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(1000);
+    await page.locator('main').waitFor({ state: 'visible' });
 
     // THE ROOT CAUSE: homepage has <video autoPlay> — each frame differs.
     // Pause + reset to frame 0 for deterministic snapshots.
@@ -41,7 +41,7 @@ test.describe('Visual Regression — Homepage (SOTA GOLD)', () => {
         try { (a as Element & { endElement(): void }).endElement(); } catch { /* already ended */ }
       });
     });
-    await page.waitForTimeout(500);
+    await page.waitForFunction(() => document.fonts.status === 'loaded');
 
     await expect(page).toHaveScreenshot('homepage-full.png', {
       fullPage: true,
@@ -54,7 +54,7 @@ test.describe('Visual Regression — Homepage (SOTA GOLD)', () => {
     await page.goto('/');
     await page.waitForLoadState('load');
     await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(500);
+    await page.locator('section').first().waitFor({ state: 'visible' });
 
     // Freeze CSS animations for deterministic snapshot
     await page.evaluate(() => {
@@ -64,7 +64,7 @@ test.describe('Visual Regression — Homepage (SOTA GOLD)', () => {
         s.transition = 'none';
       });
     });
-    await page.waitForTimeout(300);
+    await page.locator('section').first().waitFor({ state: 'visible' });
 
     const hero = page.locator('section').first();
     await expect(hero).toHaveScreenshot('hero-section.png', {

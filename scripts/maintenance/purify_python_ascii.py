@@ -59,6 +59,20 @@ def escape_non_ascii(text: str) -> str:
     return "".join(out)
 
 
+def _purify_token_string(tok: tokenize.TokenInfo) -> str:
+    """Retorna o texto do token purificado para representacao ASCII pura."""
+    if tok.type == tokenize.COMMENT:
+        return transliterate_text(tok.string)
+    if tok.type == tokenize.STRING:
+        val = tok.string
+        if val.startswith(('"""', "'''")):
+            q = val[:3]
+            inner = val[3:-3]
+            return f"{q}{transliterate_text(inner)}{q}"
+        return escape_non_ascii(val)
+    return escape_non_ascii(tok.string)
+
+
 def purify_source_code(content: str) -> str:
     raw_bytes = content.encode("utf-8")
     if all(b <= 127 for b in raw_bytes):
@@ -69,19 +83,7 @@ def purify_source_code(content: str) -> str:
 
     for tok in tokens:
         if any(ord(c) > 127 for c in tok.string):
-            if tok.type == tokenize.COMMENT:
-                new_str = transliterate_text(tok.string)
-            elif tok.type == tokenize.STRING:
-                val = tok.string
-                if val.startswith(('"""', "'''")):
-                    q = val[:3]
-                    inner = val[3:-3]
-                    new_str = f"{q}{transliterate_text(inner)}{q}"
-                else:
-                    new_str = escape_non_ascii(val)
-            else:
-                new_str = escape_non_ascii(tok.string)
-            edits.append((tok.start, tok.end, new_str))
+            edits.append((tok.start, tok.end, _purify_token_string(tok)))
 
     lines = content.splitlines(keepends=True)
     edits.sort(key=lambda e: e[0], reverse=True)

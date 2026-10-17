@@ -57,11 +57,9 @@ def test_gate_result_helper_only_tolerates_real_cve_failures() -> None:
 
     with pytest.raises(AssertionError):
         _assert_gate_status_is_only_cve_blocked(0, cve_output)
+    invalid_output = cve_output.replace("security.HIGH_CVE_COUNT", "cwv.cobertura")
     with pytest.raises(AssertionError):
-        _assert_gate_status_is_only_cve_blocked(
-            1,
-            cve_output.replace("security.HIGH_CVE_COUNT", "cwv.cobertura"),
-        )
+        _assert_gate_status_is_only_cve_blocked(1, invalid_output)
 
 
 @pytest.mark.skipif(shutil.which("powershell") is None, reason="PowerShell 5.1 ausente do PATH")

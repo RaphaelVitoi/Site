@@ -9,7 +9,7 @@ ROLE: Fixar o que a correcao faz (avisar) e o que ela deliberadamente NAO faz
 
 Medido antes da correcao: `_optional_claims_match` lia
 `SUPABASE_JWT_ISSUER` e `SUPABASE_JWT_AUDIENCE` e, ausentes, aceitava
-qualquer `iss`/`aud`. A mitigacao que JÁ existia e boa: `role ==
+qualquer `iss`/`aud`. A mitigacao que JA existia e boa: `role ==
 "authenticated"` com `sub` presente bloqueia a `anon` e a `service_role`, e e
 medido em BK-03. `iss`/`aud` fecha a lacuna RESIDUAL entre aplicacoes que
 compartilham o mesmo segredo.
@@ -63,11 +63,11 @@ def _payload(**extra) -> dict:
     return base
 
 
-# ── A mitigacao real, que já existia e não pode regredir ─────────────────────
+#  A mitigacao real, que ja existia e nao pode regredir
 
 
 def test_sem_iss_aud_declarados_o_token_de_usuario_passa():
-    """Contrato preservado: sem `iss`/`aud` no ambiente, um token de sessão de
+    """Contrato preservado: sem `iss`/`aud` no ambiente, um token de sessao de
     usuario valido continua aceito. Exigir os claims derrubaria o produto."""
     token = _token(_payload())
     with patch.dict("os.environ", {}, clear=True):
@@ -87,7 +87,7 @@ async def test_anon_key_continua_bloqueada_pelo_role():
 
     token_anon = _token({"role": "anon", "exp": int(time.time()) + 3600 * 24 * 365})
     with patch.object(middleware, "SUPABASE_JWT_SECRET", None):
-        with patch.object(middleware, "_jwt_secret", lambda: SECREDO):
+        with patch.object(middleware, "_jwt_secret", return_value=SECREDO):
             resp = await _handle_jwt_token_auth(token_anon, _request(), _handler_que_nao_deve_passar)
     assert resp.status == 403
     assert "usuario autenticado" in resp.text
@@ -99,12 +99,12 @@ async def test_service_role_key_continua_bloqueada():
 
     token_service = _token({"role": "service_role", "exp": int(time.time()) + 3600 * 24 * 365})
     with patch.object(middleware, "SUPABASE_JWT_SECRET", None):
-        with patch.object(middleware, "_jwt_secret", lambda: SECREDO):
+        with patch.object(middleware, "_jwt_secret", return_value=SECREDO):
             resp = await _handle_jwt_token_auth(token_service, _request(), _handler_que_nao_deve_passar)
     assert resp.status == 403
 
 
-# ── A lacuna residual: iss/aud de outra aplicação ───────────────────────────
+#  A lacuna residual: iss/aud de outra aplicacao
 
 
 def test_token_de_outra_aplicacao_passa_sem_os_claims_declarados():
@@ -146,7 +146,7 @@ def test_aud_aceita_lista():
         assert middleware.verify_hs256_jwt(token, SECREDO) is not None
 
 
-# ── O aviso: a correcao efetiva ─────────────────────────────────────────────
+#  O aviso: a correcao efetiva
 
 
 def test_avisa_quando_os_claims_opcionais_nao_estao_declarados(caplog: pytest.LogCaptureFixture):
@@ -161,7 +161,7 @@ def test_avisa_quando_os_claims_opcionais_nao_estao_declarados(caplog: pytest.Lo
     """
     with patch.dict("os.environ", {}, clear=True):
         with patch.object(middleware, "SUPABASE_JWT_SECRET", None):
-            with patch.object(middleware, "_jwt_secret", lambda: SECREDO):
+            with patch.object(middleware, "_jwt_secret", return_value=SECREDO):
                 with caplog.at_level(logging.WARNING, logger="api.v1.middleware"):
                     middleware._avisar_claims_opcionais_ausentes()
     avisos = [r.getMessage() for r in caplog.records if "SEC-05" in r.getMessage()]
@@ -187,7 +187,7 @@ def test_nao_avisa_sem_secreto_configurado(caplog: pytest.LogCaptureFixture):
     """Sem `SUPABASE_JWT_SECRET` nao ha JWT a verificar; o aviso seria sobre
     um sistema que nao esta em uso."""
     with patch.dict("os.environ", {}, clear=True):
-        with patch.object(middleware, "_jwt_secret", lambda: None):
+        with patch.object(middleware, "_jwt_secret", return_value=None):
             with caplog.at_level(logging.WARNING, logger="api.v1.middleware"):
                 middleware._avisar_claims_opcionais_ausentes()
     assert not [r for r in caplog.records if "SEC-05" in r.getMessage()]
@@ -199,7 +199,7 @@ def test_declarar_so_um_dos_dois_ainda_avisa(caplog: pytest.LogCaptureFixture):
     silencio depois de alguem ter feito parte do trabalho."""
     with patch.dict("os.environ", {"SUPABASE_JWT_ISSUER": "supabase"}, clear=True):
         with patch.object(middleware, "SUPABASE_JWT_SECRET", None):
-            with patch.object(middleware, "_jwt_secret", lambda: SECREDO):
+            with patch.object(middleware, "_jwt_secret", return_value=SECREDO):
                 with caplog.at_level(logging.WARNING, logger="api.v1.middleware"):
                     middleware._avisar_claims_opcionais_ausentes()
     assert [r for r in caplog.records if "SEC-05" in r.getMessage()], (
@@ -213,19 +213,19 @@ def test_a_variavel_declarada_com_espaco_e_tratada_como_ausente(caplog: pytest.L
     e o que parece declarado e nao esta."""
     with patch.dict("os.environ", {"SUPABASE_JWT_ISSUER": "   ", "SUPABASE_JWT_AUDIENCE": " "}, clear=True):
         with patch.object(middleware, "SUPABASE_JWT_SECRET", None):
-            with patch.object(middleware, "_jwt_secret", lambda: SECREDO):
+            with patch.object(middleware, "_jwt_secret", return_value=SECREDO):
                 with caplog.at_level(logging.WARNING, logger="api.v1.middleware"):
                     middleware._avisar_claims_opcionais_ausentes()
     assert [r for r in caplog.records if "SEC-05" in r.getMessage()]
 
 
-# ── O aviso não vaza segredo ────────────────────────────────────────────────
+#  O aviso nao vaza segredo
 
 
 def test_o_aviso_nao_contem_o_segredo(caplog: pytest.LogCaptureFixture):
     with patch.dict("os.environ", {}, clear=True):
         with patch.object(middleware, "SUPABASE_JWT_SECRET", None):
-            with patch.object(middleware, "_jwt_secret", lambda: SECREDO):
+            with patch.object(middleware, "_jwt_secret", return_value=SECREDO):
                 with caplog.at_level(logging.WARNING, logger="api.v1.middleware"):
                     middleware._avisar_claims_opcionais_ausentes()
     texto = " ".join(r.getMessage() for r in caplog.records)
@@ -233,7 +233,7 @@ def test_o_aviso_nao_contem_o_segredo(caplog: pytest.LogCaptureFixture):
     assert "segredo-jwt" not in texto
 
 
-# ── O exemplo de ambiente declara as duas ──────────────────────────────────
+#  O exemplo de ambiente declara as duas
 
 
 def test_o_exemplo_de_ambiente_declara_os_dois_claims():
@@ -247,7 +247,7 @@ def test_o_exemplo_de_ambiente_declara_os_dois_claims():
     assert "$env:SUPABASE_JWT_AUDIENCE" in texto, "o exemplo de ambiente nao declara SUPABASE_JWT_AUDIENCE"
 
 
-# ── Utilidades ──────────────────────────────────────────────────────────────
+#  Utilidades
 
 
 def _request():

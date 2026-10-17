@@ -123,6 +123,8 @@ const HeadingWithCopy = ({ level, children, id }: { level: 2 | 3; children: Reac
   );
 };
 
+const DIM_REGEX = /\|\s*(\d+)\s*[x:]\s*(\d+)/;
+
 const markdownComponents: Components = {
   h1: ({ children, id }) => (
     <h1
@@ -170,7 +172,7 @@ const markdownComponents: Components = {
       <a
         href={href}
         title={title}
-        className="text-accent-indigo-light decoration-accent-indigo/40 hover:decoration-accent-indigo hover:text-text-bright font-bold underline underline-offset-4 transition-all hover:text-white"
+        className="text-accent-indigo-light decoration-accent-indigo/40 hover:decoration-accent-indigo font-bold underline underline-offset-4 transition-all hover:text-white"
         target={isExternalHttpUrl(href) ? '_blank' : undefined}
         rel={isExternalHttpUrl(href) ? 'noopener noreferrer' : undefined}
       >
@@ -213,7 +215,7 @@ const markdownComponents: Components = {
   table: ({ children }) => (
     <div className="relative my-10 w-full overflow-x-auto rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-md">
       {/* Gradient overlay to indicate scrollability on mobile */}
-      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-r from-black/60 to-transparent opacity-60" />
+      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-linear-to-r from-black/60 to-transparent opacity-60" />
       <table className="w-full border-collapse text-left text-[0.9rem]">{children}</table>
     </div>
   ),
@@ -229,11 +231,11 @@ const markdownComponents: Components = {
     let cleanAlt = alt || '';
 
     // SOTA: Blindagem de CLS com resolução de aspecto intrínseco por props ou sintaxe alt (ex: ![Fig|16:9](...) ou ![Fig | 16:9](...))
-    const dimMatch = cleanAlt.match(/\|\s*(\d+)\s*(?:x|:)\s*(\d+)/);
+    const dimMatch = DIM_REGEX.exec(cleanAlt);
     if (dimMatch && (!resolvedWidth || !resolvedHeight)) {
       resolvedWidth = Number(dimMatch[1]);
       resolvedHeight = Number(dimMatch[2]);
-      cleanAlt = cleanAlt.replace(/\|\s*(\d+)\s*(?:x|:)\s*(\d+)/, '').trim();
+      cleanAlt = cleanAlt.replace(DIM_REGEX, '').trim();
     }
 
     const aspectRatio =
@@ -265,7 +267,7 @@ export function SotaMarkdown({ content }: Readonly<SotaMarkdownProps>) {
   useEffect(() => {
     // SOTA v8.0 GOLD: KaTeX CSS lazy-loaded via dynamic import para não inflar o bundle
     // de páginas que não renderizam matemática. A importação é idempotente e cacheada.
-    import('katex/dist/katex.min.css');
+    void import('katex/dist/katex.min.css');
   }, []);
 
   if (!content) return null;

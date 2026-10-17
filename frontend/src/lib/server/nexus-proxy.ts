@@ -73,8 +73,8 @@ export const tokenDaSessao: ObterToken = async (req: Request) => {
 async function obterTokenComToleranciaAFalha(obterToken: ObterToken, req: Request): Promise<string | null> {
 	try {
 		return await obterToken(req);
-	} catch (erro) {
-		console.warn('[nexus-proxy] token do usuário ilegível; encaminhando sem identidade', erro);
+	} catch (error_) {
+		console.warn('[nexus-proxy] token do usuário ilegível; encaminhando sem identidade', error_);
 		return null;
 	}
 }

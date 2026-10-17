@@ -47,7 +47,7 @@ O Operador Soberano identifica quando o oponente está sofrendo um Downward Drif
 
 Em 2026-09-18, o laboratório de pesquisa do ecossistema executou a medição reprodutível da hipótese **H8 (Downward Drift de Sizings)** contra os nós pareados GTO Wizard (ChipEV) × HRC (IcmEV) da Aula 1.2 (\`data/aula12_pairs.json\`):
 
-* **Nós de Aposta Livre (Flop $K\diamondsuit J\clubsuit T\spadesuit$):** A convenção de fração do pote é preservada com erro máximo de apenas $0{,}40$ p.p. Sob pressão de ICM, o solver não apenas amplia a frequência de check, mas desloca apostas de grande porte para sizings menores (leads de 25% do pote).
+* **Nós de Aposta Livre (Flop $K\\diamondsuit J\\clubsuit T\\spadesuit$):** A convenção de fração do pote é preservada com erro máximo de apenas $0{,}40$ p.p. Sob pressão de ICM, o solver não apenas amplia a frequência de check, mas desloca apostas de grande porte para sizings menores (leads de 25% do pote).
 * **Nós de Aumento (Raise Nodes):** Onde já houve aposta adversária, a dinâmica é governada pela proteção de equidade e polarização, exigindo separação estrita da geometria do pote.
 * **Critério Científico de Refutabilidade:** A análise de sensibilidade por bootstrap ($N=2.000$) comprovou que a compressão depende criticamente da liberdade de ação e do SPR residual, consolidando o Downward Drift não como um viés empírico arbitrário, mas como uma consequência direta da preservação não-linear de valuation.
 

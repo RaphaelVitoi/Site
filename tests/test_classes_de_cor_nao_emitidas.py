@@ -13,7 +13,7 @@ MEDIDO EM 2026-09-29, no CSS compilado do projeto:
 Nenhum relatorio de acessibilidade acusa nada disso: o texto herda uma cor
 valida e o contraste passa. O defeito e *AUSENCIA* de efeito, e auditoria de
 acesso so mede presenca. Por isso os guards de contraste nunca viram nada
-aqui — eles procuram `text-white` ao lado de `bg-accent-*`, e uma classe
+aqui -- eles procuram `text-white` ao lado de `bg-accent-*`, e uma classe
 morta de cor nao tem nada ao lado.
 
 ## Por que este guard confia no CSS compilado
@@ -28,7 +28,7 @@ raza: **Tailwind resolve a classe por estrutura, nao por sufixo literal.**
 
 A primeira versao acusou **3271** classes; a segunda, **118**. Todas as 4389
 eram falsos positivos, e as duas pegavam **zero** defeito real. Um guard que
-grita 3271 vezes nao protege nada — o time para de ler.
+grita 3271 vezes nao protege nada -- o time para de ler.
 
 A unica autoridade e o que o Tailwind **de fato emitiu**. O guard le o CSS
 gerado e acusa a classe que o codigo usa e o build nao produziu. Se o
@@ -105,9 +105,9 @@ def test_toda_classe_de_cor_usada_e_efetivamente_emitida() -> None:
     for arquivo in sorted(SRC.rglob("*.tsx")):
         texto = arquivo.read_text(encoding="utf-8")
         for i, linha in enumerate(texto.splitlines(), 1):
-            # Só a linha que DECLARA classe entra na conta. Um slug como
-            # `slug: 'teto-equidade-river-icm'` ou um path em comentário
-            # casam o padrao de utilitario sem nunca virar className —
+            # So a linha que DECLARA classe entra na conta. Um slug como
+            # `slug: 'teto-equidade-river-icm'` ou um path em comentario
+            # casam o padrao de utilitario sem nunca virar className --
             # 4 dos 5 achados iniciais eram exatamente isso.
             if "className" not in linha and "cn:" not in linha:
                 continue
@@ -124,7 +124,7 @@ def test_toda_classe_de_cor_usada_e_efetivamente_emitida() -> None:
         )
         raise AssertionError(
             f"{len(nao_emitidas)} classe(s) de cor usada(s) que o Tailwind nao "
-            f"emitiu — {total} usos, nenhum produz efeito. O elemento fica com a "
+            f"emitiu \u2014 {total} usos, nenhum produz efeito. O elemento fica com a "
             f"cor herdada do pai, e nenhum relatorio de acessibilidade acusa "
             f"ausencia de efeito:\n  {detalhe}\n"
             f"  CSS verificado: {len(css):,} bytes compilados"
@@ -134,7 +134,7 @@ def test_toda_classe_de_cor_usada_e_efetivamente_emitida() -> None:
 def test_o_guard_ainda_enxerga_as_classes_medidas() -> None:
     """Trava o comportamento, nao so a implementacao.
 
-    Se `classe_emitida` perder a forma, o guard fica cego — e um guard
+    Se `classe_emitida` perder a forma, o guard fica cego -- e um guard
     cego passa verde. As 4 classes abaixo sao as medidas em 2026-09-29.
     """
     css = ".hover\\:bg-slate-800{color:red} .to-text-dim{color:blue}"

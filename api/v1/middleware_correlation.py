@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
 import re
@@ -45,3 +46,4 @@ async def request_correlation_middleware(
 async def request_id_response_prepare(request: web.Request, response: web.StreamResponse) -> None:
     """Attach the request ID immediately before headers are sent, including 500s."""
     response.headers[CORRELATION_HEADER] = correlation_id_for(request)
+    await asyncio.sleep(0)

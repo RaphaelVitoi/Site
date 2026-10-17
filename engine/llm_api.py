@@ -38,6 +38,9 @@ PROVIDER_BLOCK_UNTIL: dict = {}
 MAX_PROVIDER_FAILURES = 3
 PROVIDER_BLOCK_DURATION = 300  # 5 minutos de bloqueio em caso de queda de servidor
 CONTENT_TYPE_JSON = "application/json"
+MODEL_POOLSIDE_LAGUNA_FREE = "poolside/laguna-s-2.1:free"
+MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
+MODEL_OPENROUTER_GEMINI_35_FLASH_LITE = "google/gemini-3.5-flash-lite"
 circuit_breaker_lock = asyncio.Lock()
 
 logger = logging.getLogger(__name__)
@@ -611,6 +614,86 @@ def _generate_fallback_response(agent_name: str, models_to_try: list[str]) -> st
     )
 
 
+def _resolve_cloud_zero_ram_target(model: str, model_l: str) -> tuple[str, str] | None:
+    if "gpt-oss" in model_l or "gpt:oss" in model_l:
+        target = "gpt-oss:120b-cloud" if "120b" in model_l else "gpt-oss:20b-cloud"
+        return "ollama", target
+    if ":cloud" in model_l or any(model_l.startswith(p) for p in ("glm-", "kimi-", "minimax-", "nemotron-")):
+        return "ollama", model
+    return None
+
+
+def _resolve_local_or_ollama_target(model: str, model_l: str) -> tuple[str, str] | None:
+    if "strata" in model_l or "qwen3.8" in model_l:
+        return "strata", model
+    if "g9v3" in model_l or "ai9stars" in model_l or "ling" in model_l:
+        return "local_llama", model
+    if "qwen" in model_l and not model_l.startswith("openrouter/"):
+        return ("local_llama", model) if "1.5b" in model_l else ("ollama", model)
+    if "gemma" in model_l:
+        return ("ollama", "gemma4:31b-cloud") if "31b" in model_l else ("local_gemma", model)
+    return _resolve_cloud_zero_ram_target(model, model_l)
+
+
+def _resolve_nous_or_openrouter_free_target(
+    model: str, model_l: str, has_nous: bool, has_openrouter: bool
+) -> tuple[str, str] | None:
+    if any(k in model_l for k in ("laguna", "poolside", "space-bunny", "space_bunny", "stealth")):
+        if has_nous:
+            target = (
+                "stealth/space-bunny-alpha"
+                if ("bunny" in model_l or "stealth" in model_l)
+                else MODEL_POOLSIDE_LAGUNA_FREE
+            )
+            return "nous", target
+        if has_openrouter:
+            return "openrouter", MODEL_POOLSIDE_LAGUNA_FREE
+    if "hermes" in model_l:
+        if has_nous:
+            return "nous", "nousresearch/hermes-3-llama-3.1-70b"
+        if has_openrouter:
+            return "openrouter", "nousresearch/hermes-3-llama-3.1-70b"
+        return "ollama", model
+    return None
+
+
+def _resolve_openai_target(model: str, model_l: str, has_nous: bool, has_openrouter: bool) -> tuple[str, str] | None:
+    if has_nous:
+        if "astra" in model_l or "6" in model_l:
+            return "nous", "openai/gpt-6-astra-fast"
+        if "sol" in model_l or "5.6" in model_l:
+            return "nous", "openai/gpt-5.5"
+    if has_openrouter:
+        if "sol" in model_l or "5.6" in model_l:
+            return "openrouter", "openai/gpt-4o"
+        if "astra" in model_l or "6" in model_l:
+            return "openrouter", "openai/o1-preview"
+        return "openrouter", f"openai/{model}"
+    return None
+
+
+def _resolve_proprietary_target(
+    model: str,
+    model_l: str,
+    has_anthropic: bool,
+    has_nous: bool,
+    has_openrouter: bool,
+) -> tuple[str, str] | None:
+    if "gemini" in model_l:
+        return "gemini", model
+    if "claude" in model_l:
+        if has_anthropic:
+            return "anthropic", model
+        if has_nous:
+            return "nous", "anthropic/claude-sonnet-5"
+        if has_openrouter:
+            target = model if model.startswith("anthropic/") else f"anthropic/{model}"
+            return "openrouter", target
+    if any(k in model_l for k in ("gpt-", "sol", "terra", "astra", "luna", "openai")):
+        return _resolve_openai_target(model, model_l, has_nous, has_openrouter)
+    return None
+
+
 def _resolve_model_provider_and_target(
     model: str,
     gemini_keys: list[str],
@@ -621,99 +704,406 @@ def _resolve_model_provider_and_target(
     """Mapeia deterministicamente o modelo solicitado para seu provedor e nome de destino."""
     model_l = model.lower()
     has_nous = bool(nous_keys)
+    has_openrouter = bool(openrouter_keys)
+    has_anthropic = bool(anthropic_keys)
 
-    # 0. Strata Engine Local (MoE 125B Qwen3.8-Flash-Next / Coder)
-    if "strata" in model_l or "qwen3.8" in model_l:
-        return "strata", model
+    resolved = _resolve_local_or_ollama_target(model, model_l)
+    if resolved:
+        return resolved
 
-    # 1. Modelos dedicados llama.cpp locais (Hardware / Vulkan)
-    if "g9v3" in model_l or "ai9stars" in model_l or "ling" in model_l:
-        return "local_llama", model
+    resolved = _resolve_nous_or_openrouter_free_target(model, model_l, has_nous, has_openrouter)
+    if resolved:
+        return resolved
 
-    # 2. Modelos Qwen locais (1.5b no llama-server 8083 ou 7b/cirurgico no Ollama)
-    if "qwen" in model_l and not model_l.startswith("openrouter/"):
-        if "1.5b" in model_l:
-            return "local_llama", model
-        return "ollama", model
+    resolved = _resolve_proprietary_target(model, model_l, has_anthropic, has_nous, has_openrouter)
+    if resolved:
+        return resolved
 
-    # 3. Modelos Gemma locais ou Ollama
-    if "gemma" in model_l:
-        if "31b" in model_l:
-            return "ollama", "gemma4:31b-cloud"
-        return "local_gemma", model
-
-    # 4. Modelos Cloud via Ollama (Zero-RAM: gpt-oss 120b/20b, glm-5.1, deepseek-v4, kimi, minimax, nemotron)
-    if "gpt-oss" in model_l or "gpt:oss" in model_l:
-        target = "gpt-oss:120b-cloud" if "120b" in model_l else "gpt-oss:20b-cloud"
-        return "ollama", target
-
-    if ":cloud" in model_l or any(model_l.startswith(p) for p in ["glm-", "kimi-", "minimax-", "nemotron-"]):
-        return "ollama", model
-
-    # 5. Modelos Laguna / Poolside / Space Bunny (Nous / Hermes Cloud Free)
-    if any(k in model_l for k in ["laguna", "poolside", "space-bunny", "space_bunny", "stealth"]):
-        if has_nous:
-            target = (
-                "stealth/space-bunny-alpha"
-                if ("bunny" in model_l or "stealth" in model_l)
-                else "poolside/laguna-s-2.1:free"
-            )
-            return "nous", target
-        if openrouter_keys:
-            return "openrouter", "poolside/laguna-s-2.1:free"
-
-    # 6. Modelos Hermes Agent / Nous Hermes (Cloud via Nous / OpenRouter / Ollama)
-    if "hermes" in model_l:
-        if has_nous:
-            return "nous", "nousresearch/hermes-3-llama-3.1-70b"
-        if openrouter_keys:
-            return "openrouter", "nousresearch/hermes-3-llama-3.1-70b"
-        return "ollama", model
-
-    # 7. Modelos Google Gemini
-    if "gemini" in model_l:
-        return "gemini", model
-
-    # 8. Modelos Anthropic / Claude
-    if "claude" in model_l:
-        if anthropic_keys:
-            return "anthropic", model
-        if has_nous:
-            return "nous", "anthropic/claude-sonnet-5"
-        if openrouter_keys:
-            target = model if model.startswith("anthropic/") else f"anthropic/{model}"
-            return "openrouter", target
-
-    # 9. Modelos OpenAI / Sol / Terra / Astra (GPT-5.6, GPT-6)
-    if any(k in model_l for k in ["gpt-", "sol", "terra", "astra", "luna", "openai"]):
-        if has_nous:
-            if "astra" in model_l or "6" in model_l:
-                return "nous", "openai/gpt-6-astra-fast"
-            if "sol" in model_l or "5.6" in model_l:
-                return "nous", "openai/gpt-5.5"
-        if openrouter_keys:
-            if "sol" in model_l or "5.6" in model_l:
-                return "openrouter", "openai/gpt-4o"
-            if "astra" in model_l or "6" in model_l:
-                return "openrouter", "openai/o1-preview"
-            return "openrouter", f"openai/{model}"
-
-    # 10. Modelos OpenRouter / Nous explicitos ou comunitarios (DeepSeek, Llama)
-    if "/" in model or any(k in model_l for k in ["deepseek", "llama"]):
+    if "/" in model or any(k in model_l for k in ("deepseek", "llama")):
         if has_nous:
             return "nous", model
-        if openrouter_keys:
+        if has_openrouter:
             return "openrouter", model
 
-    # 11. Fallbacks universais
     if has_nous:
-        return "nous", "poolside/laguna-s-2.1:free"
-    if openrouter_keys:
+        return "nous", MODEL_POOLSIDE_LAGUNA_FREE
+    if has_openrouter:
         return "openrouter", model
     if gemini_keys:
-        return "gemini", "gemini-3.5-flash-lite"
+        return "gemini", MODEL_GEMINI_35_FLASH_LITE
 
     return "unknown", model
+
+
+def _try_dispatch_strata(target_model: str, prompt: str) -> str | None:
+    try:
+        from llm.strata_client import LocalStrataClient  # noqa: PLC0415
+
+        strata_client = LocalStrataClient()
+        if strata_client.is_healthy():
+            res = strata_client.complete(prompt)
+            if res:
+                return res
+    except Exception as e:
+        logger.debug("Falha na chamada ao Strata Local (%s): %s. Recorrendo a fallback...", target_model, e)
+    return None
+
+
+def _resolve_local_llama_port(model_lower: str) -> int:
+    from llm.local_llama_client import (  # noqa: PLC0415
+        DEFAULT_G9_PORT,
+        DEFAULT_LING_PORT,
+        DEFAULT_QWEN_PORT,
+    )
+
+    if "ling" in model_lower:
+        return DEFAULT_LING_PORT
+    if "qwen" in model_lower:
+        return DEFAULT_QWEN_PORT
+    return DEFAULT_G9_PORT
+
+
+def _try_dispatch_local_llama(target_model: str, prompt: str) -> str | None:
+    try:
+        from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
+
+        target_port = _resolve_local_llama_port(target_model.lower())
+        llama_client = LocalLlamaClient(port=target_port)
+        if llama_client.is_healthy():
+            res = llama_client.complete(prompt)
+            if res:
+                return res
+    except Exception as e:
+        logger.debug("Falha na chamada ao LocalLlama (%s): %s", target_model, e)
+    return None
+
+
+def _dispatch_local_engine(
+    provider: str, target_model: str, system_prompt: str, user_prompt: str
+) -> tuple[str | None, str]:
+    """Tenta Strata ou LocalLlama. Retorna (resultado, proximo_provedor)."""
+    prompt = f"{system_prompt}\n\n{user_prompt}"
+    if provider == "strata":
+        res = _try_dispatch_strata(target_model, prompt)
+        if res:
+            return res, provider
+        provider = "ollama"
+
+    if provider == "local_llama":
+        res = _try_dispatch_local_llama(target_model, prompt)
+        if res:
+            return res, provider
+        provider = "ollama"
+
+    return None, provider
+
+
+async def _try_gemma_e4b_fallback(
+    session: aiohttp.ClientSession, system_prompt: str, user_prompt: str, response_format: dict | None
+) -> str | None:
+    try:
+        res, _ = await call_ollama(session, "gemma4:e2b", system_prompt, user_prompt, response_format=response_format)
+        return res
+    except Exception as err:
+        logger.debug("Fallback de contingencia gemma4:e2b falhou: %s", err)
+        return None
+
+
+async def _dispatch_local_gemma(
+    session: aiohttp.ClientSession,
+    target_model: str,
+    system_prompt: str,
+    user_prompt: str,
+    response_format: dict | None,
+    gemini_keys: list[str],
+    openrouter_keys: list[str],
+) -> tuple[str | None, str, str]:
+    try:
+        res, _ = await call_gemma_local(
+            session, target_model, system_prompt, user_prompt, response_format=response_format
+        )
+        return res, "local_gemma", target_model
+    except Exception as e:
+        logger.warning("Falha no Motor Gemma Local: %s. Tentando roteamento alternativo...", e)
+        if "e4b" in target_model:
+            res = await _try_gemma_e4b_fallback(session, system_prompt, user_prompt, response_format)
+            if res:
+                return res, "local_gemma", target_model
+        if gemini_keys:
+            return None, "gemini", MODEL_GEMINI_35_FLASH_LITE
+        if openrouter_keys:
+            return None, "openrouter", MODEL_OPENROUTER_GEMINI_35_FLASH_LITE
+        return None, "unknown", MODEL_OPENROUTER_GEMINI_35_FLASH_LITE
+
+
+async def _dispatch_ollama(
+    session: aiohttp.ClientSession,
+    target_model: str,
+    system_prompt: str,
+    user_prompt: str,
+    response_format: dict | None,
+    gemini_keys: list[str],
+    openrouter_keys: list[str],
+) -> tuple[str | None, str, str]:
+    try:
+        res, _ = await call_ollama(session, target_model, system_prompt, user_prompt, response_format=response_format)
+        if res:
+            return res, "ollama", target_model
+    except Exception as e:
+        logger.warning("Falha no Daemon Ollama para '%s': %s", target_model, e)
+        if openrouter_keys:
+            target = "qwen/qwen-2.5-coder-32b-instruct" if "qwen" in target_model.lower() else target_model
+            return None, "openrouter", target
+        if gemini_keys:
+            return None, "gemini", MODEL_GEMINI_35_FLASH_LITE
+    return None, "ollama", target_model
+
+
+async def _dispatch_gemini_provider(
+    session: aiohttp.ClientSession,
+    target_model: str,
+    system_prompt: str,
+    user_prompt: str,
+    gemini_keys: list[str],
+    task: Task,
+    manager: QueueManager,
+    response_format: dict | None,
+) -> str | None:
+    res = await _try_provider(
+        session,
+        "gemini",
+        call_gemini,
+        target_model,
+        system_prompt,
+        user_prompt,
+        gemini_keys,
+        task,
+        manager,
+        max_retries=2,
+        usage_keys=("promptTokenCount", "candidatesTokenCount"),
+        response_format=response_format,
+    )
+    if res:
+        return res
+    for alt_model in ("gemini-3.6-flash", "gemini-3.8-flash"):
+        if alt_model != target_model:
+            logger.info("[GEMINI SOTA] Tentando alternativa na familia Gemini: '%s'", alt_model)
+            res = await _try_provider(
+                session,
+                "gemini",
+                call_gemini,
+                alt_model,
+                system_prompt,
+                user_prompt,
+                gemini_keys,
+                task,
+                manager,
+                max_retries=1,
+                usage_keys=("promptTokenCount", "candidatesTokenCount"),
+                response_format=response_format,
+            )
+            if res:
+                return res
+    return None
+
+
+async def _dispatch_anthropic_provider(
+    session: aiohttp.ClientSession,
+    target_model: str,
+    system_prompt: str,
+    user_prompt: str,
+    anthropic_keys: list[str],
+    task: Task,
+    manager: QueueManager,
+    response_format: dict | None,
+) -> str | None:
+    return await _try_provider(
+        session,
+        "anthropic",
+        call_anthropic,
+        target_model,
+        system_prompt,
+        user_prompt,
+        anthropic_keys,
+        task,
+        manager,
+        max_retries=2,
+        usage_keys=("input_tokens", "output_tokens"),
+        response_format=response_format,
+    )
+
+
+async def _dispatch_nous_or_openrouter(
+    session: aiohttp.ClientSession,
+    provider: str,
+    target_model: str,
+    system_prompt: str,
+    user_prompt: str,
+    nous_keys: list[str] | None,
+    openrouter_keys: list[str],
+    gemini_keys: list[str],
+    task: Task,
+    manager: QueueManager,
+    response_format: dict | None,
+) -> tuple[str | None, str, str]:
+    if provider == "nous" and nous_keys:
+        res = await _try_provider(
+            session,
+            "nous",
+            call_nous,
+            target_model,
+            system_prompt,
+            user_prompt,
+            nous_keys,
+            task,
+            manager,
+            max_retries=2,
+            usage_keys=("prompt_tokens", "completion_tokens"),
+            response_format=response_format,
+        )
+        if res:
+            return res, provider, target_model
+        if openrouter_keys:
+            provider = "openrouter"
+        elif gemini_keys:
+            provider = "gemini"
+            target_model = MODEL_GEMINI_35_FLASH_LITE
+
+    if provider == "openrouter" and openrouter_keys:
+        res = await _try_provider(
+            session,
+            "openrouter",
+            call_openrouter,
+            target_model,
+            system_prompt,
+            user_prompt,
+            openrouter_keys,
+            task,
+            manager,
+            max_retries=2,
+            usage_keys=("prompt_tokens", "completion_tokens"),
+            response_format=response_format,
+        )
+        if res:
+            return res, provider, target_model
+
+    return None, provider, target_model
+
+
+async def _dispatch_gemma_contingency(
+    session: aiohttp.ClientSession,
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    gemini_keys: list[str],
+    task: Task,
+    manager: QueueManager,
+    response_format: dict | None,
+) -> str | None:
+    if "gemma" not in model.lower() or not gemini_keys:
+        return None
+    logger.info("[ROTEAMENTO SOTA] Triagem externa de contingencia via gemini-3.5-flash-lite para '%s'", model)
+    return await _try_provider(
+        session,
+        "gemini",
+        call_gemini,
+        MODEL_GEMINI_35_FLASH_LITE,
+        system_prompt,
+        user_prompt,
+        gemini_keys,
+        task,
+        manager,
+        max_retries=2,
+        usage_keys=("promptTokenCount", "candidatesTokenCount"),
+        response_format=response_format,
+    )
+
+
+async def _dispatch_local_or_ollama_pipeline(
+    session: aiohttp.ClientSession,
+    provider: str,
+    target_model: str,
+    system_prompt: str,
+    user_prompt: str,
+    gemini_keys: list[str],
+    openrouter_keys: list[str],
+    response_format: dict | None,
+) -> tuple[str | None, str, str]:
+    res, provider = _dispatch_local_engine(provider, target_model, system_prompt, user_prompt)
+    if res:
+        return res, provider, target_model
+
+    if provider == "local_gemma":
+        res, provider, target_model = await _dispatch_local_gemma(
+            session, target_model, system_prompt, user_prompt, response_format, gemini_keys, openrouter_keys
+        )
+        if res:
+            return res, provider, target_model
+
+    if provider == "ollama":
+        res, provider, target_model = await _dispatch_ollama(
+            session, target_model, system_prompt, user_prompt, response_format, gemini_keys, openrouter_keys
+        )
+        if res:
+            return res, provider, target_model
+
+    return None, provider, target_model
+
+
+async def _execute_provider_pipeline(
+    session: aiohttp.ClientSession,
+    model: str,
+    provider: str,
+    target_model: str,
+    system_prompt: str,
+    user_prompt: str,
+    gemini_keys: list[str],
+    anthropic_keys: list[str],
+    openrouter_keys: list[str],
+    nous_keys: list[str] | None,
+    task: Task,
+    manager: QueueManager,
+    response_format: dict | None,
+) -> str | None:
+    res, provider, target_model = await _dispatch_local_or_ollama_pipeline(
+        session, provider, target_model, system_prompt, user_prompt, gemini_keys, openrouter_keys, response_format
+    )
+    if res:
+        return res
+
+    if provider == "gemini" and gemini_keys:
+        res = await _dispatch_gemini_provider(
+            session, target_model, system_prompt, user_prompt, gemini_keys, task, manager, response_format
+        )
+        if res:
+            return res
+
+    if provider == "anthropic" and anthropic_keys:
+        res = await _dispatch_anthropic_provider(
+            session, target_model, system_prompt, user_prompt, anthropic_keys, task, manager, response_format
+        )
+        if res:
+            return res
+
+    res, provider, target_model = await _dispatch_nous_or_openrouter(
+        session,
+        provider,
+        target_model,
+        system_prompt,
+        user_prompt,
+        nous_keys,
+        openrouter_keys,
+        gemini_keys,
+        task,
+        manager,
+        response_format,
+    )
+    if res:
+        return res
+
+    return await _dispatch_gemma_contingency(
+        session, model, system_prompt, user_prompt, gemini_keys, task, manager, response_format
+    )
 
 
 async def _dispatch_provider_call(
@@ -733,214 +1123,30 @@ async def _dispatch_provider_call(
     )
 
     async with aiohttp.ClientSession() as session:
-        # 0. Strata Engine Local (Porta 8080 - MoE 125B Qwen3.8-Flash-Next / Coder)
-        if provider == "strata":
-            try:
-                from llm.strata_client import LocalStrataClient  # noqa: PLC0415
-
-                strata_client = LocalStrataClient()
-                if strata_client.is_healthy():
-                    res = strata_client.complete(f"{system_prompt}\n\n{user_prompt}")
-                    if res:
-                        return res
-            except Exception as e:
-                logger.debug("Falha na chamada ao Strata Local (%s): %s. Recorrendo a fallback...", target_model, e)
-            provider = "ollama"
-
-        # 1. Llama-server local (portas 8081, 8082, 8083)
-        if provider == "local_llama":
-            try:
-                from llm.local_llama_client import (  # noqa: PLC0415
-                    DEFAULT_G9_PORT,
-                    DEFAULT_LING_PORT,
-                    DEFAULT_QWEN_PORT,
-                    LocalLlamaClient,
-                )
-
-                target_port = (
-                    DEFAULT_LING_PORT
-                    if "ling" in target_model.lower()
-                    else (DEFAULT_QWEN_PORT if "qwen" in target_model.lower() else DEFAULT_G9_PORT)
-                )
-                llama_client = LocalLlamaClient(port=target_port)
-                if llama_client.is_healthy():
-                    res = llama_client.complete(f"{system_prompt}\n\n{user_prompt}")
-                    if res:
-                        return res
-            except Exception as e:
-                logger.debug("Falha na chamada ao LocalLlama (%s): %s", target_model, e)
-            provider = "ollama"
-
-        # 2. Gemma Server Local (Proxy 17043 com fallback para Ollama 11434)
-        if provider == "local_gemma":
-            try:
-                res, _ = await call_gemma_local(
-                    session, target_model, system_prompt, user_prompt, response_format=response_format
-                )
-                return res
-            except Exception as e:
-                logger.warning("Falha no Motor Gemma Local: %s. Tentando roteamento alternativo...", e)
-                if "e4b" in target_model:
-                    try:
-                        res, _ = await call_ollama(
-                            session, "gemma4:e2b", system_prompt, user_prompt, response_format=response_format
-                        )
-                        if res:
-                            return res
-                    except Exception as err:
-                        logger.debug("Fallback de contingencia gemma4:e2b falhou: %s", err)
-                provider = "gemini" if gemini_keys else ("openrouter" if openrouter_keys else "unknown")
-                target_model = "gemini-3.5-flash-lite" if provider == "gemini" else "google/gemini-3.5-flash-lite"
-
-        # 3. Ollama direto (local e :cloud Zero-RAM)
-        if provider == "ollama":
-            try:
-                res, _ = await call_ollama(
-                    session, target_model, system_prompt, user_prompt, response_format=response_format
-                )
-                if res:
-                    return res
-            except Exception as e:
-                logger.warning("Falha no Daemon Ollama para '%s': %s", target_model, e)
-                if openrouter_keys:
-                    provider = "openrouter"
-                    target_model = (
-                        "qwen/qwen-2.5-coder-32b-instruct" if "qwen" in target_model.lower() else target_model
-                    )
-                elif gemini_keys:
-                    provider = "gemini"
-                    target_model = "gemini-3.5-flash-lite"
-
-        # 4. Provedor Gemini
-        if provider == "gemini" and gemini_keys:
-            res = await _try_provider(
-                session,
-                "gemini",
-                call_gemini,
-                target_model,
-                system_prompt,
-                user_prompt,
-                gemini_keys,
-                task,
-                manager,
-                max_retries=2,
-                usage_keys=("promptTokenCount", "candidatesTokenCount"),
-                response_format=response_format,
-            )
-            if res:
-                return res
-            # Fallback de resiliencia: se o modelo 3.5 deu 503, tenta alternativas na mesma familia
-            for alt_model in ["gemini-3.6-flash", "gemini-3.8-flash"]:
-                if alt_model != target_model:
-                    logger.info("[GEMINI SOTA] Tentando alternativa na familia Gemini: '%s'", alt_model)
-                    res = await _try_provider(
-                        session,
-                        "gemini",
-                        call_gemini,
-                        alt_model,
-                        system_prompt,
-                        user_prompt,
-                        gemini_keys,
-                        task,
-                        manager,
-                        max_retries=1,
-                        usage_keys=("promptTokenCount", "candidatesTokenCount"),
-                        response_format=response_format,
-                    )
-                    if res:
-                        return res
-
-        # 5. Provedor Anthropic
-        if provider == "anthropic" and anthropic_keys:
-            res = await _try_provider(
-                session,
-                "anthropic",
-                call_anthropic,
-                target_model,
-                system_prompt,
-                user_prompt,
-                anthropic_keys,
-                task,
-                manager,
-                max_retries=2,
-                usage_keys=("input_tokens", "output_tokens"),
-                response_format=response_format,
-            )
-            if res:
-                return res
-
-        # 6. Provedor Nous Research / Hermes Cloud (Laguna Free, Space Bunny, Hermes 3)
-        if provider == "nous" and nous_keys:
-            res = await _try_provider(
-                session,
-                "nous",
-                call_nous,
-                target_model,
-                system_prompt,
-                user_prompt,
-                nous_keys,
-                task,
-                manager,
-                max_retries=2,
-                usage_keys=("prompt_tokens", "completion_tokens"),
-                response_format=response_format,
-            )
-            if res:
-                return res
-            # Fallback contingencial: se Nous falhar, tenta via OpenRouter ou Gemini
-            if openrouter_keys:
-                provider = "openrouter"
-            elif gemini_keys:
-                provider = "gemini"
-                target_model = "gemini-3.5-flash-lite"
-
-        # 7. Provedor OpenRouter
-        if provider == "openrouter" and openrouter_keys:
-            res = await _try_provider(
-                session,
-                "openrouter",
-                call_openrouter,
-                target_model,
-                system_prompt,
-                user_prompt,
-                openrouter_keys,
-                task,
-                manager,
-                max_retries=2,
-                usage_keys=("prompt_tokens", "completion_tokens"),
-                response_format=response_format,
-            )
-            if res:
-                return res
-
-        # Fallback de contingencia Gemini para modelos Gemma/overrides antes de fechar a sessao
-        if "gemma" in model.lower() and gemini_keys:
-            logger.info("[ROTEAMENTO SOTA] Triagem externa de contingencia via gemini-3.5-flash-lite para '%s'", model)
-            res = await _try_provider(
-                session,
-                "gemini",
-                call_gemini,
-                "gemini-3.5-flash-lite",
-                system_prompt,
-                user_prompt,
-                gemini_keys,
-                task,
-                manager,
-                max_retries=2,
-                usage_keys=("promptTokenCount", "candidatesTokenCount"),
-                response_format=response_format,
-            )
-            if res:
-                return res
+        res = await _execute_provider_pipeline(
+            session,
+            model,
+            provider,
+            target_model,
+            system_prompt,
+            user_prompt,
+            gemini_keys,
+            anthropic_keys,
+            openrouter_keys,
+            nous_keys,
+            task,
+            manager,
+            response_format,
+        )
+        if res:
+            return res
 
     logger.warning("Modelo '%s' (resolvido como '%s' via '%s') nao pode ser executado.", model, target_model, provider)
     return None
 
 
-def _extract_provider_keys(
-    all_env_vars: dict[str, str],
-) -> tuple[list[str], list[str], list[str], list[str]]:
-    gemini_keys = list(
+def _extract_gemini_keys(all_env_vars: dict[str, str]) -> list[str]:
+    return list(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
@@ -959,7 +1165,9 @@ def _extract_provider_keys(
         )
     )
 
-    anthropic_keys = list(
+
+def _extract_anthropic_keys(all_env_vars: dict[str, str]) -> list[str]:
+    return list(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
@@ -967,7 +1175,9 @@ def _extract_provider_keys(
         )
     )
 
-    openrouter_keys = list(
+
+def _extract_openrouter_keys(all_env_vars: dict[str, str]) -> list[str]:
+    keys = list(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
@@ -978,20 +1188,22 @@ def _extract_provider_keys(
             and "BASE" not in k.upper()
         )
     )
-
-    if not openrouter_keys:
+    if not keys:
         try:
             from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
 
             pool = openrouter_pool_manager
             for t in (1, 2, 3, 4):
                 for k in pool.get_pool_keys(t):
-                    if k not in openrouter_keys:
-                        openrouter_keys.append(k)
+                    if k not in keys:
+                        keys.append(k)
         except Exception as err:
             logger.debug("Falha ao consultar pool openrouter: %s", err)
+    return keys
 
-    nous_keys = list(
+
+def _extract_nous_keys(all_env_vars: dict[str, str]) -> list[str]:
+    keys = list(
         dict.fromkeys(
             v
             for k, v in all_env_vars.items()
@@ -1002,8 +1214,7 @@ def _extract_provider_keys(
             and "BASE" not in k.upper()
         )
     )
-
-    if not nous_keys:
+    if not keys:
         try:
             local_app = os.environ.get("LOCALAPPDATA", "")
             if local_app:
@@ -1016,11 +1227,21 @@ def _extract_provider_keys(
                         "nous", {}
                     ).get("access_token")
                     if n_tok:
-                        nous_keys.append(str(n_tok).strip())
+                        keys.append(str(n_tok).strip())
         except Exception as err:
             logger.debug("Falha ao carregar credencial hermes: %s", err)
+    return keys
 
-    return gemini_keys, anthropic_keys, openrouter_keys, nous_keys
+
+def _extract_provider_keys(
+    all_env_vars: dict[str, str],
+) -> tuple[list[str], list[str], list[str], list[str]]:
+    return (
+        _extract_gemini_keys(all_env_vars),
+        _extract_anthropic_keys(all_env_vars),
+        _extract_openrouter_keys(all_env_vars),
+        _extract_nous_keys(all_env_vars),
+    )
 
 
 def _build_models_to_try(
@@ -1046,17 +1267,17 @@ def _build_models_to_try(
             candidates.append(model_name)
 
     if nous_keys:
-        candidates.extend(m for m in ["poolside/laguna-s-2.1:free", "stealth/space-bunny-alpha"] if m not in candidates)
+        candidates.extend(m for m in [MODEL_POOLSIDE_LAGUNA_FREE, "stealth/space-bunny-alpha"] if m not in candidates)
 
     if openrouter_keys:
         extras = (
-            ["anthropic/claude-opus-5", "anthropic/claude-sonnet-5", "poolside/laguna-s-2.1:free"]
+            ["anthropic/claude-opus-5", "anthropic/claude-sonnet-5", MODEL_POOLSIDE_LAGUNA_FREE]
             if agent_type == "deep_thinking"
             else [
-                "google/gemini-3.5-flash-lite",
+                MODEL_OPENROUTER_GEMINI_35_FLASH_LITE,
                 "google/gemini-3.6-flash",
                 "poolside/laguna-xs-2.1:free",
-                "poolside/laguna-s-2.1:free",
+                MODEL_POOLSIDE_LAGUNA_FREE,
             ]
         )
         candidates.extend(m for m in extras if m not in candidates)

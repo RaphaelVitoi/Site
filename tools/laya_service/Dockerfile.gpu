@@ -20,21 +20,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     git \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && python3.12 -m venv /opt/venv \
+    && useradd -m -u 1000 appuser
 
-RUN python3.12 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN pip install --upgrade pip setuptools wheel && \
     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124 && \
     pip install transformers safetensors huggingface-hub fastapi uvicorn pydantic laya
 
-COPY . /app
+COPY pyproject.toml /app/pyproject.toml
+COPY scripts /app/scripts
+COPY llm /app/llm
+COPY utils /app/utils
+COPY core /app/core
+RUN chown -R appuser:appuser /app /opt/venv
+
+USER appuser
 
 EXPOSE 8192
 
 # Download e aquecimento antecipado do checkpoint canonico no container build/startup
-RUN python3.12 -c "import os; os.environ['CHICO_LAYA_PREDICT_ALLOW_CPU']='1'; from laya.router import Router; r = Router(default='multilingual'); r.load('multilingual')"
+RUN python3.12 -c \
+    "import os; os.environ['CHICO_LAYA_PREDICT_ALLOW_CPU']='1'; \
+    from laya.router import Router; r = Router(default='multilingual'); \
+    r.load('multilingual')"
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8192/health || exit 1

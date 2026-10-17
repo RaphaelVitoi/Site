@@ -1,1 +1,1 @@
-"""Tests -- Suíte de testes automatizados e integridade SOTA."""
+"""Tests -- Suite de testes automatizados e integridade SOTA."""

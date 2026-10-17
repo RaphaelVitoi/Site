@@ -25,6 +25,7 @@ comparison is safe in `==` as well as `>`.
 from __future__ import annotations
 
 from collections import Counter
+import itertools
 from typing import Final
 
 __all__ = [
@@ -142,36 +143,18 @@ def _straight_high(ranks: list[int]) -> int:
     return 0
 
 
-def evaluate_5(cards: list[int] | tuple[int, ...]) -> int:
-    """Exact strength of exactly 5 cards. Higher is stronger; 0 is the floor.
+def _pack(*vals: int) -> int:
+    out = 0
+    for v in vals:
+        out = (out << 4) | (v & 0xF)
+    return out
 
-    Score is `category << 20 | tiebreak`, with `tiebreak` packing the deciding
-    ranks most-significant-first, 4 bits each. Five ranks need 20 bits, so the
-    category field starts at bit 20: tiebreak < 2**20 always, so a single `>`
-    compares any two hands correctly, across categories and within one.
-    """
 
-    def _pack(*vals: int) -> int:
-        out = 0
-        for v in vals:
-            out = (out << 4) | (v & 0xF)
-        return out
+def _score(cat: int, *vals: int) -> int:
+    return (cat << 20) | _pack(*vals)
 
-    def _score(cat: int, *vals: int) -> int:
-        return (cat << 20) | _pack(*vals)
 
-    if len(cards) != 5:
-        raise ValueError(f"evaluate_5 needs 5 cards, got {len(cards)}")
-    ranks = sorted((c >> 2) for c in cards)
-    suits = [c & 0x3 for c in cards]
-    counts = Counter(ranks)
-    groups = sorted(counts.values(), reverse=True)
-    flush = len(set(suits)) == 1
-    s_high = _straight_high(ranks)
-    ordered = sorted(ranks, reverse=True)
-
-    if flush and s_high:
-        return _score(_CAT_STRAIGHT_FLUSH, s_high)
+def _evaluate_count_based(groups: list[int], counts: Counter[int], ranks: list[int]) -> int | None:
     if groups[0] == 4:
         quad = next(r for r in ranks if counts[r] == 4)
         kick = max(r for r in ranks if r != quad)
@@ -180,10 +163,6 @@ def evaluate_5(cards: list[int] | tuple[int, ...]) -> int:
         trip = next(r for r in ranks if counts[r] == 3)
         pair = next(r for r in ranks if counts[r] == 2)
         return _score(_CAT_FULL, trip, pair)
-    if flush:
-        return _score(_CAT_FLUSH, *ordered)
-    if s_high:
-        return _score(_CAT_STRAIGHT, s_high)
     if groups[0] == 3:
         trip = next(r for r in ranks if counts[r] == 3)
         kick = sorted((r for r in ranks if r != trip), reverse=True)
@@ -196,6 +175,38 @@ def evaluate_5(cards: list[int] | tuple[int, ...]) -> int:
         pair = next(r for r in ranks if counts[r] == 2)
         kick = sorted((r for r in ranks if r != pair), reverse=True)
         return _score(_CAT_PAIR, pair, kick[0], kick[1], kick[2])
+    return None
+
+
+def evaluate_5(cards: list[int] | tuple[int, ...]) -> int:
+    """Exact strength of exactly 5 cards. Higher is stronger; 0 is the floor.
+
+    Score is `category << 20 | tiebreak`, with `tiebreak` packing the deciding
+    ranks most-significant-first, 4 bits each. Five ranks need 20 bits, so the
+    category field starts at bit 20: tiebreak < 2**20 always, so a single `>`
+    compares any two hands correctly, across categories and within one.
+    """
+    if len(cards) != 5:
+        raise ValueError(f"evaluate_5 needs 5 cards, got {len(cards)}")
+    ranks = sorted((c >> 2) for c in cards)
+    suits = [c & 0x3 for c in cards]
+    counts = Counter(ranks)
+    groups = sorted(counts.values(), reverse=True)
+    flush = len(set(suits)) == 1
+    s_high = _straight_high(ranks)
+    ordered = sorted(ranks, reverse=True)
+
+    if flush and s_high:
+        return _score(_CAT_STRAIGHT_FLUSH, s_high)
+    if flush:
+        return _score(_CAT_FLUSH, *ordered)
+    if s_high:
+        return _score(_CAT_STRAIGHT, s_high)
+
+    count_score = _evaluate_count_based(groups, counts, ranks)
+    if count_score is not None:
+        return count_score
+
     return _score(_CAT_HIGH, *ordered)
 
 
@@ -209,23 +220,7 @@ def evaluate_7(cards: list[int] | tuple[int, ...]) -> int:
         return evaluate_5(cards)
     if n not in (6, 7):
         raise ValueError(f"evaluate_7 needs 5..7 cards, got {n}")
-    best = 0
-    if n == 6:
-        for i in range(6):
-            five = [cards[j] for j in range(6) if j != i]
-            v = evaluate_5(five)
-            if v > best:
-                best = v
-        return best
-    for i0 in range(7):
-        for i1 in range(i0 + 1, 7):
-            for i2 in range(i1 + 1, 7):
-                for i3 in range(i2 + 1, 7):
-                    for i4 in range(i3 + 1, 7):
-                        v = evaluate_5([cards[i0], cards[i1], cards[i2], cards[i3], cards[i4]])
-                        if v > best:
-                            best = v
-    return best
+    return max(evaluate_5(combo) for combo in itertools.combinations(cards, 5))
 
 
 def best_of(cards: list[int] | tuple[int, ...]) -> tuple[int, int]:
@@ -266,61 +261,13 @@ def from_strings(cards: str, *, ranks: str = _RANK_CHARS, suits: str = _SUIT_CHA
     return out
 
 
-def describe(cards: list[int] | tuple[int, ...]) -> str:
-    """Human-readable best hand, e.g. 'full house, kings full of threes'."""
-    names = _RANK_CHARS
-    n = len(cards)
-    best5: list[int] = []
-    best_v = -1
-    if n == 5:
-        combos: list[tuple[int, ...]] = [(0, 1, 2, 3, 4)]
-    else:
-        combos = [
-            (i0, i1, i2, i3, i4)
-            for i0 in range(n)
-            for i1 in range(i0 + 1, n)
-            for i2 in range(i1 + 1, n)
-            for i3 in range(i2 + 1, n)
-            for i4 in range(i3 + 1, n)
-        ]
-    for combo in combos:
-        five = [cards[i] for i in combo]
-        v = evaluate_5(five)
-        if v > best_v:
-            best_v = v
-            best5 = five
-    ranks = sorted((c >> 2 for c in best5), reverse=True)
-    cat = best_v >> 20
-    rn = "".join(names[r - 2] for r in ranks)
-    if cat in (_CAT_STRAIGHT_FLUSH, _CAT_STRAIGHT):
-        # The top of a straight lives in the tiebreak, not in `rn[0]`: a wheel
-        # has A as its highest rank but is a FIVE-high straight.
-        top = best_v & 0xFFFFF
-        kind = "straight flush" if cat == _CAT_STRAIGHT_FLUSH else "straight"
-        return f"{kind}, {names[top - 2]}-high"
-    if cat == _CAT_FLUSH:
-        return f"flush, {rn}"
-
-    # Group by multiplicity, not by position in `ranks`: `ranks` keeps
-    # duplicates, so 9-9-9-8-8 would read ranks[1] as a second nine. Only
-    # the per-category decoding below may consume names, and each one takes
-    # its ranks from the group it means.
+def _describe_count_based(cat: int, ranks: list[int], names: str, rn: str) -> str:
+    """Group by multiplicity to describe quads, full houses, trips, pairs, or high card."""
     counts = Counter(ranks)
-    trip = quad = None
-    pairs: list[int] = []
-    singles: list[int] = []
-    for r in ranks:
-        if counts[r] == 4:
-            quad = r
-        elif counts[r] == 3:
-            trip = r
-        elif counts[r] == 2:
-            if r not in pairs:
-                pairs.append(r)
-        elif counts[r] == 1 and r not in singles:
-            singles.append(r)
-    pairs.sort(reverse=True)
-    singles.sort(reverse=True)
+    quad = next((r for r in ranks if counts[r] == 4), None)
+    trip = next((r for r in ranks if counts[r] == 3), None)
+    pairs = sorted({r for r in ranks if counts[r] == 2}, reverse=True)
+    singles = sorted({r for r in ranks if counts[r] == 1}, reverse=True)
 
     if cat == _CAT_QUADS and quad is not None:
         return f"four {names[quad - 2]}, {names[singles[0] - 2]} kicker"
@@ -335,3 +282,31 @@ def describe(cards: list[int] | tuple[int, ...]) -> str:
         k = "".join(names[r - 2] for r in singles)
         return f"pair of {names[pairs[0] - 2]}, {k} kickers"
     return f"high card, {rn}"
+
+
+def describe(cards: list[int] | tuple[int, ...]) -> str:
+    """Human-readable best hand, e.g. 'full house, kings full of threes'."""
+    names = _RANK_CHARS
+    n = len(cards)
+    if n < 5:
+        raise ValueError(f"describe needs at least 5 cards, got {n}")
+    if n == 5:
+        best5 = list(cards)
+        best_v = evaluate_5(best5)
+    else:
+        best5 = list(max(itertools.combinations(cards, 5), key=evaluate_5))
+        best_v = evaluate_5(best5)
+
+    ranks = sorted((c >> 2 for c in best5), reverse=True)
+    cat = best_v >> 20
+    rn = "".join(names[r - 2] for r in ranks)
+    if cat in (_CAT_STRAIGHT_FLUSH, _CAT_STRAIGHT):
+        # The top of a straight lives in the tiebreak, not in `rn[0]`: a wheel
+        # has A as its highest rank but is a FIVE-high straight.
+        top = best_v & 0xFFFFF
+        kind = "straight flush" if cat == _CAT_STRAIGHT_FLUSH else "straight"
+        return f"{kind}, {names[top - 2]}-high"
+    if cat == _CAT_FLUSH:
+        return f"flush, {rn}"
+
+    return _describe_count_based(cat, ranks, names, rn)

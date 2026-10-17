@@ -178,9 +178,9 @@ def test_todo_modulo_do_fecho_e_copiado(fecho: tuple[set[str], set[str]]) -> Non
 
 
 def test_guard_declara_o_que_nao_e_dependencia_de_runtime() -> None:
-    """A exclusao de `cli/` e `scripts/` e declarada, nao implícita.
+    """A exclusao de `cli/` e `scripts/` e declarada, nao implicita.
 
-    Sem esta assercao, quem lê o guard nao sabe se a ausência delas e esquecimento
+    Sem esta assercao, quem le o guard nao sabe se a ausencia delas e esquecimento
     ou decisao -- e um `COPY cli ./cli` posterior passaria despercebido.
     """
     modulos, pacotes = _fecho_transitivo(MODULO_DO_CMD)

@@ -113,10 +113,7 @@ async def test_call_ollama_responde_texto_contudo_com_schema_no_daemon_real() ->
     assert texto.strip(), "resposta vazia"
     # O daemon devolve JSON puro quando recebe `format` com schema; um texto
     # solto aqui indicaria que o schema foi reduzido a "json" ou ignorado.
-    try:
-        objeto = json.loads(texto)
-    except json.JSONDecodeError as e:
-        pytest.fail(f"resposta nao e JSON valido apesar do schema: {texto!r} ({e})")
+    objeto = json.loads(texto)
 
     assert isinstance(objeto, dict), objeto
     assert "resposta" in objeto, f"campo exigido pelo schema ausente: {objeto}"

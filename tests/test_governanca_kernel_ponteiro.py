@@ -7,17 +7,17 @@ nada acuse** -- e nenhum deles coberto por guarda:
 
 1. **Duas secoes `## 7.` no `CLAUDE.md`.** A piramide de Tiers foi inserida
    entre a secao 8 e a secao 9, e recebeu o numero 7. Passaram 30+ referencias
-   internas a `§7` com dois alvos possiveis, e nenhuma delas resolvia de forma
-   inequivoca. `AGENTS.md` diz "para CHICO ... leia o §7": se o agente pegasse a
+   internas a `Secao 7` com dois alvos possiveis, e nenhuma delas resolvia de forma
+   inequivoca. `AGENTS.md` diz "para CHICO ... leia o Secao 7": se o agente pegasse a
    secao errada, recebia a regra do ponteiro no lugar da piramide.
    **A correcao que quase foi dada esta errada, e por isso e o primeiro
    guard deste arquivo:** renumerar o arquivo inteiro resolve a duplicata e
-   invalida 100+ enderecos ja citados. A piramide desce a `§0` e `§1..§10`
+   invalida 100+ enderecos ja citados. A piramide desce a `Secao 0` e `Secao 1..Secao 10`
    ficam onde estavam.
 
 2. **Duas autoridades de doutrina.** `governance/KERNEL.md` declarava-se "the
    canonical governance source for the repository and its agent ecosystem" e o
-   `docs/INDEX.md` o listava como **nº 1 na ordem de autoridade** -- enquanto
+   `docs/INDEX.md` o listava como **no 1 na ordem de autoridade** -- enquanto
    `AGENTS.md`, `GEMINI.md` e `GLOBAL_INSTRUCTIONS.md` apontavam o `CLAUDE.md`.
    O agravante: o `KERNEL.md` definia **Tiers 0-3** com semantica diferente da
    piramide de **8 Tiers** do `CLAUDE.md`. `Tier 1` era "primary orchestrator"
@@ -100,7 +100,7 @@ def test_secoes_do_claude_sao_unicas() -> None:
     repetidos = {n for n in numeros if numeros.count(n) > 1}
     assert not repetidos, (
         f"CLAUDE.md tem secao duplicada: {sorted(repetidos)}. "
-        "Cada `§N` precisa de um alvo unico, senao a referencia resolve por sorte."
+        "Cada `\u00a7N` precisa de um alvo unico, senao a referencia resolve por sorte."
     )
 
 
@@ -121,7 +121,7 @@ def test_secoes_do_claude_sao_monotonicas() -> None:
 
 
 # Os enderecos citados fora deste arquivo. Cada um deles ja era citado por
-# alguem -- 56 relatorios citam o §8.3 -- e renumerar a constituicao os
+# alguem -- 56 relatorios citam o Secao 8.3 -- e renumerar a constituicao os
 # transformou em orfaos silenciosos: a leitura nao levanta excecao, o
 # endereco simplesmente deixa de bater.
 ENDERECOS_CITADOS = (
@@ -153,16 +153,16 @@ def test_nenhum_endereco_citado_externamente_sumiu() -> None:
     """A renumeracao que este guard existe para impedir.
 
     Em 2026-09-29 a auditoria resolveu a duplicata de `## 7.` reordenando
-    o arquivo inteiro: a piramide virou §1 e cada secao seguinte ganhou +1.
-    A duplicata desapareceu -- e com ela desapareceram os enderecos. `§8.3`
-    (calibracao, 56 citacoes), `§8.0`, `§8.1`, `§8.2`, `§10.5`, `§10.6` e
-    `§9.2` passaram a nao resolver, e o deslocamento automatico tambem nao
-    (`§8.3` -> `§9.4`, que nunca existiu). Cento e tantas referencias
+    o arquivo inteiro: a piramide virou Secao 1 e cada secao seguinte ganhou +1.
+    A duplicata desapareceu -- e com ela desapareceram os enderecos. `Secao 8.3`
+    (calibracao, 56 citacoes), `Secao 8.0`, `Secao 8.1`, `Secao 8.2`, `Secao 10.5`, `Secao 10.6` e
+    `Secao 9.2` passaram a nao resolver, e o deslocamento automatico tambem nao
+    (`Secao 8.3` -> `Secao 9.4`, que nunca existiu). Cento e tantas referencias
     mortas, nenhuma delas visivel: `grep` acha o texto, e nao ha o que
     comparar.
 
     A correcao foi a minima possivel -- a piramide desce a `## 0.`, e
-    §1..§10 ficam exatamente onde estavam. Um numero que alguem ja citou
+    Secao 1..Secao 10 ficam exatamente onde estavam. Um numero que alguem ja citou
     e um endereco postal: mudar a rua invalida a correspondencia sem
     avisar ninguem.
     """
@@ -171,13 +171,13 @@ def test_nenhum_endereco_citado_externamente_sumiu() -> None:
     assert not perdidas, (
         f"CLAUDE.md deixou de oferecer enderecos ja citados: {perdidas}. "
         "Endereco renumerado vira referencia morta em todos os 100+ "
-        "documentos que o citam. Para reordenar, use §0 e preserve §1..§N."
+        "documentos que o citam. Para reordenar, use \u00a70 e preserve \u00a71..\u00a7N."
     )
 
 
 @pytest.mark.unit
 def test_todo_ref_interno_aponta_para_secao_existente() -> None:
-    """`§N` local tem de resolver. Referencia a raiz e a unica exceao.
+    """`Secao N` local tem de resolver. Referencia a raiz e a unica exceao.
 
     O que distingue a referencia local da referencia a `..\\CLAUDE.md` e a
     propria frase que a qualifica -- e ela precisa continuar la, porque e ela
@@ -189,7 +189,7 @@ def test_todo_ref_interno_aponta_para_secao_existente() -> None:
     raiz = re.compile(r"da raiz|de `\.\.\\CLAUDE\.md`")
 
     orfas = []
-    for m in re.finditer(r"§\s?(\d+(?:\.\d+)*)", texto):
+    for m in re.finditer(r"\u00a7\s?(\d+(?:\.\d+)*)", texto):
         numero, pos = m.group(1), m.start()
         contexto = texto[max(0, pos - 90) : pos + 40]
         if raiz.search(contexto):
@@ -198,7 +198,7 @@ def test_todo_ref_interno_aponta_para_secao_existente() -> None:
             continue
         orfas.append((numero, contexto.replace("\n", " ")[:110]))
 
-    assert not orfas, "referencia interna sem destino: " + "; ".join(f"§{n} em «{c}»" for n, c in orfas)
+    assert not orfas, "referencia interna sem destino: " + "; ".join(f"\u00a7{n} em \u00ab{c}\u00bb" for n, c in orfas)
 
 
 # --- 2. unidade de autoridade --------------------------------------------------
@@ -240,7 +240,7 @@ def test_kernel_nao_redefine_tiers() -> None:
 def test_kernel_continua_ponteiro() -> None:
     """O caminho de volta ao fork e o crescimento gradual, nunca a copia.
 
-    O teto e medido sobre a **doutrina** — tudo que precede `## 3.` — e nao
+    O teto e medido sobre a **doutrina** -- tudo que precede `## 3.` -- e nao
     sobre o arquivo inteiro. A distincao importa porque a medicao do elo de
     autonomia ocupa 2.4 kB e nao e doutrina: e o que a auditoria descobriu, e
     descoberta envelhece com a correcao, enquanto regra tem que valer
@@ -250,14 +250,14 @@ def test_kernel_continua_ponteiro() -> None:
     texto = _ler(KERNEL)
     corte = texto.find("## 3. `autonomy.yaml`")
     assert corte != -1, (
-        "o §3 (medicao do elo de autonomia) sumiu. Ele e a unica secao do "
+        "o \u00a73 (medicao do elo de autonomia) sumiu. Ele e a unica secao do "
         "kernel que registra o que a auditoria mediu e o runtime nao faz."
     )
     doutrina = len(texto[:corte].encode("utf-8"))
     assert doutrina <= TETO_DO_KERNEL, (
         f"a doutrina do kernel cresceu para {doutrina} B (teto {TETO_DO_KERNEL}). "
         "Doutrina nova entra no CLAUDE.md; aqui so resta o papel, a ordem e "
-        "a medicao. A §3 e medida, e nao conta para este teto."
+        "a medicao. A \u00a73 e medida, e nao conta para este teto."
     )
 
 
@@ -273,7 +273,7 @@ def test_kernel_nao_promete_consumo_de_arquivo_que_nada_le() -> None:
     pelo menos se verifica.
     """
     texto = _sem_acento(_ler(KERNEL))
-    assert not re.search(r"leg[ií]vel por `agents/autonomy", texto), (
+    assert not re.search(r"leg[i\u00ed]vel por `agents/autonomy", texto), (
         "KERNEL.md voltou a dizer que autonomy.yaml e legivel por "
         "agents/autonomy.py. Medido em 2026-09-29: o runtime nao menciona o "
         "arquivo. O modo efetivo vem de system_state.autonomy_mode."
@@ -293,7 +293,7 @@ def test_kernel_aponta_para_o_claude() -> None:
 def test_indice_nao_publica_ordem_de_autoridade_invertida() -> None:
     """`docs/INDEX.md` e mapa de leitura. A autoridade vive no kernel.
 
-    Em 2026-09-29 o indice listava o kernel como nº 1, invertendo a ordem que
+    Em 2026-09-29 o indice listava o kernel como no 1, invertendo a ordem que
     `AGENTS.md`, `GEMINI.md` e `GLOBAL_INSTRUCTIONS.md` declararam -- e o titulo
     da secao ainda dizia "Ordem de autoridade".
 
@@ -307,9 +307,11 @@ def test_indice_nao_publica_ordem_de_autoridade_invertida() -> None:
     )
     # 2. o preambulo nao pode alegar que a autoridade esta no KERNEL.md
     preambulo = texto[: texto.index("## Referencias")] if "## Referencias" in texto else texto[:2000]
-    assert "autoridade está consolidada" in preambulo.lower() or "autoridade está no" not in preambulo.lower(), (
+    assert (
+        "autoridade est\u00e1 consolidada" in preambulo.lower() or "autoridade est\u00e1 no" not in preambulo.lower()
+    ), (
         "INDEX.md continua alegando que autoridade esta no KERNEL.md. "
-        "A constituição (CLAUDE.md) e a fonte unica de autoridade atual."
+        "A constitui\u00e7\u00e3o (CLAUDE.md) e a fonte unica de autoridade atual."
     )
     # 3. se o KERNEL.md aparecer na lista numerada, CLAUDE.md deve vir antes
     lista = (
@@ -351,7 +353,7 @@ def test_manifesto_de_coerencia_aponta_para_caminhos_vivos() -> None:
 
     `.claude/CLAUDE.md` nao existe desde a fusao `.cerebro` -> `.claude`, e
     `GLOBAL_INSTRUCTIONS.md` vive em `.claude/GOVERNANCA/`. O leitor recebia
-    um conjunto de regras em que a camada de identidade simplesmente não
+    um conjunto de regras em que a camada de identidade simplesmente nao
     carregava.
     """
     texto = _ler(MANIFEST)
@@ -419,12 +421,12 @@ def test_adaptadores_declaram_a_mesma_constituicao() -> None:
 
 @pytest.mark.unit
 def test_nenhum_documento_cita_subsecao_que_nao_existe() -> None:
-    """`§N.N` para um subitem que a constituicao nao numera.
+    """`Secao N.N` para um subitem que a constituicao nao numera.
 
-    Os subitens da piramide sao titulos `###` sem numero. Citar `§1.5`
+    Os subitens da piramide sao titulos `###` sem numero. Citar `Secao 1.5`
     parece preciso e e inventado: nao ha `1.5`, e nao ha nada para receber a
     referencia. Foi o que aconteceu em `PRODUCT_OWNERSHIP.md` durante esta
-    auditoria -- `§1.1`, `§1.5`, `§1.6` e `§1.10` foram escritos com a
+    auditoria -- `Secao 1.1`, `Secao 1.5`, `Secao 1.6` e `Secao 1.10` foram escritos com a
     conviccao de quem esta citando, e nao_existiam.
 
     Subitem nao numerado se cita pelo nome. Endereco que nao resolve e pior
@@ -432,7 +434,7 @@ def test_nenhum_documento_cita_subsecao_que_nao_existe() -> None:
     parece existir.
     """
     validas = set(re.findall(r"^#{2,4} (\d+(?:\.\d+)+)\.?", _ler(CLAUDE), re.M))
-    # subniveis nao sao auto-contidos: §8.3 existe sem §8.3.1
+    # subniveis nao sao auto-contidos: Secao 8.3 existe sem Secao 8.3.1
     validas |= {n.split(".")[0] for n in validas}
 
     alvos = (
@@ -447,20 +449,20 @@ def test_nenhum_documento_cita_subsecao_que_nao_existe() -> None:
             continue
         texto = _ler(p)
         orfas = []
-        for m in re.finditer(r"§\s?(\d+\.\d+)", texto):
+        for m in re.finditer(r"\u00a7\s?(\d+\.\d+)", texto):
             n = m.group(1)
             if n in validas:
                 continue
-            # prosa que *fala sobre* endereco ("um `§1.5` aqui seria
+            # prosa que *fala sobre* endereco ("um `Secao 1.5` aqui seria
             # endereco inventado") nao e citacao -- e o proprio guard
             # precisa disso para poder descrever o defeito que impede.
             # A janela e bidirecional: o qualificador tanto precede
-            # ("endereco inventado, como §1.5") quanto sucede ("um §1.5
+            # ("endereco inventado, como Secao 1.5") quanto sucede ("um Secao 1.5
             # aqui seria inventado") a mencao.
             janela = re.sub(r"\s+", " ", texto[max(0, m.start() - 110) : m.end() + 90])
             if re.search(
-                r"(inventado|n[aã]o existe|inexistente|seria|exemplo|hipot|"
-                r"sem n[uú]mero|n[aã]o numerad)",
+                r"(inventado|n[a\u00e3]o existe|inexistente|seria|exemplo|hipot|"
+                r"sem n[u\u00fa]mero|n[a\u00e3]o numerad)",
                 janela,
                 re.I,
             ):
@@ -476,11 +478,11 @@ def test_nenhum_documento_cita_subsecao_que_nao_existe() -> None:
 
 # Medido em 2026-09-29. existem duas constituicoes: a do projeto
 # (`Site/CLAUDE.md`, 11 secoes) e a multiprojeto (`~/.gemini/CLAUDE.md`, 8).
-# Um `§6.4` nu existe na segunda e nao na primeira; um `§8.3` existe na
+# Um `Secao 6.4` nu existe na segunda e nao na primeira; um `Secao 8.3` existe na
 # primeira e nao na segunda. As duas classes coexistem em reports/ sem
 # qualificador, e o leitor tem 50% de chance por referencia.
 #
-# Nao e erro de quem escreveu: `§6.4` estava certo para a raiz e continua
+# Nao e erro de quem escreveu: `Secao 6.4` estava certo para a raiz e continua
 # certo. E ambiguidade -- o defeito e a ausencia do qualificador, nao o
 # numero. Por isso o guard exige a qualificacao e nao reescreve os relatorios:
 # reescrever 100+ relatorios historicos para satisfazer um verificador seria
@@ -488,16 +490,16 @@ def test_nenhum_documento_cita_subsecao_que_nao_existe() -> None:
 QUALIFICADORES = re.compile(
     r"(da raiz|multiproject|raiz multiprojet|C:\\\\Users\\\
 apha\\\\\.gemini\\\\CLAUDE|"
-    r"deste handoff|deste relatorio| deste |deste registro|ra[ií]z)",
+    r"deste handoff|deste relatorio| deste |deste registro|ra[i\u00ed]z)",
     re.I,
 )
 
 
 @pytest.mark.unit
 def test_referencia_do_canonico_e_qualificada_quando_ambigua() -> None:
-    """`§N` que existe nas duas constituicoes precisa dizer a qual.
+    """`Secao N` que existe nas duas constituicoes precisa dizer a qual.
 
-    O criterio e o do §7 do `CLAUDE.md`: numero ambiguo e numero errado.
+    O criterio e o do Secao 7 do `CLAUDE.md`: numero ambiguo e numero errado.
     Aqui so se cobra a qualificacao nos documentos de governanca -- os
     reports historicos ficam de fora de proposito, e o guard acima diz por
     que.
@@ -517,7 +519,7 @@ def test_referencia_do_canonico_e_qualificada_quando_ambigua() -> None:
             continue
         texto = _ler(p)
         sem_qualificacao = []
-        for m in re.finditer(r"§\s?(\d+\.\d+)", texto):
+        for m in re.finditer(r"\u00a7\s?(\d+\.\d+)", texto):
             n = m.group(1)
             if n not in ambiguas:
                 continue
@@ -561,5 +563,5 @@ def test_nenhum_documento_de_governanca_tem_script_estranho() -> None:
             nome = next((n for lo, hi, n in SCRIPTS_NAO_LATINOS if lo <= cp <= hi), None)
             if nome:
                 ctx = re.sub(r"\s+", " ", texto[max(0, i - 40) : i + 20])
-                achados.append(f"U+{cp:04X} {nome} em «{ctx}»")
+                achados.append(f"U+{cp:04X} {nome} em \u00ab{ctx}\u00bb")
         assert not achados, f"{rel} contem caractere de script nao latino: " + "; ".join(achados)

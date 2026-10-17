@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { UI_I18N } from '../../../constants/translations';
+import { cleanTextForSpeech } from '../hooks/useSotaSpeech';
 
 export interface GeminiVoicePlayerProps {
 	defaultText?: string;
@@ -31,6 +32,7 @@ export function GeminiVoicePlayer({
 	const [rate, setRate] = useState<number>(1.05); // Ritmo ideal
 	const [pitch] = useState<number>(1.0);
 	const [isSupported, setIsSupported] = useState<boolean>(true);
+	const [isNexusActive, setIsNexusActive] = useState<boolean>(false);
 
 	// Carrega e filtra vozes femininas em Português do Brasil
 	useEffect(() => {
@@ -64,6 +66,15 @@ export function GeminiVoicePlayer({
 		updateVoices();
 		window.speechSynthesis.onvoiceschanged = updateVoices;
 
+		if (typeof window !== 'undefined' && 'fetch' in window) {
+			fetch('http://127.0.0.1:9333/api/voice/status')
+				.then((res) => res.json())
+				.then((data) => {
+					if (data?.ok || data?.success) setIsNexusActive(true);
+				})
+				.catch(() => setIsNexusActive(false));
+		}
+
 		return () => {
 			if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 				window.speechSynthesis.cancel();
@@ -83,7 +94,8 @@ export function GeminiVoicePlayer({
 
 		window.speechSynthesis.cancel();
 
-		const utterance = new SpeechSynthesisUtterance(text);
+		const sanitizedText = cleanTextForSpeech(text);
+		const utterance = new SpeechSynthesisUtterance(sanitizedText);
 		if (selectedVoice) {
 			utterance.voice = selectedVoice;
 			utterance.lang = selectedVoice.lang || 'pt-BR';
@@ -149,6 +161,15 @@ export function GeminiVoicePlayer({
 				</div>
 
 				<div className="flex items-center gap-2">
+					<span
+						className={`px-2 py-0.5 rounded-lg text-[0.55rem] font-mono font-bold border transition-colors ${
+							isNexusActive
+								? 'bg-accent-indigo/10 border-accent-indigo/30 text-accent-indigo-light'
+								: 'bg-white/5 border-white/10 text-text-muted'
+						}`}
+					>
+						{isNexusActive ? '✨ Gemini 3.8 Studio' : '🔊 SAPI Neural'}
+					</span>
 					{isPlaying && (
 						<div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent-emerald/10 border border-accent-emerald/20 text-accent-emerald text-[0.55rem] font-mono font-bold">
 							<span className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />

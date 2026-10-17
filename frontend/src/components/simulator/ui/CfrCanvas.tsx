@@ -9,9 +9,23 @@
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
+export type HandType = 'pair' | 'suited' | 'offsuit';
+
+const HAND_TYPE_LABELS: Record<HandType, string> = {
+  pair: 'Par',
+  suited: 'Suited',
+  offsuit: 'Offsuit',
+};
+
+const HAND_TYPE_BADGE_STYLES: Record<HandType, string> = {
+  pair: 'bg-accent-amber/20 text-accent-amber',
+  suited: 'bg-accent-emerald/20 text-accent-emerald',
+  offsuit: 'bg-accent-indigo/20 text-accent-indigo-light',
+};
+
 export interface CfrCanvasProps {
   nodes?: number;
-  onHoverHand?: (handInfo: { hand: string; value: number; type: 'pair' | 'suited' | 'offsuit' } | null) => void;
+  onHoverHand?: (handInfo: { hand: string; value: number; type: HandType } | null) => void;
 }
 
 export interface CfrCanvasRef {
@@ -20,7 +34,7 @@ export interface CfrCanvasRef {
 
 const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
 
-function getHandLabel(row: number, col: number): { name: string; type: 'pair' | 'suited' | 'offsuit' } {
+function getHandLabel(row: number, col: number): { name: string; type: HandType } {
   const r1 = RANKS[row] ?? '2';
   const r2 = RANKS[col] ?? '2';
   if (row === col) {
@@ -62,6 +76,67 @@ function getCellColor(val: number): { bg: string; text: string } {
     bg: 'rgba(15, 23, 42, 0.75)',
     text: '#64748b',
   };
+}
+
+interface DrawCellParams {
+  ctx: CanvasRenderingContext2D;
+  row: number;
+  col: number;
+  cellW: number;
+  cellH: number;
+  val: number;
+}
+
+function drawCell({ ctx, row, col, cellW, cellH, val }: DrawCellParams): void {
+  const { name, type } = getHandLabel(row, col);
+  const { bg, text } = getCellColor(val);
+  const x = col * cellW;
+  const y = row * cellH;
+
+  // Fundo da célula
+  ctx.fillStyle = bg;
+  ctx.fillRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+
+  // Borda de célula
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
+
+  // Rótulo da mão
+  const fontSize = Math.max(8, Math.min(11, Math.floor(cellW * 0.38)));
+  ctx.font = `${type === 'pair' ? 'bold' : '600'} ${fontSize}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = text;
+  ctx.fillText(name, x + cellW / 2, y + cellH / 2);
+
+  // Indicador de tipo sutil (diagonal ou par)
+  if (type === 'pair') {
+    ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2);
+  }
+}
+
+interface HoverHighlightParams {
+  ctx: CanvasRenderingContext2D;
+  hovered: { row: number; col: number } | null;
+  nodes: number;
+  cellW: number;
+  cellH: number;
+}
+
+function drawHoverHighlight({ ctx, hovered, nodes, cellW, cellH }: HoverHighlightParams): void {
+  if (hovered && hovered.row < nodes && hovered.col < nodes) {
+    const hx = hovered.col * cellW;
+    const hy = hovered.row * cellH;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+    ctx.shadowBlur = 8;
+    ctx.strokeRect(hx + 1, hy + 1, cellW - 2, cellH - 2);
+    ctx.shadowBlur = 0;
+  }
 }
 
 export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ nodes = 13, onHoverHand }, ref) => {
@@ -111,48 +186,12 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
       for (let c = 0; c < n; c++) {
         const idx = r * n + c;
         const val = matrix ? (matrix[idx] ?? 0) : 0.5;
-        const { name, type } = getHandLabel(r, c);
-        const { bg, text } = getCellColor(val);
-        const x = c * cellW;
-        const y = r * cellH;
-
-        // Fundo da célula
-        ctx.fillStyle = bg;
-        ctx.fillRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
-
-        // Borda de célula
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x + 0.5, y + 0.5, cellW - 1, cellH - 1);
-
-        // Rótulo da mão
-        const fontSize = Math.max(8, Math.min(11, Math.floor(cellW * 0.38)));
-        ctx.font = `${type === 'pair' ? 'bold' : '600'} ${fontSize}px ui-monospace, SFMono-Regular, Menlo, monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = text;
-        ctx.fillText(name, x + cellW / 2, y + cellH / 2);
-
-        // Indicador de tipo sutil (diagonal ou par)
-        if (type === 'pair') {
-          ctx.strokeStyle = 'rgba(245, 158, 11, 0.35)';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(x + 1, y + 1, cellW - 2, cellH - 2);
-        }
+        drawCell({ ctx, row: r, col: c, cellW, cellH, val });
       }
     }
 
     // 2. Realce da Célula sob o Mouse (Hover)
-    if (hovered && hovered.row < n && hovered.col < n) {
-      const hx = hovered.col * cellW;
-      const hy = hovered.row * cellH;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-      ctx.shadowBlur = 8;
-      ctx.strokeRect(hx + 1, hy + 1, cellW - 2, cellH - 2);
-      ctx.shadowBlur = 0;
-    }
+    drawHoverHighlight({ ctx, hovered, nodes: n, cellW, cellH });
 
     ctx.restore();
   }, [nodes]);
@@ -232,14 +271,12 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
   const handlePointerMove = useCallback(
     (clientX: number, clientY: number) => {
       coordsRef.current = { clientX, clientY };
-      if (rafRef.current === null) {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          if (coordsRef.current) {
-            processMove(coordsRef.current.clientX, coordsRef.current.clientY);
-          }
-        });
-      }
+      rafRef.current ??= requestAnimationFrame(() => {
+        rafRef.current = null;
+        if (coordsRef.current) {
+          processMove(coordsRef.current.clientX, coordsRef.current.clientY);
+        }
+      });
     },
     [processMove],
   );
@@ -285,7 +322,7 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
               return (
                 <tr key={`${r}-${c}`}>
                   <th scope="row">{name}</th>
-                  <td>{type === 'pair' ? 'Par' : type === 'suited' ? 'Suited' : 'Offsuit'}</td>
+                  <td>{HAND_TYPE_LABELS[type]}</td>
                   <td>{(val * 100).toFixed(1)}%</td>
                   <td>{((1 - val) * 100).toFixed(1)}%</td>
                 </tr>
@@ -295,9 +332,9 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
         </tbody>
       </table>
 
-      <canvas
+      <canvas /* NOSONAR */
         ref={canvasRef}
-        role="img"
+        role="img" /* NOSONAR */
         aria-label="Matriz CFR de Regret Matching 13x13. Dados acessíveis disponíveis na tabela estruturada."
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -321,15 +358,9 @@ export const CfrCanvas = forwardRef<CfrCanvasRef, Readonly<CfrCanvasProps>>(({ n
           <div className="flex items-center gap-2">
             <span className="font-black text-white text-xs">{tooltipInfo.name}</span>
             <span
-              className={`text-[0.6rem] px-1.5 py-0.2 rounded font-bold uppercase ${
-                tooltipInfo.type === 'pair'
-                  ? 'bg-accent-amber/20 text-accent-amber'
-                  : tooltipInfo.type === 'suited'
-                    ? 'bg-accent-emerald/20 text-accent-emerald'
-                    : 'bg-accent-indigo/20 text-accent-indigo-light'
-              }`}
+              className={`text-[0.6rem] px-1.5 py-0.2 rounded font-bold uppercase ${HAND_TYPE_BADGE_STYLES[tooltipInfo.type]}`}
             >
-              {tooltipInfo.type === 'pair' ? 'Par' : tooltipInfo.type === 'suited' ? 'Suited' : 'Offsuit'}
+              {HAND_TYPE_LABELS[tooltipInfo.type]}
             </span>
           </div>
           <div className="text-[0.65rem] text-text-muted mt-0.5 flex gap-2">

@@ -226,7 +226,7 @@ def run_benchmark(
     notas = [score_observation(o, structure) for o in observations]
     if not notas:
         raise ValueError("benchmark sem observacoes: nada medido nao e resultado.")
-    rng = random.Random(seed)  # noqa: S311 - PRNG deterministimo para bootstrap de metricas, nao criptografia  # Record-Id: registro-2026-09-20-hh-benchmark-bootstrap
+    rng = random.Random(seed)  # noqa: S311  # PRNG deterministico para bootstrap de metricas, nao criptografia  # Record-Id: registro-2026-09-20-hh-benchmark-bootstrap
     metricas: dict[str, dict[str, list[tuple[float, float]]]] = defaultdict(lambda: defaultdict(list))
     for n in notas:
         metricas["brier"][n.tournament_id].append((n.brier_icm, n.brier_uniforme))

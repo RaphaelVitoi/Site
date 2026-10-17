@@ -68,7 +68,9 @@ Toda reinicialização, build e validação de integridade deve seguir o pipelin
 $$\text{Higienização} \longrightarrow \text{Backend Check} \longrightarrow \text{Build Turbopack} \longrightarrow \text{Subida Limpa} \longrightarrow \text{Warmup \& Hidratação}$$
 
 ### Fase 1: Pré-Compilação e Build de Produção
+
 Garante que a tipagem estrita e os Web Workers estejam sincronizados antes da inicialização:
+
 ```bash
 # 1. Compilar manifestos de Web Workers isolados
 npm --workspace frontend exec -- tsc -b tsconfig.worker.json
@@ -76,10 +78,13 @@ npm --workspace frontend exec -- tsc -b tsconfig.worker.json
 # 2. Executar compilação otimizada do Turbopack
 npm --workspace frontend run build
 ```
+
 - **Invariante:** 70/70 páginas devem ser geradas (estáticas ou dinâmicas) sem falhas de SSR.
 
 ### Fase 2: Higienização Atômica de Processos Obsoletos
+
 Previne o erro clássico `EADDRINUSE: address already in use :::3000` e compilações fantasmas em memória:
+
 ```powershell
 # Encerramento gracioso de processos bloqueando a porta 3000
 $conns = Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue
@@ -91,7 +96,9 @@ if ($conns) {
 ```
 
 ### Fase 3: Prontidão do Backend Aiohttp (Porta 17042)
+
 O frontend depende do backend para cálculos complexos, Oráculo Gemma e Laya:
+
 ```bash
 # Verificar saúde imediata
 curl -s http://127.0.0.1:17042/ping
@@ -100,7 +107,9 @@ node scripts/ops/ensure-dev-backend.mjs
 ```
 
 ### Fase 4: Subida Atômica do Servidor Next.js
+
 Recarrega variáveis do `.env` atualizado (assegurando `DATABASE_URL="file:./prisma/dev.db"`):
+
 ```bash
 # Inicialização a partir do diretório frontend
 cd frontend
@@ -108,7 +117,9 @@ npm run dev
 ```
 
 ### Fase 5: Protocolo SOTA de Aquecimento de Rotas (Warmup Engine)
+
 Elimina latências de compilação Just-in-Time (JIT) e valida hidratação nas rotas críticas:
+
 1. `GET /` — Shell principal e tokens de design system.
 2. `GET /simulador` — Carregamento dinâmico do `MasterSimulator` (`ssr: false`).
 3. `GET /simulador/distorcoes` — Gráficos matemáticos de distorções ICM.

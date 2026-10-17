@@ -32,19 +32,53 @@ def sanitize_think_tags(text: str) -> str:
     return cleaned.strip()
 
 
+def _sanitize_completion_choices(choices: list[dict[str, Any]]) -> None:
+    """Sanitiza tags <think></think> em escolhas retornadas pelo servidor."""
+    for choice in choices:
+        if "message" in choice and "content" in choice["message"]:
+            raw_content = choice["message"]["content"]
+            if raw_content:
+                choice["message"]["content"] = sanitize_think_tags(raw_content)
+        elif "text" in choice and choice["text"]:
+            choice["text"] = sanitize_think_tags(choice["text"])
+
+
+def _build_chat_payload(
+    messages: list[dict[str, str]],
+    temperature: float,
+    max_tokens: int,
+    tools: list[dict[str, Any]] | None,
+    tool_choice: str | dict[str, Any] | None,
+    response_format: dict[str, Any] | None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": False,
+    }
+    if tools:
+        payload["tools"] = tools
+        if tool_choice:
+            payload["tool_choice"] = tool_choice
+    if response_format:
+        payload["response_format"] = response_format
+    return payload
+
+
 class LocalLlamaClient:
     """Cliente HTTP sincrono e ultraleve para instancias locais do llama-server."""
 
     def __init__(self, host: str = "127.0.0.1", port: int = DEFAULT_G9_PORT, timeout: float = 30.0) -> None:
         self.host = host
         self.port = port
-        self.base_url = f"http://{host}:{port}/v1"
+        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR
         self.timeout = timeout
 
     def is_healthy(self) -> bool:
         """Verifica se o servidor local esta ativo e respondendo."""
         try:
-            url = f"http://{self.host}:{self.port}/health"
+            url = f"http://{self.host}:{self.port}/health"  # NOSONAR
             req = urllib.request.Request(url, method="GET")  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
             with urllib.request.urlopen(req, timeout=2.0) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
                 data = json.loads(resp.read().decode("utf-8"))
@@ -77,20 +111,7 @@ class LocalLlamaClient:
         Executa chamada de chat completion compativel com o endpoint /v1/chat/completions.
         Garante remocao de tags <think> e injecao de telemetria de latencia.
         """
-        payload: dict[str, Any] = {
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": False,
-        }
-
-        if tools:
-            payload["tools"] = tools
-            if tool_choice:
-                payload["tool_choice"] = tool_choice
-
-        if response_format:
-            payload["response_format"] = response_format
+        payload = _build_chat_payload(messages, temperature, max_tokens, tools, tool_choice, response_format)
 
         url = f"{self.base_url}/chat/completions"
         req_data = json.dumps(payload).encode("utf-8")
@@ -113,16 +134,10 @@ class LocalLlamaClient:
                 }
                 # Sanitizacao mandatoria contra vazamento de tags <think></think>
                 if "choices" in result:
-                    for choice in result["choices"]:
-                        if "message" in choice and "content" in choice["message"]:
-                            raw_content = choice["message"]["content"]
-                            if raw_content:
-                                choice["message"]["content"] = sanitize_think_tags(raw_content)
-                        elif "text" in choice and choice["text"]:
-                            choice["text"] = sanitize_think_tags(choice["text"])
+                    _sanitize_completion_choices(result["choices"])
                 return result
         except urllib.error.URLError as e:
-            logger.error("Falha de conexao com o llama-server na porta %d: %s", self.port, e)
+            logger.exception("Falha de conexao com o llama-server na porta %d", self.port)
             raise ConnectionError(
                 f"llama-server offline na porta {self.port}. Inicie via scripts/ops/Start-LocalLlama.ps1"
             ) from e

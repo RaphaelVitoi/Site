@@ -1,1 +1,1 @@
-"""Utils -- Utilitários de ambiente, formatação e logging."""
+"""Utils -- Utilitarios de ambiente, formatacao e logging."""

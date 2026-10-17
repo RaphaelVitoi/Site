@@ -79,6 +79,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from typing import BinaryIO
 
 import psutil
 
@@ -134,42 +135,58 @@ def ler_marcador() -> dict:
         return {}
 
 
+def _lock_file_nonblocking(arquivo: BinaryIO) -> None:
+    arquivo.seek(0)
+    if os.name == "nt":
+        import msvcrt
+
+        msvcrt.locking(arquivo.fileno(), msvcrt.LK_NBLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(arquivo.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def _unlock_file(arquivo: BinaryIO) -> None:
+    arquivo.seek(0)
+    if os.name == "nt":
+        import msvcrt
+
+        msvcrt.locking(arquivo.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        import fcntl
+
+        fcntl.flock(arquivo.fileno(), fcntl.LOCK_UN)
+
+
+def _acquire_suite_lock(arquivo: BinaryIO) -> None:
+    inicio = time.monotonic()
+    proximo_aviso = 0
+    while True:
+        try:
+            _lock_file_nonblocking(arquivo)
+            return
+        except OSError as erro:
+            if erro.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                raise
+            decorrido = time.monotonic() - inicio
+            if decorrido >= 600:
+                raise TimeoutError("outra suite ainda ocupa o gate apos 10 minutos") from erro
+            if decorrido >= proximo_aviso:
+                print("[SUITE] aguardando a verificacao em curso", flush=True)
+                proximo_aviso += 30
+            time.sleep(1)
+
+
 @contextmanager
 def trava_suite():
     """Uma suite por clone; a segunda chamada reavalia o cache ao entrar."""
     with ARQUIVO_TRAVA.open("a+b") as arquivo:
-        inicio = time.monotonic()
-        proximo_aviso = 0
-        while True:
-            try:
-                arquivo.seek(0)
-                if os.name == "nt":
-                    import msvcrt
-
-                    msvcrt.locking(arquivo.fileno(), msvcrt.LK_NBLCK, 1)
-                else:
-                    import fcntl
-
-                    fcntl.flock(arquivo.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                break
-            except OSError as erro:
-                if erro.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
-                    raise
-                decorrido = time.monotonic() - inicio
-                if decorrido >= 600:
-                    raise TimeoutError("outra suite ainda ocupa o gate apos 10 minutos") from erro
-                if decorrido >= proximo_aviso:
-                    print("[SUITE] aguardando a verificacao em curso", flush=True)
-                    proximo_aviso += 30
-                time.sleep(1)
+        _acquire_suite_lock(arquivo)
         try:
             yield
         finally:
-            arquivo.seek(0)
-            if os.name == "nt":
-                msvcrt.locking(arquivo.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                fcntl.flock(arquivo.fileno(), fcntl.LOCK_UN)
+            _unlock_file(arquivo)
 
 
 def cacheavel() -> tuple[bool, str]:

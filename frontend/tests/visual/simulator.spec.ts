@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Visual Regression — Simulator (SOTA GOLD)', () => {
-  test.setTimeout(90000);
+  test.describe.configure({ timeout: 90000 });
 
   test('simulator page — layout e componentes interativos', async ({ page }) => {
     await page.goto('/simulador');
     // simulator has WebSocket connections — use 'load' not 'networkidle'
     await page.waitForLoadState('load', { timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(2000);
+    await page.locator('main').waitFor({ state: 'visible' });
 
     // Freeze animations for deterministic snapshot
     await page.evaluate(() => {
@@ -19,7 +19,7 @@ test.describe('Visual Regression — Simulator (SOTA GOLD)', () => {
         s.transition = 'none';
       });
     });
-    await page.waitForTimeout(500);
+    await page.locator('main').waitFor({ state: 'visible' });
 
     await expect(page).toHaveScreenshot('simulator-page.png', {
       fullPage: true,
@@ -32,7 +32,7 @@ test.describe('Visual Regression — Simulator (SOTA GOLD)', () => {
     await page.goto('/simulador');
     await page.waitForLoadState('load', { timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(2000);
+    await page.locator('header').first().waitFor({ state: 'visible' });
 
     // Freeze animations for deterministic snapshot
     await page.evaluate(() => {
@@ -43,7 +43,7 @@ test.describe('Visual Regression — Simulator (SOTA GOLD)', () => {
         s.transition = 'none';
       });
     });
-    await page.waitForTimeout(300);
+    await page.locator('header').first().waitFor({ state: 'visible' });
 
     const header = page.locator('header').first();
     await expect(header).toHaveScreenshot('simulator-header.png', {

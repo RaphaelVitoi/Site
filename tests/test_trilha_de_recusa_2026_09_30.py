@@ -47,7 +47,7 @@ def _request(
     return req
 
 
-# ── A recusa e registrada ────────────────────────────────────────────────────
+#  A recusa e registrada
 
 
 def test_recusa_ausente_registra_e_devolve_401(caplog: pytest.LogCaptureFixture):
@@ -81,7 +81,7 @@ def test_todo_motivo_de_recusa_tem_texto_e_registro(caplog: pytest.LogCaptureFix
     """Cada motivo tem mensagem propria.
 
     A allowlist e fechada de proposito: um motivo novo sem texto cairia no
-    genérico "Acesso negado", e o cliente perderia a distincao que o log
+    generico "Acesso negado", e o cliente perderia a distincao que o log
     preserva. Um `KeyError` aqui seria pior que uma mensagem generica.
     """
     req = _request()
@@ -126,7 +126,7 @@ async def test_estouro_de_rate_limit_registra(caplog: pytest.LogCaptureFixture):
         "start_time": time.time(),
     }
 
-    with patch.object(middleware, "_purge_expired_ips", lambda *_a, **_k: None):
+    with patch.object(middleware, "_purge_expired_ips", return_value=None):
         with caplog.at_level(logging.WARNING, logger="api.v1.middleware"):
             resp = await middleware.rate_limit_middleware(req, _handler)
 
@@ -143,7 +143,7 @@ async def test_estouro_de_rate_limit_registra(caplog: pytest.LogCaptureFixture):
     assert resp.headers["X-RateLimit-Limit"] == str(middleware.MAX_REQUESTS_PER_WINDOW)
 
 
-# ── O rastro NAO carrega a credencial ────────────────────────────────────────
+#  O rastro NAO carrega a credencial
 
 
 def test_o_registro_nao_carrega_o_valor_do_token(caplog: pytest.LogCaptureFixture):
@@ -172,7 +172,7 @@ def test_o_registro_nao_carrega_o_cabecalho_authorization(caplog: pytest.LogCapt
     assert "abc123def456" not in " ".join(r.getMessage() for r in caplog.records)
 
 
-# ── Correlacao ───────────────────────────────────────────────────────────────
+#  Correlacao
 
 
 def test_o_id_de_correlacao_volta_na_resposta():
@@ -189,7 +189,7 @@ def test_o_proxy_pode_fornecer_o_id_de_correlacao():
     assert resp.headers[middleware.CORRELATION_HEADER] == "edge-abc123"
 
 
-@pytest.mark.parametrize("malicioso", ["a" * 200, "com espaço", "quebra\nlinha", "<script>", ""])
+@pytest.mark.parametrize("malicioso", ["a" * 200, "com espa\u00e7o", "quebra\nlinha", "<script>", ""])
 def test_id_de_correlacao_hostil_e_descartado(malicioso: str):
     """O header vem de fora. Quem envia nao escolhe o conteudo do log.
 
@@ -205,7 +205,7 @@ def test_id_de_correlacao_hostil_e_descartado(malicioso: str):
         assert id_gerado != malicioso
 
 
-# ── Contrato preservado ──────────────────────────────────────────────────────
+#  Contrato preservado
 
 
 def test_o_status_e_a_mensagem_continuam_os_de_antes():
@@ -278,7 +278,7 @@ async def test_o_middleware_de_auth_nao_deja_o_registro_vazar_para_o_cliente():
 
     with (
         patch.object(middleware, "API_SECRET_TOKEN", ""),
-        patch.object(middleware, "_jwt_secret", lambda: "segredo-jwt-de-teste"),
+        patch.object(middleware, "_jwt_secret", return_value="segredo-jwt-de-teste"),
     ):
         resp = await middleware.auth_middleware(req, _handler)
     assert resp.status == 403

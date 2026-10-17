@@ -61,6 +61,7 @@ AGENT_BIBLIOTECARIO = "@bibliotecario"
 AGENT_SKILLMASTER = "@skillmaster"
 AGENT_HISTORIAN = "@historian"
 AGENT_GEMMA4 = "@gemma4"
+AGENT_SUBAGENT = "@subagent"
 
 
 async def _create_system_task(
@@ -529,6 +530,90 @@ async def _finish_task_success(
         )
 
 
+async def _try_delegate_gemma_task(task: Task, manager: QueueManager) -> bool:
+    """Tenta delegar para o Oraculo de Borda (@gemma4). Retorna True se tratado."""
+    if task.agent not in (AGENT_GEMMA4, "@gemma"):
+        return False
+
+    logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)...")
+    try:
+        await local_engine.process_agent_task(task, manager)
+        await manager.update_task_status(task.id, "completed")
+        with contextlib.suppress(Exception):
+            await asyncio.to_thread(_set_task_completed_at_sync, manager.db_path, task.id)
+        return True
+    except Exception as e:
+        logger.warning(f"Falha no Motor Local: {e}. Tentando workflow padrao como fallback...")
+        return False
+
+
+def _is_subagent_task(task: Task) -> bool:
+    metadata_flag = bool(
+        task.metadata
+        and (
+            task.metadata.get("delegate_subagent")
+            or task.metadata.get("subagent_tier")
+            or task.metadata.get("use_subagents_mesh")
+        )
+    )
+    agent_flag = bool(
+        task.agent
+        and (
+            task.agent in (AGENT_SUBAGENT, "@subagents")
+            or task.agent.startswith("@sub_")
+            or task.agent.startswith(AGENT_SUBAGENT)
+        )
+    )
+    return metadata_flag or agent_flag
+
+
+async def _try_delegate_subagent_task(task: Task, manager: QueueManager) -> bool:
+    """Tenta delegar para a malha de subagentes locais. Retorna True se tratado com sucesso."""
+    if not _is_subagent_task(task):
+        return False
+
+    from core.subagents_mesh import (  # noqa: PLC0415
+        SubagentMissionRequest,
+        resolve_subagent_tier,
+        subagents_mesh,
+    )
+
+    logger.info(
+        f"[[{te._c(task.agent)}]{task.agent}[/]] [SUBAGENTS MESH] Delegando missao para a malha de subagentes..."
+    )
+    try:
+        start_time = time.monotonic()
+        tier_val = (task.metadata or {}).get("subagent_tier")
+        tier = resolve_subagent_tier(tier_val) or subagents_mesh.route_task_to_subagent(task)
+        target_files = (task.metadata or {}).get("target_files", [])
+        prompt_text = task.description if len(task.description) >= 10 else f"{task.description} (subagent execution)"
+        mission_req = SubagentMissionRequest(
+            mission_id=f"MISSION-{task.id}",
+            tier=tier,
+            prompt=prompt_text,
+            target_files=target_files if isinstance(target_files, list) else [],
+        )
+        mission_res = await subagents_mesh.execute_subagent_pipeline(mission_req)
+        if mission_res.status == "SUCCESS":
+            response_text = mission_res.report
+            await asyncio.to_thread(_save_task_result_sync, task.id, task.agent, response_text)
+            await manager.update_task_metadata(
+                task.id,
+                {
+                    "subagent_execution": mission_res.model_dump(),
+                    "workflow_status": "completed",
+                },
+                merge=True,
+            )
+            await _finish_task_success(task, manager, start_time, mission_res.files_modified, {})
+            await _process_observers_and_handoff(task, manager)
+            gc.collect()
+            return True
+    except Exception as e_sub:
+        logger.warning(f"[SUBAGENTS MESH] Delegacao para {task.id} falhou ({e_sub}). Prosseguindo com workflow padrao.")
+    return False
+
+
 async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
     """
     Orquestrador de Fluxo Funcional SOTA. Processa de maneira limpa o ciclo de vida.
@@ -542,78 +627,12 @@ async def execute_task_workflow(task: Task, manager: QueueManager) -> None:
         return
 
     # --- SOTA DELEGATION: Oraculo de Borda (@gemma4) ---
-    if task.agent in (AGENT_GEMMA4, "@gemma"):
-        logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] Delegando para o Motor Cognitivo Local (Pure Engine)...")
-        try:
-            await local_engine.process_agent_task(task, manager)
-            await manager.update_task_status(task.id, "completed")
-            with contextlib.suppress(Exception):
-                await asyncio.to_thread(_set_task_completed_at_sync, manager.db_path, task.id)
-            return
-        except Exception as e:
-            logger.warning(f"Falha no Motor Local: {e}. Tentando workflow padrao como fallback...")
+    if await _try_delegate_gemma_task(task, manager):
+        return
 
     # --- SOTA DELEGATION: Malha de Subagentes (Custo Zero Local) ---
-    is_subagent_task = bool(
-        task.metadata
-        and (
-            task.metadata.get("delegate_subagent")
-            or task.metadata.get("subagent_tier")
-            or task.metadata.get("use_subagents_mesh")
-        )
-    ) or bool(
-        task.agent
-        and (
-            task.agent in ("@subagent", "@subagents")
-            or task.agent.startswith("@sub_")
-            or task.agent.startswith("@subagent")
-        )
-    )
-
-    if is_subagent_task:
-        from core.subagents_mesh import (  # noqa: PLC0415
-            SubagentMissionRequest,
-            resolve_subagent_tier,
-            subagents_mesh,
-        )
-
-        logger.info(
-            f"[[{te._c(task.agent)}]{task.agent}[/]] [SUBAGENTS MESH] Delegando missao para a malha de subagentes..."
-        )
-        try:
-            start_time = time.monotonic()
-            tier_val = (task.metadata or {}).get("subagent_tier")
-            tier = resolve_subagent_tier(tier_val) or subagents_mesh.route_task_to_subagent(task)
-            target_files = (task.metadata or {}).get("target_files", [])
-            prompt_text = (
-                task.description if len(task.description) >= 10 else f"{task.description} (subagent execution)"
-            )
-            mission_req = SubagentMissionRequest(
-                mission_id=f"MISSION-{task.id}",
-                tier=tier,
-                prompt=prompt_text,
-                target_files=target_files if isinstance(target_files, list) else [],
-            )
-            mission_res = await subagents_mesh.execute_subagent_pipeline(mission_req)
-            if mission_res.status == "SUCCESS":
-                response_text = mission_res.report
-                await asyncio.to_thread(_save_task_result_sync, task.id, task.agent, response_text)
-                await manager.update_task_metadata(
-                    task.id,
-                    {
-                        "subagent_execution": mission_res.model_dump(),
-                        "workflow_status": "completed",
-                    },
-                    merge=True,
-                )
-                await _finish_task_success(task, manager, start_time, mission_res.files_modified, {})
-                await _process_observers_and_handoff(task, manager)
-                gc.collect()
-                return
-        except Exception as e_sub:
-            logger.warning(
-                f"[SUBAGENTS MESH] Delegacao para {task.id} falhou ({e_sub}). Prosseguindo com workflow padrao."
-            )
+    if await _try_delegate_subagent_task(task, manager):
+        return
 
     start_time = time.monotonic()
     timing_metrics = {}
@@ -655,7 +674,7 @@ async def delegate_subtask_to_mesh(
     )
 
     resolved_tier = resolve_subagent_tier(tier) or subagents_mesh.route_task_to_subagent(
-        Task(id=task_id, description=description, agent="@subagent", timestamp=datetime.now(UTC).isoformat())
+        Task(id=task_id, description=description, agent=AGENT_SUBAGENT, timestamp=datetime.now(UTC).isoformat())
     )
     prompt_text = description if len(description) >= 10 else f"{description} (subagent execution)"
     req = SubagentMissionRequest(

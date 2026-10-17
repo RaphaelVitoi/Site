@@ -3,7 +3,7 @@
 Executa medicao quantitativa, factual e agnostica entre modelos dos Tiers 3, 2 e 1.
 Mede concretamente:
 1. Passivo de governanca e pendencias ativas (record_gate.py)
-2. Integridade e portao do ledger de calibracao (§8.3)
+2. Integridade e portao do ledger de calibracao (Secao 8.3)
 3. Fila de tarefas assincronas SQLite (core/task_queue.py)
 4. Eficiencia de poda de ferramentas e economia de tokens (llm/mcp_tool_interceptor.py)
 5. Latencia de decisao e triagem Fast-Path S1 (core/arbitrator.py)
@@ -113,7 +113,7 @@ def medir_fila_tarefas() -> dict[str, int | float]:
 
 def medir_interceptador_mcp() -> dict[str, float]:
     """Mede a taxa de poda de schemas de ferramentas e o overhead de latencia."""
-    # Conjunto canônico de teste com 30 ferramentas padronizadas
+    # Conjunto canonico de teste com 30 ferramentas padronizadas
     tools: list[dict[str, object]] = []
     for name in ["view_file", "read_file", "get_file_contents", "list_directory", "search_code"]:
         tools.append({"name": name, "description": f"Leitura de arquivos {name}"})
@@ -299,26 +299,32 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
     pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
     econ: dict[str, object] = r.get("eficiencia_economica_infra", {})  # type: ignore
 
-    md = []
-    md.append("### Painel de Avaliacao de Impacto da Sessao (Agnostico Tier 1-2-3)")
-    md.append("")
-    md.append("| Metrica de Impacto | Valor Medido | Status / Observacao |")
-    md.append("| :--- | :--- | :--- |")
-    md.append(
-        f"| **Economia de Tokens MCP (S1)** | **-{mcp['economia_media_tokens_pct']}%** | Poda dinamica de schemas irrelevantes (overhead: {mcp['overhead_latencia_us']} us) |"
-    )
-    md.append(
-        f"| **Ingress Fast-Path S1** | **{ing['latencia_s1_ms']} ms** ({ing['latencia_s1_us']} us) | Triagem O(1) de tarefas sem compilar grafo |"
-    )
-    md.append(
-        f"| **Passivo de Pendencias** | **{pend['abertas']} abertas** (reducao: {pend['reducao_pct']}%) | Resolucao formal via M.O. 13.F |"
-    )
-    md.append(
-        f"| **Integridade do Ledger** | **{ledger['total_registros']} registros** (tail: `{str(ledger['tail_hash'])[:8]}`) | Portao acumulado: {ledger['sessoes_acumuladas']} sessoes |"
-    )
-    md.append(
-        f"| **Resolucao de Tarefas SQLite** | **{fila['taxa_resolucao_pct']}%** ({fila['completed']}/{fila['total_tarefas']}) | 0 pendencias residuais ou falhas |"
-    )
+    md: list[str] = [
+        "### Painel de Avaliacao de Impacto da Sessao (Agnostico Tier 1-2-3)",
+        "",
+        "| Metrica de Impacto | Valor Medido | Status / Observacao |",
+        "| :--- | :--- | :--- |",
+        (
+            f"| **Economia de Tokens MCP (S1)** | **-{mcp['economia_media_tokens_pct']}%** |"
+            f" Poda dinamica de schemas irrelevantes (overhead: {mcp['overhead_latencia_us']} us) |"
+        ),
+        (
+            f"| **Ingress Fast-Path S1** | **{ing['latencia_s1_ms']} ms** ({ing['latencia_s1_us']} us) |"
+            " Triagem O(1) de tarefas sem compilar grafo |"
+        ),
+        (
+            f"| **Passivo de Pendencias** | **{pend['abertas']} abertas** (reducao: {pend['reducao_pct']}%) |"
+            " Resolucao formal via M.O. 13.F |"
+        ),
+        (
+            f"| **Integridade do Ledger** | **{ledger['total_registros']} registros** (tail: `{str(ledger['tail_hash'])[:8]}`) |"
+            f" Portao acumulado: {ledger['sessoes_acumuladas']} sessoes |"
+        ),
+        (
+            f"| **Resolucao de Tarefas SQLite** | **{fila['taxa_resolucao_pct']}%** ({fila['completed']}/{fila['total_tarefas']}) |"
+            " 0 pendencias residuais ou falhas |"
+        ),
+    ]
     if pools and pools.get("total_chaves"):
         md.append(
             f"| **Pools OpenRouter Multi-Tier** | **{pools['total_chaves']} chaves** ({pools['ativas']} ativas, score: {pools['score_medio']}) | T1: {pools['tier1_count']} \\| T2: {pools['tier2_count']} \\| T3: {pools['tier3_count']} \\| T4: {pools['tier4_count']} ({pools['bloqueadas']} bloq / {pools['revogadas']} rev) |"
@@ -345,26 +351,26 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
     print("  AVALIACAO DE IMPACTO OBJETIVO DE SESSAO (SOTA AGNOSTIC)")
     print("=" * 65)
     print(
-        f"• Economia de Tokens MCP (S1):   -{mcp['economia_media_tokens_pct']}% (overhead: {mcp['overhead_latencia_us']} us)"
+        f"\u2022 Economia de Tokens MCP (S1):   -{mcp['economia_media_tokens_pct']}% (overhead: {mcp['overhead_latencia_us']} us)"
     )
-    print(f"• Ingress Fast-Path S1:          {ing['latencia_s1_ms']} ms ({ing['latencia_s1_us']} us) por tarefa")
-    print(f"• Passivo de Pendencias:         {pend['abertas']} abertas (reducao: {pend['reducao_pct']}%)")
+    print(f"\u2022 Ingress Fast-Path S1:          {ing['latencia_s1_ms']} ms ({ing['latencia_s1_us']} us) por tarefa")
+    print(f"\u2022 Passivo de Pendencias:         {pend['abertas']} abertas (reducao: {pend['reducao_pct']}%)")
     print(
-        f"• Ledger de Calibracao:          {ledger['total_registros']} registros (tail: {str(ledger['tail_hash'])[:12]}...)"
-    )
-    print(
-        f"• Portao de Suficiencia (§8.3):  {ledger['sessoes_acumuladas']} sessoes acumuladas (gate_passed: {ledger['gate_passed']})"
+        f"\u2022 Ledger de Calibracao:          {ledger['total_registros']} registros (tail: {str(ledger['tail_hash'])[:12]}...)"
     )
     print(
-        f"• Fila de Tarefas Assincronas:   {fila['taxa_resolucao_pct']}% taxa de resolucao ({fila['completed']} concluidas, {fila['pending']} pendentes)"
+        f"\u2022 Portao de Suficiencia (\u00a78.3):  {ledger['sessoes_acumuladas']} sessoes acumuladas (gate_passed: {ledger['gate_passed']})"
+    )
+    print(
+        f"\u2022 Fila de Tarefas Assincronas:   {fila['taxa_resolucao_pct']}% taxa de resolucao ({fila['completed']} concluidas, {fila['pending']} pendentes)"
     )
     if pools and pools.get("total_chaves"):
         print(
-            f"• Pools OpenRouter Multi-Tier:   {pools['total_chaves']} chaves ({pools['ativas']} ativas, T1:{pools['tier1_count']} T2:{pools['tier2_count']} T3:{pools['tier3_count']} T4:{pools['tier4_count']} | Score: {pools['score_medio']})"
+            f"\u2022 Pools OpenRouter Multi-Tier:   {pools['total_chaves']} chaves ({pools['ativas']} ativas, T1:{pools['tier1_count']} T2:{pools['tier2_count']} T3:{pools['tier3_count']} T4:{pools['tier4_count']} | Score: {pools['score_medio']})"
         )
     if econ:
         print(
-            f"• Eficiencia Economica & Infra:  Cotas Pro Tier 1 prioritarias (FLAT_FEE) | {econ.get('modelos_cloud_zero_ram_count', 0)} cloud Zero-RAM / {econ.get('modelos_locais_quantizados_count', 0)} locais"
+            f"\u2022 Eficiencia Economica & Infra:  Cotas Pro Tier 1 prioritarias (FLAT_FEE) | {econ.get('modelos_cloud_zero_ram_count', 0)} cloud Zero-RAM / {econ.get('modelos_locais_quantizados_count', 0)} locais"
         )
         print("                                 Runtimes: Ollama cloud + llama.cpp Qwen + Hermes Agent")
     print("=" * 65 + "\n")

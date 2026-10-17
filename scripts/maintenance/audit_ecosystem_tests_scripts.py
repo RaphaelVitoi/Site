@@ -13,8 +13,9 @@ import sys
 import time
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DIR_VENV_NAME = ".venv"
 IGNORE_DIRS = {
-    ".venv",
+    DIR_VENV_NAME,
     ".venv-wsl",
     "venv",
     "node_modules",
@@ -36,7 +37,7 @@ def audit_python_files() -> tuple[int, list[tuple[str, str]]]:
         dirs[:] = [
             d
             for d in dirs
-            if d not in IGNORE_DIRS and not d.startswith((".venv", "venv", ".env")) and d != "site-packages"
+            if d not in IGNORE_DIRS and not d.startswith((DIR_VENV_NAME, "venv", ".env")) and d != "site-packages"
         ]
         for f in files:
             if f.endswith(".py"):
@@ -59,7 +60,7 @@ def audit_powershell_files() -> tuple[int, list[str]]:
         dirs[:] = [
             d
             for d in dirs
-            if d not in IGNORE_DIRS and not d.startswith((".venv", "venv", ".env")) and d != "site-packages"
+            if d not in IGNORE_DIRS and not d.startswith((DIR_VENV_NAME, "venv", ".env")) and d != "site-packages"
         ]
         for f in files:
             if f.endswith(".ps1"):

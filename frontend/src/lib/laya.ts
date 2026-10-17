@@ -125,6 +125,104 @@ export interface LayaSolverBridgePayload {
 	};
 }
 
+interface SolverAdaptContext {
+	rp: number;
+	noul: number;
+	choice: string;
+}
+
+type SolverAdapterFn = (
+	params: Record<string, unknown>,
+	signals: Record<string, unknown>,
+	ctx: SolverAdaptContext,
+) => void;
+
+function adaptPluribus(params: Record<string, unknown>, signals: Record<string, unknown>, { rp, noul, choice }: SolverAdaptContext): void {
+	const baseIters = Number(params['iterations'] ?? 500);
+	if (noul > 0.7 || choice === 'complex') {
+		params['iterations'] = Math.round(baseIters * 1.5);
+		params['lambda_factor'] = Number((Number(params['lambda_factor'] ?? 1.2) * rp).toFixed(4));
+	}
+	signals['pluribus_depth_multiplier'] = choice === 'complex' ? 1.2 : 1.0;
+}
+
+function adaptDeepstack(params: Record<string, unknown>, signals: Record<string, unknown>, { noul }: SolverAdaptContext): void {
+	const baseTol = Number(params['tolerance'] ?? 0.01);
+	params['tolerance'] = Number((baseTol * (1.0 + noul * 0.5)).toFixed(6));
+	signals['continual_resolving_tightened'] = noul > 0.5;
+}
+
+function adaptPmevPerspective(params: Record<string, unknown>, signals: Record<string, unknown>, { rp }: SolverAdaptContext): void {
+	params['ruin_prior'] = rp;
+	signals['pmev_barrier_inflation'] = Number((((rp - 1.0) / 0.3) * 100.0).toFixed(2));
+}
+
+function adaptCfrPlus(params: Record<string, unknown>, signals: Record<string, unknown>, { noul }: SolverAdaptContext): void {
+	params['discount_alpha'] = Number((0.6 + 0.3 * (1.0 - noul)).toFixed(4));
+	signals['cfr_regret_matching_plus'] = true;
+	signals['cfr_discount_alpha'] = params['discount_alpha'];
+}
+
+function adaptMonteCarlo(params: Record<string, unknown>, signals: Record<string, unknown>, { rp, noul, choice }: SolverAdaptContext): void {
+	const baseSamples = Number(params['simulations_count'] ?? 10000);
+	if (noul > 0.6 || choice === 'complex') {
+		params['simulations_count'] = Math.round(baseSamples * 1.5);
+	}
+	params['ruin_prior'] = rp;
+	const baseConf = Number(params['confidence_level'] ?? 0.95);
+	params['confidence_level'] = Number(Math.min(0.99, baseConf + (noul > 0.5 ? 0.02 : 0.0)).toFixed(4));
+	signals['monte_carlo_sample_expansion'] = noul > 0.6 || choice === 'complex';
+	signals['ruin_barrier_factor'] = rp;
+}
+
+function adaptTimesfm(params: Record<string, unknown>, signals: Record<string, unknown>, { rp, noul }: SolverAdaptContext): void {
+	const baseHorizon = Number(params['horizon'] ?? 5);
+	if (noul > 0.5) {
+		params['horizon'] = Math.round(baseHorizon * (1.0 + noul * 0.5));
+	}
+	params['quantile_focus'] = rp > 1.1 ? 'quantile_90' : 'quantile_50';
+	const rawMode = params['mode'];
+	const mode = typeof rawMode === 'string' ? rawMode.toLowerCase() : 'commercial';
+	params['preferred_model'] = mode === 'research' ? 'timesfm-3.0-330m' : 'timesfm-2.5-200m';
+	signals['timesfm_volatility_prior'] = Number(noul.toFixed(4));
+	signals['timesfm_ruin_adjusted_horizon'] = params['horizon'] ?? baseHorizon;
+}
+
+function adaptDreamRsi(params: Record<string, unknown>, signals: Record<string, unknown>, { rp, noul, choice }: SolverAdaptContext): void {
+	const baseMargin = Number(params['pruning_margin'] ?? 0.02);
+	params['pruning_margin'] = Number((baseMargin * rp).toFixed(4));
+	params['s1_pruning_threshold'] = Number((0.2 + 0.15 * (1.0 - noul)).toFixed(4));
+	params['fast_path_heuristic'] = choice !== 'complex' && noul < 0.4;
+	signals['dream_rsi_pruning_tightened'] = rp > 1.1;
+	signals['s1_pre_filtering_enabled'] = true;
+}
+
+function adaptProspectTheory(params: Record<string, unknown>, _signals: Record<string, unknown>, { rp }: SolverAdaptContext): void {
+	const lambdaLoss = Number(params['loss_aversion_lambda'] ?? 2.25);
+	params['loss_aversion_lambda'] = Number((lambdaLoss * rp).toFixed(4));
+}
+
+function adaptShannonEntropy(_params: Record<string, unknown>, signals: Record<string, unknown>, { noul }: SolverAdaptContext): void {
+	signals['shannon_uncertainty_bits'] = Number(
+		(noul > 0 ? -noul * Math.log2(Math.max(noul, 1e-6)) : 0.0).toFixed(4),
+	);
+}
+
+const SOLVER_ADAPTERS: Record<string, SolverAdapterFn> = {
+	pluribus: adaptPluribus,
+	deepstack: adaptDeepstack,
+	'pmev-perspective': adaptPmevPerspective,
+	'cfr-plus': adaptCfrPlus,
+	'monte-carlo': adaptMonteCarlo,
+	timesfm: adaptTimesfm,
+	'timesfm-forecaster': adaptTimesfm,
+	'dream-rsi': adaptDreamRsi,
+	'dream-timesfm': adaptDreamRsi,
+	'pmev-dream': adaptDreamRsi,
+	'prospect-theory': adaptProspectTheory,
+	'shannon-entropy': adaptShannonEntropy,
+};
+
 /**
  * Modula parâmetros de solvers analíticos no frontend com base em sinais S1 da Laya.
  * Espelha fielmente a lógica de llm/laya_solver_adapter.py.
@@ -135,65 +233,16 @@ export function adaptForSolverClient(
 	baseParameters?: Record<string, unknown>,
 ): LayaSolverBridgePayload {
 	const solverKey = (solverName || 'universal-importer').toLowerCase().trim();
-	const params: Record<string, unknown> = { ...(baseParameters || {}) };
+	const params: Record<string, unknown> = { ...baseParameters };
 	const signals: Record<string, unknown> = {};
 
 	const rp = ruinPriorityFromLayaPrediction(prediction);
 	const noul = prediction.noul ?? 0.0;
 	const choice = prediction.choice ?? 'moderate';
 
-	if (solverKey === 'pluribus') {
-		const baseIters = Number(params['iterations'] ?? 500);
-		if (noul > 0.7 || choice === 'complex') {
-			params['iterations'] = Math.round(baseIters * 1.5);
-			params['lambda_factor'] = Number((Number(params['lambda_factor'] ?? 1.2) * rp).toFixed(4));
-		}
-		signals['pluribus_depth_multiplier'] = choice === 'complex' ? 1.2 : 1.0;
-	} else if (solverKey === 'deepstack') {
-		const baseTol = Number(params['tolerance'] ?? 0.01);
-		params['tolerance'] = Number((baseTol * (1.0 + noul * 0.5)).toFixed(6));
-		signals['continual_resolving_tightened'] = noul > 0.5;
-	} else if (solverKey === 'pmev-perspective') {
-		params['ruin_prior'] = rp;
-		signals['pmev_barrier_inflation'] = Number((((rp - 1.0) / 0.3) * 100.0).toFixed(2));
-	} else if (solverKey === 'cfr-plus') {
-		params['discount_alpha'] = Number((0.6 + 0.3 * (1.0 - noul)).toFixed(4));
-		signals['cfr_regret_matching_plus'] = true;
-		signals['cfr_discount_alpha'] = params['discount_alpha'];
-	} else if (solverKey === 'monte-carlo') {
-		const baseSamples = Number(params['simulations_count'] ?? 10000);
-		if (noul > 0.6 || choice === 'complex') {
-			params['simulations_count'] = Math.round(baseSamples * 1.5);
-		}
-		params['ruin_prior'] = rp;
-		const baseConf = Number(params['confidence_level'] ?? 0.95);
-		params['confidence_level'] = Number(Math.min(0.99, baseConf + (noul > 0.5 ? 0.02 : 0.0)).toFixed(4));
-		signals['monte_carlo_sample_expansion'] = noul > 0.6 || choice === 'complex';
-		signals['ruin_barrier_factor'] = rp;
-	} else if (solverKey === 'timesfm' || solverKey === 'timesfm-forecaster') {
-		const baseHorizon = Number(params['horizon'] ?? 5);
-		if (noul > 0.5) {
-			params['horizon'] = Math.round(baseHorizon * (1.0 + noul * 0.5));
-		}
-		params['quantile_focus'] = rp > 1.1 ? 'quantile_90' : 'quantile_50';
-		const mode = String(params['mode'] ?? 'commercial').toLowerCase();
-		params['preferred_model'] = mode === 'research' ? 'timesfm-3.0-330m' : 'timesfm-2.5-200m';
-		signals['timesfm_volatility_prior'] = Number(noul.toFixed(4));
-		signals['timesfm_ruin_adjusted_horizon'] = params['horizon'] ?? baseHorizon;
-	} else if (solverKey === 'dream-rsi' || solverKey === 'dream-timesfm' || solverKey === 'pmev-dream') {
-		const baseMargin = Number(params['pruning_margin'] ?? 0.02);
-		params['pruning_margin'] = Number((baseMargin * rp).toFixed(4));
-		params['s1_pruning_threshold'] = Number((0.2 + 0.15 * (1.0 - noul)).toFixed(4));
-		params['fast_path_heuristic'] = choice !== 'complex' && noul < 0.4;
-		signals['dream_rsi_pruning_tightened'] = rp > 1.1;
-		signals['s1_pre_filtering_enabled'] = true;
-	} else if (solverKey === 'prospect-theory') {
-		const lambdaLoss = Number(params['loss_aversion_lambda'] ?? 2.25);
-		params['loss_aversion_lambda'] = Number((lambdaLoss * rp).toFixed(4));
-	} else if (solverKey === 'shannon-entropy') {
-		signals['shannon_uncertainty_bits'] = Number(
-			(noul > 0 ? -noul * Math.log2(Math.max(noul, 1e-6)) : 0.0).toFixed(4),
-		);
+	const adapter = SOLVER_ADAPTERS[solverKey];
+	if (adapter) {
+		adapter(params, signals, { rp, noul, choice });
 	}
 
 	signals['s1_confidence_score'] = prediction.score ?? 0.5;
