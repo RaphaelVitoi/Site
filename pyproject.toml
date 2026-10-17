@@ -115,7 +115,7 @@ requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math", "scripts", "scripts.cli"]
+packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "scripts", "scripts.cli"]
 
 
 [project.optional-dependencies]
@@ -260,8 +260,7 @@ pythonpath = [
     "monitoring",
     "governance",
     "conductor",
-    "tools",
-    "math"
+    "tools"
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -367,6 +366,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = [
     "S101",   # assert statements em testes
+    "S311",   # standard pseudo-random generators em testes
+    "PT011",  # pytest.raises too broad - aceitavel em testes estruturais antigos
     "ARG001", # unused arguments em fixtures
     "ARG002", # idem
     "T201",   # prints em testes de debug
@@ -465,8 +466,7 @@ extraPaths = [
     "monitoring",
     "governance",
     "conductor",
-    "tools",
-    "math"
+    "tools"
 ]
 exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info", "core/vendor"]
 venvPath = "."

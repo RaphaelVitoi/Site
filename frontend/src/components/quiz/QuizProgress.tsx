@@ -17,7 +17,7 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({ current, total, scor
 				</span>
 				<span className="font-mono font-black text-text-bright text-lg">
 					{String(current + 1).padStart(2, '0')}{' '}
-					<span className="text-text-darker text-sm">
+					<span className="text-text-dim text-sm">
 						/ {String(total).padStart(2, '0')}
 					</span>
 				</span>
@@ -32,7 +32,7 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({ current, total, scor
 				<span className="text-text-dim text-xs uppercase tracking-widest font-bold">
 					Acertos
 				</span>
-				<span className="font-mono font-black text-accent-emerald text-lg">
+				<span className="font-mono font-black text-accent-emerald-light text-lg">
 					{String(score).padStart(2, '0')}
 				</span>
 			</div>

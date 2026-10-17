@@ -62,7 +62,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ score, total, onRestar
 						>
 							{percentage}%
 						</motion.div>
-						<div className="text-text-darker text-[0.65rem] uppercase tracking-[0.4em] mt-3 font-black">
+						<div className="text-text-dim text-[0.65rem] uppercase tracking-[0.4em] mt-3 font-black">
 							Sincronia
 						</div>
 					</div>
@@ -70,7 +70,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ score, total, onRestar
 
 				<div className="grid grid-cols-2 gap-16 w-full max-w-md pt-8 border-t border-white/5">
 					<div className="text-center space-y-2 group/metric">
-						<span className="block text-text-darker text-[0.6rem] uppercase tracking-[0.3em] font-black group-hover:text-accent-emerald transition-colors">
+						<span className="block text-text-dim text-[0.6rem] uppercase tracking-[0.3em] font-black group-hover:text-accent-emerald transition-colors">
 							Acertos
 						</span>
 						<span className="text-3xl font-black font-mono text-white tabular-nums tracking-tighter">
@@ -78,7 +78,7 @@ export const QuizResults: React.FC<QuizResultsProps> = ({ score, total, onRestar
 						</span>
 					</div>
 					<div className="text-center space-y-2 group/metric">
-						<span className="block text-text-darker text-[0.6rem] uppercase tracking-[0.3em] font-black group-hover:text-accent-danger transition-colors">
+						<span className="block text-text-dim text-[0.6rem] uppercase tracking-[0.3em] font-black group-hover:text-accent-danger transition-colors">
 							Entropia
 						</span>
 						<span className="text-3xl font-black font-mono text-white tabular-nums tracking-tighter">
