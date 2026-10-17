@@ -72,3 +72,10 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+### 2026-09-06 -- Erradicando overhead de coalescencia nula em arrays no engine de Monte Carlo
+
+Origem: sessao Jules, otimizacao de performance.
+
+- ``#aprendizado`` **Uso de `?? 0` para fallback em acessos a arrays indexados no hot loop adiciona overhead no V8.** Em loops matematicos de alta frequencia como o simulador de Monte Carlo, depender de nullish coalescing (`?? 0`) ou fallbacks logicos (`|| 0`) ao acessar elementos de arrays regulares e TypedArrays obriga a runtime a gerar branches extras e avaliacoes de tipo para tratar casos de `undefined`, impactando severamente a performance. No caso do montecarlo ICM, assumir confianca nos limites (quando garantido) e realizar um cast `as number` gerou uma melhoria de ~20% no tempo de execucao do hot loop (de 899ms para 723ms num benchmark com 2 milhoes iteracoes N=9).
+  **Acao:** Para otimizacoes de rotas criticas de computacao baseada em arrays que dependem de leitura de indices confiaveis, remover fallbacks de runtime (`?? 0`, `|| 0`) e preferir cast explicito `as number`, certificando-se de que o acesso out-of-bounds nao sera tentado (por projeto algoritmico).
