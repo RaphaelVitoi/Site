@@ -63,8 +63,9 @@ async def test_service_failure_cancels_siblings(monkeypatch) -> None:
     monkeypatch.setattr(startup, "start_worker", lambda value: keep_running(value))
     monkeypatch.setattr(startup, "system_watchdog", lambda value: keep_running(value))
 
+    test_coro = startup._run_service_group(_fake_manager(), asyncio.Event())
     with pytest.raises(RuntimeError, match="service failed"):
-        await asyncio.wait_for(startup._run_service_group(_fake_manager(), asyncio.Event()), timeout=1)
+        await asyncio.wait_for(test_coro, timeout=1)
 
     assert sibling_cancelled.is_set()
 
@@ -86,8 +87,9 @@ async def test_service_normal_exit_is_unexpected_and_cancels_siblings(monkeypatc
     monkeypatch.setattr(startup, "start_worker", keep_running)
     monkeypatch.setattr(startup, "system_watchdog", keep_running)
 
+    test_coro = startup._run_service_group(_fake_manager(), asyncio.Event())
     with pytest.raises(RuntimeError, match="encerrou inesperadamente: api"):
-        await asyncio.wait_for(startup._run_service_group(_fake_manager(), asyncio.Event()), timeout=1)
+        await asyncio.wait_for(test_coro, timeout=1)
 
     assert sibling_cancelled.is_set()
 

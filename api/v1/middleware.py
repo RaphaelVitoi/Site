@@ -70,12 +70,12 @@ def _jwt_secret() -> str | None:
 
 
 def _auth_secret() -> str | None:
-    """`AUTH_SECRET` do NextAuth — o segredo que assina o token de SESSAO.
+    """`AUTH_SECRET` do NextAuth -- o segredo que assina o token de SESSAO.
 
-    FASE 6 / opção C (2026-09-30). Separate de `_jwt_secret()` porque sao
-    segredos de QUE ASSINAM: o `SUPABASE_JWT_SECRET` assina tokens de sessão do
+    FASE 6 / opcao C (2026-09-30). Separate de `_jwt_secret()` porque sao
+    segredos de QUE ASSINAM: o `SUPABASE_JWT_SECRET` assina tokens de sessao do
     Supabase, e o `AUTH_SECRET` assina os do NextAuth. Um unico campo para os
-    dois faria o sistema aceitar tokens de um emissor no lugar do outro — que e
+    dois faria o sistema aceitar tokens de um emissor no lugar do outro -- que e
     exatamente o que CVE-2026-102273 (o algoritmo-confusion do PyJWT, piso
     aplicado em `pyproject.toml`) descreve em escala maior.
 
@@ -312,12 +312,12 @@ def _headers(request):
     return getattr(request, "headers", None) or {}
 
 
-#: FASE 6 / opção C (Tier 0, 2026-09-30): o token do USUÁRIO, que decide QUEM
-#: é, e a credencial de serviço, que decide PORTA.
+#: FASE 6 / opcao C (Tier 0, 2026-09-30): o token do USUARIO, que decide QUEM
+#: e, e a credencial de servico, que decide PORTA.
 #:
 #: Medido antes da mudanca: o gateway so enviava `Authorization` com
 #: `API_SECRET_TOKEN`, e o backend so conseguia responder 401 ou 403. Nunca
-#: "esta requisicao e do usuario X" — a identidade de produto exigia
+#: "esta requisicao e do usuario X" -- a identidade de produto exigia
 #: `SUPABASE_JWT_SECRET`, que nao existe nesta maquina, e as 22 rotas de produto
 #: respondiam 500.
 #:
@@ -328,7 +328,7 @@ def _headers(request):
 USER_TOKEN_HEADER = "X-User-Token"
 
 #: O RISCO que a opcao C cria, e por que o escopo e declarado. Quem tem
-#: `API_SECRET_TOKEN` PODE forjar `X-User-Token` — e o gateway tem a credencial.
+#: `API_SECRET_TOKEN` PODE forjar `X-User-Token` -- e o gateway tem a credencial.
 #: Entao aceitar o token sem mais e aceitar uma afirmacao sobre identidade
 #: vinda de quem ja tem autoridade sobre o host.
 #:
@@ -421,7 +421,7 @@ def _recusa(request, status: int, motivo: str, mensagem: str | None = None) -> w
     """Responde com recusa de autenticacao/autorizacao E a registra.
 
     O corpo nao muda: as mensagens seguem exatamente as de antes, porque o
-    contrato de API para o cliente e o que a §5 da auditoria mede. O que
+    contrato de API para o cliente e o que a Secao 5 da auditoria mede. O que
     novelty e que a decisao agora deixa rastro.
     """
     request_id = _correlacao(request)
@@ -675,10 +675,10 @@ async def auth_middleware(request, handler):
     if not secrets.compare_digest(token, API_SECRET_TOKEN):
         return _recusa(request, 403, "token_invalido")
 
-    # FASE 6 / opção C (Tier 0, 2026-09-30): a credencial de servico abriu a
+    # FASE 6 / opcao C (Tier 0, 2026-09-30): a credencial de servico abriu a
     # PORTA. Quem e o USUARIO vem do `X-User-Token`, validado contra o
     # `AUTH_SECRET` e exige o vinculo de sessao. Sem esse header, a requisicao
-    # segue — anônima, como sempre foi — e nenhuma rota de produto a alcanca.
+    # segue -- anonima, como sempre foi -- e nenhuma rota de produto a alcanca.
     # A opcao C nao ABRE nada: ela da nome ao que ja estava fechado.
     usuario = _identidade_do_usuario(request)
     if usuario:

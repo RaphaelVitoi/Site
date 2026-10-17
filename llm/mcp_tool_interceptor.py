@@ -92,6 +92,35 @@ def _extrair_nome_ferramenta(tool_def: dict[str, Any]) -> str:
     return ""
 
 
+def _resolver_categorias_ativas(prompt: str, s1_choice: str) -> set[str]:
+    """Mapeamento semantico de intencao para categorias de ferramentas ativas."""
+    categorias: set[str] = {"filesystem_read"}
+    if _RESEARCH_KEYWORDS.search(prompt) or s1_choice in {"simple", "moderate"}:
+        categorias.add("web_research")
+    if _WRITE_KEYWORDS.search(prompt) or s1_choice == "complex":
+        categorias.add("filesystem_write")
+    if _UI_KEYWORDS.search(prompt):
+        categorias.add("browser_ui")
+    if _DB_KEYWORDS.search(prompt):
+        categorias.add("database_data")
+    if _CLOUD_KEYWORDS.search(prompt):
+        categorias.add("cloud_async")
+    if len(categorias) == 1:
+        categorias.update(["web_research", "filesystem_write"])
+    return categorias
+
+
+def _filtrar_ferramentas_permitidas(tools: list[dict[str, Any]], permitidas: set[str]) -> list[dict[str, Any]]:
+    """Filtra ferramentas mantendo desconhecidas (fail-open) e permitidas."""
+    filtradas: list[dict[str, Any]] = []
+    for tool_def in tools:
+        nome = _extrair_nome_ferramenta(tool_def)
+        eh_conhecida = any(nome in names or any(k in nome for k in names) for names in TOOL_CATEGORIES.values())
+        if not eh_conhecida or any(k in nome for k in permitidas):
+            filtradas.append(tool_def)
+    return filtradas or tools
+
+
 def interceptar_e_podar_ferramentas_s1(
     tools: list[dict[str, Any]] | None,
     prompt: str,
@@ -118,41 +147,9 @@ def interceptar_e_podar_ferramentas_s1(
     s1_choice = str(intent.get("choice", "moderate"))
     s1_noul = float(intent.get("noul", 0.5))
 
-    categorias_ativas: set[str] = set()
-
-    # Sempre preserva leitura de arquivo por seguranca e grounding basico
-    categorias_ativas.add("filesystem_read")
-
-    # Mapeamento semantico de intencao para categorias
-    if _RESEARCH_KEYWORDS.search(prompt) or s1_choice in {"simple", "moderate"}:
-        categorias_ativas.add("web_research")
-    if _WRITE_KEYWORDS.search(prompt) or s1_choice == "complex":
-        categorias_ativas.add("filesystem_write")
-    if _UI_KEYWORDS.search(prompt):
-        categorias_ativas.add("browser_ui")
-    if _DB_KEYWORDS.search(prompt):
-        categorias_ativas.add("database_data")
-    if _CLOUD_KEYWORDS.search(prompt):
-        categorias_ativas.add("cloud_async")
-
-    # Se nenhuma categoria especifica for ativada alem de filesystem_read, abre escopo
-    if len(categorias_ativas) == 1:
-        categorias_ativas.update(["web_research", "filesystem_write"])
-
+    categorias_ativas = _resolver_categorias_ativas(prompt, s1_choice)
     ferramentas_permitidas = {tool_name for cat in categorias_ativas for tool_name in TOOL_CATEGORIES.get(cat, set())}
-
-    ferramentas_filtradas: list[dict[str, Any]] = []
-    for tool_def in tools:
-        nome = _extrair_nome_ferramenta(tool_def)
-        # Se for reconhecida no catalogo de categorias, obedece ao gating;
-        # se for ferramenta customizada desconhecida, preserva por seguranca (fail-open)
-        eh_conhecida = any(nome in names or any(k in nome for k in names) for names in TOOL_CATEGORIES.values())
-        if not eh_conhecida or any(k in nome for k in ferramentas_permitidas):
-            ferramentas_filtradas.append(tool_def)
-
-    # Nunca esvazia completamente
-    if not ferramentas_filtradas:
-        ferramentas_filtradas = tools
+    ferramentas_filtradas = _filtrar_ferramentas_permitidas(tools, ferramentas_permitidas)
 
     orig = len(tools)
     ret = len(ferramentas_filtradas)

@@ -24,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_STRATA_HOST = "127.0.0.1"
 DEFAULT_STRATA_PORT = 8080
+CONTENT_TYPE_JSON = "application/json"
+AUTH_BEARER_LOCAL = "Bearer local"
+ENGINE_STRATA_VERSION = "Strata-v0.1.39"
 
 
 def sanitize_think_tags(text: str) -> str:
@@ -32,6 +35,38 @@ def sanitize_think_tags(text: str) -> str:
         return ""
     cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
     return cleaned.strip()
+
+
+def _sanitize_chat_choices(choices: list[dict[str, Any]]) -> None:
+    for choice in choices:
+        msg = choice.get("message")
+        if isinstance(msg, dict):
+            raw_content = msg.get("content")
+            if raw_content:
+                msg["content"] = sanitize_think_tags(raw_content)
+
+
+def _build_strata_chat_payload(
+    messages: list[dict[str, str]],
+    temperature: float,
+    max_tokens: int,
+    tools: list[dict[str, Any]] | None = None,
+    tool_choice: str | dict[str, Any] | None = None,
+    response_format: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+        "stream": False,
+    }
+    if tools:
+        payload["tools"] = tools
+        if tool_choice:
+            payload["tool_choice"] = tool_choice
+    if response_format:
+        payload["response_format"] = response_format
+    return payload
 
 
 class LocalStrataClient:
@@ -45,8 +80,8 @@ class LocalStrataClient:
     ) -> None:
         self.host = host
         self.port = port
-        self.base_url = f"http://{host}:{port}/v1"
-        self.control_url = f"http://{host}:{port}"
+        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR
+        self.control_url = f"http://{host}:{port}"  # NOSONAR
         self.timeout = timeout
 
     def _request(
@@ -113,7 +148,7 @@ class LocalStrataClient:
                 "POST",
                 "/v1/vram",
                 body=payload,
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": CONTENT_TYPE_JSON},
                 timeout=5.0,
             )
             return status == 200
@@ -128,7 +163,7 @@ class LocalStrataClient:
                 "POST",
                 "/unload",
                 body=b"{}",
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": CONTENT_TYPE_JSON},
                 timeout=5.0,
             )
             return status == 200
@@ -143,7 +178,7 @@ class LocalStrataClient:
                 "POST",
                 "/load",
                 body=b"{}",
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": CONTENT_TYPE_JSON},
                 timeout=10.0,
             )
             return status == 200
@@ -173,23 +208,11 @@ class LocalStrataClient:
         response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Executa chamada ao endpoint /v1/chat/completions com telemetria e sanitizacao."""
-        payload: dict[str, Any] = {
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": False,
-        }
-        if tools:
-            payload["tools"] = tools
-            if tool_choice:
-                payload["tool_choice"] = tool_choice
-        if response_format:
-            payload["response_format"] = response_format
-
+        payload = _build_strata_chat_payload(messages, temperature, max_tokens, tools, tool_choice, response_format)
         req_data = json.dumps(payload).encode("utf-8")
         headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer local",
+            "Content-Type": CONTENT_TYPE_JSON,
+            "Authorization": AUTH_BEARER_LOCAL,
         }
         t0 = time.time()
         try:
@@ -207,18 +230,14 @@ class LocalStrataClient:
             result["_sota_telemetry"] = {
                 "latency_ms": round(latency_ms, 2),
                 "port": self.port,
-                "endpoint": f"http://{self.host}:{self.port}/v1/chat/completions",
-                "engine": "Strata-v0.1.39",
+                "endpoint": f"{self.base_url}/chat/completions",
+                "engine": ENGINE_STRATA_VERSION,
             }
             if "choices" in result:
-                for choice in result["choices"]:
-                    if "message" in choice and "content" in choice["message"]:
-                        raw_content = choice["message"]["content"]
-                        if raw_content:
-                            choice["message"]["content"] = sanitize_think_tags(raw_content)
+                _sanitize_chat_choices(result["choices"])
             return result
         except Exception as e:
-            logger.error("Falha de conexao com o Strata na porta %d: %s", self.port, e)
+            logger.exception("Falha de conexao com o Strata na porta %d", self.port)
             raise ConnectionError(
                 f"Strata offline na porta {self.port}. Inicie via scripts/ops/Start-StrataNode.ps1"
             ) from e
@@ -250,8 +269,8 @@ class LocalStrataClient:
 
         req_data = json.dumps(payload).encode("utf-8")
         headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer local",
+            "Content-Type": CONTENT_TYPE_JSON,
+            "Authorization": AUTH_BEARER_LOCAL,
         }
         t0 = time.time()
         try:
@@ -269,13 +288,13 @@ class LocalStrataClient:
             result["_sota_telemetry"] = {
                 "latency_ms": round(latency_ms, 2),
                 "port": self.port,
-                "endpoint": f"http://{self.host}:{self.port}/v1/responses",
-                "engine": "Strata-v0.1.39",
+                "endpoint": f"{self.base_url}/responses",
+                "engine": ENGINE_STRATA_VERSION,
                 "api": "responses",
             }
             return result
         except Exception as e:
-            logger.error("Falha ao chamar endpoint /v1/responses do Strata: %s", e)
+            logger.exception("Falha ao chamar endpoint /v1/responses do Strata")
             raise ConnectionError(f"Strata offline na porta {self.port}") from e
 
 
@@ -290,8 +309,8 @@ class AsyncStrataClient:
     ) -> None:
         self.host = host
         self.port = port
-        self.base_url = f"http://{host}:{port}/v1"
-        self.control_url = f"http://{host}:{port}"
+        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR
+        self.control_url = f"http://{host}:{port}"  # NOSONAR
         self.timeout = timeout
 
     async def is_healthy(self, session: aiohttp.ClientSession | None = None) -> bool:
@@ -321,7 +340,7 @@ class AsyncStrataClient:
         max_tokens: int = 1024,
         response_format: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Executa completion assincrona compatível com /v1/chat/completions."""
+        """Executa completion assincrona compativel com /v1/chat/completions."""
         url = f"{self.base_url}/chat/completions"
         payload: dict[str, Any] = {
             "messages": messages,
@@ -336,7 +355,7 @@ class AsyncStrataClient:
         async with session.post(
             url,
             json=payload,
-            headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
+            headers={"Content-Type": CONTENT_TYPE_JSON, "Authorization": AUTH_BEARER_LOCAL},
             timeout=aiohttp.ClientTimeout(total=self.timeout),
         ) as resp:
             if resp.status != 200:
@@ -348,12 +367,8 @@ class AsyncStrataClient:
                 "latency_ms": round(latency_ms, 2),
                 "port": self.port,
                 "endpoint": url,
-                "engine": "Strata-v0.1.39",
+                "engine": ENGINE_STRATA_VERSION,
             }
             if "choices" in result:
-                for choice in result["choices"]:
-                    if "message" in choice and "content" in choice["message"]:
-                        raw_content = choice["message"]["content"]
-                        if raw_content:
-                            choice["message"]["content"] = sanitize_think_tags(raw_content)
+                _sanitize_chat_choices(result["choices"])
             return result

@@ -18,11 +18,14 @@ import sqlite3
 import subprocess
 import sys
 import time
+from typing import Final
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 NEXUS_ZONE = BASE_DIR / "temp" / "nexus_zone"
-LOCK_FILE = NEXUS_ZONE / "homeostasis.lock"
-TELEMETRY_LOG = NEXUS_ZONE / "logs" / "homeostasis_telemetry.jsonl"
+LOCK_FILENAME: Final[str] = "homeostasis.lock"
+TELEMETRY_FILENAME: Final[str] = "homeostasis_telemetry.jsonl"
+LOCK_FILE = NEXUS_ZONE / LOCK_FILENAME
+TELEMETRY_LOG = NEXUS_ZONE / "logs" / TELEMETRY_FILENAME
 
 
 @dataclass
@@ -54,15 +57,15 @@ class AutopoiesisEngine:
         self.nexus_zone = self.base_dir / "temp" / "nexus_zone"
         self.nexus_zone.mkdir(parents=True, exist_ok=True)
         (self.nexus_zone / "logs").mkdir(parents=True, exist_ok=True)
-        if LOCK_FILE != BASE_DIR / "temp" / "nexus_zone" / "homeostasis.lock":
+        if LOCK_FILE != BASE_DIR / "temp" / "nexus_zone" / LOCK_FILENAME:
             self.lock_file = LOCK_FILE
         else:
-            self.lock_file = self.nexus_zone / "homeostasis.lock"
+            self.lock_file = self.nexus_zone / LOCK_FILENAME
 
-        if TELEMETRY_LOG != BASE_DIR / "temp" / "nexus_zone" / "logs" / "homeostasis_telemetry.jsonl":
+        if TELEMETRY_LOG != BASE_DIR / "temp" / "nexus_zone" / "logs" / TELEMETRY_FILENAME:
             self.telemetry_log = TELEMETRY_LOG
         else:
-            self.telemetry_log = self.nexus_zone / "logs" / "homeostasis_telemetry.jsonl"
+            self.telemetry_log = self.nexus_zone / "logs" / TELEMETRY_FILENAME
 
     def _acquire_lock(self) -> bool:
         """Adquire trava de processo anti-concorrencia."""

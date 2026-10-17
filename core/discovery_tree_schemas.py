@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import copy
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+_IMMUTABLE_ERROR: Final[str] = "FrozenDict is immutable and cannot be modified"
 
 
 class FrozenDict(dict):
@@ -29,25 +31,25 @@ class FrozenDict(dict):
         super().__init__(frozen)
 
     def __setitem__(self, _key: Any, _value: Any) -> None:
-        raise TypeError("FrozenDict is immutable and cannot be modified")
+        raise TypeError(_IMMUTABLE_ERROR)
 
     def __delitem__(self, _key: Any) -> None:
-        raise TypeError("FrozenDict is immutable and cannot be modified")
+        raise TypeError(_IMMUTABLE_ERROR)
 
     def pop(self, *_args: Any, **_kwargs: Any) -> Any:
-        raise TypeError("FrozenDict is immutable and cannot be modified")
+        raise TypeError(_IMMUTABLE_ERROR)
 
     def popitem(self) -> tuple[Any, Any]:
-        raise TypeError("FrozenDict is immutable and cannot be modified")
+        raise TypeError(_IMMUTABLE_ERROR)
 
     def clear(self) -> None:
-        raise TypeError("FrozenDict is immutable and cannot be modified")
+        raise TypeError(_IMMUTABLE_ERROR)
 
     def update(self, *_args: Any, **_kwargs: Any) -> None:
-        raise TypeError("FrozenDict is immutable and cannot be modified")
+        raise TypeError(_IMMUTABLE_ERROR)
 
     def setdefault(self, *_args: Any, **_kwargs: Any) -> Any:
-        raise TypeError("FrozenDict is immutable and cannot be modified")
+        raise TypeError(_IMMUTABLE_ERROR)
 
     def __copy__(self) -> FrozenDict:
         return self

@@ -1,0 +1,8 @@
+{
+  "ignoredUrls": [
+    "**/vendor/**",
+    "**/core/vendor/**",
+    "**/node_modules/**",
+    "**/.next/**"
+  ]
+}

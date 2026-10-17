@@ -1,1 +1,1 @@
-"""Monitoring -- Telemetria, métricas e observabilidade do sistema."""
+"""Monitoring -- Telemetria, metricas e observabilidade do sistema."""

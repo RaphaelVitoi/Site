@@ -33,7 +33,7 @@ COMPOSE = RAIZ / "docker-compose.yml"
 #: Os mesmos literais que `api/v1/handlers.py` declara, copiados aqui DE
 #: PROPITO: este teste mede o ARQUIVO, e nao o modulo. Se importasse a
 #: constante, um `rm` dela reprovaria este teste e nao o de seguranca -- o
-#: teste viraria tautologia, que e o modo de falha que a §13 da auditoria
+#: teste viraria tautologia, que e o modo de falha que a Secao 13 da auditoria
 #: proibe (achado confirmado por controle em outra camada).
 _DIRETORIOS = {".git", ".secrets", ".ssh", ".gnupg", ".aws", "secrets", "queue"}
 _SUFIXOS = {".pem", ".key", ".p12", ".pfx", ".keystore", ".jks", ".db", ".sqlite", ".sqlite3", ".lance"}
@@ -90,7 +90,7 @@ def _montagens_do_compose() -> list[str]:
     return montados
 
 
-# ── SEC-02: o caminho que estava exposto ──────────────────────────────────────
+#  SEC-02: o caminho que estava exposto
 
 
 def test_o_segredo_do_gateway_esta_bloqueado():
@@ -108,7 +108,7 @@ def test_o_estado_da_fila_esta_bloqueado():
     assert _e_sensivel(Path("/app/tasks.db")), "tasks.db na raiz voltou a ser servivel"
 
 
-# ── A lista e derivada do compose, nao de memoria ─────────────────────────────
+#  A lista e derivada do compose, nao de memoria
 
 
 def test_todo_volume_de_segredo_do_compose_esta_bloqueado():
@@ -150,7 +150,7 @@ def test_o_segredo_do_compose_aponta_para_um_caminho_bloqueado():
         )
 
 
-# ── O que NAO pode regredir ──────────────────────────────────────────────────
+#  O que NAO pode regredir
 
 
 @pytest.mark.parametrize(

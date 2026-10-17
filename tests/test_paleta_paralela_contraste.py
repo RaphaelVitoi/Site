@@ -7,7 +7,7 @@ autor por outra sem corrigir defeito nenhum.
 
 Este guard existe para o caso oposto: uma cor NOVA entra no codigo e
 reprova. Sem ele, o axe so pegaria se a cor renderizasse visivel na rota
-medida — cor em rota nao auditada passa.
+medida -- cor em rota nao auditada passa.
 
 O que o guard NAO faz, e por que:
   - nao exige migrar para token do tema: paleta paralela e escolha
@@ -327,7 +327,7 @@ def test_o_guard_reprova_uma_cor_de_contraste_ruim() -> None:
     """Prova que o guard ACENDE, e nao so que fica verde.
 
     Um guard que nunca reprova e indistinguivel de um guard quebrado. Este
-    caso usa `indigo-500` — que hoje passa a 4.70:1 — e mede contra um
+    caso usa `indigo-500` -- que hoje passa a 4.70:1 -- e mede contra um
     fundo propositalmente impossivel, o que tem de reproduzir a condicao
     `pior < limiar`. Se a comparacao ou o limiar parassem de valer, o
     calculo aqui pararia junto, e o teste pegaria.
@@ -367,7 +367,7 @@ def test_nenhuma_cor_de_paleta_padrao_reprova_o_contraste() -> None:
         rgb = hex_rgb(TAILWIND[fam][int(passo)])
         pior = max(contraste(rgb, f) for f in fundos)
         # 4.5:1 e exigencia de TEXTO. Fundo e borda nao sao texto, e
-        # exigir 4.5 delas reprovaria `slate-900` — que e superficie, e
+        # exigir 4.5 delas reprovaria `slate-900` -- que e superficie, e
         # esta la por um motivo.
         limiar = 4.5 if como_texto.get(nome) else 3.0
         if pior < limiar:

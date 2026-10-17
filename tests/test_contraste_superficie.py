@@ -12,7 +12,7 @@ Tres defeitos, uma familia:
    texto branco. E o axe nao enxerga: ele inspeciona o estado atual e nao
    pseudo-classes, entao um hover ilegivel nunca aparece em nenhum relatorio.
 
-3. **A correcao intuitiva — escurecer o acento — foi rejeitada por medicao.**
+3. **A correcao intuitiva -- escurecer o acento -- foi rejeitada por medicao.**
    Os tokens de acento tem 400+ usos como `text-accent-*` e borda sobre fundo
    escuro, onde o contraste sobra. Escurece-los para servir de fundo teria
    apagado 133 usos de `text-accent-indigo-light` e 104 de `text-accent-emerald`
@@ -53,7 +53,7 @@ FOLGA = 0.1
 def _hls_para_rgb(h: int, s: float, lum: float) -> tuple[int, int, int]:
     # colorsys.hls_to_rgb(h, l, s) recebe H em voltas e L, S em 0..1.
     # Passar `s` em 0..100 produz canais estourados e razao de contraste
-    # na ordem de 1e5 — numeros que nao correspondem a cor nenhuma. A
+    # na ordem de 1e5 -- numeros que nao correspondem a cor nenhuma. A
     # sanidade abaixo trava: hsl(239,84%,67%) tem de dar #6467f2, o valor
     # que o axe mediu no DOM.
     r, g, b = colorsys.hls_to_rgb(h / 360, lum / 100, s / 100)
@@ -84,7 +84,7 @@ def test_a_matematica_de_contraste_bate_com_o_axe() -> None:
     Implementacao de contraste que erra a escala devolve razao de 1e5 e
     continua "verde" contra um token inventado: o guard aprova um numero
     que nao corresponde a cor nenhuma. A unica saida e um valor que veio de
-    fora — `#6467f2` medido pelo axe-core no DOM renderizado, com 4.4:1.
+    fora -- `#6467f2` medido pelo axe-core no DOM renderizado, com 4.4:1.
     """
     rgb = _hls_para_rgb(239, 84, 67)
     assert rgb == (0x64, 0x67, 0xF2), (
@@ -107,7 +107,7 @@ def _tokens() -> dict[str, tuple[int, float, float]]:
 
 
 # `accent-` no inicio e obrigatorio: `--color-light-surface` tambem termina em
-# `-surface`, e pertence ao sistema editorial claro — a superficie e clara de
+# `-surface`, e pertence ao sistema editorial claro -- a superficie e clara de
 # proposito, com texto escuro em cima. Reprovar por contraste com branco seria
 # o guard medindo a cor errada.
 SUPERFICIE = [k for k in _tokens() if k.startswith("accent-") and k.endswith("-surface")]
@@ -126,7 +126,7 @@ def test_superficie_de_acento_passa_aa_com_texto_branco(nome: str) -> None:
         f"`--color-{nome}` mede {razao:.3f}:1 com texto branco; o piso e "
         f"{MINIMO_AA + FOLGA:.1f}:1.\n"
         "  A superficie existe para carregar texto. Se ela nao passa, ela nao "
-        "pode ser superficie — suba o `L` do token ou pare de usa-lo como fundo."
+        "pode ser superficie \u2014 suba o `L` do token ou pare de usa-lo como fundo."
     )
 
 
@@ -137,7 +137,7 @@ def test_estado_ativo_tem_mais_contraste_que_a_superficie(nome: str) -> None:
 
     Este e o defeito que nenhuma auditoria de axe pegaria: axe inspeciona o
     estado atual, nao pseudo-classes. `hover:bg-accent-indigo-light` media
-    2.903:1 contra a base de 4.408:1 — o hover era o pior estado do botao, e
+    2.903:1 contra a base de 4.408:1 -- o hover era o pior estado do botao, e
     por isso o pior estado era invisivel.
     """
     base = nome.removesuffix("-active")
@@ -151,7 +151,7 @@ def test_estado_ativo_tem_mais_contraste_que_a_superficie(nome: str) -> None:
         f"({rb:.3f}:1).\n"
         "  Clarear o fundo no hover reduz o contraste do texto branco. "
         "Baixe o `L` do `-active`, ou o hover vira o estado mais ilegivel "
-        "do componente — e nenhum relatorio de axe vai mostrar."
+        "do componente \u2014 e nenhum relatorio de axe vai mostrar."
     )
     assert ra >= MINIMO_AA + FOLGA, f"`--color-{nome}` mede {ra:.3f}:1; o piso e {MINIMO_AA + FOLGA:.1f}:1."
 
@@ -162,7 +162,7 @@ def test_superficie_preserva_matiz_e_saturacao_do_acento() -> None:
 
     A tentativa de escurecer o token de acento reprovou aqui: mudaria 400+ usos
     de `text-accent-*` sobre fundo escuro. Por isso a superficie mantem `h` e `s`
-    — o que o olho le como "o mesmo indigo" — e devolve um `L` legivel.
+    -- o que o olho le como "o mesmo indigo" -- e devolve um `L` legivel.
     """
     tokens = _tokens()
     for nome in SUPERFICIE + ATIVA:
@@ -184,7 +184,7 @@ def test_superficie_preserva_matiz_e_saturacao_do_acento() -> None:
 # de uma forma propria porque o conteudo leva `${...}`, e o interior costuma
 # conter apostro de acesso a objeto: `${styles['shareTitle']}`. Um unico
 # padrao `` `([^`]*)` `` para na barra no primeiro backtick e perde a classe
-# INTEIRA — e classes assim somem do guard sem aviso.
+# INTEIRA -- e classes assim somem do guard sem aviso.
 #
 # MEDIDO EM 2026-09-29: 149 `className={`...`}` do frontend contem apostro
 # dentro do template. Todas eram invisiveis para estas checagens, inclusive
@@ -210,7 +210,7 @@ def test_nenhum_fundo_de_acento_que_carrega_texto_usa_acento_puro() -> None:
     Sao 196 usos de `bg-accent-indigo` e apenas 48 carregam texto; os outros
     148 sao barra de progresso, anel, regua e glow, onde escurecer a cor
     apagaria a hierarquia visual sem corrigir nada. Este teste exige a
-    superficie **apenas** onde ha texto — que e a unica condicao em que o
+    superficie **apenas** onde ha texto -- que e a unica condicao em que o
     contraste e uma questao de acesso, e nao de estilo.
     """
     infraveis: list[str] = []

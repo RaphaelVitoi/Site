@@ -20,6 +20,32 @@ logger = logging.getLogger(__name__)
 _SignalHandler = Callable[[int, FrameType | None], Any] | int | signal.Handlers | None
 
 
+def _register_signal(
+    signum: signal.Signals,
+    loop: asyncio.AbstractEventLoop,
+    shutdown_event: asyncio.Event,
+    request_shutdown: Callable[[int, FrameType | None], None],
+    loop_signals: list[signal.Signals],
+    previous_signal_handlers: dict[signal.Signals, _SignalHandler],
+) -> None:
+    try:
+        previous_handler = signal.getsignal(signum)
+    except (OSError, RuntimeError, ValueError) as error:
+        logger.warning("Nao foi possivel consultar handler de %s: %s", signum.name, error)
+        return
+
+    try:
+        loop.add_signal_handler(signum, shutdown_event.set)
+        loop_signals.append(signum)
+        previous_signal_handlers[signum] = previous_handler
+    except (OSError, RuntimeError, ValueError):
+        try:
+            signal.signal(signum, request_shutdown)
+            previous_signal_handlers[signum] = previous_handler
+        except (OSError, RuntimeError, ValueError) as error:
+            logger.warning("Nao foi possivel registrar %s: %s", signum.name, error)
+
+
 def _install_shutdown_handlers(
     loop: asyncio.AbstractEventLoop,
     shutdown_event: asyncio.Event,
@@ -34,22 +60,7 @@ def _install_shutdown_handlers(
         loop.call_soon_threadsafe(shutdown_event.set)
 
     for signum in (signal.SIGINT, signal.SIGTERM):
-        try:
-            previous_handler = signal.getsignal(signum)
-        except (OSError, RuntimeError, ValueError) as error:
-            logger.warning("Nao foi possivel consultar handler de %s: %s", signum.name, error)
-            continue
-
-        try:
-            loop.add_signal_handler(signum, shutdown_event.set)
-            loop_signals.append(signum)
-            previous_signal_handlers[signum] = previous_handler
-        except (NotImplementedError, OSError, RuntimeError, ValueError):
-            try:
-                signal.signal(signum, request_shutdown)
-                previous_signal_handlers[signum] = previous_handler
-            except (OSError, RuntimeError, ValueError) as error:
-                logger.warning("Nao foi possivel registrar %s: %s", signum.name, error)
+        _register_signal(signum, loop, shutdown_event, request_shutdown, loop_signals, previous_signal_handlers)
 
     def restore() -> None:
         nonlocal restored
@@ -59,7 +70,7 @@ def _install_shutdown_handlers(
         for signum in loop_signals:
             try:
                 loop.remove_signal_handler(signum)
-            except (NotImplementedError, OSError, RuntimeError, ValueError) as error:
+            except (OSError, RuntimeError, ValueError) as error:
                 logger.warning("Nao foi possivel remover handler de %s: %s", signum.name, error)
         for signum, previous_handler in previous_signal_handlers.items():
             try:

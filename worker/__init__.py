@@ -1,1 +1,1 @@
-"""Worker -- Loop assíncrono de execução e processamento da fila."""
+"""Worker -- Loop assincrono de execucao e processamento da fila."""

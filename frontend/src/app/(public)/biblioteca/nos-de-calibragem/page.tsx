@@ -106,7 +106,7 @@ export default function NosDeCalibragemPage() {
 							<div>
 								<h2 className="text-xl font-heading font-black tracking-tight text-white flex items-center gap-2">
 									<i className="fa-solid fa-microchip text-accent-indigo" />
-									Referencial Visual Interativo da Aula 1.2
+									{' '}Referencial Visual Interativo da Aula 1.2
 								</h2>
 								<p className="text-xs text-text-muted mt-1">
 									Mesa orbital 9-max, matrizes pareadas de Risk Premium / Bubble Factor e grids 13x13 de ranges de ação.

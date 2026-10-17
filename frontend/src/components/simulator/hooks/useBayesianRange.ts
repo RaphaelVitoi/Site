@@ -152,7 +152,7 @@ export function useBayesianRange(options?: UseBayesianRangeOptions) {
 				return [null];
 			}
 			const next = prev.slice(0, -1);
-			const last = next[next.length - 1] ?? null;
+			const last = next.at(-1) ?? null;
 			setActiveAction(last);
 			return next;
 		});

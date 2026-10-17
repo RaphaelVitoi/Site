@@ -29,7 +29,7 @@ function GtoCfrContentInner({
 		<main className="sota-container mt-8 space-y-14 animate-sota-in pb-24">
 			{/* SELETOR DE MODO DO SOLVER */}
 			<div className="flex justify-center px-1">
-				<div role="group" aria-label="Modo de simulação" className="grid w-full max-w-2xl grid-cols-1 gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 shadow-2xl backdrop-blur-xl sm:grid-cols-2">
+				<fieldset aria-label="Modo de simulação" className="grid w-full max-w-2xl grid-cols-1 gap-2 rounded-2xl border border-white/10 bg-slate-950/80 p-2 shadow-2xl backdrop-blur-xl sm:grid-cols-2">
 					<button
 						type="button"
 						onClick={() => setSolverMode('heads_up')}
@@ -58,7 +58,7 @@ function GtoCfrContentInner({
 							SOTA
 						</span>
 					</button>
-				</div>
+				</fieldset>
 			</div>
 
 			{/* SEÇÃO 1: MOTOR DE JOGO (HEADS-UP CFR+ OU PLURIBUS MULTIWAY) */}

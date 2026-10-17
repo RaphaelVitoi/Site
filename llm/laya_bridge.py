@@ -400,30 +400,28 @@ def _allow_cpu_predict() -> bool:
     return os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
 
 
-def _extrair_grandes_dados(
-    result: dict[str, Any], qs: dict[str, dict[str, Any]]
+def _parse_single_answer_dict(
+    resp: Any, qtype: str | None
 ) -> tuple[float | None, str | None, float | None, float | None]:
-    """Extrai noul, choice, score e confidence do resultado do forward pass da Laya Multilingual."""
-    answers = result.get("answers", result) if isinstance(result, dict) else {}
-    noul: float | None = None
-    choice: str | None = None
-    score: float | None = None
-    conf: float | None = None
-    for qid, qdef in qs.items():
-        qtype = qdef.get("type")
-        if qid not in answers:
-            continue
-        resp = answers[qid]
-        if isinstance(resp, dict):
-            if "confidence" in resp:
-                with contextlib.suppress(ValueError, TypeError):
-                    conf = float(resp["confidence"])
-            if qtype == "noul":
-                noul = float(resp.get("noul", resp.get("probability", resp.get("value", 0.0))))
-            elif qtype == "choice":
-                choice = str(resp.get("choice", resp.get("answer", "")))
-            elif qtype == "score":
-                score = float(resp.get("score", resp.get("value", 0.0)))
+    if not isinstance(resp, dict):
+        return None, None, None, None
+    conf = None
+    if "confidence" in resp:
+        with contextlib.suppress(ValueError, TypeError):
+            conf = float(resp["confidence"])
+    noul, choice, score = None, None, None
+    if qtype == "noul":
+        noul = float(resp.get("noul", resp.get("probability", resp.get("value", 0.0))))
+    elif qtype == "choice":
+        choice = str(resp.get("choice", resp.get("answer", "")))
+    elif qtype == "score":
+        score = float(resp.get("score", resp.get("value", 0.0)))
+    return noul, choice, score, conf
+
+
+def _fallback_extract_fields(
+    result: dict[str, Any], noul: float | None, choice: str | None, score: float | None
+) -> tuple[float | None, str | None, float | None]:
     if noul is None and isinstance(result, dict):
         noul_val = result.get("noul", result.get("calibrated_probability"))
         noul = float(noul_val) if noul_val is not None else None
@@ -433,6 +431,38 @@ def _extrair_grandes_dados(
     if score is None and isinstance(result, dict):
         sc_val = result.get("score", result.get("value"))
         score = float(sc_val) if sc_val is not None else None
+    return noul, choice, score
+
+
+def _extract_answers_fields(
+    answers: dict[str, Any], qs: dict[str, dict[str, Any]]
+) -> tuple[float | None, str | None, float | None, float | None]:
+    noul: float | None = None
+    choice: str | None = None
+    score: float | None = None
+    conf: float | None = None
+    for qid, qdef in qs.items():
+        if qid not in answers:
+            continue
+        n, c, s, cf = _parse_single_answer_dict(answers[qid], qdef.get("type"))
+        if n is not None:
+            noul = n
+        if c is not None:
+            choice = c
+        if s is not None:
+            score = s
+        if cf is not None:
+            conf = cf
+    return noul, choice, score, conf
+
+
+def _extrair_grandes_dados(
+    result: dict[str, Any], qs: dict[str, dict[str, Any]]
+) -> tuple[float | None, str | None, float | None, float | None]:
+    """Extrai noul, choice, score e confidence do resultado do forward pass da Laya Multilingual."""
+    answers = result.get("answers", result) if isinstance(result, dict) else {}
+    noul, choice, score, conf = _extract_answers_fields(answers, qs)
+    noul, choice, score = _fallback_extract_fields(result, noul, choice, score)
     return noul, choice, score, conf
 
 
@@ -593,6 +623,68 @@ def laya_predict(
         )
 
 
+def _run_router_batch(
+    router: Any,
+    formatted_requests: list[dict[str, Any]],
+    target_model: str,
+    batch_size: int,
+) -> list[Any]:
+    predict_batch_fn: Any = getattr(router, "predict_batch", None)  # noqa: B009
+    if callable(predict_batch_fn):
+        raw_batch: Any = predict_batch_fn(formatted_requests, batch_size=batch_size)
+        return raw_batch if isinstance(raw_batch, list) else []
+    return [
+        router.predict(
+            r.get("state", ""),
+            r.get("questions", LAYA_DEFAULT_QUESTIONS),
+            model=target_model,
+        )
+        for r in formatted_requests
+    ]
+
+
+def _build_batch_prediction_item(
+    res: dict[str, Any],
+    orig_qs: Any,
+    device_str: str,
+    target_model: str,
+    batch_size: int,
+) -> LayaPrediction:
+    noul, choice, score, conf = _extrair_grandes_dados(res, orig_qs)
+    m_used = res.get("routing", {}).get("model", target_model)
+    return LayaPrediction(
+        answers=res,
+        model_used=m_used,
+        device=device_str,
+        n_tokens=int(res.get("token_usage", {}).get("total_tokens", 0))
+        if isinstance(res.get("token_usage"), dict)
+        else 0,
+        latency_ms=0.0,
+        noul=round(noul, 6) if noul is not None else None,
+        choice=choice if choice else None,
+        score=round(score, 6) if score is not None else None,
+        confidence=round(conf, 6) if conf is not None else None,
+        provenia=Provenia(
+            engine_id="laya-s1-trained",
+            implementation_level="trained-model",
+            runtime_used=f"transformers+torch ({device_str})",
+            model_used=m_used,
+            intended_model=target_model,
+            weights_loaded=True,
+            fallback_used=False,
+            assumptions=[
+                "laya-predict-batch-grouped",
+                f"batch_size={batch_size}",
+                f"canonical-model={CANONICAL_LAYA_MODEL}",
+            ],
+            limitations=[
+                "predict-requires-checkpoint-download-gpu-preferred",
+            ],
+            units=["probability", "score"],
+        ),
+    )
+
+
 def predict_batch(
     requests: list[dict[str, Any]],
     batch_size: int = 8,
@@ -614,65 +706,18 @@ def predict_batch(
     try:
         router = _obter_predict_router()
         target_model = model_override or CANONICAL_LAYA_MODEL
-        formatted_requests = []
-        for r in requests:
-            item = dict(r)
-            if "model" not in item:
-                item["model"] = target_model
-            formatted_requests.append(item)
-
-        predict_batch_fn: Any = getattr(router, "predict_batch", None)  # noqa: B009
-        if callable(predict_batch_fn):
-            raw_batch: Any = predict_batch_fn(formatted_requests, batch_size=batch_size)
-            batch_results = raw_batch if isinstance(raw_batch, list) else []
-        else:
-            batch_results = [
-                router.predict(
-                    r.get("state", ""),
-                    r.get("questions", LAYA_DEFAULT_QUESTIONS),
-                    model=target_model,
-                )
-                for r in formatted_requests
-            ]
-        predictions: list[LayaPrediction] = []
-        for i, res in enumerate(batch_results):
-            orig_qs = requests[i].get("questions", LAYA_DEFAULT_QUESTIONS)
-            noul, choice, score, conf = _extrair_grandes_dados(res, orig_qs)
-            m_used = res.get("routing", {}).get("model", target_model)
-            predictions.append(
-                LayaPrediction(
-                    answers=res,
-                    model_used=m_used,
-                    device=device_str,
-                    n_tokens=int(res.get("token_usage", {}).get("total_tokens", 0))
-                    if isinstance(res.get("token_usage"), dict)
-                    else 0,
-                    latency_ms=0.0,
-                    noul=round(noul, 6) if noul is not None else None,
-                    choice=choice if choice else None,
-                    score=round(score, 6) if score is not None else None,
-                    confidence=round(conf, 6) if conf is not None else None,
-                    provenia=Provenia(
-                        engine_id="laya-s1-trained",
-                        implementation_level="trained-model",
-                        runtime_used=f"transformers+torch ({device_str})",
-                        model_used=m_used,
-                        intended_model=target_model,
-                        weights_loaded=True,
-                        fallback_used=False,
-                        assumptions=[
-                            "laya-predict-batch-grouped",
-                            f"batch_size={batch_size}",
-                            f"canonical-model={CANONICAL_LAYA_MODEL}",
-                        ],
-                        limitations=[
-                            "predict-requires-checkpoint-download-gpu-preferred",
-                        ],
-                        units=["probability", "score"],
-                    ),
-                )
+        formatted_requests = [dict(r, model=r.get("model", target_model)) for r in requests]
+        batch_results = _run_router_batch(router, formatted_requests, target_model, batch_size)
+        return [
+            _build_batch_prediction_item(
+                res,
+                requests[i].get("questions", LAYA_DEFAULT_QUESTIONS),
+                device_str,
+                target_model,
+                batch_size,
             )
-        return predictions
+            for i, res in enumerate(batch_results)
+        ]
     except Exception as err:
         logger.debug("[laya-s1] predict_batch falhou (%s); caindo para laya_predict sequencial.", err)
         return [laya_predict(req.get("state", ""), req.get("questions"), model_override) for req in requests]

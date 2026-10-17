@@ -493,7 +493,6 @@ function RiskAndPrizesRight(
               valColorClass = 'text-amber-400';
             } else if (i === 1) {
               barBgClass = 'bg-linear-to-r from-slate-200 to-slate-400';
-              valColorClass = 'text-text-muted';
             } else if (i === 2) {
               barBgClass = 'bg-linear-to-r from-violet-400 to-violet-600';
               valColorClass = 'text-violet-400';

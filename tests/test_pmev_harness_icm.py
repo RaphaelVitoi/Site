@@ -1,6 +1,6 @@
 """O harness de paridade ICM x ChipEV precisa continuar verde.
 
-Por que um teste para o harness: ele é o unico mecanismo que detecta se
+Por que um teste para o harness: ele e o unico mecanismo que detecta se
 `engine/icm_matrix.py` mudou depois que o artefato publico foi gerado. Se o
 kernel divergir e ninguem rodar `python -m engine.pmev_harness_icm`, a
 divergencia so aparece no proximo relatorio -- ou nunca.
@@ -15,8 +15,8 @@ O que estes testes NAO prometem:
 O que eles prometem, sobre o harness:
 
 1. Verde no artefato commitado (o motor bate com o que foi publicado).
-2. Vermelho quando o motor muda (a sensibilidade é real, nao decorativa).
-3. Vermelho quando o artefato é adulterado (o harness le o artefato de fato).
+2. Vermelho quando o motor muda (a sensibilidade e real, nao decorativa).
+3. Vermelho quando o artefato e adulterado (o harness le o artefato de fato).
 """
 
 from __future__ import annotations

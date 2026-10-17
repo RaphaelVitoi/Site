@@ -170,6 +170,24 @@ async def _execute_primary_request(
         raise RuntimeError(f"HTTP {e.status}: {e.message} - {error_body}") from e
 
 
+def _parse_gemini_error_info(err_str: str) -> tuple[int, float]:
+    """Extrai status_code HTTP e retry_after de mensagem de erro da API Gemini."""
+    status_code = 500
+    retry_after = 0.0
+    if "HTTP 429" in err_str:
+        status_code = 429
+        if "retry_after=" in err_str:
+            try:
+                retry_after = float(err_str.split("retry_after=")[1].split("s")[0])
+            except (IndexError, ValueError):
+                retry_after = 45.0
+    elif "HTTP 401" in err_str:
+        status_code = 401
+    elif "HTTP 403" in err_str:
+        status_code = 403
+    return status_code, retry_after
+
+
 async def call_gemini(
     session: aiohttp.ClientSession,
     model: str,
@@ -218,21 +236,7 @@ async def call_gemini(
             await gemini_pool_manager.mark_success(active_key, lat_ms)
             return res_text, res_usage
         except RuntimeError as err:
-            err_str = str(err)
-            status_code = 500
-            retry_after = 0.0
-            if "HTTP 429" in err_str:
-                status_code = 429
-                if "retry_after=" in err_str:
-                    try:
-                        retry_after = float(err_str.split("retry_after=")[1].split("s")[0])
-                    except (IndexError, ValueError):
-                        retry_after = 45.0
-            elif "HTTP 401" in err_str:
-                status_code = 401
-            elif "HTTP 403" in err_str:
-                status_code = 403
-
+            status_code, retry_after = _parse_gemini_error_info(str(err))
             await gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(err))
             raise
         except (aiohttp.ClientError, TimeoutError, ConnectionResetError) as net_err:
@@ -251,11 +255,11 @@ async def call_gemini_flash_lite(
     **kwargs,
 ) -> tuple[str, dict]:
     """
-    Chamada especializada para Gemini 3.5 Flash-Lite com rotação inteligente e circuit breaker.
+    Chamada especializada para Gemini 3.5 Flash-Lite com rotacao inteligente e circuit breaker.
     Projetado especificamente para:
-      - Edições pontuais e atômicas (workload='atomic_edits')
+      - Edicoes pontuais e atomicas (workload='atomic_edits')
       - Triagem de prompts e tarefas (workload='triagem')
-      - Linting e verificação estática (workload='linting')
+      - Linting e verificacao estatica (workload='linting')
     """
     last_err: Exception | None = None
     for attempt in range(max_retries):
@@ -265,7 +269,7 @@ async def call_gemini_flash_lite(
                 model="gemini-3.5-flash-lite",
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
-                api_key="",  # força rotação inteligente via pool
+                api_key="",  # forca rotacao inteligente via pool
                 client_timeout=client_timeout,
                 require_json=require_json,
                 workload=workload,
@@ -276,7 +280,7 @@ async def call_gemini_flash_lite(
             if "HTTP 429" in str(err) and attempt < max_retries - 1:
                 logger.warning(
                     f"[GEMINI FLASH-LITE] Chave atingiu 429 na tentativa {attempt + 1}. "
-                    "Alternando automaticamente para a próxima chave do pool..."
+                    "Alternando automaticamente para a pr\u00f3xima chave do pool..."
                 )
                 continue
             raise

@@ -6,9 +6,11 @@
 ---
 
 ## Opcao A: GitHub Pages (Recomendado - Longo Prazo)
+
 *Ideal para versionamento e historico profissional.*
 
 1.  **Inicialize o Git (se ainda nao fez):**
+
     ```powershell
     git init
     git add .
@@ -20,6 +22,7 @@
     *   Nome sugerido: `raphaelvitoi-poker` (ou `seu-usuario.github.io` para site principal).
 
 3.  **Conecte e Suba:**
+
     ```powershell
     git branch -M main
     git remote add origin https://github.com/SEU_USUARIO/NOME_REPO.git
@@ -35,6 +38,7 @@
 ---
 
 ## Opcao B: Netlify Drop (Imediato - Teste Rapido)
+
 *Ideal para validar visualmente em < 30 segundos.*
 
 1.  Acesse app.netlify.com/drop.
@@ -46,7 +50,7 @@
 
 ## Checklist Pos-Deploy
 
-- [ ] Verificar carregamento de `style.css` (caminhos relativos).
-- [ ] Testar responsividade mobile no navegador real.
-- [ ] Validar meta-tags (SEO basico).
-- [ ] Atualizar link na bio do Instagram/Twitter.
+* [ ] Verificar carregamento de `style.css` (caminhos relativos).
+* [ ] Testar responsividade mobile no navegador real.
+* [ ] Validar meta-tags (SEO basico).
+* [ ] Atualizar link na bio do Instagram/Twitter.

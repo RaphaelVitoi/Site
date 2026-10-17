@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 import json
+import math
 from pathlib import Path
 import sqlite3
 
@@ -243,8 +244,10 @@ class DashboardNotificationsEngine:
             )
         )
 
-        health_score = 100.0 if risk == 0.0 and token_consumed < 16000 else 85.0
-        health_status = "HOMEOSTASE TOTAL (PADRAO SOTA)" if health_score == 100.0 else "ATENCAO MODERADA"
+        health_score = 100.0 if math.isclose(risk, 0.0, abs_tol=1e-9) and token_consumed < 16000 else 85.0
+        health_status = (
+            "HOMEOSTASE TOTAL (PADRAO SOTA)" if math.isclose(health_score, 100.0, abs_tol=1e-9) else "ATENCAO MODERADA"
+        )
 
         return DashboardNotificationReport(
             overall_health=health_score,

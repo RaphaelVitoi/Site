@@ -10,6 +10,7 @@ import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import { ArticleVoiceNarration } from '@/components/ui/layout/ArticleVoiceNarration';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import ScrollToTop from '@/components/ui/layout/ScrollToTop';
 import ContentFooter from '@/components/ui/layout/ContentFooter';
@@ -128,6 +129,10 @@ export function DynamicArticleClient({ initialSlug, initialContent }: DynamicArt
 				<div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-16 items-start max-w-6xl mx-auto">
 					<article className="animate-sota-in">
 						<GlassPanel className="p-10 lg:p-20 border-l-4 border-l-accent-indigo">
+							<ArticleVoiceNarration
+								title={content.title}
+								content={content.body || ''}
+							/>
 							<SotaMarkdown content={content.body || ''} />
 						</GlassPanel>
 					</article>

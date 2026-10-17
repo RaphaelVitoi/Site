@@ -363,6 +363,53 @@ async def _dispatch_llm_provider(
     )
 
 
+async def _try_apply_s1_advisory(task: Task, manager: QueueManager, system_prompt: str, user_prompt: str) -> str:
+    """Aplica System-1 Laya ao system_prompt e registra intencao_s1 em metadata."""
+    try:
+        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        updated_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
+        if laya_metadata:
+            task.metadata["intencao_s1"] = laya_metadata
+            await manager.update_task_metadata(task.id, {"intencao_s1": laya_metadata}, merge=True)
+        return updated_prompt
+    except Exception as laya_error:  # pylint: disable=broad-exception-caught
+        logger.debug("[laya-s1] advisory unavailable for task %s: %s", task.id, laya_error)
+        return system_prompt
+
+
+async def _save_route_telemetry(
+    task: Task,
+    manager: QueueManager,
+    models_to_try: list[str],
+    agent_type: str,
+    designated_model: str | None,
+    provider_retries: int,
+    timeout_seconds: int,
+    response: dict,
+) -> None:
+    """Registra telemetria de selecao de rota e procedencia S1 no QueueManager."""
+    route_selected = {
+        "route_selected": models_to_try,
+        "reason_codes": [
+            f"agent_type:{agent_type}",
+            f"designated_model:{designated_model}" if designated_model else "designated_model:none",
+            f"provider_retries:{provider_retries}",
+            f"timeout_seconds:{timeout_seconds}",
+        ],
+        "model_used": response.get("model"),
+        "provider_used": response.get("provider"),
+        "latency_ms": response.get("latency_ms"),
+        "retry_count": response.get("retry_count", 0),
+    }
+    _s1 = cast(dict, (task.metadata or {}).get("intencao_s1") or {})
+    if _s1:
+        route_selected["reason_codes"].append(
+            f"s1:{_s1.get('modelo_sugerido', 'multilingual')}|{_s1.get('script', 'unknown')}"
+        )
+    await manager.update_task_metadata(task.id, route_selected, merge=True)
+
+
 # Funcao para chamar a API da LLM, tratando diferentes modelos e chaves de API.
 async def call_llm_api(
     task: Task,
@@ -376,18 +423,7 @@ async def call_llm_api(
     te._maybe_reload_config()
     _c = te._c
 
-    # System-1 Laya acompanha a chamada canonica, registra procedencia e compoe
-    # o advisory com o LLM sem substituir a fonte unica de roteamento.
-    try:
-        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-
-        system_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
-        if laya_metadata:
-            task.metadata["intencao_s1"] = laya_metadata
-            await manager.update_task_metadata(task.id, {"intencao_s1": laya_metadata}, merge=True)
-    except Exception as laya_error:  # pylint: disable=broad-exception-caught
-        logger.debug("[laya-s1] advisory unavailable for task %s: %s", task.id, laya_error)
-
+    system_prompt = await _try_apply_s1_advisory(task, manager, system_prompt, user_prompt)
     models_to_try, agent_type, designated_model = await _prepare_routing_pipeline(task, manager)
 
     logger.info(f"[[{_c(task.agent)}]{task.agent}[/]] Rota de modelos selecionada: {agent_type} -> {models_to_try}")
@@ -399,7 +435,6 @@ async def call_llm_api(
     session = await get_global_http_session()
 
     for model in models_to_try:
-        response = None
         provider = _infer_provider_for_model(model)
         if provider and await _is_route_blocked(_route_identifier(provider, model)):
             logger.warning(
@@ -422,28 +457,16 @@ async def call_llm_api(
         )
 
         if response:
-            route_selected = {
-                "route_selected": models_to_try,
-                "reason_codes": [
-                    f"agent_type:{agent_type}",
-                    f"designated_model:{designated_model}" if designated_model else "designated_model:none",
-                    f"provider_retries:{provider_retries}",
-                    f"timeout_seconds:{timeout_seconds}",
-                ],
-                "model_used": response.get("model"),
-                "provider_used": response.get("provider"),
-                "latency_ms": response.get("latency_ms"),
-                "retry_count": response.get("retry_count", 0),
-            }
-            # Proveniancia S1 (laya): registra a classificacao zero-download que
-            # influenciou este roteamento (advisory -- nao altera o resultado, apenas
-            # a telemetry; contrato Secao 4 de proveniancia).
-            _s1 = cast(dict, (task.metadata or {}).get("intencao_s1") or {})
-            if _s1:
-                route_selected["reason_codes"].append(
-                    f"s1:{_s1.get('modelo_sugerido', 'multilingual')}|{_s1.get('script', 'unknown')}"
-                )
-            await manager.update_task_metadata(task.id, route_selected, merge=True)
+            await _save_route_telemetry(
+                task,
+                manager,
+                models_to_try,
+                agent_type,
+                designated_model,
+                provider_retries,
+                timeout_seconds,
+                response,
+            )
             return response["text"]
 
     logger.error(f"[[{_c(task.agent)}]{task.agent}[/]] Esgotamento absoluto do pool de APIs/Chaves.")

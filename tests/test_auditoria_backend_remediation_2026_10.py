@@ -37,7 +37,7 @@ async def queue_manager():
     await qm.close()
 
 
-# ── FASE 1 (P0) ─────────────────────────────────────────────────────────────
+#  FASE 1 (P0)
 
 
 def test_multidict_pinned_in_dependencies() -> None:
@@ -67,7 +67,7 @@ def test_openrouter_pool_manager_and_get_openrouter_pool() -> None:
     assert hasattr(llm_api, "call_openrouter") or hasattr(llm_api, "resolve_api_key")
 
 
-# ── FASE 2 (P1) ─────────────────────────────────────────────────────────────
+#  FASE 2 (P1)
 
 
 def test_task_instantiation_schema_conformance() -> None:
@@ -174,7 +174,7 @@ def test_openrouter_pool_stats_typing() -> None:
         assert isinstance(item["avg_latency_ms"], float)
 
 
-# ── FASE 3 (P2) ─────────────────────────────────────────────────────────────
+#  FASE 3 (P2)
 
 
 def test_autopoiesis_engine_path_decoupling(tmp_path: Path) -> None:

@@ -787,8 +787,8 @@ _SENSITIVE_NAMES = frozenset({"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", ".ne
 #: `_is_file_access_allowed("<raiz>/_env.ps1")` devolvia True, e esse arquivo e
 #: a segunda fonte canonica de credenciais do projeto (declarada em
 #: `_env.example.ps1`, ignorada em `.gitignore:157`), com `API_SECRET_TOKEN` e
-#: `AUTH_SECRET` em claro. Quem tem a credencial de servico — a unica que
-#: alcanca esta rota — lia o segredo que o proprio sistema entrega.
+#: `AUTH_SECRET` em claro. Quem tem a credencial de servico -- a unica que
+#: alcanca esta rota -- lia o segredo que o proprio sistema entrega.
 #:
 #: Tres particoes, e cada uma fecha uma familia:
 #: - `ext.startswith("env")`: `.env`, `.env.local`, `.envrc`, `nexus.env`

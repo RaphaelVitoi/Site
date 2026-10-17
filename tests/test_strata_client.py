@@ -1,6 +1,6 @@
 """
 Testes unitarios automatizados para o cliente e integracao Strata v0.1.39.
-Governança: Protocolo Chico SOTA v8.0 Gold.
+Governanca: Protocolo Chico SOTA v8.0 Gold.
 """
 
 from __future__ import annotations

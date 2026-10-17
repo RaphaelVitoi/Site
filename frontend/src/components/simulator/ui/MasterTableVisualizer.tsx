@@ -54,17 +54,10 @@ export function resolveTableSpot(
     ipSeat = 'UTG';
   } else if (scenario.id === 'sniper' || ipPos.startsWith('SB')) {
     ipSeat = 'SB';
-  } else if (ipPos.includes('BTN')) {
-    ipSeat = 'BTN';
   }
 
   // 2. Resolver assento físico OOP na mesa de 9 jogadores
-  let oopSeat = 'BB';
-  if (oopPos.includes('SB') && !oopPos.includes('BB')) {
-    oopSeat = 'SB';
-  } else {
-    oopSeat = 'BB';
-  }
+  const oopSeat = oopPos.includes('SB') && !oopPos.includes('BB') ? 'SB' : 'BB';
 
   // 3. Vincular Hero e Villain de acordo com heroPosition ('IP' | 'OOP' | 'BB' | 'SB')
   const isHeroIp =

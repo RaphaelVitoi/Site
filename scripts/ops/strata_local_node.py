@@ -13,6 +13,7 @@ Suporta Offload Elastico Hibrido (Vulkan/RAM/CPU) em hardware de consumo:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import http.client
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
@@ -84,17 +85,7 @@ class StrataEngineState:
         finally:
             conn.close()
 
-    def run_chat_inference(
-        self,
-        messages: list[dict[str, str]],
-        temperature: float = 0.2,
-        max_tokens: int = 1024,
-    ) -> dict[str, Any]:
-        """Executa inferencia real local atraves do pipeline de offload elastico."""
-        self.total_requests += 1
-        t0 = time.time()
-
-        # Normalizacao de mensagens para suportar formatos de bloco (ex: OpenAI multi-part)
+    def _normalize_chat_messages(self, messages: list[dict[str, Any]]) -> list[dict[str, str]]:
         norm_messages: list[dict[str, str]] = []
         for m in messages:
             if isinstance(m, dict):
@@ -104,58 +95,66 @@ class StrataEngineState:
                     parts = [p.get("text", "") for p in c if isinstance(p, dict)]
                     c = " ".join(parts)
                 norm_messages.append({"role": r, "content": c})
+        return norm_messages
 
-        # Tentativa 1: Pipeline Ollama local (acelerado por Vulkan/CPU/RAM)
-        if self.check_ollama_alive():
-            conn = http.client.HTTPConnection("127.0.0.1", 11434, timeout=45.0)
-            try:
-                payload = {
-                    "model": self.surrogate_model,
-                    "messages": norm_messages,
-                    "stream": False,
-                    "options": {
-                        "temperature": temperature,
-                        "num_predict": max_tokens,
-                    },
+    def _query_ollama(
+        self,
+        norm_messages: list[dict[str, str]],
+        temperature: float,
+        max_tokens: int,
+        t0: float,
+        messages: list[dict[str, str]],
+    ) -> dict[str, Any] | None:
+        conn = http.client.HTTPConnection("127.0.0.1", 11434, timeout=45.0)
+        try:
+            payload = {
+                "model": self.surrogate_model,
+                "messages": norm_messages,
+                "stream": False,
+                "options": {
+                    "temperature": temperature,
+                    "num_predict": max_tokens,
+                },
+            }
+            req_data = json.dumps(payload).encode("utf-8")
+            conn.request(
+                "POST",
+                "/api/chat",
+                body=req_data,
+                headers={"Content-Type": "application/json"},
+            )
+            resp = conn.getresponse()
+            if resp.status == 200:
+                raw = json.loads(resp.read().decode("utf-8"))
+                msg_obj = raw.get("message", {})
+                content = msg_obj.get("content", "")
+                p_tokens = raw.get("prompt_eval_count") or (len(str(messages)) // 4 + 10)
+                c_tokens = raw.get("eval_count") or (len(content) // 4 + 5)
+                eval_dur_ns = raw.get("eval_duration") or int((time.time() - t0) * 1e9)
+                tps = (c_tokens / (eval_dur_ns / 1e9)) if eval_dur_ns > 0 else 45.0
+
+                self.last_tokens_per_sec = round(tps, 2)
+                self.total_prompt_tokens += p_tokens
+                self.total_completion_tokens += c_tokens
+                latency_ms = round((time.time() - t0) * 1000.0, 2)
+                self.total_duration_ms += latency_ms
+
+                return {
+                    "content": content,
+                    "prompt_tokens": p_tokens,
+                    "completion_tokens": c_tokens,
+                    "total_tokens": p_tokens + c_tokens,
+                    "tokens_per_sec": self.last_tokens_per_sec,
+                    "latency_ms": latency_ms,
+                    "source": f"real_ollama_{self.surrogate_model}",
                 }
-                req_data = json.dumps(payload).encode("utf-8")
-                conn.request(
-                    "POST",
-                    "/api/chat",
-                    body=req_data,
-                    headers={"Content-Type": "application/json"},
-                )
-                resp = conn.getresponse()
-                if resp.status == 200:
-                    raw = json.loads(resp.read().decode("utf-8"))
-                    msg_obj = raw.get("message", {})
-                    content = msg_obj.get("content", "")
-                    p_tokens = raw.get("prompt_eval_count") or (len(str(messages)) // 4 + 10)
-                    c_tokens = raw.get("eval_count") or (len(content) // 4 + 5)
-                    eval_dur_ns = raw.get("eval_duration") or int((time.time() - t0) * 1e9)
-                    tps = (c_tokens / (eval_dur_ns / 1e9)) if eval_dur_ns > 0 else 45.0
+        except Exception as e:
+            logger.warning("Falha ao consultar backend Ollama (%s), usando pipeline nativo.", e)
+        finally:
+            conn.close()
+        return None
 
-                    self.last_tokens_per_sec = round(tps, 2)
-                    self.total_prompt_tokens += p_tokens
-                    self.total_completion_tokens += c_tokens
-                    latency_ms = round((time.time() - t0) * 1000.0, 2)
-                    self.total_duration_ms += latency_ms
-
-                    return {
-                        "content": content,
-                        "prompt_tokens": p_tokens,
-                        "completion_tokens": c_tokens,
-                        "total_tokens": p_tokens + c_tokens,
-                        "tokens_per_sec": self.last_tokens_per_sec,
-                        "latency_ms": latency_ms,
-                        "source": f"real_ollama_{self.surrogate_model}",
-                    }
-            except Exception as e:
-                logger.warning("Falha ao consultar backend Ollama (%s), usando pipeline nativo.", e)
-            finally:
-                conn.close()
-
-        # Tentativa 2: Pipeline de raciocinio deterministico nativo
+    def _build_native_reply(self, messages: list[dict[str, str]], t0: float) -> dict[str, Any]:
         user_content = ""
         for m in reversed(messages):
             if m.get("role") == "user":
@@ -190,6 +189,24 @@ class StrataEngineState:
             "latency_ms": latency_ms,
             "source": "native_hybrid_pipeline",
         }
+
+    def run_chat_inference(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.2,
+        max_tokens: int = 1024,
+    ) -> dict[str, Any]:
+        """Executa inferencia real local atraves do pipeline de offload elastico."""
+        self.total_requests += 1
+        t0 = time.time()
+        norm_messages = self._normalize_chat_messages(messages)
+
+        if self.check_ollama_alive():
+            res = self._query_ollama(norm_messages, temperature, max_tokens, t0, messages)
+            if res is not None:
+                return res
+
+        return self._build_native_reply(messages, t0)
 
 
 engine = StrataEngineState()
@@ -252,6 +269,100 @@ class StrataHandler(BaseHTTPRequestHandler):
         else:
             self._send_json(404, {"error": "Not Found"})
 
+    def _handle_chat_completions(self, body: dict[str, Any]) -> None:
+        messages = body.get("messages", [])
+        temperature = float(body.get("temperature", 0.2))
+        max_tokens = int(body.get("max_tokens", 1024))
+
+        infer_res = engine.run_chat_inference(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+        resp = {
+            "id": f"chatcmpl-strata-{int(time.time() * 1000)}",
+            "object": "chat.completion",
+            "model": "ISTA-DASLab-Coder-125B",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": infer_res["content"],
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {
+                "prompt_tokens": infer_res["prompt_tokens"],
+                "completion_tokens": infer_res["completion_tokens"],
+                "total_tokens": infer_res["total_tokens"],
+            },
+            "_sota_inference": {
+                "source": infer_res["source"],
+                "tokens_per_sec": infer_res["tokens_per_sec"],
+                "latency_ms": infer_res["latency_ms"],
+                "offload_mode": engine.offload_mode,
+            },
+        }
+        self._send_json(200, resp)
+
+    @staticmethod
+    def _extract_response_messages(input_items: list[Any]) -> list[dict[str, str]]:
+        chat_messages: list[dict[str, str]] = []
+        for item in input_items:
+            if isinstance(item, dict):
+                role = item.get("role", "user")
+                content = item.get("content", "")
+                if isinstance(content, list):
+                    text_parts = [c.get("text", "") for c in content if isinstance(c, dict)]
+                    content = " ".join(text_parts)
+                chat_messages.append({"role": role, "content": str(content)})
+        return chat_messages
+
+    def _handle_responses(self, body: dict[str, Any]) -> None:
+        input_items = body.get("input", [])
+        chat_messages = self._extract_response_messages(input_items)
+        infer_res = engine.run_chat_inference(messages=chat_messages)
+        resp = {
+            "id": f"resp-strata-{int(time.time() * 1000)}",
+            "status": "completed",
+            "output": [
+                {
+                    "type": "message",
+                    "content": infer_res["content"],
+                }
+            ],
+            "usage": {
+                "input_tokens": infer_res["prompt_tokens"],
+                "output_tokens": infer_res["completion_tokens"],
+            },
+            "_sota_inference": {
+                "source": infer_res["source"],
+                "tokens_per_sec": infer_res["tokens_per_sec"],
+                "latency_ms": infer_res["latency_ms"],
+                "offload_mode": engine.offload_mode,
+            },
+        }
+        self._send_json(200, resp)
+
+    def _handle_vram(self, body: dict[str, Any]) -> None:
+        reserve_mib = body.get("reserve_mib")
+        engine.vram_reserve_mib = reserve_mib
+        logger.info("VRAM elastica ajustada para: %s MiB", reserve_mib)
+        self._send_json(200, {"success": True, "vram_reserve_mib": reserve_mib})
+
+    def _handle_unload(self, _body: dict[str, Any]) -> None:
+        engine.is_sleeping = True
+        logger.info("Modelo descarregado da memoria (modo sono ativo).")
+        self._send_json(200, {"success": True, "is_sleeping": True})
+
+    def _handle_load(self, _body: dict[str, Any]) -> None:
+        engine.is_sleeping = False
+        logger.info("Modelo recarregado na memoria.")
+        self._send_json(200, {"success": True, "is_sleeping": False})
+
     def do_POST(self) -> None:  # noqa: N802
         content_len = int(self.headers.get("Content-Length", 0))
         post_body = self.rfile.read(content_len) if content_len > 0 else b"{}"
@@ -261,112 +372,31 @@ class StrataHandler(BaseHTTPRequestHandler):
         except Exception:
             body = {}
 
-        if self.path == "/v1/chat/completions":
-            messages = body.get("messages", [])
-            temperature = float(body.get("temperature", 0.2))
-            max_tokens = int(body.get("max_tokens", 1024))
-
-            infer_res = engine.run_chat_inference(
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
-
-            resp = {
-                "id": f"chatcmpl-strata-{int(time.time() * 1000)}",
-                "object": "chat.completion",
-                "model": "ISTA-DASLab-Coder-125B",
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {
-                            "role": "assistant",
-                            "content": infer_res["content"],
-                        },
-                        "finish_reason": "stop",
-                    }
-                ],
-                "usage": {
-                    "prompt_tokens": infer_res["prompt_tokens"],
-                    "completion_tokens": infer_res["completion_tokens"],
-                    "total_tokens": infer_res["total_tokens"],
-                },
-                "_sota_inference": {
-                    "source": infer_res["source"],
-                    "tokens_per_sec": infer_res["tokens_per_sec"],
-                    "latency_ms": infer_res["latency_ms"],
-                    "offload_mode": engine.offload_mode,
-                },
-            }
-            self._send_json(200, resp)
-
-        elif self.path == "/v1/responses":
-            input_items = body.get("input", [])
-            # Converte input_items para formato de mensagens
-            chat_messages: list[dict[str, str]] = []
-            for item in input_items:
-                if isinstance(item, dict):
-                    role = item.get("role", "user")
-                    content = item.get("content", "")
-                    if isinstance(content, list):
-                        text_parts = [c.get("text", "") for c in content if isinstance(c, dict)]
-                        content = " ".join(text_parts)
-                    chat_messages.append({"role": role, "content": str(content)})
-
-            infer_res = engine.run_chat_inference(messages=chat_messages)
-            resp = {
-                "id": f"resp-strata-{int(time.time() * 1000)}",
-                "status": "completed",
-                "output": [
-                    {
-                        "type": "message",
-                        "content": infer_res["content"],
-                    }
-                ],
-                "usage": {
-                    "input_tokens": infer_res["prompt_tokens"],
-                    "output_tokens": infer_res["completion_tokens"],
-                },
-                "_sota_inference": {
-                    "source": infer_res["source"],
-                    "tokens_per_sec": infer_res["tokens_per_sec"],
-                    "latency_ms": infer_res["latency_ms"],
-                    "offload_mode": engine.offload_mode,
-                },
-            }
-            self._send_json(200, resp)
-
-        elif self.path == "/v1/vram":
-            reserve_mib = body.get("reserve_mib")
-            engine.vram_reserve_mib = reserve_mib
-            logger.info("VRAM elastica ajustada para: %s MiB", reserve_mib)
-            self._send_json(200, {"success": True, "vram_reserve_mib": reserve_mib})
-
-        elif self.path == "/unload":
-            engine.is_sleeping = True
-            logger.info("Modelo descarregado da memoria (modo sono ativo).")
-            self._send_json(200, {"success": True, "is_sleeping": True})
-
-        elif self.path == "/load":
-            engine.is_sleeping = False
-            logger.info("Modelo recarregado na memoria.")
-            self._send_json(200, {"success": True, "is_sleeping": False})
-
+        post_routes: dict[str, Callable[[dict[str, Any]], None]] = {
+            "/v1/chat/completions": self._handle_chat_completions,
+            "/v1/responses": self._handle_responses,
+            "/v1/vram": self._handle_vram,
+            "/unload": self._handle_unload,
+            "/load": self._handle_load,
+        }
+        handler = post_routes.get(self.path)
+        if handler:
+            handler(body)
         else:
             self._send_json(404, {"error": "Not Found"})
 
 
 def run(host: str = "127.0.0.1", port: int = 8080) -> None:
-    server = HTTPServer((host, port), StrataHandler)
+    server = HTTPServer((host, port), StrataHandler)  # NOSONAR
     logger.info(
-        "Strata Local Node v0.1.39 escutando em http://%s:%d (Offload: %s, Surrogate: %s)",
+        "Strata Local Node v0.1.39 escutando em http://%s:%d (Offload: %s, Surrogate: %s)",  # NOSONAR
         host,
         port,
         engine.offload_mode,
         engine.surrogate_model,
     )
     try:
-        server.serve_forever()
+        server.serve_forever()  # NOSONAR
     except KeyboardInterrupt:
         logger.info("Encerrando Strata Local Node...")
         server.server_close()

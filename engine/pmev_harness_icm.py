@@ -146,6 +146,132 @@ def _pagamentos_do_estado(
     return None
 
 
+def _comparar_estado_icm(
+    estado: Mapping[str, Any],
+    est: Mapping[str, Any],
+) -> tuple[int, int, bool, float, str]:
+    """Compara um estado com seu icm_ev recomputado.
+
+    Retorna (assentos, processado, acertou, max_delta, info_pior_estado).
+    """
+    recomputado = _icm_publicado(estado, _pagamentos_do_estado(estado, est) or [])
+    publicado = estado.get("icm_ev")
+    if recomputado is None or not isinstance(publicado, list):
+        return 0, 0, False, 0.0, ""
+
+    if len(recomputado) != len(publicado):
+        info = f"stacks={estado.get('stacks')} motor={len(recomputado)} assentos publicado={len(publicado)}"
+        return 0, 1, False, float("inf"), info
+
+    assentos = len(recomputado)
+    deltas = [abs(a - float(e)) for a, e in zip(recomputado, publicado, strict=True)]
+    if all(d <= _TOLERANCIA_CENTRAL for d in deltas):
+        return assentos, 1, True, 0.0, ""
+
+    max_d = max(deltas)
+    info = f"stacks={estado.get('stacks')} motor={recomputado!r} publicado={publicado!r}"
+    return assentos, 1, False, max_d, info
+
+
+def _verificar_estados_amostra(
+    estados: Sequence[Mapping[str, Any]],
+    est: Mapping[str, Any],
+    rel: Relatorio,
+) -> None:
+    acertos = 0
+    processados = 0
+    assentos = 0
+    pior_delta = 0.0
+    pior_estado = ""
+    for estado in estados:
+        num_assentos, proc, acertou, max_d, info = _comparar_estado_icm(estado, est)
+        if not proc:
+            continue
+        processados += proc
+        assentos += num_assentos
+        if acertou:
+            acertos += 1
+        elif max_d > pior_delta:
+            pior_delta = max_d
+            pior_estado = info
+
+    rel.verificacoes.append(
+        Verificacao(
+            "estados_recomparados",
+            processados > 0,
+            f"{processados}/{len(estados)} estados, {assentos} assentos no total",
+        )
+    )
+    rel.verificacoes.append(
+        Verificacao(
+            "icm_ev_conferido",
+            processados > 0 and acertos == processados,
+            f"{acertos}/{processados} estados dentro de {_TOLERANCIA_CENTRAL:g}"
+            + (f"; pior delta={pior_delta:.6g} em {pior_estado}" if pior_delta else ""),
+        )
+    )
+
+
+def _verificar_vencedor_leva_tudo(
+    estados: Sequence[Mapping[str, Any]],
+    rel: Relatorio,
+) -> None:
+    compativeis = 0
+    iguais = 0
+    for e in estados:
+        a, b = e.get("icm_ev"), e.get("chip_ev")
+        if not isinstance(a, list) or not isinstance(b, list) or len(a) != len(b):
+            continue
+        compativeis += 1
+        if all(math.isclose(float(x), float(y), abs_tol=_TOLERANCIA_CENTRAL) for x, y in zip(a, b, strict=True)):
+            iguais += 1
+    rel.verificacoes.append(
+        Verificacao(
+            "spin_icm_igual_a_chipev",
+            compativeis > 0 and iguais == compativeis,
+            f"{iguais}/{compativeis} vetores identicos",
+        )
+    )
+
+
+def _verificar_bloco_metrica(nome: str, bloco: Mapping[str, Any], rel: Relatorio) -> None:
+    modelo, referencia = bloco.get("modelo"), bloco.get("referencia")
+    diferenca, ic = bloco.get("diferenca"), bloco.get("ic95")
+    if modelo is None or referencia is None or diferenca is None or not ic:
+        return
+    m, r, d = float(modelo), float(referencia), float(diferenca)
+    rel.verificacoes.append(
+        Verificacao(
+            f"diferenca_confere:{nome}",
+            math.isclose(m - r, d, abs_tol=1e-5),
+            f"modelo={m} referencia={r} => {m - r:.6f}, publicado={d}",
+        )
+    )
+    rel.verificacoes.append(
+        Verificacao(
+            f"ic_contem_diferenca:{nome}",
+            ic[0] - 1e-9 <= d <= ic[1] + 1e-9,
+            f"diferenca={d} dentro de ic95={ic}",
+        )
+    )
+    if math.isclose(float(ic[1]) - float(ic[0]), 0.0, abs_tol=1e-12):
+        rel.verificacoes.append(
+            Verificacao(
+                f"ic_degenerado_implica_zero:{nome}",
+                abs(d) <= 1e-9,
+                f"ic95={ic} e diferenca={d}",
+            )
+        )
+
+
+def _verificar_metricas_agregadas(est: Mapping[str, Any], rel: Relatorio) -> None:
+    metricas = est.get("metricas", {})
+    for nome in ("brier_lugar", "logloss_lugar", "brier_itm", "erro2_premio"):
+        bloco = metricas.get(nome)
+        if isinstance(bloco, Mapping):
+            _verificar_bloco_metrica(nome, bloco, rel)
+
+
 def verificar_estrutura(
     est: Mapping[str, Any],
     amostras: Mapping[str, Sequence[Mapping[str, Any]]],
@@ -170,114 +296,14 @@ def verificar_estrutura(
         rel.verificacoes.append(Verificacao("premios_disponiveis", False, "nem `premios` nem `fracoes_premio`"))
         return rel
 
-    acertos = 0
-    processados = 0
-    assentos = 0
-    pior_delta = 0.0
-    pior_estado = ""
-    for estado in estados:
-        recomputado = _icm_publicado(estado, _pagamentos_do_estado(estado, est) or [])
-        publicado = estado.get("icm_ev")
-        if recomputado is None or not isinstance(publicado, list):
-            continue
-        if len(recomputado) != len(publicado):
-            processados += 1
-            pior_delta = float("inf")
-            pior_estado = f"stacks={estado.get('stacks')} motor={len(recomputado)} assentos publicado={len(publicado)}"
-            continue
-        processados += 1
-        assentos += len(recomputado)
-        deltas = [abs(a - float(e)) for a, e in zip(recomputado, publicado, strict=True)]
-        if all(d <= _TOLERANCIA_CENTRAL for d in deltas):
-            acertos += 1
-        elif max(deltas) > pior_delta:
-            pior_delta = max(deltas)
-            pior_estado = f"stacks={estado.get('stacks')} motor={recomputado!r} publicado={publicado!r}"
-
-    rel.verificacoes.append(
-        Verificacao(
-            "estados_recomparados",
-            processados > 0,
-            f"{processados}/{len(estados)} estados, {assentos} assentos no total",
-        )
-    )
-    rel.verificacoes.append(
-        Verificacao(
-            "icm_ev_conferido",
-            processados > 0 and acertos == processados,
-            f"{acertos}/{processados} estados dentro de {_TOLERANCIA_CENTRAL:g}"
-            + (f"; pior delta={pior_delta:.6g} em {pior_estado}" if pior_delta else ""),
-        )
-    )
+    _verificar_estados_amostra(estados, est, rel)
 
     # ChipEV: em estruturas com `vencedor_leva_tudo`, ICM tem de igualar ChipEV
-    # exatamente. E o invariante que `test_pmev_benchmark_publico.py` tambem
-    # cobre; aqui ele fecha a lacuna de rodar por estrutura e reportar.
+    # exatamente.
     if est.get("vencedor_leva_tudo"):
-        # Em `vencedor_leva_tudo` a premiacao e linear na prob de.finish, entao
-        # ICM tem de reproduzir ChipEV assento a assento. Os dois sao vetores
-        # de mesmo comprimento no artefato.
-        compativeis = 0
-        iguais = 0
-        for e in estados:
-            a, b = e.get("icm_ev"), e.get("chip_ev")
-            if not isinstance(a, list) or not isinstance(b, list) or len(a) != len(b):
-                continue
-            compativeis += 1
-            if all(math.isclose(float(x), float(y), abs_tol=_TOLERANCIA_CENTRAL) for x, y in zip(a, b, strict=True)):
-                iguais += 1
-        rel.verificacoes.append(
-            Verificacao(
-                "spin_icm_igual_a_chipev",
-                compativeis > 0 and iguais == compativeis,
-                f"{iguais}/{compativeis} vetores identicos",
-            )
-        )
+        _verificar_vencedor_leva_tudo(estados, rel)
 
-    # As metricas agregadas vem com bootstrap por torneio. O `ic95` published
-    # bracket de `diferenca` (modelo - referencia), NAO do valor do modelo --
-    # ler `modelo` contra `ic95` daria falso negativo em toda linha, porque o
-    # Brier do modelo (0.72) nunca cai no IC da diferenca (negativo).
-    #
-    # O que se confere aqui e a COERENCIA INTERNA do agregado, nao que o
-    # bootstrap foi reamostrado igual: o resampleo e por torneio e os nomes dos
-    # torneios nao saem da maquina, logo isso e irreproduzivel de proposito.
-    metricas = est.get("metricas", {})
-    for nome in ("brier_lugar", "logloss_lugar", "brier_itm", "erro2_premio"):
-        bloco = metricas.get(nome)
-        if not isinstance(bloco, Mapping):
-            continue
-        modelo, referencia = bloco.get("modelo"), bloco.get("referencia")
-        diferenca, ic = bloco.get("diferenca"), bloco.get("ic95")
-        if modelo is None or referencia is None or diferenca is None or not ic:
-            continue
-        m, r, d = float(modelo), float(referencia), float(diferenca)
-        rel.verificacoes.append(
-            Verificacao(
-                f"diferenca_confere:{nome}",
-                math.isclose(m - r, d, abs_tol=1e-5),
-                f"modelo={m} referencia={r} => {m - r:.6f}, publicado={d}",
-            )
-        )
-        rel.verificacoes.append(
-            Verificacao(
-                f"ic_contem_diferenca:{nome}",
-                ic[0] - 1e-9 <= d <= ic[1] + 1e-9,
-                f"diferenca={d} dentro de ic95={ic}",
-            )
-        )
-        # `erro2_premio` com ic95 de largura zero so pode ocorrer quando o
-        # modelo e a referencia coincidem exatamente -- o caso da Spin, em que
-        # ICM reproduz ChipEV. Se o IC e degenerado e a diferenca nao e zero,
-        # o agregado e incoerente.
-        if float(ic[1]) - float(ic[0]) == 0.0:
-            rel.verificacoes.append(
-                Verificacao(
-                    f"ic_degenerado_implica_zero:{nome}",
-                    abs(d) <= 1e-9,
-                    f"ic95={ic} e diferenca={d}",
-                )
-            )
+    _verificar_metricas_agregadas(est, rel)
 
     rel.verificacoes.append(
         Verificacao(
@@ -295,6 +321,42 @@ def rodar(artefato: Path = ARTEFATO_PADRAO) -> list[Relatorio]:
     return [verificar_estrutura(est, amostras) for est in dados.get("estruturas", [])]
 
 
+def _imprimir_relatorio_json(
+    relatorios: Sequence[Relatorio],
+    total: int,
+    falhas: Sequence[tuple[Relatorio, Verificacao]],
+) -> None:
+    print(
+        json.dumps(
+            {
+                "estrutura_total": len(relatorios),
+                "verificacoes_total": total,
+                "falhas": [{"estrutura": r.estrutura_id, "nome": v.nome, "detalhe": v.detalhe} for r, v in falhas],
+                "ok": not falhas,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
+
+
+def _imprimir_relatorio_texto(
+    relatorios: Sequence[Relatorio],
+    total: int,
+    falhas: Sequence[tuple[Relatorio, Verificacao]],
+) -> None:
+    print(f"harness ICM x ChipEV -- {len(relatorios)} estruturas, {total} verificacoes")
+    for r in relatorios:
+        marca = "OK  " if r.ok else "FALHA"
+        print(f"  [{marca}] {r.estrutura_id}")
+        for v in r.verificacoes:
+            print(f"         {'pass' if v.ok else 'FAIL'}  {v.nome}" + (f" -- {v.detalhe}" if v.detalhe else ""))
+    print()
+    print(f"RESULTADO: {'TUDO VERDE' if not falhas else str(len(falhas)) + ' FALHA(S)'}")
+    if not falhas:
+        print("  (nao revalida as 15.459 estados: ver docstring do modulo)")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artefato", type=Path, default=ARTEFATO_PADRAO)
@@ -307,29 +369,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     falhas = [(r, v) for r in relatorios for v in r.falhas()]
 
     if args.json:
-        print(
-            json.dumps(
-                {
-                    "estrutura_total": len(relatorios),
-                    "verificacoes_total": total,
-                    "falhas": [{"estrutura": r.estrutura_id, "nome": v.nome, "detalhe": v.detalhe} for r, v in falhas],
-                    "ok": not falhas,
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
+        _imprimir_relatorio_json(relatorios, total, falhas)
     else:
-        print(f"harness ICM x ChipEV -- {len(relatorios)} estruturas, {total} verificacoes")
-        for r in relatorios:
-            marca = "OK  " if r.ok else "FALHA"
-            print(f"  [{marca}] {r.estrutura_id}")
-            for v in r.verificacoes:
-                print(f"         {'pass' if v.ok else 'FAIL'}  {v.nome}" + (f" -- {v.detalhe}" if v.detalhe else ""))
-        print()
-        print(f"RESULTADO: {'TUDO VERDE' if not falhas else str(len(falhas)) + ' FALHA(S)'}")
-        if not falhas:
-            print("  (nao revalida as 15.459 estados: ver docstring do modulo)")
+        _imprimir_relatorio_texto(relatorios, total, falhas)
 
     return 1 if falhas else 0
 

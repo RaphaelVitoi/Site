@@ -77,7 +77,7 @@ export function NexusOperationsPanel() {
     return () => window.clearInterval(timer);
   }, [refresh]);
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!description.trim() || submitting) return;
     setSubmitting(true);
@@ -125,6 +125,16 @@ export function NexusOperationsPanel() {
     (task) => task.status === 'pending' && Date.now() - Date.parse(task.timestamp) > 15 * 60 * 1000,
   );
 
+  let statusColor = 'text-emerald-300';
+  let statusText = 'API e QueueManager respondendo';
+  if (error) {
+    statusColor = 'text-rose-300';
+    statusText = 'Fila sem resposta';
+  } else if (loading) {
+    statusColor = 'text-amber-200';
+    statusText = 'Consultando a fila';
+  }
+
   return (
     <section aria-labelledby="nexus-operations-heading" className="mb-10">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -141,7 +151,7 @@ export function NexusOperationsPanel() {
           aria-label="Atualizar fila"
         >
           <i className="fa-solid fa-rotate-right mr-2" aria-hidden="true" />
-          Atualizar
+          {' '}Atualizar
         </button>
       </div>
 
@@ -155,23 +165,23 @@ export function NexusOperationsPanel() {
           ))}
         </div>
         <div className="text-text-muted mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3 text-xs">
-          <span role="status" aria-live="polite">
+          <output aria-live="polite">
             <i
-              className={`fa-solid fa-circle mr-2 ${error ? 'text-rose-300' : loading ? 'text-amber-200' : 'text-emerald-300'}`}
+              className={`fa-solid fa-circle mr-2 ${statusColor}`}
               aria-hidden="true"
             />
-            {error ? 'Fila sem resposta' : loading ? 'Consultando a fila' : 'API e QueueManager respondendo'}
-          </span>
+            {statusText}
+          </output>
           <span>
             {lastUpdated ? `Atualizado ${lastUpdated.toLocaleTimeString('pt-BR')}` : 'Sem leitura confirmada'}
           </span>
         </div>
       </GlassPanel>
       {stalePending ? (
-        <div role="status" className="mb-4 border-l-2 border-amber-300 px-4 py-2 text-sm text-amber-100">
+        <output className="mb-4 block border-l-2 border-amber-300 px-4 py-2 text-sm text-amber-100">
           Há tarefa pendente há mais de 15 minutos; isso pode indicar atraso ou falta de consumo, não confirma worker
           parado.
-        </div>
+        </output>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)]">
@@ -194,6 +204,7 @@ export function NexusOperationsPanel() {
             <div className="mt-3 flex items-center justify-between gap-3">
               <span className="text-text-muted text-xs">{description.length}/4000 · despacho via QueueManager</span>
               <button
+                type="submit"
                 disabled={submitting || !description.trim()}
                 className="bg-accent-indigo-surface rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
@@ -202,9 +213,9 @@ export function NexusOperationsPanel() {
             </div>
           </form>
           {notice ? (
-            <p role="status" className="mt-3 text-sm text-emerald-200">
+            <output className="mt-3 block text-sm text-emerald-200">
               {notice}
-            </p>
+            </output>
           ) : null}
           {error ? (
             <p role="alert" className="mt-3 text-sm text-rose-200">
@@ -222,7 +233,7 @@ export function NexusOperationsPanel() {
           {!loading && tasks.length === 0 ? (
             <p className="text-text-muted text-sm">Nenhuma tarefa recente retornada pela fila.</p>
           ) : null}
-          <ul className="m-0 max-h-[28rem] list-none space-y-3 overflow-y-auto p-0">
+          <ul className="m-0 max-h-112 list-none space-y-3 overflow-y-auto p-0">
             {tasks.map((task) => (
               <li key={task.id} className="rounded-lg border border-white/10 bg-slate-950/30 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -263,7 +274,7 @@ export function NexusOperationsPanel() {
               Fechar
             </button>
           </div>
-          <pre className="text-text-bright max-h-[32rem] overflow-auto text-sm break-words whitespace-pre-wrap">
+          <pre className="text-text-bright max-h-128 overflow-auto text-sm wrap-break-word whitespace-pre-wrap">
             {result.content}
           </pre>
         </GlassPanel>

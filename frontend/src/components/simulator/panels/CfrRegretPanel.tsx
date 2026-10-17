@@ -34,6 +34,12 @@ const WORKER_STATUS_LABEL: Record<string, string> = {
 	error: 'Indisponível',
 };
 
+const HAND_TYPE_LABELS = {
+	pair: 'Par',
+	suited: 'Suited',
+	offsuit: 'Offsuit',
+} as const;
+
 interface CfrWorkerMessage {
 	matrix?: Float32Array;
 	diagnostic?: CfrRegretDiagnostic;
@@ -293,7 +299,7 @@ export default function CfrRegretPanel({
 						<div className="flex items-center justify-between">
 							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
 								<i className="fa-solid fa-sliders text-accent-indigo-light" />
-								Ajuste de Parâmetros do Spot
+								{' '}Ajuste de Parâmetros do Spot
 							</h4>
 							<span className="text-[0.65rem] font-mono text-text-dim">Entrada Dinâmica</span>
 						</div>
@@ -409,7 +415,7 @@ export default function CfrRegretPanel({
 						<div className="flex justify-between items-center flex-wrap gap-2">
 							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
 								<i className="fa-solid fa-calculator text-accent-emerald" />
-								Dimensionamento Geométrico Multirua (Janda)
+								{' '}Dimensionamento Geométrico Multirua (Janda)
 							</h4>
 							<span className="text-xs font-mono font-bold text-accent-emerald bg-accent-emerald-surface/20 px-2.5 py-0.5 rounded-full border border-accent-emerald/25">
 								{canonicalSizing.potFractionPercentage}% Pot / Rua
@@ -459,7 +465,7 @@ export default function CfrRegretPanel({
 						<div className="flex justify-between items-center flex-wrap gap-2">
 							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
 								<i className="fa-solid fa-chart-line text-accent-indigo-light" />
-								Convergência & Exploitability (TimesFM)
+								{' '}Convergência & Exploitability (TimesFM)
 							</h4>
 							<div className="flex items-center gap-1.5">
 								<button
@@ -543,7 +549,7 @@ export default function CfrRegretPanel({
 						<div className="flex justify-between items-center">
 							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
 								<i className="fa-solid fa-table-cells text-accent-indigo-light" />
-								Matriz de Regret Matching 13x13
+								{' '}Matriz de Regret Matching 13x13
 							</h4>
 							<span className="text-[0.65rem] font-mono text-accent-emerald font-bold">
 								169 Spots de Mão
@@ -562,7 +568,7 @@ export default function CfrRegretPanel({
 									<div className="flex items-center gap-2">
 										<span className="font-bold text-white text-sm">{hoveredHand.hand}</span>
 										<span className="text-text-dim text-[0.7rem]">
-											{hoveredHand.type === 'pair' ? 'Par' : hoveredHand.type === 'suited' ? 'Suited' : 'Offsuit'}
+											{HAND_TYPE_LABELS[hoveredHand.type]}
 										</span>
 									</div>
 									<div className="flex items-center gap-3">

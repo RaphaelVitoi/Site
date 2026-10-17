@@ -131,6 +131,19 @@ def obter_perfil_hardware() -> HardwareProfile:
     )
 
 
+def _resolver_dispositivo(target_device: str, profile: HardwareProfile, allow_cpu: bool) -> str | None:
+    """Resolve o dispositivo de inferencia canonico validando suporte a CUDA."""
+    if target_device == "cuda" or (target_device == "auto" and profile.cuda_available):
+        if not profile.cuda_available:
+            logger.error("CUDA foi solicitado mas nao esta disponivel no host.")
+            if not allow_cpu:
+                return None
+            logger.warning("Prosseguindo com fallback de CPU sob autorizacao --allow-cpu.")
+            return "cpu"
+        return "cuda"
+    return "cpu"
+
+
 def executar_homologacao(
     target_device: str = "auto",
     iterations: int = 5,
@@ -150,18 +163,9 @@ def executar_homologacao(
     )
     logger.info("CUDA disponivel: %s (Dispositivos: %d)", profile.cuda_available, profile.device_count)
 
-    resolved_device = "cpu"
-    if target_device == "cuda" or (target_device == "auto" and profile.cuda_available):
-        if not profile.cuda_available:
-            logger.error("CUDA foi solicitado mas nao esta disponivel no host.")
-            if not allow_cpu:
-                return 1
-            logger.warning("Prosseguindo com fallback de CPU sob autorizacao --allow-cpu.")
-            resolved_device = "cpu"
-        else:
-            resolved_device = "cuda"
-    else:
-        resolved_device = "cpu"
+    resolved_device = _resolver_dispositivo(target_device, profile, allow_cpu)
+    if resolved_device is None:
+        return 1
 
     if resolved_device == "cpu" and not allow_cpu:
         os.environ.setdefault("CHICO_LAYA_PREDICT_ALLOW_CPU", "0")
@@ -487,9 +491,7 @@ def criar_fastapi_app() -> FastAPI:
         cpu_allowed = os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
         from llm.laya_bridge import _PREDICT_ROUTER  # noqa: PLC0415
 
-        weights_resident = bool(
-            _PREDICT_ROUTER is not None and "multilingual" in getattr(_PREDICT_ROUTER, "_agents", {})
-        )
+        weights_resident = _PREDICT_ROUTER is not None and "multilingual" in getattr(_PREDICT_ROUTER, "_agents", {})
         weights_ready = (profile.cuda_available or cpu_allowed) and weights_resident
         return {
             "status": "HEALTHY",
@@ -500,7 +502,7 @@ def criar_fastapi_app() -> FastAPI:
             "devices": [asdict(d) for d in profile.devices],
         }
 
-    @app.post("/predict")
+    @app.post("/predict", responses={500: {"description": "Erro interno durante predicao Laya"}})
     def predict(req: Annotated[PredictRequest, Body()]):
         try:
             pred: LayaPrediction = laya_predict(req.state, req.questions, model_override=req.model)
@@ -523,7 +525,7 @@ def criar_fastapi_app() -> FastAPI:
             logger.exception("Erro durante predicao Laya: %s", e)
             raise HTTPException(status_code=500, detail=str(e)) from e
 
-    @app.post("/solve")
+    @app.post("/solve", responses={500: {"description": "Erro interno durante solver bridge"}})
     def solve(req: Annotated[SolveRequest, Body()]):
         try:
             pred: LayaPrediction = laya_predict(req.state, model_override=req.model)
