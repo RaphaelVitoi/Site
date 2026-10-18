@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Construir ponte de API com engines de Range Analysis para o MasterSimulator.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -66,7 +65,7 @@ Domínio de Teoria dos Jogos (ICM, GTO, Nash), Rigor Matemático e Científico, 
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/validador/MEMORY.md`
 
-# @validador MEMORY - O Cortex Individual
+# @validador MEMORY - O Cortex Individual (AGENTS-MEMORY)
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 

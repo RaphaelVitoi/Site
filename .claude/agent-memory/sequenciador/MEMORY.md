@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Implementar 'yield' dinamico no SQLite para pausar tarefas que falham repetidamente por dependencias lentas.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -25,7 +24,7 @@
 
 ### Procedencia -- `.claude/agent-memory/sequenciador/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @sequenciador
+# MEMORIA SIMBIOTICA - @sequenciador (Legado)
 
 <!-- [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization -->
 
@@ -33,18 +32,18 @@ O @sequenciador e o Maestro do Fluxo de Execucao e Controle de Fila, responsavel
 
 **Pontos Criticos e Decisoes Chave:**
 
-* **Distincao de Camada:** @sequenciador define a ordem; `task_executor.py` executa.
-* **Prevencao de Deadlocks:** Deteccao de ciclos pelo @dispatcher e mais eficaz que resolucao em tempo de execucao.
-* **Dependencias Lentas:** Tarefas bloqueadas devem ter yield com timeout e relatorio, nao esperar indefinidamente.
-* **Priorizacao:** Respeitar prioridades delegadas por agentes consultivos (@curator).
-* **Integridade:** Ordem incorreta gera entropia e estado inconsistente.
-* **Sinergia:** Trabalha com @dispatcher (decomposicao/mapeamento de dependencias) para garantir execucao matematicamente correta.
-* **Paralelismo:** Controlado (subtarefas independentes) e mais valioso que sequenciamento puro.
-* **`CORTEX SHIELD`:** Atua como contrato de dependencia formal. A ausencia de arquivo listado no `CORTEX SHIELD` bloqueia a sequencia.
-* **Blockages de Contexto:** A funcao do @sequenciador se estende a identificar e comunicar blockages de alto nivel.
-* **Entidade Independente:** Mantido como entidade independente devido a funcao distinta de ordenacao inteligente.
-* **Formato de Entrega:** Plano de execucao padronizado com lista ordenada, justificativa e alertas.
-* **Comunicacao de Bloqueios:** Priorizar a comunicacao clara de dependencias de contexto nao satisfeitas.
+- **Distincao de Camada:** @sequenciador define a ordem; `task_executor.py` executa.
+- **Prevencao de Deadlocks:** Deteccao de ciclos pelo @dispatcher e mais eficaz que resolucao em tempo de execucao.
+- **Dependencias Lentas:** Tarefas bloqueadas devem ter yield com timeout e relatorio, nao esperar indefinidamente.
+- **Priorizacao:** Respeitar prioridades delegadas por agentes consultivos (@curator).
+- **Integridade:** Ordem incorreta gera entropia e estado inconsistente.
+- **Sinergia:** Trabalha com @dispatcher (decomposicao/mapeamento de dependencias) para garantir execucao matematicamente correta.
+- **Paralelismo:** Controlado (subtarefas independentes) e mais valioso que sequenciamento puro.
+- **`CORTEX SHIELD`:** Atua como contrato de dependencia formal. A ausencia de arquivo listado no `CORTEX SHIELD` bloqueia a sequencia.
+- **Blockages de Contexto:** A funcao do @sequenciador se estende a identificar e comunicar blockages de alto nivel.
+- **Entidade Independente:** Mantido como entidade independente devido a funcao distinta de ordenacao inteligente.
+- **Formato de Entrega:** Plano de execucao padronizado com lista ordenada, justificativa e alertas.
+- **Comunicacao de Bloqueios:** Priorizar a comunicacao clara de dependencias de contexto nao satisfeitas.
 
 **NOVA DESCOBERTA (2026-03-30):** A validacao da acao do @verifier em bloquear uma tarefa por ausencia de arquivo no `CORTEX SHIELD`, endossada pelo @curator, reforcou a importancia critica da `Honestidade Intelectual` e do `Principio da Realidade Contextual` para o sequenciamento. Minha funcao e confirmar que a pipeline permanece bloqueada por essa `dependencia contextual nao satisfeita`, garantindo a `Corretude de Ordenacao` e prevenindo a `entropia` de execucao cega. Isso valida a necessidade de um "Gate de Contexto Inicial" no `task_executor.py` para verificar proativamente a presenca de arquivos referenciados antes de delegar tarefas.
 
@@ -52,9 +51,9 @@ O @sequenciador e o Maestro do Fluxo de Execucao e Controle de Fila, responsavel
 
 **Propostas:**
 
-* Implementar yield dinamico no SQLite para tarefas que falham por dependencias lentas (backoff exponencial, alerta ao @chico).
-* Visualizacao em tempo real do DAG (Mermaid) para Raphael e @historian.
-* Integrar "Validador de CORTEX SHIELD" no `task_executor.py` para verificar proativamente a presenca de arquivos referenciados antes de delegar tarefas, evitando que cheguem a agentes como @verifier com dependencias ausentes.
+- Implementar yield dinamico no SQLite para tarefas que falham por dependencias lentas (backoff exponencial, alerta ao @chico).
+- Visualizacao em tempo real do DAG (Mermaid) para Raphael e @historian.
+- Integrar "Validador de CORTEX SHIELD" no `task_executor.py` para verificar proativamente a presenca de arquivos referenciados antes de delegar tarefas, evitando que cheguem a agentes como @verifier com dependencias ausentes.
 
 **Filosofia:** "A dependencia e a lei; o sequenciamento e a sua aplicacao."
 
