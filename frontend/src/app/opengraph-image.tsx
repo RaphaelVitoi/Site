@@ -111,7 +111,7 @@ const LOGO_TEXT = 'PokerRacional';
 const TAGLINE_TEXT = 'A Geometria do Risco: ICM Pós-Flop, Risk Premium e a Nova Fronteira do Edge em 2026';
 const AUTHOR_TEXT = 'Raphael Vitoi \u2014 Embaixador DeepSolver \u2022 GTO Wizard';
 
-export default async function Image() {
+export default function Image() {
 	return new ImageResponse(
 		<div style={containerStyle}>
 			{/* Grade decorativa */}

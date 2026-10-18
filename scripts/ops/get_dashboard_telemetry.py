@@ -147,7 +147,7 @@ def _empty_counts() -> dict[str, Any]:
 
 
 def _row_dict(row: sqlite3.Row) -> dict[str, Any]:
-    return {key: row[key] for key in row.keys()}  # noqa: SIM118 - sqlite3.Row itera valores, nao chaves
+    return dict(row)
 
 
 def _collect_task_counts(cursor: sqlite3.Cursor, counts: dict[str, Any]) -> None:

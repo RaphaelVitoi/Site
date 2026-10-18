@@ -291,7 +291,7 @@ export default function ToyGamesPage() {
 
 								{/* GAUGE IP */}
 								<div className="relative w-32 h-32 mx-auto my-6">
-									<svg viewBox="0 0 36 36" className="block w-full h-full">
+									<svg viewBox="0 0 36 36" className="block w-full h-full" aria-label="Gauge Risco Premium IP" role="img">
 										<path
 											fill="none"
 											stroke="rgba(30, 41, 59, 0.8)"
@@ -343,7 +343,7 @@ export default function ToyGamesPage() {
 
 								{/* GAUGE OOP */}
 								<div className="relative w-32 h-32 mx-auto my-6">
-									<svg viewBox="0 0 36 36" className="block w-full h-full">
+									<svg viewBox="0 0 36 36" className="block w-full h-full" aria-label="Gauge Risco Premium OOP" role="img">
 										<path
 											fill="none"
 											stroke="rgba(30, 41, 59, 0.8)"

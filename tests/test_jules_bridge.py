@@ -61,8 +61,9 @@ def test_jules_client_unconfigured() -> None:
     with patch.dict("os.environ", {"JULES_API_KEY": "", "GOOGLE_CLOUD_PROJECT": ""}, clear=True):
         client = JulesClient(api_key="", project_id="")
         assert not client.is_configured
+        req = JulesSessionRequest(source="src", prompt="p")
         with pytest.raises(ValueError, match="JulesClient nao configurado"):
-            client.create_session(JulesSessionRequest(source="src", prompt="p"))
+            client.create_session(req)
 
 
 def test_jules_client_create_session_success() -> None:

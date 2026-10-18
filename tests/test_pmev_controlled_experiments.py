@@ -52,11 +52,12 @@ def test_h3_accepts_only_a_clock_intervention() -> None:
 def test_h3_rejects_a_confounded_stack_change() -> None:
     treatment = h3_arm(2)
     treatment["stacks"] = [45, 30, 25]
+    control = h3_arm(15)
 
     with pytest.raises(ValueError, match="variaveis de confusao"):
         ControlledExperimentSpec(
             hypothesis=ExperimentHypothesis.H3_TEMPORAL_EROSION,
-            control=h3_arm(15),
+            control=control,
             treatment=treatment,
             primary_metric="delta_q_open",
             falsification_rule="A abertura nao aumenta.",
@@ -150,11 +151,13 @@ def test_h8_accepts_one_allowed_intervention() -> None:
 
 
 def test_h8_rejects_two_allowed_interventions_in_the_same_comparison() -> None:
+    control = h8_arm(payouts=[70, 30], utility_model="icmev")
+    treatment = h8_arm(payouts=[90, 10], utility_model="pmev-d")
     with pytest.raises(ValueError, match="exatamente uma intervencao"):
         ControlledExperimentSpec(
             hypothesis=ExperimentHypothesis.H8_DOWNWARD_DRIFT,
-            control=h8_arm(payouts=[70, 30], utility_model="icmev"),
-            treatment=h8_arm(payouts=[90, 10], utility_model="pmev-d"),
+            control=control,
+            treatment=treatment,
             primary_metric="aggression_delta",
             falsification_rule="O efeito nao aparece com a mesma direcao no output do solver.",
         )

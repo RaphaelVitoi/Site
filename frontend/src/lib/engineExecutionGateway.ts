@@ -190,7 +190,7 @@ export async function executePluribusEngine(
 		const executor =
 			executors[runtime] ??
 			(runtime === 'typescript'
-				? async (input: PluribusStateConfig) => solvePluribusMultiway(input)
+				? (input: PluribusStateConfig) => Promise.resolve(solvePluribusMultiway(input))
 				: undefined);
 		if (!executor) {
 			attempts.push({ runtime, status: 'unavailable', reason: 'executor not configured' });

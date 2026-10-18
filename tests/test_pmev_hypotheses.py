@@ -56,5 +56,6 @@ def _escrever(tmp_path: Path, mutar) -> Path:
     ],
 )
 def test_registro_invalido_falha_fechado(tmp_path, mutar, trecho):
+    caminho = _escrever(tmp_path, mutar)
     with pytest.raises(ValueError, match=trecho):
-        load_registry(_escrever(tmp_path, mutar))
+        load_registry(caminho)

@@ -229,7 +229,7 @@ rl.on('line', (line) => {
   if (!trimmed) return;
   try {
     const parsed = JSON.parse(trimmed);
-    handleMessage(parsed);
+    void handleMessage(parsed);
   } catch {
     // Ignore malformed lines to prevent crashes
   }

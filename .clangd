@@ -11,6 +11,12 @@ CompileFlags:
 
 ---
 If:
-  PathMatch: .*(/vendor/|/worker/Java/|/oracleJdk-).*
+  PathMatch: .*(vendor|worker[/\\]Java|oracleJdk).*
+Index:
+  Background: Skip
 Diagnostics:
   Suppress: ["*"]
+CompileFlags:
+  Add:
+    - "-w"
+    - "-ferror-limit=0"

@@ -34,6 +34,8 @@ wasm-equity/target/
 **/.ruff_cache/**
 reports/
 **/reports/**
+docs/reports/
+**/docs/reports/**
 skills/
 **/skills/**
 .git/

@@ -123,8 +123,9 @@ def test_composicao_recusa_ruina_sobre_equidade_incondicional():
 
 def test_pipeline_recusa_ruina_positiva_e_nao_premia_quem_quebra():
     """Antes: com p_ruin 0,3 o heroi subia de 127,01 para 160,11 T$ (payout terminal por indice)."""
+    pipeline = PMevCompositionalPipeline()
     with pytest.raises(ValueError, match="CONDICIONAL"):
-        PMevCompositionalPipeline().evaluate(MESA, p_ruin_vector=(0.3,) + (0.0,) * (N - 1))
+        pipeline.evaluate(MESA, p_ruin_vector=(0.3,) + (0.0,) * (N - 1))
 
 
 def test_proveniencia_da_cadeia_nao_declara_solver_que_nao_rodou():

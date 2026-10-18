@@ -114,7 +114,7 @@ export default function Home() {
       <section className="relative flex flex-col items-center overflow-hidden px-6 pt-32 pb-20 text-center sm:pt-40 sm:pb-24 lg:pt-52 lg:pb-36">
         {/* Subtle Fibonacci watermark in background */}
         <div className="pointer-events-none absolute top-10 right-10 opacity-[0.03] select-none">
-          <svg width="450" height="450" viewBox="0 0 320 320" fill="none">
+          <svg width="450" height="450" viewBox="0 0 320 320" fill="none" aria-hidden="true">
             <path d="M 320 320 Q 320 160 160 160" stroke="#0D0C0A" strokeWidth="0.6" fill="none" />
             <path d="M 160 160 Q 160 260 60 260" stroke="#0D0C0A" strokeWidth="0.5" fill="none" />
             <path d="M 60 260 Q 60 222 98 222" stroke="#0D0C0A" strokeWidth="0.5" fill="none" />
@@ -139,6 +139,8 @@ export default function Home() {
             viewBox="0 0 24 24"
             fill="none"
             className="opacity-80 transition-all duration-700 hover:scale-105"
+            aria-label="Logo Pacioli - Poker Racional"
+            role="img"
           >
             <circle cx="12" cy="12" r="11" stroke="#B09460" strokeWidth="0.6" />
             <polygon points="12,1.5 22.5,12 12,22.5 1.5,12" stroke="#1C1B1A" strokeWidth="0.6" />
@@ -761,7 +763,7 @@ function DownwardDriftWidget() {
 
       {/* Interactive SVG Curve Visualizer */}
       <div className="relative h-30 w-full overflow-hidden rounded-lg border border-[#EDE8E1] bg-[#F5F3EE]">
-        <svg viewBox="0 0 400 120" className="block h-full w-full">
+        <svg viewBox="0 0 400 120" className="block h-full w-full" aria-label="Visualizador Interativo de Curva Downward Drift" role="img">
           <defs>
             <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#765421" stopOpacity="0.5" />

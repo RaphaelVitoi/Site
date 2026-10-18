@@ -25,6 +25,25 @@ from typing import Any
 from engine.vitoi_perspective_engine import premio_de_risco_canonico
 
 
+def _distribute_prize_level(
+    prize: float,
+    states: dict[int, float],
+    active: list[int],
+    stacks: list[float],
+    ev: list[float],
+) -> dict[int, float]:
+    next_states: dict[int, float] = {}
+    for mask, probability in states.items():
+        remaining = [i for i in active if not mask & (1 << i)]
+        chips = sum(stacks[i] for i in remaining)
+        for i in remaining:
+            branch = probability * stacks[i] / chips
+            ev[i] += branch * prize
+            next_mask = mask | (1 << i)
+            next_states[next_mask] = next_states.get(next_mask, 0.0) + branch
+    return next_states
+
+
 def calculate_malmuth_harville_icm(
     stacks: list[float],
     payouts: list[float],
@@ -54,16 +73,7 @@ def calculate_malmuth_harville_icm(
     # Cada estado agrega todas as permutacoes do mesmo conjunto de vencedores.
     states = {0: 1.0}
     for prize in prizes[: len(active)]:
-        next_states: dict[int, float] = {}
-        for mask, probability in states.items():
-            remaining = [i for i in active if not mask & (1 << i)]
-            chips = sum(stacks[i] for i in remaining)
-            for i in remaining:
-                branch = probability * stacks[i] / chips
-                ev[i] += branch * prize
-                next_mask = mask | (1 << i)
-                next_states[next_mask] = next_states.get(next_mask, 0.0) + branch
-        states = next_states
+        states = _distribute_prize_level(prize, states, active, stacks, ev)
     return ev
 
 

@@ -20,18 +20,16 @@ const svgSource = Buffer.from(
 
 async function generateSizes() {
   const sizes = [16, 32, 48];
-  const buffers = [];
-
-  for (const size of sizes) {
-    const buf = await sharp(svgSource, { density: 300 })
-      .resize(size, size)
-      .png()
-      .toBuffer();
-    buffers.push({ size, buf });
-    console.log(`[OK] ${size}x${size} PNG generated (${buf.length} bytes)`);
-  }
-
-  return buffers;
+  return Promise.all(
+    sizes.map(async (size) => {
+      const buf = await sharp(svgSource, { density: 300 })
+        .resize(size, size)
+        .png()
+        .toBuffer();
+      console.log(`[OK] ${size}x${size} PNG generated (${buf.length} bytes)`);
+      return { size, buf };
+    })
+  );
 }
 
 function buildIco(pngBuffers) {

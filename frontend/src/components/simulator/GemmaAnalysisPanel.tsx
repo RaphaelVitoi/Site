@@ -64,7 +64,7 @@ Direto ao ponto, com rigor axiomático e sem preâmbulos.
 			bountyPower,
 		};
 
-		generateAnalysis(prompt, 256, targetModelOverride, snapshot);
+		void generateAnalysis(prompt, 256, targetModelOverride, snapshot);
 	};
 
 	return (

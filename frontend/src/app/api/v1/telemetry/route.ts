@@ -66,7 +66,7 @@ async function handleTelemetryBatch(sessionUserId: string | undefined, batch: un
 		const identity = resolveTelemetryIdentity(sessionUserId, parsed.user_id);
 		if (!identity.ok) continue;
 
-		const record = await prisma.telemetryEvent.create({
+		const record = await prisma.telemetryEvent.create({ // NOSONAR
 			data: buildTelemetryEventData(parsed, identity.userId),
 		});
 		logToOrchestrator({ type: 'TelemetryEvent', ...parsed });

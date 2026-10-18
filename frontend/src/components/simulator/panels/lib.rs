@@ -19,6 +19,7 @@ pub mod bayesian {
 }
 
 #[wasm_bindgen]
+#[derive(Default)]
 pub struct QuantumCfrEngine {
     iterations_run: usize,
 }
@@ -27,7 +28,7 @@ pub struct QuantumCfrEngine {
 impl QuantumCfrEngine {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self { iterations_run: 0 }
+        Self::default()
     }
 
     #[wasm_bindgen]

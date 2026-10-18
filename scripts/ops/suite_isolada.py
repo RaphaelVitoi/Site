@@ -61,7 +61,7 @@ RAIZ_PADRAO = Path(__file__).resolve().parents[2]
 # que dependem de submodulo materializado ou de projeto irmao, e o relatorio
 # imprimia so "504 passed" -- numero verdadeiro, categoria omitida. Vocabulario
 # de reporte que nao cobre uma categoria a apaga do relatorio.
-RE_RESUMO = re.compile(r"(\d+) (passed|failed|error|skipped|xfailed|xpassed)")
+RE_RESUMO = re.compile(r"\b(\d+)\s+(passed|failed|error|skipped|xfailed|xpassed)\b")
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess:
@@ -169,16 +169,16 @@ def main(argv: list[str] | None = None) -> int:
     alvo = Path(args.repo).expanduser().resolve()
     if not alvo.is_dir():
         print(f"[ISOLADA] Caminho inexistente: {alvo}")
-        return 2
+        return 1
     repo = raiz_do_repositorio(alvo)
     if repo is None:
         print(f"[ISOLADA] Nao e um repositorio git: {alvo}")
-        return 2
+        return 1
 
     comando = args.comando.split() if args.comando else comando_padrao(repo)
     if not comando:
         print(f"[ISOLADA] Nenhuma suite reconhecida em {repo.name}. Use --comando para declarar qual e.")
-        return 2
+        return 1
 
     base = Path(args.base).expanduser().resolve() if args.base else Path(tempfile.gettempdir())
     # pid + relogio no nome: duas execucoes simultaneas nunca colidem, e o nome

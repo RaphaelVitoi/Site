@@ -265,6 +265,47 @@ def caminhos_citados(corpo: str, raiz: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+def _extrair_supersedes(sup: Any) -> list[str]:
+    itens = sup if isinstance(sup, list) else [sup]
+    return [str(item).strip() for item in itens if item and str(item).lower() not in {"null", "none"}]
+
+
+def _construir_registro_bruto(
+    caminho: Path, raiz: Path, hoje: date, ambiente: dict[str, Any]
+) -> tuple[dict[str, Any] | None, str | None]:
+    rel = caminho.relative_to(raiz).as_posix()
+    fm, corpo = ler_frontmatter(caminho)
+    if fm is None:
+        return None, rel
+
+    classes = fm.get("classes") or []
+    if isinstance(classes, str):
+        classes = [classes]
+    sha = str(fm.get("commit") or "").strip()
+    motivos, ancestral, nao_conferiveis = avaliar_registro(fm, raiz, hoje, ambiente)
+
+    declarados = fm.get("caminhos") or []
+    if isinstance(declarados, str):
+        declarados = [declarados]
+
+    registro = {
+        "id": fm.get("id") or rel,
+        "arquivo": rel,
+        "tipo": fm.get("tipo"),
+        "escopo": fm.get("escopo"),
+        "autor": fm.get("autor"),
+        "classes": classes,
+        "commit": sha or None,
+        "commit_e_ancestral_do_head": ancestral,
+        "supersede": fm.get("supersede"),
+        "caminhos_declarados": sorted(declarados),
+        "caminhos_citados_na_prosa": caminhos_citados(corpo, raiz),
+        "config_nao_conferivel": sorted(nao_conferiveis),
+        "motivos": motivos,
+    }
+    return registro, None
+
+
 def construir(raiz: Path = RAIZ, hoje: date | None = None) -> dict[str, Any]:
     hoje = hoje or date.today()
     ambiente = resolvedores_de_ambiente(raiz)
@@ -274,52 +315,16 @@ def construir(raiz: Path = RAIZ, hoje: date | None = None) -> dict[str, Any]:
     sem_frontmatter: list[str] = []
 
     for caminho in arquivos_de_registro(raiz):
-        rel = caminho.relative_to(raiz).as_posix()
-        fm, corpo = ler_frontmatter(caminho)
-        if fm is None:
-            sem_frontmatter.append(rel)
-            continue
+        reg, sem_fm = _construir_registro_bruto(caminho, raiz, hoje, ambiente)
+        if sem_fm:
+            sem_frontmatter.append(sem_fm)
+        elif reg:
+            brutos.append(reg)
 
-        classes = fm.get("classes") or []
-        if isinstance(classes, str):
-            classes = [classes]
-        sha = str(fm.get("commit") or "").strip()
-        motivos, ancestral, nao_conferiveis = avaliar_registro(fm, raiz, hoje, ambiente)
-
-        declarados = fm.get("caminhos") or []
-        if isinstance(declarados, str):
-            declarados = [declarados]
-
-        brutos.append(
-            {
-                "id": fm.get("id") or rel,
-                "arquivo": rel,
-                "tipo": fm.get("tipo"),
-                "escopo": fm.get("escopo"),
-                "autor": fm.get("autor"),
-                "classes": classes,
-                "commit": sha or None,
-                "commit_e_ancestral_do_head": ancestral,
-                "supersede": fm.get("supersede"),
-                "caminhos_declarados": sorted(declarados),
-                "caminhos_citados_na_prosa": caminhos_citados(corpo, raiz),
-                "config_nao_conferivel": sorted(nao_conferiveis),
-                "motivos": motivos,
-            }
-        )
-
-    # OBSOLETO por supersede: quem foi aposentado por outro registro.
     aposentados: set[str] = set()
     for r in brutos:
-        sup = r.get("supersede")
-        if not sup:
-            continue
-        if isinstance(sup, list):
-            for item in sup:
-                if item and str(item).lower() not in {"null", "none"}:
-                    aposentados.add(str(item).strip())
-        elif str(sup).lower() not in {"null", "none"}:
-            aposentados.add(str(sup).strip())
+        if r.get("supersede"):
+            aposentados.update(_extrair_supersedes(r["supersede"]))
 
     for r in brutos:
         if r["id"] in aposentados:
@@ -412,6 +417,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.rebuild:
         ap.print_help()
+        return 1
     return 0
 
 

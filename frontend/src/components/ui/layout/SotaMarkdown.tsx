@@ -93,7 +93,7 @@ const HeadingWithCopy = ({ level, children, id }: { level: 2 | 3; children: Reac
     if (!id) return;
     e.stopPropagation();
     const url = `${globalThis.location.origin}${globalThis.location.pathname}#${id}`;
-    navigator.clipboard.writeText(url).then(() => {
+    void navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });

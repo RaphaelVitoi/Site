@@ -179,7 +179,7 @@ export default function TournamentTableImport({ onApply, initialContext, default
     <label className="flex flex-col gap-1">
       <span>Carregar HH ou configuração HRC</span>
       <input aria-label="Carregar HH ou configuração HRC" type="file" accept=".txt,.hh,.json,.hrcz,.hrcv,text/plain,application/json" className={fieldClass}
-        onChange={event => { receiveFile(event.target.files?.[0]); event.target.value = ''; }} />
+        onChange={event => { void receiveFile(event.target.files?.[0]); event.target.value = ''; }} />
     </label>
     <p>Cole uma HH em inglês do PokerStars/GGPoker ou abra um arquivo. Para HRC, escolha .hrcz/.hrcv ou JSON (Hand Config). A configuração da árvore, stacks, blinds e payouts são lidos do settings.json; estratégias e EVs armazenados nos binários do solver não são executados nesta bancada. Coleções de estruturas podem complementar a HH. Revise os defaults quando faltarem payouts.</p>
     <fieldset className="space-y-3 rounded-lg border border-white/20 p-3">
@@ -187,7 +187,7 @@ export default function TournamentTableImport({ onApply, initialContext, default
       <label className="flex flex-col gap-1">
         <span>Carregar estrutura JSON</span>
         <input aria-label="Carregar estrutura JSON" type="file" accept=".json,application/json" className={fieldClass}
-          onChange={event => { receiveStructureFile(event.target.files?.[0]); event.target.value = ''; }} />
+          onChange={event => { void receiveStructureFile(event.target.files?.[0]); event.target.value = ''; }} />
       </label>
       <details><summary>Colar JSON de estrutura</summary>
         <textarea aria-label="JSON de estrutura" className={fieldClass} value={structureRaw}

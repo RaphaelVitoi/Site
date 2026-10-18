@@ -38,7 +38,7 @@ const playTone = (type: GaugeState, intensity: number, audioCtxRef: React.RefObj
     }
 
     const ctx = audioCtxRef.current;
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'suspended') void ctx.resume();
 
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -181,7 +181,7 @@ export function RiskGauge({
   return (
     <div className="flex flex-col items-center group/gauge">
       <div className="relative mx-auto mb-6 aspect-square w-full max-w-40 transition-transform duration-700 group-hover/gauge:scale-105">
-        <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90 filter drop-shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+        <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90 filter drop-shadow-[0_0_30px_rgba(0,0,0,0.5)]" aria-label="Indicador Circular de Risco" role="img">
           <path
             className="fill-none stroke-slate-900/60"
             strokeWidth="3"

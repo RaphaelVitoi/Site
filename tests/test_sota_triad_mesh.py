@@ -139,8 +139,9 @@ class TestSotaTriadMesh(unittest.TestCase):
             PhaseReceipt(succeeded=True, evidence="   ")
 
     def test_unknown_pillar_receipt_is_rejected(self) -> None:
+        receipt = PhaseReceipt(True, "x")
         with pytest.raises(ValueError, match="Unknown triad pillar"):
-            self.orchestrator.execute_triad_dag("objective", receipts={"devin": PhaseReceipt(True, "x")})
+            self.orchestrator.execute_triad_dag("objective", receipts={"devin": receipt})
 
     def test_pure_ascii_in_triad_files(self) -> None:
         triad_file = ROOT_DIR / "engine" / "sota_triad_mesh.py"

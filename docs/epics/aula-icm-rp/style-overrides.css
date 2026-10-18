@@ -3,14 +3,14 @@
 /* 1. Responsividade Fluida (Mobile-First) */
 @media (max-width: 768px) {
     .glass-panel {
-        padding: 1.5rem !important;
+        padding: 1.5rem;
         border-radius: 16px;
     }
     #stage-title {
         font-size: 1.75rem;
     }
     .grid-cols-2 {
-        gap: 1rem !important;
+        gap: 1rem;
     }
 }
 

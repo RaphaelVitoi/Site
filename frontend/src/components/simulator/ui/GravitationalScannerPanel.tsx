@@ -208,6 +208,7 @@ export function GravitationalScannerPanel({
       <div className="relative my-4 flex aspect-square w-full max-w-95 items-center justify-center select-none">
         {/* SVG: Órbitas Concéntricas e Vetores Geodésicos de Força */}
         <svg
+          aria-hidden="true"
           className="pointer-events-none absolute inset-0 h-full w-full"
           viewBox="0 0 400 400"
         >

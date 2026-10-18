@@ -1191,6 +1191,31 @@ class MemoryRAG:
             )
         return "\n".join(output_parts)
 
+    async def _execute_chroma_query(self, expanded_queries: list[str], n_results: int) -> tuple[list, list, list]:
+        try:
+            results = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: self.collection.query(
+                    query_texts=expanded_queries,
+                    n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
+                    include=["documents", "metadatas", "distances"],
+                ),
+            )
+        except Exception as e:
+            logger.warning("[CHROMA] Consulta indisponivel; tentando LanceDB: %s", e)
+            results = None
+
+        return self._flatten_and_deduplicate_results(results) if results else ([], [], [])
+
+    async def _handle_chroma_fallback(self, target_engine: str, question: str, n_results: int) -> str:
+        if target_engine != "lance" and self.lance_backend:
+            lance_docs = await self.query_lancedb(question, n_results=n_results)
+            if lance_docs:
+                logger.info("[RAG] Chroma indisponivel/vazio; failover para LanceDB.")
+                return self._format_lance_results(lance_docs)
+        logger.warning("[RAG] Ambos os motores vetoriais sem resultados. Acionando fallback lexical...")
+        return await self._zero_latency_lexical_fallback()
+
     async def query_memory(
         self,
         question: str,
@@ -1213,30 +1238,9 @@ class MemoryRAG:
 
             # 1. Expansao da Query com IA para Recall Semantico Superior (ChromaDB Padrao)
             expanded_queries = [question] if local_only else await self._expand_query(question)
-            try:
-                results = await asyncio.get_event_loop().run_in_executor(
-                    None,
-                    lambda: self.collection.query(
-                        query_texts=expanded_queries,
-                        n_results=n_results * HYBRID_SEARCH_N_RESULTS_MULTIPLIER,
-                        include=["documents", "metadatas", "distances"],
-                    ),
-                )
-            except Exception as e:
-                logger.warning("[CHROMA] Consulta indisponivel; tentando LanceDB: %s", e)
-                results = None
-
-            documents, metadatas, distances = (
-                self._flatten_and_deduplicate_results(results) if results else ([], [], [])
-            )
+            documents, metadatas, distances = await self._execute_chroma_query(expanded_queries, n_results)
             if not documents:
-                if target_engine != "lance" and self.lance_backend:
-                    lance_docs = await self.query_lancedb(question, n_results=n_results)
-                    if lance_docs:
-                        logger.info("[RAG] Chroma indisponivel/vazio; failover para LanceDB.")
-                        return self._format_lance_results(lance_docs)
-                logger.warning("[RAG] Ambos os motores vetoriais sem resultados. Acionando fallback lexical...")
-                return await self._zero_latency_lexical_fallback()
+                return await self._handle_chroma_fallback(target_engine, question, n_results)
 
             top_docs = self._rank_documents(question, documents, metadatas, distances, n_results)
 

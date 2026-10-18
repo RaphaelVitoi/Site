@@ -55,12 +55,12 @@ graph TD
     EdgeSuite[Microsoft Edge & Edge Dev] --> AICore[Núcleo ChatGPT & Copilot]
     EdgeSuite --> ProdCore[Produtividade & Automações]
     EdgeSuite --> MediaSec[Mídia & Segurança]
-    
+
     AICore --> SChatGPT[Superpower ChatGPT: Pastas, Exportação, Prompt Library]
     AICore --> ChatGPTOficial[ChatGPT Oficial Web]
     AICore --> PromptlyE[Promptly: Otimizador Multi-LLM]
     AICore --> CopilotE[Microsoft Copilot Integrado]
-    
+
     ProdCore --> PowerAuto[Microsoft Power Automate RPA]
     ProdCore --> MSEditor[Editor Microsoft Gramatical]
     ProdCore --> KamiE[Kami: Anotações em PDF]
@@ -68,7 +68,7 @@ graph TD
     ProdCore --> TactiqE[Tactiq: Transcrição de Reuniões]
     ProdCore --> ReadwiseE[Readwise Sync]
     ProdCore --> ChessE[Chessvision.ai Scanner]
-    
+
     MediaSec --> ImpYTE['Improve YouTube!' Controlador Único]
     MediaSec --> MBGE[Malwarebytes Browser Guard]
 ```
@@ -88,20 +88,20 @@ graph TD
     ChromeSuite[Google Chrome & Chrome Dev] --> AICoreC[Núcleo Gemini & Claude]
     ChromeSuite --> SciGCP[Pesquisa Científica & Cloud]
     ChromeSuite --> DevSecC[DevTools, Mídia & Segurança]
-    
+
     AICoreC --> ClaudeOficial[Claude Oficial Anthropic]
     AICoreC --> SGemini[Superpower for Gemini™: Folders & Prompts]
     AICoreC --> SciGem[SciGemini: Pesquisa Científica & LaTeX]
     AICoreC --> YouMindC[YouMind: Claude & Gemini Clipper/Notes]
     AICoreC --> PromptlyC[Promptly: Prompt Refiner]
-    
+
     SciGCP --> CloudCapt[Admin Tools by Cloud Captains]
     SciGCP --> MboxV[Mbox Viewer]
     SciGCP --> GDocs[Google Docs Offline]
     SciGCP --> KnowtC[Knowt: AI Notes & Flashcards]
     SciGCP --> TactiqC[Tactiq AI Notes]
     SciGCP --> ReadwiseC[Readwise Sync]
-    
+
     DevSecC --> uBlockC[uBlock Origin Lite MV3]
     DevSecC --> MBGC[Malwarebytes Browser Guard]
     DevSecC --> ImpYTC['Improve YouTube!' Controlador Único]

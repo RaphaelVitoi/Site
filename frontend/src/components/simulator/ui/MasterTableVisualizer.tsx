@@ -200,6 +200,8 @@ export function MasterTableVisualizer({
           height="100%"
           viewBox={`0 0 ${W} ${H}`}
           className="overflow-visible drop-shadow-2xl select-none"
+          aria-label="Visualizador Topologico Master Table"
+          role="img"
         >
           <defs>
             <radialGradient id="masterFeltGrad" cx="50%" cy="50%" r="50%">

@@ -78,64 +78,125 @@ def redigir_segredos(texto: str) -> str:
     return re.sub(_SEGREDO_PREFIXADO, MARCADOR_REDIGIDO, saida)
 
 
+def _extract_session_failure(activities: list[dict[str, Any]]) -> str | None:
+    for act in activities:
+        if isinstance(act, dict) and "sessionFailed" in act:
+            fail_data = act["sessionFailed"]
+            if isinstance(fail_data, dict):
+                return str(fail_data.get("reason", "Unknown failure"))
+    return None
+
+
+def _extract_source_and_branch(s: dict[str, Any]) -> tuple[str, str]:
+    source_name = "sources/github/RaphaelVitoi/Site"
+    branch_name = "master"
+    source_ctx = s.get("sourceContext")
+    if isinstance(source_ctx, dict):
+        raw_source = source_ctx.get("source")
+        if raw_source:
+            source_name = str(raw_source)
+        repo_ctx = source_ctx.get("githubRepoContext")
+        if isinstance(repo_ctx, dict):
+            raw_branch = repo_ctx.get("startingBranch")
+            if raw_branch:
+                branch_name = str(raw_branch)
+    return source_name, branch_name
+
+
+def _enrich_single_session(client: JulesClient, s: dict[str, Any]) -> dict[str, Any]:
+    session_name = str(s.get("name", ""))
+    session_id = session_name.rsplit("/", maxsplit=1)[-1]
+    activities = client.get_activities(session_id)
+    failure_reason = _extract_session_failure(activities)
+    source_name, branch_name = _extract_source_and_branch(s)
+
+    return {
+        "id": session_id,
+        "title": s.get("title", "Sem titulo"),
+        "state": s.get("state", "STATE_UNSPECIFIED"),
+        "create_time": s.get("createTime", ""),
+        "update_time": s.get("updateTime", ""),
+        "prompt": s.get("prompt", ""),
+        "source": source_name,
+        "branch": branch_name,
+        "pr_url": s.get("githubPullRequestUrl"),
+        "failure_reason": failure_reason,
+        "activities_count": len(activities),
+        "activities": activities,
+    }
+
+
 def fetch_all_sessions_and_activities() -> list[dict[str, Any]]:
     """Obtem todas as sessoes e suas respectivas atividades detalhadas."""
     client = JulesClient()
     raw_sessions = client.list_sessions(page_size=50)
-
-    enriched_sessions: list[dict[str, Any]] = []
-    for s in raw_sessions:
-        session_name = str(s.get("name", ""))
-        session_id = session_name.rsplit("/", maxsplit=1)[-1]
-
-        # Buscar atividades da sessao
-        activities = client.get_activities(session_id)
-
-        # Identificar falha e razao se houver
-        failure_reason = None
-        for act in activities:
-            if isinstance(act, dict) and "sessionFailed" in act:
-                fail_data = act["sessionFailed"]
-                if isinstance(fail_data, dict):
-                    failure_reason = str(fail_data.get("reason", "Unknown failure"))
-                break
-
-        # Verificar se gerou PR ou diff
-        pr_url = s.get("githubPullRequestUrl")
-
-        source_name = "sources/github/RaphaelVitoi/Site"
-        branch_name = "master"
-        source_ctx = s.get("sourceContext")
-        if isinstance(source_ctx, dict):
-            raw_source = source_ctx.get("source")
-            if raw_source:
-                source_name = str(raw_source)
-            repo_ctx = source_ctx.get("githubRepoContext")
-            if isinstance(repo_ctx, dict):
-                raw_branch = repo_ctx.get("startingBranch")
-                if raw_branch:
-                    branch_name = str(raw_branch)
-
-        enriched_sessions.append(
-            {
-                "id": session_id,
-                "title": s.get("title", "Sem titulo"),
-                "state": s.get("state", "STATE_UNSPECIFIED"),
-                "create_time": s.get("createTime", ""),
-                "update_time": s.get("updateTime", ""),
-                "prompt": s.get("prompt", ""),
-                "source": source_name,
-                "branch": branch_name,
-                "pr_url": pr_url,
-                "failure_reason": failure_reason,
-                "activities_count": len(activities),
-                "activities": activities,
-            }
-        )
-
-    # Ordenar cronologicamente inverso (mais recente primeiro)
+    enriched_sessions = [_enrich_single_session(client, s) for s in raw_sessions]
     enriched_sessions.sort(key=lambda x: x["create_time"], reverse=True)
     return enriched_sessions
+
+
+def _format_session_row(s: dict[str, Any]) -> str:
+    sid = s["id"]
+    created = s["create_time"][:19].replace("T", " ") if s["create_time"] else "N/A"
+    raw_title = s["title"].splitlines()[0] if s["title"].splitlines() else "Sem titulo"
+    title = raw_title.replace("|", "/").strip()
+    if len(title) > 55:
+        title = title[:52] + "..."
+    branch = s["branch"]
+    state_badge = "✅ COMPLETED" if s["state"] == "COMPLETED" else f"❌ {s['state']}"
+    acts_count = s["activities_count"]
+
+    fail = s["failure_reason"]
+    if fail:
+        if "not our ref" in fail or "submodule" in fail:
+            obs = "Submodule clone failed (`exa-mcp-server` ref `fb57858` inexistente no upstream)"
+        else:
+            obs = f"`{fail[:80]}`"
+    elif s["state"] == "COMPLETED":
+        obs = "Execução bem-sucedida"
+    else:
+        obs = "—"
+
+    return f"| [{sid}](https://jules.google.com/session/{sid}) | `{created}` | **{title}** | `{branch}` | {state_badge} | `{acts_count}` | {obs} |"
+
+
+def _format_session_detail(s: dict[str, Any]) -> list[str]:
+    sid = s["id"]
+    lines = [
+        f"### Sessão `{sid}` — {s['title']}",
+        f"- **Status:** `{s['state']}`",
+        f"- **Criada em:** `{s['create_time']}`",
+        f"- **Branch:** `{s['branch']}` | **Repositório:** `{s['source']}`",
+        f"- **Link Direto:** https://jules.google.com/session/{sid}",
+        "- **Prompt Original:**",
+        "  ```text",
+    ]
+    prompt_lines = redigir_segredos(s["prompt"].strip()).splitlines()
+    lines.extend([f"  {pl}" for pl in prompt_lines[:15]])
+    if len(prompt_lines) > 15:
+        lines.append(f"  ... [truncado, {len(prompt_lines)} linhas no total]")
+    lines.append("  ```")
+
+    if s["failure_reason"]:
+        lines.extend(
+            [
+                "- **Motivo da Falha Registrado na Atividade:**",
+                "  ```text",
+                f"  {s['failure_reason']}",
+                "  ```",
+            ]
+        )
+
+    if s["activities"]:
+        lines.append(f"- **Timeline de Atividades ({len(s['activities'])} eventos):**")
+        lines.extend(
+            [
+                f"  - `[{act.get('createTime', '')[:19].replace('T', ' ')}]` **{act.get('originator', 'SYSTEM')}**: `{', '.join(k for k in act if k not in ('name', 'createTime', 'originator'))}`"
+                for act in s["activities"]
+            ]
+        )
+    lines.append("")
+    return lines
 
 
 def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
@@ -150,81 +211,57 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines: list[str] = [
         "# Google Jules Cloud Telemetry & Task Execution Report",
         "",
-        "> **Reposit\u00f3rio Monitorado:** `RaphaelVitoi/Site`",
-        "> **Governan\u00e7a:** Protocolo Master Chico SOTA v8.0 GOLD (Se\u00e7\u00e3o X \u2014 Jules Cloud MCP Bridge)",
-        f"> **Data de Atualiza\u00e7\u00e3o:** `{now_utc}`",
+        "> **Repositório Monitorado:** `RaphaelVitoi/Site`",
+        "> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD (Seção X — Jules Cloud MCP Bridge)",
+        f"> **Data de Atualização:** `{now_utc}`",
         "> **Origem dos Dados:** Google Jules API v1alpha (`https://jules.googleapis.com/v1alpha`)",
         "",
         "---",
         "",
-        "## 1. Resumo Executivo das Sess\u00f5es em Nuvem",
+        "## 1. Resumo Executivo das Sessões em Nuvem",
         "",
-        "| M\u00e9trica | Valor | Status Operacional |",
+        "| Métrica | Valor | Status Operacional |",
         "| :--- | :--- | :--- |",
-        f"| **Total de Sess\u00f5es Registradas** | `{total}` | Base de telemetria completa |",
-        f"| **Sess\u00f5es Conclu\u00eddas com Sucesso** | `{completed}` | \u2705 Execu\u00e7\u00e3o com artefatos |",
-        f"| **Sess\u00f5es com Falha de Execu\u00e7\u00e3o** | `{failed}` | \u26a0\ufe0f Diagn\u00f3stico detalhado abaixo |",
-        f"| **Sess\u00f5es Ativas no Momento** | `{in_progress}` | \U0001f4a4 Standby |",
-        "| **Plano / cota** | N\u00e3o expostos por este endpoint | Consulte a conta no momento da opera\u00e7\u00e3o |",
-        "| **Agendamento externo** | N\u00e3o verificado | O hist\u00f3rico de sess\u00f5es n\u00e3o prova estado do cron |",
+        f"| **Total de Sessões Registradas** | `{total}` | Base de telemetria completa |",
+        f"| **Sessões Concluídas com Sucesso** | `{completed}` | ✅ Execução com artefatos |",
+        f"| **Sessões com Falha de Execução** | `{failed}` | ⚠️ Diagnóstico detalhado abaixo |",
+        f"| **Sessões Ativas no Momento** | `{in_progress}` | 💤 Standby |",
+        "| **Plano / cota** | Não expostos por este endpoint | Consulte a conta no momento da operação |",
+        "| **Agendamento externo** | Não verificado | O histórico de sessões não prova estado do cron |",
         "",
         "> [!NOTE]",
-        "> **Modelo: a escolha \u00e9 na UI, n\u00e3o pelo port\u00e3o MCP.**",
+        "> **Modelo: a escolha é na UI, não pelo portão MCP.**",
         ">",
-        "> O seletor de modelo do Jules existe e \u00e9 do operador, mas vive nas prefer\u00eancias da plataforma (`jules.google.com/settings/general`) \u2014 mesmo padr\u00e3o do Stitch.",
-        "> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam par\u00e2metro de modelo, ent\u00e3o nenhuma autom\u00e1tica daqui o roteia (medido em 2026-09-04).",
-        "> Este relat\u00f3rio deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instru\u00e7\u00e3o que n\u00e3o alcan\u00e7a mecanismo \u00e9 promessa ao operador.",
+        "> O seletor de modelo do Jules existe e é do operador, mas vive nas preferências da plataforma (`jules.google.com/settings/general`) — mesmo padrão do Stitch.",
+        "> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04).",
+        "> Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador.",
         ">",
-        "> Plano, limites da conta e automa\u00e7\u00f5es externas n\u00e3o s\u00e3o inferidos do hist\u00f3rico retornado pela API.",
+        "> Plano, limites da conta e automações externas não são inferidos do histórico retornado pela API.",
         "",
         "---",
         "",
-        "## 2. Diagn\u00f3stico de Causa-Raiz das Falhas Di\u00e1rias",
+        "## 2. Diagnóstico de Causa-Raiz das Falhas Diárias",
         "",
         "> [!CAUTION]",
-        "> **Por que o relat\u00f3rio anterior estava vazio e as tarefas di\u00e1rias falhavam:**",
-        "> 1. **Relat\u00f3rio Alien\u00edgena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extens\u00e3o VS Code alheio), sem qualquer v\u00ednculo com a API do Jules.",
-        "> 2. **Falha Sist\u00eamica no Clone da VM do Jules:** Toda noite \u00e0s ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descart\u00e1vel e executa:",
+        "> **Por que o relatório anterior estava vazio e as tarefas diárias falhavam:**",
+        "> 1. **Relatório Alienígena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extensão VS Code alheio), sem qualquer vínculo com a API do Jules.",
+        "> 2. **Falha Sistêmica no Clone da VM do Jules:** Toda noite às ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descartável e executa:",
         ">    ```bash",
         ">    git clone --depth 1 --shallow-submodules --no-single-branch --recursive https://github.com/RaphaelVitoi/Site -b master /app",
         ">    ```",
-        "> 3. **Subm\u00f3dulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no subm\u00f3dulo, mas **nunca foi (e n\u00e3o pode ser) enviado para o reposit\u00f3rio p\u00fablico upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar.",
-        "> 4. **Bug de Par\u00e2metro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sess\u00e3o).",
+        "> 3. **Submódulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no submódulo, mas **nunca foi (e não pode ser) enviado para o repositório público upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar.",
+        "> 4. **Bug de Parâmetro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sessão).",
         "",
         "---",
         "",
-        "## 3. Hist\u00f3rico Consolidado de Sess\u00f5es no Google Jules",
+        "## 3. Histórico Consolidado de Sessões no Google Jules",
         "",
-        "| ID da Sess\u00e3o | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observa\u00e7\u00e3o / Causa da Falha |",
+        "| ID da Sessão | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observação / Causa da Falha |",
         "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
 
     for s in sessions:
-        sid = s["id"]
-        created = s["create_time"][:19].replace("T", " ") if s["create_time"] else "N/A"
-        raw_title = s["title"].splitlines()[0] if s["title"].splitlines() else "Sem titulo"
-        title = raw_title.replace("|", "/").strip()
-        if len(title) > 55:
-            title = title[:52] + "..."
-        branch = s["branch"]
-        state_badge = "\u2705 COMPLETED" if s["state"] == "COMPLETED" else f"\u274c {s['state']}"
-        acts_count = s["activities_count"]
-
-        fail = s["failure_reason"]
-        if fail:
-            # Resumir a razao
-            if "not our ref" in fail or "submodule" in fail:
-                obs = "Submodule clone failed (`exa-mcp-server` ref `fb57858` inexistente no upstream)"
-            else:
-                obs = f"`{fail[:80]}`"
-        elif s["state"] == "COMPLETED":
-            obs = "Execu\u00e7\u00e3o bem-sucedida"
-        else:
-            obs = "\u2014"
-
-        lines.append(
-            f"| [{sid}](https://jules.google.com/session/{sid}) | `{created}` | **{title}** | `{branch}` | {state_badge} | `{acts_count}` | {obs} |"
-        )
+        lines.append(_format_session_row(s))
 
     lines.extend(
         [
@@ -237,43 +274,7 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     )
 
     for s in sessions:
-        sid = s["id"]
-        lines.extend(
-            [
-                f"### Sess\u00e3o `{sid}` \u2014 {s['title']}",
-                f"- **Status:** `{s['state']}`",
-                f"- **Criada em:** `{s['create_time']}`",
-                f"- **Branch:** `{s['branch']}` | **Reposit\u00f3rio:** `{s['source']}`",
-                f"- **Link Direto:** https://jules.google.com/session/{sid}",
-                "- **Prompt Original:**",
-                "  ```text",
-            ]
-        )
-        prompt_lines = redigir_segredos(s["prompt"].strip()).splitlines()
-        lines.extend([f"  {pl}" for pl in prompt_lines[:15]])
-        if len(prompt_lines) > 15:
-            lines.append(f"  ... [truncado, {len(prompt_lines)} linhas no total]")
-        lines.append("  ```")
-
-        if s["failure_reason"]:
-            lines.extend(
-                [
-                    "- **Motivo da Falha Registrado na Atividade:**",
-                    "  ```text",
-                    f"  {s['failure_reason']}",
-                    "  ```",
-                ]
-            )
-
-        if s["activities"]:
-            lines.append(f"- **Timeline de Atividades ({len(s['activities'])} eventos):**")
-            lines.extend(
-                [
-                    f"  - `[{act.get('createTime', '')[:19].replace('T', ' ')}]` **{act.get('originator', 'SYSTEM')}**: `{', '.join(k for k in act if k not in ('name', 'createTime', 'originator'))}`"
-                    for act in s["activities"]
-                ]
-            )
-        lines.append("")
+        lines.extend(_format_session_detail(s))
     lines.extend(
         [
             "---",

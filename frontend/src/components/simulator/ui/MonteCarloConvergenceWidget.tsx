@@ -72,7 +72,7 @@ export function MonteCarloConvergenceWidget({
 
 	useEffect(() => {
 		const debounceTimer = setTimeout(() => {
-			executeSimulation();
+			void executeSimulation();
 		}, 200);
 		return () => clearTimeout(debounceTimer);
 	}, [executeSimulation]);
