@@ -65,7 +65,8 @@ export function deriveSeed(): number {
 export function seededRandom(seed: number): () => number {
 	let state = seed >>> 0;
 	return () => {
-		state = (state + 0x6d2b79f5) | 0; // wrap signed 32-bit é exigência do algoritmo
+		// Wrap signed 32-bit com | 0 é exigência matemática estrita do algoritmo mulberry32
+		state = (state + 0x6d2b79f5) | 0; // NOSONAR
 		let value = Math.imul(state ^ (state >>> 15), 1 | state);
 		value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
 		return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
@@ -130,14 +131,18 @@ function pickWinner(
 }
 
 
+interface MonteCarloAccumulators {
+	totalEquity: number[];
+	sumSquares: number[];
+	placementCounts: number[][];
+}
+
 function runSingleMonteCarloIteration(
 	numPlayers: number,
 	stacks: number[],
 	activePrizes: number[],
 	totalChips: number,
-	totalEquity: number[],
-	sumSquares: number[],
-	placementCounts: number[][],
+	accumulators: MonteCarloAccumulators,
 	isBusted: Uint8Array | null,
 	random: () => number,
 ) {
@@ -164,9 +169,9 @@ function runSingleMonteCarloIteration(
 		// Distribui o prêmio e remove o jogador da pool
 		if (winnerIdx !== -1) {
 			const prize = activePrizes[j] ?? 0;
-			totalEquity[winnerIdx] = (totalEquity[winnerIdx] ?? 0) + prize;
-			sumSquares[winnerIdx] = (sumSquares[winnerIdx] ?? 0) + prize * prize;
-			const pRow = placementCounts[winnerIdx];
+			accumulators.totalEquity[winnerIdx] = (accumulators.totalEquity[winnerIdx] ?? 0) + prize;
+			accumulators.sumSquares[winnerIdx] = (accumulators.sumSquares[winnerIdx] ?? 0) + prize * prize;
+			const pRow = accumulators.placementCounts[winnerIdx];
 			if (pRow) {
 				pRow[j] = (pRow[j] ?? 0) + 1;
 			}
@@ -402,15 +407,19 @@ function calculateIcmMonteCarloWithZeros(params: MonteCarloWithZerosParams): Mon
 	const placementActiveCounts: number[][] = Array.from({ length: numActive }, () => new Array(kActive).fill(0));
 	const isBusted = numActive > 30 ? new Uint8Array(numActive) : null;
 
+	const activeAccumulators: MonteCarloAccumulators = {
+		totalEquity: totalActiveEquity,
+		sumSquares: sumActiveSquares,
+		placementCounts: placementActiveCounts,
+	};
+
 	for (let i = 0; i < iterations; i++) {
 		runSingleMonteCarloIteration(
 			numActive,
 			activeStacks,
 			activePrizesForSim,
 			totalChips,
-			totalActiveEquity,
-			sumActiveSquares,
-			placementActiveCounts,
+			activeAccumulators,
 			isBusted,
 			random,
 		);
@@ -488,15 +497,19 @@ function calculateIcmMonteCarloStandard(params: MonteCarloStandardParams): Monte
 		throw new RangeError(`Monte Carlo ICM: numPlayers=${numPlayers} requer isBusted=Uint8Array para N > 30.`);
 	}
 
+	const accumulators: MonteCarloAccumulators = {
+		totalEquity,
+		sumSquares,
+		placementCounts,
+	};
+
 	for (let i = 0; i < iterations; i++) {
 		runSingleMonteCarloIteration(
 			numPlayers,
 			stacks,
 			activePrizes,
 			totalChips,
-			totalEquity,
-			sumSquares,
-			placementCounts,
+			accumulators,
 			isBusted,
 			random,
 		);

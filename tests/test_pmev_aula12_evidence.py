@@ -104,5 +104,6 @@ def _espelho_alterado(tmp_path: Path, mutar) -> Path:
     ],
 )
 def test_espelho_invalido_falha_fechado(tmp_path, mutar, trecho):
+    caminho = _espelho_alterado(tmp_path, mutar)
     with pytest.raises(ValueError, match=trecho):
-        load_aula12_pairs(_espelho_alterado(tmp_path, mutar))
+        load_aula12_pairs(caminho)

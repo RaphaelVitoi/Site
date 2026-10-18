@@ -509,7 +509,7 @@ export default function GemmaPortal() {
           for (const frac of fractions) {
             const targetTime = duration * frac;
             video.currentTime = targetTime;
-            await new Promise((r) => {
+            await new Promise((r) => { // NOSONAR
               video.onseeked = r;
             });
             const canvas = document.createElement('canvas');
@@ -545,7 +545,7 @@ export default function GemmaPortal() {
       } else {
         let textContent = '';
         try {
-          textContent = await file.text();
+          textContent = await file.text(); // NOSONAR
         } catch {
           textContent = '[Documento binário ou codificação não suportada]';
         }
@@ -566,7 +566,7 @@ export default function GemmaPortal() {
           if (f) files.push(f);
         }
       }
-      if (files.length) addFiles(files);
+      if (files.length) void addFiles(files);
     };
 
     window.addEventListener('paste', handlePaste);
@@ -710,7 +710,7 @@ export default function GemmaPortal() {
         e.preventDefault();
         setIsDragging(false);
         if (e.dataTransfer?.files?.length) {
-          addFiles(e.dataTransfer.files);
+          void addFiles(e.dataTransfer.files);
         }
       }}
     >
@@ -1031,7 +1031,7 @@ export default function GemmaPortal() {
               className="hidden"
               onChange={(e) => {
                 if (e.target.files?.length) {
-                  addFiles(e.target.files);
+                  void addFiles(e.target.files);
                   e.target.value = '';
                 }
               }}

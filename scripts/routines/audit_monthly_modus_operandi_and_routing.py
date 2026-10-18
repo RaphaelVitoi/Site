@@ -198,29 +198,9 @@ def _auditoria_anterior(agora: datetime.datetime) -> str:
     return f"auditoria-mensal-modus-operandi-routing-{anterior}" if alvo.exists() else "null"
 
 
-def run_monthly_audit() -> dict[str, Any]:
-    agora = datetime.datetime.now()
-    timestamp_str = agora.strftime("%Y-%m-%d %H:%M:%S")
-    mes_ano = agora.strftime("%Y_%m")
-
-    audit_results = {
-        "timestamp": timestamp_str,
-        "mes_referencia": mes_ano,
-        "status_geral": "APROVADO",
-        "camadas_auditadas": {},
-        "roteamento_auditado": {},
-        "modus_operandi_auditado": {},
-        "alertas": [],
-    }
-
-    # 1. Auditoria das 4 Camadas Funcionais no Model Registry
-    camadas = {
-        "camada_1_triagem": [MODEL_GEMINI_35_FLASH_LITE, "gemini-3.6-flash"],
-        "camada_2_agente_principal": ["gemini-3.7-flash", MODEL_GEMINI_35_FLASH_LITE],
-        "camada_3_raciocinio_profundo": ["chatgpt-5.6-sol"],
-    }
-
-    status_camadas = {}
+def _audit_camadas(camadas: dict[str, list[str]]) -> tuple[dict[str, dict], list[str]]:
+    status_camadas: dict[str, dict] = {}
+    alertas: list[str] = []
     for camada, modelos in camadas.items():
         for mod in modelos:
             try:
@@ -236,24 +216,17 @@ def run_monthly_audit() -> dict[str, Any]:
                 }
             except Exception as e:
                 status_camadas[mod] = {"status": "ERRO", "detalhe": str(e)}
-                audit_results["alertas"].append(f"Modelo {mod} da {camada} falhou na resolucao: {e}")
-                audit_results["status_geral"] = "ATENCAO"
+                alertas.append(f"Modelo {mod} da {camada} falhou na resolucao: {e}")
+    return status_camadas, alertas
 
-    audit_results["camadas_auditadas"] = status_camadas
 
-    # 2. Auditoria do Roteamento e ROI
+def _audit_roteamento(suspeitas: dict) -> tuple[dict[str, Any], list[str], dict[str, int]]:
     cob = cobertura()
     test_roi_flash = avaliar_uso_condicional_pro(complexidade_formal=False, ganho_qualidade_esperado_pct=10.0)
     test_roi_pro = avaliar_uso_condicional_pro(complexidade_formal=True, ganho_qualidade_esperado_pct=40.0)
 
-    # Ancoras de capacidade (M.O. 13.A, classe EXTERNA). Ate 2026-08-27 esta
-    # auditoria RECOMENDAVA por escrito "monitorar lancamentos de modelos de
-    # fronteira" com um literal fixo, enquanto a funcao que detecta exatamente
-    # isso vivia sem chamador no modulo do qual esta rotina ja importava.
-    # Recomendacao que nao le nada e sinal verde desconectado.
-    suspeitas = rotas_suspeitas()
-
-    audit_results["roteamento_auditado"] = {
+    alertas: list[str] = []
+    roteamento_auditado = {
         "total_agentes_cobertos": cob["agentes"],
         "total_subagentes_cobertos": cob["subagentes"],
         "mapa_agentes_resolvidos": len(AGENT_MODEL_MAP),
@@ -263,39 +236,68 @@ def run_monthly_audit() -> dict[str, Any]:
         "rotas_suspeitas": {c.value: motivo for c, motivo in suspeitas.items()},
     }
 
-    if suspeitas:
-        for classe, motivo in suspeitas.items():
-            audit_results["alertas"].append(f"Rota '{classe.value}' com ancora vencida: {motivo}")
-        # ATENCAO, nao falha: ancora vencida nao quebra o sistema, exige
-        # reconsulta ao fornecedor  ato humano. O wrapper Invoke-MonthlyAudit.ps1
-        # trata exit != 0 como aviso amarelo e nao interrompe nada (medido).
-        audit_results["status_geral"] = "ATENCAO"
+    for classe, motivo in suspeitas.items():
+        alertas.append(f"Rota '{classe.value}' com ancora vencida: {motivo}")
 
     if len(AGENT_MODEL_MAP) < 19:
-        audit_results["alertas"].append(
-            f"Numero de agentes resolvidos ({len(AGENT_MODEL_MAP)}) abaixo do esperado (19)."
+        alertas.append(f"Numero de agentes resolvidos ({len(AGENT_MODEL_MAP)}) abaixo do esperado (19).")
+    return roteamento_auditado, alertas, cob
+
+
+def _render_tabela_camadas(status_camadas: dict[str, dict]) -> str:
+    md = ""
+    for mod, dados in status_camadas.items():
+        if dados.get("status") == "OK":
+            md += f"| `{mod}` | {dados['camada']} | {dados['context_window']:,} | {dados['max_output']:,} | ${dados['preco_in']:.2f} / ${dados['preco_out']:.2f} | `{dados['thinking']}` | {dados['status']} |\n"
+        else:
+            md += f"| `{mod}` | N/A | N/A | N/A | N/A | N/A | ERRO: {dados.get('detalhe')} |\n"
+    return md
+
+
+def _render_tabela_manuais(mo_status: dict[str, dict]) -> str:
+    md = ""
+    for fname, d in mo_status.items():
+        if d.get("existe"):
+            md += f"| `{fname}` | Sim | {d['tamanho_bytes']} B | {'Sim' if d['tem_4_camadas'] else 'Nao'} | {'Sim' if d['tem_mcp'] else 'Nao'} |\n"
+        else:
+            md += f"| `{fname}` | Nao | N/A | N/A | N/A |\n"
+    return md
+
+
+def _render_secao_ancoras(suspeitas: dict, agora: datetime.datetime) -> str:
+    md = f"\n### 4.1 Ancoras de capacidade das rotas (TTL {TTL_ROTA_DIAS} dias)\n\n"
+    if suspeitas:
+        md += (
+            f"**{len(suspeitas)} de {len(ROTAS)} rotas** afirmam capacidade ou preco de terceiro "
+            f"sem verificacao dentro do TTL. Reconsulta ao fornecedor e ato humano:\n\n"
         )
-        audit_results["status_geral"] = "ATENCAO"
+        for classe, motivo in suspeitas.items():
+            md += f"- `{classe.value}` -- {motivo}\n"
+    else:
+        md += (
+            f"Nenhuma das {len(ROTAS)} rotas venceu o TTL na data desta execucao "
+            f"({agora.strftime('%Y-%m-%d')}). As ancoras declaradas em `llm/routing_policy.py` "
+            f"seguem dentro do prazo.\n"
+        )
+        md += (
+            f"\n> Ausencia de rota vencida NAO e prova de que a tabela esta atual: o TTL de "
+            f"{TTL_ROTA_DIAS} dias e palpite declarado sobre o intervalo entre releases de "
+            f"fronteira, nao medicao. Ver `TTL_ROTA_DIAS` em `llm/routing_policy.py`.\n"
+        )
+    return md
 
-    # 3. Auditoria de Integridade de Manuais
-    arquivos_mo = [
-        SITE_ROOT.parent / "MODUS_OPERANDI.md",
-        SITE_ROOT / "MODUS_OPERANDI.md",
-        SITE_ROOT / "docs" / "ARQUITETURA_PADRAO_OURO_SOTA_2026.md",
-    ]
 
-    mo_status, alertas_mo = auditar_manuais(arquivos_mo, raiz=SITE_ROOT.parent)
-    if alertas_mo:
-        audit_results["alertas"].extend(alertas_mo)
-        audit_results["status_geral"] = "ATENCAO"
-
-    audit_results["modus_operandi_auditado"] = mo_status
-
-    # 4. Gerar Relatorio Markdown
-    reports_dir = SITE_ROOT / "reports" / "audits"
-    reports_dir.mkdir(parents=True, exist_ok=True)
-    report_file = reports_dir / f"AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_{mes_ano}.md"
-
+def _build_markdown_report(
+    agora: datetime.datetime,
+    mes_ano: str,
+    timestamp_str: str,
+    status_geral: str,
+    status_camadas: dict[str, dict],
+    mo_status: dict[str, dict],
+    suspeitas: dict,
+    cob: dict[str, int],
+    alertas: list[str],
+) -> str:
     md_content = _frontmatter(
         agora=agora,
         mes_ano=mes_ano,
@@ -315,7 +317,7 @@ def run_monthly_audit() -> dict[str, Any]:
 
 > **Data de Execucao:** {timestamp_str}
 > **Mes de Referencia:** {mes_ano}
-> **Status Global:** **{audit_results["status_geral"]}**
+> **Status Global:** **{status_geral}**
 > **Auditor Responsavel:** Chico / SOTA Routine Daemon
 
 ---
@@ -335,12 +337,7 @@ def run_monthly_audit() -> dict[str, Any]:
 | Modelo | Camada | Context Window | Max Output | Preco In/Out ($/1M) | Thinking | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 """
-    for mod, dados in status_camadas.items():
-        if dados.get("status") == "OK":
-            md_content += f"| `{mod}` | {dados['camada']} | {dados['context_window']:,} | {dados['max_output']:,} | ${dados['preco_in']:.2f} / ${dados['preco_out']:.2f} | `{dados['thinking']}` | {dados['status']} |\n"
-        else:
-            md_content += f"| `{mod}` | N/A | N/A | N/A | N/A | N/A | ERRO: {dados.get('detalhe')} |\n"
-
+    md_content += _render_tabela_camadas(status_camadas)
     md_content += """
 ---
 
@@ -349,48 +346,74 @@ def run_monthly_audit() -> dict[str, Any]:
 | Arquivo | Presente | Tamanho | 4 Camadas | Barramento MCP |
 | :--- | :--- | :--- | :--- | :--- |
 """
-    for fname, d in mo_status.items():
-        if d.get("existe"):
-            md_content += f"| `{fname}` | Sim | {d['tamanho_bytes']} B | {'Sim' if d['tem_4_camadas'] else 'Nao'} | {'Sim' if d['tem_mcp'] else 'Nao'} |\n"
-        else:
-            md_content += f"| `{fname}` | Nao | N/A | N/A | N/A |\n"
-
+    md_content += _render_tabela_manuais(mo_status)
     md_content += """
 ---
 
 ## 4. ALERTAS E RECOMENDACOES PARA O PROXIMO MES
 
 """
-    if audit_results["alertas"]:
-        for al in audit_results["alertas"]:
+    if alertas:
+        for al in alertas:
             md_content += f"- **Alerta:** {al}\n"
     else:
         md_content += "- **Zero inconformidades detectadas.** O ecossistema opera no Padrao-Ouro termodinamico.\n"
 
-    # O estado das ancoras e sempre reportado, com alerta ou sem  e o unico
-    # item desta secao que fala de decaimento EXTERNO, que corre por tempo e
-    # nao por diff. Texto derivado de rotas_suspeitas(), nunca literal.
-    md_content += f"\n### 4.1 Ancoras de capacidade das rotas (TTL {TTL_ROTA_DIAS} dias)\n\n"
-    if suspeitas:
-        md_content += (
-            f"**{len(suspeitas)} de {len(ROTAS)} rotas** afirmam capacidade ou preco de terceiro "
-            f"sem verificacao dentro do TTL. Reconsulta ao fornecedor e ato humano:\n\n"
-        )
-        for classe, motivo in suspeitas.items():
-            md_content += f"- `{classe.value}` -- {motivo}\n"
-    else:
-        md_content += (
-            f"Nenhuma das {len(ROTAS)} rotas venceu o TTL na data desta execucao "
-            f"({agora.strftime('%Y-%m-%d')}). As ancoras declaradas em `llm/routing_policy.py` "
-            f"seguem dentro do prazo.\n"
-        )
-        md_content += (
-            f"\n> Ausencia de rota vencida NAO e prova de que a tabela esta atual: o TTL de "
-            f"{TTL_ROTA_DIAS} dias e palpite declarado sobre o intervalo entre releases de "
-            f"fronteira, nao medicao. Ver `TTL_ROTA_DIAS` em `llm/routing_policy.py`.\n"
-        )
-
+    md_content += _render_secao_ancoras(suspeitas, agora)
     md_content += "\n---\n*Relatorio gerado automaticamente pela Rotina de Auditoria Mensal SOTA v8.0 GOLD sob governanca de Raphael Vitoi.*\n"
+    return md_content
+
+
+def run_monthly_audit() -> dict[str, Any]:
+    agora = datetime.datetime.now()
+    timestamp_str = agora.strftime("%Y-%m-%d %H:%M:%S")
+    mes_ano = agora.strftime("%Y_%m")
+
+    camadas = {
+        "camada_1_triagem": [MODEL_GEMINI_35_FLASH_LITE, "gemini-3.6-flash"],
+        "camada_2_agente_principal": ["gemini-3.7-flash", MODEL_GEMINI_35_FLASH_LITE],
+        "camada_3_raciocinio_profundo": ["chatgpt-5.6-sol"],
+    }
+
+    status_camadas, alertas_camadas = _audit_camadas(camadas)
+    suspeitas = rotas_suspeitas()
+    roteamento_auditado, alertas_roteamento, cob = _audit_roteamento(suspeitas)
+
+    arquivos_mo = [
+        SITE_ROOT.parent / "MODUS_OPERANDI.md",
+        SITE_ROOT / "MODUS_OPERANDI.md",
+        SITE_ROOT / "docs" / "ARQUITETURA_PADRAO_OURO_SOTA_2026.md",
+    ]
+    mo_status, alertas_mo = auditar_manuais(arquivos_mo, raiz=SITE_ROOT.parent)
+
+    alertas = [*alertas_camadas, *alertas_roteamento, *alertas_mo]
+    status_geral = "ATENCAO" if alertas else "APROVADO"
+
+    audit_results = {
+        "timestamp": timestamp_str,
+        "mes_referencia": mes_ano,
+        "status_geral": status_geral,
+        "camadas_auditadas": status_camadas,
+        "roteamento_auditado": roteamento_auditado,
+        "modus_operandi_auditado": mo_status,
+        "alertas": alertas,
+    }
+
+    reports_dir = SITE_ROOT / "reports" / "audits"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    report_file = reports_dir / f"AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_{mes_ano}.md"
+
+    md_content = _build_markdown_report(
+        agora=agora,
+        mes_ano=mes_ano,
+        timestamp_str=timestamp_str,
+        status_geral=status_geral,
+        status_camadas=status_camadas,
+        mo_status=mo_status,
+        suspeitas=suspeitas,
+        cob=cob,
+        alertas=alertas,
+    )
 
     report_file.write_text(md_content, encoding="utf-8")
     print(f"[AUDITORIA SOTA] Relatorio gerado com sucesso em: {report_file}")

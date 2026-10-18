@@ -552,9 +552,10 @@
 	stroke-dasharray: 3 4;
 }
 
+.forest .svg .forestLabel,
 .forestLabel {
-	fill: var(--color-text-main) !important;
-	font-size: 13px !important;
+	fill: var(--color-text-main);
+	font-size: 13px;
 }
 
 .ci {
@@ -685,8 +686,9 @@
 		font-size: 16px;
 	}
 
+	.forest .svg .forestLabel,
 	.forestLabel {
-		font-size: 17px !important;
+		font-size: 17px;
 	}
 
 	/* Nome e os dois valores na primeira linha; as fichas ocupam a segunda, inteira. */

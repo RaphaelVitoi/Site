@@ -36,6 +36,76 @@ class HRCProImporter(BaseSolverImporter):
                 pass
         return False
 
+    def _parse_json_tree(
+        self, trimmed: str
+    ) -> tuple[dict[str, SolverNode] | None, dict[str, Any] | None, dict[str, float], float]:
+        if not (trimmed.startswith("{") and trimmed.endswith("}")):
+            return None, None, {"Hero": 20.0, "Villain": 25.0}, 2.5
+        try:
+            data = json.loads(trimmed)
+            starting_pot = float(data.get("pot", data.get("starting_pot", 2.5)))
+            stacks = (
+                {k: float(v) for k, v in data["stacks"].items()}
+                if "stacks" in data
+                else {"Hero": 20.0, "Villain": 25.0}
+            )
+            strategy_raw = data.get("strategy", data.get("ranges", {}))
+            strategy = {self.sanitize_action_name(a): float(f) for a, f in strategy_raw.items()}
+            ev_raw = data.get("ev", {})
+            ev = {self.sanitize_action_name(a): float(e) for a, e in ev_raw.items()}
+
+            node = SolverNode(
+                node_id="root",
+                player=data.get("hero_position", "SB"),
+                street="preflop",
+                pot=starting_pot,
+                actions=list(strategy.keys()) if strategy else ["FOLD", "ALLIN"],
+                strategy=strategy if strategy else {"FOLD": 0.40, "ALLIN": 0.60},
+                ev=ev,
+                range_equity=data.get("equity", 0.50),
+                children=[],
+            )
+            return {"root": node}, data, stacks, starting_pot
+        except Exception:
+            return None, None, {"Hero": 20.0, "Villain": 25.0}, 2.5
+
+    def _parse_tabular_tree(
+        self, trimmed: str, stacks: dict[str, float], starting_pot: float
+    ) -> tuple[dict[str, SolverNode], dict[str, float]]:
+        strategy: dict[str, float] = {}
+        for line in trimmed.splitlines():
+            line_str = line.strip()
+            # Procurar acoes como PUSH / FOLD / CALL / RAISE com frequencias (sem backtracking super-linear)
+            m_act = re.search(
+                r"\b(PUSH|SHOVE|ALLIN|FOLD|CALL|RAISE)\b[^\d%\n]*?(\d+(?:\.\d+)?)\s*%", line_str, re.IGNORECASE
+            )
+            if m_act:
+                act_name = self.sanitize_action_name(m_act.group(1))
+                with contextlib.suppress(ValueError):
+                    strategy[act_name] = round(float(m_act.group(2)) / 100.0, 4)
+
+            # Extrair stacks se presentes: "SB: 15.0bb, BB: 20.0bb"
+            st_matches = re.findall(r"\b([A-Za-z]+)\s*:\s*(\d+(?:\.\d+)?)\s*bb\b", line_str)
+            for pos_name, stack_val in st_matches:
+                with contextlib.suppress(ValueError):
+                    stacks[pos_name.upper()] = float(stack_val)
+
+        if not strategy:
+            strategy = {"FOLD": 0.45, "ALLIN": 0.55}
+
+        node = SolverNode(
+            node_id="root",
+            player="SB",
+            street="preflop",
+            pot=starting_pot,
+            actions=list(strategy.keys()),
+            strategy=strategy,
+            ev={},
+            range_equity=0.50,
+            children=[],
+        )
+        return {"root": node}, stacks
+
     def parse_tree(
         self,
         raw_content: str,
@@ -43,77 +113,9 @@ class HRCProImporter(BaseSolverImporter):
     ) -> NormalizedGameTree:
         """Processa ranges de push/fold e calculos de ICM do HRC Pro."""
         trimmed = raw_content.strip()
-        nodes_dict: dict[str, SolverNode] = {}
-        dados_json: dict[str, Any] | None = None
-        stacks: dict[str, float] = {"Hero": 20.0, "Villain": 25.0}
-        starting_pot = 2.5
-        board: list[str] = []
-
-        if trimmed.startswith("{") and trimmed.endswith("}"):
-            try:
-                data = json.loads(trimmed)
-                dados_json = data
-                starting_pot = float(data.get("pot", data.get("starting_pot", 2.5)))
-                if "stacks" in data:
-                    stacks = {k: float(v) for k, v in data["stacks"].items()}
-                strategy_raw = data.get("strategy", data.get("ranges", {}))
-                strategy = {self.sanitize_action_name(a): float(f) for a, f in strategy_raw.items()}
-                ev_raw = data.get("ev", {})
-                ev = {self.sanitize_action_name(a): float(e) for a, e in ev_raw.items()}
-
-                node = SolverNode(
-                    node_id="root",
-                    player=data.get("hero_position", "SB"),
-                    street="preflop",
-                    pot=starting_pot,
-                    actions=list(strategy.keys()) if strategy else ["FOLD", "ALLIN"],
-                    strategy=strategy if strategy else {"FOLD": 0.40, "ALLIN": 0.60},
-                    ev=ev,
-                    range_equity=data.get("equity", 0.50),
-                    children=[],
-                )
-                nodes_dict["root"] = node
-            except Exception:
-                pass
-
+        nodes_dict, dados_json, stacks, starting_pot = self._parse_json_tree(trimmed)
         if not nodes_dict:
-            # Parsing de texto tabular/relatorio do HRC
-            strategy = {}
-            ev_map = {}
-            for line in trimmed.splitlines():
-                line_str = line.strip()
-                # Procurar acoes como PUSH / FOLD / CALL / RAISE com frequencias
-                m_act = re.search(r"\b(PUSH|SHOVE|ALLIN|FOLD|CALL|RAISE)\b.*?([\d.]+)\s*%", line_str, re.IGNORECASE)
-                if m_act:
-                    act_name = self.sanitize_action_name(m_act.group(1))
-                    try:
-                        freq = float(m_act.group(2)) / 100.0
-                        strategy[act_name] = round(freq, 4)
-                    except ValueError:
-                        pass
-
-                # Extrair stacks se presentes: "SB: 15.0bb, BB: 20.0bb"
-                st_matches = re.findall(r"([A-Z]+)\s*:\s*([\d.]+)\s*bb", line_str, re.IGNORECASE)
-                if st_matches:
-                    for pos_name, stack_val in st_matches:
-                        with contextlib.suppress(ValueError):
-                            stacks[pos_name.upper()] = float(stack_val)
-
-            if not strategy:
-                strategy = {"FOLD": 0.45, "ALLIN": 0.55}
-
-            node = SolverNode(
-                node_id="root",
-                player="SB",
-                street="preflop",
-                pot=starting_pot,
-                actions=list(strategy.keys()),
-                strategy=strategy,
-                ev=ev_map,
-                range_equity=0.50,
-                children=[],
-            )
-            nodes_dict["root"] = node
+            nodes_dict, stacks = self._parse_tabular_tree(trimmed, stacks, starting_pot)
 
         return NormalizedGameTree(
             provenance=self.extrair_procedencia(raw_content, dados_json),
@@ -121,7 +123,7 @@ class HRCProImporter(BaseSolverImporter):
             source_format="HRC Pro Export",
             game_type="ICM Tournament",
             num_players=len(stacks),
-            board=board,
+            board=[],
             starting_pot=starting_pot,
             stacks=stacks,
             nodes=nodes_dict,
@@ -154,6 +156,66 @@ class HRCProImporter(BaseSolverImporter):
         if r < c:
             return 4.0
         return 12.0
+
+    @staticmethod
+    def _extrair_procedencia_json(
+        data: dict[str, Any],
+    ) -> tuple[str | None, float | None, ENashUnit | None, str | None]:
+        build = None
+        e_nash = None
+        unidade = None
+        rotulo = None
+        for chave in ("hrc_version", "solver_version", "version", "build"):
+            valor = data.get(chave)
+            if valor is not None:
+                build = str(valor)
+                break
+        for chave in HRCProImporter.CHAVES_JSON_DE_E_NASH:
+            valor = data.get(chave)
+            if isinstance(valor, (int, float)) and not isinstance(valor, bool):
+                e_nash = float(valor)
+                rotulo = chave
+                break
+        declarada = data.get("e_nash_unit") or data.get("ci_unit")
+        if isinstance(declarada, str) and declarada in HRCProImporter.UNIDADES_DECLARAVEIS:
+            unidade = cast(ENashUnit, declarada)
+        return build, e_nash, unidade, rotulo
+
+    @staticmethod
+    def _extrair_procedencia_texto(
+        raw_content: str,
+        build: str | None,
+        e_nash: float | None,
+        unidade: ENashUnit | None,
+        rotulo: str | None,
+    ) -> tuple[str | None, float | None, ENashUnit | None, str | None]:
+        if build is None:
+            m = re.search(
+                r"(?:HoldemResources|HRC)[^\r\n]{0,80}?\bv(\d+(?:\.\d+){0,3})",
+                raw_content,
+                re.IGNORECASE,
+            )
+            if m:
+                build = "v" + m.group(1)
+
+        if e_nash is None:
+            alternativas = "|".join(
+                rot.replace(" ", r"\s+").replace("-", "-?") for rot in HRCProImporter.ROTULOS_DE_E_NASH
+            )
+            m = re.search(
+                r"\b(" + alternativas + r")\b\s*[:=]\s*(\d+(?:\.\d+)?)\s*(%|bb)?",
+                raw_content,
+                re.IGNORECASE,
+            )
+            if m:
+                rotulo = m.group(1)
+                e_nash = float(m.group(2))
+                sufixo = (m.group(3) or "").lower()
+                if sufixo == "%":
+                    unidade = "pct"
+                elif sufixo == "bb":
+                    unidade = "bb"
+        return build, e_nash, unidade, rotulo
 
     @staticmethod
     def extrair_procedencia(raw_content: str, data: dict[str, Any] | None = None) -> SolverProvenance:
@@ -217,47 +279,11 @@ class HRCProImporter(BaseSolverImporter):
         rotulo: str | None = None
 
         if data:
-            for chave in ("hrc_version", "solver_version", "version", "build"):
-                valor = data.get(chave)
-                if valor is not None:
-                    build = str(valor)
-                    break
-            for chave in HRCProImporter.CHAVES_JSON_DE_E_NASH:
-                valor = data.get(chave)
-                if isinstance(valor, (int, float)) and not isinstance(valor, bool):
-                    e_nash = float(valor)
-                    rotulo = chave
-                    break
-            declarada = data.get("e_nash_unit") or data.get("ci_unit")
-            if isinstance(declarada, str) and declarada in HRCProImporter.UNIDADES_DECLARAVEIS:
-                unidade = cast(ENashUnit, declarada)
+            build, e_nash, unidade, rotulo = HRCProImporter._extrair_procedencia_json(data)
 
-        if build is None:
-            m = re.search(
-                r"(?:HoldemResources|HRC)[^\r\n]{0,80}?\bv(\d+(?:\.\d+){0,3})",
-                raw_content,
-                re.IGNORECASE,
-            )
-            if m:
-                build = "v" + m.group(1)
-
-        if e_nash is None:
-            alternativas = "|".join(
-                rot.replace(" ", r"\s+").replace("-", "-?") for rot in HRCProImporter.ROTULOS_DE_E_NASH
-            )
-            m = re.search(
-                r"\b(" + alternativas + r")\b\s*[:=]\s*(\d+(?:\.\d+)?)\s*(%|bb)?",
-                raw_content,
-                re.IGNORECASE,
-            )
-            if m:
-                rotulo = m.group(1)
-                e_nash = float(m.group(2))
-                sufixo = (m.group(3) or "").lower()
-                if sufixo == "%":
-                    unidade = "pct"
-                elif sufixo == "bb":
-                    unidade = "bb"
+        build, e_nash, unidade, rotulo = HRCProImporter._extrair_procedencia_texto(
+            raw_content, build, e_nash, unidade, rotulo
+        )
 
         return SolverProvenance(build=build, e_nash=e_nash, e_nash_unit=unidade, e_nash_label=rotulo)
 
@@ -270,10 +296,45 @@ class HRCProImporter(BaseSolverImporter):
             return f"{RANKS[r]}{RANKS[c]}s"
         return f"{RANKS[c]}{RANKS[r]}o"
 
+    def _parse_range_from_text(self, raw_data: str) -> list[list[float]]:
+        matrix = [[0.0 for _ in range(13)] for _ in range(13)]
+        for r in range(13):
+            for c in range(13):
+                label = self.get_hand_label(r, c)
+                pattern = rf"\b{label}\b[:\s=]+([\d\.]+)(%)?"
+                match = re.search(pattern, raw_data, re.IGNORECASE)
+                if match:
+                    val = float(match.group(1))
+                    if match.group(2) == "%" or val > 1.0:
+                        val = val / 100.0
+                    matrix[r][c] = round(max(0.0, min(1.0, val)), 4)
+        return matrix
+
+    @staticmethod
+    def _parse_range_from_list(raw_data: list) -> list[list[float]] | None:
+        if len(raw_data) == 13 and all(isinstance(row, list) and len(row) == 13 for row in raw_data):
+            return [[round(float(v), 4) for v in row] for row in raw_data]
+        if len(raw_data) == 169:
+            matrix = [[0.0 for _ in range(13)] for _ in range(13)]
+            for idx, val in enumerate(raw_data):
+                matrix[idx // 13][idx % 13] = round(float(val), 4)
+            return matrix
+        return None
+
+    def _parse_range_from_dict(self, raw_data: dict) -> list[list[float]]:
+        matrix = [[0.0 for _ in range(13)] for _ in range(13)]
+        for r in range(13):
+            for c in range(13):
+                label = self.get_hand_label(r, c)
+                val = raw_data.get(label, raw_data.get(label.lower(), 0.0))
+                if isinstance(val, (int, float)):
+                    if val > 1.0:
+                        val = val / 100.0
+                    matrix[r][c] = round(float(val), 4)
+        return matrix
+
     def parse_range_matrix(self, raw_data: Any) -> list[list[float]]:
         """Converte formatos do HRC Pro (dict, texto HRC, 2D list, 1D 169) em matriz 13x13."""
-        matrix = [[0.0 for _ in range(13)] for _ in range(13)]
-
         if isinstance(raw_data, str):
             raw_text = raw_data.strip()
             if raw_text.startswith("{") and raw_text.endswith("}"):
@@ -281,39 +342,15 @@ class HRCProImporter(BaseSolverImporter):
                     raw_data = json.loads(raw_text)
 
         if isinstance(raw_data, str):
-            for r in range(13):
-                for c in range(13):
-                    label = self.get_hand_label(r, c)
-                    pattern = rf"\b{label}\b[:\s=]+([\d\.]+)(%)?"
-                    match = re.search(pattern, raw_data, re.IGNORECASE)
-                    if match:
-                        val = float(match.group(1))
-                        if match.group(2) == "%" or val > 1.0:
-                            val = val / 100.0
-                        matrix[r][c] = round(max(0.0, min(1.0, val)), 4)
-            return matrix
-
+            return self._parse_range_from_text(raw_data)
         if isinstance(raw_data, list):
-            if len(raw_data) == 13 and all(isinstance(row, list) and len(row) == 13 for row in raw_data):
-                return [[round(float(v), 4) for v in row] for row in raw_data]
-            if len(raw_data) == 169:
-                for idx, val in enumerate(raw_data):
-                    r = idx // 13
-                    c = idx % 13
-                    matrix[r][c] = round(float(val), 4)
-                return matrix
+            res = self._parse_range_from_list(raw_data)
+            if res is not None:
+                return res
         elif isinstance(raw_data, dict):
-            for r in range(13):
-                for c in range(13):
-                    label = self.get_hand_label(r, c)
-                    val = raw_data.get(label, raw_data.get(label.lower(), 0.0))
-                    if isinstance(val, (int, float)):
-                        if val > 1.0:
-                            val = val / 100.0
-                        matrix[r][c] = round(float(val), 4)
-            return matrix
+            return self._parse_range_from_dict(raw_data)
 
-        return matrix
+        return [[0.0 for _ in range(13)] for _ in range(13)]
 
     def generate_pmev_heatmap(
         self,

@@ -36,7 +36,7 @@ graph TD
     Total --> Vec2[Vetor 2: Advisory Pypi chromadb 1 High]
     Total --> Vec3[Vetor 3: Dependências Transitivas Backlog ~13 Alertas]
     Total --> Vec4[Vetor 4: Tags de GitHub Actions 4 Alertas]
-    
+
     Vec1 --> SubDesc[Manifestos legados em vendor third-party: exa, supermemory, jules]
     Vec2 --> ChromaDesc[PYSEC-2026-311: Injeção em modo HTTP. Inoperante no modo PersistentClient]
     Vec3 --> TransDesc[Bumps de Framer-Motion, React-Player, Recharts e Supabase]

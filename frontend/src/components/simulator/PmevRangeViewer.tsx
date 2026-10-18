@@ -1310,7 +1310,7 @@ export function PmevRangeViewer() {
 							className="hidden"
 							onChange={(e) => {
 								const file = e.target.files?.[0];
-								if (file) handleFileUpload(file);
+								if (file) void handleFileUpload(file);
 							}}
 						/>
 					</label>

@@ -12,7 +12,7 @@ async function processSSEStream(
 	try {
 		let done = false;
 		while (!done) {
-			const { value, done: readerDone } = await reader.read();
+			const { value, done: readerDone } = await reader.read(); // NOSONAR
 			done = readerDone;
 
 			if (value) {

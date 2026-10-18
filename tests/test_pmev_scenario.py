@@ -78,8 +78,9 @@ def test_sem_bloco_de_procedencia_falta_provenance_como_no_typescript():
 
 
 def test_chipev_nao_aceita_payouts_e_icmev_os_exige():
+    payouts_lido = Read((1.0,))
     with pytest.raises(ValueError, match="ChipEV nao usa payouts"):
-        _cenario(Regime.CHIP_EV, payouts=Read((1.0,)))
+        _cenario(Regime.CHIP_EV, payouts=payouts_lido)
     with pytest.raises(ValueError, match="ICMev exige payouts"):
         _cenario(Regime.ICM_EV, payouts=None)
     assert _cenario(Regime.ICM_EV, payouts=Unreadable("lobby nao capturado")).payouts is not None
@@ -101,8 +102,10 @@ def test_estado_impossivel_falha_fechado(extra):
 
 @pytest.mark.parametrize("valor", [float("inf"), -0.1])
 def test_enash_lido_impossivel_falha_fechado(valor):
+    build_read = Read("x")
+    enash_read = Read(valor)
     with pytest.raises(ValueError, match="e-Nash"):
-        SolverProvenance(solver="HRC", build=Read("x"), e_nash=Read(valor))
+        SolverProvenance(solver="HRC", build=build_read, e_nash=enash_read)
 
 
 def test_par_exige_regimes_nos_lados_certos_e_sha_valido():

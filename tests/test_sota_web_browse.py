@@ -26,10 +26,7 @@ class TestSotaWebBrowseEngine:
     def test_pure_ascii_in_web_browse_engine(self) -> None:
         path = Path("engine/sota_web_browse.py")
         content = path.read_text(encoding="utf-8")
-        try:
-            content.encode("ascii")
-        except UnicodeEncodeError as e:
-            pytest.fail(f"engine/sota_web_browse.py contains non-ASCII character: {e}")
+        assert content.isascii(), f"{path} contains non-ASCII character"
 
     def test_tier_policy_auto_grounding_hierarchy(self) -> None:
         # Tier 3 (Custom/Copilot), Tier 4 (Subagents), Tier 5 (Bots), Tier 6 (Local/Edge) must auto-ground

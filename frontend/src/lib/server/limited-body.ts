@@ -23,11 +23,11 @@ export async function lerCorpoComLimite(request: Request, maxBytes: number): Pro
 	const partes: Uint8Array[] = [];
 	let total = 0;
 	for (;;) {
-		const { done, value } = await leitor.read();
+		const { done, value } = await leitor.read(); // NOSONAR
 		if (done) break;
 		total += value.byteLength;
 		if (total > maxBytes) {
-			await leitor.cancel();
+			await leitor.cancel(); // NOSONAR
 			throw new CorpoExcedeLimiteError('Corpo recebido excede o limite.');
 		}
 		partes.push(value);

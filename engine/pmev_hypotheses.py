@@ -68,6 +68,34 @@ class Hypothesis:
     nota: str
 
 
+def _validar_item_hipotese(item: object, indice: int, raiz: Path) -> Hypothesis:
+    if not isinstance(item, dict):
+        raise ValueError(f"hipoteses[{indice}] deve ser um objeto.")
+    for campo in ("id", *_CAMPOS_TEXTO):
+        if not isinstance(item.get(campo), str) or not item[campo].strip():
+            raise ValueError(f"hipoteses[{indice}].{campo} deve ser texto nao vazio.")
+    try:
+        estado = EvidenceState(item.get("estado_evidencia"))
+    except ValueError as exc:
+        raise ValueError(f"{item['id']}: estado_evidencia invalido: {item.get('estado_evidencia')!r}.") from exc
+    impls = item.get("implementacoes")
+    if not isinstance(impls, list) or any(not isinstance(p, str) or not p.strip() for p in impls):
+        raise ValueError(f"{item['id']}: implementacoes deve ser lista de caminhos.")
+    mortos = [p for p in impls if not (raiz / p).is_file()]
+    if mortos:
+        raise ValueError(f"{item['id']}: implementacoes aponta caminho inexistente: {mortos}.")
+    return Hypothesis(
+        id=item["id"],
+        enunciado=item["enunciado"],
+        baseline=item["baseline"],
+        criterio_falsificacao=item["criterio_falsificacao"],
+        onde_testar=item["onde_testar"],
+        estado_evidencia=estado,
+        implementacoes=tuple(impls),
+        nota=item["nota"],
+    )
+
+
 def load_registry(path: Path = REGISTRY_PATH, raiz: Path = RAIZ) -> tuple[Hypothesis, ...]:
     """Le e valida o registro. Falha fechado: qualquer desvio levanta ValueError."""
     try:
@@ -78,40 +106,11 @@ def load_registry(path: Path = REGISTRY_PATH, raiz: Path = RAIZ) -> tuple[Hypoth
     if not isinstance(itens, list):
         raise ValueError("O registro deve ter a lista `hipoteses`.")
 
-    hipoteses: list[Hypothesis] = []
-    for indice, item in enumerate(itens):
-        if not isinstance(item, dict):
-            raise ValueError(f"hipoteses[{indice}] deve ser um objeto.")
-        for campo in ("id", *_CAMPOS_TEXTO):
-            if not isinstance(item.get(campo), str) or not item[campo].strip():
-                raise ValueError(f"hipoteses[{indice}].{campo} deve ser texto nao vazio.")
-        try:
-            estado = EvidenceState(item.get("estado_evidencia"))
-        except ValueError as exc:
-            raise ValueError(f"{item['id']}: estado_evidencia invalido: {item.get('estado_evidencia')!r}.") from exc
-        impls = item.get("implementacoes")
-        if not isinstance(impls, list) or any(not isinstance(p, str) or not p.strip() for p in impls):
-            raise ValueError(f"{item['id']}: implementacoes deve ser lista de caminhos.")
-        mortos = [p for p in impls if not (raiz / p).is_file()]
-        if mortos:
-            raise ValueError(f"{item['id']}: implementacoes aponta caminho inexistente: {mortos}.")
-        hipoteses.append(
-            Hypothesis(
-                id=item["id"],
-                enunciado=item["enunciado"],
-                baseline=item["baseline"],
-                criterio_falsificacao=item["criterio_falsificacao"],
-                onde_testar=item["onde_testar"],
-                estado_evidencia=estado,
-                implementacoes=tuple(impls),
-                nota=item["nota"],
-            )
-        )
-
+    hipoteses = tuple(_validar_item_hipotese(item, idx, raiz) for idx, item in enumerate(itens))
     ids = tuple(h.id for h in hipoteses)
     if ids != EXPECTED_IDS:
         raise ValueError(f"O registro deve conter exatamente {list(EXPECTED_IDS)} nesta ordem; tem {list(ids)}.")
-    return tuple(hipoteses)
+    return hipoteses
 
 
 def _celula_id(hid: str) -> str:

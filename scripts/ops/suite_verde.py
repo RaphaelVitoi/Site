@@ -321,6 +321,35 @@ def rodar_suite(extra: list[str]) -> int:
     return 0
 
 
+def _atualizar_marcador_se_necessario() -> None:
+    pode, _ = cacheavel()
+    if not pode:
+        return
+    arvore = arvore_de_conteudo()
+    m = ler_marcador()
+    if arvore and m and m.get("arvore") != arvore:
+        m["arvore"] = arvore
+        m["head_na_medicao"] = _git("rev-parse", "HEAD").strip()
+        m["em"] = datetime.now(UTC).astimezone().isoformat(timespec="seconds")
+        MARCADOR.write_text(json.dumps(m, ensure_ascii=False), encoding="utf-8")
+
+
+def _executar_garantia_suite(acao: str, extra: list[str]) -> int:
+    try:
+        with trava_suite():
+            vale, motivo = cache_valido()
+            if acao == "ensure" and vale:
+                print(f"[SUITE] nao remedido: {motivo}")
+                _atualizar_marcador_se_necessario()
+                return 0
+            if acao == "ensure":
+                print(f"[SUITE] medindo porque {motivo}")
+            return rodar_suite(extra)
+    except TimeoutError as erro:
+        print(f"[SUITE] {erro}", file=sys.stderr)
+        return 2
+
+
 def main(argv: list[str]) -> int:
     acao = argv[0] if argv and not argv[0].startswith("-") else "ensure"
     extra = argv[1:] if argv and not argv[0].startswith("-") else argv
@@ -336,27 +365,7 @@ def main(argv: list[str]) -> int:
         return 0 if vale else 1
 
     if acao in ("ensure", "run"):
-        try:
-            with trava_suite():
-                vale, motivo = cache_valido()
-                if acao == "ensure" and vale:
-                    print(f"[SUITE] nao remedido: {motivo}")
-                    pode, _ = cacheavel()
-                    if pode:
-                        arvore = arvore_de_conteudo()
-                        m = ler_marcador()
-                        if arvore and m and m.get("arvore") != arvore:
-                            m["arvore"] = arvore
-                            m["head_na_medicao"] = _git("rev-parse", "HEAD").strip()
-                            m["em"] = datetime.now(UTC).astimezone().isoformat(timespec="seconds")
-                            MARCADOR.write_text(json.dumps(m, ensure_ascii=False), encoding="utf-8")
-                    return 0
-                if acao == "ensure":
-                    print(f"[SUITE] medindo porque {motivo}")
-                return rodar_suite(extra)
-        except TimeoutError as erro:
-            print(f"[SUITE] {erro}", file=sys.stderr)
-            return 2
+        return _executar_garantia_suite(acao, extra)
 
     print(f"acao desconhecida: {acao}. Use ensure (padrao), check, run ou invalidate.", file=sys.stderr)
     return 2

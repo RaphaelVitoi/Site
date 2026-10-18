@@ -173,7 +173,7 @@ export default function FilesDashboardPage() {
         setLoading(false);
       }
     }
-    fetchFiles();
+    void fetchFiles();
   }, []);
 
   // Carregar conteúdo individual do arquivo selecionado
@@ -211,7 +211,7 @@ export default function FilesDashboardPage() {
         if (ativo) setLoadingContent(false);
       }
     }
-    fetchFileContent();
+    void fetchFileContent();
     return () => {
       ativo = false;
     };

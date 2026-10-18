@@ -301,7 +301,7 @@ function BoardAndTableLeft(_props: Readonly<{ rpBtn: number; rpBb: number }>) {
         <div className="rounded-5xl relative overflow-hidden border border-white/10 bg-slate-950/80 p-8 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)] backdrop-blur-3xl">
           {/* Ambient Backlight */}
           <div className="pointer-events-none absolute inset-0 bg-radial-[at_center_center] from-indigo-500/5 to-transparent" />
-          <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} className="overflow-visible drop-shadow-2xl">
+          <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} className="overflow-visible drop-shadow-2xl" aria-label="Topologia Geometrica da Mesa" role="img">
             <defs>
               <radialGradient id="feltGrad" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#0f172a" />

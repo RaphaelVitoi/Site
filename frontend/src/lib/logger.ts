@@ -1,4 +1,4 @@
-﻿/**
+/**
  * IDENTITY: SOTA Frontend Logger
  * PATH: src/lib/logger.ts
  * ROLE: Capturar eventos, erros e métricas de performance do frontend e enviá-los para o motor de auditoria (task_executor).
@@ -92,7 +92,7 @@ class SOTALogger {
     }
 
     this.queue.push(event);
-    this.flush();
+    void this.flush();
   }
 
   private async flush() {

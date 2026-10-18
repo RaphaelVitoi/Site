@@ -44,7 +44,7 @@ export default function PredictiveProfilePanel() {
 				setLoading(false);
 			}
 		}
-		fetchProfile();
+		void fetchProfile();
 	}, []);
 
 	if (loading) {

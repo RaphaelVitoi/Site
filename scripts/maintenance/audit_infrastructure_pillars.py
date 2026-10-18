@@ -116,10 +116,29 @@ def audit_temps_pillar() -> tuple[list[str], list[str], dict]:
     return errors, warnings, stats
 
 
+def _audit_single_artifact(p: Path, errors: list[str], warnings: list[str]) -> bool:
+    try:
+        text = p.read_text(encoding="utf-8")
+        display_blocks = text.count("$$")
+        if display_blocks % 2 != 0:
+            errors.append(f"[ARTIFACTS-KATEX] Bloco $$ desbalanceado em {p.name}")
+
+        meta_file = p.with_suffix(".md.metadata.json")
+        if meta_file.exists():
+            try:
+                json.loads(meta_file.read_text(encoding="utf-8"))
+                return True
+            except Exception:
+                warnings.append(f"[ARTIFACTS-META] Metadados corrompidos para {p.name}")
+    except Exception as e:
+        errors.append(f"[ARTIFACTS-READ] Erro de leitura no artefato {p.name}: {e}")
+    return False
+
+
 def audit_artifacts_pillar() -> tuple[list[str], list[str], dict]:
     """Audita a integridade de artefatos markdown e KaTeX."""
-    errors = []
-    warnings = []
+    errors: list[str] = []
+    warnings: list[str] = []
     stats = {"artifacts_scanned": 0, "valid_metadata": 0}
 
     if not BRAIN_DIR.exists():
@@ -130,32 +149,43 @@ def audit_artifacts_pillar() -> tuple[list[str], list[str], dict]:
         for f in files:
             if f.endswith(".md"):
                 stats["artifacts_scanned"] += 1
-                p = Path(root) / f
-                try:
-                    text = p.read_text(encoding="utf-8")
-                    # Checagem de balanceamento de KaTeX display blocks
-                    display_blocks = text.count("$$")
-                    if display_blocks % 2 != 0:
-                        errors.append(f"[ARTIFACTS-KATEX] Bloco $$ desbalanceado em {p.name}")
-
-                    # Checagem de metadata companion
-                    meta_file = p.with_suffix(".md.metadata.json")
-                    if meta_file.exists():
-                        try:
-                            json.loads(meta_file.read_text(encoding="utf-8"))
-                            stats["valid_metadata"] += 1
-                        except Exception:
-                            warnings.append(f"[ARTIFACTS-META] Metadados corrompidos para {p.name}")
-                except Exception as e:
-                    errors.append(f"[ARTIFACTS-READ] Erro de leitura no artefato {p.name}: {e}")
+                if _audit_single_artifact(Path(root) / f, errors, warnings):
+                    stats["valid_metadata"] += 1
 
     return errors, warnings, stats
 
 
+def _audit_single_skill(skill_file: Path, errors: list[str]) -> bool:
+    try:
+        content = skill_file.read_text(encoding="utf-8")
+        if not content.startswith("---"):
+            errors.append(f"[SKILL-NO-FRONTMATTER] {skill_file.parent.name} nao inicia com delimitador YAML '---'")
+            return False
+
+        parts = content.split("---", 2)
+        if len(parts) < 3:
+            errors.append(f"[SKILL-MALFORMED] {skill_file.parent.name} possui frontmatter YAML malformado")
+            return False
+
+        frontmatter = parts[1]
+        has_name = "name:" in frontmatter
+        has_desc = "description:" in frontmatter
+
+        if not has_name:
+            errors.append(f"[SKILL-MISSING-NAME] {skill_file.parent.name} nao define 'name:' no frontmatter")
+        if not has_desc:
+            errors.append(f"[SKILL-MISSING-DESC] {skill_file.parent.name} nao define 'description:' no frontmatter")
+
+        return has_name and has_desc
+    except Exception as e:
+        errors.append(f"[SKILL-READ-FAIL] Falha ao ler {skill_file}: {e}")
+        return False
+
+
 def audit_skills_pillar() -> tuple[list[str], list[str], dict]:
     """Audita a conformidade das skills do Antigravity/Agent Mesh."""
-    errors = []
-    warnings = []
+    errors: list[str] = []
+    warnings: list[str] = []
     stats = {"skills_scanned": 0, "valid_frontmatter": 0}
 
     scan_dirs = [USER_SKILLS_DIR, BUILTIN_SKILLS_DIR]
@@ -167,40 +197,26 @@ def audit_skills_pillar() -> tuple[list[str], list[str], dict]:
             if "SKILL.md" in files:
                 stats["skills_scanned"] += 1
                 skill_file = Path(root) / "SKILL.md"
-                try:
-                    content = skill_file.read_text(encoding="utf-8")
-                    # Validar YAML Frontmatter
-                    if not content.startswith("---"):
-                        errors.append(
-                            f"[SKILL-NO-FRONTMATTER] {skill_file.parent.name} nao inicia com delimitador YAML '---'"
-                        )
-                        continue
-
-                    parts = content.split("---", 2)
-                    if len(parts) < 3:
-                        errors.append(f"[SKILL-MALFORMED] {skill_file.parent.name} possui frontmatter YAML malformado")
-                        continue
-
-                    frontmatter = parts[1]
-                    has_name = "name:" in frontmatter
-                    has_desc = "description:" in frontmatter
-
-                    if not has_name:
-                        errors.append(
-                            f"[SKILL-MISSING-NAME] {skill_file.parent.name} nao define 'name:' no frontmatter"
-                        )
-                    if not has_desc:
-                        errors.append(
-                            f"[SKILL-MISSING-DESC] {skill_file.parent.name} nao define 'description:' no frontmatter"
-                        )
-
-                    if has_name and has_desc:
-                        stats["valid_frontmatter"] += 1
-
-                except Exception as e:
-                    errors.append(f"[SKILL-READ-FAIL] Falha ao ler {skill_file}: {e}")
+                if _audit_single_skill(skill_file, errors):
+                    stats["valid_frontmatter"] += 1
 
     return errors, warnings, stats
+
+
+def _print_pillar_summary(name: str, index: int, stats_text: str, errors: list[str], warnings: list[str]) -> None:
+    print(f" [PILAR {index}/4: {name}]      {stats_text} | Erros: {len(errors)} | Warnings: {len(warnings)}")
+    for e in errors:
+        print(f"   {e}")
+    for w in warnings:
+        print(f"    {w}")
+
+
+def _determine_tri_state(total_errors: int, total_warnings: int) -> str:
+    if total_errors == 0 and total_warnings == 0:
+        return "SUCESSO (VERDE)"
+    if total_errors == 0 and 1 <= total_warnings <= 2:
+        return "FRAGIL (AMARELO)"
+    return "FALHOU (VERMELHO)"
 
 
 def run_full_pillars_audit():
@@ -212,54 +228,28 @@ def run_full_pillars_audit():
 
     # 1. LOGS
     log_errs, log_warns, log_stats = audit_logs_pillar()
-    print(
-        f" [PILAR 1/4: LOGS]      {log_stats['files_scanned']} arquivos ({log_stats['bytes_total'] / 1024:.1f} KB) | Erros: {len(log_errs)} | Warnings: {len(log_warns)}"
-    )
-    for e in log_errs:
-        print(f"   {e}")
-    for w in log_warns:
-        print(f"    {w}")
+    log_text = f"{log_stats['files_scanned']} arquivos ({log_stats['bytes_total'] / 1024:.1f} KB)"
+    _print_pillar_summary("LOGS", 1, log_text, log_errs, log_warns)
 
     # 2. TEMPS
     tmp_errs, tmp_warns, tmp_stats = audit_temps_pillar()
-    print(
-        f" [PILAR 2/4: TEMPS]     {tmp_stats['temp_folders']} pastas ({tmp_stats['empty_purged']} purgadas) | Erros: {len(tmp_errs)} | Warnings: {len(tmp_warns)}"
-    )
-    for e in tmp_errs:
-        print(f"   {e}")
-    for w in tmp_warns:
-        print(f"    {w}")
+    tmp_text = f"{tmp_stats['temp_folders']} pastas ({tmp_stats['empty_purged']} purgadas)"
+    _print_pillar_summary("TEMPS", 2, tmp_text, tmp_errs, tmp_warns)
 
     # 3. ARTIFACTS
     art_errs, art_warns, art_stats = audit_artifacts_pillar()
-    print(
-        f" [PILAR 3/4: ARTIFACTS] {art_stats['artifacts_scanned']} artefatos ({art_stats['valid_metadata']} metadados) | Erros: {len(art_errs)} | Warnings: {len(art_warns)}"
-    )
-    for e in art_errs:
-        print(f"   {e}")
-    for w in art_warns:
-        print(f"    {w}")
+    art_text = f"{art_stats['artifacts_scanned']} artefatos ({art_stats['valid_metadata']} metadados)"
+    _print_pillar_summary("ARTIFACTS", 3, art_text, art_errs, art_warns)
 
     # 4. SKILLS
     skl_errs, skl_warns, skl_stats = audit_skills_pillar()
-    print(
-        f" [PILAR 4/4: SKILLS]    {skl_stats['skills_scanned']} skills ({skl_stats['valid_frontmatter']} validas) | Erros: {len(skl_errs)} | Warnings: {len(skl_warns)}"
-    )
-    for e in skl_errs:
-        print(f"   {e}")
-    for w in skl_warns:
-        print(f"    {w}")
+    skl_text = f"{skl_stats['skills_scanned']} skills ({skl_stats['valid_frontmatter']} validas)"
+    _print_pillar_summary("SKILLS", 4, skl_text, skl_errs, skl_warns)
 
     total_errors = len(log_errs) + len(tmp_errs) + len(art_errs) + len(skl_errs)
     total_warnings = len(log_warns) + len(tmp_warns) + len(art_warns) + len(skl_warns)
     dt = time.monotonic() - t0
-
-    if total_errors == 0 and total_warnings == 0:
-        tri_state = "SUCESSO (VERDE)"
-    elif total_errors == 0 and 1 <= total_warnings <= 2:
-        tri_state = "FRAGIL (AMARELO)"
-    else:
-        tri_state = "FALHOU (VERMELHO)"
+    tri_state = _determine_tri_state(total_errors, total_warnings)
 
     print("\n" + "=" * 80)
     print("========= SOTA QUALITY & INTEGRITY GUARD  PROTOCOLO CHICO v8.0 GOLD (PILLARS) =========")

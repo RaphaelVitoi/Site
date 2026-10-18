@@ -8,13 +8,12 @@ Author: Chat GPT-6 Astra <noreply@openai.com>
 from __future__ import annotations
 
 import argparse
+from datetime import UTC, datetime
 import hashlib
 import json
 import math
 import os
-from datetime import datetime, timezone
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parent
 
@@ -50,11 +49,10 @@ def expected_value(outcomes: list[dict]) -> float:
     return sum(x["probability"] * x["value"] for x in outcomes)
 
 
-def verify(originals: bool) -> dict:
-    source_data = read("sources.json")
+def _verify_sources(source_data: dict, originals: bool) -> tuple[dict[str, dict], dict[str, int], int]:
     sources = {s["id"]: s for s in source_data["sources"]}
     require(len(sources) == len(source_data["sources"]), "Duplicate source ID")
-    counts = {}
+    counts: dict[str, int] = {}
     original_count = 0
     for sid, source in sources.items():
         path = ROOT / source["text_path"]
@@ -76,7 +74,10 @@ def verify(originals: bool) -> dict:
     require(
         len({s["text_sha256"] for s in sources.values()}) == source_data["distinct_extracted_texts"], "Distinct texts"
     )
-    claims = read("hypotheses.json")["claims"]
+    return sources, counts, original_count
+
+
+def _verify_claims(claims: list[dict], counts: dict[str, int]) -> int:
     ids = {c["id"] for c in claims}
     require(len(ids) == len(claims), "Duplicate claim ID")
     references = 0
@@ -87,13 +88,10 @@ def verify(originals: bool) -> dict:
                 1 <= ref["first_block"] <= ref["last_block"] <= counts[ref["source_id"]], "Reference outside source"
             )
             references += 1
-    for asset in source_data["assets"]:
-        require(asset["source"] in sources and len(asset["sha256"]) == 64, "Invalid asset reference")
-    experiments = read("experiments.json")
-    for experiment in experiments["experiments"]:
-        require(set(experiment["hypothesis_ids"]) <= ids, "Unknown experiment hypothesis")
-        require(experiment["input_origin"] == "synthetic", "Wrong provenance")
-    defense, fold, entry = experiments["experiments"]
+    return references
+
+
+def _verify_defense_experiment(defense: dict) -> None:
     for variant in defense["variants"]:
         gain = variant["aggressor_gain_on_fold"]
         loss = variant["aggressor_loss_when_called"]
@@ -108,6 +106,9 @@ def verify(originals: bool) -> dict:
         require(combos <= defense["available_bluff_combos"], "Infeasible interior equilibrium")
         close((1 - d) * gain - d * loss, 0)
         close(b * win - (1 - b) * lose, 0)
+
+
+def _verify_fold_experiment(fold: dict) -> None:
     call = fold["call"]
     call_value = expected_value(
         [
@@ -127,12 +128,9 @@ def verify(originals: bool) -> dict:
         }.items():
             close(actual, variant["expected"][key])
         close((call_value + 1000) - (value + 1000), delta)
-    delta = sum(entry["after_incumbents"]) - sum(entry["before_incumbents"])
-    entrants = sum(entry["after_new_players"])
-    close(delta, entry["expected"]["incumbent_delta"])
-    close(entrants, entry["expected"]["new_player_value"])
-    close(delta - (entry["pool_increase"] - entrants), entry["expected"]["residual"])
-    diagnostics = experiments["diagnostics"]
+
+
+def _verify_diagnostics(diagnostics: dict) -> None:
     bf = diagnostics["bf_symmetric"]
     close(bf / (1 + bf), diagnostics["expected_required_equity"])
     close(100 * (bf / (1 + bf) - 0.5), diagnostics["expected_rp_pp"])
@@ -147,12 +145,9 @@ def verify(originals: bool) -> dict:
         ),
         "MDF conflation",
     )
-    invalid_distributions = [
-        [],
-        [{"probability": 1.2, "value": 1}],
-        [{"probability": 0.5, "value": 1}],
-        [{"probability": 1, "value": float("nan")}],
-    ]
+
+
+def _verify_negative_controls(invalid_distributions: list[list[dict]]) -> None:
     for invalid in invalid_distributions:
         try:
             expected_value(invalid)
@@ -160,10 +155,48 @@ def verify(originals: bool) -> dict:
             pass
         else:
             raise ValueError("Negative control was accepted")
+
+
+def verify(originals: bool) -> dict:
+    source_data = read("sources.json")
+    sources, counts, original_count = _verify_sources(source_data, originals)
+
+    claims = read("hypotheses.json")["claims"]
+    references = _verify_claims(claims, counts)
+    ids = {c["id"] for c in claims}
+
+    for asset in source_data["assets"]:
+        require(asset["source"] in sources and len(asset["sha256"]) == 64, "Invalid asset reference")
+
+    experiments = read("experiments.json")
+    for experiment in experiments["experiments"]:
+        require(set(experiment["hypothesis_ids"]) <= ids, "Unknown experiment hypothesis")
+        require(experiment["input_origin"] == "synthetic", "Wrong provenance")
+
+    defense, fold, entry = experiments["experiments"]
+    _verify_defense_experiment(defense)
+    _verify_fold_experiment(fold)
+
+    delta = sum(entry["after_incumbents"]) - sum(entry["before_incumbents"])
+    entrants = sum(entry["after_new_players"])
+    close(delta, entry["expected"]["incumbent_delta"])
+    close(entrants, entry["expected"]["new_player_value"])
+    close(delta - (entry["pool_increase"] - entrants), entry["expected"]["residual"])
+
+    _verify_diagnostics(experiments["diagnostics"])
+
+    invalid_distributions = [
+        [],
+        [{"probability": 1.2, "value": 1}],
+        [{"probability": 0.5, "value": 1}],
+        [{"probability": 1, "value": float("nan")}],
+    ]
+    _verify_negative_controls(invalid_distributions)
+
     return {
         "status": "passed",
         "scope": "curation_integrity_and_synthetic_identities_only",
-        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "checked_at": datetime.now(UTC).isoformat(),
         "original_files_verified": original_count,
         "originals_requested": originals,
         "source_texts_verified": len(sources),

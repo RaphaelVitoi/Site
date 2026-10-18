@@ -158,7 +158,7 @@ class JulesClient:
                 )
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
-            logger.error("[JULES] Erro HTTP %d ao criar sessao: %s", e.code, err_msg)
+            logger.exception("[JULES] Erro HTTP %d ao criar sessao: %s", e.code, err_msg)
             raise RuntimeError(f"Erro na API do Jules ({e.code}): {err_msg}") from e
         except Exception:
             logger.exception("[JULES] Falha de conexao com a API do Jules")
@@ -185,7 +185,7 @@ class JulesClient:
                 )
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
-            logger.error("[JULES] Erro HTTP %d ao consultar sessao %s: %s", e.code, session_id, err_msg)
+            logger.exception("[JULES] Erro HTTP %d ao consultar sessao %s: %s", e.code, session_id, err_msg)
             raise RuntimeError(f"Erro na consulta do Jules ({e.code}): {err_msg}") from e
         except Exception:
             logger.exception("[JULES] Falha ao consultar sessao %s", session_id)
@@ -204,7 +204,7 @@ class JulesClient:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                 return resp.status in (200, 204)
         except urllib.error.HTTPError as e:
-            logger.error("[JULES] Erro HTTP %d ao aprovar plano %s: %s", e.code, activity_id, e.reason)
+            logger.exception("[JULES] Erro HTTP %d ao aprovar plano %s: %s", e.code, activity_id, e.reason)
             return False
         except Exception:
             logger.exception("[JULES] Falha ao aprovar plano %s", activity_id)
@@ -228,7 +228,7 @@ class JulesClient:
                 )
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
-            logger.error("[JULES] Erro HTTP %d ao obter diff: %s", e.code, err_msg)
+            logger.exception("[JULES] Erro HTTP %d ao obter diff: %s", e.code, err_msg)
             raise RuntimeError(f"Erro ao obter diff do Jules ({e.code}): {err_msg}") from e
         except Exception:
             logger.exception("[JULES] Falha ao obter diff da sessao %s", session_id)

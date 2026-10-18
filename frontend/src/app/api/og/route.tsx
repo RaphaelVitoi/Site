@@ -76,7 +76,7 @@ const LABEL_POT_BET = 'Pote / Aposta';
 const LABEL_CHIP_EV = 'ChipEV (Ilusao Linear)';
 const LABEL_ICM_EV = 'ICM EV (Realidade Assimetrica)';
 
-export async function GET(request: Request) {
+export function GET(request: Request) {
 	try {
 		const { searchParams } = new URL(request.url);
 

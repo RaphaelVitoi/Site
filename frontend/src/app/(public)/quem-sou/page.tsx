@@ -384,7 +384,7 @@ function SectionLabel({ children, left }: { readonly children: React.ReactNode; 
 function FibonacciMark() {
   return (
     <div className="pointer-events-none absolute top-15 right-15 opacity-[0.055] select-none">
-      <svg width="320" height="320" viewBox="0 0 320 320" fill="none">
+      <svg width="320" height="320" viewBox="0 0 320 320" fill="none" aria-hidden="true">
         {/* Fibonacci squares approximation */}
         <rect x="160" y="160" width="160" height="160" stroke="#0D0C0A" strokeWidth="0.6" />
         <rect x="60" y="160" width="100" height="100" stroke="#0D0C0A" strokeWidth="0.6" />
@@ -409,6 +409,8 @@ function ClassicalSigil() {
         viewBox="0 0 160 160"
         fill="none"
         className="h-[68%] w-[68%] transition-transform duration-1000 group-hover/sigil:rotate-12"
+        aria-label="Sigilo Observatorio Classico"
+        role="img"
       >
         {/* Outer ring */}
         <circle cx="80" cy="80" r="72" stroke="#DED9D2" strokeWidth="0.5" />

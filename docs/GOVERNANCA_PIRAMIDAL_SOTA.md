@@ -123,7 +123,7 @@ O antigo comando `-Web` (anteriormente um montador interativo de clipboard) foi 
 ```mermaid
 flowchart LR
     REQ["Requisição de Consulta\n(nexus web / -Web)"] --> TIER_POL{"Política de Tier\n(TierPolicyEngine)"}
-    
+
     TIER_POL -->|Tier 3, 4, 5, 6\n(Grounding Fortemente Incentivado)| AUTO_SEARCH["Auto-Grounding AI / Search"]
     TIER_POL -->|Tier 0, 1, 2\n(Sob Demanda / Cirúrgico)| CDP_BROWSE["Chrome Dev CDP (9222/9223)"]
     TIER_POL -->|Handoff Explícito| CLIP["Clipboard Bridge SOTA"]

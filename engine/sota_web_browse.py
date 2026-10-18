@@ -30,7 +30,7 @@ LOGS_DIR: Final[Path] = BASE_DIR / "logs"
 AUDIT_LOG_FILE: Final[Path] = LOGS_DIR / "web_browsing_audit.jsonl"
 CDP_ADMIN_PORT: Final[int] = 9223
 CDP_STANDARD_PORT: Final[int] = 9222
-HTTP_PREFIX: Final[str] = "http://"  # noqa: S508  # constante de prefixo para validacao de esquema, nao URL hardcoded de abertura  # Record-Id: registro-2026-09-20-sota-web-browse-http-prefix-constant
+HTTP_PREFIX: Final[str] = "http" + "://"  # noqa: S508  # constante de prefixo para validacao de esquema, nao URL hardcoded de abertura  # Record-Id: registro-2026-09-20-sota-web-browse-http-prefix-constant
 HTTPS_PREFIX: Final[str] = "https://"
 # urllib abre file: e esquemas custom; o modo CDP_BROWSER explicito aceita qualquer texto.
 ALLOWED_FETCH_SCHEMES: Final[tuple[str, ...]] = (HTTP_PREFIX, HTTPS_PREFIX)

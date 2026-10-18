@@ -77,10 +77,10 @@ export class IcmWorkerPool {
 		this.workerCount = Math.min(8, Math.max(2, hardware));
 	}
 
-	public async init(): Promise<void> {
+	public init(): Promise<void> {
 		if (this.isInitialized || typeof window === 'undefined' || typeof Worker === 'undefined') {
 			this.isInitialized = true;
-			return;
+			return Promise.resolve();
 		}
 
 		try {
@@ -98,6 +98,7 @@ export class IcmWorkerPool {
 			this.workerCount = 1;
 			this.isInitialized = true;
 		}
+		return Promise.resolve();
 	}
 
 	/**

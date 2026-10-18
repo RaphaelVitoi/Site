@@ -90,9 +90,13 @@ class WebSearchEngine:
             return f"[WebSearch] No results for: {query}"
         lines: list[str] = [f"## Web Search: {query}\n"]
         for i, r in enumerate(resp.results, 1):
-            lines.append(f"{i}. **{r.title}**")
-            lines.append(f"   {r.snippet}")
-            lines.append(f"   Source: {r.url}\n")
+            lines.extend(
+                [
+                    f"{i}. **{r.title}**",
+                    f"   {r.snippet}",
+                    f"   Source: {r.url}\n",
+                ]
+            )
         lines.append(f"_Provider: {resp.provider_used} | Latency: {resp.latency_ms}ms_")
         return "\n".join(lines)
 

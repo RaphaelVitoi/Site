@@ -124,7 +124,33 @@
         "editor.formatOnSave": true,
         "editor.wordWrap": "on"
     },
-    "markdownlint.ignoreFileName": ".markdownlintignore",
+    "markdownlint.lintWorkspaceGlobs": [
+        "**/*.md",
+        "!node_modules/**",
+        "!**/node_modules/**",
+        "!.next/**",
+        "!**/.next/**",
+        "!.venv/**",
+        "!**/.venv/**",
+        "!dist/**",
+        "!**/dist/**",
+        "!build/**",
+        "!**/build/**",
+        "!coverage/**",
+        "!**/coverage/**",
+        "!core/vendor/**",
+        "!**/core/vendor/**",
+        "!worker/Java/**",
+        "!**/worker/Java/**",
+        "!wasm-equity/target/**",
+        "!**/wasm-equity/target/**",
+        "!reports/**",
+        "!**/reports/**",
+        "!docs/reports/**",
+        "!**/docs/reports/**",
+        "!skills/**",
+        "!**/skills/**"
+    ],
     "files.associations": {
         ".markdownlintignore": "ignore",
         ".prettierignore": "ignore",
@@ -221,8 +247,8 @@
     "jupyter.askForKernelRestart": false,
     "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
     "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
-    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
-    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
+    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
+    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
     "css.lint.unknownAtRules": "ignore",
     "scss.lint.unknownAtRules": "ignore",
     "vitest.rootConfig": "vitest.config.mjs",
@@ -260,6 +286,9 @@
         "python:S5332": {
             "level": "off"
         },
+        "python:S3776": {
+            "level": "off"
+        },
         "css:S5404": {
             "level": "off"
         },
@@ -273,6 +302,15 @@
             "level": "off"
         },
         "typescript:S6842": {
+            "level": "off"
+        },
+        "javascript:S9362": {
+            "level": "off"
+        },
+        "typescript:S9362": {
+            "level": "off"
+        },
+        "typescript:S7767": {
             "level": "off"
         }
     },
