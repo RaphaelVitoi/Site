@@ -72,3 +72,13 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+### 2026-09-23 -- Erradicando overhead de coalescencia nula e iteradores na hot loop CFR
+
+Origem: sessao Jules, 2026-09-23.
+
+- ``#aprendizado`` **`?? 0` sobre acessos em TypedArrays no JavaScript causa gargalo no V8 em malhas quentes.** Em JavaScript, um acesso num TypedArray (como `Float32Array`) sempre retorna um número (o valor contido na memória) e nunca `undefined` desde que acessado dentro dos limites, portanto fallback com `?? 0` não apenas é redundante, mas causa verificações de tipo desnecessárias (branching overhead) na engine V8 durante cada iteração do hot loop, degradando sensivelmente a performance (aumenta o trabalho por iteração e quebra algumas otimizações de inlining para JIT).
+  **Ação:** Nunca utilizar nullish coalescing (`?? 0`) em acessos indexados `[]` de TypedArrays dentro de loops matemáticos (ex: motores CFR e Monte Carlo). Acessos fora dos limites retornam `undefined`, mas como a lógica de acesso já garante indexação válida, o valor obtido é sempre numérico seguro.
+
+- ``#aprendizado`` **`for...of` em TypedArrays acarreta overhead de alocação de iteradores em malhas quentes.** O uso sintático do ES6 de um loop iterador (`for (const item of typedArray)`) no Regret Matching CFR causava micro-alocações contínuas, induzindo a GC churn desnecessário na main branch loop.
+  **Ação:** Substituir loops `for...of` sobre estruturas de matriz estrita/TypedArray por for-loops primitivos baseados em índices iterados (`for (let i = 0; i < len; i++)`), que são radicalmente otimizados para tempo C-like dentro das malhas V8.
