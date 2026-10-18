@@ -140,3 +140,59 @@ def test_resolve_subagent_tier():
     assert resolve_subagent_tier("invalid_tier") is None
     assert resolve_subagent_tier(None) is None
     assert resolve_subagent_tier("") is None
+
+
+def test_gemma4_protocols_and_formatting():
+    from core.subagents_mesh import (
+        format_gemma4_system_prompt,
+        format_gemma4_thought_block,
+        parse_gemma4_channel_output,
+        sanitize_gemma4_multiturn_history,
+        validate_visual_token_budget,
+    )
+
+    # 1. format_gemma4_system_prompt
+    base_prompt = "You are an expert system."
+    formatted_thinking = format_gemma4_system_prompt(base_prompt, enable_thinking=True)
+    assert formatted_thinking.startswith("<|think|>")
+    assert "You are an expert system." in formatted_thinking
+
+    formatted_plain = format_gemma4_system_prompt(formatted_thinking, enable_thinking=False)
+    assert not formatted_plain.startswith("<|think|>")
+    assert formatted_plain == base_prompt
+
+    # 2. format_gemma4_thought_block & parse_gemma4_channel_output
+    thought = "Calculating optimal subgame strategy..."
+    answer = "Action: Call 2.5bb."
+    raw_output = format_gemma4_thought_block(thought, answer)
+
+    parsed_thought, parsed_answer = parse_gemma4_channel_output(raw_output)
+    assert parsed_thought == thought
+    assert parsed_answer == answer
+
+    # 3. parse_gemma4_channel_output without channels
+    plain_thought, plain_answer = parse_gemma4_channel_output("Direct answer with no thought tags.")
+    assert plain_thought is None
+    assert plain_answer == "Direct answer with no thought tags."
+
+    # 4. sanitize_gemma4_multiturn_history
+    history = [
+        {"role": "user", "content": "What is the Nash range?"},
+        {
+            "role": "assistant",
+            "content": "<|channel>thought\nStep 1: checking range<channel|>The range is 14.2%.",
+        },
+        {"role": "user", "content": "And on the turn?"},
+    ]
+    sanitized = sanitize_gemma4_multiturn_history(history)
+    assert len(sanitized) == 3
+    assert sanitized[1]["content"] == "The range is 14.2%."
+    assert "<|channel>" not in sanitized[1]["content"]
+
+    # 5. validate_visual_token_budget
+    assert validate_visual_token_budget(70) == 70
+    assert validate_visual_token_budget(280) == 280
+    assert validate_visual_token_budget(1120) == 1120
+    # Clamping / Nearest neighbor for non-standard budgets
+    assert validate_visual_token_budget(100) == 70 or validate_visual_token_budget(100) == 140
+    assert validate_visual_token_budget(2000) == 1120

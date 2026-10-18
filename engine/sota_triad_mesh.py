@@ -348,6 +348,8 @@ class SotaTriadOrchestrator:
         }
 
     def plan_triad_workflow(self, objective: str) -> dict[str, object]:
+        if not isinstance(objective, str) or not objective.strip():
+            raise ValueError("Objective must be a non-empty string.")
         exa_req = self.exa.build_game_theory_query(objective)
         stitch_req = self.stitch.build_screen_prompt(f"Screen: {objective}")
         jules_req = self.jules.create_cloud_task_spec(f"Implement backend calculations and unit tests for {objective}")
