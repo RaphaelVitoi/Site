@@ -3,10 +3,10 @@
   "proposito": "Decisoes humanas de acessibilidade que o axe-core nao consegue resolver automaticamente. Uma aprovacao e estritamente vinculada a regra, aos alvos e ao SHA-256 da origem; qualquer divergencia expira a decisao e devolve o item para revisao.",
   "reviews": [
     {
-      "id": "a11y-color-contrast-downward-drift-20260901",
+      "id": "a11y-color-contrast-downward-drift-20261018",
       "status": "approved",
       "decision": "positive",
-      "reviewed_at": "2026-09-15",
+      "reviewed_at": "2026-10-18",
       "reviewer_authority": "Tier 0 — Raphael Vitoi",
       "rule_id": "color-contrast",
       "target_url": "http://localhost:3000/",
@@ -20,12 +20,13 @@
         "text[x=\"185.39999999999998\"]"
       ],
       "evidence": {
-        "automated_report": "reports/cwv/cwv_report_20260901_030113.md",
+        "automated_report": "reports/cwv/cwv_report_20261018_100928.md",
         "reason_for_incomplete": "axe-core nao determina automaticamente fundos de dois textos em SVG com gradientes e de um texto sobreposto por geometria SVG.",
         "engineering_controls": [
           "tokens semanticamente contrastados e testados contra superficies opacas",
           "placa opaca atras do rotulo dinamico CORTE",
-          "contrastes medidos: #625f5a=5.73:1; #765421=6.19:1; #286247=6.47:1; #6e3636=8.44:1 sobre #F5F3EE"
+          "contrastes medidos: #625f5a=5.73:1; #765421=6.19:1; #286247=6.47:1; #6e3636=8.44:1 sobre #F5F3EE",
+          "revisao humana formal aprovada pelo Tier 0 (Raphael Vitoi)"
         ]
       },
       "invalidated_by": [
@@ -35,5 +36,5 @@
       ]
     }
   ],
-  "atualizado_em": "2026-09-23T19:00:00-03:00"
+  "atualizado_em": "2026-10-18T10:13:00-03:00"
 }

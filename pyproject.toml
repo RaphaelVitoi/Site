@@ -8,7 +8,7 @@
 name = "nexus-orchestrator"
 version = "0.2.0"
 description = "Orquestrador SOTA de Agentes LLM com DAG, RAG e resiliencia multi-provedor"
-readme = "AGNOSTIC_SYSTEM.md"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     # ── NUCLEO ASSINCRONO ──────────────────────────────────────────────
@@ -91,7 +91,7 @@ dependencies = [
     "loguru>=0.7.3",
     "typer>=0.25.1",
     "edge-tts>=7.2.8",
-    "mcp>=2.0.0",
+    "mcp>=2.3.0",
     "nanobind>=2.15.0",
     "pyperclip>=1.11.0",
     "matplotlib>=3.9.0",
@@ -115,7 +115,7 @@ requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "math", "scripts", "scripts.cli"]
+packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "scripts", "scripts.cli"]
 
 
 [project.optional-dependencies]
@@ -260,8 +260,7 @@ pythonpath = [
     "monitoring",
     "governance",
     "conductor",
-    "tools",
-    "math"
+    "tools"
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -449,8 +448,7 @@ include = [
     "governance",
     "conductor",
     "tools",
-    "cli",
-    "math"
+    "cli"
 ]
 extraPaths = [
     ".",
@@ -465,8 +463,7 @@ extraPaths = [
     "monitoring",
     "governance",
     "conductor",
-    "tools",
-    "math"
+    "tools"
 ]
 exclude = ["**/__pycache__", "**/.*", ".venv", "node_modules", "frontend", "archive", "nexus_orchestrator.egg-info", "core/vendor"]
 venvPath = "."
