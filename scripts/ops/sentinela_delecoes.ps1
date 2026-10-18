@@ -111,7 +111,7 @@ while ($true) {
                 caminho     = $caminho
                 bytes_antes = $anterior[$caminho]
                 janela_ms   = $IntervaloMs
-                suspeitos   = $suspeitos
+                suspeitos   = @($suspeitos)
             }
             $registro | ConvertTo-Json -Depth 4 -Compress | Add-Content -Path $Saida -Encoding utf8
             Write-Host ("[SENTINELA] SUMIU {0} ({1} bytes)" -f $caminho, $anterior[$caminho]) -ForegroundColor Yellow
