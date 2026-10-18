@@ -32,6 +32,13 @@ export function ArticleVoiceNarration({ title, content }: ArticleVoiceNarrationP
 		toggle(`article-${title.slice(0, 20)}`, fullNarrationText);
 	}, [title, content, toggle]);
 
+	let statusLabel = 'Ouvir Artigo Completo';
+	if (isPlaying) {
+		statusLabel = 'Transmitindo Narração';
+	} else if (isPaused) {
+		statusLabel = 'Narração Pausada';
+	}
+
 	return (
 		<div className="w-full mb-8 rounded-2xl bg-black/40 border border-white/10 p-4 sm:p-5 backdrop-blur-md shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300 hover:border-accent-indigo/30">
 			<div className="flex items-center gap-3">
@@ -51,7 +58,7 @@ export function ArticleVoiceNarration({ title, content }: ArticleVoiceNarrationP
 				<div>
 					<div className="flex items-center gap-2">
 						<span className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-white">
-							{isPlaying ? 'Transmitindo Narração' : isPaused ? 'Narração Pausada' : 'Ouvir Artigo Completo'}
+							{statusLabel}
 						</span>
 						<span
 							className={`px-2 py-0.5 rounded-full text-[0.55rem] font-mono font-bold border transition-colors ${

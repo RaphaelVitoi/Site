@@ -36,13 +36,13 @@ export function cleanTextForSpeech(raw: string): string {
 		.replace(/\|[-:\s|]+\|/g, '')
 		.replaceAll('|', ', ')
 		// Calibração Acústica de Poesia e Versos
-		.replace(/\s+\/\s+/g, ', ')
+		.replace(/\s\/\s/g, ', ')
 		.replace(/\(Linhas\s+(\d+)[–-](\d+)\)/gi, 'Linhas $1 a $2')
 		.replace(/\b(\d+)#\s*/g, 'Ponto $1: ')
-		.replace(/\s*->\s*/g, ' para ')
-		.replace(/\s*=>\s*/g, ' implica ')
-		.replace(/\s*<=\s*/g, ' menor ou igual a ')
-		.replace(/\s*>=\s*/g, ' maior ou igual a ')
+		.replaceAll('->', ' para ')
+		.replaceAll('=>', ' implica ')
+		.replaceAll('<=', ' menor ou igual a ')
+		.replaceAll('>=', ' maior ou igual a ')
 		// Calibração Acústica de Poker, Teoria dos Jogos & PMev
 		.replace(/\bc-bet\b|\bcbet\b/gi, 'continuation bet')
 		.replace(/\bICM\b/g, 'I C M')
@@ -125,6 +125,7 @@ export function useSotaSpeech() {
 	const isPausedRef = useRef<boolean>(false);
 	const rateRef = useRef<number>(1.25);
 	const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+	const speakSentenceRef = useRef<(index: number) => void>(() => {});
 
 	rateRef.current = rate;
 	voiceRef.current = selectedVoice;
@@ -194,7 +195,7 @@ export function useSotaSpeech() {
 	const speakSentenceWithSapi = useCallback((index: number) => {
 		if (
 			typeof window === 'undefined' ||
-			typeof window.SpeechSynthesisUtterance === 'undefined' ||
+			window.SpeechSynthesisUtterance === undefined ||
 			!('speechSynthesis' in window)
 		) {
 			setIsPlaying(false);
@@ -237,7 +238,7 @@ export function useSotaSpeech() {
 			if (currentUtteranceRef.current !== utterance) return;
 			if (isPausedRef.current) return;
 			sentenceIndexRef.current++;
-			speakSentence(sentenceIndexRef.current);
+			speakSentenceRef.current(sentenceIndexRef.current);
 		};
 
 		utterance.onerror = (err) => {
@@ -284,10 +285,8 @@ export function useSotaSpeech() {
 			const data = await res.json();
 			if (!data.ok || !data.audioBase64) throw new Error(data.error || 'Audio vazio');
 
-			if (typeof window !== 'undefined' && typeof window.Audio !== 'undefined') {
-				if (!audioRef.current) {
-					audioRef.current = new Audio();
-				}
+			if (typeof window !== 'undefined' && window.Audio !== undefined) {
+				audioRef.current ??= new Audio();
 				const audio = audioRef.current;
 				const format = data.format || 'wav';
 				audio.src = `data:audio/${format};base64,${data.audioBase64}`;
@@ -303,7 +302,7 @@ export function useSotaSpeech() {
 				audio.onended = () => {
 					if (isPausedRef.current) return;
 					sentenceIndexRef.current++;
-					speakSentence(sentenceIndexRef.current);
+					speakSentenceRef.current(sentenceIndexRef.current);
 				};
 
 				audio.onerror = () => {
@@ -313,15 +312,18 @@ export function useSotaSpeech() {
 				await audio.play();
 				return;
 			}
-		} catch (_) {
+		} catch {
+			// Fallback Voice Nexus: se falhar ou estiver indisponível, chaveia para SAPI nativo
 			setIsNexusActive(false);
 			speakSentenceWithSapi(index);
 		}
 	}, [speakSentenceWithSapi]);
 
 	const speakSentence = useCallback((index: number) => {
-		speakSentenceWithNexus(index);
+		void speakSentenceWithNexus(index);
 	}, [speakSentenceWithNexus]);
+
+	speakSentenceRef.current = speakSentence;
 
 	const applyRate = useCallback((newRate: number) => {
 		setRate(newRate);
@@ -352,40 +354,46 @@ export function useSotaSpeech() {
 		applyRate(rates[nextIdx] ?? 1.25);
 	}, [applyRate]);
 
+	const toggleActivePlayback = useCallback(() => {
+		if (audioRef.current) {
+			if (!audioRef.current.paused) {
+				audioRef.current.pause();
+				setIsPaused(true);
+				setIsPlaying(false);
+				return;
+			}
+			if (isPausedRef.current) {
+				void audioRef.current.play().catch(() => {});
+				setIsPaused(false);
+				setIsPlaying(true);
+				return;
+			}
+		}
+
+		if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+			const synth = window.speechSynthesis;
+			if (synth.speaking && !isPausedRef.current) {
+				synth.pause();
+				setIsPaused(true);
+				setIsPlaying(false);
+				return;
+			}
+			if (isPausedRef.current) {
+				synth.resume();
+				setIsPaused(false);
+				setIsPlaying(true);
+			}
+		}
+	}, []);
+
 	const toggle = useCallback(
 		(messageId: string, text: string) => {
 			if (typeof window === 'undefined') return;
 
 			// Pausar ou Retomar a mesma mensagem
 			if (activeIdRef.current === messageId) {
-				if (audioRef.current && !audioRef.current.paused) {
-					audioRef.current.pause();
-					setIsPaused(true);
-					setIsPlaying(false);
-					return;
-				}
-				if (audioRef.current && audioRef.current.paused && isPausedRef.current) {
-					audioRef.current.play().catch(() => {});
-					setIsPaused(false);
-					setIsPlaying(true);
-					return;
-				}
-
-				if ('speechSynthesis' in window) {
-					const synth = window.speechSynthesis;
-					if (synth.speaking && !isPausedRef.current) {
-						synth.pause();
-						setIsPaused(true);
-						setIsPlaying(false);
-						return;
-					}
-					if (isPausedRef.current) {
-						synth.resume();
-						setIsPaused(false);
-						setIsPlaying(true);
-						return;
-					}
-				}
+				toggleActivePlayback();
+				return;
 			}
 
 			// Parar reprodução anterior
@@ -401,7 +409,7 @@ export function useSotaSpeech() {
 
 			speakSentence(0);
 		},
-		[speakSentence, stop],
+		[speakSentence, stop, toggleActivePlayback],
 	);
 
 	return {

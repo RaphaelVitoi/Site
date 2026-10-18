@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Integrar um headless browser lightweight para 'enxergar' visualmente a UI gerada e comparar com o design system.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -25,7 +24,7 @@
 
 ### Procedencia -- `.claude/agent-memory/verifier/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @verifier
+# MEMORIA SIMBIOTICA - @verifier (Legado)
 
 > **Status:** Ativo
 > **Vinculo:** Honrando COSMOVISAO.md
@@ -78,7 +77,7 @@ Recebo a entrega do @implementor com a SPEC original como referencia. Se aprovad
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/verifier/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @verifier
+# MEMORIA SIMBIOTICA - @verifier (AGENTS-MEMORY)
 
 > **Status:** Ativo
 > **Vinculo:** Honrando COSMOVISAO.md

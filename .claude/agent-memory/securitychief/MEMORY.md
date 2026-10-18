@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Ofuscar automaticamente paths absolutos do usuario nos logs expostos para blindagem de PII.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -64,7 +63,7 @@ Reviso a arquitetura do `@architect` e audito o código do `@implementor`, focan
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/securitychief/MEMORY.md`
 
-# @securitychief MEMORY - O Cortex Individual
+# @securitychief MEMORY - O Cortex Individual (AGENTS-MEMORY)
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 

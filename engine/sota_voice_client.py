@@ -15,15 +15,17 @@ import base64
 import json
 import logging
 import re
+from typing import TypedDict
 import urllib.error
 import urllib.request
-from typing import TypedDict
 
 import aiohttp
 
 logger = logging.getLogger("sota.voice_client")
 
 VOICE_NEXUS_DEFAULT_URL = "http://127.0.0.1:9333"
+DEFAULT_USER_AGENT = "Site-PokerTheory/1.0"
+DEFAULT_AUDIO_MIME_TYPE = "audio/mp3"
 
 # Termos de calibração fonética canônica para MTTs, ICM e Teoria dos Jogos
 POKER_PHONETIC_REPLACEMENTS: list[tuple[re.Pattern[str], str]] = [
@@ -110,8 +112,7 @@ def normalize_poker_phonetics(raw_text: str) -> str:
         text = pattern.sub(replacement, text)
 
     # Redução de múltiplos espaços
-    text = re.sub(r"\s{2,}", " ", text).strip()
-    return text
+    return re.sub(r"\s{2,}", " ", text).strip()
 
 
 class SotaVoiceClient:
@@ -124,9 +125,11 @@ class SotaVoiceClient:
     def check_status_sync(self) -> VoiceNexusStatus:
         """Verifica a integridade do Voice Nexus de forma síncrona."""
         url = f"{self.base_url}/api/voice/status"
-        req = urllib.request.Request(url, headers={"User-Agent": "Site-PokerTheory/1.0"})
+        if not url.startswith(("http://", "https://")):
+            raise ValueError(f"URL inválida ou esquema não permitido: {url}")
+        req = urllib.request.Request(url, headers={"User-Agent": DEFAULT_USER_AGENT})  # noqa: S310  # Record-Id: registro-2026-10-18-saneamento-linters-sonar-e-markdownlint
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
+            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:  # noqa: S310  # Record-Id: registro-2026-10-18-saneamento-linters-sonar-e-markdownlint
                 data = json.loads(resp.read().decode("utf-8"))
                 return {
                     "active": True,
@@ -152,26 +155,28 @@ class SotaVoiceClient:
         url = f"{self.base_url}/api/voice/status"
         timeout = aiohttp.ClientTimeout(total=self.timeout_s)
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(url, headers={"User-Agent": "Site-PokerTheory/1.0"}) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        return {
-                            "active": True,
-                            "url": self.base_url,
-                            "gemini_studio": bool(data.get("providers", {}).get("gemini", {}).get("active")),
-                            "providers": list(data.get("providers", {}).keys()),
-                            "latency_ms": float(data.get("latencyMs", 0.0)),
-                            "error": None,
-                        }
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.get(url, headers={"User-Agent": DEFAULT_USER_AGENT}) as resp,
+            ):
+                if resp.status == 200:
+                    data = await resp.json()
                     return {
-                        "active": False,
+                        "active": True,
                         "url": self.base_url,
-                        "gemini_studio": False,
-                        "providers": [],
-                        "latency_ms": 0.0,
-                        "error": f"HTTP {resp.status}",
+                        "gemini_studio": bool(data.get("providers", {}).get("gemini", {}).get("active")),
+                        "providers": list(data.get("providers", {}).keys()),
+                        "latency_ms": float(data.get("latencyMs", 0.0)),
+                        "error": None,
                     }
+                return {
+                    "active": False,
+                    "url": self.base_url,
+                    "gemini_studio": False,
+                    "providers": [],
+                    "latency_ms": 0.0,
+                    "error": f"HTTP {resp.status}",
+                }
         except Exception as exc:  # noqa: BLE001
             return {
                 "active": False,
@@ -193,6 +198,8 @@ class SotaVoiceClient:
         """Sintetiza áudio via Voice Nexus de forma síncrona."""
         normalized = normalize_poker_phonetics(text) if apply_phonetics else text
         url = f"{self.base_url}/api/voice/tts"
+        if not url.startswith(("http://", "https://")):
+            raise ValueError(f"URL inválida ou esquema não permitido: {url}")
         payload = json.dumps(
             {
                 "text": normalized,
@@ -202,19 +209,19 @@ class SotaVoiceClient:
             }
         ).encode("utf-8")
 
-        req = urllib.request.Request(
+        req = urllib.request.Request(  # noqa: S310  # Record-Id: registro-2026-10-18-saneamento-linters-sonar-e-markdownlint
             url,
             data=payload,
-            headers={"Content-Type": "application/json", "User-Agent": "Site-PokerTheory/1.0"},
+            headers={"Content-Type": "application/json", "User-Agent": DEFAULT_USER_AGENT},
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
+            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:  # noqa: S310  # Record-Id: registro-2026-10-18-saneamento-linters-sonar-e-markdownlint
                 data = json.loads(resp.read().decode("utf-8"))
                 return {
                     "success": bool(data.get("success")),
                     "audio_base64": str(data.get("audioData", "")),
-                    "mime_type": str(data.get("mimeType", "audio/mp3")),
+                    "mime_type": str(data.get("mimeType", DEFAULT_AUDIO_MIME_TYPE)),
                     "voice": str(data.get("voice", voice)),
                     "tier": str(data.get("tier", tier)),
                     "latency_ms": float(data.get("latencyMs", 0.0)),
@@ -224,7 +231,7 @@ class SotaVoiceClient:
             return {
                 "success": False,
                 "audio_base64": "",
-                "mime_type": "audio/mp3",
+                "mime_type": DEFAULT_AUDIO_MIME_TYPE,
                 "voice": voice,
                 "tier": tier,
                 "latency_ms": 0.0,
@@ -251,33 +258,35 @@ class SotaVoiceClient:
 
         timeout = aiohttp.ClientTimeout(total=self.timeout_s)
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.post(url, json=payload, headers={"User-Agent": "Site-PokerTheory/1.0"}) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        return {
-                            "success": bool(data.get("success")),
-                            "audio_base64": str(data.get("audioData", "")),
-                            "mime_type": str(data.get("mimeType", "audio/mp3")),
-                            "voice": str(data.get("voice", voice)),
-                            "tier": str(data.get("tier", tier)),
-                            "latency_ms": float(data.get("latencyMs", 0.0)),
-                            "error": data.get("error"),
-                        }
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.post(url, json=payload, headers={"User-Agent": DEFAULT_USER_AGENT}) as resp,
+            ):
+                if resp.status == 200:
+                    data = await resp.json()
                     return {
-                        "success": False,
-                        "audio_base64": "",
-                        "mime_type": "audio/mp3",
-                        "voice": voice,
-                        "tier": tier,
-                        "latency_ms": 0.0,
-                        "error": f"HTTP {resp.status}",
+                        "success": bool(data.get("success")),
+                        "audio_base64": str(data.get("audioData", "")),
+                        "mime_type": str(data.get("mimeType", DEFAULT_AUDIO_MIME_TYPE)),
+                        "voice": str(data.get("voice", voice)),
+                        "tier": str(data.get("tier", tier)),
+                        "latency_ms": float(data.get("latencyMs", 0.0)),
+                        "error": data.get("error"),
                     }
+                return {
+                    "success": False,
+                    "audio_base64": "",
+                    "mime_type": DEFAULT_AUDIO_MIME_TYPE,
+                    "voice": voice,
+                    "tier": tier,
+                    "latency_ms": 0.0,
+                    "error": f"HTTP {resp.status}",
+                }
         except Exception as exc:  # noqa: BLE001
             return {
                 "success": False,
                 "audio_base64": "",
-                "mime_type": "audio/mp3",
+                "mime_type": DEFAULT_AUDIO_MIME_TYPE,
                 "voice": voice,
                 "tier": tier,
                 "latency_ms": 0.0,
@@ -305,26 +314,28 @@ class SotaVoiceClient:
 
         timeout = aiohttp.ClientTimeout(total=self.timeout_s * 2)
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.post(url, json=payload, headers={"User-Agent": "Site-PokerTheory/1.0"}) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        return {
-                            "success": bool(data.get("success")),
-                            "text": str(data.get("text", "")),
-                            "confidence": float(data.get("confidence", 0.0)),
-                            "model": str(data.get("model", "gemini-3.8-transcribe")),
-                            "latency_ms": float(data.get("latencyMs", 0.0)),
-                            "error": data.get("error"),
-                        }
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.post(url, json=payload, headers={"User-Agent": DEFAULT_USER_AGENT}) as resp,
+            ):
+                if resp.status == 200:
+                    data = await resp.json()
                     return {
-                        "success": False,
-                        "text": "",
-                        "confidence": 0.0,
-                        "model": "",
-                        "latency_ms": 0.0,
-                        "error": f"HTTP {resp.status}",
+                        "success": bool(data.get("success")),
+                        "text": str(data.get("text", "")),
+                        "confidence": float(data.get("confidence", 0.0)),
+                        "model": str(data.get("model", "gemini-3.8-transcribe")),
+                        "latency_ms": float(data.get("latencyMs", 0.0)),
+                        "error": data.get("error"),
                     }
+                return {
+                    "success": False,
+                    "text": "",
+                    "confidence": 0.0,
+                    "model": "",
+                    "latency_ms": 0.0,
+                    "error": f"HTTP {resp.status}",
+                }
         except Exception as exc:  # noqa: BLE001
             return {
                 "success": False,
