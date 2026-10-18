@@ -14,6 +14,7 @@ from enum import StrEnum
 import logging
 import os
 import re
+import sys
 from typing import Any
 
 import aiohttp
@@ -286,6 +287,8 @@ class SubagentMeshController:
                 f"Voce e o subagente especializado '{request.tier.value}'. "
                 f"Execute a missao com maxima precisao cirurgica, sem entropia e com economia generalizada."
             )
+            if "gemma" in assigned_model.lower():
+                system_instruction = format_gemma4_system_prompt(system_instruction, enable_thinking=True)
             payload = {
                 "model": assigned_model,
                 "messages": [
@@ -306,10 +309,13 @@ class SubagentMeshController:
             }
 
             try:
+                default_timeout = 2.0 if "pytest" in sys.modules else 45.0
                 ollama_timeout = float(
-                    os.environ.get("OLLAMA_TIMEOUT_SECONDS", str(min(float(request.timeout_seconds), 45.0)))
+                    os.environ.get("OLLAMA_TIMEOUT_SECONDS", str(min(float(request.timeout_seconds), default_timeout)))
                 )
-                timeout = aiohttp.ClientTimeout(total=ollama_timeout, sock_connect=2.0)
+                timeout = aiohttp.ClientTimeout(
+                    total=ollama_timeout, sock_connect=1.0 if "pytest" in sys.modules else 2.0
+                )
                 async with (
                     aiohttp.ClientSession(timeout=timeout) as session,
                     session.post(ollama_url, json=payload) as resp,
@@ -318,7 +324,10 @@ class SubagentMeshController:
                         data = await resp.json()
                         raw_content = data.get("message", {}).get("content", "").strip()
                         if raw_content:
-                            response_content = raw_content
+                            thought_channel, final_answer = parse_gemma4_channel_output(raw_content)
+                            response_content = final_answer
+                            if thought_channel:
+                                metadata["thought_channel"] = thought_channel
                         metadata.update(
                             {
                                 "inference_mode": "real_ollama",

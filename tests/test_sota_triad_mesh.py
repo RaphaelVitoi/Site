@@ -99,12 +99,17 @@ class TestSotaTriadMesh(unittest.TestCase):
         assert "objective" in plan
         dag_phases = plan["dag_phases"]
         assert isinstance(dag_phases, list)
-        assert isinstance(dag_phases, list)
         assert len(dag_phases) == 4
         assert dag_phases[0]["agent"] == "Exa (Neural Research)"
         assert dag_phases[1]["agent"] == "Stitch (Generative UI)"
         assert dag_phases[2]["agent"] == "Google Jules (Cloud VM)"
         assert dag_phases[3]["agent"] == "Antigravity 2.0 (Local Gate)"
+
+    def test_plan_triad_workflow_rejects_empty_objective(self) -> None:
+        with pytest.raises(ValueError, match="Objective must be a non-empty string"):
+            self.orchestrator.plan_triad_workflow("")
+        with pytest.raises(ValueError, match="Objective must be a non-empty string"):
+            self.orchestrator.plan_triad_workflow("   ")
 
     def test_triad_dag_without_receipts_is_not_verified(self) -> None:
         """Negative test: planning is not execution. It used to report verified=True."""
