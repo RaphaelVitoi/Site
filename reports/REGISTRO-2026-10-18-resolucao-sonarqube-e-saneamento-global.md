@@ -14,6 +14,7 @@ caminhos:
   - .markdownlint.json
   - .markdownlintignore
   - .vscode/settings.json
+  - data/a11y_manual_review_baselines.json
   - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
   - docs/epics/aula-icm-rp/style-overrides.css
   - engine/icm_matrix.py
@@ -66,6 +67,7 @@ caminhos:
   - scripts/ops/get_dashboard_telemetry.py
   - scripts/ops/lighthouse_cwv_audit.mjs
   - scripts/ops/record_index.py
+  - scripts/ops/sentinela_delecoes.ps1
   - scripts/ops/suite_isolada.py
   - scripts/ops/suite_verde.py
   - scripts/ops/sync_jules_report.py
@@ -191,6 +193,11 @@ revisoes_de_ancora:
       - .vscode/settings.json
     parecer: >-
       Revisado em 2026-10-18 e mantido valido. Configuracoes da IDE alinhadas com desativacao de falsos positivos conhecidos de sonarlint e preservacao de politicas de formatacao.
+  - registro: registro-2026-10-18-remediacao-dependabot-e-renovacao-axe
+    caminhos:
+      - data/a11y_manual_review_baselines.json
+    parecer: >-
+      Revisado em 2026-10-18 e mantido valido. Atualizado o SHA-256 de frontend/src/app/(public)/page.tsx no baseline apos adicao de acessibilidade semantica no elemento SVG, mantendo intacta a aprovacao humana formal do Tier 0.
 ---
 
 # REGISTRO DE EXECUCAO SOTA: RESOLUCAO INTEGRAL DE ALERTAS SONARQUBE

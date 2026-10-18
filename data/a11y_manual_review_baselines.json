@@ -12,7 +12,7 @@
       "target_url": "http://localhost:3000/",
       "source": {
         "path": "frontend/src/app/(public)/page.tsx",
-        "sha256": "222ba0ebaf110e641bcaf9b87a8e5eb946222a83a603fe2619039f9fbf56a591"
+        "sha256": "b4f65ea0dc15dcbb2a803c29ae33aa15965afdf4f03f840afc6093ed32b943ac"
       },
       "targets": [
         "text[x=\"15\"]",
