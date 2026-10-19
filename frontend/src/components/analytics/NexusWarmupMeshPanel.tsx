@@ -77,21 +77,21 @@ export function NexusWarmupMeshPanel() {
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Ativo
+            <span>Ativo</span>
           </span>
         );
       case 'STANDBY':
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            Standby
+            <span>Standby</span>
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/30">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-            Offline
+            <span>Offline</span>
           </span>
         );
     }
@@ -115,7 +115,7 @@ export function NexusWarmupMeshPanel() {
           </div>
           <h2 className="text-xl md:text-2xl font-black text-white tracking-tight m-0 flex items-center gap-2">
             <i className="fa-solid fa-server text-cyan-400 text-lg" />
-            Painel de Ativação, Warmup & Malha de Motores
+            <span>Painel de Ativação, Warmup & Malha de Motores</span>
           </h2>
           <p className="text-xs md:text-sm text-text-muted mt-1 mb-0">
             Controle integrado de serviços, aceleração de VRAM no Ollama, percepção multimodal e inspeção CDP em tempo real.
@@ -129,7 +129,7 @@ export function NexusWarmupMeshPanel() {
             className="px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 bg-white/5 text-xs font-medium text-text-muted hover:text-white transition-all flex items-center gap-1.5"
           >
             <i className="fa-solid fa-circle-question text-cyan-400" />
-            {showGuide ? 'Ocultar Guia' : 'Guia Didático'}
+            <span>{showGuide ? 'Ocultar Guia' : 'Guia Didático'}</span>
           </button>
 
           <button
@@ -139,7 +139,7 @@ export function NexusWarmupMeshPanel() {
             className="px-3.5 py-1.5 rounded-lg bg-accent-indigo-surface hover:bg-accent-indigo-surface-active border border-accent-indigo/40 text-xs font-semibold text-accent-indigo-light transition-all flex items-center gap-2"
           >
             <i className={`fa-solid fa-arrows-rotate text-xs ${loading ? 'animate-spin' : ''}`} />
-            Sincronizar Malha
+            <span>Sincronizar Malha</span>
           </button>
         </div>
       </div>
@@ -176,7 +176,7 @@ export function NexusWarmupMeshPanel() {
         <div className="mt-4 p-4 rounded-xl bg-slate-900/80 border border-cyan-500/20 text-xs text-text-muted space-y-2">
           <div className="font-bold text-cyan-300 text-sm flex items-center gap-2">
             <i className="fa-solid fa-book-open text-xs" />
-            Didática da Topologia do Ecossistema Nexus
+            <span>Didática da Topologia do Ecossistema Nexus</span>
           </div>
           <p className="m-0 leading-relaxed">
             • <strong>Ollama VRAM (11434):</strong> Carrega os modelos neurais locais (ex: <code>qwen-code-surgical</code>) na GPU. O aquecimento prévio elimina o atraso de carregamento de ~35 segundos, permitindo inferência cirúrgica em &lt; 2s para os subagentes.
@@ -219,7 +219,7 @@ export function NexusWarmupMeshPanel() {
                   {node.role}
                 </p>
 
-                <div className="p-2.5 rounded-lg bg-black/30 border border-white/5 text-[11px] font-mono text-cyan-200/90 break-words mb-3">
+                <div className="p-2.5 rounded-lg bg-black/30 border border-white/5 text-[11px] font-mono text-cyan-200/90 wrap-break-word mb-3">
                   {node.details}
                 </div>
               </div>

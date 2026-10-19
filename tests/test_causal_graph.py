@@ -66,12 +66,14 @@ def test_causal_graph_cycle_prevention():
         engine.add_edge(CausalEdge(source_id="B", target_id="C", relation="CAUSES"))
 
         # Tentativa de fechar o ciclo: C -> A (deve falhar)
+        cycle_edge = CausalEdge(source_id="C", target_id="A", relation="CAUSES")
         with pytest.raises(ValueError, match="Ciclo detectado"):
-            engine.add_edge(CausalEdge(source_id="C", target_id="A", relation="CAUSES"))
+            engine.add_edge(cycle_edge)
 
         # Auto-loop: A -> A (deve falhar)
+        self_loop_edge = CausalEdge(source_id="A", target_id="A", relation="CAUSES")
         with pytest.raises(ValueError, match="Ciclo detectado"):
-            engine.add_edge(CausalEdge(source_id="A", target_id="A", relation="CAUSES"))
+            engine.add_edge(self_loop_edge)
 
 
 def test_causal_graph_bootstrap_pmev():
