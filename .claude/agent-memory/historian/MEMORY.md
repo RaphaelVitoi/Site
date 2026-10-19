@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Criar um dashboard em tempo real no frontend que visualize as metricas que eu gero.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -25,7 +24,7 @@
 
 ### Procedencia -- `.claude/agent-memory/historian/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @historian
+#### MEMORIA SIMBIOTICA - @historian (Snapshot 1)
 
 > **Status:** Ativo | **Aura:** grey53 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -80,7 +79,7 @@ Alimento @maverick e @chico com dados quantitativos para analises estrategicas e
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/historian/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @historian
+#### MEMORIA SIMBIOTICA - @historian (Snapshot 2)
 
 > **Status:** Ativo | **Aura:** grey53 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas

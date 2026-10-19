@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Construir linter em tempo real na memoria do agente para auto-corrigir erros de sintaxe antes do output final.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -25,7 +24,7 @@
 
 ### Procedencia -- `.claude/agent-memory/implementor/MEMORY.md`
 
-# @implementor MEMORY - Cortex Individual
+#### @implementor MEMORY - Cortex Individual (Snapshot 1)
 
 > **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
 
@@ -79,7 +78,7 @@ Guiado pelo CORTEX SHIELD e as diretrizes de CHICO, forjei a Fase 3 (Painel de C
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/implementor/MEMORY.md`
 
-# @implementor MEMORY - Cortex Individual
+#### @implementor MEMORY - Cortex Individual (Snapshot 2)
 
 > **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
 

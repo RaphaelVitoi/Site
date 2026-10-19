@@ -155,7 +155,12 @@
         ".markdownlintignore": "ignore",
         ".prettierignore": "ignore",
         ".geminiignore": "ignore",
-        ".ragignore": "ignore"
+        ".ragignore": "ignore",
+        "skills/**/.github/workflows/*.yml": "yaml",
+        "skills/**/.github/workflows/*.yaml": "yaml",
+        "**/skills/**/.github/workflows/*.yml": "yaml",
+        "**/skills/**/.github/workflows/*.yaml": "yaml",
+        "**/.github/workflows/publish-agentcore.yml": "yaml"
     },
     "prettier.logLevel": "warn",
     "prettier.requireConfig": true,
@@ -609,5 +614,15 @@
     "lldb-dap.enableSyntheticChildDebugging": true,
     "lldb-dap.enableAutoVariableSummaries": true,
     "boot-java.ai.mcp-server-enabled": true,
-    "boot-java.code-action.data-query-multiline": true
+    "boot-java.code-action.data-query-multiline": true,
+    "yaml.schemas": {
+        "vscode://schemas/custom/github-workflow": ".github/workflows/*.{yml,yaml}"
+    },
+    "github-actions.workflows.pinned.workflows": [],
+    "github-actions.custom-variables": [
+        "AGENTCORE_ECR_REPOSITORY_URI"
+    ],
+    "github-actions.custom-secrets": [
+        "AGENTCORE_AWS_ROLE_ARN"
+    ]
 }

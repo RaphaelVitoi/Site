@@ -12,3 +12,7 @@ config-variables:
   - GOOGLE_GENAI_USE_GCA
   - GOOGLE_GENAI_USE_VERTEXAI
   - UPLOAD_ARTIFACTS
+  - AGENTCORE_ECR_REPOSITORY_URI
+paths:
+  ignore:
+    - "skills/**"
