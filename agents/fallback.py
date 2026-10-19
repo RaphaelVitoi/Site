@@ -192,6 +192,37 @@ def _generate_fallback_specs(task_id: str, route_agents: list[str]) -> list[Fall
     return fallback_specs
 
 
+def _merge_reason_codes(existing: object, new_codes: list[str]) -> list[str]:
+    codes: list[str] = []
+    if isinstance(existing, list):
+        codes.extend(str(r) for r in existing)
+    for code in new_codes:
+        if code not in codes:
+            codes.append(code)
+    return codes
+
+
+def _build_fallback_subtask_metadata(
+    task: Task,
+    spec: FallbackSpec,
+    route_agents: list[str],
+    reason_codes: list[str],
+    created_ids: list[str],
+) -> TaskMetadata:
+    meta: TaskMetadata = task.metadata.copy() if task.metadata else {}
+    priority_val = meta.get("priority")
+    meta["priority"] = str(priority_val) if priority_val is not None else "high"
+    meta.pop("depends_on", None)
+    meta["fallback_route"] = route_agents
+    meta["route_selected"] = route_agents
+    meta["reason_codes"] = _merge_reason_codes(meta.get("reason_codes"), reason_codes)
+    meta = apply_mcp_addon_routing(f"{task.description} {spec['description']}", meta)
+    depends_on = [created_ids[idx] for idx in spec["depends_on"] if idx < len(created_ids)]
+    if depends_on:
+        meta["depends_on"] = depends_on
+    return meta
+
+
 async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager) -> None:
     """
     Orquestrador de Fallback: Isola aquisicao de rota, geracao de specs e enfileiramento.
@@ -206,25 +237,7 @@ async def _create_dispatcher_fallback_plan(task: Task, manager: QueueManager) ->
         if await manager.get_task(sub_id):
             continue
 
-        meta: TaskMetadata = task.metadata.copy() if task.metadata else {}
-        priority_val = meta.get("priority")
-        meta["priority"] = str(priority_val) if priority_val is not None else "high"
-        meta.pop("depends_on", None)
-        meta["fallback_route"] = route_agents
-        meta["route_selected"] = route_agents
-        raw_existing_reasons = meta.get("reason_codes", [])
-        existing_reasons: list[str] = (
-            [str(r) for r in raw_existing_reasons] if isinstance(raw_existing_reasons, list) else []
-        )
-        for code in reason_codes:
-            if code not in existing_reasons:
-                existing_reasons.append(code)
-        meta["reason_codes"] = existing_reasons
-        meta = apply_mcp_addon_routing(f"{task.description} {spec['description']}", meta)
-        depends_on = [created_ids[idx] for idx in spec["depends_on"] if idx < len(created_ids)]
-        if depends_on:
-            meta["depends_on"] = depends_on
-
+        meta = _build_fallback_subtask_metadata(task, spec, route_agents, reason_codes, created_ids)
         new_task = Task(
             id=sub_id,
             description=spec["description"],
