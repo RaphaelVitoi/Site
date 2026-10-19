@@ -108,7 +108,10 @@ param(
     [int]$TimesFmHorizon = 3,
 
     [Parameter(ParameterSetName = 'TimesFm')]
-    [string]$ConductorModel
+    [string]$ConductorModel,
+
+    [Parameter(ParameterSetName = 'TimesFm')]
+    [switch]$UsePretrainedWeights
 )
 
 function Resolve-ProjectPython {
@@ -333,6 +336,7 @@ if ($PSCmdlet.ParameterSetName -eq 'TimesFm') {
     $env:AGENT_CALIBRATION_SCORES = ConvertTo-Json -InputObject $numericScores -Compress
     $env:AGENT_CALIBRATION_HORIZON = [string]$TimesFmHorizon
     $env:AGENT_CALIBRATION_CONDUCTOR = if ($ConductorModel) { $ConductorModel } else { '' }
+    $env:AGENT_CALIBRATION_USE_WEIGHTS = if ($UsePretrainedWeights) { '1' } else { '0' }
 
     $pythonCode = @'
 import json
@@ -342,8 +346,16 @@ from engine.timesfm_engine import forecast_agent_calibration_trajectory
 scores = [float(x) for x in json.loads(os.environ["AGENT_CALIBRATION_SCORES"])]
 horizon = int(os.environ.get("AGENT_CALIBRATION_HORIZON", "3"))
 conductor = os.environ.get("AGENT_CALIBRATION_CONDUCTOR") or None
+use_weights = os.environ.get("AGENT_CALIBRATION_USE_WEIGHTS") == "1"
+target_key = "timesfm-2.5-200m" if use_weights else "timesfm-2.0-500m"
 
-fc = forecast_agent_calibration_trajectory(scores, horizon_sessions=horizon, conductor_model=conductor)
+fc = forecast_agent_calibration_trajectory(
+    scores,
+    horizon_sessions=horizon,
+    conductor_model=conductor,
+    preferred_model_key=target_key,
+    use_pretrained_weights=use_weights,
+)
 print(fc.model_dump_json())
 '@
 
@@ -356,9 +368,10 @@ print(fc.model_dump_json())
         engine         = 'google-timesfm-2.5'
         source         = 'engine/timesfm_engine.py::forecast_agent_calibration_trajectory'
         inputs         = [ordered]@{
-            scores_count    = $numericScores.Count
-            horizon         = $TimesFmHorizon
-            conductor_model = $ConductorModel
+            scores_count           = $numericScores.Count
+            horizon                = $TimesFmHorizon
+            conductor_model        = $ConductorModel
+            use_pretrained_weights = [bool]$UsePretrainedWeights
         }
         output         = $result
         limitations    = @(

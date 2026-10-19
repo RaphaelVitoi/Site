@@ -21,8 +21,11 @@ from engine.timesfm_engine import (
     TimesFMGovernanceError,
     forecast_bankroll_trajectory,
     forecast_cfr_convergence,
+    forecast_ev_variance_envelope,
+    forecast_mesh_telemetry_latency,
     forecast_opponent_drift,
     forecast_pmev_risk_dynamics,
+    forecast_tournament_icm_decay,
 )
 
 
@@ -410,3 +413,122 @@ def test_timesfm_domain_function_opponent_drift():
     assert len(drift.mean_trajectory) == 6
     assert drift.divergence_from_canonical >= 0.0
     assert isinstance(drift.exploitative_adjustment_recommended, bool)
+
+
+def test_timesfm_domain_function_tournament_icm_decay():
+    """Valida a funcao de dominio forecast_tournament_icm_decay."""
+    # 1. Historico insuficiente (< 4)
+    insuf = forecast_tournament_icm_decay(history_premiums=[5.0, 6.0])
+    assert insuf.status == "INSUFFICIENT_HISTORY"
+    assert insuf.tightening_recommended is False
+
+    # 2. Pressao ativa em bolha
+    active = forecast_tournament_icm_decay(
+        history_premiums=[4.5, 5.2, 6.1, 7.8, 9.5],
+        horizon_levels=5,
+        remaining_players=10,
+        total_entries=100,
+    )
+    assert active.status in ("PRESSURE_INCREASING", "BUBBLE_PEAK", "STABLE")
+    assert len(active.mean_trajectory) == 5
+    assert len(active.quantile_10) == 5
+    assert len(active.quantile_90) == 5
+    assert active.bubble_factor_projected > 1.0
+    for q10, m, q90 in zip(active.quantile_10, active.mean_trajectory, active.quantile_90, strict=False):
+        assert q10 <= m <= q90
+
+
+def test_timesfm_domain_function_mesh_telemetry_latency():
+    """Valida a funcao de dominio forecast_mesh_telemetry_latency."""
+    # 1. Historico insuficiente
+    insuf = forecast_mesh_telemetry_latency(history_latencies_ms=[45.0, 50.0])
+    assert insuf.status == "INSUFFICIENT_HISTORY"
+    assert insuf.failover_recommended is False
+
+    # 2. Latencia saudavel dentro do SLA
+    healthy = forecast_mesh_telemetry_latency(
+        history_latencies_ms=[40.0, 42.0, 41.5, 43.0, 42.8],
+        horizon_steps=4,
+        sla_threshold_ms=200.0,
+    )
+    assert healthy.status == "HEALTHY"
+    assert healthy.failover_recommended is False
+    assert len(healthy.mean_trajectory) == 4
+
+    # 3. Spike de latencia excedendo SLA
+    spiking = forecast_mesh_telemetry_latency(
+        history_latencies_ms=[120.0, 150.0, 190.0, 240.0, 310.0],
+        horizon_steps=4,
+        sla_threshold_ms=150.0,
+    )
+    assert spiking.status in ("LATENCY_SPIKE_RISK", "SATURATION_WARNING")
+    assert spiking.failover_recommended is True
+
+
+def test_timesfm_domain_function_ev_variance_envelope():
+    """Valida a funcao de dominio forecast_ev_variance_envelope."""
+    # 1. Historico insuficiente
+    insuf = forecast_ev_variance_envelope(history_ev_bb=[10.0, 20.0], history_actual_bb=[10.0, 15.0])
+    assert insuf.status == "INSUFFICIENT_HISTORY"
+
+    # 2. Envelope regular de variancia
+    normal = forecast_ev_variance_envelope(
+        history_ev_bb=[50.0, 60.0, 70.0, 80.0, 90.0],
+        history_actual_bb=[48.0, 62.0, 68.0, 79.0, 88.0],
+        horizon_steps=5,
+    )
+    assert normal.status == "WITHIN_EXPECTED_VARIANCE"
+    assert len(normal.mean_trajectory) == 5
+    assert len(normal.quantile_10) == 5
+    assert len(normal.quantile_90) == 5
+
+    # 3. Anomalia severa de downswing
+    downswing = forecast_ev_variance_envelope(
+        history_ev_bb=[100.0, 120.0, 140.0, 160.0, 180.0, 200.0],
+        history_actual_bb=[100.0, 80.0, 50.0, 20.0, -10.0, -40.0],
+        horizon_steps=6,
+    )
+    assert downswing.status == "DOWNSWING_ANOMALY"
+    assert downswing.current_gap_bb < 0.0
+    assert downswing.variance_exhaustion_probability > 0.5
+
+
+def test_timesfm_forecast_with_covariates():
+    """Valida previsao condicionada por covariantes passadas e futuras."""
+    engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
+    target = [10.0, 12.0, 14.0, 16.0, 18.0]
+    past_cov = {"temp": [20.0, 21.0, 22.0, 23.0, 24.0]}
+    fut_cov = {"factor": [1.0, 1.1, 1.2]}
+
+    res = engine.forecast_with_covariates(
+        target_series=target,
+        past_covariates=past_cov,
+        future_covariates=fut_cov,
+        horizon=3,
+        target_name="temperature_conditioned",
+    )
+    assert res.target_name == "temperature_conditioned"
+    assert len(res.mean_prediction) == 3
+    assert len(res.quantile_10) == 3
+    assert len(res.quantile_90) == 3
+
+
+def test_timesfm_25_neural_weights_loading_and_inference():
+    """Valida carregamento real de pesos neurais pre-treinados do TimesFM 2.5 PyTorch."""
+    engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
+    try:
+        engine.load_pretrained_weights(local_files_only=True)
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Pesos locais nao disponiveis no ambiente de teste: {exc}")
+
+    assert engine.weights_loaded is True
+    assert engine.model is not None
+
+    series = [10.0, 12.0, 11.5, 13.0, 14.5, 16.0]
+    res = engine.forecast_univariate(series=series, horizon=3, target_name="test_neural")
+
+    assert res.weights_loaded is True
+    assert res.model_used == "google/timesfm-2.5-200m-pytorch"
+    assert len(res.mean_prediction) == 3
+    for q10, mean, q90 in zip(res.quantile_10, res.mean_prediction, res.quantile_90, strict=True):
+        assert q10 <= mean <= q90

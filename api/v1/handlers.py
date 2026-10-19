@@ -1700,6 +1700,26 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
                 intended_model=engine.metadata.model_id,
                 weights_loaded=engine.weights_loaded,
             )
+        elif req.past_covariates is not None or req.future_covariates is not None:
+            series = cast(list[float], req.series)
+            result = await asyncio.to_thread(
+                engine.forecast_with_covariates,
+                series=series,
+                past_covariates=req.past_covariates,
+                future_covariates=req.future_covariates,
+                horizon=req.horizon,
+                frequency_indicator=req.frequency_indicator,
+                target_name=req.target_name,
+            )
+            resp = TimesFMForecastResponse(
+                status="SUCCESS",
+                forecast_type="univariate",
+                results={req.target_name: result.to_item()},
+                model_used=engine.procedencia,
+                license_tier=engine.metadata.license_tier.value,
+                intended_model=engine.metadata.model_id,
+                weights_loaded=engine.weights_loaded,
+            )
         else:
             series = cast(list[float], req.series)
             result = await asyncio.to_thread(
