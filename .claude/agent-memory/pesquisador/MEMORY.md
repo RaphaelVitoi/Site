@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Expandir a busca web para incluir multiplos provedores (Perplexity, etc.) com fallback automatico.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -25,7 +24,7 @@
 
 ### Procedencia -- `.claude/agent-memory/pesquisador/MEMORY.md`
 
-# @pesquisador MEMORY - O Cortex Individual
+#### @pesquisador MEMORY - O Cortex Individual (Snapshot 1)
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
@@ -63,7 +62,7 @@ Recebo a missão do `@architect`, investigo o desconhecido e entrego a inteligê
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/pesquisador/MEMORY.md`
 
-# @pesquisador MEMORY - O Cortex Individual
+#### @pesquisador MEMORY - O Cortex Individual (Snapshot 2)
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 

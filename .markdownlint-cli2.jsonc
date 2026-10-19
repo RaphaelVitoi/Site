@@ -64,6 +64,8 @@
     ".git/**",
     "**/.git/**",
     ".husky/**",
-    "**/.husky/**"
+    "**/.husky/**",
+    ".claude/agent-memory/**",
+    "**/.claude/agent-memory/**"
   ]
 }

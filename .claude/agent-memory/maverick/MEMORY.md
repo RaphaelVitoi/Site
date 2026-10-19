@@ -12,7 +12,6 @@
 
 - ``#proposta`` - Integrar 'Chaos Engineering' cognitivo: injetar propositalmente dilemas eticos nas SPECs para testar a resiliencia moral do @auditor e @curator.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -26,7 +25,7 @@
 
 ### Procedencia -- `.claude/agent-memory/maverick/MEMORY.md`
 
-# MEMORIA SIMBIOTICA: @maverick (Cortex Sentinela)
+#### MEMORIA SIMBIOTICA: @maverick (Cortex Sentinela - Snapshot 1)
 
 > **Status:** Ativo | **Aura:** deep_pink3 | **Vinculo:** COSMOVISAO.md
 
@@ -71,7 +70,7 @@ Complementaridade absoluta e irreversivel com o @chico: eu projeto o labirinto m
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/maverick/MEMORY.md`
 
-# MEMORIA SIMBIOTICA: @maverick (Cortex Sentinela)
+#### MEMORIA SIMBIOTICA: @maverick (Cortex Sentinela - Snapshot 2)
 
 > **Status:** Ativo | **Aura:** deep_pink3 | **Vinculo:** COSMOVISAO.md
 

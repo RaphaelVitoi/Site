@@ -11,7 +11,6 @@
 
 - ``#proposta`` - Rotina autonoma para arquivar PRDs velhos para o .archive automaticamente. Expurgar contextos desnecessarios da memoria vetorial do Chroma.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->
@@ -25,7 +24,7 @@
 
 ### Procedencia -- `.claude/agent-memory/organizador/MEMORY.md`
 
-# @organizador MEMORY - O Cortex Individual
+#### @organizador MEMORY - O Cortex Individual (Snapshot 1)
 
 // [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization
 
@@ -70,7 +69,7 @@ Sou o chão onde todos pisam. Mantenho o `project-context.md` impecável para o 
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/organizador/MEMORY.md`
 
-# @organizador MEMORY - O Cortex Individual
+#### @organizador MEMORY - O Cortex Individual (Snapshot 2)
 
 // [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization
 
