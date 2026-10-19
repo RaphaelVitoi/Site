@@ -40,7 +40,7 @@ A ferramenta afere concretamente:
    - Mede tarefas `completed`, `pending`, `running` e `failed`.
    - Calcula a taxa de resolução efetiva da fila (alvo: 100%).
 4. **Economia de Contexto & Tool Calling (`llm/mcp_tool_interceptor.py`):**
-   - Mede a redução percentual de tokens de schemas de ferramentas podados via oráculo S1 e o overhead de latência em microssegundos ($\mu\text{s}$).
+   - Motor híbrido SOTA: se houver chamadas na sessão, extrai a economia empírica real e overhead médio do ledger append-only (`data/mcp_tool_telemetry.jsonl`). Caso contrário (ou via `--forcar-benchmark`), executa benchmark de capacidade em regime sobre 32 ferramentas reais com warmup descartável, medindo latência pura do oráculo S1 (<500 $\mu\text{s}$).
 5. **Latência de Decisão & Ingress Fast-Path S1 (`core/arbitrator.py`):**
    - Mede a latência de triagem $\mathcal{O}(1)$ de tarefas unitárias sem compilação desnecessária de grafos DAG.
 6. **Integridade e Saúde dos Pools de Chaves Multi-Tier (`llm/openrouter_pool.py`):**
@@ -56,6 +56,7 @@ Execute no terminal da raiz do projeto:
 ```powershell
 .venv/Scripts/python.exe scripts/ops/avaliar_impacto_sessao.py --pendencias-inicio <TOTAL_INICIAL> --markdown
 ```
+Para auditar a capacidade pura de laboratório em regime descartando telemetria viva, adicione `--forcar-benchmark`.
 
 ### Passo 2: Copiar a Tabela para o Relatório de Handoff
 A saída gerada segue rigorosamente o formato Markdown aprovado pelos gates:
@@ -65,7 +66,7 @@ A saída gerada segue rigorosamente o formato Markdown aprovado pelos gates:
 
 | Metrica de Impacto | Valor Medido | Status / Observacao |
 | :--- | :--- | :--- |
-| **Economia de Tokens MCP (S1)** | **-XX.XX%** | Poda dinamica de schemas irrelevantes (overhead: XX.X us) |
+| **Economia de Tokens MCP (S1)** | **-XX.XX%** | Telemetria viva da sessao (N chamadas reais) / Regime (overhead: XX.X us) |
 | **Ingress Fast-Path S1** | **X.XXXX ms** (XX.X us) | Triagem O(1) de tarefas sem compilar grafo |
 | **Passivo de Pendencias** | **X abertas** (reducao: XX.X%) | Resolucao formal via M.O. 13.F |
 | **Integridade do Ledger** | **XX registros** (tail: `XXXXXXXX`) | Portao acumulado: X sessoes |

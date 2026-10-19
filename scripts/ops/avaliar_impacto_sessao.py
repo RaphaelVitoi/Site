@@ -27,7 +27,11 @@ sys.path.insert(0, str(SITE_ROOT))
 
 from core.arbitrator import UniversalArbitrator  # noqa: E402
 from core.schemas import Task  # noqa: E402
-from llm.mcp_tool_interceptor import interceptar_e_podar_ferramentas_s1  # noqa: E402
+from llm.mcp_tool_interceptor import (  # noqa: E402
+    calcular_estatisticas_telemetria,
+    interceptar_e_podar_ferramentas_s1,
+    obter_telemetria_sessao,
+)
 from scripts.ops.record_gate import coletar_pendencias  # noqa: E402
 
 
@@ -111,27 +115,63 @@ def medir_fila_tarefas() -> dict[str, int | float]:
     }
 
 
-def medir_interceptador_mcp() -> dict[str, float]:
-    """Mede a taxa de poda de schemas de ferramentas e o overhead de latencia."""
-    # Conjunto canonico de teste com 30 ferramentas padronizadas
+def medir_interceptador_mcp(forcar_benchmark: bool = False) -> dict[str, object]:
+    """Mede a taxa de poda de schemas de ferramentas e o overhead de latencia.
+
+    Fusao SOTA:
+    1. Se houver telemetria viva registrada na sessao (mcp_tool_telemetry.jsonl),
+       utiliza a economia real ponderada e a latencia media das chamadas autenticas.
+    2. Caso contrario (ou com forcar_benchmark=True), executa benchmark de capacidade
+       com warmup descartavel para medir a latencia em regime puro (<500us).
+    """
+    if not forcar_benchmark:
+        registros = obter_telemetria_sessao(horas=24.0)
+        if registros:
+            stats = calcular_estatisticas_telemetria(registros)
+            return {
+                "fonte": "telemetria_real",
+                "total_eventos": stats["total_eventos"],
+                "economia_media_tokens_pct": stats["economia_media_tokens_pct"],
+                "overhead_latencia_us": stats["overhead_medio_us"],
+                "status": f"Telemetria viva da sessao ({stats['total_eventos']} chamadas reais)",
+            }
+
+    # Benchmark SOTA Otimizado em Regime com Warmup Descartavel
+    # 1. Warmup descartavel: isola o lazy import do torch/laya fora da medicao de precisao
+    _ = interceptar_e_podar_ferramentas_s1(
+        tools=[{"name": "view_file", "description": "warmup"}],
+        prompt="warmup inicializacao lazy laya",
+        registrar_telemetria=False,
+    )
+
+    # 2. Catalogo expandido e balanceado de 32 ferramentas representativas SOTA
     tools: list[dict[str, object]] = []
-    for name in ["view_file", "read_file", "get_file_contents", "list_directory", "search_code"]:
-        tools.append({"name": name, "description": f"Leitura de arquivos {name}"})
-    for name in ["write_to_file", "replace_file_content", "create_or_update_file"]:
-        tools.append({"name": name, "description": f"Gravacao de arquivos {name}"})
-    for name in ["run_sql", "execute_sql", "query_logs", "describe_table_schema", "bigquery"]:
-        tools.append({"name": name, "description": f"Banco de dados SQL {name}"})
-    for name in ["browser_navigate", "browser_click", "browser_type", "lighthouse_audit"]:
-        tools.append({"name": name, "description": f"Navegacao e UI {name}"})
-    for name in ["exa", "search_web", "web_search_exa", "read_url_content"]:
-        tools.append({"name": name, "description": f"Pesquisa web {name}"})
+    for name in ["view_file", "read_file", "get_file_contents", "list_directory", "search_code", "read_resource"]:
+        tools.append({"name": name, "description": f"Leitura de arquivos do workspace e recursos {name}"})
+    for name in ["write_to_file", "replace_file_content", "create_or_update_file", "delete_file", "push_files"]:
+        tools.append({"name": name, "description": f"Gravacao e mutacao de arquivos e git {name}"})
+    for name in ["run_sql", "execute_sql", "query_logs", "describe_table_schema", "bigquery", "supabase"]:
+        tools.append({"name": name, "description": f"Banco de dados SQL Postgres Neon BigQuery {name}"})
+    for name in ["browser_navigate", "browser_click", "browser_type", "browser_snapshot", "lighthouse_audit"]:
+        tools.append({"name": name, "description": f"Navegacao e automacao de UI Playwright {name}"})
+    for name in ["exa", "search_web", "web_search_exa", "web_fetch_exa", "read_url_content"]:
+        tools.append({"name": name, "description": f"Pesquisa web profunda e fetch de URLs {name}"})
+    for name in [
+        "jules_create_session",
+        "jules_get_session_status",
+        "jules_approve_plan",
+        "stitch_create_project",
+        "google_workspace",
+    ]:
+        tools.append({"name": name, "description": f"Operacoes em nuvem assincronas Jules Stitch Workspace {name}"})
 
     full_bytes = len(json.dumps(tools).encode("utf-8"))
 
     prompts = [
-        "Execute uma query no banco de dados para auditar tabelas",
-        "Pesquise na internet a documentacao oficial do Python",
-        "Modifique o arquivo e implemente o novo componente",
+        "Execute uma query no banco de dados para auditar tabelas e logs",
+        "Pesquise na internet a documentacao oficial do Python e Next.js",
+        "Modifique o arquivo e implemente o novo componente no workspace",
+        "Crie uma sessao assincrona no Jules para analise e refatoracao",
     ]
 
     economias: list[float] = []
@@ -139,7 +179,7 @@ def medir_interceptador_mcp() -> dict[str, float]:
 
     for prompt in prompts:
         t0 = time.perf_counter()
-        filtered, _ = interceptar_e_podar_ferramentas_s1(tools, prompt)
+        filtered, _ = interceptar_e_podar_ferramentas_s1(tools, prompt, registrar_telemetria=False)
         t1 = time.perf_counter()
 
         latencias_us.append((t1 - t0) * 1_000_000)
@@ -148,8 +188,11 @@ def medir_interceptador_mcp() -> dict[str, float]:
         economias.append(saved_pct)
 
     return {
+        "fonte": "benchmark_regime",
+        "total_eventos": len(prompts),
         "economia_media_tokens_pct": round(sum(economias) / len(economias), 2),
         "overhead_latencia_us": round(sum(latencias_us) / len(latencias_us), 1),
+        "status": f"Capacidade S1 em regime (warmup descartado, {len(tools)} ferramentas)",
     }
 
 
@@ -251,12 +294,13 @@ def medir_eficiencia_economica_e_infraestrutura() -> dict[str, object]:
 def avaliar_impacto_sessao(
     pendencias_inicio: int | None = None,
     saida_markdown: bool = False,
+    forcar_benchmark: bool = False,
 ) -> dict[str, object]:
     """Gera o diagnostico quantitativo completo da sessao."""
     pend = medir_pendencias()
     ledger = medir_ledger_calibracao()
     fila = medir_fila_tarefas()
-    mcp = medir_interceptador_mcp()
+    mcp = medir_interceptador_mcp(forcar_benchmark=forcar_benchmark)
     ingress = medir_ingress_fast_path()
     pools = medir_pools_openrouter()
     economia = medir_eficiencia_economica_e_infraestrutura()
@@ -306,7 +350,7 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
         "| :--- | :--- | :--- |",
         (
             f"| **Economia de Tokens MCP (S1)** | **-{mcp['economia_media_tokens_pct']}%** |"
-            f" Poda dinamica de schemas irrelevantes (overhead: {mcp['overhead_latencia_us']} us) |"
+            f" {mcp.get('status', 'Poda dinamica de schemas irrelevantes')} (overhead: {mcp['overhead_latencia_us']} us) |"
         ),
         (
             f"| **Ingress Fast-Path S1** | **{ing['latencia_s1_ms']} ms** ({ing['latencia_s1_us']} us) |"
@@ -351,7 +395,7 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
     print("  AVALIACAO DE IMPACTO OBJETIVO DE SESSAO (SOTA AGNOSTIC)")
     print("=" * 65)
     print(
-        f"\u2022 Economia de Tokens MCP (S1):   -{mcp['economia_media_tokens_pct']}% (overhead: {mcp['overhead_latencia_us']} us)"
+        f"\u2022 Economia de Tokens MCP (S1):   -{mcp['economia_media_tokens_pct']}% [{mcp.get('status', 'Poda dinamica')}] (overhead: {mcp['overhead_latencia_us']} us)"
     )
     print(f"\u2022 Ingress Fast-Path S1:          {ing['latencia_s1_ms']} ms ({ing['latencia_s1_us']} us) por tarefa")
     print(f"\u2022 Passivo de Pendencias:         {pend['abertas']} abertas (reducao: {pend['reducao_pct']}%)")
@@ -385,10 +429,19 @@ def main() -> int:
     )
     parser.add_argument("--markdown", action="store_true", help="Gera a saida em formato de tabela Markdown")
     parser.add_argument("--json", action="store_true", help="Imprime o payload JSON completo")
+    parser.add_argument(
+        "--forcar-benchmark",
+        action="store_true",
+        help="Forca execucao do benchmark em regime ignorando telemetria viva",
+    )
 
     args = parser.parse_args()
 
-    r = avaliar_impacto_sessao(pendencias_inicio=args.pendencias_inicio, saida_markdown=args.markdown)
+    r = avaliar_impacto_sessao(
+        pendencias_inicio=args.pendencias_inicio,
+        saida_markdown=args.markdown,
+        forcar_benchmark=args.forcar_benchmark,
+    )
 
     if args.json:
         print(json.dumps(r, indent=2))
