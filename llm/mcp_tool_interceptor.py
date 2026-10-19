@@ -151,7 +151,7 @@ def obter_telemetria_sessao(
                         delta_horas = (agora - ts).total_seconds() / 3600.0
                         if delta_horas <= horas:
                             registros.append(obj)
-                except (json.JSONDecodeError, ValueError):
+                except ValueError:
                     continue
     except Exception as e:
         logger.debug("[mcp-s1-telemetry] Falha ao ler telemetria: %s", e)

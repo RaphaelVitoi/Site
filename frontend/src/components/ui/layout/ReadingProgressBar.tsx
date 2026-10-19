@@ -23,7 +23,6 @@ export function ReadingProgressBar({ className = '' }: Readonly<ReadingProgressB
 	return (
 		<div
 			aria-hidden="true"
-			role="presentation"
 			className="pointer-events-none fixed top-0 right-0 left-0 z-100 h-1 overflow-hidden"
 		>
 			<motion.div
