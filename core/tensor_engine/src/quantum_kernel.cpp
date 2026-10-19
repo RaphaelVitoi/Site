@@ -1,4 +1,4 @@
-﻿#include <nanobind/nanobind.h>
+#include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
 #include <Eigen/Dense>
 #include <memory>
@@ -14,8 +14,8 @@ public:
 };
 
 nb::ndarray<nb::numpy, float> calculate_perspective_simd(
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> equity,
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> pot,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& equity,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& pot,
     float human_noise_factor) {
 
     size_t n = equity.size();
@@ -41,12 +41,12 @@ nb::ndarray<nb::numpy, float> calculate_perspective_simd(
 }
 
 nb::tuple solve_icm_distortion_simd( // NOSONAR
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> fold_arr,
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> call_arr,
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> raise_arr,
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> ip_rp_arr,
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> oop_rp_arr,
-    nb::ndarray<float, nb::ndim<1>, nb::c_contig> pot_size_arr,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& fold_arr,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& call_arr,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& raise_arr,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& ip_rp_arr,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& oop_rp_arr,
+    const nb::ndarray<float, nb::ndim<1>, nb::c_contig>& pot_size_arr,
     float topologic_aggression,
     uint32_t active_players,
     uint32_t street_idx) {
@@ -128,15 +128,8 @@ nb::tuple solve_icm_distortion_simd( // NOSONAR
 }
 
 NB_MODULE(quantum_tensor_engine, m) {
-    m.def("calculate_perspective_simd", &calculate_perspective_simd, "VetorizaÃ§Ã£o O(1) da Perspectiva via Eigen", "equity"_a, "pot"_a, "human_noise_factor"_a = 0.05f);
-    m.def("solve_icm_distortion_simd", &solve_icm_distortion_simd, "Solver Vetorizado Branchless para DistorÃ§Ã£o ICM SOTA",
+    m.def("calculate_perspective_simd", &calculate_perspective_simd, "Vetorizacao O(1) da Perspectiva via Eigen", "equity"_a, "pot"_a, "human_noise_factor"_a = 0.05f);
+    m.def("solve_icm_distortion_simd", &solve_icm_distortion_simd, "Solver Vetorizado Branchless para Distorcao ICM SOTA",
           "fold_arr"_a, "call_arr"_a, "raise_arr"_a, "ip_rp_arr"_a, "oop_rp_arr"_a, "pot_size_arr"_a,
           "topologic_aggression"_a, "active_players"_a, "street_idx"_a);
 }
-
-
-
-
-
-
-

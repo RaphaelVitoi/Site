@@ -123,6 +123,93 @@ def _rule_order(rule: Mapping[str, Any], name: str) -> tuple[int, str]:
     return _safe_int(rule.get("order"), 100), name
 
 
+CandidateItem = tuple[tuple[int, str], str, int, str]
+
+
+def _is_mcp_disabled(metadata_map: Mapping[str, Any], configured: Mapping[str, Any]) -> str | None:
+    task_mode = str(metadata_map.get("mcp_addons_mode", "")).strip().lower()
+    if metadata_map.get("mcp_addons_disabled") or task_mode in {"off", "disabled", "none"}:
+        return "mcp_disabled_by_task"
+    if configured.get("enabled", True) is False:
+        return "mcp_policy_disabled"
+    return None
+
+
+def _is_explicit_request(name: str, text: str, rule: Mapping[str, Any], known_requested: tuple[str, ...]) -> bool:
+    if name in known_requested:
+        return True
+    explicit_terms = _normalise_term_list(rule.get("explicit_terms"))
+    return any(_contains_term(text, term) for term in explicit_terms)
+
+
+def _is_rule_blocked(text: str, rule: Mapping[str, Any], is_explicit: bool) -> bool:
+    if is_explicit or not rule.get("block_without_explicit"):
+        return False
+    blocked_terms = _normalise_term_list(rule.get("blocked_terms"))
+    return any(_contains_term(text, term) for term in blocked_terms)
+
+
+def _is_long_task(text: str, rule: Mapping[str, Any]) -> bool:
+    minimum_words = max(0, _safe_int(rule.get("minimum_words"), 0))
+    return minimum_words > 0 and len(text.split()) >= minimum_words
+
+
+def _build_candidate_item(
+    name: str,
+    raw_rule: Mapping[str, Any],
+    is_explicit: bool,
+    known_requested: tuple[str, ...],
+    score: int,
+    threshold: int,
+    long_task: bool,
+) -> CandidateItem:
+    order_key = _rule_order(raw_rule, name)
+    if is_explicit:
+        reason = f"mcp_explicit:{name}" if name in known_requested else f"mcp_intent:{name}"
+        return order_key, name, max(score, threshold), reason
+
+    reason = f"mcp_auto:{name}:long_task" if long_task and score < threshold else f"mcp_auto:{name}:score_{score}"
+    candidate_score = max(score, threshold) if long_task else score
+    return order_key, name, candidate_score, reason
+
+
+def _compute_recorded_score(
+    score: int,
+    threshold: int,
+    is_explicit: bool,
+    long_task: bool,
+) -> int | None:
+    if score > 0 or is_explicit:
+        return max(score, threshold if is_explicit or long_task else score)
+    if long_task:
+        return threshold
+    return None
+
+
+def _evaluate_addon_candidate(
+    name: str,
+    raw_rule: Mapping[str, Any],
+    text: str,
+    known_requested: tuple[str, ...],
+    default_threshold: int,
+) -> tuple[bool, CandidateItem | None, int | None]:
+    is_explicit = _is_explicit_request(name, text, raw_rule, known_requested)
+    if _is_rule_blocked(text, raw_rule, is_explicit):
+        return is_explicit, None, None
+
+    terms = _normalise_terms(raw_rule.get("terms"))
+    score = _calculate_heuristic_score(text, terms) if terms else 0
+    threshold = _safe_int(raw_rule.get("minimum_score"), default_threshold)
+    long_task = _is_long_task(text, raw_rule)
+
+    if not is_explicit and score < threshold and not long_task:
+        return is_explicit, None, None
+
+    candidate = _build_candidate_item(name, raw_rule, is_explicit, known_requested, score, threshold, long_task)
+    recorded_score = _compute_recorded_score(score, threshold, is_explicit, long_task)
+    return is_explicit, candidate, recorded_score
+
+
 def resolve_mcp_addons(
     description: str,
     metadata: Mapping[str, Any] | None = None,
@@ -146,16 +233,13 @@ def resolve_mcp_addons(
     addons = addons_raw if isinstance(addons_raw, Mapping) else {}
     known_requested = tuple(name for name in requested if name in addons)
 
-    task_mode = str(metadata_map.get("mcp_addons_mode", "")).strip().lower()
-    if metadata_map.get("mcp_addons_disabled") or task_mode in {"off", "disabled", "none"}:
-        return MCPAddonDecision((), {}, ("mcp_disabled_by_task",), known_requested, mode)
-
-    if configured.get("enabled", True) is False:
-        return MCPAddonDecision((), {}, ("mcp_policy_disabled",), known_requested, mode)
+    disabled_reason = _is_mcp_disabled(metadata_map, configured)
+    if disabled_reason:
+        return MCPAddonDecision((), {}, (disabled_reason,), known_requested, mode)
 
     text = _normalise_text(description)
-    auto_candidates: list[tuple[tuple[int, str], str, int, str]] = []
-    explicit_candidates: list[tuple[tuple[int, str], str, int, str]] = []
+    auto_candidates: list[CandidateItem] = []
+    explicit_candidates: list[CandidateItem] = []
     scores: dict[str, int] = {}
 
     default_threshold = _safe_int(configured.get("default_threshold"), 2)
@@ -164,40 +248,17 @@ def resolve_mcp_addons(
         if not name or not isinstance(raw_rule, Mapping):
             continue
 
-        terms = _normalise_terms(raw_rule.get("terms"))
-        score = _calculate_heuristic_score(text, terms) if terms else 0
-        explicit_by_text = any(
-            _contains_term(text, term) for term in _normalise_term_list(raw_rule.get("explicit_terms"))
+        is_explicit, candidate, recorded_score = _evaluate_addon_candidate(
+            name, raw_rule, text, known_requested, default_threshold
         )
-        is_explicit = name in known_requested or explicit_by_text
-        blocked = bool(raw_rule.get("block_without_explicit")) and any(
-            _contains_term(text, term) for term in _normalise_term_list(raw_rule.get("blocked_terms"))
-        )
-        minimum_words = max(0, _safe_int(raw_rule.get("minimum_words"), 0))
-        long_task = len(text.split()) >= minimum_words > 0
-
-        if blocked and not is_explicit:
+        if candidate is None:
             continue
 
-        threshold = _safe_int(raw_rule.get("minimum_score"), default_threshold)
-        if not is_explicit and score < threshold and not long_task:
-            continue
+        target_list = explicit_candidates if is_explicit else auto_candidates
+        target_list.append(candidate)
 
-        if is_explicit:
-            reason = f"mcp_explicit:{name}" if name in known_requested else f"mcp_intent:{name}"
-            explicit_candidates.append((_rule_order(raw_rule, name), name, max(score, threshold), reason))
-        else:
-            reason = (
-                f"mcp_auto:{name}:long_task" if long_task and score < threshold else f"mcp_auto:{name}:score_{score}"
-            )
-            auto_candidates.append(
-                (_rule_order(raw_rule, name), name, max(score, threshold) if long_task else score, reason)
-            )
-
-        if score > 0 or is_explicit:
-            scores[name] = max(score, threshold if is_explicit or long_task else score)
-        elif long_task:
-            scores[name] = threshold
+        if recorded_score is not None:
+            scores[name] = recorded_score
 
     explicit_candidates.sort(key=lambda item: item[0])
     auto_candidates.sort(key=lambda item: (item[0], -item[2]))

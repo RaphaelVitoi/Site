@@ -132,22 +132,26 @@ def resolve_subagent_tier(value: Any) -> SubagentTier | None:
         return None
 
 
+MODEL_QWEN_CODE_SURGICAL = "qwen-code-surgical:latest"
+MODEL_QWEN_7B_INSTRUCT = "qwen2.5-coder:7b-instruct-q5_K_M"
+MODEL_GEMMA4_31B_CLOUD = "gemma4:31b-cloud"
+
 SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
-    SubagentTier.APPSEC: "qwen-code-surgical:latest",
+    SubagentTier.APPSEC: MODEL_QWEN_CODE_SURGICAL,
     SubagentTier.MATH: "qwen-pmev-math:latest",
-    SubagentTier.WASM: "qwen2.5-coder:7b-instruct-q5_K_M",
+    SubagentTier.WASM: MODEL_QWEN_7B_INSTRUCT,
     SubagentTier.POETICS: "qwen-poetics:latest",
     SubagentTier.NANO_ROUTER: "qwen2.5-coder:0.5b",
     SubagentTier.STREAMING_FIM: "qwen2.5-coder:1.5b",
-    SubagentTier.UI: "qwen2.5-coder:7b-instruct-q5_K_M",
-    SubagentTier.RESEARCH: "gemma4:31b-cloud",
+    SubagentTier.UI: MODEL_QWEN_7B_INSTRUCT,
+    SubagentTier.RESEARCH: MODEL_GEMMA4_31B_CLOUD,
     SubagentTier.VALIDADOR: "qwen-pmev-math:latest",
     SubagentTier.IMPLEMENTOR: "qwen2.5-coder:7b",
-    SubagentTier.CURATOR: "qwen2.5-coder:7b-instruct-q5_K_M",
-    SubagentTier.ARCHITECT: "gemma4:31b-cloud",
-    SubagentTier.GENERALIST: "gemma4:31b-cloud",
-    SubagentTier.SELF: "qwen-code-surgical:latest",
-    SubagentTier.FLUTTER_A11Y: "qwen-code-surgical:latest",
+    SubagentTier.CURATOR: MODEL_QWEN_7B_INSTRUCT,
+    SubagentTier.ARCHITECT: MODEL_GEMMA4_31B_CLOUD,
+    SubagentTier.GENERALIST: MODEL_GEMMA4_31B_CLOUD,
+    SubagentTier.SELF: MODEL_QWEN_CODE_SURGICAL,
+    SubagentTier.FLUTTER_A11Y: MODEL_QWEN_CODE_SURGICAL,
 }
 
 
@@ -235,13 +239,101 @@ class SubagentMeshController:
 
         return SubagentTier.SELF
 
+    @staticmethod
+    async def _call_ollama_inference(
+        assigned_model: str,
+        tier_value: str,
+        prompt: str,
+        timeout_seconds: int,
+    ) -> tuple[str | None, dict[str, Any]]:
+        """Dispara a chamada HTTP para o Ollama local e extrai resposta ou metadados de fallback."""
+        ollama_base = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
+        ollama_url = f"{ollama_base}/api/chat"
+        system_instruction = (
+            f"Voce e o subagente especializado '{tier_value}'. "
+            f"Execute a missao com maxima precisao cirurgica, sem entropia e com economia generalizada."
+        )
+        if "gemma" in assigned_model.lower():
+            system_instruction = format_gemma4_system_prompt(system_instruction, enable_thinking=True)
+        payload = {
+            "model": assigned_model,
+            "messages": [
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": prompt},
+            ],
+            "stream": False,
+            "options": {
+                "temperature": 0.2,
+                "num_predict": 1024,
+            },
+        }
+
+        metadata: dict[str, Any] = {}
+        response_content: str | None = None
+        default_timeout = 2.0 if "pytest" in sys.modules else 45.0
+        sock_timeout = 1.0 if "pytest" in sys.modules else 2.0
+        ollama_timeout = float(
+            os.environ.get("OLLAMA_TIMEOUT_SECONDS", str(min(float(timeout_seconds), default_timeout)))
+        )
+        timeout = aiohttp.ClientTimeout(total=ollama_timeout, sock_connect=sock_timeout)
+
+        try:
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.post(ollama_url, json=payload) as resp,
+            ):
+                if resp.status == 200:
+                    data = await resp.json()
+                    raw_content = data.get("message", {}).get("content", "").strip()
+                    if raw_content:
+                        thought_channel, final_answer = parse_gemma4_channel_output(raw_content)
+                        response_content = final_answer
+                        if thought_channel:
+                            metadata["thought_channel"] = thought_channel
+                    metadata.update(
+                        {
+                            "inference_mode": "real_ollama",
+                            "prompt_eval_count": data.get("prompt_eval_count", 0),
+                            "eval_count": data.get("eval_count", 0),
+                        }
+                    )
+                else:
+                    err_body = await resp.text()
+                    logger.warning(
+                        "[SUBAGENTS MESH] Ollama HTTP %d para modelo '%s': %s. Ativando fallback gracioso.",
+                        resp.status,
+                        assigned_model,
+                        err_body[:200],
+                    )
+                    metadata.update(
+                        {
+                            "inference_mode": "fallback_deterministic",
+                            "fallback_reason": f"HTTP {resp.status}",
+                        }
+                    )
+        except Exception as e_ollama:
+            err_detail = str(e_ollama).strip() or type(e_ollama).__name__
+            logger.warning(
+                "[SUBAGENTS MESH] Inferencia real via Ollama (127.0.0.1:11434) para modelo '%s' falhou (%s). Ativando fallback gracioso.",
+                assigned_model,
+                err_detail,
+            )
+            metadata.update(
+                {
+                    "inference_mode": "fallback_deterministic",
+                    "fallback_reason": err_detail,
+                }
+            )
+
+        return response_content, metadata
+
     async def execute_subagent_pipeline(self, request: SubagentMissionRequest) -> SubagentMissionResult:
         """
         Executa o pipeline assincrono do subagente com medicao precisa de latencia e hooks.
         """
         start_time = asyncio.get_event_loop().time()
         self.active_missions[request.mission_id] = request
-        assigned_model = SUBAGENT_MODEL_MAP.get(request.tier, "qwen-code-surgical:latest")
+        assigned_model = SUBAGENT_MODEL_MAP.get(request.tier, MODEL_QWEN_CODE_SURGICAL)
 
         logger.info(
             "[SUBAGENTS MESH] Iniciando missao '%s' no subagente '%s' (Modelo: %s)",
@@ -280,88 +372,18 @@ class SubagentMeshController:
                 ttl_seconds=request.timeout_seconds,
             )
 
-            # Inferencia real assincrona conectada ao Ollama local (127.0.0.1:11434)
-            ollama_base = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
-            ollama_url = f"{ollama_base}/api/chat"
-            system_instruction = (
-                f"Voce e o subagente especializado '{request.tier.value}'. "
-                f"Execute a missao com maxima precisao cirurgica, sem entropia e com economia generalizada."
+            response_content, inference_metadata = await self._call_ollama_inference(
+                assigned_model=assigned_model,
+                tier_value=request.tier.value,
+                prompt=request.prompt,
+                timeout_seconds=request.timeout_seconds,
             )
-            if "gemma" in assigned_model.lower():
-                system_instruction = format_gemma4_system_prompt(system_instruction, enable_thinking=True)
-            payload = {
-                "model": assigned_model,
-                "messages": [
-                    {"role": "system", "content": system_instruction},
-                    {"role": "user", "content": request.prompt},
-                ],
-                "stream": False,
-                "options": {
-                    "temperature": 0.2,
-                    "num_predict": 1024,
-                },
-            }
 
-            response_content: str | None = None
             metadata: dict[str, Any] = {
                 "agent_source": cfg.AGENT_SOURCE or "antigravity_core",
                 "cache_signature": bucket.hash_signature,
             }
-
-            try:
-                default_timeout = 2.0 if "pytest" in sys.modules else 45.0
-                ollama_timeout = float(
-                    os.environ.get("OLLAMA_TIMEOUT_SECONDS", str(min(float(request.timeout_seconds), default_timeout)))
-                )
-                timeout = aiohttp.ClientTimeout(
-                    total=ollama_timeout, sock_connect=1.0 if "pytest" in sys.modules else 2.0
-                )
-                async with (
-                    aiohttp.ClientSession(timeout=timeout) as session,
-                    session.post(ollama_url, json=payload) as resp,
-                ):
-                    if resp.status == 200:
-                        data = await resp.json()
-                        raw_content = data.get("message", {}).get("content", "").strip()
-                        if raw_content:
-                            thought_channel, final_answer = parse_gemma4_channel_output(raw_content)
-                            response_content = final_answer
-                            if thought_channel:
-                                metadata["thought_channel"] = thought_channel
-                        metadata.update(
-                            {
-                                "inference_mode": "real_ollama",
-                                "prompt_eval_count": data.get("prompt_eval_count", 0),
-                                "eval_count": data.get("eval_count", 0),
-                            }
-                        )
-                    else:
-                        err_body = await resp.text()
-                        logger.warning(
-                            "[SUBAGENTS MESH] Ollama HTTP %d para modelo '%s': %s. Ativando fallback gracioso.",
-                            resp.status,
-                            assigned_model,
-                            err_body[:200],
-                        )
-                        metadata.update(
-                            {
-                                "inference_mode": "fallback_deterministic",
-                                "fallback_reason": f"HTTP {resp.status}",
-                            }
-                        )
-            except Exception as e_ollama:
-                err_detail = str(e_ollama).strip() or type(e_ollama).__name__
-                logger.warning(
-                    "[SUBAGENTS MESH] Inferencia real via Ollama (127.0.0.1:11434) para modelo '%s' falhou (%s). Ativando fallback gracioso.",
-                    assigned_model,
-                    err_detail,
-                )
-                metadata.update(
-                    {
-                        "inference_mode": "fallback_deterministic",
-                        "fallback_reason": err_detail,
-                    }
-                )
+            metadata.update(inference_metadata)
 
             duration_ms = (asyncio.get_event_loop().time() - start_time) * 1000
 

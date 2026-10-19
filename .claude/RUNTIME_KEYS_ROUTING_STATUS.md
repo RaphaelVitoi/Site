@@ -7,10 +7,12 @@
 - validation_method: Gemini=ListModels; OpenRouter=Models; Anthropic=Messages ping
 
 ## Routing Notes
+
 - Chaves Gemini validadas via endpoint /v1beta/models (ListModels).
 - Falha de modelo fixo nao invalida chave; separar problema de roteamento de modelo.
 
 ## Last Audit Rows
+
 - Gemini | origin...8419 | FALHA | HTTP 400 (chave/permissao) | N/A
 - Gemini | COLOQU...UIr4 | FALHA | HTTP 400 (chave/permissao) | N/A
 - Gemini | COLOQU...UI_A | FALHA | HTTP 400 (chave/permissao) | N/A

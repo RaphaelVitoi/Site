@@ -10,9 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# ==============================================================================
-# 1. CHEN & ANKENMAN SCHEMAS (The Mathematics of Poker)
-# ==============================================================================
+POT_SIZE_DESCRIPTION: str = "Tamanho do pote."
 
 
 class ChenClairvoyanceRequest(BaseModel):
@@ -20,7 +18,7 @@ class ChenClairvoyanceRequest(BaseModel):
 
     model_config = ConfigDict(allow_inf_nan=False)
 
-    pot: float = Field(..., ge=0.1, description="Tamanho do pote.")
+    pot: float = Field(..., ge=0.1, description=POT_SIZE_DESCRIPTION)
     bet: float = Field(..., ge=0.1, description="Tamanho da aposta.")
 
 
@@ -46,7 +44,7 @@ class ChenAKQGameRequest(BaseModel):
 
     model_config = ConfigDict(allow_inf_nan=False)
 
-    pot: float = Field(..., ge=0.1, description="Tamanho do pote.")
+    pot: float = Field(..., ge=0.1, description=POT_SIZE_DESCRIPTION)
     bet: float = Field(1.0, ge=0.1, description="Tamanho da aposta unitaria.")
 
 
@@ -105,7 +103,7 @@ class JandaMDFRequest(BaseModel):
 
     model_config = ConfigDict(allow_inf_nan=False)
 
-    pot: float = Field(..., ge=0.1, description="Tamanho do pote.")
+    pot: float = Field(..., ge=0.1, description=POT_SIZE_DESCRIPTION)
     bet: float = Field(..., ge=0.01, description="Tamanho da aposta enfrentada.")
     num_defenders: int = Field(1, ge=1, le=9, description="Numero de defensores ativos (multiway).")
 

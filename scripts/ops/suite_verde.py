@@ -283,15 +283,18 @@ def silencio(extra: list[str]) -> list[str]:
 def rodar_suite(extra: list[str]) -> int:
     """Executa a suite e, se verde E a arvore continuar limpa, grava o marcador."""
     memoria_livre = psutil.virtual_memory().available
-    if memoria_livre < 6 * 1024**3:
+    min_ram_gib = float(os.environ.get("SOTA_SUITE_MIN_RAM_GIB", "6"))
+    if memoria_livre < min_ram_gib * 1024**3:
         print(
-            f"[SUITE] RAM disponivel insuficiente ({memoria_livre / 1024**3:.1f} GiB; minimo 6 GiB); "
+            f"[SUITE] RAM disponivel insuficiente ({memoria_livre / 1024**3:.1f} GiB; minimo {min_ram_gib:.1f} GiB); "
             "libere memoria e tente novamente",
             file=sys.stderr,
         )
         return 2
-    base = str(Path(tempfile.gettempdir()) / "pytest-sota")
-    cmd = [sys.executable, "-m", "pytest", "-q", f"--basetemp={base}", *paralelismo(extra), *silencio(extra), *extra]
+    tem_basetemp = any(arg.startswith("--basetemp") for arg in extra)
+    base = os.environ.get("SOTA_SUITE_BASETEMP") or str(Path(tempfile.gettempdir()) / f"pytest-sota-{os.getpid()}")
+    basetemp_args = [] if tem_basetemp else [f"--basetemp={base}"]
+    cmd = [sys.executable, "-m", "pytest", "-q", *basetemp_args, *paralelismo(extra), *silencio(extra), *extra]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)
     if r.returncode != 0:
