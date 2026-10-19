@@ -1639,6 +1639,58 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
     )
 
 
+async def _dispatch_timesfm_forecast(
+    engine: TimesFMEngine,
+    req: TimesFMForecastRequest,
+) -> TimesFMForecastResponse:
+    """Despacha a inferencia TimesFM conforme o tipo de serie (multivariada, covariadas ou univariada)."""
+    if req.series_dict is not None:
+        multi_results = await asyncio.to_thread(
+            engine.forecast_multivariate,
+            series_dict=req.series_dict,
+            horizon=req.horizon,
+        )
+        return TimesFMForecastResponse(
+            status="SUCCESS",
+            forecast_type="multivariate",
+            results={k: v.to_item() for k, v in multi_results.items()},
+            model_used=engine.procedencia,
+            license_tier=engine.metadata.license_tier.value,
+            intended_model=engine.metadata.model_id,
+            weights_loaded=engine.weights_loaded,
+        )
+
+    series = cast(list[float], req.series)
+    if req.past_covariates is not None or req.future_covariates is not None:
+        result = await asyncio.to_thread(
+            engine.forecast_with_covariates,
+            series=series,
+            past_covariates=req.past_covariates,
+            future_covariates=req.future_covariates,
+            horizon=req.horizon,
+            frequency_indicator=req.frequency_indicator,
+            target_name=req.target_name,
+        )
+    else:
+        result = await asyncio.to_thread(
+            engine.forecast_univariate,
+            series=series,
+            horizon=req.horizon,
+            frequency_indicator=req.frequency_indicator,
+            target_name=req.target_name,
+        )
+
+    return TimesFMForecastResponse(
+        status="SUCCESS",
+        forecast_type="univariate",
+        results={req.target_name: result.to_item()},
+        model_used=engine.procedencia,
+        license_tier=engine.metadata.license_tier.value,
+        intended_model=engine.metadata.model_id,
+        weights_loaded=engine.weights_loaded,
+    )
+
+
 async def handle_timesfm_forecast(request: web.Request) -> web.Response:
     """Endpoint de inferencia e previsao temporal via Google Research TimesFM."""
     try:
@@ -1684,60 +1736,7 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
             except Exception as e:  # noqa: BLE001
                 logger.warning("TimesFM pretrained weights unavailable; using explicit analytic fallback: %s", e)
 
-        if req.series_dict is not None:
-            multi_results = await asyncio.to_thread(
-                engine.forecast_multivariate,
-                series_dict=req.series_dict,
-                horizon=req.horizon,
-            )
-            items = {k: v.to_item() for k, v in multi_results.items()}
-            resp = TimesFMForecastResponse(
-                status="SUCCESS",
-                forecast_type="multivariate",
-                results=items,
-                model_used=engine.procedencia,
-                license_tier=engine.metadata.license_tier.value,
-                intended_model=engine.metadata.model_id,
-                weights_loaded=engine.weights_loaded,
-            )
-        elif req.past_covariates is not None or req.future_covariates is not None:
-            series = cast(list[float], req.series)
-            result = await asyncio.to_thread(
-                engine.forecast_with_covariates,
-                series=series,
-                past_covariates=req.past_covariates,
-                future_covariates=req.future_covariates,
-                horizon=req.horizon,
-                frequency_indicator=req.frequency_indicator,
-                target_name=req.target_name,
-            )
-            resp = TimesFMForecastResponse(
-                status="SUCCESS",
-                forecast_type="univariate",
-                results={req.target_name: result.to_item()},
-                model_used=engine.procedencia,
-                license_tier=engine.metadata.license_tier.value,
-                intended_model=engine.metadata.model_id,
-                weights_loaded=engine.weights_loaded,
-            )
-        else:
-            series = cast(list[float], req.series)
-            result = await asyncio.to_thread(
-                engine.forecast_univariate,
-                series=series,
-                horizon=req.horizon,
-                frequency_indicator=req.frequency_indicator,
-                target_name=req.target_name,
-            )
-            resp = TimesFMForecastResponse(
-                status="SUCCESS",
-                forecast_type="univariate",
-                results={req.target_name: result.to_item()},
-                model_used=engine.procedencia,
-                license_tier=engine.metadata.license_tier.value,
-                intended_model=engine.metadata.model_id,
-                weights_loaded=engine.weights_loaded,
-            )
+        resp = await _dispatch_timesfm_forecast(engine, req)
 
         return web.json_response(
             _with_execution_provenance(

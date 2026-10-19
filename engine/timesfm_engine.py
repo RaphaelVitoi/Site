@@ -203,6 +203,58 @@ class TimesFMGovernanceError(PermissionError):
     """Lancado quando uma tentativa de deploy comercial viola a licenca do TimesFM 3.0."""
 
 
+def _normalize_covariates_array(
+    covariates: dict[str, list[float]] | np.ndarray | None,
+) -> np.ndarray | None:
+    """Converte covariadas em dicionario ou array para ndarray float32."""
+    if covariates is None:
+        return None
+    if isinstance(covariates, dict):
+        return np.array(list(covariates.values()), dtype=np.float32)
+    return np.asarray(covariates, dtype=np.float32)
+
+
+def _extract_quantiles_from_predict(
+    output: Any,
+    horizon: int,
+) -> tuple[list[float], list[float], list[float]]:
+    """Extrai previsao media e quantis q10/q90 do output do metodo predict."""
+    forecast = np.asarray(output.forecast, dtype=np.float64).flatten()[:horizon]
+    forecast_quantiles = np.asarray(output.quantiles, dtype=np.float64)
+    if forecast_quantiles.ndim == 3:
+        forecast_quantiles = forecast_quantiles[0]
+    forecast_quantiles = forecast_quantiles[:horizon]
+    if forecast_quantiles.ndim >= 2:
+        q10 = forecast_quantiles[:, 0].tolist()
+        q90_col = min(8, forecast_quantiles.shape[1] - 1)
+        q90 = forecast_quantiles[:, q90_col].tolist()
+    else:
+        q10 = forecast.tolist()
+        q90 = forecast.tolist()
+    return forecast.tolist(), q10, q90
+
+
+def _extract_quantiles_from_legacy_forecast(
+    points: Any,
+    quantiles: Any,
+    horizon: int,
+) -> tuple[list[float], list[float], list[float]]:
+    """Extrai previsao media e quantis q10/q90 de modelos legados baseados em forecast."""
+    forecast = np.asarray(points[0], dtype=np.float64)[:horizon]
+    forecast_quantiles = np.asarray(quantiles[0], dtype=np.float64)[:horizon]
+    if forecast_quantiles.ndim >= 2 and forecast_quantiles.shape[1] == 10:
+        q10 = forecast_quantiles[:, 1].tolist()
+        q90 = forecast_quantiles[:, 9].tolist()
+    elif forecast_quantiles.ndim >= 2:
+        q10 = forecast_quantiles[:, 0].tolist()
+        q90_col = min(8, forecast_quantiles.shape[1] - 1)
+        q90 = forecast_quantiles[:, q90_col].tolist()
+    else:
+        q10 = forecast.tolist()
+        q90 = forecast.tolist()
+    return forecast.tolist(), q10, q90
+
+
 class TimesFMEngine:
     """Motor unificado de governanca e inferencia para modelos TimesFM."""
 
@@ -215,7 +267,7 @@ class TimesFMEngine:
         canonical_key = TIMESFM_ALIASES.get(preferred_model_key.strip().lower(), preferred_model_key)
         self.preferred_model_key = canonical_key
         self.metadata = self._validate_and_resolve_model(mode, canonical_key)
-        self._model = None
+        self._model: Any = None
 
     def load_pretrained_weights(
         self,
@@ -236,7 +288,10 @@ class TimesFMEngine:
             with _PRETRAINED_MODEL_LOCK:
                 model = _PRETRAINED_MODEL_CACHE.get(self.preferred_model_key)
                 if model is None:
-                    from timesfm import TimesFM3Forecaster  # noqa: PLC0415
+                    try:
+                        from timesfm3 import TimesFM3Forecaster  # noqa: PLC0415
+                    except ImportError:
+                        from timesfm import TimesFM3Forecaster  # type: ignore[attr-defined] # noqa: PLC0415
 
                     model = TimesFM3Forecaster.from_pretrained(
                         self.metadata.model_id,
@@ -340,66 +395,13 @@ class TimesFMEngine:
         )
         return meta
 
-    def forecast_univariate(
+    def _forecast_analytic_fallback(
         self,
-        series: list[float] | np.ndarray,
-        horizon: int = 12,
-        frequency_indicator: int = 0,
-        target_name: str = "metric",
+        history: np.ndarray,
+        horizon: int,
+        target_name: str,
     ) -> ForecastResult:
-        """Executa previsao univariada (serie temporal unica, e.g. variancia de EV ou Bankroll)."""
-        _ = frequency_indicator
-        history = np.asarray(series, dtype=np.float32)
-        if len(history) < 4:
-            raise ValueError("A s\u00e9rie hist\u00f3rica deve possuir ao menos 4 pontos para infer\u00eancia.")
-
-        if self._model is not None:
-            if hasattr(self._model, "predict"):
-                output = self._model.predict(
-                    context=history.astype(np.float32),
-                    horizon=horizon,
-                    return_quantiles=True,
-                )
-                forecast = np.asarray(output.forecast, dtype=np.float64).flatten()[:horizon]
-                forecast_quantiles = np.asarray(output.quantiles, dtype=np.float64)
-                if forecast_quantiles.ndim == 3:
-                    forecast_quantiles = forecast_quantiles[0]
-                forecast_quantiles = forecast_quantiles[:horizon]
-                q10 = forecast_quantiles[:, 0].tolist() if forecast_quantiles.ndim >= 2 else forecast.tolist()
-                q90 = (
-                    forecast_quantiles[:, min(8, forecast_quantiles.shape[1] - 1)].tolist()
-                    if forecast_quantiles.ndim >= 2
-                    else forecast.tolist()
-                )
-            else:
-                points, quantiles = self._model.forecast(horizon, [history.astype(np.float32)])
-                forecast = np.asarray(points[0], dtype=np.float64)[:horizon]
-                forecast_quantiles = np.asarray(quantiles[0], dtype=np.float64)[:horizon]
-                if forecast_quantiles.ndim >= 2 and forecast_quantiles.shape[1] == 10:
-                    q10 = forecast_quantiles[:, 1].tolist()
-                    q90 = forecast_quantiles[:, 9].tolist()
-                else:
-                    q10 = forecast_quantiles[:, 0].tolist()
-                    q90 = (
-                        forecast_quantiles[:, min(8, forecast_quantiles.shape[1] - 1)].tolist()
-                        if forecast_quantiles.ndim >= 2
-                        else forecast.tolist()
-                    )
-
-            return ForecastResult(
-                target_name=target_name,
-                history_length=len(history),
-                forecast_horizon=horizon,
-                mean_prediction=forecast.tolist(),
-                quantile_10=q10,
-                quantile_90=q90,
-                model_used=self.metadata.model_id,
-                license_tier=self.metadata.license_tier.value,
-                intended_model=self.metadata.model_id,
-                weights_loaded=True,
-            )
-
-        # Simulacao analitica com decaimento/drift bayesiano para fallback zero-token ou inferencia direta
+        """Simulacao analitica com decaimento/drift bayesiano para fallback zero-token ou inferencia direta."""
         last_val = float(history[-1])
         window = min(len(history), 10)
         trend = float(np.mean(np.diff(history[-window:]))) if len(history) >= 2 else 0.0
@@ -422,6 +424,58 @@ class TimesFMEngine:
             intended_model=self.metadata.model_id,
             weights_loaded=self.weights_loaded,
         )
+
+    def _forecast_model_univariate(
+        self,
+        history: np.ndarray,
+        horizon: int,
+        target_name: str,
+    ) -> ForecastResult:
+        """Executa previsao univariada usando o modelo neural carregado."""
+        model: Any = self._model
+        if model is not None and hasattr(model, "predict"):
+            output = model.predict(
+                context=history.astype(np.float32),
+                horizon=horizon,
+                return_quantiles=True,
+            )
+            mean_pred, q10, q90 = _extract_quantiles_from_predict(output, horizon)
+        elif model is not None and hasattr(model, "forecast"):
+            points, quantiles = model.forecast(horizon, [history.astype(np.float32)])
+            mean_pred, q10, q90 = _extract_quantiles_from_legacy_forecast(points, quantiles, horizon)
+        else:
+            return self._forecast_analytic_fallback(history, horizon, target_name)
+
+        return ForecastResult(
+            target_name=target_name,
+            history_length=len(history),
+            forecast_horizon=horizon,
+            mean_prediction=mean_pred,
+            quantile_10=q10,
+            quantile_90=q90,
+            model_used=self.metadata.model_id,
+            license_tier=self.metadata.license_tier.value,
+            intended_model=self.metadata.model_id,
+            weights_loaded=True,
+        )
+
+    def forecast_univariate(
+        self,
+        series: list[float] | np.ndarray,
+        horizon: int = 12,
+        frequency_indicator: int = 0,
+        target_name: str = "metric",
+    ) -> ForecastResult:
+        """Executa previsao univariada (serie temporal unica, e.g. variancia de EV ou Bankroll)."""
+        _ = frequency_indicator
+        history = np.asarray(series, dtype=np.float32)
+        if len(history) < 4:
+            raise ValueError("A série histórica deve possuir ao menos 4 pontos para inferência.")
+
+        if self._model is not None:
+            return self._forecast_model_univariate(history, horizon, target_name)
+
+        return self._forecast_analytic_fallback(history, horizon, target_name)
 
     def forecast_multivariate(
         self,
@@ -457,44 +511,23 @@ class TimesFMEngine:
         if len(history) < 4:
             raise ValueError("A série histórica deve possuir ao menos 4 pontos para inferência.")
 
-        if self._model is not None and hasattr(self._model, "predict"):
-            po_arr = None
-            if past_covariates is not None:
-                if isinstance(past_covariates, dict):
-                    po_arr = np.array(list(past_covariates.values()), dtype=np.float32)
-                else:
-                    po_arr = np.asarray(past_covariates, dtype=np.float32)
-
-            pf_arr = None
-            if future_covariates is not None:
-                if isinstance(future_covariates, dict):
-                    pf_arr = np.array(list(future_covariates.values()), dtype=np.float32)
-                else:
-                    pf_arr = np.asarray(future_covariates, dtype=np.float32)
-
-            output = self._model.predict(
+        model: Any = self._model
+        if model is not None and hasattr(model, "predict"):
+            po_arr = _normalize_covariates_array(past_covariates)
+            pf_arr = _normalize_covariates_array(future_covariates)
+            output = model.predict(
                 context=history.astype(np.float32),
                 horizon=horizon,
                 past_only_covariates=po_arr,
                 past_future_covariates=pf_arr,
                 return_quantiles=True,
             )
-            forecast = np.asarray(output.forecast, dtype=np.float64).flatten()[:horizon]
-            forecast_quantiles = np.asarray(output.quantiles, dtype=np.float64)
-            if forecast_quantiles.ndim == 3:
-                forecast_quantiles = forecast_quantiles[0]
-            forecast_quantiles = forecast_quantiles[:horizon]
-            q10 = forecast_quantiles[:, 0].tolist() if forecast_quantiles.ndim >= 2 else forecast.tolist()
-            q90 = (
-                forecast_quantiles[:, min(8, forecast_quantiles.shape[1] - 1)].tolist()
-                if forecast_quantiles.ndim >= 2
-                else forecast.tolist()
-            )
+            mean_pred, q10, q90 = _extract_quantiles_from_predict(output, horizon)
             return ForecastResult(
                 target_name=target_name,
                 history_length=len(history),
                 forecast_horizon=horizon,
-                mean_prediction=forecast.tolist(),
+                mean_prediction=mean_pred,
                 quantile_10=q10,
                 quantile_90=q90,
                 model_used=self.metadata.model_id,

@@ -129,6 +129,15 @@ WORKER_SCRIPT_PATH = BASE_DIR / WORKER_SCRIPT_NAME
 WORKER_API_CMD = "worker-api"
 MEMORY_RAG_SCRIPT = "memory_rag.py"
 
+TIMESFM_20_500M_KEY = "timesfm-2.0-500m"
+TIMESFM_25_200M_KEY = "timesfm-2.5-200m"
+TIMESFM_30_330M_KEY = "timesfm-3.0-330m"
+HELP_JSON_OUTPUT = "Emitir payload JSON puro"
+HELP_USE_WEIGHTS = "Usar pesos neurais pre-treinados locais"
+COL_PASSO_FUTURO = "Passo Futuro"
+COL_QUANTIL_10 = "Quantil 10%"
+COL_QUANTIL_90 = "Quantil 90%"
+
 STYLE_BOLD_WHITE = "bold #f8f8f2"
 STYLE_BOLD_YELLOW = "bold yellow"
 STYLE_BOLD_RED = "bold red"
@@ -1649,9 +1658,9 @@ def stats_timesfm(
     if model is not None:
         target_model = model
     elif exec_mode == ExecutionMode.RESEARCH_BENCHMARK:
-        target_model = "timesfm-3.0-330m"
+        target_model = TIMESFM_30_330M_KEY
     else:
-        target_model = "timesfm-2.0-500m"
+        target_model = TIMESFM_20_500M_KEY
 
     # 1. Projecao Estocastica de Bankroll
     history_bb = [100.0, 102.5, 99.0, 101.2, 103.8, 102.0, 105.4, 104.2, 106.0, 108.5, 107.2, 110.0]
@@ -3565,7 +3574,7 @@ def agent_calibration_forecast(
     use_weights: bool = typer.Option(
         False, "--use-weights", "-w", help="Usar inferencia direta de pesos neurais pre-treinados locais"
     ),
-    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+    json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Projecao estocastica de calibracao de agentes via Google Research TimesFM (2.0/2.5/3.0)."""
     from engine.timesfm_engine import (
@@ -3582,11 +3591,11 @@ def agent_calibration_forecast(
     if model is not None:
         target_model = model
     elif exec_mode == ExecutionMode.RESEARCH_BENCHMARK:
-        target_model = "timesfm-3.0-330m"
+        target_model = TIMESFM_30_330M_KEY
     elif use_weights:
-        target_model = "timesfm-2.5-200m"
+        target_model = TIMESFM_25_200M_KEY
     else:
-        target_model = "timesfm-2.0-500m"
+        target_model = TIMESFM_20_500M_KEY
 
     ledger_path = BASE_DIR / "reports" / "agent-calibration" / "feedback-ledger.jsonl"
     if not ledger_path.exists():
@@ -3669,7 +3678,7 @@ def agent_dream_optimize(
         "2.5", "--model", "-m", help="Modelo TimesFM: 2.5 (producao Apache 2.0) ou 3.0 (pesquisa academica)"
     ),
     research: bool = typer.Option(False, "--research", "-r", help="Ativar modo de pesquisa academica nao-comercial"),
-    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+    json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Fase de Sonho do Dream-RSI sobre o historico real, com a politica preditiva TimesFM."""
     from core.exploration_policy import AdaptiveDreamPolicy, ParallelRefinePolicy, TimesFMPredictivePolicy
@@ -4077,10 +4086,10 @@ def timesfm_forecast_cmd(
     series: str = typer.Option(..., "--series", "-s", help="Serie temporal separada por virgula (ex: 10,12,15,14,18)"),
     horizon: int = typer.Option(5, "--horizon", "-h", help="Horizonte de passos futuros a projetar"),
     model: str = typer.Option("2.5", "--model", "-m", help="Versao do modelo: 2.5 (comercial) ou 3.0 (pesquisa)"),
-    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help=HELP_USE_WEIGHTS),
     research: bool = typer.Option(False, "--research", "-r", help="Ativar modo de pesquisa nao-comercial"),
     target_name: str = typer.Option("timeseries", "--target", "-t", help="Rotulo semantico da variavel"),
-    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+    json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Previsao de series temporais univariada via Google Research TimesFM."""
     from engine.timesfm_engine import ExecutionMode, TimesFMEngine
@@ -4096,11 +4105,12 @@ def timesfm_forecast_cmd(
         raise typer.Exit(0)
 
     exec_mode = ExecutionMode.RESEARCH_BENCHMARK if research or "3.0" in model else ExecutionMode.COMMERCIAL_PRODUCTION
-    pref_key = (
-        "timesfm-3.0-330m"
-        if "3.0" in model
-        else ("timesfm-2.5-200m" if ("2.5" in model or use_weights) else "timesfm-2.0-500m")
-    )
+    if "3.0" in model:
+        pref_key = TIMESFM_30_330M_KEY
+    elif "2.5" in model or use_weights:
+        pref_key = TIMESFM_25_200M_KEY
+    else:
+        pref_key = TIMESFM_20_500M_KEY
 
     engine = TimesFMEngine(mode=exec_mode, preferred_model_key=pref_key)
     if use_weights:
@@ -4116,10 +4126,10 @@ def timesfm_forecast_cmd(
         return
 
     table = Table(title=f"[bold #50fa7b]PREVISAO TIMESFM: {target_name.upper()} (H={horizon})[/]", box=box.ROUNDED)
-    table.add_column("Passo Futuro", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column(COL_PASSO_FUTURO, style=STYLE_BOLD_CYAN, justify="center")
     table.add_column("Media Projetada", style=STYLE_BOLD_YELLOW, justify="right")
-    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
-    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+    table.add_column(COL_QUANTIL_10, style=STYLE_BOLD_RED, justify="right")
+    table.add_column(COL_QUANTIL_90, style=STYLE_BOLD_GREEN, justify="right")
 
     for i in range(len(res.mean_prediction)):
         table.add_row(
@@ -4139,7 +4149,7 @@ def timesfm_forecast_cmd(
 def timesfm_benchmark_cmd(
     horizon: int = typer.Option(5, "--horizon", "-h", help="Horizonte de previsao"),
     points: int = typer.Option(32, "--points", "-p", help="Numero de observacoes na serie de teste"),
-    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+    json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Mede a latencia e o comportamento comparado: Analitico vs Neural 2.5 vs Pesquisa 3.0."""
     import time
@@ -4155,7 +4165,7 @@ def timesfm_benchmark_cmd(
 
     # 1. Modo Analitico Baseline
     t0 = time.perf_counter()
-    engine_base = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.0-500m")
+    engine_base = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key=TIMESFM_20_500M_KEY)
     res_base = engine_base.forecast_univariate(series=synthetic_series, horizon=horizon)
     lat_base = (time.perf_counter() - t0) * 1000.0
     results_bench.append(
@@ -4172,7 +4182,7 @@ def timesfm_benchmark_cmd(
 
     # 2. Modo Neural 2.5 (Pesos locais se disponiveis)
     t0 = time.perf_counter()
-    engine_25 = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
+    engine_25 = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key=TIMESFM_25_200M_KEY)
     try:
         engine_25.load_pretrained_weights(local_files_only=True)
     except Exception as exc:  # noqa: BLE001
@@ -4193,7 +4203,7 @@ def timesfm_benchmark_cmd(
 
     # 3. Modo Pesquisa 3.0 (Academico/Nao-Comercial)
     t0 = time.perf_counter()
-    engine_30 = TimesFMEngine(mode=ExecutionMode.RESEARCH_BENCHMARK, preferred_model_key="timesfm-3.0-330m")
+    engine_30 = TimesFMEngine(mode=ExecutionMode.RESEARCH_BENCHMARK, preferred_model_key=TIMESFM_30_330M_KEY)
     try:
         engine_30.load_pretrained_weights(local_files_only=True)
     except Exception as exc:  # noqa: BLE001
@@ -4226,11 +4236,11 @@ def timesfm_benchmark_cmd(
     for r in results_bench:
         w_str = "[green]SIM (PyTorch)[/]" if r["weights_loaded"] else "[dim]NÃO (Analítico)[/]"
         table.add_row(
-            r["config"],
+            str(r["config"]),
             w_str,
-            f"{r['latency_ms']:.2f} ms",
-            r["license"],
-            f"{r['first_step_mean']:.2f}",
+            f"{float(r['latency_ms']):.2f} ms",
+            str(r["license"]),
+            f"{float(r['first_step_mean']):.2f}",
         )
     console.print(table)
 
@@ -4246,8 +4256,8 @@ def timesfm_icm_cmd(
     horizon: int = typer.Option(5, "--horizon", "-h", help="Horizonte de niveis a projetar"),
     remaining_players: int = typer.Option(10, "--remaining", "-p", help="Numero de jogadores restantes"),
     total_entries: int = typer.Option(100, "--entries", "-e", help="Numero total de inscricoes no torneio"),
-    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
-    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help=HELP_USE_WEIGHTS),
+    json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Projecao estocastica de pressao de ICM e fator de bolha para MTTs via TimesFM."""
     from engine.timesfm_engine import forecast_tournament_icm_decay
@@ -4270,9 +4280,13 @@ def timesfm_icm_cmd(
         print(res.model_dump_json(indent=2))
         return
 
-    status_color = (
-        "red" if res.status == "BUBBLE_PEAK" else ("yellow" if res.status == "PRESSURE_INCREASING" else "green")
-    )
+    if res.status == "BUBBLE_PEAK":
+        status_color = "red"
+    elif res.status == "PRESSURE_INCREASING":
+        status_color = "yellow"
+    else:
+        status_color = "green"
+
     console.print("\n[bold cyan]=== [TIMESFM ICM PRESSURE FORECAST] ===[/]\n")
     console.print(
         f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Prêmio Atual:[/] {res.current_risk_premium:.2f}% | [bold white]Fator de Bolha Projetado:[/] {res.bubble_factor_projected:.2f}x"
@@ -4284,8 +4298,8 @@ def timesfm_icm_cmd(
     table = Table(title="Trajetória Estocástica de Prêmio de Risco (% Equity)", box=box.ROUNDED)
     table.add_column("Mão Futura", style=STYLE_BOLD_CYAN, justify="center")
     table.add_column("Média Projetada (%)", style=STYLE_BOLD_YELLOW, justify="right")
-    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
-    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+    table.add_column(COL_QUANTIL_10, style=STYLE_BOLD_RED, justify="right")
+    table.add_column(COL_QUANTIL_90, style=STYLE_BOLD_GREEN, justify="right")
 
     for i in range(len(res.mean_trajectory)):
         table.add_row(
@@ -4307,8 +4321,8 @@ def timesfm_telemetry_cmd(
     ),
     horizon: int = typer.Option(6, "--horizon", "-h", help="Horizonte de passos futuros a projetar"),
     sla: float = typer.Option(200.0, "--sla", "-s", help="Limiar de SLA em ms para alerta de failover"),
-    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
-    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help=HELP_USE_WEIGHTS),
+    json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Projecao estocastica de latencia e prevencao de gargalos na malha agentica via TimesFM."""
     from engine.timesfm_engine import forecast_mesh_telemetry_latency
@@ -4330,9 +4344,13 @@ def timesfm_telemetry_cmd(
         print(res.model_dump_json(indent=2))
         return
 
-    status_color = (
-        "red" if res.status == "SATURATION_WARNING" else ("yellow" if res.status == "LATENCY_SPIKE_RISK" else "green")
-    )
+    if res.status == "SATURATION_WARNING":
+        status_color = "red"
+    elif res.status == "LATENCY_SPIKE_RISK":
+        status_color = "yellow"
+    else:
+        status_color = "green"
+
     console.print("\n[bold cyan]=== [TIMESFM MESH TELEMETRY FORECAST] ===[/]\n")
     console.print(
         f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Latência Atual:[/] {res.current_latency_ms:.2f}ms | [bold white]P95 Projetado:[/] {res.projected_p95_ms:.2f}ms"
@@ -4342,10 +4360,10 @@ def timesfm_telemetry_cmd(
     )
 
     table = Table(title="Projeção Temporal de Latência da Malha (ms)", box=box.ROUNDED)
-    table.add_column("Passo Futuro", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column(COL_PASSO_FUTURO, style=STYLE_BOLD_CYAN, justify="center")
     table.add_column("Média Projetada", style=STYLE_BOLD_YELLOW, justify="right")
-    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
-    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+    table.add_column(COL_QUANTIL_10, style=STYLE_BOLD_RED, justify="right")
+    table.add_column(COL_QUANTIL_90, style=STYLE_BOLD_GREEN, justify="right")
 
     for i in range(len(res.mean_trajectory)):
         table.add_row(
@@ -4370,8 +4388,8 @@ def timesfm_ev_gap_cmd(
         help="Historico acumulado de resultado real em BBs separado por virgula",
     ),
     horizon: int = typer.Option(10, "--horizon", "-h", help="Horizonte de passos a projetar"),
-    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
-    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help=HELP_USE_WEIGHTS),
+    json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Envelope estocastico de dispersao de variancia entre EV e resultado real (Downswing Anomaly)."""
     from engine.timesfm_engine import forecast_ev_variance_envelope
@@ -4409,10 +4427,10 @@ def timesfm_ev_gap_cmd(
     )
 
     table = Table(title="Trajetória do Gap EV Realizado vs Esperado (BB)", box=box.ROUNDED)
-    table.add_column("Passo Futuro", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column(COL_PASSO_FUTURO, style=STYLE_BOLD_CYAN, justify="center")
     table.add_column("Gap Médio (BB)", style=STYLE_BOLD_YELLOW, justify="right")
-    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
-    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+    table.add_column(COL_QUANTIL_10, style=STYLE_BOLD_RED, justify="right")
+    table.add_column(COL_QUANTIL_90, style=STYLE_BOLD_GREEN, justify="right")
 
     for i in range(len(res.mean_trajectory)):
         table.add_row(
