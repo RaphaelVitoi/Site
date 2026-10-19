@@ -44,7 +44,9 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: blob: https:",
-              "connect-src 'self' https: http://localhost:* http://127.0.0.1:* http://[::1]:* ws: wss:",
+              // Sem `http://[::1]:*`: IPv6 literal entre colchetes nao existe na gramatica de host-source da CSP;
+              // o navegador o descartava e registrava erro de console em toda pagina. `localhost` ja cobre o loopback.
+              "connect-src 'self' https: http://localhost:* http://127.0.0.1:* ws: wss:",
               "worker-src 'self' blob:",
               "frame-src 'self' blob: data: chrome-extension:",
               "object-src 'self' data: blob:",

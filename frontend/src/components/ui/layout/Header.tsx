@@ -2,7 +2,9 @@
 
 import { ROUTES } from '@/constants/routes';
 import BrandMark from '@/components/ui/layout/BrandMark';
-import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion';
+import ReadingProgressBar from '@/components/ui/layout/ReadingProgressBar';
+import { isLightPage as checkIsLightPage, isReadingContentPage } from '@/lib/surface';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import { HeaderAuthAction } from '@/components/ui/layout/HeaderAuthAction';
 import Link from 'next/link';
@@ -162,14 +164,8 @@ function useHeaderState() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const isLightPage = pathname === '/' || pathname === '/quem-sou';
-  const isContentPage = pathname.startsWith('/biblioteca/') || pathname.startsWith('/aulas/');
-  const { scrollYProgress } = useScroll();
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 100,
-    damping: 30,
-    restDelta: 0.001,
-  });
+  const isLightPage = checkIsLightPage(pathname);
+  const isContentPage = isReadingContentPage(pathname);
 
   // /api/v1/gemma exige sessao: sem ela a sonda so produz 401 a cada 30 s.
   const shouldCheckGemma = Boolean(session);
@@ -219,34 +215,33 @@ function useHeaderState() {
     pathname,
     isLightPage,
     isContentPage,
-    scaleX,
   };
 }
 
 const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({ isLightPage, gemmaOnline }) => {
   const logoContainerClass = isLightPage
-    ? 'relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-black/5 border border-black/10 backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.01)] transition-all duration-700 group-hover:border-black/20 group-hover:shadow-[0_0_30px_rgba(0,0,0,0.04)]'
-    : 'relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-black/20 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(255,255,255,0.03)] transition-all duration-700 group-hover:border-white/20 group-hover:shadow-[0_0_30px_rgba(255,255,255,0.1)]';
+    ? 'relative flex h-9 w-9 xl:h-10 xl:w-10 items-center justify-center overflow-hidden rounded-xl bg-black/5 border border-black/10 backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.01)] transition-all duration-700 group-hover:border-black/20 group-hover:shadow-[0_0_30px_rgba(0,0,0,0.04)]'
+    : 'relative flex h-9 w-9 xl:h-10 xl:w-10 items-center justify-center overflow-hidden rounded-xl bg-black/20 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(255,255,255,0.03)] transition-all duration-700 group-hover:border-amber-500/30 group-hover:shadow-[0_0_30px_rgba(212,175,55,0.15)]';
 
   return (
-    <Link href="/" className="group relative flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 rounded-xl">
+    <Link href={ROUTES.HOME} className="group relative flex items-center gap-2 xl:gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 rounded-xl">
       <div className={logoContainerClass}>
         <div
           className={`absolute inset-0 bg-linear-to-br ${
-            isLightPage ? 'from-black/5' : 'from-white/10'
+            isLightPage ? 'from-black/5' : 'from-amber-500/10'
           } to-transparent opacity-0 transition-opacity duration-700 group-hover:opacity-100`}
         />
         <BrandMark
           size={20}
           className={`relative z-10 transition-transform duration-500 group-hover:scale-105 ${
-            isLightPage ? 'text-light-text-main' : 'text-white'
+            isLightPage ? 'text-light-text-main' : 'text-white group-hover:text-amber-300'
           }`}
         />
       </div>
       <div className="flex flex-col justify-center">
         <div className="flex items-center gap-2">
           <span
-            className={`text-[1.2rem] font-black tracking-tighter ${
+            className={`text-[1.1rem] xl:text-[1.2rem] font-black tracking-tighter ${
               isLightPage ? 'text-light-text-main' : 'text-white'
             } leading-none transition-all duration-500`}
           >
@@ -254,7 +249,7 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
             <span
               className={`font-light ${
                 isLightPage ? 'text-light-text-muted' : 'text-text-muted'
-              } ml-0.5 tracking-[0.2em] transition-colors duration-500`}
+              } ml-0.5 tracking-[0.18em] xl:tracking-[0.2em] transition-colors duration-500`}
             >
               {HEADER_STRINGS.brandSubtitle}
             </span>
@@ -269,9 +264,9 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
           />
         </div>
         <span
-          className={`text-[0.55rem] font-black tracking-[0.4em] uppercase ${
+          className={`text-[0.5rem] xl:text-[0.55rem] font-black tracking-[0.25em] xl:tracking-[0.4em] uppercase ${
             isLightPage ? 'text-light-text-accent' : 'text-accent-indigo-light'
-          } mt-2 leading-none transition-all duration-500`}
+          } mt-1.5 xl:mt-2 leading-none transition-all duration-500`}
         >
           {HEADER_STRINGS.tagline}
         </span>
@@ -287,8 +282,8 @@ const HeaderDesktopNav: React.FC<{
   setActiveSubmenu: (label: string | null) => void;
 }> = ({ pathname, isLightPage, activeSubmenu, setActiveSubmenu }) => {
   const menuPillClass = isLightPage
-    ? 'flex items-center p-1.5 bg-light-surface border border-light-border rounded-full gap-1.5 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)]'
-    : 'flex items-center p-1.5 sota-glass-pill gap-1.5 backdrop-blur-2xl';
+    ? 'flex items-center p-1 xl:p-1.5 bg-light-surface border border-light-border rounded-full gap-1 xl:gap-1.5 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)]'
+    : 'flex items-center p-1 xl:p-1.5 sota-glass-pill gap-1 xl:gap-1.5 backdrop-blur-2xl';
 
   const activeIndicatorBg = isLightPage
     ? 'absolute inset-0 bg-[#0D0C0A]/5 rounded-full'
@@ -330,11 +325,11 @@ const HeaderDesktopNav: React.FC<{
                     }
                   }
                 }}
-                className={`relative z-10 flex items-center gap-2 px-4 py-2.5 text-[0.62rem] font-black tracking-[0.16em] whitespace-nowrap uppercase transition-all duration-300 ${getNavLinkClass(isLightPage, isActive)}`}
+                className={`relative z-10 flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-4 py-2 xl:py-2.5 text-[0.58rem] xl:text-[0.62rem] font-black tracking-[0.12em] xl:tracking-[0.16em] whitespace-nowrap uppercase transition-all duration-300 ${getNavLinkClass(isLightPage, isActive)}`}
               >
                 {item.label}
                 {item.submenu && (
-                  <i className="fa-solid fa-chevron-down text-[0.5rem] opacity-50 transition-transform duration-300 group-hover/nav:rotate-180" />
+                  <i className="fa-solid fa-chevron-down text-[0.45rem] xl:text-[0.5rem] opacity-50 transition-transform duration-300 group-hover/nav:rotate-180" />
                 )}
               </Link>
 
@@ -514,7 +509,7 @@ const HeaderMobileDrawer: React.FC<{
 
             <div className={`mt-auto border-t pt-8 ${isLightPage ? 'border-black/5' : 'border-white/5'}`}>
               <Link
-                href="/quem-sou"
+                href={ROUTES.QUEM_SOU}
                 onClick={onClose}
                 className={`flex items-center gap-4 text-xs font-black tracking-widest uppercase transition-colors ${
                   isLightPage ? 'text-light-text-muted hover:text-light-text-main' : 'text-text-muted hover:text-white'
@@ -543,7 +538,6 @@ export const Header: React.FC = () => {
     pathname,
     isLightPage,
     isContentPage,
-    scaleX,
   } = useHeaderState();
 
   const isSimulatorPage = pathname === ROUTES.SIMULADOR;
@@ -552,17 +546,12 @@ export const Header: React.FC = () => {
     : getHeaderBgClass(scrolled, isLightPage);
 
   const actionButtonClass = isLightPage
-    ? 'hidden sm:flex relative group px-7 py-3 rounded-full overflow-hidden bg-light-text-main border border-light-text-main transition-all duration-700 hover:bg-[#2A2825] hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)] active:scale-95'
-    : 'hidden sm:flex relative group px-7 py-3 rounded-full overflow-hidden bg-accent-indigo/10 border border-accent-indigo/30 transition-all duration-700 hover:border-accent-indigo hover:bg-accent-indigo/20 hover:shadow-[0_0_40px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-95';
+    ? 'hidden sm:flex relative group px-4 xl:px-7 py-2.5 xl:py-3 rounded-full overflow-hidden bg-light-text-main border border-light-text-main transition-all duration-700 hover:bg-[#2A2825] hover:shadow-[0_4px_20px_rgba(0,0,0,0.15)] active:scale-95'
+    : 'hidden sm:flex relative group px-4 xl:px-7 py-2.5 xl:py-3 rounded-full overflow-hidden bg-accent-indigo/10 border border-accent-indigo/30 transition-all duration-700 hover:border-amber-500/40 hover:bg-accent-indigo/20 hover:shadow-[0_0_40px_rgba(99,102,241,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] active:scale-95';
 
   return (
     <>
-      {isContentPage && (
-        <motion.div
-          className="bg-accent-indigo fixed top-0 right-0 left-0 z-100 h-1 origin-left shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-          style={{ scaleX }}
-        />
-      )}
+      {isContentPage && <ReadingProgressBar />}
       <motion.header
         id="site-header"
         initial={{ y: -100 }}
@@ -582,12 +571,12 @@ export const Header: React.FC = () => {
             setActiveSubmenu={setActiveSubmenu}
           />
 
-          <div className="flex shrink-0 items-center justify-end gap-4 justify-self-end">
+          <div className="flex shrink-0 items-center justify-end gap-3 xl:gap-4 justify-self-end">
             <HeaderAuthAction isLightPage={isLightPage} />
             {!isSimulatorPage && (
-              <Link href="/simulador" className={actionButtonClass}>
+              <Link href={ROUTES.SIMULADOR} className={actionButtonClass}>
                 <span
-                  className={`relative text-[0.7rem] font-black tracking-[0.2em] uppercase transition-colors ${
+                  className={`relative text-[0.62rem] xl:text-[0.7rem] font-black tracking-[0.14em] xl:tracking-[0.2em] uppercase transition-colors ${
                     isLightPage ? 'text-[#FAFAF7]' : 'text-accent-indigo-light group-hover:text-white'
                   }`}
                 >

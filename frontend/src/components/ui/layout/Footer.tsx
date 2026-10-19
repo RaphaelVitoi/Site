@@ -1,5 +1,6 @@
 'use client';
 
+import { isLightPage as checkIsLightPage } from '@/lib/surface';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ROUTES } from '@/constants/routes';
@@ -161,7 +162,7 @@ function FooterLegal({ isLightPage, currentYear }: Readonly<{ isLightPage: boole
 
 export default function Footer() {
   const pathname = usePathname();
-  const isLightPage = pathname === '/' || pathname === '/quem-sou';
+  const isLightPage = checkIsLightPage(pathname);
   const currentYear = new Date().getFullYear();
 
   const footerClass = isLightPage

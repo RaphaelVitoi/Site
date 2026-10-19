@@ -15,9 +15,13 @@ export const ROUTES = {
 	QUIZ: '/quiz',
 	O_AUTOR: '/quem-sou',
 	TEMPLO: {
+		INDEX: '/templo',
 		ANALYTICS: '/templo/analytics',
 		GEMMA: '/templo/gemma',
 		LAYA: '/templo/laya',
+	},
+	AUTH: {
+		LOGIN: '/login',
 	},
 	AULAS: {
 		INDEX: '/aulas',
