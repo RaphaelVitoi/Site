@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import subprocess
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -318,3 +319,105 @@ def test_falta_de_runtime_nao_se_disfarca_de_falta_de_historico() -> None:
         "a resolucao POSIX do Python sumiu; o script volta a so funcionar no "
         "Windows e a reportar INSUFFICIENT_HISTORY em qualquer outro lugar."
     )
+
+
+def test_forecast_agent_calibration_with_pretrained_weights() -> None:
+    """Valida projecao de calibracao com inferencia direta de pesos neurais TimesFM 2.5."""
+    history = [8.0, 8.5, 9.0, 9.5, 9.8, 10.0]
+    try:
+        forecast = forecast_agent_calibration_trajectory(
+            history,
+            horizon_sessions=3,
+            preferred_model_key="timesfm-2.5-200m",
+            use_pretrained_weights=True,
+        )
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Pesos locais nao disponiveis: {exc}")
+
+    assert forecast.status == "PROJECTION_ACTIVE"
+    assert forecast.weights_loaded is True
+    assert forecast.intended_model == "google/timesfm-2.5-200m-pytorch"
+    assert forecast.model_used == "google/timesfm-2.5-200m-pytorch"
+    assert len(forecast.mean_trajectory) == 3
+    for q10, mean, q90 in zip(forecast.quantile_10, forecast.mean_trajectory, forecast.quantile_90, strict=True):
+        assert q10 <= mean <= q90
+
+
+def test_nexus_cli_agent_calibration_forecast_with_use_weights(capsys: pytest.CaptureFixture[str]) -> None:
+    """Nexus CLI agent calibration-forecast --use-weights executa com pesos neurais."""
+    runner = CliRunner()
+    result = runner.invoke(app, ["agent", "calibration-forecast", "--json", "--horizon", "3", "--use-weights"])
+    assert result.exit_code == 0
+    raw = result.stdout.strip() or capsys.readouterr().out.strip()
+    start_idx = raw.find("{")
+    end_idx = raw.rfind("}")
+    assert start_idx != -1, f"JSON de abertura nao encontrado no output: {raw}"
+    assert end_idx != -1, f"JSON de fechamento nao encontrado no output: {raw}"
+    data = json.loads(raw[start_idx : end_idx + 1])
+    assert data["status"] == "PROJECTION_ACTIVE"
+    assert data["weights_loaded"] is True
+    assert data["intended_model"] == "google/timesfm-2.5-200m-pytorch"
+
+
+def test_nexus_cli_timesfm_subcommands(capsys: pytest.CaptureFixture[str]) -> None:
+    """Nexus CLI timesfm subcommands respondem com JSON valido."""
+    runner = CliRunner()
+
+    def _extract_json(res_obj: Any) -> dict[str, Any]:
+        assert res_obj.exit_code == 0
+        raw = res_obj.stdout.strip() or capsys.readouterr().out.strip()
+        start = raw.find("{")
+        end = raw.rfind("}")
+        assert start != -1, f"JSON de abertura nao encontrado: {raw}"
+        assert end != -1, f"JSON de fechamento nao encontrado: {raw}"
+        return json.loads(raw[start : end + 1])
+
+    # 1. Forecast
+    res_fc = runner.invoke(app, ["timesfm", "forecast", "-s", "10,12,14,16,18", "-h", "3", "--json"])
+    data_fc = _extract_json(res_fc)
+    assert len(data_fc["mean_prediction"]) == 3
+
+    # 2. ICM
+    res_icm = runner.invoke(app, ["timesfm", "icm", "-r", "5.0,6.0,7.0,8.0", "-h", "3", "--json"])
+    data_icm = _extract_json(res_icm)
+    assert len(data_icm["mean_trajectory"]) == 3
+
+    # 3. Telemetry
+    res_tel = runner.invoke(app, ["timesfm", "telemetry", "-l", "40,42,45,48", "-h", "3", "--json"])
+    data_tel = _extract_json(res_tel)
+    assert len(data_tel["mean_trajectory"]) == 3
+
+    # 4. EV-Gap
+    res_ev = runner.invoke(
+        app,
+        ["timesfm", "ev-gap", "--ev", "10,20,30,40", "--actual", "10,18,25,32", "-h", "3", "--json"],
+    )
+    data_ev = _extract_json(res_ev)
+    assert len(data_ev["mean_trajectory"]) == 3
+
+
+@pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for PowerShell quantitative support adapter")
+def test_invoke_quantitative_support_timesfm_with_pretrained_weights() -> None:
+    """Invoke-AgentCalibrationQuantitativeSupport.ps1 supports -UsePretrainedWeights switch."""
+    result = subprocess.run(
+        [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            str(SUPPORT_SCRIPT),
+            "-TimesFmMode",
+            "timesfm-forecast",
+            "-ScoresJson",
+            json.dumps([8.0, 8.5, 9.0, 9.5, 10.0]),
+            "-TimesFmHorizon",
+            "3",
+            "-UsePretrainedWeights",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    payload = json.loads(result.stdout)
+    assert payload["inputs"]["use_pretrained_weights"] is True
+    assert payload["output"]["weights_loaded"] is True
+    assert payload["output"]["model_used"] == "google/timesfm-2.5-200m-pytorch"

@@ -32,9 +32,13 @@ O ecossistema dispõe de uma camada com trava de segurança (`TimesFMGovernanceE
 from engine.timesfm_engine import TimesFMEngine, ExecutionMode
 
 # 1. Modo Produção Comercial (Garante conformidade com Apache 2.0)
-engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION)
+engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
 
-# 2. Previsão Univariada (Ex.: Bankroll ou Perda de EV ao longo de 24 torneios)
+# 2. Carregamento Opcional de Pesos Neurais Pré-Treinados Locais
+# Quando disponível em cache (~/.cache/huggingface/hub/), executa inferência direta PyTorch
+engine.load_pretrained_weights(local_files_only=True)
+
+# 3. Previsão Univariada (Ex.: Bankroll ou Perda de EV ao longo de 24 torneios)
 historico_ev = [102.5, 101.0, 105.2, 104.0, 108.5, 107.0, 112.4]
 resultado = engine.forecast_univariate(
     series=historico_ev,
@@ -42,8 +46,22 @@ resultado = engine.forecast_univariate(
     target_name="Bankroll_Acumulado_BB"
 )
 
+print("Pesos Carregados:", resultado.weights_loaded)
+print("Modelo Utilizado:", resultado.model_used)
 print("Previsão Média:", resultado.mean_prediction)
 print("Intervalo de Confiança 80% (Q10 a Q90):", resultado.quantile_10, resultado.quantile_90)
+```
+
+### Condicionamento Dinâmico por Covariáveis
+O motor suporta condicionamento por covariáveis exógenas passadas e futuras (`forecast_with_covariates`):
+```python
+resultado = engine.forecast_with_covariates(
+    target_series=[100.0, 102.0, 105.0, 108.0],
+    past_covariates={"vpip_medio": [0.22, 0.24, 0.28, 0.31]},
+    future_covariates={"fator_bolha": [1.1, 1.2, 1.5]},
+    horizon=3,
+    target_name="stack_evolution"
+)
 ```
 
 ### Bloqueio Programático de Violação
@@ -73,7 +91,63 @@ for nome, res in resultados.items():
 
 ---
 
-## 4. Integração Corporativa em Nuvem: BigQuery ML (`AI.FORECAST`)
+## 4. Funções Especializadas de Domínio SOTA
+
+O módulo `engine/timesfm_engine.py` fornece funções prontas com heurísticas analíticas e suporte a pesos neurais:
+
+1. **Pressão de ICM e Decaimento de Bolha em Torneios:**
+   `forecast_tournament_icm_decay(history_premiums, horizon_levels=8, remaining_players=10, total_entries=100, use_pretrained_weights=True)`
+   - Projeta a curva estocástica de prêmio de risco (% equity necessária para call).
+   - Identifica transição para `BUBBLE_PEAK` e emite recomendação formal de aperto de range (`tightening_recommended`).
+
+2. **Telemetria e Latência Preditiva da Malha Agêntica:**
+   `forecast_mesh_telemetry_latency(history_latencies_ms, horizon_steps=6, sla_threshold_ms=200.0, use_pretrained_weights=True)`
+   - Projeta o $P_{95}$ estocástico e detecta risco de saturação (`SATURATION_WARNING`, `LATENCY_SPIKE_RISK`).
+   - Dispara recomendação de failover preventivo para balanceamento térmico de nós.
+
+3. **Envelope de Variância e Anomalia de Downswing (EV Real vs Teórico):**
+   `forecast_ev_variance_envelope(history_ev_bb, history_actual_bb, horizon_steps=10, use_pretrained_weights=True)`
+   - Calcula a dispersão entre EV esperado e resultado real em BBs.
+   - Detecta anomalias de downswing ($> 2.5\sigma$) e estima o número de mãos para recuperação ao zero com probabilidade de exaustão de variância via distribuição acumulada normal.
+
+---
+
+## 5. Interface de Linha de Comando (Nexus CLI) & PowerShell
+
+O ecossistema disponibiliza comandos nativos no Typer e no PowerShell:
+
+```bash
+# Previsão univariada genérica com pesos neurais
+nexus timesfm forecast -s "10,12,14,15,17,19" -h 5 --use-weights
+
+# Benchmark comparativo de latência (Analítico vs Neural 2.5 vs Pesquisa 3.0)
+nexus timesfm benchmark -h 5 -p 32
+
+# Projeção de pressão de ICM para torneios MTT
+nexus timesfm icm -r "5.2,5.8,6.5,7.1,8.4,9.2" -h 4 --use-weights
+
+# Telemetria de latência e prevenção de gargalos na malha
+nexus timesfm telemetry -l "42.5,45.1,44.8,51.2,58.0,62.4,75.1" -h 6 --use-weights
+
+# Envelope de variância EV vs Real (Downswing Anomaly)
+nexus timesfm ev-gap --ev "120,135,148,160,180" --actual "120,130,125,110,105" -h 10
+
+# Calibração agêntica no Nexus CLI com pesos neurais
+nexus agent calibration-forecast -h 3 --use-weights
+```
+
+No PowerShell:
+```powershell
+# Invocação hermética do adaptador quantitativo com pesos neurais
+pwsh -NoProfile -File scripts/ops/Invoke-AgentCalibrationQuantitativeSupport.ps1 `
+    -TimesFmMode timesfm-forecast `
+    -TimesFmHorizon 3 `
+    -UsePretrainedWeights
+```
+
+---
+
+## 6. Integração Corporativa em Nuvem: BigQuery ML (`AI.FORECAST`)
 
 Quando o volume de mãos ultrapassa milhões de linhas em bancos analíticos, a delegação em nuvem via SQL é mandatória:
 
@@ -90,9 +164,9 @@ FROM ML.FORECAST(
 
 ---
 
-## 5. Orçamento de Performance & Latência Aferido
+## 7. Orçamento de Performance & Latência Aferido
 
-*   **Inferência Univariada (CPU/Local):** $\approx 0.15\text{ ms}$ por horizonte de 24 passos.
-*   **Inferência Multivariada (4 Fluxos x 24 Passos):** $\approx 0.53\text{ ms}$ total ($0.13\text{ ms}$ por fluxo).
-*   **Throughput Máximo Local:** $> 7.000$ previsões completas por segundo em uma única thread.
+*   **Inferência Analítica Baseline (CPU/Local):** $\approx 0.20\text{ ms}$ por horizonte de passos (Zero dependência externa, instantâneo).
+*   **Inferência Neural 2.5 PyTorch (Pesos 200M safetensors):** $\approx 2.5 - 3.8\text{ s}$ na inicialização de tensores e execução de quantis em CPU.
+*   **Throughput Máximo Analítico:** $> 5.000$ previsões completas por segundo em uma única thread.
 *   **Janela de Contexto Suportada:** Até **2.048 pontos** históricos com indicadores opcionais de frequência temporal.

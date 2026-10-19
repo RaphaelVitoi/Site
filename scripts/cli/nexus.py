@@ -96,6 +96,11 @@ stats_app = typer.Typer(name="stats", help="Telemetria Preditiva e Relatorios", 
 voice_app = typer.Typer(name="voice", help="Sintese Neural de Voz e Audio SOTA", no_args_is_help=True)
 audit_app = typer.Typer(name="audit", help="Auditorias SOTA v8.0 GOLD", no_args_is_help=True)
 routine_app = typer.Typer(name="routine", help="Rotinas SOTA v8.0 GOLD", no_args_is_help=True)
+timesfm_app = typer.Typer(
+    name="timesfm",
+    help="Google Research TimesFM (2.5 Comercial e 3.0 Pesquisa) Previsão de Séries Temporais",
+    no_args_is_help=True,
+)
 
 app.add_typer(ops_app)
 app.add_typer(agent_app)
@@ -104,6 +109,7 @@ app.add_typer(stats_app)
 app.add_typer(voice_app)
 app.add_typer(audit_app)
 app.add_typer(routine_app)
+app.add_typer(timesfm_app)
 
 MARKUP_BOLD_CYAN = "[bold cyan]"
 STYLE_BOLD_CYAN = "bold cyan"
@@ -937,11 +943,16 @@ def _imprimir_calibracao_unificada(res: Any, horizon: int) -> None:
     else:
         risk_color = "red"
 
+    weights_tag = (
+        "[bold green][Pesos Neurais Carregados][/]"
+        if getattr(res, "weights_loaded", False)
+        else "[dim][Backend Analítico][/]"
+    )
     summary_panel = Panel(
         f"[bold #50fa7b]* Amostras Analisadas:[/] [white]{res.history_points} sessoes registradas no ledger[/]\n"
         f"[bold #50fa7b]* Taxa de Deriva Temporal:[/] [{drift_color}]{res.drift_per_session:+.4f} pontos/sessao ({res.drift_direction})[/]\n"
         f"[bold #8be9fd]* Risco Estocastico de Degradacao (< 8.5):[/] [{risk_color}]{res.risk_of_degradation * 100:.1f}%[/]\n"
-        f"[bold #bd93f9]* Modelo & Licenca:[/] [magenta]{res.model_used} ({res.license_tier})[/]\n"
+        f"[bold #bd93f9]* Modelo & Licenca:[/] [magenta]{res.model_used} ({res.license_tier})[/] {weights_tag}\n"
         f"[bold #f1fa8c]* Modelo Condutor:[/] [cyan]{res.conductor_model or 'Consolidado Geral (Multimodel Default)'}[/]\n"
         f"[dim #6272a4]* Dominio da Metrica:[/] [white]Escala estrita [0.0, 10.0] governada pelo Tier 0 (Raphael Vitoi)[/]",
         title="[bold #f1fa8c]DIAGNOSTICO QUANTITATIVO DO MOTOR TEMPORAL[/]",
@@ -3551,6 +3562,9 @@ def agent_calibration_forecast(
     ),
     mode: str = typer.Option("commercial", "--mode", help="Modo: commercial ou research"),
     model: str | None = typer.Option(None, "--model", "-M", help="Modelo TimesFM (2.0, 2.5, 3.0 ou chave completa)"),
+    use_weights: bool = typer.Option(
+        False, "--use-weights", "-w", help="Usar inferencia direta de pesos neurais pre-treinados locais"
+    ),
     json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
 ) -> None:
     """Projecao estocastica de calibracao de agentes via Google Research TimesFM (2.0/2.5/3.0)."""
@@ -3569,6 +3583,8 @@ def agent_calibration_forecast(
         target_model = model
     elif exec_mode == ExecutionMode.RESEARCH_BENCHMARK:
         target_model = "timesfm-3.0-330m"
+    elif use_weights:
+        target_model = "timesfm-2.5-200m"
     else:
         target_model = "timesfm-2.0-500m"
 
@@ -3584,7 +3600,11 @@ def agent_calibration_forecast(
 
     if multimodel:
         results = forecast_multimodel_calibration(
-            series_by_model, horizon_sessions=horizon, mode=exec_mode, preferred_model_key=target_model
+            series_by_model,
+            horizon_sessions=horizon,
+            mode=exec_mode,
+            preferred_model_key=target_model,
+            use_pretrained_weights=use_weights,
         )
         if json_output:
             out_dict = {m: r.model_dump() for m, r in results.items()}
@@ -3607,6 +3627,7 @@ def agent_calibration_forecast(
         conductor_model=conductor,
         mode=exec_mode,
         preferred_model_key=target_model,
+        use_pretrained_weights=use_weights,
     )
     if json_output:
         print(res.model_dump_json(indent=2))  # cf. nota em agent-metadata: JSON nao passa pelo Rich
@@ -3623,7 +3644,7 @@ def agent_calibration_forecast(
 @voice_app.command("speak")
 def voice_speak(
     text: str = typer.Argument(
-        "Sistema SOTA v7.0 GOLD operando com sintese de voz padrao ouro em portugues do Brasil sob governanca de Raphael Vitoi.",
+        "Protocolo Chico SOTA v8.0 GOLD operando com sintese de voz padrao ouro em portugues do Brasil sob governanca de Raphael Vitoi.",
         help="Texto a sintetizar em voz alta.",
     ),
     voice: str = typer.Option(
@@ -4044,6 +4065,363 @@ def web_audit(limit: int = typer.Option(5, "--limit", "-n", help="Numero de regi
         )
     console.print(tabela)
     console.print()
+
+
+# ==========================================
+# COMANDOS GOOGLE TIMESFM 2.5 / 3.0
+# ==========================================
+
+
+@timesfm_app.command("forecast")
+def timesfm_forecast_cmd(
+    series: str = typer.Option(..., "--series", "-s", help="Serie temporal separada por virgula (ex: 10,12,15,14,18)"),
+    horizon: int = typer.Option(5, "--horizon", "-h", help="Horizonte de passos futuros a projetar"),
+    model: str = typer.Option("2.5", "--model", "-m", help="Versao do modelo: 2.5 (comercial) ou 3.0 (pesquisa)"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
+    research: bool = typer.Option(False, "--research", "-r", help="Ativar modo de pesquisa nao-comercial"),
+    target_name: str = typer.Option("timeseries", "--target", "-t", help="Rotulo semantico da variavel"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+) -> None:
+    """Previsao de series temporais univariada via Google Research TimesFM."""
+    from engine.timesfm_engine import ExecutionMode, TimesFMEngine
+
+    try:
+        points = [float(x.strip()) for x in series.split(",") if x.strip()]
+    except ValueError as err:
+        console.print(f"[bold red]Erro ao processar serie: {err}[/]")
+        raise typer.Exit(1) from err
+
+    if len(points) < 4:
+        console.print("[bold yellow][AVISO] TimesFM exige ao menos 4 pontos historicos.[/]")
+        raise typer.Exit(0)
+
+    exec_mode = ExecutionMode.RESEARCH_BENCHMARK if research or "3.0" in model else ExecutionMode.COMMERCIAL_PRODUCTION
+    pref_key = (
+        "timesfm-3.0-330m"
+        if "3.0" in model
+        else ("timesfm-2.5-200m" if ("2.5" in model or use_weights) else "timesfm-2.0-500m")
+    )
+
+    engine = TimesFMEngine(mode=exec_mode, preferred_model_key=pref_key)
+    if use_weights:
+        try:
+            engine.load_pretrained_weights(local_files_only=True)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Falha ao carregar pesos neurais: %s", exc)
+
+    res = engine.forecast_univariate(series=points, horizon=horizon, target_name=target_name)
+
+    if json_output:
+        print(res.model_dump_json(indent=2))
+        return
+
+    table = Table(title=f"[bold #50fa7b]PREVISAO TIMESFM: {target_name.upper()} (H={horizon})[/]", box=box.ROUNDED)
+    table.add_column("Passo Futuro", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column("Media Projetada", style=STYLE_BOLD_YELLOW, justify="right")
+    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
+    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+
+    for i in range(len(res.mean_prediction)):
+        table.add_row(
+            f"t+{i + 1}",
+            f"{res.mean_prediction[i]:.2f}",
+            f"{res.quantile_10[i]:.2f}",
+            f"{res.quantile_90[i]:.2f}",
+        )
+    console.print(table)
+    weights_badge = "[bold green][Pesos Neurais Ativos][/]" if res.weights_loaded else "[dim][Backend Analítico][/]"
+    console.print(
+        f"[bold cyan]Modelo:[/] {res.model_used} | [bold magenta]Licenca:[/] {res.license_tier} {weights_badge}"
+    )
+
+
+@timesfm_app.command("benchmark")
+def timesfm_benchmark_cmd(
+    horizon: int = typer.Option(5, "--horizon", "-h", help="Horizonte de previsao"),
+    points: int = typer.Option(32, "--points", "-p", help="Numero de observacoes na serie de teste"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+) -> None:
+    """Mede a latencia e o comportamento comparado: Analitico vs Neural 2.5 vs Pesquisa 3.0."""
+    import time
+
+    import numpy as np
+
+    from engine.timesfm_engine import ExecutionMode, TimesFMEngine
+
+    t = np.linspace(0, 4 * np.pi, points)
+    synthetic_series = [float(v) for v in (100.0 + 2.0 * t + 5.0 * np.sin(t))]
+
+    results_bench = []
+
+    # 1. Modo Analitico Baseline
+    t0 = time.perf_counter()
+    engine_base = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.0-500m")
+    res_base = engine_base.forecast_univariate(series=synthetic_series, horizon=horizon)
+    lat_base = (time.perf_counter() - t0) * 1000.0
+    results_bench.append(
+        {
+            "config": "Analítico Baseline (2.0/2.5)",
+            "latency_ms": lat_base,
+            "weights_loaded": res_base.weights_loaded,
+            "model": res_base.model_used,
+            "license": res_base.license_tier,
+            "horizon": horizon,
+            "first_step_mean": res_base.mean_prediction[0] if res_base.mean_prediction else 0.0,
+        }
+    )
+
+    # 2. Modo Neural 2.5 (Pesos locais se disponiveis)
+    t0 = time.perf_counter()
+    engine_25 = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
+    try:
+        engine_25.load_pretrained_weights(local_files_only=True)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Pesos 2.5 nao carregados: %s", exc)
+    res_25 = engine_25.forecast_univariate(series=synthetic_series, horizon=horizon)
+    lat_25 = (time.perf_counter() - t0) * 1000.0
+    results_bench.append(
+        {
+            "config": "Neural 2.5 (200M PyTorch)",
+            "latency_ms": lat_25,
+            "weights_loaded": res_25.weights_loaded,
+            "model": res_25.model_used,
+            "license": res_25.license_tier,
+            "horizon": horizon,
+            "first_step_mean": res_25.mean_prediction[0] if res_25.mean_prediction else 0.0,
+        }
+    )
+
+    # 3. Modo Pesquisa 3.0 (Academico/Nao-Comercial)
+    t0 = time.perf_counter()
+    engine_30 = TimesFMEngine(mode=ExecutionMode.RESEARCH_BENCHMARK, preferred_model_key="timesfm-3.0-330m")
+    try:
+        engine_30.load_pretrained_weights(local_files_only=True)
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Pesos 3.0 nao carregados: %s", exc)
+    res_30 = engine_30.forecast_univariate(series=synthetic_series, horizon=horizon)
+    lat_30 = (time.perf_counter() - t0) * 1000.0
+    results_bench.append(
+        {
+            "config": "Pesquisa 3.0 (330M Acadêmico)",
+            "latency_ms": lat_30,
+            "weights_loaded": res_30.weights_loaded,
+            "model": res_30.model_used,
+            "license": res_30.license_tier,
+            "horizon": horizon,
+            "first_step_mean": res_30.mean_prediction[0] if res_30.mean_prediction else 0.0,
+        }
+    )
+
+    if json_output:
+        print(json.dumps(results_bench, indent=2))
+        return
+
+    table = Table(title="[bold #50fa7b]BENCHMARK DE PERFORMANCE TIMESFM[/]", box=box.ROUNDED)
+    table.add_column("Configuração", style=STYLE_BOLD_CYAN)
+    table.add_column("Pesos Reais", style=STYLE_BOLD_YELLOW, justify="center")
+    table.add_column("Latência", style=STYLE_BOLD_GREEN, justify="right")
+    table.add_column("Licença", style=STYLE_WHITE)
+    table.add_column("Previsão t+1", style="magenta", justify="right")
+
+    for r in results_bench:
+        w_str = "[green]SIM (PyTorch)[/]" if r["weights_loaded"] else "[dim]NÃO (Analítico)[/]"
+        table.add_row(
+            r["config"],
+            w_str,
+            f"{r['latency_ms']:.2f} ms",
+            r["license"],
+            f"{r['first_step_mean']:.2f}",
+        )
+    console.print(table)
+
+
+@timesfm_app.command("icm")
+def timesfm_icm_cmd(
+    risk_premium: str = typer.Option(
+        "5.2, 5.8, 6.5, 7.1, 8.4, 9.2",
+        "--risk-premium",
+        "-r",
+        help="Historico de premio de risco (% equity) separado por virgula",
+    ),
+    horizon: int = typer.Option(5, "--horizon", "-h", help="Horizonte de niveis a projetar"),
+    remaining_players: int = typer.Option(10, "--remaining", "-p", help="Numero de jogadores restantes"),
+    total_entries: int = typer.Option(100, "--entries", "-e", help="Numero total de inscricoes no torneio"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+) -> None:
+    """Projecao estocastica de pressao de ICM e fator de bolha para MTTs via TimesFM."""
+    from engine.timesfm_engine import forecast_tournament_icm_decay
+
+    try:
+        rp_vals = [float(x.strip()) for x in risk_premium.split(",") if x.strip()]
+    except ValueError as err:
+        console.print(f"[bold red]Erro ao processar premio de risco: {err}[/]")
+        raise typer.Exit(1) from err
+
+    res = forecast_tournament_icm_decay(
+        history_premiums=rp_vals,
+        horizon_levels=horizon,
+        remaining_players=remaining_players,
+        total_entries=total_entries,
+        use_pretrained_weights=use_weights,
+    )
+
+    if json_output:
+        print(res.model_dump_json(indent=2))
+        return
+
+    status_color = (
+        "red" if res.status == "BUBBLE_PEAK" else ("yellow" if res.status == "PRESSURE_INCREASING" else "green")
+    )
+    console.print("\n[bold cyan]=== [TIMESFM ICM PRESSURE FORECAST] ===[/]\n")
+    console.print(
+        f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Prêmio Atual:[/] {res.current_risk_premium:.2f}% | [bold white]Fator de Bolha Projetado:[/] {res.bubble_factor_projected:.2f}x"
+    )
+    console.print(
+        f"[bold white]Aperto de Range Recomendado:[/] {'[bold red]SIM (TIGHTEN RANGE)[/]' if res.tightening_recommended else '[green]NÃO (PADRÃO)[/]'}\n"
+    )
+
+    table = Table(title="Trajetória Estocástica de Prêmio de Risco (% Equity)", box=box.ROUNDED)
+    table.add_column("Mão Futura", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column("Média Projetada (%)", style=STYLE_BOLD_YELLOW, justify="right")
+    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
+    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+
+    for i in range(len(res.mean_trajectory)):
+        table.add_row(
+            f"+{i + 1}",
+            f"{res.mean_trajectory[i]:.2f}%",
+            f"{res.quantile_10[i]:.2f}%",
+            f"{res.quantile_90[i]:.2f}%",
+        )
+    console.print(table)
+
+
+@timesfm_app.command("telemetry")
+def timesfm_telemetry_cmd(
+    latencies: str = typer.Option(
+        "42.5, 45.1, 44.8, 51.2, 58.0, 62.4, 75.1",
+        "--latencies",
+        "-l",
+        help="Historico de latencia em ms dos nos da malha separado por virgula",
+    ),
+    horizon: int = typer.Option(6, "--horizon", "-h", help="Horizonte de passos futuros a projetar"),
+    sla: float = typer.Option(200.0, "--sla", "-s", help="Limiar de SLA em ms para alerta de failover"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+) -> None:
+    """Projecao estocastica de latencia e prevencao de gargalos na malha agentica via TimesFM."""
+    from engine.timesfm_engine import forecast_mesh_telemetry_latency
+
+    try:
+        lat_vals = [float(x.strip()) for x in latencies.split(",") if x.strip()]
+    except ValueError as err:
+        console.print(f"[bold red]Erro ao processar latencias: {err}[/]")
+        raise typer.Exit(1) from err
+
+    res = forecast_mesh_telemetry_latency(
+        history_latencies_ms=lat_vals,
+        horizon_steps=horizon,
+        sla_threshold_ms=sla,
+        use_pretrained_weights=use_weights,
+    )
+
+    if json_output:
+        print(res.model_dump_json(indent=2))
+        return
+
+    status_color = (
+        "red" if res.status == "SATURATION_WARNING" else ("yellow" if res.status == "LATENCY_SPIKE_RISK" else "green")
+    )
+    console.print("\n[bold cyan]=== [TIMESFM MESH TELEMETRY FORECAST] ===[/]\n")
+    console.print(
+        f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Latência Atual:[/] {res.current_latency_ms:.2f}ms | [bold white]P95 Projetado:[/] {res.projected_p95_ms:.2f}ms"
+    )
+    console.print(
+        f"[bold white]Failover Preventivo Recomendado:[/] {'[bold red]SIM (ACIONAR FAILOVER)[/]' if res.failover_recommended else '[green]NÃO (SAUDÁVEL)[/]'}\n"
+    )
+
+    table = Table(title="Projeção Temporal de Latência da Malha (ms)", box=box.ROUNDED)
+    table.add_column("Passo Futuro", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column("Média Projetada", style=STYLE_BOLD_YELLOW, justify="right")
+    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
+    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+
+    for i in range(len(res.mean_trajectory)):
+        table.add_row(
+            f"t+{i + 1}",
+            f"{res.mean_trajectory[i]:.2f} ms",
+            f"{res.quantile_10[i]:.2f} ms",
+            f"{res.quantile_90[i]:.2f} ms",
+        )
+    console.print(table)
+
+
+@timesfm_app.command("ev-gap")
+def timesfm_ev_gap_cmd(
+    ev_bb: str = typer.Option(
+        "120, 135, 148, 160, 180, 195, 210, 230",
+        "--ev",
+        help="Historico acumulado de EV teorico em BBs separado por virgula",
+    ),
+    actual_bb: str = typer.Option(
+        "120, 130, 125, 110, 105, 95, 100, 90",
+        "--actual",
+        help="Historico acumulado de resultado real em BBs separado por virgula",
+    ),
+    horizon: int = typer.Option(10, "--horizon", "-h", help="Horizonte de passos a projetar"),
+    use_weights: bool = typer.Option(False, "--use-weights", "-w", help="Usar pesos neurais pre-treinados locais"),
+    json_output: bool = typer.Option(False, "--json", help="Emitir payload JSON puro"),
+) -> None:
+    """Envelope estocastico de dispersao de variancia entre EV e resultado real (Downswing Anomaly)."""
+    from engine.timesfm_engine import forecast_ev_variance_envelope
+
+    try:
+        ev_vals = [float(x.strip()) for x in ev_bb.split(",") if x.strip()]
+        act_vals = [float(x.strip()) for x in actual_bb.split(",") if x.strip()]
+    except ValueError as err:
+        console.print(f"[bold red]Erro ao processar dados de EV: {err}[/]")
+        raise typer.Exit(1) from err
+
+    res = forecast_ev_variance_envelope(
+        history_ev_bb=ev_vals,
+        history_actual_bb=act_vals,
+        horizon_steps=horizon,
+        use_pretrained_weights=use_weights,
+    )
+
+    if json_output:
+        print(res.model_dump_json(indent=2))
+        return
+
+    status_color = "red" if res.status == "DOWNSWING_ANOMALY" else "green"
+    console.print("\n[bold cyan]=== [TIMESFM EV VARIANCE ENVELOPE] ===[/]\n")
+    console.print(
+        f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Gap Atual de EV:[/] {res.current_gap_bb:+.2f} BB"
+    )
+    rec_str = (
+        f"{res.downswing_recovery_hands} mãos estimadas"
+        if res.downswing_recovery_hands > 0
+        else "Sem previsão imediata de retorno ao zero"
+    )
+    console.print(
+        f"[bold white]Recuperação de Downswing:[/] {rec_str} | [bold white]Probabilidade de Exaustão:[/] {res.variance_exhaustion_probability * 100:.1f}%\n"
+    )
+
+    table = Table(title="Trajetória do Gap EV Realizado vs Esperado (BB)", box=box.ROUNDED)
+    table.add_column("Passo Futuro", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column("Gap Médio (BB)", style=STYLE_BOLD_YELLOW, justify="right")
+    table.add_column("Quantil 10%", style=STYLE_BOLD_RED, justify="right")
+    table.add_column("Quantil 90%", style=STYLE_BOLD_GREEN, justify="right")
+
+    for i in range(len(res.mean_trajectory)):
+        table.add_row(
+            f"t+{i + 1}",
+            f"{res.mean_trajectory[i]:+.2f}",
+            f"{res.quantile_10[i]:+.2f}",
+            f"{res.quantile_90[i]:+.2f}",
+        )
+    console.print(table)
 
 
 # ==========================================
