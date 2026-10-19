@@ -1,5 +1,6 @@
 'use client';
 
+import { ROUTES } from '@/constants/routes';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 
@@ -19,14 +20,14 @@ export function HeaderAuthAction({ isLightPage }: Readonly<{ isLightPage: boolea
 
 	if (session) {
 		return (
-			<button type="button" className={classe} onClick={() => void signOut({ redirectTo: '/' })}>
+			<button type="button" className={classe} onClick={() => void signOut({ redirectTo: ROUTES.HOME })}>
 				Sair
 			</button>
 		);
 	}
 
 	return (
-		<Link href="/login" className={classe}>
+		<Link href={ROUTES.AUTH.LOGIN} className={classe}>
 			Entrar
 		</Link>
 	);

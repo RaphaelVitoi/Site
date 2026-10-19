@@ -61,7 +61,7 @@ def _modelos_instalados() -> set[str]:
 
 
 async def _tags_async() -> str:
-    timeout = aiohttp.ClientTimeout(total=10)
+    timeout = aiohttp.ClientTimeout(total=30)
     async with aiohttp.ClientSession(timeout=timeout) as sessao:
         async with sessao.get(f"{OLLAMA_URL}/api/tags") as resposta:
             resposta.raise_for_status()

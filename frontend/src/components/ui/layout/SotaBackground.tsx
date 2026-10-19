@@ -1,11 +1,12 @@
 'use client';
 
+import { isLightPage } from '@/lib/surface';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 
 export default function SotaBackground() {
 	const pathname = usePathname();
-	const isLightPage = pathname === '/' || pathname === '/quem-sou';
+	const light = isLightPage(pathname);
 
 	// SOTA: Substituição de useState por useRef para bypassar o React Fiber
 	// Atualizar estado no 'mousemove' causava re-renderizações 60x por segundo, afogando a CPU.
@@ -15,7 +16,7 @@ export default function SotaBackground() {
 	const rafRef = useRef<number | null>(null);
 
 	useEffect(() => {
-		if (isLightPage) return;
+		if (light) return;
 
 		const handleMouseMove = (e: MouseEvent) => {
 			if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -41,9 +42,9 @@ export default function SotaBackground() {
 			globalThis.removeEventListener('mousemove', handleMouseMove);
 			if (rafRef.current) cancelAnimationFrame(rafRef.current);
 		};
-	}, [isLightPage]);
+	}, [light]);
 
-	if (isLightPage) {
+	if (light) {
 		return (
 			<div className="fixed inset-0 z-[-1] overflow-hidden bg-[#F5F4F0] pointer-events-none transition-colors duration-500">
 				{/* SOTA: Textura de Grain Ethereal em Fundo Claro */}
