@@ -318,7 +318,7 @@ export default function NashPanel({
   const oopRp = isBaseline ? 0 : current.rps.oop;
 
   return (
-    <div className="glass-panel !p-4 sm:!p-5 lg:!p-6 bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-5 sm:gap-7 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
+    <div className="glass-panel p-4! sm:p-5! lg:p-6! bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-5 sm:gap-7 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
       <div className="bg-accent-indigo/10 group-hover/nash:bg-accent-indigo/15 pointer-events-none absolute -top-32 -right-32 h-80 w-80 rounded-full blur-[140px] transition-all duration-1000" />
       <div className="bg-accent-rose/5 pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full blur-[140px]" />
 

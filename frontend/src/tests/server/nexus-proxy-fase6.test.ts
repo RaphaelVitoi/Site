@@ -57,7 +57,7 @@ jest.mock('@/lib/server/auth-secret', () => ({ resolveAuthSecret: () => 'segredo
 const SESSAO = { user: { id: 'usuario-uuid-0001', email: 'pessoa@exemplo.com' } };
 const mockAuth = auth as jest.MockedFunction<typeof auth>;
 
-type Capturado = { headers?: Record<string, string>; chamado: boolean };
+type Capturado = { headers?: Record<string, string> | undefined; chamado: boolean };
 
 /**
  * Stub de `Request`.

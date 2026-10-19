@@ -15,7 +15,7 @@
     "python.testing.pytestArgs": [
         "tests"
     ],
-    "python.testing.unittestEnabled": false,
+    "python.testing.unittestEnabled": true,
     "python.testing.autoTestDiscoverOnSaveEnabled": false,
     "editor.formatOnSave": true,
     "files.trimTrailingWhitespace": true,
@@ -381,11 +381,8 @@
     ],
     "ruff.configuration": "${workspaceFolder}/pyproject.toml",
     "ruff.importStrategy": "fromEnvironment",
-    "ruff.lint.preview": false,
-    "ruff.format.preview": false,
-    "ruff.codeAction.disableRuleComment": {
-        "enable": false
-    },
+    "ruff.lint.preview": true,
+    "ruff.format.preview": true,
     "workbench.editorAssociations": {
         "**/.claude/**/*.bin": "default",
         "**/CMakeFiles/**/*.bin": "default",
@@ -541,7 +538,7 @@
     "lldb-dap.captureSessionLogs": true,
     "quarto.render.renderOnSave": true,
     "python.globalModuleInstallation": true,
-    "python.useEnvironmentsExtension": false,
+    "python.useEnvironmentsExtension": true,
     "markdown.preview.breaks": true,
     "markdown.preview.typographer": true,
     "markdown.preview.doubleClickToSwitchToEditor": true,
@@ -596,5 +593,21 @@
     "playwright.configs": [
         "frontend/playwright.config.ts",
         "frontend/playwright.quality.config.ts"
-    ]
+    ],
+    "csv.columnColorPalette": "cool",
+    "csv.separatorMode": "auto",
+    "vscode-office.gitHistory.quickSyncButton": true,
+    "vscode-office.decodeEscapedUnicodeCharacters": true,
+    "vscode-office.workspacePathAsImageBasePath": true,
+    "vscode-office.pasteImageToWorkspacePath": true,
+    "google.datacloud.expandMenus": true,
+    "google.datacloud.executeCellToolForNotebookMCP": true,
+    "clangd.checkUpdates": true,
+    "lldb-dap.serverMode": true,
+    "lldb-dap.detachOnError": true,
+    "lldb-dap.displayExtendedBacktrace": true,
+    "lldb-dap.enableSyntheticChildDebugging": true,
+    "lldb-dap.enableAutoVariableSummaries": true,
+    "boot-java.ai.mcp-server-enabled": true,
+    "boot-java.code-action.data-query-multiline": true
 }

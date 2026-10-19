@@ -85,7 +85,7 @@ export function ScenarioQuickSelector({
                 </span>
                 {isActiveCategory && activeScenario && (
                   <span
-                    className="hidden max-w-[14rem] truncate text-[0.55rem] font-mono text-accent-indigo-light sm:inline"
+                    className="hidden max-w-56 truncate text-[0.55rem] font-mono text-accent-indigo-light sm:inline"
                     title={activeScenario.name}
                   >
                     Ativo: {activeScenario.name}

@@ -70,7 +70,7 @@
 ### C. Action Button (Gold Gradient)
 
 ```html
-<button class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 transition-all duration-200 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/30 active:scale-95">
+<button class="inline-flex items-center justify-center rounded-xl bg-linear-to-r from-amber-500 to-amber-600 px-6 py-3 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 transition-all duration-200 hover:from-amber-400 hover:to-amber-500 hover:shadow-lg hover:shadow-amber-500/30 active:scale-95">
   Calcular Equidade no Solver
 </button>
 ```

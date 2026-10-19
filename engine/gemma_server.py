@@ -1,4 +1,4 @@
-# ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002, E402, I001
+# ruff: noqa: D100, D101, D103, BLE001, G004, ARG001, ARG002, E402, I001, ASYNC119
 # pylint: disable=wrong-import-position, global-statement, invalid-name, too-many-lines, import-outside-toplevel
 
 from collections.abc import AsyncGenerator
