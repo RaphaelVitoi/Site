@@ -62,6 +62,102 @@ async function pingEndpoint(
   }
 }
 
+interface PingResult {
+  ok: boolean;
+  status: number;
+  latencyMs: number;
+  data: unknown;
+}
+
+type VramDetails = NonNullable<EcosystemNode['vramDetails']>;
+
+interface OllamaResolution {
+  status: 'ACTIVE' | 'OFFLINE';
+  details: string;
+  vramDetails: VramDetails | null;
+}
+
+function resolveOllamaNode(ping: PingResult, ps: PingResult): OllamaResolution {
+  if (!ping.ok) {
+    return {
+      status: 'OFFLINE',
+      details: 'Daemon offline ou nao inicializado na porta 11434',
+      vramDetails: null,
+    };
+  }
+
+  const psData = ps.data as {
+    models?: Array<{
+      name: string;
+      size: number;
+      size_vram: number;
+      context_length: number;
+      runner: string;
+      expires_at: string;
+    }>;
+  } | null;
+
+  const residentModels = psData?.models || [];
+  const first = residentModels[0];
+  if (!first) {
+    return {
+      status: 'ACTIVE',
+      details: 'Ollama ativo (VRAM ociosa, pronto para aquecimento)',
+      vramDetails: null,
+    };
+  }
+
+  const vramMb = Math.round(first.size_vram / (1024 * 1024));
+  return {
+    status: 'ACTIVE',
+    details: `${first.name} residente (${vramMb} MB VRAM, 100% GPU, ctx ${first.context_length})`,
+    vramDetails: {
+      model: first.name,
+      sizeMb: Math.round(first.size / (1024 * 1024)),
+      sizeVramMb: vramMb,
+      contextLength: first.context_length,
+      runner: first.runner,
+      expiresAt: first.expires_at,
+    },
+  };
+}
+
+interface CdpResolution {
+  status: 'ACTIVE' | 'STANDBY' | 'OFFLINE';
+  port: number;
+  details: string;
+  latencyMs: number;
+}
+
+function resolveCdpNode(cdp9222: PingResult, cdp9223: PingResult): CdpResolution {
+  if (cdp9222.ok) {
+    const info = cdp9222.data as { Browser?: string } | null;
+    return {
+      status: 'ACTIVE',
+      port: 9222,
+      details: `${info?.Browser || 'Chrome'} ativo via loopback (porta 9222)`,
+      latencyMs: cdp9222.latencyMs,
+    };
+  }
+
+  if (cdp9223.ok) {
+    const info = cdp9223.data as { Browser?: string } | null;
+    return {
+      status: 'ACTIVE',
+      port: 9223,
+      details: `${info?.Browser || 'Chrome Dev'} ativo via loopback (porta 9223)`,
+      latencyMs: cdp9223.latencyMs,
+    };
+  }
+
+  return {
+    status: 'OFFLINE',
+    port: 9222,
+    details: 'Nenhum browser conectado via remote debugging port',
+    latencyMs: cdp9222.latencyMs,
+  };
+}
+
 export async function GET() {
   const tStart = performance.now();
 
@@ -70,57 +166,14 @@ export async function GET() {
     pingEndpoint('http://127.0.0.1:11434/api/tags', 1200),
     pingEndpoint('http://127.0.0.1:11434/api/ps', 1200),
   ]);
-
-  let ollamaStatus: 'ACTIVE' | 'OFFLINE' = 'OFFLINE';
-  let ollamaDetails = 'Daemon offline ou nao inicializado na porta 11434';
-  let activeVram: EcosystemNode['vramDetails'] = null;
-
-  if (ollamaPing.ok) {
-    ollamaStatus = 'ACTIVE';
-    const psData = ollamaPs.data as { models?: Array<{ name: string; size: number; size_vram: number; context_length: number; runner: string; expires_at: string }> } | null;
-    const residentModels = psData?.models || [];
-    if (residentModels.length > 0) {
-      const first = residentModels[0];
-      if (first) {
-        const vramMb = Math.round(first.size_vram / (1024 * 1024));
-        ollamaDetails = `${first.name} residente (${vramMb} MB VRAM, 100% GPU, ctx ${first.context_length})`;
-        activeVram = {
-          model: first.name,
-          sizeMb: Math.round(first.size / (1024 * 1024)),
-          sizeVramMb: vramMb,
-          contextLength: first.context_length,
-          runner: first.runner,
-          expiresAt: first.expires_at,
-        };
-      }
-    } else {
-      ollamaDetails = 'Ollama ativo (VRAM ociosa, pronto para aquecimento)';
-    }
-  }
+  const ollama = resolveOllamaNode(ollamaPing, ollamaPs);
 
   // 2. Chrome CDP (9222 / 9223)
   const [cdp9222, cdp9223] = await Promise.all([
     pingEndpoint('http://127.0.0.1:9222/json/version', 1000),
     pingEndpoint('http://127.0.0.1:9223/json/version', 1000),
   ]);
-
-  let cdpStatus: 'ACTIVE' | 'STANDBY' | 'OFFLINE' = 'OFFLINE';
-  let cdpPort: number = 9222;
-  let cdpDetails = 'Nenhum browser conectado via remote debugging port';
-  let cdpLatency = cdp9222.latencyMs;
-
-  if (cdp9222.ok) {
-    cdpStatus = 'ACTIVE';
-    cdpPort = 9222;
-    const info = cdp9222.data as { Browser?: string } | null;
-    cdpDetails = `${info?.Browser || 'Chrome'} ativo via loopback (porta 9222)`;
-  } else if (cdp9223.ok) {
-    cdpStatus = 'ACTIVE';
-    cdpPort = 9223;
-    const info = cdp9223.data as { Browser?: string } | null;
-    cdpDetails = `${info?.Browser || 'Chrome Dev'} ativo via loopback (porta 9223)`;
-    cdpLatency = cdp9223.latencyMs;
-  }
+  const cdp = resolveCdpNode(cdp9222, cdp9223);
 
   // 3. Shared MCP Gateway (8933)
   const mcpGateway = await pingEndpoint('http://127.0.0.1:8933/', 1000);
@@ -166,26 +219,26 @@ export async function GET() {
       role: 'Inferencia local acelerada por GPU para subagentes e Qwen Code',
       port: 11434,
       protocol: 'HTTP REST',
-      status: ollamaStatus,
+      status: ollama.status,
       latencyMs: ollamaPing.latencyMs,
-      details: ollamaDetails,
+      details: ollama.details,
       category: 'llm',
-      actionAvailable: ollamaStatus === 'ACTIVE',
-      actionLabel: activeVram ? 'Reaquecer VRAM (1h)' : 'Aquecer qwen-code na VRAM',
+      actionAvailable: ollama.status === 'ACTIVE',
+      actionLabel: ollama.vramDetails ? 'Reaquecer VRAM (1h)' : 'Aquecer qwen-code na VRAM',
       actionType: 'warmup_ollama',
-      vramDetails: activeVram,
+      vramDetails: ollama.vramDetails,
     },
     {
       id: 'chrome-cdp',
       name: 'Chrome DevTools Protocol (CDP)',
       role: 'Grounding visual, automacao de abas, Lighthouse e auditoria A11y',
-      port: cdpPort,
+      port: cdp.port,
       protocol: 'CDP WebSocket',
-      status: cdpStatus,
-      latencyMs: cdpLatency,
-      details: cdpDetails,
+      status: cdp.status,
+      latencyMs: cdp.latencyMs,
+      details: cdp.details,
       category: 'browser',
-      actionAvailable: cdpStatus === 'ACTIVE',
+      actionAvailable: cdp.status === 'ACTIVE',
       actionLabel: 'Inspecionar Abas CDP',
       actionType: 'inspect_cdp',
     },

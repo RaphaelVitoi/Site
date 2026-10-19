@@ -496,7 +496,7 @@ def test_proxy_que_nunca_sobe_reprova():
     assert exc_info.value.exit_code == 1
 
 
-def test_teclado_indisponivel_avisa_uma_vez_e_para():
+def test_teclado_indisponivel_avisa_uma_vez_e_para(monkeypatch: pytest.MonkeyPatch):
     """Degradava em silencio para sempre: as teclas nao respondiam e nada dizia por que.
 
     O estado mora em `nexus._TECLADO_INDISPONIVEL`, flag de modulo. Antes era um
@@ -505,21 +505,17 @@ def test_teclado_indisponivel_avisa_uma_vez_e_para():
     avisar uma vez e parar de tentar --, entao o teste mede o aviso, e nao onde
     o booleano guarda residencia.
     """
-    anterior = nexus_mod._TECLADO_INDISPONIVEL
-    nexus_mod._TECLADO_INDISPONIVEL = False
-    try:
-        with (
-            patch.object(nexus_mod.sys, "platform", "win32"),
-            patch.dict("sys.modules", {"msvcrt": None}),
-            patch.object(nexus_mod.console, "print") as avisou,
-        ):
-            assert _get_key() is None
-            assert _get_key() is None
-            # Uma vez, nao duas: o segundo retorno sai pelo atalho da flag.
-            assert avisou.call_count == 1
-        assert nexus_mod._TECLADO_INDISPONIVEL is True
-    finally:
-        nexus_mod._TECLADO_INDISPONIVEL = anterior
+    monkeypatch.setattr(nexus_mod, "_TECLADO_INDISPONIVEL", False)
+    with (
+        patch.object(nexus_mod.sys, "platform", "win32"),
+        patch.dict("sys.modules", {"msvcrt": None}),
+        patch.object(nexus_mod.console, "print") as avisou,
+    ):
+        assert _get_key() is None
+        assert _get_key() is None
+        # Uma vez, nao duas: o segundo retorno sai pelo atalho da flag.
+        assert avisou.call_count == 1
+    assert nexus_mod._TECLADO_INDISPONIVEL is True
 
 
 def test_turno_unico_sem_resposta_reprova():

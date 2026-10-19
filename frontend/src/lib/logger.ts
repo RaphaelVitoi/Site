@@ -21,7 +21,7 @@ interface LogEvent {
   level: LogLevel;
   component: string;
   message: string;
-  data?: Record<string, unknown> | undefined;
+  data?: Record<string, unknown>;
   timestamp: string;
 }
 
@@ -74,7 +74,7 @@ class SOTALogger {
       level,
       component,
       message,
-      data,
+      ...(data !== undefined ? { data } : {}),
       timestamp: new Date().toISOString(),
     };
 
