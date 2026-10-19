@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
-import subprocess
+import subprocess  # noqa: S404  # Record-Id: registro-2026-10-19-saneamento-linters-markdown-e-conformidade-tipagem
 import sys
 
 import pytest

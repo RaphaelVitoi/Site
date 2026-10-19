@@ -6,7 +6,7 @@ jest.mock('@/lib/api-contract', () => ({
 }));
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() } }));
 
-import { auth } from '@/auth';
+import { auth } from '../../../../auth';
 import { POST } from './route';
 
 describe('API RAG: composição System-1 + LLM', () => {

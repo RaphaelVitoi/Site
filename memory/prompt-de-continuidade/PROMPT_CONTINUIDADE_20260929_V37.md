@@ -57,6 +57,7 @@ sentidos: baseline 0 → 5/5 mutações detectadas → restaurado 0.
 ### Roteamento — a parte que FUNCIONA (não toque)
 
 `llm/routing.py`:
+
 - `DOMINIO_POR_AGENTE` — 19/19 agentes cobertos, derivado do **trabalho**
 - `resolver_dominio(task)` — declarado vence derivado; `llm/orchestrator.py:180`
   consome. Sem este hook, o eixo é código morto.
@@ -189,6 +190,7 @@ Calibrar exige a frota inteira medida com o mesmo método, de uma vez.
 `glm-5.1`, `deepseek-v4-pro`, `deepseek-v4-flash`
 
 **`~/AppData/Local/hermes/provider_models_cache.json`:**
+
 | Provider | Modelos (parcial) |
 |---|---|
 | **openrouter** | `claude-opus-5.5/5`, `claude-fable-5.1/5`, `gpt-6.1-sol-pro`, `gpt-6-astra-pro`, `grok-4.7`, `qwen3.8-max`, **`kimi-k3`**, `gemini-3.8-flash`, `deepseek-v4-pro` |
@@ -285,6 +287,7 @@ mude `routing_policy.py`, não o score.
 ## 7. FROTA DE MODELOS (medido 2026-09-30, `/api/tags` + `~/models/gguf`)
 
 **Locais — llama.cpp / GGUF**
+
 | Modelo | Porta | Papel |
 |---|---|---|
 | `ai9stars_G9v3-3B-Q4_K_M.gguf` | 8081 | raciocinio/ops (na ar) |
@@ -292,6 +295,7 @@ mude `routing_policy.py`, não o score.
 | `Ling-3.0-tiny-Q4_K_M.gguf` | — | sintese PT-BR |
 
 **Ollama local — quatro variants de coder, custos MUITO diferentes**
+
 | Modelo | Tam. | Quant. |
 |---|---|---|
 | `qwen2.5-coder:0.5b` | 494M | Q4_K_M |
@@ -304,6 +308,7 @@ mude `routing_policy.py`, não o score.
 `qwen-poetics` (texto)
 
 **Cloud** — forca MAIOR que a tabela de dominios que escrevi supoe:
+
 | Modelo | Tam. | Papel |
 |---|---|---|
 | `kimi-k2.7-code:cloud` | 1.04T INT4 | **code cloud, maior que o Tier 1** |

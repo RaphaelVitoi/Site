@@ -28,7 +28,7 @@ vazou mutacao quando o run estourou o timeout no meio.
 from __future__ import annotations
 
 import pathlib
-import subprocess
+import subprocess  # noqa: S404  # Record-Id: registro-2026-10-19-saneamento-linters-markdown-e-conformidade-tipagem
 import sys
 
 import pytest
