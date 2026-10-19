@@ -15,7 +15,11 @@ from core.arbitrator import UniversalArbitrator
 from core.schemas import Task
 from engine.dream_replay_simulator import DreamReplaySimulator
 from engine.pmev_dream_bridge import PMevDreamBridge
-from llm.mcp_tool_interceptor import interceptar_e_podar_ferramentas_s1
+from llm.mcp_tool_interceptor import (
+    calcular_estatisticas_telemetria,
+    interceptar_e_podar_ferramentas_s1,
+    obter_telemetria_sessao,
+)
 
 
 def test_ingress_fast_path_s1_pre_filtra_tarefas_triviais() -> None:
@@ -66,6 +70,53 @@ def test_mcp_tool_interceptor_poda_ferramentas_irrelevantes() -> None:
     assert "view_file" in nomes
     assert "read_url_content" in nomes
     assert "run_sql" not in nomes
+
+
+def test_mcp_tool_interceptor_telemetry_ledger(tmp_path: Path) -> None:
+    telemetry_file = tmp_path / "telemetry_test.jsonl"
+    tools_mock = [
+        {"name": "view_file", "description": "Ler arquivos"},
+        {"name": "write_to_file", "description": "Gravar arquivos"},
+        {"name": "run_sql", "description": "Executar queries"},
+        {"name": "browser_navigate", "description": "Navegar browser"},
+    ]
+
+    # Chamada 1: Pesquisa / Leitura
+    _, telem1 = interceptar_e_podar_ferramentas_s1(
+        tools=tools_mock,
+        prompt="Auditar arquivos e ler configuracoes",
+        registrar_telemetria=True,
+        telemetry_path=telemetry_file,
+    )
+    assert telemetry_file.exists()
+    assert telem1.overhead_us >= 0.0
+
+    # Chamada 2: SQL / Database
+    _, telem2 = interceptar_e_podar_ferramentas_s1(
+        tools=tools_mock,
+        prompt="Executar query SQL nas tabelas de logs",
+        registrar_telemetria=True,
+        telemetry_path=telemetry_file,
+    )
+
+    registros = obter_telemetria_sessao(horas=1.0, telemetry_path=telemetry_file)
+    assert len(registros) == 2
+
+    stats = calcular_estatisticas_telemetria(registros)
+    assert stats["total_eventos"] == 2
+    assert stats["economia_media_tokens_pct"] > 0.0
+    assert stats["overhead_medio_us"] >= 0.0
+
+
+def test_avaliar_impacto_sessao_benchmark_regime() -> None:
+    from scripts.ops.avaliar_impacto_sessao import medir_interceptador_mcp
+
+    res = medir_interceptador_mcp(forcar_benchmark=True)
+    assert res["fonte"] == "benchmark_regime"
+    assert res["economia_media_tokens_pct"] > 0.0
+    assert "Capacidade S1 em regime" in str(res["status"])
+    # Em regime com warmup descartado, o overhead deve ser estritamente sub-segundo (normalmente < 50ms)
+    assert float(res["overhead_latencia_us"]) < 200_000.0
 
 
 def test_dream_replay_simulator_persiste_e_exporta_trios(tmp_path: Path) -> None:

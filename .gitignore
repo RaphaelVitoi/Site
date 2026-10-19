@@ -96,6 +96,7 @@ temp_media/
 stress_test_results*.log
 gemini_media_gen.log
 appmap.log
+data/mcp_tool_telemetry.jsonl
 reports/coverage/
 .coverage
 htmlcov/
