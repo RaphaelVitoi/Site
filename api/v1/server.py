@@ -83,6 +83,7 @@ logger = logging.getLogger(__name__)
 
 async def handle_root(_request: web.Request) -> web.Response:
     """Endpoint de saude e identificacao na raiz para probes e orquestradores de nuvem."""
+    await asyncio.sleep(0)
     return web.json_response(
         {
             "status": "ok",

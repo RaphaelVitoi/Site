@@ -168,6 +168,41 @@ class AutopoiesisEngine:
         except Exception as e:
             return False, f"Falha ao validar SQLite: {e}"
 
+    def _run_subsystem_audit(self, cmd: list[str], name: str, success_details: str) -> tuple[SubsystemHealth, int]:
+        """Executa comando de auditoria e produz telemetria padronizada de subsistema."""
+        t_sub = time.monotonic()
+        res = subprocess.run(
+            cmd,
+            cwd=str(self.base_dir),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        dt_sub = time.monotonic() - t_sub
+        err = 0 if res.returncode == 0 else 1
+        status = "VERDE" if err == 0 else "VERMELHO"
+        details = success_details if err == 0 else f"Falha na auditoria (codigo {res.returncode})"
+        return (
+            SubsystemHealth(
+                name=name,
+                status=status,
+                errors=err,
+                elapsed_seconds=dt_sub,
+                details=details,
+            ),
+            err,
+        )
+
+    @staticmethod
+    def _calculate_overall_status(total_errors: int, total_warnings: int) -> tuple[str, float]:
+        """Calcula indice de entropia e estado tri-state consolidado."""
+        entropy = total_errors * 1.0 + total_warnings * 0.25
+        if total_errors == 0 and total_warnings == 0:
+            return "SUCESSO (VERDE)", entropy
+        if total_errors == 0 and 1 <= total_warnings <= 2:
+            return "FRAGIL (AMARELO)", entropy
+        return "FALHOU (VERMELHO)", entropy
+
     def run_autopoietic_cycle(self) -> HomeostasisReport:
         """Executa um ciclo completo de homeostase e autopoiese."""
         if not self._acquire_lock():
@@ -219,57 +254,25 @@ class AutopoiesisEngine:
             # 4. Auditoria de Pilares de Infraestrutura (Logs, Temps, Artifacts, Skills)
             audit_script = self.base_dir / "scripts" / "maintenance" / "audit_infrastructure_pillars.py"
             if audit_script.exists():
-                t_sub = time.monotonic()
-                res = subprocess.run(
+                health_infra, err_infra = self._run_subsystem_audit(
                     [sys.executable, str(audit_script)],
-                    cwd=str(self.base_dir),
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                )
-                dt_sub = time.monotonic() - t_sub
-                p_status = "VERDE" if res.returncode == 0 else "VERMELHO"
-                p_err = 0 if res.returncode == 0 else 1
-                if p_err > 0:
-                    total_errors += p_err
-                subsystems["infrastructure_pillars"] = SubsystemHealth(
                     name="Pilares de Infraestrutura (Logs/Temps/Artifacts/Skills)",
-                    status=p_status,
-                    errors=p_err,
-                    elapsed_seconds=dt_sub,
-                    details="56 skills, 33 artefatos, logs e temps auditados com sucesso.",
+                    success_details="56 skills, 33 artefatos, logs e temps auditados com sucesso.",
                 )
+                subsystems["infrastructure_pillars"] = health_infra
+                total_errors += err_infra
 
             # 5. Auditoria de Desambiguacao & Fonte Unica
-            t_sub = time.monotonic()
-            res = subprocess.run(
+            health_desamb, err_desamb = self._run_subsystem_audit(
                 [sys.executable, "-m", "pytest", "tests/test_desambiguacao.py", "-q"],
-                cwd=str(self.base_dir),
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            dt_sub = time.monotonic() - t_sub
-            d_status = "VERDE" if res.returncode == 0 else "VERMELHO"
-            d_err = 0 if res.returncode == 0 else 1
-            if d_err > 0:
-                total_errors += d_err
-            subsystems["desambiguacao"] = SubsystemHealth(
                 name="Fonte Unica da Verdade & Desambiguacao de Modelos",
-                status=d_status,
-                errors=d_err,
-                elapsed_seconds=dt_sub,
-                details="Garantia de zero constantes duplicadas e roteamento canonico.",
+                success_details="Garantia de zero constantes duplicadas e roteamento canonico.",
             )
+            subsystems["desambiguacao"] = health_desamb
+            total_errors += err_desamb
 
             # Calculo de Entropia e Status Tri-State
-            entropy = total_errors * 1.0 + total_warnings * 0.25
-            if total_errors == 0 and total_warnings == 0:
-                overall = "SUCESSO (VERDE)"
-            elif total_errors == 0 and 1 <= total_warnings <= 2:
-                overall = "FRAGIL (AMARELO)"
-            else:
-                overall = "FALHOU (VERMELHO)"
+            overall, entropy = self._calculate_overall_status(total_errors, total_warnings)
 
             report = HomeostasisReport(
                 timestamp=time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -325,7 +328,7 @@ def run_homeostasis():
 
     print("\n[ESTADO DOS SUBSISTEMAS VITAIS]:")
     for sub in report.subsystems.values():
-        icon = "" if sub.status == "VERDE" else ""
+        icon = "[OK]" if sub.status == "VERDE" else "[WARN]"
         print(f"  {icon} [{sub.name}]: [{sub.status}] | Erros: {sub.errors} | {sub.details}")
 
     print("\n" + "=" * 80)

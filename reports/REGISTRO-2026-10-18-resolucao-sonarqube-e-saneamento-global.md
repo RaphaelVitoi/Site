@@ -10,11 +10,21 @@ commit: HEAD
 classes: [interno, medido, governanca, registro, ancoras, saneamento, sonarqube, tipagem]
 caminhos:
   - .clangd
+  - .claude/RUNTIME_KEYS_ROUTING_STATUS.md
+  - .claude/project-context.md
   - .markdownlint-cli2.jsonc
   - .markdownlint.json
   - .markdownlintignore
   - .vscode/settings.json
   - agents/fallback.py
+  - agents/prompts.py
+  - api/v1/server.py
+  - core/autopoiesis_engine.py
+  - core/canonical_theory_schemas.py
+  - core/mcp_routing.py
+  - core/quantum_tensor_engine.pyi
+  - core/subagents_mesh.py
+  - core/tensor_engine/src/quantum_kernel.cpp
   - data/a11y_manual_review_baselines.json
   - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
   - docs/epics/aula-icm-rp/style-overrides.css
@@ -57,6 +67,7 @@ caminhos:
   - memory_rag.py
   - quantum_tensor_engine.pyi
   - reports/REGISTRO-2026-10-18-resolucao-sonarqube-e-saneamento-global.md
+  - reports/agent-calibration/daily/2026-10-18.json
   - reports/RELATORIO_ARQUITETURA_SUITES_ESPECIALIZADAS_NAVEGADORES_v8_GOLD.md
   - reports/RELATORIO_AUDITORIA_VULNERABILIDADES_DEPENDABOT_v8_GOLD.md
   - reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_10.md
@@ -163,9 +174,10 @@ revisoes_de_ancora:
       Revisado em 2026-10-18 e mantido valido. Marcacao de void operator no clipboard em SotaMarkdown.tsx e anotacao nosonar em loop deterministico de hash em lighthouse_cwv_audit.mjs.
   - registro: registro-2026-10-04-http-metrics-correlation-e-worker-shutdown
     caminhos:
+      - api/v1/server.py
       - scripts/ops/suite_verde.py
     parecer: >-
-      Revisado em 2026-10-18 e mantido valido. Preservacao dos fluxos de metricas HTTP e encerramento de workers com tipagem estrita higienizada em suite_verde.py.
+      Revisado em 2026-10-18 e mantido valido. Preservacao dos fluxos de metricas HTTP e encerramento de workers com tipagem estrita higienizada em suite_verde.py e cooperatividade assincrona em api/v1/server.py.
   - registro: registro-2026-10-05-layout-espacial-formatacao-bb-e-icmev-rp
     caminhos:
       - frontend/src/components/simulator/ui/MasterTableVisualizer.tsx
@@ -202,8 +214,35 @@ revisoes_de_ancora:
   - registro: registro-2026-10-10-evolucao-malha-agentica-sota-v8-gold
     caminhos:
       - agents/fallback.py
+      - agents/prompts.py
+      - core/subagents_mesh.py
     parecer: >-
-      Revisado em 2026-10-18 e mantido valido. Modularizacao de construcao de metadados em agents/fallback.py reduzindo a complexidade cognitiva de _create_dispatcher_fallback_plan de 16 para 3, sem alterar a semantica de fallback da malha agentica.
+      Revisado em 2026-10-18 e mantido valido. Modularizacao de construcao de metadados em agents/fallback.py, aplicacao de list.extend() em agents/prompts.py e extracao de constantes de modelo e helpers em core/subagents_mesh.py, mantendo a semantica da malha agentica.
+  - registro: auditoria-2026-10-08-integralidade-backend
+    caminhos:
+      - core/autopoiesis_engine.py
+    parecer: >-
+      Revisado em 2026-10-18 e mantido valido. Decomposicao de funcoes auxiliares de auditoria em core/autopoiesis_engine.py reduzindo a complexidade cognitiva para <= 15, mantendo integridade da homeostase e metricas de entropia.
+  - registro: handoff-2026-10-08-auditoria-e-remediacao-backend
+    caminhos:
+      - core/autopoiesis_engine.py
+    parecer: >-
+      Revisado em 2026-10-18 e mantido valido. Modularizacao de rotinas de auditoria e ajuste de ternario em core/autopoiesis_engine.py sem impacto funcional na regeneracao e autopoiese do backend.
+  - registro: registro-2026-10-08-auditoria-e-remediacao-backend
+    caminhos:
+      - core/autopoiesis_engine.py
+    parecer: >-
+      Revisado em 2026-10-18 e mantido valido. Saneamento de complexidade cognitiva e branches condicionais em core/autopoiesis_engine.py preservando integridade ACID do SQLite WAL e telemetria.
+  - registro: registro-2026-10-13-conclusao-4-trilhas-calibracao-rust-warmup-strata
+    caminhos:
+      - api/v1/server.py
+    parecer: >-
+      Revisado em 2026-10-18 e mantido valido. Insercao de yield assincrono em handle_root de api/v1/server.py preservando conformidade com aiohttp e probes de warmup do servidor.
+  - registro: registro-2026-10-18-harmonizacao-malha-agentica-e-sota-engine
+    caminhos:
+      - core/subagents_mesh.py
+    parecer: >-
+      Revisado em 2026-10-18 e mantido valido. Extracao de constantes de modelo e isolamento de chamada HTTP Ollama em core/subagents_mesh.py reduzindo complexidade cognitiva sem alterar contratos da malha.
 ---
 
 # REGISTRO DE EXECUCAO SOTA: RESOLUCAO INTEGRAL DE ALERTAS SONARQUBE
