@@ -14,6 +14,7 @@ caminhos:
   - .markdownlint.json
   - .markdownlintignore
   - .vscode/settings.json
+  - agents/fallback.py
   - data/a11y_manual_review_baselines.json
   - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
   - docs/epics/aula-icm-rp/style-overrides.css
@@ -198,6 +199,11 @@ revisoes_de_ancora:
       - data/a11y_manual_review_baselines.json
     parecer: >-
       Revisado em 2026-10-18 e mantido valido. Atualizado o SHA-256 de frontend/src/app/(public)/page.tsx no baseline apos adicao de acessibilidade semantica no elemento SVG, mantendo intacta a aprovacao humana formal do Tier 0.
+  - registro: registro-2026-10-10-evolucao-malha-agentica-sota-v8-gold
+    caminhos:
+      - agents/fallback.py
+    parecer: >-
+      Revisado em 2026-10-18 e mantido valido. Modularizacao de construcao de metadados em agents/fallback.py reduzindo a complexidade cognitiva de _create_dispatcher_fallback_plan de 16 para 3, sem alterar a semantica de fallback da malha agentica.
 ---
 
 # REGISTRO DE EXECUCAO SOTA: RESOLUCAO INTEGRAL DE ALERTAS SONARQUBE
