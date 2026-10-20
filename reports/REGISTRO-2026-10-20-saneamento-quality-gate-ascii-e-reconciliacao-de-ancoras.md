@@ -5,7 +5,7 @@ escopo: Site -- saneamento markdownlint em DESIGN.md, SCRIPTS_E_COMANDOS_DASHBOA
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-10-20T07:45:00-03:00'
-atualizado_em: '2026-10-20T07:45:00-03:00'
+atualizado_em: '2026-10-20T08:20:00-03:00'
 commit: HEAD
 classes: [interno, medido, governanca, registro, quality-gate, ascii, sonar]
 caminhos:
@@ -47,6 +47,7 @@ verificado:
   - "111 suites de testes frontend (Jest) aprovadas (739/739 testes verdes)"
   - "Restaurado .claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md a partir do git HEAD, zerando falha em test_manifesto_de_documentos.py"
   - "Corrigida resolucao de interpretador POSIX sh e caminhos POSIX em tests/test_hook_commit_msg.py (51/51 testes verdes)"
+  - "Anotacao noqa S404 adicionada na importacao de subprocess em tests/test_hook_commit_msg.py"
   - "Portao CWV 5-Fases (cwv_gate.ps1) aprovado com 0 erros e 0 warnings via CDP na porta 9223"
 nao_verificado:
   - "Execucao de navegadores legados sem suporte a WebAssembly SIMD ou CSS container queries"

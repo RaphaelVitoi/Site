@@ -27,7 +27,7 @@ import json
 import os
 from pathlib import Path
 import shutil
-import subprocess
+import subprocess  # noqa: S404  # Record-Id: registro-2026-10-20-saneamento-quality-gate-ascii-e-reconciliacao-de-ancoras
 
 import pytest
 
