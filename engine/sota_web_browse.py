@@ -180,7 +180,7 @@ class ClipboardHandoffBridge:
 
     @classmethod
     def assemble_payload(cls, task_desc: str, context: str | None = None, target_llm: str | None = None) -> str:
-        llm_label = target_llm or "Claude 3.7 Sonnet / Gemini 3.7 Flash"
+        llm_label = target_llm or "Claude 3.7 Sonnet / Gemini 3.8 Flash"
         lines = [
             "================================================================================",
             f"=== PROTOCOLO DE HANDOFF SOTA v8.0 GOLD -> WEB INTERFACE [{llm_label.upper()}] ===",

@@ -479,7 +479,7 @@ async def test_queue_manager_cache_lookup_matches_real_model_key(
     assert cached == value
 
     # Diferente modelo = Miss no cache (Isolamento de Contexto)
-    miss = await manager.get_llm_cache(model="gemini-3.7-flash", prompt=key)
+    miss = await manager.get_llm_cache(model="gemini-3.5-flash-lite", prompt=key)
     assert miss is None
 
 

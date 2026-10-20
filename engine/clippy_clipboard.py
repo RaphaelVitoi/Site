@@ -172,7 +172,7 @@ class ClippyClipboard:
         decisions: list[str],
         next_tasks: list[str],
         continuity_prompt: str,
-        target_llm: str = "Claude 3.7 Sonnet / Gemini 3.7 Flash",
+        target_llm: str = "Claude 3.7 Sonnet / Gemini 3.8 Flash",
     ) -> dict[str, str | int | bool]:
         """Monta o payload canonico de Handoff e o copia para a Area de Transferencia."""
         lines = [

@@ -40,8 +40,7 @@ FROTA = [
     "gemma4:31b-cloud",
     "gpt-oss:120b-cloud",
     "qwen2.5-coder:7b-instruct-q5_K_M",
-    "gemini-3.7-flash",
-    "gemini-3.6-flash",
+    "gemini-3.8-flash",
     "gemini-3.5-flash-lite",
 ]
 
@@ -94,7 +93,6 @@ def test_modelos_tier1_reconhecidos_e_bloqueados_em_tarefas_comuns() -> None:
         "gpt-6-sol",
         "gpt-6.1",
         "claude-fable-5.1",
-        "gemini-3.8-flash",
     ]
 
     for mod in modelos_tier1_amostra:
@@ -104,6 +102,8 @@ def test_modelos_tier1_reconhecidos_e_bloqueados_em_tarefas_comuns() -> None:
         )
         # Mas se o manifesto ou Tier 0 designar explicitamente, a designacao vence:
         assert _score_model(mod, False, mod, DOMINIO_RAZONIO) == _FAIXA_DESIGNACAO
+
+    assert _e_tier1("gemini-3.8-flash") is False
 
 
 def test_triagem_vai_para_o_mais_barato_que_classifica() -> None:
@@ -137,9 +137,9 @@ def test_matematica_vai_para_o_31b() -> None:
     assert _primeiro(FROTA, DOMINIO_MATH) == "gemma4:31b-cloud"
 
 
-def test_raciocinio_prefere_o_3_7() -> None:
-    """Na frota de execucao, o especialista de raciocinio e o 3.7 Flash."""
-    assert _primeiro(FROTA, DOMINIO_RAZONIO) == "gemini-3.7-flash"
+def test_raciocinio_prefere_o_3_8() -> None:
+    """Na frota de execucao, o especialista de raciocinio e o 3.8 Flash."""
+    assert _primeiro(FROTA, DOMINIO_RAZONIO) == "gemini-3.8-flash"
 
 
 def test_especialidade_vence_economia() -> None:
@@ -148,10 +148,10 @@ def test_especialidade_vence_economia() -> None:
     Fails se alguem voltar a modelar os dois eixos numa escala so.
     """
     barato = _score_model("gemini-3.5-flash-lite", False, None, DOMINIO_TRIAGEM)
-    caro = _score_model("gemini-3.7-flash", False, None, DOMINIO_TRIAGEM)
+    caro = _score_model("gemini-3.8-flash", False, None, DOMINIO_TRIAGEM)
     assert barato < caro, "Economia voltou a sobrepor a especialidade"
 
-    caro_triagem = _score_model("gemini-3.7-flash", False, None, DOMINIO_RAZONIO)
+    caro_triagem = _score_model("gemini-3.8-flash", False, None, DOMINIO_RAZONIO)
     barato_razao = _score_model("gemini-3.5-flash-lite", False, None, DOMINIO_RAZONIO)
     assert caro_triagem < barato_razao, "Economia voltou a sobrepor a especialidade"
 

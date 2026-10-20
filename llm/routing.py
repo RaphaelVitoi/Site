@@ -75,7 +75,6 @@ MODELOS_TIER1 = (
     "gpt-5.6+",
     "gpt-6+",
     "fable",
-    PREFIX_GEMINI_38,
 )
 
 #: Recurso ESCASSO: modelo potente que e limitado (cota de cloud) e caro, e que
@@ -113,16 +112,15 @@ def _e_recurso_escasso(m: str) -> bool:
 #: O modelo especialista sempre precede o modelo generico, blindando
 #: recursos nobres contra tarefas banais sem prometer pesos inoperantes.
 
-#: Quota estrutural que torna um modelo indisponivel para a frota.
+#: Medicao historica de modelos Gemini, preservada como dado, nao como rota vigente.
 #:
 #: Medido em `key_usage_metrics` (326 registros, 2026-09-30) -- a ORDEM real de
 #: entrega, e nao uma estimativa:
 #:   gemini-3.7-flash      1453 ms   n=35
 #:   gemini-3.5-flash-lite 1843 ms   n=88
 #:   gemini-3.6-flash      5113 ms   n=40
-#: Ou seja: o 3.7 e MAIS RAPIDO que o 3.5-lite, e o 3.6 e 2.8x mais lento que
-#: ambos. Minha tabela anterior assumia a ordem intuitiva (lite < 3.6 < 3.7) e
-#: estava errada em dois dos tres.
+#: O Tier 0 retirou o 3.7 das rotas vigentes em 2026-10-20; nao inferir que
+#: essa medicao historica prediz desempenho ou cota do Gemini 3.8 Flash.
 #:
 #: E o dado mais duro: os modelos `:free` sao os mais rapidos E os que mais
 #: falham -- `mistral-small:free` 46 ms com 38 erros em 38, `llama-3.1-8b:free`
@@ -133,9 +131,8 @@ def _e_recurso_escasso(m: str) -> bool:
 #: 0.0 = cota esgotada (nao entra), 1.0 = folgado. Cota alta = quota folgada de
 #: cloud, e nao "modelo maior serve mais".
 COTA_DE_DISPONIBILIDADE: dict[str, float] = {
-    "gemini-3.7-flash": 0.9,  # rapido E com cota folgada
     "gemini-3.5-flash-lite": 0.8,  # rapido, mas o mais disputado da frota
-    "gemini-3.6-flash": 0.6,  # 5.1 s: o mais lento dos tres
+    "gemini-3.8-flash": 0.55,  # peso conservador; sem medicao comparavel nesta janela
     "gemma4:31b-cloud": 0.9,  # quota de cloud generosa
     "gpt-oss:120b-cloud": 0.8,  # quota de cloud generosa
     "glm": 0.85,  # quota de cloud generosa
@@ -156,16 +153,11 @@ def _disponibilidade(m: str) -> float:
 def _velocidade(m: str) -> float:
     """Velocidade relativa esperada, em [0, 1]. Maior e mais rapido.
 
-    ORDEM MEDIDA em `key_usage_metrics` (2026-09-30, 326 registros), nao
-    estimada. A ordem intuitiva (lite < 3.6 < 3.7) estava ERRADA em dois dos
-    tres: o 3.7 responde em 1453 ms e o 3.5-lite em 1843 ms -- o "lite" nao e o
-    mais rapido da familia. E o 3.6, que eu supunha no meio, e o mais lento
-    (5113 ms, 2.8x o 3.7).
+    Pesos atuais sao heuristicas; as latencias de 3.7 e 3.6 descritas acima
+    sao historicas e nao entram na rota vigente do Gemini 3.8 Flash.
     """
     if "31b" in m or "120b" in m or "glm" in m:
         return 0.35  # cloud de parametro grande
-    if "3.7" in m:
-        return 0.9  # MEDIDO: o mais rapido da familia cloud
     if "flash-lite" in m or "lite" in m:
         return 0.8  # MEDIDO: 1843 ms, rapido mas nao o mais
     if "laguna-xs" in m or "xs" in m:
@@ -176,8 +168,8 @@ def _velocidade(m: str) -> float:
         return 0.75  # local: sem round-trip de rede
     if "3.8" in m:
         return 0.55
-    if "3.6" in m:
-        return 0.2  # MEDIDO: 5113 ms, o mais lento dos tres
+    if "3.6" in m or "3.7" in m:
+        return 0.2  # referencia de legado; nao selecionar em rotas vigentes
     return 0.5
 
 
@@ -251,8 +243,10 @@ def _score_portugues(m: str) -> int:
 
 
 def _score_razonio(m: str) -> int:
-    if "3.7" in m:
+    if "3.8" in m:
         return -6
+    if "3.7" in m:
+        return 100
     if "120b" in m or "glm" in m or "r1" in m or "reason" in m:
         return -4
     if "laguna" in m:
@@ -349,7 +343,7 @@ def _score_local_preference(m: str, domain: str | None = None) -> int:
     if PREFIX_GEMINI_36 in m:
         return 4
     if PREFIX_GEMINI_37 in m:
-        return 5
+        return 1000  # retirado da rota vigente; manter apenas medicao historica
     if "deepseek-r1" in m:
         return 6
     if "flash" in m:
@@ -366,8 +360,7 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
 
     # Economia e o TERCEIRO eixo: so desempate entre modelos igualmente
     # capazes. Antes era o unico eixo, e por isso o mais barato vencia o
-    # especialista. `gemini-3.8` ganha ramo proprio -- sem ele caia em
-    # `"flash" in m` (3), pior que `3.7` (-1) e que o proprio 3.6 (-2).
+    # especialista. `gemini-3.8` ganha ramo proprio sem herdar o ramo generico.
     if PREFIX_GEMINI_35 in m:
         return -4  # Mais barato da familia; especialista em TRIAGE
     if PREFIX_GEMINI_38 in m:
@@ -375,7 +368,7 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
     if PREFIX_GEMINI_36 in m:
         return -2  # Workhorse Flash
     if PREFIX_GEMINI_37 in m:
-        return -1  # Reasoning Flash
+        return 1000  # retirado da rota vigente; manter apenas medicao historica
     if "gemma-4" in m or "gemma4" in m:
         return 1
     if "deepseek-r1" in m:

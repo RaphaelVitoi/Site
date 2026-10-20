@@ -127,8 +127,8 @@ def test_sota_cache_lru_eviction_under_stress(memory_cache: SOTACache):
     ("model_name", "expected_provider"),
     [
         ("gemini-3.8-flash", "gemini"),
-        ("gemini-3.7-flash", "gemini"),
-        ("gemini-3.6-flash", "gemini"),
+        ("gemini-3.8-flash", "gemini"),
+        ("gemini-3.8-flash", "gemini"),
         ("gemini-3.5-flash-lite", "gemini"),
         ("gemma4:e4b", "local"),
         ("gemma4:31b-cloud", "local"),
@@ -204,7 +204,7 @@ def test_all_19_agents_manifest_integrity():
 def test_gemini_flash_lite_scoring_priority():
     """Valida que Gemini 3.5 Flash-Lite recebe prioridade maxima (-4) em execucoes economicas."""
     score_lite = _score_model("gemini-3.5-flash-lite", prefer_local=False, designated_model=None)
-    score_flash = _score_model("gemini-3.7-flash", prefer_local=False, designated_model=None)
+    score_flash = _score_model("gemini-3.8-flash", prefer_local=False, designated_model=None)
     score_openrouter = _score_model("meta-llama/llama-3.3-70b-instruct:free", prefer_local=False, designated_model=None)
 
     assert score_lite == -4, "gemini-3.5-flash-lite deve ter score -4 (prioridade standard maxima)"

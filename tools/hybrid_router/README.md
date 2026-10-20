@@ -5,7 +5,7 @@
 > unica de roteamento (CLAUDE.md, secao 3). O codigo permanece porque registros publicados citam seus caminhos
 > e porque os testes seguem verdes; **nao integrar nada novo aqui**. Roteamento real: `llm/routing_policy.py`.
 
-> Microserviço inteligente de alto desempenho para roteamento dinâmico entre **llama.cpp (Vulkan Edge)** e **Google Gemini 3.7 Flash (Cloud)** sob o Protocolo Chico SOTA v8.0 GOLD.
+> Microserviço legado de roteamento entre **llama.cpp (Vulkan Edge)** e **Google Gemini 3.8 Flash (Cloud)**. O registro oficial da ferramenta marca este serviço como descontinuado.
 
 ---
 
@@ -14,8 +14,8 @@
 O sistema implementa uma camada de triagem semântica estática e de tokenometria que analisa prompts em tempo de submilisegundo e decide o destino de execução:
 
 1. **Local Llama.cpp (Vulkan):** Requisições de baixa/média densidade sintática dentro do teto de tokens local (< 2048 tokens), sem dependência de schemas JSON estritos ou ferramentas externas.
-2. **Gemini 3.7 Flash (Standard):** Requisições com Tool Calling, decodificação gramatical de JSON Schema estrito (`response_schema`), ou volume de tokens superior à capacidade local.
-3. **Gemini 3.7 Flash (Extended Thinking):** Requisições de alta complexidade analítica (Teoria dos Jogos PMev, matrizes de payoff, equações diferenciais, otimização combinatória, refatorações profundas). Aloca de 4.096 a 16.384 tokens de pensamento em tempo de inferência.
+2. **Gemini 3.8 Flash (Standard):** Requisições com Tool Calling, decodificação gramatical de JSON Schema estrito (`response_schema`), ou volume de tokens superior à capacidade local.
+3. **Gemini 3.8 Flash (Extended Thinking):** Requisições de alta complexidade analítica (Teoria dos Jogos PMev, matrizes de payoff, equações diferenciais, otimização combinatória, refatorações profundas). Usa thinking levels documentados, sem inferir cotas de tokens internas.
 
 ---
 

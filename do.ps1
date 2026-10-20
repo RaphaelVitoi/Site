@@ -466,7 +466,7 @@ if ($Web -or $Ola) {
     if (-not $TestMode) { Invoke-TypeScriptGateSOTA }
     Write-Host '=== [PROTOCOLO DE HANDOFF E IGNICAO WEB] CEREBRO HIBRIDO (v8.0 GOLD) ===' -ForegroundColor Cyan
     Write-Host '1. Claude 5 (Sonnet / Opus) - Extended Thinking, 200k/128k, Codificacao Cirurgica'
-    Write-Host '2. Gemini 3.7 (Flash High / Pro) - 2M Context, Multimodal Nativo, Zero-Latency Tools'
+    Write-Host '2. Gemini 3.8 Flash - contexto longo, multimodal e thinking configuravel'
     Write-Host '3. ChatGPT / Codex 5.6 (Luna / Terra / Sol) - 1.05M Context, Reasoning Effort none->max'
     Write-Host '4. Gemma 4 31B Dense (Cloud Ollama / Vertex) - Raciocinio Puro, 0 GB VRAM Local, AIME 89.2%'
 
@@ -474,7 +474,7 @@ if ($Web -or $Ola) {
 
     $RecomendacaoLLM = switch ($MenuChoice) {
         '1' { 'Recomendacao LLM: Use Claude 5. Ideal para arquitetura impecavel, Extended Adaptive Thinking e diffs cirurgicos.' }
-        '2' { 'Recomendacao LLM: Use Gemini 3.7. Cole todo o macro-contexto; ele vai absorver 2M tokens de multimodabilidade nativa.' }
+        '2' { 'Recomendacao LLM: Use Gemini 3.8 Flash para raciocinio e contexto longo; Gemini 3.7 foi retirado das rotas vigentes.' }
         '3' { 'Recomendacao LLM: Use ChatGPT / Codex 5.6. Excelente para scaffolding, CI/CD e raciocinio profundo.' }
         '4' { 'Recomendacao LLM: Use Gemma 4 31B Cloud. Raciocinio denso de ponta com zero consumo de VRAM local.' }
         default { 'Recomendacao LLM: Oraculo indefinido. Assumindo Claude 5 Sonnet por padrao.' }

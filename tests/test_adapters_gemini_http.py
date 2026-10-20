@@ -28,8 +28,9 @@ USUARIO = [{"role": "user", "parts": [{"text": "ping"}]}]
 
 def test_reconhece_modelos_gemini_ativos() -> None:
     assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.5-flash-lite")
-    assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.7-flash")
-    assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.6-flash")
+    assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.8-flash")
+    assert not GoogleGenAIAdapter.e_geracao_atual("gemini-3.7-flash")
+    assert not GoogleGenAIAdapter.e_geracao_atual("gemini-3.6-flash")
     assert GoogleGenAIAdapter.e_geracao_atual("gemini-3.5-flash-lite")
 
 
@@ -126,14 +127,9 @@ def test_build_http_gemini_38_flash_thinking_config() -> None:
     assert "top_p" not in gen
 
 
-def test_build_http_gemini_36_flash_respeita_teto_8k() -> None:
-    payload = GoogleGenAIAdapter.build_http(
-        "gemini-3.6-flash",
-        USUARIO,
-        max_output_tokens=65_536,  # Tenta pedir 64k
-    )
-    # Deve ser limitado pela capacidade maxima real de 8k
-    assert payload["generationConfig"]["maxOutputTokens"] == 8_192
+def test_build_http_rejeita_modelo_gemini_retirado() -> None:
+    with pytest.raises(ParametroRejeitadoError, match="nao autorizado"):
+        GoogleGenAIAdapter.build_http("gemini-3.6-flash", USUARIO)
 
 
 def test_build_gemini_payload_omite_temperature_em_3x() -> None:

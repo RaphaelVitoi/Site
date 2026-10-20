@@ -213,12 +213,28 @@ def test_o_hook_de_pre_push_usa_o_mesmo_comando():
     hook = (RAIZ / ".husky" / "pre-push").read_text(encoding="utf-8")
     assert "scripts/ops/suite_verde.py" in hook
     assert "-m pytest" not in hook, "o hook voltou a chamar pytest direto, contornando o cache"
+    assert 'SOTA_SUITE_WORKERS="${SOTA_SUITE_WORKERS:-6}"' in hook
+
+
+def test_o_hook_de_pre_commit_exporta_seis_workers():
+    pre_commit = (RAIZ / ".husky" / "pre-commit").read_text(encoding="utf-8")
+    assert 'SOTA_SUITE_WORKERS="${SOTA_SUITE_WORKERS:-6}"' in pre_commit
+    assert "scripts/ops/suite_verde.py" in pre_commit
 
 
 def test_variavel_de_ambiente_sota_suite_workers_define_paralelismo(monkeypatch, tmp_path):
-    monkeypatch.setenv("SOTA_SUITE_WORKERS", "4")
+    monkeypatch.setenv("SOTA_SUITE_WORKERS", "6")
     cmd = _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=True)
-    assert cmd[cmd.index("-n") + 1] == "4", cmd
+    assert cmd[cmd.index("-n") + 1] == "6", cmd
+
+
+def test_main_define_sota_suite_workers_como_seis_por_padrao(monkeypatch):
+    monkeypatch.delenv("SOTA_SUITE_WORKERS", raising=False)
+    monkeypatch.setattr(sv, "_executar_garantia_suite", lambda *a, **k: 0)
+    sv.main([])
+    import os
+
+    assert os.environ.get("SOTA_SUITE_WORKERS") == "6"
 
 
 def test_apenas_documentacao_modificada_preserva_cache(monkeypatch, tmp_path):

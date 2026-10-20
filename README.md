@@ -24,7 +24,7 @@ C:\Users\rapha\.gemini\Site\
 ├── frontend/                 ← Interface de alta performance (Next.js 16, React 19, Tailwind 4)
 │   └── src/app/              ← Roteamento geométrico por grupos: (public), (lab), (auth), (user)
 ├── governance/               ← Kernel constitucional, autonomia e matriz de decisão
-├── llm/                      ← Roteamento dinâmico (Gemini 3.7 / 3.1), fallback nativo e budgets
+├── llm/                      ← Roteamento dinâmico (Gemini 3.8 / 3.1), fallback nativo e budgets
 ├── reports/                  ← Relatórios de auditoria, cobertura de testes e Core Web Vitals
 ├── scripts/                  ← Utilitários operacionais, rotinas de saneamento e automações
 └── tests/                    ← Suíte de testes unitários e de integração
@@ -75,7 +75,7 @@ python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
 | **Governança Canônica** | [`CLAUDE.md`](CLAUDE.md) | Regras constitucionais, soberania piramidal, Tiers e qualidade. |
 | **Rotas do Frontend** | [`ROUTES.md`](ROUTES.md) | Mapeamento das 49 páginas estáticas/dinâmicas e laboratórios interativos. |
 | **Córtex & Memória** | [`.claude/`](.claude/) | Portal de navegação do córtex cognitivo, memórias e manifestos matemáticos. |
-| **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.7 Flash e arquitetura híbrida. |
+| **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.8 Flash e arquitetura híbrida. |
 
 ---
 

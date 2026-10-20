@@ -370,8 +370,8 @@ def run_monthly_audit() -> dict[str, Any]:
     mes_ano = agora.strftime("%Y_%m")
 
     camadas = {
-        "camada_1_triagem": [MODEL_GEMINI_35_FLASH_LITE, "gemini-3.6-flash"],
-        "camada_2_agente_principal": ["gemini-3.7-flash", MODEL_GEMINI_35_FLASH_LITE],
+        "camada_1_triagem": [MODEL_GEMINI_35_FLASH_LITE],
+        "camada_2_agente_principal": ["gemini-3.8-flash", MODEL_GEMINI_35_FLASH_LITE],
         "camada_3_raciocinio_profundo": ["chatgpt-5.6-sol"],
     }
 

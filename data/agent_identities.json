@@ -27,6 +27,62 @@
   ],
   "canonicas": [
     {
+      "nome": "Gemini 4 Argon",
+      "email": "noreply@google.com",
+      "veiculo": "antigravity",
+      "modelo": "gemini-4-argon",
+      "tier": "1",
+      "nota": "Nova geração frontier da Google (Outubro/2026). Integrante pleno do Tier 1 / Coletivo CHICO. Compartilha da mesma situação do GPT-6 Astra: modelos mais potentes e custosos, acionados pontualmente."
+    },
+    {
+      "nome": "Claude Opus 5.5",
+      "email": "noreply@anthropic.com",
+      "veiculo": "claude-code",
+      "modelo": "claude-opus-5.5",
+      "tier": "1",
+      "nota": "Atualizado em 2026-10-20 pelo Tier 0. Primário canônico de Governança e Código Cirúrgico."
+    },
+    {
+      "nome": "Claude Sonnet 5.5",
+      "email": "noreply@anthropic.com",
+      "veiculo": "claude-code",
+      "modelo": "claude-sonnet-5.5",
+      "tier": "1",
+      "nota": "Atualizado em 2026-10-20 pelo Tier 0. Parceiro de Engenharia de Software e Construção Multi-arquivo."
+    },
+    {
+      "nome": "Claude Haiku 5.5",
+      "email": "noreply@anthropic.com",
+      "veiculo": "claude-code",
+      "modelo": "claude-haiku-5.5",
+      "tier": "1",
+      "nota": "Modelo Tier 1 de Fast Operations da Anthropic (integrante da tríade com Gemini 3.5 Flash-Lite e GPT-6.0 Luna). Introduzido em 2026-10-20."
+    },
+    {
+      "nome": "Codex GPT-6.0 Sol",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-6.0-sol",
+      "tier": "1",
+      "nota": "Atualizado em 2026-10-20 pelo Tier 0. Primário de raciocínio analítico profundo."
+    },
+    {
+      "nome": "Codex GPT-6.0 Terra",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-6.0-terra",
+      "tier": "1",
+      "nota": "Atualizado em 2026-10-20 pelo Tier 0. Primário de Pesquisa, Estudo e Arquitetura Macro."
+    },
+    {
+      "nome": "Codex GPT-6.0 Luna",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-6.0-luna",
+      "tier": "1",
+      "nota": "Atualizado em 2026-10-20 pelo Tier 0. Fast operations opcional da família 6.0."
+    },
+    {
       "nome": "Claude Opus 5",
       "email": "noreply@anthropic.com",
       "veiculo": "claude-code",
@@ -77,6 +133,14 @@
       "modelo": "gpt-6-luna",
       "tier": "1",
       "nota": "Identidade do condutor Codex informada pelo Tier 0 em 2026-09-22. Sessao assistida. Modelo de condutor da plataforma Codex; esta identidade nao declara disponibilidade como modelo de inferencia do produto."
+    },
+    {
+      "nome": "ChatGPT Luna 6.0",
+      "email": "noreply@openai.com",
+      "veiculo": "codex",
+      "modelo": "gpt-6-luna",
+      "tier": "1",
+      "nota": "Assinatura individual validada pelo Tier 0 em 2026-10-20 para este condutor; integrante do coletivo CHICO. Identidade de condutor, nao rota de inferencia do produto."
     },
     {
       "nome": "Codex GPT-6 Sol",

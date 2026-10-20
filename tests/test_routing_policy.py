@@ -113,15 +113,20 @@ def test_operacional_usa_faixa_gratuita_e_nao_o_menor_preco():
     rota = ROTAS[ClasseTarefa.OPERACIONAL]
     assert rota.faixa is Faixa.GRATUITA
     assert rota.primario == "gemini-3.5-flash-lite"
-    assert rota.primario != "gpt-5.6-luna"
-    assert rota.fallback == "gpt-5.6-luna"  # fica como fallback pago
+    assert rota.primario != "gpt-6.0-luna"
+    assert rota.fallback == "gpt-6.0-luna"  # fica como fallback pago
+    assert rota.escalona_para == "claude-haiku-5.5"  # triade fast operations Tier 1
 
-    luna = MODEL_REGISTRY["gpt-5.6-luna"]
+    luna = MODEL_REGISTRY["gpt-6.0-luna"]
     lite = MODEL_REGISTRY["gemini-3.5-flash-lite"]
+    haiku = MODEL_REGISTRY["claude-haiku-5.5"]
+    assert haiku.autorizado is True
     # O estado NOVO, declarado para que a proxima promocao saiba o que mudou:
     # o primario nao depende mais do desempate por faixa para se sustentar.
-    assert lite.price_per_1m_in < luna.price_per_1m_in
-    assert lite.price_per_1m_out < luna.price_per_1m_out
+    assert lite.cota_por_assinatura is True
+    assert luna.cota_por_assinatura is False
+    assert lite.price_per_1m_in > luna.price_per_1m_in
+    assert lite.price_per_1m_out > luna.price_per_1m_out
 
 
 def test_ordem_de_consumo_respeita_a_economia_generalizada():
@@ -137,16 +142,16 @@ def test_ordem_de_consumo_respeita_a_economia_generalizada():
 @pytest.mark.parametrize(
     ("agente", "primario", "fallback"),
     [
-        ("chico", "claude-opus-5", "gpt-5.6-sol"),
-        ("maverick", "gpt-5.6-sol", "claude-opus-5"),
-        ("architect", "claude-sonnet-5", "gemini-3.6-flash"),
-        ("implementor", "claude-sonnet-5", "gemini-3.6-flash"),
-        ("auditor", "gemini-3.6-flash", "gpt-5.6-terra"),
-        ("verifier", "gemini-3.6-flash", "gpt-5.6-terra"),
-        ("securitychief", "gemini-3.6-flash", "gpt-5.6-terra"),
-        ("dispatcher", "gemini-3.5-flash-lite", "gpt-5.6-luna"),
-        ("organizador", "gemini-3.5-flash-lite", "gpt-5.6-luna"),
-        ("historian", "gemini-3.5-flash-lite", "gpt-5.6-luna"),
+        ("chico", "claude-opus-5.5", "gpt-6.0-sol"),
+        ("maverick", "gpt-6.0-sol", "claude-opus-5.5"),
+        ("architect", "claude-sonnet-5.5", "gemini-3.8-flash"),
+        ("implementor", "claude-sonnet-5.5", "gemini-3.8-flash"),
+        ("auditor", "gemini-3.8-flash", "gpt-6.0-terra"),
+        ("verifier", "gemini-3.8-flash", "gpt-6.0-terra"),
+        ("securitychief", "gemini-3.8-flash", "gpt-6.0-terra"),
+        ("dispatcher", "gemini-3.5-flash-lite", "gpt-6.0-luna"),
+        ("organizador", "gemini-3.5-flash-lite", "gpt-6.0-luna"),
+        ("historian", "gemini-3.5-flash-lite", "gpt-6.0-luna"),
     ],
 )
 def test_tabela_do_operador(agente, primario, fallback):
@@ -245,8 +250,8 @@ def test_construcao_e_estrategia_usam_provedores_diferentes():
 
 
 def test_construcao_escalona_de_sonnet_para_opus():
-    assert rotear("implementor") == "claude-sonnet-5"
-    assert rotear("implementor", escalado=True) == "claude-opus-5"
+    assert rotear("implementor") == "claude-sonnet-5.5"
+    assert rotear("implementor", escalado=True) == "claude-opus-5.5"
 
 
 def test_topo_nao_escalona():
@@ -288,7 +293,7 @@ def test_escalonamento_constante_deixa_de_compensar():
 def test_timeout_cresce_com_o_esforco():
     """Recomendacao 3 do estudo: socket fechado no meio descarta trabalho pago."""
     profundo = timeout_recomendado("claude-opus-5", max_tokens=64_000)
-    raso = timeout_recomendado("gemini-3.7-flash", max_tokens=8_000)
+    raso = timeout_recomendado("gemini-3.8-flash", max_tokens=8_000)
     assert profundo > raso
     assert raso >= 600
 
@@ -363,7 +368,7 @@ def test_core_config_expoe_modelo_concreto_por_agente():
     mapa = cfg.AGENT_MODEL_MAP
     assert len(mapa) == 19, f"esperado 19 agentes resolvidos, veio {len(mapa)}"
     assert len(set(mapa.values())) >= 3, f"roteamento colapsou: {set(mapa.values())}"
-    assert mapa["@chico"] == "claude-opus-5"
+    assert mapa["@chico"] == "claude-opus-5.5"
     assert mapa["@dispatcher"] == "gemini-3.5-flash-lite"
     assert mapa["@gemma4"] == "gemma4:e4b"
 
@@ -399,12 +404,12 @@ def test_avaliar_uso_condicional_pro():
     assert res_flash["aprovado_pro"] is False
     assert "Gemini 3.5 Flash-Lite supre a tarefa" in res_flash["motivo"]
 
-    # 2. Tarefa de alta complexidade matematica e ganho expressivo -> Chat GPT 5.6-Sol
+    # 2. Tarefa de alta complexidade matematica e ganho expressivo -> Chat GPT 6.0-Sol
     res_pro = avaliar_uso_condicional_pro(
         complexidade_formal=True,
         ganho_qualidade_esperado_pct=40.0,
     )
-    assert res_pro["modelo_escolhido"] == "chatgpt-5.6-sol"
+    assert res_pro["modelo_escolhido"] == "chatgpt-6.0-sol"
     assert res_pro["aprovado_pro"] is True
     assert res_pro["beneficio_estimado_pct"] == 40.0
     assert "Alta complexidade matematica" in res_pro["motivo"]
@@ -415,7 +420,7 @@ def test_avaliar_uso_condicional_pro():
 
 def test_decidir_marca_o_primario():
     d = decidir("implementor")
-    assert d.modelo == "claude-sonnet-5"
+    assert d.modelo == "claude-sonnet-5.5"
     assert d.origem is Origem.PRIMARIO
     assert d.classe is ClasseTarefa.CONSTRUCAO
     assert not d.degradado
@@ -423,7 +428,7 @@ def test_decidir_marca_o_primario():
 
 def test_decidir_marca_o_escalonamento_atendido():
     d = decidir("implementor", escalado=True)
-    assert d.modelo == "claude-opus-5"
+    assert d.modelo == "claude-opus-5.5"
     assert d.origem is Origem.ESCALADO
     assert not d.degradado, "escalonamento ATENDIDO nao e degradacao"
 
@@ -516,7 +521,7 @@ def test_rotear_registra_o_escalonamento_que_nao_aconteceu(caplog):
     que impede o descarte de ser mudo.
     """
     with caplog.at_level(logging.WARNING, logger="llm.routing_policy"):
-        assert rotear("chico", escalado=True) == "claude-opus-5"
+        assert rotear("chico", escalado=True) == "claude-opus-5.5"
     # getMessage() e o que interpola: o logger usa %-lazy, entao ate aqui o
     # texto final nao existe  so `msg` com placeholders e `args` separados.
     assert any("nao declara escalona_para" in r.getMessage() for r in caplog.records)

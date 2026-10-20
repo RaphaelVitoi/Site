@@ -180,7 +180,7 @@
     "specialized_scripts": [
       "core/sota_context_engine.py"
     ],
-    "fallback_model": "gemini-3.6-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Prompt Engineering SOTA (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE"
   },
@@ -207,7 +207,7 @@
       "scripts/ops/cwv_gate.ps1",
       "scripts/ops/sri_integrity_verifier.py"
     ],
-    "fallback_model": "gemini-3.6-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Quality Gate & CVE Audit (Pipeline)",
     "memory_affinity": "RAM_CACHE & STATIC_ANALYSIS"
   },
@@ -385,7 +385,7 @@
       "scripts/ops/cwv_gate.ps1",
       "scripts/ops/sri_integrity_verifier.py"
     ],
-    "fallback_model": "gemini-3.6-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Zero Trust & Semgrep (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE & SHA512_BUCKETS"
   },
@@ -438,7 +438,7 @@
       "scripts/ops/Ensure-OllamaModels.ps1",
       "scripts/routines/sync_agents_reality.ps1"
     ],
-    "fallback_model": "gemini-3.6-flash",
+    "fallback_model": "gemini-3.8-flash",
     "tier": "Tier 3: Skill Governance & Tools (Free Tier Workhorse)",
     "memory_affinity": "RAM_CACHE & FASTMCP"
   },
