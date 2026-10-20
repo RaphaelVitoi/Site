@@ -118,7 +118,7 @@ que ninguém executa.
 **foi avaliado e rejeitado por medição** (2026-09-29), não por princípio de
 "não mexer no runtime". Três motivos, todos verificados:
 
-1. **O YAML perde um token de segurança.** O autor escreveu `- format ` com
+1. **O YAML perde um token de segurança.** O autor escreveu <code>- format </code> com
    espaço final, para casar com o literal Python — e **YAML apara o espaço final
    de escalar não-quotado**. A intenção se perde sem erro, sem aviso e sem
    diff. Só foi visto porque o token foi comparado elemento a elemento. Ligar o

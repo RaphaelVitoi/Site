@@ -66,7 +66,7 @@ def fetch_all_stitch_data() -> dict[str, Any]:
 
 def _format_projects_table(projects: list[dict[str, Any]]) -> list[str]:
     if not projects:
-        return ["| — | *Nenhum projeto encontrado* | — | — | — | — |"]
+        return ["| \u2014 | *Nenhum projeto encontrado* | \u2014 | \u2014 | \u2014 | \u2014 |"]
     rows: list[str] = []
     for p in projects:
         pid = p["id"]
@@ -82,10 +82,10 @@ def _format_projects_table(projects: list[dict[str, Any]]) -> list[str]:
 def _format_screens(screens: list[dict[str, Any]]) -> list[str]:
     if not screens:
         return ["- **Telas Cadastradas:** *Nenhuma tela gerada no momento.*"]
-    lines = [f"- **Inventário de Telas ({len(screens)}):**"]
+    lines = [f"- **Invent\u00e1rio de Telas ({len(screens)}):**"]
     for sc in screens:
         sc_name = sc.get("name", "")
-        sc_title = sc.get("title", "Sem título")
+        sc_title = sc.get("title", "Sem t\u00edtulo")
         dev_type = sc.get("deviceType", "DESKTOP")
         lines.append(f"  - `{sc_name}`: **{sc_title}** (`{dev_type}`)")
     return lines
@@ -109,8 +109,8 @@ def _format_design_systems(design_systems: list[dict[str, Any]]) -> list[str]:
                 font = str(theme.get("font", font))
         lines.extend(
             [
-                f"  - 🎨 **{display_name}** (`{ds_name}`)",
-                f"    - Tipografia: `{font}` / `JetBrains Mono` | Acento Primário: `{custom_color}`",
+                f"  - \U0001f3a8 **{display_name}** (`{ds_name}`)",
+                f"    - Tipografia: `{font}` / `JetBrains Mono` | Acento Prim\u00e1rio: `{custom_color}`",
                 "    - Filosofia Visual: *Dark Obsidian Glassmorphism*, bordas com brilho de 1px e contraste WCAG AAA.",
             ]
         )
@@ -121,11 +121,11 @@ def _format_project_detail(p: dict[str, Any]) -> list[str]:
     pid = p["id"]
     title = p["title"]
     lines = [
-        f"### Projeto `{pid}` — {title}",
-        f"- **Nome Canônico:** `{p['name']}`",
+        f"### Projeto `{pid}` \u2014 {title}",
+        f"- **Nome Can\u00f4nico:** `{p['name']}`",
         f"- **Tipo de Projeto:** `{p['project_type']}` | **Origem:** `{p['origin']}`",
-        f"- **Última Atualização:** `{p.get('update_time', 'N/A')}`",
-        f"- **Permissão / Papel:** `{p.get('metadata', {}).get('userRole', 'OWNER')}`",
+        f"- **\u00daltima Atualiza\u00e7\u00e3o:** `{p.get('update_time', 'N/A')}`",
+        f"- **Permiss\u00e3o / Papel:** `{p.get('metadata', {}).get('userRole', 'OWNER')}`",
     ]
     lines.extend(_format_screens(p.get("screens", [])))
     lines.extend(_format_design_systems(p.get("design_systems", [])))
@@ -141,36 +141,36 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     total_screens = data.get("total_screens", 0)
 
     lines: list[str] = [
-        "# Google Cloud Stitch MCP — Relatório de Governança e Ativos de UI",
+        "# Google Cloud Stitch MCP \u2014 Relat\u00f3rio de Governan\u00e7a e Ativos de UI",
         "",
-        "> **Repositório Monitorado:** `RaphaelVitoi/Site`",
-        "> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules",
-        f"> **Data de Atualização:** `{now_utc}`",
+        "> **Reposit\u00f3rio Monitorado:** `RaphaelVitoi/Site`",
+        "> **Governan\u00e7a:** Protocolo Master Chico SOTA v8.0 GOLD \u00b7 Tr\u00edade Stitch, Exa & Jules",
+        f"> **Data de Atualiza\u00e7\u00e3o:** `{now_utc}`",
         "> **Origem dos Dados:** Google Cloud Stitch MCP (`https://stitch.googleapis.com/mcp`)",
         "",
         "---",
         "",
         "## 1. Resumo Executivo do Servidor Stitch MCP",
         "",
-        "| Dimensão | Valor | Status Operacional |",
+        "| Dimens\u00e3o | Valor | Status Operacional |",
         "| :--- | :--- | :--- |",
-        f"| **Projetos Stitch Ativos** | `{total_proj}` | ✅ Conectado e Operacional |",
-        f"| **Telas Cadastradas** | `{total_screens}` | 🎨 Em expansão contínua |",
-        "| **Modelos Suportados** | `Gemini 3.8 Flash` (Balanced - Padrão) & `Gemini 3.5 Flash-Lite` (Speed) | SOTA visual duo ativo no Stitch |",
-        "| **Integração Frontend** | Tailwind CSS 4 + Next.js 16 | Tokens sincronizados em `globals.css` |",
+        f"| **Projetos Stitch Ativos** | `{total_proj}` | \u2705 Conectado e Operacional |",
+        f"| **Telas Cadastradas** | `{total_screens}` | \U0001f3a8 Em expans\u00e3o cont\u00ednua |",
+        "| **Modelos Suportados** | `Gemini 3.8 Flash` (Balanced - Padr\u00e3o) & `Gemini 3.5 Flash-Lite` (Speed) | SOTA visual duo ativo no Stitch |",
+        "| **Integra\u00e7\u00e3o Frontend** | Tailwind CSS 4 + Next.js 16 | Tokens sincronizados em `globals.css` |",
         "",
         "> [!NOTE]",
-        "> **Atualização de Modelos de Fronteira no Stitch:**",
-        "> Conforme verificado na interface de produção do Stitch (`stitch.withgoogle.com`), a geração de UI opera com dois tiers:",
-        "> - ⚡ **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) — menor latência e custo marginal nulo.",
-        "> - ✨ **Balanced (Padrão)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) — alta fidelidade estética e adesão a design systems.",
-        "> - *Nota de Descontinuação:* Os modelos da geração anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na produção.",
+        "> **Atualiza\u00e7\u00e3o de Modelos de Fronteira no Stitch:**",
+        "> Conforme verificado na interface de produ\u00e7\u00e3o do Stitch (`stitch.withgoogle.com`), a gera\u00e7\u00e3o de UI opera com dois tiers:",
+        "> - \u26a1 **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) \u2014 menor lat\u00eancia e custo marginal nulo.",
+        "> - \u2728 **Balanced (Padr\u00e3o)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) \u2014 alta fidelidade est\u00e9tica e ades\u00e3o a design systems.",
+        "> - *Nota de Descontinua\u00e7\u00e3o:* Os modelos da gera\u00e7\u00e3o anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na produ\u00e7\u00e3o.",
         "",
         "---",
         "",
         "## 2. Projetos Registrados no Google Stitch",
         "",
-        "| ID do Projeto | Título | Visibilidade | Telas | Design Systems | Criado em (UTC) |",
+        "| ID do Projeto | T\u00edtulo | Visibilidade | Telas | Design Systems | Criado em (UTC) |",
         "| :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
 
@@ -192,16 +192,16 @@ def format_markdown_report(data: dict[str, Any]) -> str:
         [
             "---",
             "",
-            "## 4. Esteira de Prototipagem & Playbook Stitch → Next.js",
+            "## 4. Esteira de Prototipagem & Playbook Stitch \u2192 Next.js",
             "",
             "```mermaid",
             "flowchart TD",
-            '    Prompt["📝 Prompt Conceitual / Teoria PMev"] --> Stitch["✨ Stitch MCP (generate_screen_from_text)"]',
-            '    Stitch --> Variants["🔀 Geração de Variantes (generate_variants)"]',
-            '    Variants --> Screen["🖥️ get_screen (HTML/Tailwind Assets)"]',
-            '    Screen --> TokenAlign["🎨 Alinhamento de Tokens com globals.css"]',
-            '    TokenAlign --> Components["🧩 Componentes Modulares (frontend/src/components/)"]',
-            '    Components --> QGate["🛡️ Quality Gate & CWV (cwv_gate.ps1)"]',
+            '    Prompt["\U0001f4dd Prompt Conceitual / Teoria PMev"] --> Stitch["\u2728 Stitch MCP (generate_screen_from_text)"]',
+            '    Stitch --> Variants["\U0001f500 Gera\u00e7\u00e3o de Variantes (generate_variants)"]',
+            '    Variants --> Screen["\U0001f5a5\ufe0f get_screen (HTML/Tailwind Assets)"]',
+            '    Screen --> TokenAlign["\U0001f3a8 Alinhamento de Tokens com globals.css"]',
+            '    TokenAlign --> Components["\U0001f9e9 Componentes Modulares (frontend/src/components/)"]',
+            '    Components --> QGate["\U0001f6e1\ufe0f Quality Gate & CWV (cwv_gate.ps1)"]',
             "",
             "    classDef stitch fill:#1a2332,stroke:#ec4899,stroke-width:2px,color:#fff;",
             "    classDef next fill:#111927,stroke:#3b82f6,stroke-width:2px,color:#fff;",
@@ -232,7 +232,7 @@ def format_markdown_report(data: dict[str, Any]) -> str:
             "```",
             "",
             "---",
-            "*Relatório emitido pelo Sincronizador de UI Google Cloud Stitch — Protocolo Chico SOTA v8.0 GOLD*",
+            "*Relat\u00f3rio emitido pelo Sincronizador de UI Google Cloud Stitch \u2014 Protocolo Chico SOTA v8.0 GOLD*",
         ]
     )
 

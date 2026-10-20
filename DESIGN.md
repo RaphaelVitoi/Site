@@ -128,6 +128,7 @@ A interface trata o estudo de poker como um cockpit analítico: navy profundo or
 Os tokens normativos vêm de `frontend/src/app/globals.css`; atualize esta especificação no mesmo patch quando a fonte mudar. A leitura de acessibilidade deve ser confirmada no DOM renderizado: valores de token, isoladamente, não certificam contraste em todo estado ou combinação.
 
 **Key Characteristics:**
+
 - Navy em camadas, com indigo como acento primário e cores semânticas complementares.
 - Tipografia operacional Inter/Montserrat/JetBrains Mono; Playfair Display/EB Garamond na superfície editorial.
 - Controles com estado ativo explícito, foco visível e alvos de toque generosos.
@@ -138,16 +139,20 @@ Os tokens normativos vêm de `frontend/src/app/globals.css`; atualize esta espec
 A paleta é escura por padrão e funcional: superfícies estáveis carregam conteúdo, enquanto os acentos preservam a identidade sem virar fundos de texto por conveniência.
 
 ### Primary
+
 - `primary` é o canvas padrão; `deep`, `panel` e `elevated` criam profundidade tonal.
 - Indigo é o acento primário da interface; emerald, rose, danger, amber, gold, violet, sky, cyan e pink permanecem disponíveis para os contextos semânticos já estabelecidos.
 
 ### Neutral
+
 - `text-main` e `text-bright` carregam conteúdo; `text-muted`, `text-dim` e `text-darker` marcam hierarquia, não permissão para ilegibilidade.
 
 ### Editorial
+
 - `light-canvas`, `light-surface`, os tokens de texto claro e `light-border` formam um tema separado para leitura, sem opacidade como mecanismo de contraste.
 
 ### Named Rules
+
 **The Accent Is Not a Surface Rule.** Acentos puros são para texto, ícones, bordas, glow e gradientes; fundos que carregam texto usam o token `*-surface`.
 
 **The Surface Contrast Rule.** Combine `*-surface` e `*-surface-active` com o token `white`, não com `text-bright`; em indigo, a medição é **4,663:1** com branco e **4,456:1** com o off-white. O estado ativo escurece em vez de clarear.
@@ -162,6 +167,7 @@ O CSS declara piso de **4,5:1** para texto normal nas combinações do tema escu
 **Caráter:** O par operacional prioriza leitura rápida e comparação numérica; o editorial favorece leitura sustentada sem trocar a identidade cromática.
 
 ### Hierarchy
+
 - **Corpo** (400, 1rem, line-height 1.625): explicações e texto padrão da interface.
 - **Título** (Montserrat, peso 900, letter spacing -0.05em): seções do cockpit e rótulos de alta prioridade; os tamanhos variam por componente.
 - **Dados** (JetBrains Mono): índices, medidas e valores alinhados.
@@ -196,14 +202,17 @@ O sistema combina superfícies tonais e vidro; `.glass-panel` é estrutural, com
 ## Components
 
 ### Buttons
+
 - `.btn-primary` combina a superfície indigo com texto branco e escurece no hover; a composição da chamada define raio e padding.
 - `.btn-gold` é o CTA de destaque com gradiente amber, texto slate escuro, raio de 12px e padding 24px × 12px.
 
 ### Cards / Containers
+
 - `.glass-panel` usa raio de **32px**, padding de **32px** (48px em `lg`), gradiente vertical, borda fina e blur forte.
 - Cards de dados mantêm fundos escuros discretos e não recebem a elevação ampla do painel estrutural.
 
 ### Scenario Atlas
+
 - As 12 situações ficam em `Referenciais`, `Casos clínicos` e `Toy games`; a família ativa abre por padrão e expansões manuais persistem em rerenders.
 - O resumo da família tem alvo mínimo de **44px**, rótulo de **12px** e foco visível; o grid passa de 2 para 3 colunas em `sm` e 4 em `lg`.
 - O cenário selecionado combina `aria-pressed`, fundo, borda e indicador; famílias secundárias são reveladas sob demanda.
@@ -216,12 +225,14 @@ O sistema combina superfícies tonais e vidro; `.glass-panel` é estrutural, com
 ## Do's and Don'ts
 
 ### Do:
+
 - **Do** consumir os tokens de `frontend/src/app/globals.css` como fonte de verdade.
 - **Do** usar `white` sobre fundos `*-surface` e testar contraste no estado renderizado.
 - **Do** preservar foco visível, alvos táteis e hierarquia de dados nas três larguras do Atlas.
 - **Do** agrupar opções profissionais antes de considerar ocultar ou remover uma ferramenta.
 
 ### Don't:
+
 - **Don't** usar acento puro como superfície que carrega texto.
 - **Don't** usar `text-bright` sobre `accent-indigo-surface` nem clarear o hover.
 - **Don't** tornar animação necessária para compreender o estado ou os dados.
