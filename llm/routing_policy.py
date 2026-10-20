@@ -19,7 +19,7 @@ valor versionado (SS3): aponte para o enum, que e a fonte.
    paga. Um modelo com cota livre ganha de um modelo pago mais barato por
    token, porque o custo marginal da cota e zero. Uma versao anterior deste
    modulo roteava Tier 3 operacional para `gpt-5.6-luna` por ter o menor
-   $/token  e estava errada: `gemini-3.7-flash` tem cota gratuita e a Luna
+   $/token  e estava errada: `gemini-3.8-flash` tem cota gratuita e a Luna
    nao. Preco unitario so desempata DENTRO da mesma faixa.
 2. **Assimetria de capacidade e Preferencias por Arquitetura / Especialidade / Preco.**
    Todos os modelos de fronteira podem cumprir todas as funcoes (Axioma de Capacidade
@@ -72,9 +72,16 @@ def _carregar_modelos_locais() -> frozenset[str]:
 
 
 MODELOS_LOCAIS: frozenset[str] = _carregar_modelos_locais()
-GPT_5_6_SOL = "gpt-5.6-sol"
+GPT_6_0_SOL = "gpt-6.0-sol"
+GPT_6_0_TERRA = "gpt-6.0-terra"
+GPT_6_0_LUNA = "gpt-6.0-luna"
+GPT_5_6_SOL = "gpt-5.6-sol"  # retrocompatibilidade
+GEMINI_4_ARGON = "gemini-4-argon"
+GEMINI_3_8_FLASH = "gemini-3.8-flash"
 GEMINI_3_5_FLASH_LITE = "gemini-3.5-flash-lite"
-GEMINI_3_6_FLASH = "gemini-3.6-flash"  # failover para 3.5-flash-lite
+CLAUDE_OPUS_55 = "claude-opus-5.5"
+CLAUDE_SONNET_55 = "claude-sonnet-5.5"
+CLAUDE_HAIKU_55 = "claude-haiku-5.5"
 
 
 def e_local(alias: str) -> bool:
@@ -162,134 +169,103 @@ class Rota:
 
 ROTAS: dict[ClasseTarefa, Rota] = {
     ClasseTarefa.GOVERNANCA: Rota(
-        primario="claude-opus-5",
-        fallback=GPT_5_6_SOL,
+        primario=CLAUDE_OPUS_55,
+        fallback=GPT_6_0_SOL,
         faixa=Faixa.API_PAGA,
         justificativa=(
             "Mediacao de conflito e decisao final exigem julgamento com "
-            "consciencia de codigo, e o Opus 5 lidera horizonte longo. "
-            "A VANTAGEM DE PRECO INVERTEU em 2026-09-07: o Sol caiu para "
-            "$4/$20 e agora custa MENOS que o Opus ($25) na saida. A rota "
-            "permanece no Opus pelo julgamento, nao pelo preco -- e a "
-            "justificativa passa a dizer isso, em vez de citar uma "
-            "comparacao que deixou de valer."
+            "consciencia de codigo, e o Opus 5.5 lidera horizonte longo. "
+            "Atualizado em 2026-10-20 sob diretriz do Tier 0."
         ),
-        ancorado_em="2026-09-07",
-        modelos_citados=("claude-opus-5", GPT_5_6_SOL),
+        ancorado_em="2026-10-20",
+        modelos_citados=(CLAUDE_OPUS_55, GPT_6_0_SOL),
     ),
     ClasseTarefa.ESTRATEGIA: Rota(
-        primario=GPT_5_6_SOL,
-        fallback="claude-opus-5",
+        primario=GPT_6_0_SOL,
+        fallback=CLAUDE_OPUS_55,
         faixa=Faixa.API_PAGA,
         justificativa=(
             "Analise de risco e arquitetura macro pendem para raciocinio puro, "
-            "onde o Sol lidera. Inverso da governanca, de proposito."
+            "onde o GPT-6.0 Sol lidera. Inverso da governanca, de proposito."
         ),
-        ancorado_em="2026-08-27",
-        modelos_citados=(GPT_5_6_SOL, "claude-opus-5"),
+        ancorado_em="2026-10-20",
+        modelos_citados=(GPT_6_0_SOL, CLAUDE_OPUS_55),
     ),
     ClasseTarefa.CONSTRUCAO: Rota(
-        primario="claude-sonnet-5",
-        fallback=GEMINI_3_6_FLASH,
+        primario=CLAUDE_SONNET_55,
+        fallback=GEMINI_3_8_FLASH,
         faixa=Faixa.API_PAGA,
-        escalona_para="claude-opus-5",
+        escalona_para=CLAUDE_OPUS_55,
         justificativa=(
-            "Sonnet 5 sustenta a maior parte da alteracao multi-arquivo por "
-            "40% do preco do Opus -- e nao 60%, como esta linha dizia ate "
-            "2026-09-07. O registro cobrava $3/$15 pelo Sonnet 5 quando a "
-            "Anthropic cobra $2/$10; $3/$15 e o Sonnet 4.6. A rota ja estava "
-            "certa, e a razao dela era ainda mais forte do que se supunha. "
-            "Escalona ao Opus quando o grafo de dependencia passa do que o "
-            "Sonnet resolve numa passada."
+            "Sonnet 5.5 sustenta a maior parte da alteracao multi-arquivo por "
+            "40% do preco do Opus. Fallback em Gemini 3.8 Flash para vazao de fluxo. "
+            "Escalona ao Opus 5.5 quando o grafo de dependencia exige sintese de topo."
         ),
-        ancorado_em="2026-09-07",
-        modelos_citados=("claude-sonnet-5", GEMINI_3_6_FLASH, "claude-opus-5"),
+        ancorado_em="2026-10-20",
+        modelos_citados=(CLAUDE_SONNET_55, GEMINI_3_8_FLASH, CLAUDE_OPUS_55),
     ),
     ClasseTarefa.VERIFICACAO: Rota(
-        primario=GEMINI_3_6_FLASH,
-        fallback="gpt-5.6-terra",
+        primario=GEMINI_3_8_FLASH,
+        fallback=GPT_6_0_TERRA,
         faixa=Faixa.GRATUITA,
-        escalona_para="claude-opus-5",
+        escalona_para=GEMINI_4_ARGON,
         justificativa=(
-            "Revisao de primeira passagem em faixa gratuita. Escalona so quando "
-            "o revisor barato sinaliza incerteza. O PRIMARIO deixou de ser o "
-            "gemini-3.8-flash em 2026-09-07: na faixa GRATUITA ele tem teto de "
-            "50 RPD e gasta 4k-16k thinking tokens por chamada, o que esgota a "
-            "cota em menos de uma hora de trabalho agentico. O 3.6 Flash cobre "
-            "a mesma classe com 1.500 RPD e 1.000.000 TPM por chave. A recusa e "
-            "de ADEQUACAO A FAIXA, nao de capacidade: o 3.8 segue no registro, "
-            "verificado, e continua primario onde a faixa e paga."
+            "Revisao de primeira passagem e auditoria. Gemini 3.8 Flash assume a classe "
+            "apos a descontinuacao formal do 3.6 Flash em 2026-10-20. "
+            "Fallback solido em GPT-6.0 Terra e escalonamento para Gemini 4 Argon."
         ),
-        ancorado_em="2026-09-07",
-        modelos_citados=(GEMINI_3_6_FLASH, "gpt-5.6-terra", "claude-opus-5"),
+        ancorado_em="2026-10-20",
+        modelos_citados=(GEMINI_3_8_FLASH, GPT_6_0_TERRA, GEMINI_4_ARGON),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
         primario=GEMINI_3_5_FLASH_LITE,
-        fallback="gpt-5.6-luna",
+        fallback=GPT_6_0_LUNA,
         faixa=Faixa.GRATUITA,
+        escalona_para=CLAUDE_HAIKU_55,
         justificativa=(
-            "Faixa gratuita ANTES de preco unitario -- e aqui os dois eixos "
-            "passaram a apontar junto. O PRIMARIO saiu de gemini-3.8-flash para "
-            "gemini-3.5-flash-lite em 2026-09-07 por adequacao a faixa (o 3.8 "
-            "tem teto de 50 RPD na cota livre e gasta 4k-16k thinking tokens), "
-            "e por adequacao a classe: OPERACIONAL e despacho, organizacao e "
-            "registro -- triagem e parsing, que o Lite entrega em menos de "
-            "300 ms com 2.000 RPD por chave. Gastar raciocinio profundo em "
-            "despacho queima cota sem comprar qualidade.\n\n"
-            "ATENCAO AO QUE ESTA ROTA DEIXOU DE PROVAR. Ate 2026-09-07 ela era o "
-            "exemplo canonico de COTA LIVRE VENCE PRECO UNITARIO MENOR: a Luna "
-            "custava $0.20/$1.20 contra $0.75/$3.75 do 3.8 Flash, e a faixa "
-            "desempatava contra o preco. Com o Lite a $0.15/$0.60 o primario "
-            "passou a ganhar NOS DOIS EIXOS, e a tensao sumiu daqui. A regra de "
-            "desempate segue valendo como governanca -- ela e anterior a esta "
-            "rota e nao depende dela --, mas esta rota nao a exemplifica mais. "
-            "A Luna continua fallback pago."
+            "Faixa gratuita com latencia minima. Gemini 3.5 Flash-Lite permanece "
+            "como o motor de triagem deterministica (<300ms) e linting. "
+            "Fallback em GPT-6.0 Luna e escalonamento para Claude Haiku 5.5, "
+            "formando a triade Tier 1 de fast operations."
         ),
-        ancorado_em="2026-09-07",
-        modelos_citados=(GEMINI_3_5_FLASH_LITE, "gpt-5.6-luna"),
+        ancorado_em="2026-10-20",
+        modelos_citados=(GEMINI_3_5_FLASH_LITE, GPT_6_0_LUNA, CLAUDE_HAIKU_55),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
-        primario=GPT_5_6_SOL,
-        fallback="claude-opus-5",
+        primario=GPT_6_0_SOL,
+        fallback=CLAUDE_OPUS_55,
         faixa=Faixa.API_PAGA,
         escalona_para="gpt-6-astra",
         justificativa=(
-            "Planejamento, pesquisa e prova formal. 'Sem degrau acima' deixou "
-            "de ser verdade em 2026-09-03: o GPT-6 Astra e o degrau, e entra "
-            "so por ESCALONAMENTO -- a $10/$50 ele e teto, nao piso. O Sol "
-            "segue primario porque cobre a classe a $4/$20."
+            "Planejamento, pesquisa e prova formal. GPT-6.0 Sol primario "
+            "com fallback em Claude Opus 5.5 e escalonamento para GPT-6 Astra."
         ),
-        ancorado_em="2026-09-07",
-        modelos_citados=(GPT_5_6_SOL, "claude-opus-5", "gpt-6-astra"),
+        ancorado_em="2026-10-20",
+        modelos_citados=(GPT_6_0_SOL, CLAUDE_OPUS_55, "gpt-6-astra"),
     ),
     ClasseTarefa.SESSAO_MULTI_DIA: Rota(
-        primario="claude-opus-5",
-        fallback=GPT_5_6_SOL,
+        primario=CLAUDE_OPUS_55,
+        fallback=GPT_6_0_SOL,
         faixa=Faixa.API_PAGA,
-        escalona_para="gpt-6-astra",
+        escalona_para=GEMINI_4_ARGON,
         justificativa=(
-            "O Fable 5 era o primario por ser o unico com auto-verificacao "
-            "assincrona. O Tier 0 DESCARTOU a familia Fable em 2026-09-07 por "
-            "cotas e preco, e uma rota nao pode apontar para modelo que a "
-            "malha nao usa. O Opus 5 sobe do fallback. "
-            "PERDA DECLARADA, e nao dissimulada: a auto-verificacao assincrona "
-            "multi-sessao do Fable nao tem substituto nesta tabela -- o que "
-            "esta classe ganha de volta e horizonte longo, nao aquele recurso."
+            "PERDA DECLARADA: Fable retirado sem substituto 1:1. "
+            "Execucao continuada de sessao longa com Claude Opus 5.5 e GPT-6.0 Sol."
         ),
-        ancorado_em="2026-09-07",
-        modelos_citados=("claude-opus-5", GPT_5_6_SOL, "gpt-6-astra"),
+        ancorado_em="2026-10-20",
+        modelos_citados=(CLAUDE_OPUS_55, GPT_6_0_SOL, GEMINI_4_ARGON),
     ),
     ClasseTarefa.LOCAL: Rota(
         primario="gemma4:e4b",
         fallback="gemma4:e2b",
         faixa=Faixa.LOCAL,
-        escalona_para=GEMINI_3_6_FLASH,
+        escalona_para=GEMINI_3_8_FLASH,
         justificativa=(
             "Inferencia de borda: nenhum custo por uso e nenhuma dependencia de "
             "rede. Pesos ja provisionados; ver data/ollama_models.json."
         ),
-        ancorado_em="2026-08-27",
-        modelos_citados=("gemma4:e4b", "gemma4:e2b", GEMINI_3_6_FLASH),
+        ancorado_em="2026-10-20",
+        modelos_citados=("gemma4:e4b", "gemma4:e2b", GEMINI_3_8_FLASH),
     ),
 }
 
@@ -707,12 +683,12 @@ def avaliar_uso_condicional_pro(
     intencao_s1: dict[str, Any] | None = None,
     prompt: str | None = None,
 ) -> dict[str, Any]:
-    """Avalia se o Chat GPT 5.6-Sol deve ser utilizado no lugar do Gemini 3.5/3.6 Flash.
+    """Avalia se o GPT-6 Sol deve ser utilizado no lugar do Gemini 3.5 Flash-Lite.
 
     Regra de Ouro do Operador:
     Chat GPT 5.6-Sol so deve ser acionado EVENTUALMENTE se o ganho de qualidade
     superar CONCRETAMENTE o diferencial de custo/tokens. Caso contrario, o
-    Gemini 3.6 Flash prevalece.
+    Gemini 3.5 Flash-Lite prevalece.
 
     Integracao Tier-0 (Laya S1):
     Se `intencao_s1` ou `prompt` forem fornecidos, o sinal System-1 da Laya
@@ -720,7 +696,7 @@ def avaliar_uso_condicional_pro(
     ajusta o threshold para evitar falsos positivos na escalacao custosa).
     """
     custo_flash = custo(GEMINI_3_5_FLASH_LITE, tokens_in, tokens_out)
-    custo_pro = custo("chatgpt-5.6-sol", tokens_in, tokens_out)
+    custo_pro = custo("chatgpt-6.0-sol", tokens_in, tokens_out)
 
     # Modulacao Laya S1 (advisory Tier-0)
     threshold_ganho = 25.0
@@ -747,7 +723,7 @@ def avaliar_uso_condicional_pro(
             logger.debug("[routing_policy] Laya S1 modulacao falhou (prompt=%s)", bool(prompt or intencao_s1))
 
     aprovado = complexidade_formal and (ganho_qualidade_esperado_pct >= threshold_ganho)
-    modelo_escolhido = "chatgpt-5.6-sol" if aprovado else GEMINI_3_5_FLASH_LITE
+    modelo_escolhido = "chatgpt-6.0-sol" if aprovado else GEMINI_3_5_FLASH_LITE
 
     motivo = (
         f"Alta complexidade matematica/axiomatica com ganho concreto de {ganho_qualidade_esperado_pct:.1f}% (limiar Laya S1: {threshold_ganho:.1f}%) justificando o custo."

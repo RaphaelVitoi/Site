@@ -85,6 +85,8 @@ class AnthropicAdapter:
         cap = get(alias)
         if cap.adapter is not AdapterType.ANTHROPIC:
             raise ParametroRejeitadoError(f"{alias} nao e um modelo Anthropic.")
+        if not cap.autorizado:
+            raise ParametroRejeitadoError(f"{alias} esta catalogado como nao autorizado.")
 
         req = _sanear(kwargs, cap.model_name, ANTHROPIC_REMOVIDOS)
         req["model"] = cap.model_name
@@ -262,6 +264,8 @@ class OpenAIAdapter:
         cap = get(alias)
         if cap.adapter is not AdapterType.OPENAI:
             raise ParametroRejeitadoError(f"{alias} nao e um modelo OpenAI.")
+        if not cap.autorizado:
+            raise ParametroRejeitadoError(f"{alias} esta catalogado como nao autorizado.")
 
         esforco = effort_override or cap.reasoning_effort
         if esforco is not None:
@@ -342,9 +346,10 @@ class GoogleGenAIAdapter:
 
     @staticmethod
     def e_geracao_atual(alias: str) -> bool:
-        """Verifica se o alias esta no registro e e um modelo Google Gemini."""
+        """Verifica se o alias esta autorizado no registro como modelo Google Gemini."""
         try:
-            return get(alias).adapter is AdapterType.GOOGLE
+            capability = get(alias)
+            return capability.adapter is AdapterType.GOOGLE and capability.autorizado
         except KeyError:
             return False
 
@@ -368,7 +373,13 @@ class GoogleGenAIAdapter:
             return
         level_l = thinking_level.lower()
         if (
-            alias in ("gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.8-flash")
+            alias
+            in (
+                "gemini-3.5-flash-lite",
+                "gemini-3.8-flash",
+                "gemini-3.1-pro-preview",
+                "gemini-4-argon",
+            )
             and level_l == "minimal"
         ):
             raise ParametroRejeitadoError(
@@ -388,6 +399,8 @@ class GoogleGenAIAdapter:
         cap = get(alias)
         if cap.adapter is not AdapterType.GOOGLE:
             raise ParametroRejeitadoError(f"{alias} nao e um modelo Google.")
+        if not cap.autorizado:
+            raise ParametroRejeitadoError(f"{alias} esta catalogado como nao autorizado.")
 
         GoogleGenAIAdapter.validar_historico(contents)
 

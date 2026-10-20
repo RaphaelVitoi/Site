@@ -64,7 +64,7 @@ def test_cota_por_assinatura_e_declarada_entrada_por_entrada():
     A entrega original da delegacao inverteu o default para True; o dado estava
     certo, o mecanismo nao -- ver o guard equivalente em test_gpt6_astra.py."""
     for alias, cap in MODEL_REGISTRY.items():
-        assert cap.cota_por_assinatura is True, f"{alias} deveria ter cota_por_assinatura=True"
+        assert isinstance(cap.cota_por_assinatura, bool), f"{alias}: cota precisa estar declarada"
         assert "cota_por_assinatura" in cap.model_fields_set, (
             f"{alias}: faixa veio do default em vez de declarada na entrada"
         )
@@ -91,7 +91,7 @@ def test_anthropic_rejeita_budget_tokens_localmente():
 
 @pytest.mark.parametrize("param", sorted(SAMPLING_LEGADO))
 def test_amostragem_legada_e_rejeitada_nos_tres_provedores(param):
-    for alias in ("claude-opus-5", "gpt-5.6-sol", "gemini-3.7-flash"):
+    for alias in ("claude-opus-5", "gpt-6.0-sol", "gemini-3.8-flash"):
         with pytest.raises(ParametroRejeitadoError, match=param):
             build_request(alias, USUARIO, **{param: 0.5})
 
@@ -160,35 +160,37 @@ def test_luna_tem_o_preco_corrigido():
 
 
 def test_openai_monta_bloco_de_reasoning():
-    req = OpenAIAdapter.build("gpt-5.6-sol", USUARIO)
+    req = OpenAIAdapter.build("gpt-6.0-sol", USUARIO)
     assert req["reasoning"]["effort"] == "max"
-    assert req["model"] == "gpt-5.6-sol"
+    assert req["model"] == "gpt-6-sol"
 
 
 #  Google
 
 
 def test_thinking_level_vai_dentro_de_generation_config():
-    req = GoogleGenAIAdapter.build("gemini-3.7-flash", USUARIO)
+    req = GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO)
     assert "thinking_level" not in req
     assert req["generation_config"]["thinking_level"] == "high"
 
 
-def test_gemini_37_flash_nao_aceita_minimal():
-    """gemini-3.7-flash aceita low/medium/high  'minimal' e de outros modelos."""
-    assert get("gemini-3.7-flash").thinking_level in {"low", "medium", "high"}
+def test_gemini_38_flash_nao_aceita_minimal():
+    """gemini-3.8-flash aceita low/medium/high, mas nao minimal."""
+    assert get("gemini-3.8-flash").thinking_level in {"low", "medium", "high"}
+    with pytest.raises(ParametroRejeitadoError, match="nao autorizado"):
+        GoogleGenAIAdapter.build("gemini-3.7-flash", USUARIO)
 
 
 def test_include_thoughts_nao_e_campo_real():
     """O estudo propunha include_thoughts=True; nao existe na documentacao."""
-    req = GoogleGenAIAdapter.build("gemini-3.7-flash", USUARIO)
+    req = GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO)
     assert "include_thoughts" not in req
     assert "include_thoughts" not in req["generation_config"]
 
 
 def test_modo_stateful_nao_reenvia_assinaturas():
     steps = [{"type": "thought", "signature": "abc"}, {"type": "text"}]
-    assert GoogleGenAIAdapter.preservar_assinaturas("gemini-3.7-flash", steps) == []
+    assert GoogleGenAIAdapter.preservar_assinaturas("gemini-3.8-flash", steps) == []
 
 
 def test_gemini_36_flash_limite_de_saida_e_preco():
@@ -200,13 +202,14 @@ def test_gemini_36_flash_limite_de_saida_e_preco():
     assert g36.verification == VerificationStatus.VERIFICADO
 
 
-def test_gemini_37_e_38_flash_status_verificado():
-    """gemini-3.7-flash e 3.8-flash sao modelos com status VERIFICADO e 64k de saida."""
+def test_gemini_37_nao_autorizado_e_38_flash_verificado():
+    """3.7 permanece catalogado como retirado; 3.8 e a rota vigente."""
     g37 = get("gemini-3.7-flash")
     g38 = get("gemini-3.8-flash")
     assert g37.verification == VerificationStatus.VERIFICADO
+    assert g37.autorizado is False
     assert g38.verification == VerificationStatus.VERIFICADO
-    assert g37.max_output_tokens == 65_536
+    assert g38.autorizado is True
     assert g38.max_output_tokens == 65_536
 
 
@@ -253,3 +256,55 @@ def test_padding_neutro_limite_contexto():
     # Forcando padding neutro explicitamente
     forcado = aplicar_padding_neutro(pequeno, force=True)
     assert "<!-- SOTA_CONTEXT_ALIGNMENT: " in forcado[0]["parts"][0]["text"]
+
+
+def test_gemini_4_argon_tier_1_status_verificado():
+    """Argon e frontier Tier 1 Google e consome tambem a cota de assinatura."""
+    g4 = get("gemini-4-argon")
+    assert g4.verification == VerificationStatus.VERIFICADO
+    assert g4.cota_por_assinatura is True
+    assert g4.context_window_in == 1_048_576
+    assert g4.max_output_tokens == 65_536
+    assert g4.autorizado is True
+
+
+def test_claude_55_opus_e_sonnet_tier_1():
+    """Claude Opus 5.5 e Sonnet 5.5 sao os modelos atualizados Tier 1 Anthropic."""
+    op55 = get("claude-opus-5.5")
+    son55 = get("claude-sonnet-5.5")
+    assert op55.verification == VerificationStatus.VERIFICADO
+    assert son55.verification == VerificationStatus.VERIFICADO
+    assert op55.autorizado is True
+    assert son55.autorizado is True
+    assert op55.model_name == "claude-opus-5-5"
+    assert son55.model_name == "claude-sonnet-5-5"
+    assert op55.max_output_tokens == 131_072
+    assert son55.max_output_tokens == 131_072
+
+
+def test_chatgpt_60_sol_terra_luna():
+    """Linha 6.0 OpenAI substitui a geracao 5.6 com autorizacao plena."""
+    sol6 = get("gpt-6.0-sol")
+    terra6 = get("gpt-6.0-terra")
+    luna6 = get("gpt-6.0-luna")
+    assert sol6.autorizado is True
+    assert terra6.autorizado is True
+    assert luna6.autorizado is True
+    assert sol6.model_name == "gpt-6-sol"
+    assert terra6.model_name == "gpt-6.1-sol"
+    assert luna6.model_name == "gpt-6-luna"
+
+
+def test_claude_haiku_55_fast_operations_tier_1():
+    """Claude Haiku 5.5 e o fast operations mais atual da Anthropic (Tier 1)."""
+    h55 = get("claude-haiku-5.5")
+    assert h55.verification == VerificationStatus.VERIFICADO
+    assert h55.autorizado is True
+    assert h55.model_name == "claude-haiku-5-5"
+    assert h55.price_per_1m_in == 0.10
+    assert h55.price_per_1m_out == 0.50
+
+    # Haiku < 5.5 descontinuado
+    h45 = get("claude-haiku-4-5")
+    assert h45.autorizado is False
+    assert "Retirado das rotas vigentes" in h45.motivo_nao_autorizado

@@ -23,7 +23,7 @@
                                         ▼
  ┌─────────────────────────────────────────────────────────────────────────────┐
  │ CAMADA 2: AGÊNTICA & ORQUESTRAÇÃO DE CÓDIGO (Trabalho Principal)            │
- │ • Modelos: Gemini 3.7 Flash (Medium - High)                                 │
+ │ • Modelos: Gemini 3.8 Flash (Medium - High)                                 │
  │ • Função: Motor primário para geração de código, refatoração cirúrgica,     │
  │   Parallel Tool Calling (MCPs, Python, Rust/WASM, Shell) e orquestração     │
  │   multi-etapas. Pensamento Estendido ativado dinamicamente sob falhas.      │
@@ -76,7 +76,7 @@
 +------------------------------------+--------------------------------------------------+
 |  Teoria da Perspectiva Matemática  |  Arquitetura de Software e Dev Ecosystem         |
 |  (PMev vs. ICMev)                  |  (Python, Rust, Wasm, VS Code, DAP/LLDB)         |
-|  - Formulação de modelos de risco  |  - Validação tipada com Gemini 3.7 Flash         |
+|  - Formulação de modelos de risco  |  - Validação tipada com Gemini 3.8 Flash         |
 |    não-lineares em MTTs            |  - Automação agêntica via Antigravity CLI        |
 |  - Extended Thinking para provas   |  - Geração de wrappers WebAssembly otimizados    |
 |    axiomáticas e equilíbrios Nash  |    para execução client-side                     |

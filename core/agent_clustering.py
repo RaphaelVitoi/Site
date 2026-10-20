@@ -17,13 +17,12 @@ class ClusterType(enum.StrEnum):
 
 
 MODEL_GEMINI_38_FLASH = "gemini-3.8-flash"
-MODEL_GEMINI_37_FLASH = "gemini-3.7-flash"
-MODEL_GEMINI_36_FLASH = "gemini-3.6-flash"
 MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
 MODEL_QWEN_25_7B_Q5 = "qwen2.5-coder:7b-instruct-q5_K_M"
 MODEL_GEMMA_31B_CLOUD = "gemma4:31b-cloud"
-MODEL_CHATGPT_56_SOL = "chatgpt-5.6-sol"
-MODEL_CLAUDE_OPUS_5 = "claude-opus-5"
+MODEL_CHATGPT_60_SOL = "chatgpt-6.0-sol"
+MODEL_CLAUDE_OPUS_55 = "claude-opus-5.5"
+MODEL_CLAUDE_SONNET_55 = "claude-sonnet-5.5"
 
 
 @dataclass
@@ -51,13 +50,10 @@ class AgentClusteringMesh:
                 name="Cluster Alpha (Deep Reasoning & Architecture)",
                 description="Governanca, planejamento estrategico, resolucao matematica de PMev/ICM e arquitetura de sistemas.",
                 primary_models=[
+                    MODEL_CLAUDE_OPUS_55,
+                    MODEL_CHATGPT_60_SOL,
                     MODEL_GEMINI_38_FLASH,
-                    MODEL_GEMINI_37_FLASH,
-                    MODEL_GEMINI_36_FLASH,
-                    MODEL_GEMINI_35_FLASH_LITE,
                     MODEL_GEMMA_31B_CLOUD,
-                    MODEL_CHATGPT_56_SOL,
-                    MODEL_CLAUDE_OPUS_5,
                 ],
                 cpu_affinity_cores=[4, 5, 6, 7, 12, 13, 14, 15],  # Cores de alta performance
                 max_concurrency=4,
@@ -69,11 +65,11 @@ class AgentClusteringMesh:
                 name="Cluster Beta (Rapid Code Synthesis & Tooling)",
                 description="Geracao de codigo de baixa latencia, modificacoes atomicas de arquivos e execucao de comandos.",
                 primary_models=[
+                    MODEL_CLAUDE_SONNET_55,
+                    MODEL_GEMINI_38_FLASH,
                     MODEL_GEMINI_35_FLASH_LITE,
                     MODEL_QWEN_25_7B_Q5,
                     MODEL_GEMMA_31B_CLOUD,
-                    MODEL_GEMINI_36_FLASH,
-                    MODEL_GEMINI_37_FLASH,
                 ],
                 cpu_affinity_cores=[2, 3, 4, 5, 10, 11, 12, 13],
                 max_concurrency=8,
@@ -84,7 +80,7 @@ class AgentClusteringMesh:
                 cluster_type=ClusterType.GAMMA_AUDITING,
                 name="Cluster Gamma (Auditing, Linting & Empirical Verification)",
                 description="Varredura de seguranca, auditoria estatica de codigo, execucao de testes unitarios e linting.",
-                primary_models=[MODEL_GEMINI_35_FLASH_LITE, MODEL_QWEN_25_7B_Q5],
+                primary_models=[MODEL_GEMINI_38_FLASH, MODEL_GEMINI_35_FLASH_LITE, MODEL_QWEN_25_7B_Q5],
                 cpu_affinity_cores=[0, 1, 8, 9],
                 max_concurrency=6,
                 enable_thinking=False,
@@ -94,7 +90,7 @@ class AgentClusteringMesh:
                 cluster_type=ClusterType.DELTA_DATAPROC,
                 name="Cluster Delta (Spark & High-Throughput Analytics)",
                 description="Processamento de lotes Spark, vetores Arrow, transformacoes analiticas e replay de sessoes.",
-                primary_models=[MODEL_GEMINI_35_FLASH_LITE, MODEL_GEMINI_36_FLASH],
+                primary_models=[MODEL_GEMINI_38_FLASH, MODEL_GEMINI_35_FLASH_LITE],
                 cpu_affinity_cores=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],  # All cores
                 max_concurrency=16,
                 enable_thinking=False,

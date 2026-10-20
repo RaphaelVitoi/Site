@@ -685,7 +685,7 @@ def _resolve_proprietary_target(
         if has_anthropic:
             return "anthropic", model
         if has_nous:
-            return "nous", "anthropic/claude-sonnet-5"
+            return "nous", "anthropic/claude-sonnet-5.5"
         if has_openrouter:
             target = model if model.startswith("anthropic/") else f"anthropic/{model}"
             return "openrouter", target
@@ -885,7 +885,7 @@ async def _dispatch_gemini_provider(
     )
     if res:
         return res
-    for alt_model in ("gemini-3.6-flash", "gemini-3.8-flash"):
+    for alt_model in ("gemini-3.8-flash", "gemini-3.5-flash-lite"):
         if alt_model != target_model:
             logger.info("[GEMINI SOTA] Tentando alternativa na familia Gemini: '%s'", alt_model)
             res = await _try_provider(
@@ -1271,11 +1271,11 @@ def _build_models_to_try(
 
     if openrouter_keys:
         extras = (
-            ["anthropic/claude-opus-5", "anthropic/claude-sonnet-5", MODEL_POOLSIDE_LAGUNA_FREE]
+            ["anthropic/claude-opus-5.5", "anthropic/claude-sonnet-5.5", MODEL_POOLSIDE_LAGUNA_FREE]
             if agent_type == "deep_thinking"
             else [
                 MODEL_OPENROUTER_GEMINI_35_FLASH_LITE,
-                "google/gemini-3.6-flash",
+                "google/gemini-3.8-flash",
                 "poolside/laguna-xs-2.1:free",
                 MODEL_POOLSIDE_LAGUNA_FREE,
             ]

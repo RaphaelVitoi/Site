@@ -48,7 +48,7 @@ TRES DECISOES DE CORRETUDE, porque cada uma tem uma armadilha conhecida nesta ba
 3. Falha nunca vira marcador, e apaga o anterior. Um verde vencido, descrevendo
    outro estado, e pior que nenhum verde.
 
-PARALELISMO COM LIMITE: com pytest-xdist, usa ate oito workers, reservando 4 GiB
+PARALELISMO COM LIMITE: com pytest-xdist, usa 6 workers (configuravel via SOTA_SUITE_WORKERS), reservando 4 GiB
 de RAM para os demais aplicativos e 2 GiB por worker. O CI segue em serie e com
 cobertura -- e la que dependencia de ordem entre testes aparece. Passe `-n 0`
 para medir em serie aqui; uma escolha explicita de `-n` prevalece.
@@ -261,7 +261,7 @@ def _tem_xdist() -> bool:
 
 
 def paralelismo(extra: list[str]) -> list[str]:
-    """Limita workers pela RAM livre se quem chamou nao escolheu `-n`."""
+    """Limita workers a 6 (ou SOTA_SUITE_WORKERS) pela RAM livre se quem chamou nao escolheu `-n`."""
     if any(a.startswith("-n") or a == "no:xdist" for a in extra):
         return []
     if not _tem_xdist():
@@ -271,7 +271,7 @@ def paralelismo(extra: list[str]) -> list[str]:
         return ["-n", env_w]
     gib = 1024**3
     memoria_livre = psutil.virtual_memory().available
-    workers = max(1, min(8, os.cpu_count() or 1, (memoria_livre - 4 * gib) // (2 * gib)))
+    workers = max(1, min(6, os.cpu_count() or 1, (memoria_livre - 4 * gib) // (2 * gib)))
     return ["-n", str(workers)]
 
 
@@ -354,6 +354,7 @@ def _executar_garantia_suite(acao: str, extra: list[str]) -> int:
 
 
 def main(argv: list[str]) -> int:
+    os.environ.setdefault("SOTA_SUITE_WORKERS", "6")
     acao = argv[0] if argv and not argv[0].startswith("-") else "ensure"
     extra = argv[1:] if argv and not argv[0].startswith("-") else argv
 

@@ -265,12 +265,18 @@ def test_toda_faixa_e_declarada_e_nenhuma_vem_do_default() -> None:
     sem_declaracao = {a for a, c in MODEL_REGISTRY.items() if "cota_por_assinatura" not in c.model_fields_set}
     assert not sem_declaracao, f"faixa herdada do default, nao declarada: {sorted(sem_declaracao)}"
 
-    com_cota = {a for a, c in MODEL_REGISTRY.items() if c.cota_por_assinatura}
-    assert com_cota == set(MODEL_REGISTRY.keys()), (
-        "Os 14 ativos tiveram a faixa levantada e todos tem cota: Anthropic "
-        "por Claude Pro/Max, OpenAI por Plus/Pro/Business, Google por Gemini "
-        "Advanced e free tier do AI Studio."
-    )
+    sem_cota = {a for a, c in MODEL_REGISTRY.items() if not c.cota_por_assinatura}
+    assert sem_cota == {
+        "claude-opus-5.5",
+        "claude-sonnet-5.5",
+        "claude-haiku-5.5",
+        "gpt-6.0-sol",
+        "chatgpt-6.0-sol",
+        "gpt-6.0-terra",
+        "chatgpt-6.0-terra",
+        "gpt-6.0-luna",
+        "chatgpt-6.0-luna",
+    }, "A faixa de assinatura deve refletir as rotas com cota realmente verificada."
     # A familia Fable teve a faixa declarada e saiu por causa dela; o motivo
     # sobrevive em MODELOS_RETIRADOS, nao no campo.
     assert set(MODELOS_RETIRADOS) == {"claude-fable-5", "claude-fable-5-1"}
@@ -285,8 +291,8 @@ def test_raciocinio_profundo_ganhou_degrau_acima() -> None:
     mudam, porque trocar a rota primaria e decisao do Tier 0."""
     rota = ROTAS[ClasseTarefa.RACIOCINIO_PROFUNDO]
     assert rota.escalona_para == ALIAS
-    assert rota.primario == "gpt-5.6-sol"
-    assert rota.fallback == "claude-opus-5"
+    assert rota.primario == "gpt-6.0-sol"
+    assert rota.fallback == "claude-opus-5.5"
 
 
 def test_astra_nao_virou_primario_de_nenhuma_rota() -> None:
@@ -329,7 +335,7 @@ def test_sessao_multi_dia_declara_a_perda_em_vez_de_esconde_la() -> None:
     Trocar o primario sem dizer isso transformaria uma perda de capacidade em
     um detalhe de configuracao."""
     rota = ROTAS[ClasseTarefa.SESSAO_MULTI_DIA]
-    assert rota.primario == "claude-opus-5"
+    assert rota.primario == "claude-opus-5.5"
     assert "PERDA DECLARADA" in rota.justificativa
 
 

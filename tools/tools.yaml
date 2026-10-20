@@ -10,7 +10,7 @@ tools:
     # llm/model_registry.py, que e a fonte unica de roteamento (CLAUDE.md, secao 3).
     status: "descontinuado"
     substituto: "llm/routing_policy.py + llm/model_registry.py"
-    description: "Gateway de inferência híbrida inteligente entre Vulkan Local (llama.cpp) e Google Gemini 3.7 Flash Cloud."
+    description: "Gateway descontinuado; a rota vigente usa llm/routing_policy.py e llm/model_registry.py com Gemini 3.8 Flash."
     path: "tools/hybrid_router"
     entrypoint: "app:app"
     protocol: "fastapi_rest"
@@ -19,8 +19,8 @@ tools:
       local_engine: 8080
     targets:
       - "LOCAL_LLAMA_VULKAN"
-      - "GEMINI_37_FLASH_STANDARD"
-      - "GEMINI_37_FLASH_THINKING"
+      - "GEMINI_38_FLASH_STANDARD"
+      - "GEMINI_38_FLASH_THINKING"
     features:
       - "static_complexity_analysis"
       - "submillisecond_triage"

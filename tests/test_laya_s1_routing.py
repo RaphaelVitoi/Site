@@ -82,8 +82,8 @@ def test_laya_s1_latin_preserva_designado_da_fonte_unica():
         }
     )
     models, _agent_type, designated = _resolve(task)
-    assert models[0] == "claude-opus-5"
-    assert designated == "claude-opus-5"
+    assert models[0] == "claude-opus-5.5"
+    assert designated == "claude-opus-5.5"
     assert models[0] != "gemma4:e4b"
 
 
@@ -92,8 +92,8 @@ def test_laya_s1_ausente_preserva_politica_fonte_unica():
     # (fonte-unica). models_to_try[0] == designated_model (sem reordencao S1).
     task = _mk_task(metadata=None)
     models, _agent_type, designated = _resolve(task)
-    assert models[0] == "claude-opus-5"
-    assert designated == "claude-opus-5"
+    assert models[0] == "claude-opus-5.5"
+    assert designated == "claude-opus-5.5"
 
 
 def test_laya_s1_proveniancia_registrada_no_reason_codes():

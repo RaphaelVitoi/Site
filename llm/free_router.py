@@ -5,7 +5,7 @@ Governanca: `RULE[user_global]` e `Site/CLAUDE.md`.
 
 Adaptacao para limites de cotas gratuitas com:
   1. Token Bucket Atomico com reserva preventiva anti-TOCTOU e sincronia UTC;
-  2. Roteamento multinivel por complexidade (3.5 Lite -> 3.6 Flash -> 3.7 Flash Low -> OpenRouter);
+  2. Roteamento multinivel por complexidade (3.5 Flash-Lite -> 3.8 Flash -> OpenRouter);
   3. Cache semantico local (Deduplicacao SHA-256 em memoria/SQLite);
   4. Consumo direto do pool multi-chave (`GEMINI_FLASH_KEYS`, `GEMINI_KEYS` de `llm.budget`);
   5. Desacoplamento estrito de pre-commit e computacao combinatoria local.
@@ -30,7 +30,7 @@ from llm.budget import GEMINI_FLASH_KEYS, GEMINI_KEYS, OPENROUTER_KEYS
 logger = logging.getLogger(__name__)
 
 # Model constants for free tier routing
-GEMINI_36_FLASH = "gemini-3.6-flash"
+GEMINI_38_FLASH = "gemini-3.8-flash"
 GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
 
 
@@ -153,15 +153,10 @@ class SOTAUnifiedFreeRouter:
         # Multiplicacao linear de capacidade pelo pool multi-chave
         pool_size = max(1, len(keys))
         self.quotas: dict[str, AtomicQuotaBucket] = {
-            "gemini-3.7-flash": AtomicQuotaBucket(
+            GEMINI_38_FLASH: AtomicQuotaBucket(
                 rpm_limit=10 * pool_size,
                 tpm_limit=500_000 * pool_size,
                 rpd_limit=350 * pool_size,
-            ),
-            GEMINI_36_FLASH: AtomicQuotaBucket(
-                rpm_limit=15 * pool_size,
-                tpm_limit=1_000_000 * pool_size,
-                rpd_limit=1500 * pool_size,
             ),
             GEMINI_35_FLASH_LITE: AtomicQuotaBucket(
                 rpm_limit=30 * pool_size,
@@ -208,8 +203,8 @@ class SOTAUnifiedFreeRouter:
     async def _route_level2_standard(
         self, ckey: str, prompt: str, system_instruction: str | None, est_tokens: int, max_output: int
     ) -> dict[str, str] | None:
-        """NIVEL 2: Raciocinio Padrao (Score 3-4) -> Gemini 3.6 Flash com fallback."""
-        res = await self._call_model(GEMINI_36_FLASH, prompt, system_instruction, est_tokens, max_output)
+        """NIVEL 2: Raciocinio Padrao (Score 3-4) -> Gemini 3.8 Flash com fallback."""
+        res = await self._call_model(GEMINI_38_FLASH, prompt, system_instruction, est_tokens, max_output)
         if res:
             return await self._store_cache(ckey, res)
         # Degradacao graciosa para 3.5 Flash-Lite
@@ -221,9 +216,9 @@ class SOTAUnifiedFreeRouter:
     async def _route_level3_complex(
         self, ckey: str, prompt: str, system_instruction: str | None, est_tokens: int, max_output: int
     ) -> dict[str, str] | None:
-        """NIVEL 3: Raciocinio Teorico Profundo (Score 5) -> Gemini 3.7 Flash com fallback em cascata."""
+        """NIVEL 3: Raciocinio Teorico Profundo (Score 5) -> Gemini 3.8 Flash com fallback em cascata."""
         res = await self._call_model(
-            "gemini-3.7-flash",
+            GEMINI_38_FLASH,
             prompt,
             system_instruction,
             est_tokens,
@@ -232,11 +227,7 @@ class SOTAUnifiedFreeRouter:
         )
         if res:
             return await self._store_cache(ckey, res)
-        # Fallback 1: Gemini 3.6 Flash
-        res_36 = await self._call_model(GEMINI_36_FLASH, prompt, system_instruction, est_tokens, max_output)
-        if res_36:
-            return await self._store_cache(ckey, res_36)
-        # Fallback 2: Gemini 3.5 Flash-Lite
+        # Fallback: Gemini 3.5 Flash-Lite
         res_lite = await self._call_model(GEMINI_35_FLASH_LITE, prompt, system_instruction, est_tokens, max_output)
         if res_lite:
             return await self._store_cache(ckey, res_lite)
@@ -269,13 +260,13 @@ class SOTAUnifiedFreeRouter:
             if result:
                 return result
 
-        # NIVEL 2: Raciocinio Padrao (Score 3-4) -> Gemini 3.6 Flash
+        # NIVEL 2: Raciocinio Padrao (Score 3-4) -> Gemini 3.8 Flash
         if complexity_score in (3, 4):
             result = await self._route_level2_standard(ckey, prompt, system_instruction, est_tokens, max_output)
             if result:
                 return result
 
-        # NIVEL 3: Raciocinio Teorico Profundo (Score 5) -> Gemini 3.7 Flash Low-Effort
+        # NIVEL 3: Raciocinio Teorico Profundo (Score 5) -> Gemini 3.8 Flash Low-Effort
         if complexity_score >= 5:
             result = await self._route_level3_complex(ckey, prompt, system_instruction, est_tokens, max_output)
             if result:

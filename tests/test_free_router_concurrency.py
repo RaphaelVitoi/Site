@@ -61,18 +61,16 @@ def test_free_router_multi_key_scaling() -> None:
     mock_keys = ["mock-key-1", "mock-key-2", "mock-key-3"]
     router = SOTAUnifiedFreeRouter(google_api_keys=mock_keys)
 
-    # 3 chaves -> 3 * 15 = 45 RPM para 3.6 Flash
-    assert router.quotas["gemini-3.6-flash"].rpm_limit == 45
-    assert router.quotas["gemini-3.6-flash"].tpm_limit == 3_000_000
-    assert router.quotas["gemini-3.6-flash"].rpd_limit == 4500
+    # 3 chaves -> 3 * 10 = 30 RPM para 3.8 Flash
+    assert router.quotas["gemini-3.8-flash"].rpm_limit == 30
+    assert router.quotas["gemini-3.8-flash"].tpm_limit == 1_500_000
+    assert router.quotas["gemini-3.8-flash"].rpd_limit == 1050
 
     # 3 chaves -> 3 * 30 = 90 RPM para 3.5 Flash-Lite
     assert router.quotas["gemini-3.5-flash-lite"].rpm_limit == 90
     assert router.quotas["gemini-3.5-flash-lite"].rpd_limit == 6000
 
-    # 3 chaves -> 3 * 10 = 30 RPM para 3.7 Flash
-    assert router.quotas["gemini-3.7-flash"].rpm_limit == 30
-    assert router.quotas["gemini-3.7-flash"].rpd_limit == 1050
+    assert "gemini-3.7-flash" not in router.quotas
 
 
 @pytest.mark.asyncio

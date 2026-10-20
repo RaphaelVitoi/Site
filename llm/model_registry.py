@@ -238,11 +238,60 @@ class ModelCapability(BaseModel):
 # REGISTRO
 # ==============================================================================
 
+GPT_6_0_SOL = "gpt-6.0-sol"
 GPT_5_6_SOL = "gpt-5.6-sol"
 
 
 MODEL_REGISTRY: dict[str, ModelCapability] = {
-    #  ANTHROPIC  Geracao 5
+    # — ANTHROPIC — Geração 5.5 (Atualizada 2026-10-20)
+    "claude-opus-5.5": ModelCapability(
+        adapter=AdapterType.ANTHROPIC,
+        model_name="claude-opus-5-5",
+        cota_por_assinatura=False,
+        context_window_in=1_000_000,
+        max_output_tokens=131_072,
+        price_per_1m_in=4.00,
+        price_per_1m_out=20.00,
+        thinking_adaptive=True,
+        effort="xhigh",
+        server_side_fallback=True,
+        beta_headers=["server-side-fallback-2026-07-01"],
+        supports_mid_conversation_system=True,
+        requires_streaming_above=16_000,
+        verification=VerificationStatus.VERIFICADO,
+        notas="Claude Opus 5.5: Primário canônico de Governança e Código Cirúrgico (Tier 1 / CHICO).",
+    ),
+    "claude-sonnet-5.5": ModelCapability(
+        adapter=AdapterType.ANTHROPIC,
+        model_name="claude-sonnet-5-5",
+        cota_por_assinatura=False,
+        context_window_in=1_000_000,
+        max_output_tokens=131_072,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        thinking_adaptive=True,
+        effort="high",
+        supports_mid_conversation_system=False,
+        requires_streaming_above=16_000,
+        verification=VerificationStatus.VERIFICADO,
+        notas="Claude Sonnet 5.5: Parceiro de Engenharia de Software e Construção Multi-arquivo.",
+    ),
+    "claude-haiku-5.5": ModelCapability(
+        adapter=AdapterType.ANTHROPIC,
+        model_name="claude-haiku-5-5",
+        cota_por_assinatura=False,
+        context_window_in=1_000_000,
+        max_output_tokens=65_536,
+        price_per_1m_in=0.10,
+        price_per_1m_out=0.50,
+        thinking_adaptive=False,
+        effort="low",
+        supports_mid_conversation_system=False,
+        requires_streaming_above=16_000,
+        verification=VerificationStatus.VERIFICADO,
+        notas="Claude Haiku 5.5: Modelo Tier 1 de Fast Operations da Anthropic (trio com Gemini 3.5 Flash-Lite e GPT-6 Luna).",
+    ),
+    # — ANTHROPIC — Geração 5 (mantida disponível; Haiku 4.5 tem regra própria)
     "claude-opus-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-5",
@@ -257,6 +306,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         beta_headers=["server-side-fallback-2026-07-01"],
         supports_mid_conversation_system=True,
         requires_streaming_above=16_000,
+        autorizado=True,
         notas="Thinking ligado por padrao. xhigh e o ponto recomendado p/ coding.",
     ),
     "claude-sonnet-5": ModelCapability(
@@ -264,21 +314,16 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         model_name="claude-sonnet-5",
         cota_por_assinatura=True,
         context_window_in=1_000_000,
-        max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 65_536
-        price_per_1m_in=2.00,  # CORRIGIDO 2026-09-07: estava 3.00
-        price_per_1m_out=10.00,  # CORRIGIDO 2026-09-07: estava 15.00
+        max_output_tokens=131_072,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
         thinking_adaptive=True,
         effort="high",
-        supports_mid_conversation_system=False,  # nao suportado em Sonnet 5
+        supports_mid_conversation_system=False,
         requires_streaming_above=16_000,
         verification=VerificationStatus.CORRIGIDO,
-        notas=(
-            "Saida corrigida p/ 128k. PRECO REAVALIADO em 2026-09-07, como a "
-            "nota anterior mandava: ela dizia que $2/$10 era introdutorio e "
-            "expirava em 2026-08-31. A data passou e o preco corrente E "
-            "$2/$10, sem rotulo de promocao -- $3/$15 e o Sonnet 4.6, nao "
-            "este. O registro cobrava 50% a mais do que a Anthropic cobra."
-        ),
+        autorizado=True,
+        notas=("Saida corrigida p/ 128k. Preco $2/$10 corrente."),
     ),
     #  ANTHROPIC  Geracao 4.6  disponiveis, FORA do Tier 1
     # O Tier 0 (2026-09-07) confirmou que Opus 4.6 e Sonnet 4.6 estao
@@ -334,24 +379,41 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "so preferir a 4.6 com razao declarada que nao seja preco."
         ),
     ),
-    #  OPENAI  GPT-5.6
+    "claude-haiku-4-5": ModelCapability(
+        adapter=AdapterType.ANTHROPIC,
+        model_name="claude-haiku-4-5",
+        cota_por_assinatura=True,
+        context_window_in=1_000_000,
+        max_output_tokens=65_536,
+        price_per_1m_in=0.80,
+        price_per_1m_out=4.00,
+        thinking_adaptive=False,
+        effort="low",
+        supports_mid_conversation_system=False,
+        requires_streaming_above=16_000,
+        verification=VerificationStatus.VERIFICADO,
+        autorizado=False,
+        motivo_nao_autorizado=(
+            "Retirado das rotas vigentes do projeto por decisao do Tier 0 em 2026-10-20; "
+            "substituido por claude-haiku-5-5. Mantido como referencia historica."
+        ),
+        notas="Retirado das rotas vigentes do projeto em 2026-10-20.",
+    ),
+    #  OPENAI  GPT-5.6 (Descontinuado em 2026-10-20 pelo Tier 0)
     GPT_5_6_SOL: ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name=GPT_5_6_SOL,
         cota_por_assinatura=True,
         context_window_in=1_050_000,
-        max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 65_536
-        price_per_1m_in=4.00,  # CORRIGIDO 2026-09-07: estava 5.00
-        price_per_1m_out=20.00,  # CORRIGIDO 2026-09-07: estava 30.00
-        reasoning_effort="max",  # CORRIGIDO: 'ultra' nao existe na escala
+        max_output_tokens=131_072,
+        price_per_1m_in=4.00,
+        price_per_1m_out=20.00,
+        reasoning_effort="max",
         supports_subagents=True,
         verification=VerificationStatus.CORRIGIDO,
-        notas=(
-            "Preco caiu junto com o lancamento do GPT-6 Astra, confirmado "
-            "pelo Tier 0: 'Fez parte do upgrade. Sol ficou mais barato'. A "
-            "queda INVERTE a comparacao de saida com o Opus 5 ($20 contra "
-            "$25) que a rota de GOVERNANCA usava como justificativa."
-        ),
+        autorizado=False,
+        motivo_nao_autorizado="Descontinuado em 2026-10-20 em favor de gpt-6.0-sol.",
+        notas="Descontinuado em 2026-10-20 em favor de gpt-6.0-sol.",
     ),
     "gpt-5.6-terra": ModelCapability(
         adapter=AdapterType.OPENAI,
@@ -359,28 +421,60 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         cota_por_assinatura=True,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
-        price_per_1m_in=2.00,  # CORRIGIDO: estudo dizia 2.50
-        price_per_1m_out=12.00,  # CORRIGIDO: estudo dizia 15.00
+        price_per_1m_in=2.00,
+        price_per_1m_out=12.00,
         reasoning_effort="high",
         verification=VerificationStatus.CORRIGIDO,
+        autorizado=False,
+        motivo_nao_autorizado="Descontinuado em 2026-10-20 em favor de gpt-6.0-terra.",
     ),
     "gpt-5.6-luna": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-luna",
         cota_por_assinatura=True,
-        context_window_in=1_050_000,  # CORRIGIDO: estudo dizia 512_000
-        max_output_tokens=131_072,  # CORRIGIDO: estudo dizia 32_768
-        price_per_1m_in=0.20,  # CORRIGIDO: estudo dizia 1.00
-        price_per_1m_out=1.20,  # CORRIGIDO: estudo dizia 6.00
+        context_window_in=1_050_000,
+        max_output_tokens=131_072,
+        price_per_1m_in=0.20,
+        price_per_1m_out=1.20,
         reasoning_effort="low",
         verification=VerificationStatus.CORRIGIDO,
+        autorizado=False,
+        motivo_nao_autorizado="Descontinuado em 2026-10-20 em favor de gpt-6.0-luna.",
+        notas=("Descontinuado em favor de gpt-6.0-luna."),
+    ),
+    # — GOOGLE — Frontier & Geração 4 / 3.8 / 3.1
+    "gemini-4-argon": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-4-argon",
+        cota_por_assinatura=True,
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Cinco vezes mais barato do que o estudo supunha. Isso desloca o "
-            "ponto de equilibrio do roteamento: Luna passa a ser o executor "
-            "primario obvio para triagem e sub-agentes."
+            "Google Gemini 4 Argon: Nova geracao frontier da Google (Outubro/2026). "
+            "Integrante do Tier 1 / Coletivo CHICO. Compartilha da mesma situacao do GPT-6 Astra: "
+            "sao os modelos mais potentes e poderosos do ecossistema e, por serem mais custosos, "
+            "devem ser usados estritamente de forma pontual (escalonamento de raciocinio extremo, "
+            "provas formais PMev e arquitetura de ponta), nunca como primarios rotineiros."
         ),
     ),
-    #  GOOGLE  Gemini 3
+    "gemini-3.1-pro-preview": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-3.1-pro-preview",
+        cota_por_assinatura=True,
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=1.25,
+        price_per_1m_out=5.00,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
+        notas="Gemini 3.1 Pro: Raciocinio multimodal analitico profundo e verificacao estruturada.",
+    ),
     "gemini-3.8-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.8-flash",
@@ -412,30 +506,27 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
-        notas=(
-            "Verificado em 2026-09-08 contra o Model Card e release oficial de "
-            "Agosto/2026. Preco vigente de $0.75/$3.75 ate 31/12/2026, com "
-            "contexto de 1M e saida de 64k. Suporta thinking_level em low, "
-            "medium e high (sem 'minimal')."
+        autorizado=False,
+        motivo_nao_autorizado=(
+            "Retirado das rotas vigentes por decisao do Tier 0 em 2026-10-20; "
+            "substituido por gemini-3.8-flash. Mantido no catalogo como referencia historica."
         ),
+        notas=("Retirado das rotas vigentes em 2026-10-20; entrada historica nao autorizada."),
     ),
     "gemini-3.6-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.6-flash",
         cota_por_assinatura=True,
         context_window_in=1_048_576,
-        max_output_tokens=8_192,  # CORRIGIDO 2026-09-08: especificacao base mantem 8k de saida, nao 64k
-        price_per_1m_in=0.75,  # CORRIGIDO 2026-09-08: tabela regular oficial $0.75/$3.75 (estava $0.50/$2.50)
+        max_output_tokens=8_192,
+        price_per_1m_in=0.75,
         price_per_1m_out=3.75,
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
-        notas=(
-            "Corrigido em 2026-09-08. Limite de saida mantido na especificacao base "
-            "padrao (8.192 tokens), ao contrario dos modelos 3.7 e 3.8 (64k). "
-            "Preco regular verificado em $0.75/$3.75. Circuito de fallback canonico "
-            "para gemini-3.7-flash em pipelines de extracao JSON estrita."
-        ),
+        autorizado=False,
+        motivo_nao_autorizado="Descontinuado formalmente pelo Google em Outubro/2026. Causa de loops HTTP 503.",
+        notas=("Descontinuado em Outubro/2026."),
     ),
     "gemini-3.5-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
@@ -448,7 +539,9 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
-        notas="Degrau 3 do circuito de continuidade SOTA.",
+        autorizado=False,
+        motivo_nao_autorizado="Descontinuado formalmente pelo Google em Outubro/2026.",
+        notas="Descontinuado em Outubro/2026.",
     ),
     "gemini-3.5-flash-lite": ModelCapability(
         adapter=AdapterType.GOOGLE,
@@ -467,23 +560,100 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "'medium' e 'high' (para subagentes de codigo/shell)."
         ),
     ),
+    # — OPENAI — Geração 6.0 (Atualizada 2026-10-20)
+    "gpt-6.0-sol": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-6-sol",
+        cota_por_assinatura=False,
+        context_window_in=1_050_000,
+        max_output_tokens=128_000,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        reasoning_effort="max",
+        supports_subagents=True,
+        verification=VerificationStatus.VERIFICADO,
+        notas="OpenAI ChatGPT 6.0 Sol: Primario de raciocinio analitico profundo e deducao formal.",
+    ),
+    "chatgpt-6.0-sol": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-6-sol",
+        cota_por_assinatura=False,
+        context_window_in=1_050_000,
+        max_output_tokens=128_000,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        reasoning_effort="max",
+        supports_subagents=True,
+        verification=VerificationStatus.VERIFICADO,
+        notas="Alias de chatgpt-6.0-sol.",
+    ),
+    "gpt-6.0-terra": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-6.1-sol",
+        cota_por_assinatura=False,
+        context_window_in=1_050_000,
+        max_output_tokens=128_000,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        reasoning_effort="high",
+        supports_subagents=True,
+        verification=VerificationStatus.VERIFICADO,
+        notas="Alias interno Terra roteado para o modelo API suportado gpt-6.1-sol.",
+    ),
+    "chatgpt-6.0-terra": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-6.1-sol",
+        cota_por_assinatura=False,
+        context_window_in=1_050_000,
+        max_output_tokens=128_000,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        reasoning_effort="high",
+        supports_subagents=True,
+        verification=VerificationStatus.VERIFICADO,
+        notas="Alias de chatgpt-6.0-terra.",
+    ),
+    "gpt-6.0-luna": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-6-luna",
+        cota_por_assinatura=False,
+        context_window_in=1_050_000,
+        max_output_tokens=128_000,
+        price_per_1m_in=0.10,
+        price_per_1m_out=0.50,
+        reasoning_effort="low",
+        supports_subagents=True,
+        verification=VerificationStatus.VERIFICADO,
+        notas="OpenAI ChatGPT 6.0 Luna: Fast operations opcional da familia ChatGPT 6.0.",
+    ),
+    "chatgpt-6.0-luna": ModelCapability(
+        adapter=AdapterType.OPENAI,
+        model_name="gpt-6-luna",
+        cota_por_assinatura=False,
+        context_window_in=1_050_000,
+        max_output_tokens=128_000,
+        price_per_1m_in=0.10,
+        price_per_1m_out=0.50,
+        reasoning_effort="low",
+        supports_subagents=True,
+        verification=VerificationStatus.VERIFICADO,
+        notas="Alias de chatgpt-6.0-luna.",
+    ),
+    # — OPENAI — Geração 5.6 (Descontinuada em 2026-10-20 pelo Tier 0)
     "chatgpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name=GPT_5_6_SOL,
         cota_por_assinatura=True,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
-        price_per_1m_in=4.00,  # CORRIGIDO 2026-09-07: estava 5.00
-        price_per_1m_out=20.00,  # CORRIGIDO 2026-09-07: estava 30.00
+        price_per_1m_in=4.00,
+        price_per_1m_out=20.00,
         reasoning_effort="max",
         supports_subagents=True,
         verification=VerificationStatus.CORRIGIDO,
-        notas=(
-            "OpenAI Chat GPT 5.6-Sol. Modelo de fronteira analitica e raciocinio "
-            "profundo. ALIAS do mesmo model_name que 'gpt-5.6-sol' -- os dois tem "
-            "que mudar juntos, ou o custo passa a depender de qual nome o "
-            "chamador digitou."
-        ),
+        autorizado=False,
+        motivo_nao_autorizado="Descontinuado em 2026-10-20 em favor do ChatGPT 6.0 Sol.",
+        notas="Descontinuado em favor do ChatGPT 6.0 Sol.",
     ),
     #  OPENAI  GPT-6 (2026-09-03)
     "gpt-6-astra": ModelCapability(
@@ -507,6 +677,9 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "128k de saida, corte de conhecimento 2026-04-30, cache de entrada "
             "a $1. A API aceita ate 'max'; o Tier 0 autorizou SO 'low' e "
             "'medium'. "
+            "GPT-6 Astra e Gemini 4 Argon compartilham da mesma situacao no Tier 1 / CHICO: "
+            "sao os modelos mais potentes e poderosos do ecossistema e, por serem mais custosos, "
+            "devem ser usados estritamente de forma pontual (escalonamento). "
             "FAIXA DE ACESSO -- o que de fato o separa do Fable: o Astra tem "
             "as DUAS (cota de assinatura e pay-as-you-go), e o Fable so a "
             "segunda. Por token os dois empatam em $10/$50; dentro da cota o "
