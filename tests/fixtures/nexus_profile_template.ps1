@@ -141,6 +141,10 @@ function Enable-AutonomyFull { Set-NexusAutonomy "full" }
 Set-Alias autonomy-full Enable-AutonomyFull
 function Enable-AutonomyPartial { Set-NexusAutonomy "partial" }
 Set-Alias autonomy-partial Enable-AutonomyPartial
+function Enable-AutonomyDefault { Set-NexusAutonomy "default" }
+Set-Alias autonomy-default Enable-AutonomyDefault
+function Enable-AutonomyStop { Set-NexusAutonomy "stop" }
+Set-Alias autonomy-stop Enable-AutonomyStop
 function Disable-Autonomy { Set-NexusAutonomy "off" }
 Set-Alias autonomy-off Disable-Autonomy
 

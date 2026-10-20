@@ -98,7 +98,7 @@ audit_app = typer.Typer(name="audit", help="Auditorias SOTA v8.0 GOLD", no_args_
 routine_app = typer.Typer(name="routine", help="Rotinas SOTA v8.0 GOLD", no_args_is_help=True)
 timesfm_app = typer.Typer(
     name="timesfm",
-    help="Google Research TimesFM (2.5 Comercial e 3.0 Pesquisa) Previsão de Séries Temporais",
+    help="Google Research TimesFM (2.5 Comercial e 3.0 Pesquisa) Previs\u00e3o de S\u00e9ries Temporais",
     no_args_is_help=True,
 )
 
@@ -955,7 +955,7 @@ def _imprimir_calibracao_unificada(res: Any, horizon: int) -> None:
     weights_tag = (
         "[bold green][Pesos Neurais Carregados][/]"
         if getattr(res, "weights_loaded", False)
-        else "[dim][Backend Analítico][/]"
+        else "[dim][Backend Anal\u00edtico][/]"
     )
     summary_panel = Panel(
         f"[bold #50fa7b]* Amostras Analisadas:[/] [white]{res.history_points} sessoes registradas no ledger[/]\n"
@@ -2848,6 +2848,126 @@ def _auto_cure_lightningcss() -> None:
             raise typer.Exit(1)
 
 
+def _load_cve_acceptances(acceptances_path: Path) -> tuple[set[str], set[str]]:
+    accepted_pkgs: set[str] = set()
+    accepted_vids: set[str] = set()
+    if not acceptances_path.exists():
+        return accepted_pkgs, accepted_vids
+
+    try:
+        acc_doc = json.loads(acceptances_path.read_text(encoding="utf-8"))
+        for item in acc_doc.get("acceptances", []):
+            if item.get("status") == "accepted":
+                if pkg := item.get("package"):
+                    accepted_pkgs.add(pkg)
+                accepted_vids.update(item.get("vulnerability_ids", []))
+    except Exception as acc_err:
+        logger.warning(f"[SECURITY] Falha ao carregar npm_cve_acceptances.json: {acc_err}")
+
+    return accepted_pkgs, accepted_vids
+
+
+def _is_item_accepted(
+    item: Any,
+    accepted_pkgs: set[str],
+    accepted_vids: set[str],
+    vulns_data: dict[str, Any],
+    depth: int,
+) -> bool:
+    if isinstance(item, str):
+        if item in accepted_pkgs:
+            return True
+        parent_vuln = vulns_data.get(item)
+        if isinstance(parent_vuln, dict):
+            return _is_vuln_accepted(parent_vuln, accepted_pkgs, accepted_vids, vulns_data, depth + 1)
+        return False
+    if isinstance(item, dict):
+        if item.get("name") in accepted_pkgs:
+            return True
+        url = item.get("url", "")
+        return any(vid in url for vid in accepted_vids)
+    return False
+
+
+def _is_vuln_accepted(
+    vuln: dict[str, Any],
+    accepted_pkgs: set[str],
+    accepted_vids: set[str],
+    vulns_data: dict[str, Any],
+    depth: int = 0,
+) -> bool:
+    if depth > 10:
+        return False
+    if vuln.get("name") in accepted_pkgs:
+        return True
+    return any(_is_item_accepted(item, accepted_pkgs, accepted_vids, vulns_data, depth) for item in vuln.get("via", []))
+
+
+def _tally_vulnerabilities(
+    vulns_data: dict[str, Any],
+    accepted_pkgs: set[str],
+    accepted_vids: set[str],
+) -> tuple[int, int, int]:
+    crit_count = 0
+    high_count = 0
+    tot_count = 0
+    for vuln in vulns_data.values():
+        if not isinstance(vuln, dict) or _is_vuln_accepted(vuln, accepted_pkgs, accepted_vids, vulns_data):
+            continue
+        sev = vuln.get("severity")
+        if sev == "critical":
+            crit_count += 1
+        elif sev == "high":
+            high_count += 1
+        tot_count += 1
+    return crit_count, high_count, tot_count
+
+
+def _print_security_summary(crit_count: int, high_count: int, tot_count: int) -> None:
+    console.print(
+        "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD - PROTOCOLO CHICO v8.0 GOLD (SECURITY) ==========[/]"
+    )
+    if tot_count == 0:
+        console.print("[bold green][OK] Blindagem de Seguranca 100% integra. Zero CVEs ativas.[/]")
+        console.print(f" * Total de Erros:    {crit_count} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+        console.print(f" * Total de Warnings: {high_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+        console.print(
+            " * Status da Bateria: [bold green][SUCESSO (VERDE)][/] Blindagem de Seguranca 100% integra. Zero CVEs ativas."
+        )
+    else:
+        console.print(
+            f"[bold yellow][AVISO] {tot_count} vulnerabilidade(s) detectada(s) ({crit_count} criticas, {high_count} altas). Modo Nao-Estrito.[/]"
+        )
+        console.print(f" * Total de Erros:    {crit_count + high_count} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
+        console.print(f" * Total de Warnings: {tot_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
+        console.print(
+            f" * Status da Bateria: [bold red][FALHOU (VERMELHO)][/] Vulnerabilidades detectadas: {tot_count} ({crit_count} criticas, {high_count} altas)."
+        )
+    console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
+
+
+def _render_security_report(crit_count: int, high_count: int, tot_count: int, strict: bool) -> None:
+    table = Table(title="[bold]AUDITORIA DE VULNERABILIDADES (NIST / GHSA)[/]")
+    table.add_column("INDICADOR", style="cyan")
+    table.add_column("DETECTADAS", justify="center")
+    table.add_column("LIMITE SOTA", justify="center")
+    table.add_column("STATUS", justify="center")
+
+    table.add_row("Vulnerabilidades Criticas", str(crit_count), "0", STATUS_PASS if crit_count == 0 else STATUS_FAIL)
+    table.add_row("Vulnerabilidades Altas", str(high_count), "0", STATUS_PASS if high_count == 0 else STATUS_FAIL)
+    table.add_row("Total de Vulnerabilidades", str(tot_count), "0", STATUS_PASS if tot_count == 0 else STATUS_FAIL)
+
+    console.print(table)
+
+    if (crit_count > 0 or high_count > 0 or tot_count > 0) and strict:
+        console.print(
+            f"[bold red][FALHA DE SEGURANCA] {tot_count} vulnerabilidade(s) detectada(s). Commit/Build bloqueado.[/]"
+        )
+        raise typer.Exit(1)
+
+    _print_security_summary(crit_count, high_count, tot_count)
+
+
 @ops_app.command("security")
 def security_audit(
     strict: bool = typer.Option(
@@ -2869,55 +2989,14 @@ def security_audit(
     tot_count = 0
     try:
         data = json.loads(res.stdout)
-        vulns = data.get("metadata", {}).get("vulnerabilities", {})
-        crit_count = vulns.get("critical", 0)
-        high_count = vulns.get("high", 0)
-        tot_count = vulns.get("total", 0)
+        vulns_data = data.get("vulnerabilities", {})
+        acceptances_path = BASE_DIR / "data" / "npm_cve_acceptances.json"
+        accepted_pkgs, accepted_vids = _load_cve_acceptances(acceptances_path)
+        crit_count, high_count, tot_count = _tally_vulnerabilities(vulns_data, accepted_pkgs, accepted_vids)
     except (json.JSONDecodeError, KeyError, TypeError):
         pass
 
-    table = Table(title="[bold]AUDITORIA DE VULNERABILIDADES (NIST / GHSA)[/]")
-    table.add_column("INDICADOR", style="cyan")
-    table.add_column("DETECTADAS", justify="center")
-    table.add_column("LIMITE SOTA", justify="center")
-    table.add_column("STATUS", justify="center")
-
-    table.add_row("Vulnerabilidades Criticas", str(crit_count), "0", STATUS_PASS if crit_count == 0 else STATUS_FAIL)
-    table.add_row("Vulnerabilidades Altas", str(high_count), "0", STATUS_PASS if high_count == 0 else STATUS_FAIL)
-    table.add_row("Total de Vulnerabilidades", str(tot_count), "0", STATUS_PASS if tot_count == 0 else STATUS_FAIL)
-
-    console.print(table)
-
-    if (crit_count > 0 or high_count > 0 or tot_count > 0) and strict:
-        console.print(
-            f"[bold red][FALHA DE SEGURANCA] {tot_count} vulnerabilidade(s) detectada(s). Commit/Build bloqueado.[/]"
-        )
-        raise typer.Exit(1)
-
-    if tot_count == 0:
-        console.print("[bold green][OK] Blindagem de Seguranca 100% integra. Zero CVEs ativas.[/]")
-        console.print(
-            "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD - PROTOCOLO CHICO v8.0 GOLD (SECURITY) ==========[/]"
-        )
-        console.print(f" * Total de Erros:    {crit_count} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-        console.print(f" * Total de Warnings: {high_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-        console.print(
-            " * Status da Bateria: [bold green][SUCESSO (VERDE)][/] Blindagem de Seguranca 100% integra. Zero CVEs ativas."
-        )
-        console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
-    else:
-        console.print(
-            f"[bold yellow][AVISO] {tot_count} vulnerabilidade(s) detectada(s) ({crit_count} criticas, {high_count} altas). Modo Nao-Estrito.[/]"
-        )
-        console.print(
-            "\n[bold cyan]========== SOTA QUALITY & INTEGRITY GUARD - PROTOCOLO CHICO v8.0 GOLD (SECURITY) ==========[/]"
-        )
-        console.print(f" * Total de Erros:    {crit_count + high_count} (Teto Maximo Permitido: 0 | Peso: CRITICO)")
-        console.print(f" * Total de Warnings: {tot_count} (Teto Maximo Permitido: 2 | Tolerancia: 0 para SUCESSO)")
-        console.print(
-            f" * Status da Bateria: [bold red][FALHOU (VERMELHO)][/] Vulnerabilidades detectadas: {tot_count} ({crit_count} criticas, {high_count} altas)."
-        )
-        console.print(MARKUP_BOLD_CYAN + "=" * 80 + "[/]\n")
+    _render_security_report(crit_count, high_count, tot_count, strict)
 
 
 @ops_app.command("verify-integrity")
@@ -4139,7 +4218,9 @@ def timesfm_forecast_cmd(
             f"{res.quantile_90[i]:.2f}",
         )
     console.print(table)
-    weights_badge = "[bold green][Pesos Neurais Ativos][/]" if res.weights_loaded else "[dim][Backend Analítico][/]"
+    weights_badge = (
+        "[bold green][Pesos Neurais Ativos][/]" if res.weights_loaded else "[dim][Backend Anal\u00edtico][/]"
+    )
     console.print(
         f"[bold cyan]Modelo:[/] {res.model_used} | [bold magenta]Licenca:[/] {res.license_tier} {weights_badge}"
     )
@@ -4170,7 +4251,7 @@ def timesfm_benchmark_cmd(
     lat_base = (time.perf_counter() - t0) * 1000.0
     results_bench.append(
         {
-            "config": "Analítico Baseline (2.0/2.5)",
+            "config": "Anal\u00edtico Baseline (2.0/2.5)",
             "latency_ms": lat_base,
             "weights_loaded": res_base.weights_loaded,
             "model": res_base.model_used,
@@ -4212,7 +4293,7 @@ def timesfm_benchmark_cmd(
     lat_30 = (time.perf_counter() - t0) * 1000.0
     results_bench.append(
         {
-            "config": "Pesquisa 3.0 (330M Acadêmico)",
+            "config": "Pesquisa 3.0 (330M Acad\u00eamico)",
             "latency_ms": lat_30,
             "weights_loaded": res_30.weights_loaded,
             "model": res_30.model_used,
@@ -4227,14 +4308,14 @@ def timesfm_benchmark_cmd(
         return
 
     table = Table(title="[bold #50fa7b]BENCHMARK DE PERFORMANCE TIMESFM[/]", box=box.ROUNDED)
-    table.add_column("Configuração", style=STYLE_BOLD_CYAN)
+    table.add_column("Configura\u00e7\u00e3o", style=STYLE_BOLD_CYAN)
     table.add_column("Pesos Reais", style=STYLE_BOLD_YELLOW, justify="center")
-    table.add_column("Latência", style=STYLE_BOLD_GREEN, justify="right")
-    table.add_column("Licença", style=STYLE_WHITE)
-    table.add_column("Previsão t+1", style="magenta", justify="right")
+    table.add_column("Lat\u00eancia", style=STYLE_BOLD_GREEN, justify="right")
+    table.add_column("Licen\u00e7a", style=STYLE_WHITE)
+    table.add_column("Previs\u00e3o t+1", style="magenta", justify="right")
 
     for r in results_bench:
-        w_str = "[green]SIM (PyTorch)[/]" if r["weights_loaded"] else "[dim]NÃO (Analítico)[/]"
+        w_str = "[green]SIM (PyTorch)[/]" if r["weights_loaded"] else "[dim]N\u00c3O (Anal\u00edtico)[/]"
         table.add_row(
             str(r["config"]),
             w_str,
@@ -4289,15 +4370,15 @@ def timesfm_icm_cmd(
 
     console.print("\n[bold cyan]=== [TIMESFM ICM PRESSURE FORECAST] ===[/]\n")
     console.print(
-        f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Prêmio Atual:[/] {res.current_risk_premium:.2f}% | [bold white]Fator de Bolha Projetado:[/] {res.bubble_factor_projected:.2f}x"
+        f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Pr\u00eamio Atual:[/] {res.current_risk_premium:.2f}% | [bold white]Fator de Bolha Projetado:[/] {res.bubble_factor_projected:.2f}x"
     )
     console.print(
-        f"[bold white]Aperto de Range Recomendado:[/] {'[bold red]SIM (TIGHTEN RANGE)[/]' if res.tightening_recommended else '[green]NÃO (PADRÃO)[/]'}\n"
+        f"[bold white]Aperto de Range Recomendado:[/] {'[bold red]SIM (TIGHTEN RANGE)[/]' if res.tightening_recommended else '[green]N\u00c3O (PADR\u00c3O)[/]'}\n"
     )
 
-    table = Table(title="Trajetória Estocástica de Prêmio de Risco (% Equity)", box=box.ROUNDED)
-    table.add_column("Mão Futura", style=STYLE_BOLD_CYAN, justify="center")
-    table.add_column("Média Projetada (%)", style=STYLE_BOLD_YELLOW, justify="right")
+    table = Table(title="Trajet\u00f3ria Estoc\u00e1stica de Pr\u00eamio de Risco (% Equity)", box=box.ROUNDED)
+    table.add_column("M\u00e3o Futura", style=STYLE_BOLD_CYAN, justify="center")
+    table.add_column("M\u00e9dia Projetada (%)", style=STYLE_BOLD_YELLOW, justify="right")
     table.add_column(COL_QUANTIL_10, style=STYLE_BOLD_RED, justify="right")
     table.add_column(COL_QUANTIL_90, style=STYLE_BOLD_GREEN, justify="right")
 
@@ -4353,15 +4434,15 @@ def timesfm_telemetry_cmd(
 
     console.print("\n[bold cyan]=== [TIMESFM MESH TELEMETRY FORECAST] ===[/]\n")
     console.print(
-        f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Latência Atual:[/] {res.current_latency_ms:.2f}ms | [bold white]P95 Projetado:[/] {res.projected_p95_ms:.2f}ms"
+        f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Lat\u00eancia Atual:[/] {res.current_latency_ms:.2f}ms | [bold white]P95 Projetado:[/] {res.projected_p95_ms:.2f}ms"
     )
     console.print(
-        f"[bold white]Failover Preventivo Recomendado:[/] {'[bold red]SIM (ACIONAR FAILOVER)[/]' if res.failover_recommended else '[green]NÃO (SAUDÁVEL)[/]'}\n"
+        f"[bold white]Failover Preventivo Recomendado:[/] {'[bold red]SIM (ACIONAR FAILOVER)[/]' if res.failover_recommended else '[green]N\u00c3O (SAUD\u00c1VEL)[/]'}\n"
     )
 
-    table = Table(title="Projeção Temporal de Latência da Malha (ms)", box=box.ROUNDED)
+    table = Table(title="Proje\u00e7\u00e3o Temporal de Lat\u00eancia da Malha (ms)", box=box.ROUNDED)
     table.add_column(COL_PASSO_FUTURO, style=STYLE_BOLD_CYAN, justify="center")
-    table.add_column("Média Projetada", style=STYLE_BOLD_YELLOW, justify="right")
+    table.add_column("M\u00e9dia Projetada", style=STYLE_BOLD_YELLOW, justify="right")
     table.add_column(COL_QUANTIL_10, style=STYLE_BOLD_RED, justify="right")
     table.add_column(COL_QUANTIL_90, style=STYLE_BOLD_GREEN, justify="right")
 
@@ -4418,17 +4499,17 @@ def timesfm_ev_gap_cmd(
         f"[bold white]Status:[/] [{status_color}]{res.status}[/] | [bold white]Gap Atual de EV:[/] {res.current_gap_bb:+.2f} BB"
     )
     rec_str = (
-        f"{res.downswing_recovery_hands} mãos estimadas"
+        f"{res.downswing_recovery_hands} m\u00e3os estimadas"
         if res.downswing_recovery_hands > 0
-        else "Sem previsão imediata de retorno ao zero"
+        else "Sem previs\u00e3o imediata de retorno ao zero"
     )
     console.print(
-        f"[bold white]Recuperação de Downswing:[/] {rec_str} | [bold white]Probabilidade de Exaustão:[/] {res.variance_exhaustion_probability * 100:.1f}%\n"
+        f"[bold white]Recupera\u00e7\u00e3o de Downswing:[/] {rec_str} | [bold white]Probabilidade de Exaust\u00e3o:[/] {res.variance_exhaustion_probability * 100:.1f}%\n"
     )
 
-    table = Table(title="Trajetória do Gap EV Realizado vs Esperado (BB)", box=box.ROUNDED)
+    table = Table(title="Trajet\u00f3ria do Gap EV Realizado vs Esperado (BB)", box=box.ROUNDED)
     table.add_column(COL_PASSO_FUTURO, style=STYLE_BOLD_CYAN, justify="center")
-    table.add_column("Gap Médio (BB)", style=STYLE_BOLD_YELLOW, justify="right")
+    table.add_column("Gap M\u00e9dio (BB)", style=STYLE_BOLD_YELLOW, justify="right")
     table.add_column(COL_QUANTIL_10, style=STYLE_BOLD_RED, justify="right")
     table.add_column(COL_QUANTIL_90, style=STYLE_BOLD_GREEN, justify="right")
 

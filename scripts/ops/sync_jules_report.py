@@ -143,7 +143,7 @@ def _format_session_row(s: dict[str, Any]) -> str:
     if len(title) > 55:
         title = title[:52] + "..."
     branch = s["branch"]
-    state_badge = "✅ COMPLETED" if s["state"] == "COMPLETED" else f"❌ {s['state']}"
+    state_badge = "\u2705 COMPLETED" if s["state"] == "COMPLETED" else f"\u274c {s['state']}"
     acts_count = s["activities_count"]
 
     fail = s["failure_reason"]
@@ -153,9 +153,9 @@ def _format_session_row(s: dict[str, Any]) -> str:
         else:
             obs = f"`{fail[:80]}`"
     elif s["state"] == "COMPLETED":
-        obs = "Execução bem-sucedida"
+        obs = "Execu\u00e7\u00e3o bem-sucedida"
     else:
-        obs = "—"
+        obs = "\u2014"
 
     return f"| [{sid}](https://jules.google.com/session/{sid}) | `{created}` | **{title}** | `{branch}` | {state_badge} | `{acts_count}` | {obs} |"
 
@@ -163,10 +163,10 @@ def _format_session_row(s: dict[str, Any]) -> str:
 def _format_session_detail(s: dict[str, Any]) -> list[str]:
     sid = s["id"]
     lines = [
-        f"### Sessão `{sid}` — {s['title']}",
+        f"### Sess\u00e3o `{sid}` \u2014 {s['title']}",
         f"- **Status:** `{s['state']}`",
         f"- **Criada em:** `{s['create_time']}`",
-        f"- **Branch:** `{s['branch']}` | **Repositório:** `{s['source']}`",
+        f"- **Branch:** `{s['branch']}` | **Reposit\u00f3rio:** `{s['source']}`",
         f"- **Link Direto:** https://jules.google.com/session/{sid}",
         "- **Prompt Original:**",
         "  ```text",
@@ -211,52 +211,52 @@ def format_markdown_report(sessions: list[dict[str, Any]]) -> str:
     lines: list[str] = [
         "# Google Jules Cloud Telemetry & Task Execution Report",
         "",
-        "> **Repositório Monitorado:** `RaphaelVitoi/Site`",
-        "> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD (Seção X — Jules Cloud MCP Bridge)",
-        f"> **Data de Atualização:** `{now_utc}`",
+        "> **Reposit\u00f3rio Monitorado:** `RaphaelVitoi/Site`",
+        "> **Governan\u00e7a:** Protocolo Master Chico SOTA v8.0 GOLD (Se\u00e7\u00e3o X \u2014 Jules Cloud MCP Bridge)",
+        f"> **Data de Atualiza\u00e7\u00e3o:** `{now_utc}`",
         "> **Origem dos Dados:** Google Jules API v1alpha (`https://jules.googleapis.com/v1alpha`)",
         "",
         "---",
         "",
-        "## 1. Resumo Executivo das Sessões em Nuvem",
+        "## 1. Resumo Executivo das Sess\u00f5es em Nuvem",
         "",
-        "| Métrica | Valor | Status Operacional |",
+        "| M\u00e9trica | Valor | Status Operacional |",
         "| :--- | :--- | :--- |",
-        f"| **Total de Sessões Registradas** | `{total}` | Base de telemetria completa |",
-        f"| **Sessões Concluídas com Sucesso** | `{completed}` | ✅ Execução com artefatos |",
-        f"| **Sessões com Falha de Execução** | `{failed}` | ⚠️ Diagnóstico detalhado abaixo |",
-        f"| **Sessões Ativas no Momento** | `{in_progress}` | 💤 Standby |",
-        "| **Plano / cota** | Não expostos por este endpoint | Consulte a conta no momento da operação |",
-        "| **Agendamento externo** | Não verificado | O histórico de sessões não prova estado do cron |",
+        f"| **Total de Sess\u00f5es Registradas** | `{total}` | Base de telemetria completa |",
+        f"| **Sess\u00f5es Conclu\u00eddas com Sucesso** | `{completed}` | \u2705 Execu\u00e7\u00e3o com artefatos |",
+        f"| **Sess\u00f5es com Falha de Execu\u00e7\u00e3o** | `{failed}` | \u26a0\ufe0f Diagn\u00f3stico detalhado abaixo |",
+        f"| **Sess\u00f5es Ativas no Momento** | `{in_progress}` | \U0001f4a4 Standby |",
+        "| **Plano / cota** | N\u00e3o expostos por este endpoint | Consulte a conta no momento da opera\u00e7\u00e3o |",
+        "| **Agendamento externo** | N\u00e3o verificado | O hist\u00f3rico de sess\u00f5es n\u00e3o prova estado do cron |",
         "",
         "> [!NOTE]",
-        "> **Modelo: a escolha é na UI, não pelo portão MCP.**",
+        "> **Modelo: a escolha \u00e9 na UI, n\u00e3o pelo port\u00e3o MCP.**",
         ">",
-        "> O seletor de modelo do Jules existe e é do operador, mas vive nas preferências da plataforma (`jules.google.com/settings/general`) — mesmo padrão do Stitch.",
-        "> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam parâmetro de modelo, então nenhuma automática daqui o roteia (medido em 2026-09-04).",
-        "> Este relatório deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instrução que não alcança mecanismo é promessa ao operador.",
+        "> O seletor de modelo do Jules existe e \u00e9 do operador, mas vive nas prefer\u00eancias da plataforma (`jules.google.com/settings/general`) \u2014 mesmo padr\u00e3o do Stitch.",
+        "> Nem a `createSession` da API v1alpha nem as ferramentas do MCP `google-jules` aceitam par\u00e2metro de modelo, ent\u00e3o nenhuma autom\u00e1tica daqui o roteia (medido em 2026-09-04).",
+        "> Este relat\u00f3rio deixou de publicar tabela de roteamento de modelos por ordem do Tier 0: instru\u00e7\u00e3o que n\u00e3o alcan\u00e7a mecanismo \u00e9 promessa ao operador.",
         ">",
-        "> Plano, limites da conta e automações externas não são inferidos do histórico retornado pela API.",
+        "> Plano, limites da conta e automa\u00e7\u00f5es externas n\u00e3o s\u00e3o inferidos do hist\u00f3rico retornado pela API.",
         "",
         "---",
         "",
-        "## 2. Diagnóstico de Causa-Raiz das Falhas Diárias",
+        "## 2. Diagn\u00f3stico de Causa-Raiz das Falhas Di\u00e1rias",
         "",
         "> [!CAUTION]",
-        "> **Por que o relatório anterior estava vazio e as tarefas diárias falhavam:**",
-        "> 1. **Relatório Alienígena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extensão VS Code alheio), sem qualquer vínculo com a API do Jules.",
-        "> 2. **Falha Sistêmica no Clone da VM do Jules:** Toda noite às ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descartável e executa:",
+        "> **Por que o relat\u00f3rio anterior estava vazio e as tarefas di\u00e1rias falhavam:**",
+        "> 1. **Relat\u00f3rio Alien\u00edgena no Git:** O arquivo `JULES_REPORT.md` anterior foi incorporado no commit `b36a9ea4` com um template copiado de `robinbakshi007/ollama-direct-custom-agent` (projeto de extens\u00e3o VS Code alheio), sem qualquer v\u00ednculo com a API do Jules.",
+        "> 2. **Falha Sist\u00eamica no Clone da VM do Jules:** Toda noite \u00e0s ~03:20 UTC, o runner em nuvem do Google Jules inicia uma VM descart\u00e1vel e executa:",
         ">    ```bash",
         ">    git clone --depth 1 --shallow-submodules --no-single-branch --recursive https://github.com/RaphaelVitoi/Site -b master /app",
         ">    ```",
-        "> 3. **Submódulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no submódulo, mas **nunca foi (e não pode ser) enviado para o repositório público upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar.",
-        "> 4. **Bug de Parâmetro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sessão).",
+        "> 3. **Subm\u00f3dulo Quebrado (`skills/exa-mcp-server`):** O commit `fb578584d9bf8df7afc53890c5daabb6956200b7` foi registrado localmente no subm\u00f3dulo, mas **nunca foi (e n\u00e3o pode ser) enviado para o reposit\u00f3rio p\u00fablico upstream** (`exa-labs/exa-mcp-server.git`). O GitHub rejeitava o fetch com `upload-pack: not our ref fb578584d9...`, abortando o clone antes do agente Jules rodar.",
+        "> 4. **Bug de Par\u00e2metro no `engine/jules_bridge.py`:** A query `?view=FULL` era rejeitada pela API v1alpha com HTTP 400 Bad Request (sanado nesta sess\u00e3o).",
         "",
         "---",
         "",
-        "## 3. Histórico Consolidado de Sessões no Google Jules",
+        "## 3. Hist\u00f3rico Consolidado de Sess\u00f5es no Google Jules",
         "",
-        "| ID da Sessão | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observação / Causa da Falha |",
+        "| ID da Sess\u00e3o | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observa\u00e7\u00e3o / Causa da Falha |",
         "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |",
     ]
 

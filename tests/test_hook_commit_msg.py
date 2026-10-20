@@ -36,9 +36,6 @@ HOOK = RAIZ / ".husky" / "commit-msg"
 
 
 def _localizar_sh() -> str | None:
-    encontrado = shutil.which("sh") or shutil.which("bash")
-    if encontrado:
-        return encontrado
     candidatos = [
         r"C:\Program Files\Git\bin\sh.exe",
         r"C:\Program Files\Git\bin\bash.exe",
@@ -49,6 +46,10 @@ def _localizar_sh() -> str | None:
     for c in candidatos:
         if Path(c).is_file():
             return c
+    for cmd in ("sh", "bash"):
+        encontrado = shutil.which(cmd)
+        if encontrado and "WindowsApps" not in encontrado:
+            return encontrado
     return None
 
 
@@ -179,7 +180,7 @@ def _rodar_com_autor(mensagem: str, autor: str, tmp_path) -> subprocess.Complete
         "GIT_AUTHOR_EMAIL": "noreply@exemplo.invalid",
     }
     return subprocess.run(
-        [SH, str(HOOK), str(arquivo)],
+        [SH, HOOK.as_posix(), arquivo.as_posix()],
         cwd=RAIZ,
         capture_output=True,
         text=True,

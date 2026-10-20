@@ -174,15 +174,15 @@ class TimesFMForecastRequest(BaseModel):
     preferred_model_key: str = Field(TIMESFM_25_200M, description="Chave do modelo no catalogo TimesFM")
     use_pretrained_weights: bool = Field(
         False,
-        description="Carrega pesos locais já baixados; não baixa arquivos durante a chamada da API.",
+        description="Carrega pesos locais j\u00e1 baixados; n\u00e3o baixa arquivos durante a chamada da API.",
     )
     past_covariates: dict[str, list[float]] | None = Field(
         None,
-        description="Covariáveis temporais passadas para condicionamento de inferência",
+        description="Covari\u00e1veis temporais passadas para condicionamento de infer\u00eancia",
     )
     future_covariates: dict[str, list[float]] | None = Field(
         None,
-        description="Covariáveis temporais futuras conhecidas a priori (ex: estrutura de blinds)",
+        description="Covari\u00e1veis temporais futuras conhecidas a priori (ex: estrutura de blinds)",
     )
 
 
@@ -275,11 +275,11 @@ class TimesFMEngine:
         cache_dir: str | None = None,
         local_files_only: bool = False,
     ) -> bool:
-        """Carrega pesos pré-treinados do TimesFM (2.5 sob Apache 2.0 ou 3.0 sob Research Benchmark)."""
+        """Carrega pesos pre-treinados do TimesFM (2.5 sob Apache 2.0 ou 3.0 sob Research Benchmark)."""
         if self.preferred_model_key == TIMESFM_30_330M:
             if self.mode != ExecutionMode.RESEARCH_BENCHMARK:
                 raise TimesFMGovernanceError(
-                    f"VIOLAÇÃO DE LICENÇA: O modelo TimesFM 3.0 ({self.metadata.model_id}) é restrito a pesquisa não-comercial. "
+                    f"VIOLA\u00c7\u00c3O DE LICEN\u00c7A: O modelo TimesFM 3.0 ({self.metadata.model_id}) \u00e9 restrito a pesquisa n\u00e3o-comercial. "
                     f"Carregamento de pesos proibido no modo comercial '{self.mode.value}'."
                 )
             if self._model is not None:
@@ -334,8 +334,8 @@ class TimesFMEngine:
             return True
 
         raise RuntimeError(
-            "Carregamento integrado disponível apenas para TimesFM 2.5 e TimesFM 3.0 (apenas para TimesFM 2.5 em modo de produção comercial); "
-            "TimesFM 2.0 legado (500M JAX) opera via simulação analítica calibrada."
+            "Carregamento integrado dispon\u00edvel apenas para TimesFM 2.5 e TimesFM 3.0 (apenas para TimesFM 2.5 em modo de produ\u00e7\u00e3o comercial); "
+            "TimesFM 2.0 legado (500M JAX) opera via simula\u00e7\u00e3o anal\u00edtica calibrada."
         )
 
     @property
@@ -470,7 +470,7 @@ class TimesFMEngine:
         _ = frequency_indicator
         history = np.asarray(series, dtype=np.float32)
         if len(history) < 4:
-            raise ValueError("A série histórica deve possuir ao menos 4 pontos para inferência.")
+            raise ValueError("A s\u00e9rie hist\u00f3rica deve possuir ao menos 4 pontos para infer\u00eancia.")
 
         if self._model is not None:
             return self._forecast_model_univariate(history, horizon, target_name)
@@ -502,14 +502,14 @@ class TimesFMEngine:
         target_name: str = "metric",
         target_series: list[float] | np.ndarray | None = None,
     ) -> ForecastResult:
-        """Executa previsão condicionada a covariáveis temporais passadas e futuras."""
+        """Executa previsao condicionada a covariaveis temporais passadas e futuras."""
         _ = frequency_indicator
         actual_series = series if series is not None else target_series
         if actual_series is None:
-            raise ValueError("Uma série histórica deve ser informada (series ou target_series).")
+            raise ValueError("Uma s\u00e9rie hist\u00f3rica deve ser informada (series ou target_series).")
         history = np.asarray(actual_series, dtype=np.float32)
         if len(history) < 4:
-            raise ValueError("A série histórica deve possuir ao menos 4 pontos para inferência.")
+            raise ValueError("A s\u00e9rie hist\u00f3rica deve possuir ao menos 4 pontos para infer\u00eancia.")
 
         model: Any = self._model
         if model is not None and hasattr(model, "predict"):
@@ -974,12 +974,12 @@ def forecast_opponent_drift(
 
 
 # ==============================================================================
-# FUNÇÕES DE DOMÍNIO AMPLIADAS E EVOLUÍDAS (SOTA v8.0 GOLD)
+# FUNCOES DE DOMINIO AMPLIADAS E EVOLUIDAS (SOTA v8.0 GOLD)
 # ==============================================================================
 
 
 class IcmPressureForecast(BaseModel):
-    """Projeção estocástica da evolução do prêmio de risco e pressão de ICM em torneio MTT."""
+    """Projecao estocastica da evolucao do premio de risco e pressao de ICM em torneio MTT."""
 
     status: Literal["PRESSURE_INCREASING", "STABLE", "BUBBLE_PEAK", "INSUFFICIENT_HISTORY"]
     current_risk_premium: float
@@ -1004,7 +1004,7 @@ def forecast_tournament_icm_decay(
     preferred_model_key: str = TIMESFM_25_200M,
     use_pretrained_weights: bool = False,
 ) -> IcmPressureForecast:
-    """Projeta a curva estocástica de pressão de ICM e fator de bolha para MTTs."""
+    """Projeta a curva estocastica de pressao de ICM e fator de bolha para MTTs."""
     if len(history_premiums) < 4:
         meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_25_200M])
         return IcmPressureForecast(
@@ -1019,7 +1019,7 @@ def forecast_tournament_icm_decay(
             license_tier=meta.license_tier.value,
             intended_model=meta.model_id,
             weights_loaded=False,
-            notes="TimesFM exige ao menos 4 pontos históricos de prêmio de risco para projeção.",
+            notes="TimesFM exige ao menos 4 pontos hist\u00f3ricos de pr\u00eamio de risco para proje\u00e7\u00e3o.",
         )
 
     engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
@@ -1070,7 +1070,7 @@ def forecast_tournament_icm_decay(
 
 
 class MeshTelemetryForecast(BaseModel):
-    """Projeção estocástica de latência e throughput da malha agêntica."""
+    """Projecao estocastica de latencia e throughput da malha agentica."""
 
     status: Literal["HEALTHY", "LATENCY_SPIKE_RISK", "SATURATION_WARNING", "INSUFFICIENT_HISTORY"]
     current_latency_ms: float
@@ -1094,7 +1094,7 @@ def forecast_mesh_telemetry_latency(
     preferred_model_key: str = TIMESFM_25_200M,
     use_pretrained_weights: bool = False,
 ) -> MeshTelemetryForecast:
-    """Projeta o comportamento temporal da latência dos nós da malha agêntica."""
+    """Projeta o comportamento temporal da latencia dos nos da malha agentica."""
     if len(history_latencies_ms) < 4:
         meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_25_200M])
         return MeshTelemetryForecast(
@@ -1109,7 +1109,7 @@ def forecast_mesh_telemetry_latency(
             license_tier=meta.license_tier.value,
             intended_model=meta.model_id,
             weights_loaded=False,
-            notes="TimesFM exige ao menos 4 observações de latência para projeção temporal.",
+            notes="TimesFM exige ao menos 4 observa\u00e7\u00f5es de lat\u00eancia para proje\u00e7\u00e3o temporal.",
         )
 
     engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)
@@ -1160,7 +1160,7 @@ def forecast_mesh_telemetry_latency(
 
 
 class EvVarianceForecast(BaseModel):
-    """Envelope estocástico de dispersão entre EV esperado e realizado (Bankroll / Hand Volume)."""
+    """Envelope estocastico de dispersao entre EV esperado e realizado (Bankroll / Hand Volume)."""
 
     status: Literal["WITHIN_EXPECTED_VARIANCE", "DOWNSWING_ANOMALY", "INSUFFICIENT_HISTORY"]
     current_gap_bb: float
@@ -1184,7 +1184,7 @@ def forecast_ev_variance_envelope(
     preferred_model_key: str = TIMESFM_25_200M,
     use_pretrained_weights: bool = False,
 ) -> EvVarianceForecast:
-    """Projeta a trajetória de variância entre EV e resultado efetivo para mitigar tilt e calibrar risco."""
+    """Projeta a trajetoria de variancia entre EV e resultado efetivo para mitigar tilt e calibrar risco."""
     if len(history_ev_bb) < 4 or len(history_actual_bb) < 4:
         meta = TIMESFM_CATALOG.get(preferred_model_key, TIMESFM_CATALOG[TIMESFM_25_200M])
         return EvVarianceForecast(
@@ -1199,7 +1199,7 @@ def forecast_ev_variance_envelope(
             license_tier=meta.license_tier.value,
             intended_model=meta.model_id,
             weights_loaded=False,
-            notes="TimesFM exige ao menos 4 observações pareadas de EV e resultado real.",
+            notes="TimesFM exige ao menos 4 observa\u00e7\u00f5es pareadas de EV e resultado real.",
         )
 
     engine = TimesFMEngine(mode=mode, preferred_model_key=preferred_model_key)

@@ -620,9 +620,24 @@
     },
     "github-actions.workflows.pinned.workflows": [],
     "github-actions.custom-variables": [
-        "AGENTCORE_ECR_REPOSITORY_URI"
+        "ACTIONS_STEP_DEBUG",
+        "AGENTCORE_ECR_REPOSITORY_URI",
+        "APP_ID",
+        "DEBUG",
+        "GCP_WIF_PROVIDER",
+        "GEMINI_MODEL",
+        "GOOGLE_CLOUD_LOCATION",
+        "GOOGLE_CLOUD_PROJECT",
+        "GOOGLE_GENAI_USE_GCA",
+        "GOOGLE_GENAI_USE_VERTEXAI",
+        "SERVICE_ACCOUNT_EMAIL",
+        "UPLOAD_ARTIFACTS"
     ],
     "github-actions.custom-secrets": [
-        "AGENTCORE_AWS_ROLE_ARN"
+        "AGENTCORE_AWS_ROLE_ARN",
+        "APP_PRIVATE_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "NPM_TOKEN"
     ]
 }
