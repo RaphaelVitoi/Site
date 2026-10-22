@@ -391,7 +391,6 @@ Promulgada pelo Tier 0 em 2026-09-25. Sempre que se acumular 2 commits locais se
 
 ---
 
-
 ## 2. Camada de dependências
 
 ```bash
@@ -467,12 +466,14 @@ gerador ou o manifesto.
 ### 3.1 Pools de Chaves OpenRouter Multi-Tier com Isolamento e Circuit Breaker
 
 **Estrutura canônica de credenciais (16 chaves) no Windows Registry (`HKCU` e `HKLM`):**
+
 - **Tier 1 (Core Cognitivo — 3 chaves):** `OPENROUTER_TIER1_KEY_1..3` (Claude Opus 5, ChatGPT 6 Astra/Sol, Gemini 3.8 Flash). Zero tolerância a latência ou contenção de cota.
 - **Tier 2 (Superagentes & Pesquisa — 3 chaves):** `OPENROUTER_TIER2_KEY_1..3` (Jules, Stitch, Exa, Devin, Solar-Pro4, Space-Bunny-Alpha). Fallback autorizado para Tier 4 e Tier 1.
 - **Tier 3 (Frota Especialista & Batch — 5 chaves):** `OPENROUTER_TIER3_KEY_1..5` (19 agentes especialistas, dream replay, síntese massiva). Alto throughput, estritamente isolado do Tier 1.
 - **Tier 4 (Subagentes Dedicados — 5 chaves):** `OPENROUTER_TIER4_KEY_1..5` (task-subagents, generalist, research, architect). Fallback autorizado para Tier 3.
 
 **Circuit Breaker Adaptativo (`llm/openrouter_pool.py`):**
+
 - **HTTP 429 (Rate Limit):** Cooldown de 5 minutos (ou valor do cabeçalho `Retry-After`).
 - **HTTP 500, 502 ou 503 (Falha do Provedor):** Cooldown transitório de 2 minutos.
 - **HTTP 401 ou 403 (Chave Inválida/Revogada):** Banimento definitivo automático (`is_revoked=True`) e emissão de alerta.
@@ -487,11 +488,13 @@ Modelos integrantes do Núcleo Cognitivo Mestre Tier 1 (`Claude Opus 5`, `ChatGP
 
 **2. Axioma Econômico da Nuvem vs. Chaves (O Custo Real de Servidores):**
 O custo de provisionar, hospedar e manter servidores dedicados, instâncias em nuvem (AWS/GCP/Azure) e VMs corporativas ativas **supera exponencialmente o custo de chaves de API**, mesmo quando estas são pagas. Portanto, para absorver o trabalho diário massivo sem gerar passivo de infraestrutura, três runtimes assumem papel de **altíssima importância estratégica**:
+
 - **Ollama:** Execução de modelos de fronteira **free em nuvem Zero-RAM / Zero-VRAM** (ex: `gemma4:31b-cloud`, `kimi-k2.7-code:cloud`, `deepseek-v4-flash:cloud`, `gpt-oss:120b-cloud`), entregando raciocínio denso e coding de alta fidelidade sem onerar a memória física da estação nem contratar instâncias de GPU pagas na nuvem.
 - **llama.cpp:** Execução ultra-eficiente da família **Qwen quantizada** (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`) com relação ótima de tokens/watt em CPU/GPU local, garantindo latência sub-50ms e zero dependência de infraestrutura externa.
 - **Hermes Agent:** Orquestração autônoma desacoplada com a família **Laguna** e os condutores **`Solar-Pro4`** e **`Space-Bunny-Alpha`**, aproveitando modelos gratuitos em nuvem e agentes especializados para tarefas contínuas e assíncronas.
 
 **3. Pirâmide Quádrupla de Alocação de Recursos:**
+
 1. **1º Nível — Cotas Pagas de Assinatura Pro (`Faixa.FLAT_FEE`):** Primazia mandatória para o Tier 1; custo marginal zero dentro do teto mensal contratado.
 2. **2º Nível — Modelos Free em Nuvem e Edge:** Ingestão maciça de rotina via Ollama (`gemma4:31b-cloud`), llama.cpp (família Qwen) e Hermes Agent (família Laguna). Custo de infraestrutura = zero.
 3. **3º Nível — Pools Multi-Tier OpenRouter:** 16 chaves dedicadas e particionadas em HKCU/HKLM com isolamento estrito de cotas e circuit breaker adaptativo (Tiers 1 a 4).
