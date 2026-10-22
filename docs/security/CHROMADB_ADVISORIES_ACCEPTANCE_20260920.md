@@ -30,6 +30,7 @@ chromadb.PersistentClient(path=db_path)  # Armazenamento local em disco
 ```
 
 **Verificações realizadas (2026-09-20):**
+
 - [x] Nenhum `chromadb.HttpClient` no codebase
 - [x] Nenhum `chroma run` no codebase
 - [x] Nenhuma porta em escuta do chromadb
