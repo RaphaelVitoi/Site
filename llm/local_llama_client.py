@@ -25,7 +25,9 @@ class LlamaServerOfflineError(Exception):
         self.port = port
         self.message = (
             f"⚠️ [SOTA-LOCAL] llama.cpp server is offline or unreachable on port {port}. "
-            f"Please ensure the server is running. Start it using: ./llama-server -m <model_path> --port {port}."
+            f"Please ensure the server is running. "
+            f"Start it using: ./llama-server -m <model_path> --port {port}. "
+            f"Alternatively, run: pwsh -File scripts/ops/Start-LocalLlama.ps1 -Port {port}"
         )
         super().__init__(self.message)
 
@@ -152,7 +154,9 @@ class LocalLlamaClient:
         except urllib.error.URLError as e:
             logger.exception("Falha de conexao com o llama-server na porta %d", self.port)
             raise ConnectionError(
-                f"llama-server offline na porta {self.port}. Inicie via scripts/ops/Start-LocalLlama.ps1"
+                f"llama-server offline na porta {self.port}. "
+                f"Inicie via scripts/ops/Start-LocalLlama.ps1 ou: "
+                f"pwsh -File scripts/ops/Start-LocalLlama.ps1 -Port {self.port}"
             ) from e
 
 

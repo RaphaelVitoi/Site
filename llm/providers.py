@@ -398,7 +398,8 @@ def _check_openai_key_availability(model: str) -> bool:
         api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
         if not api_key or api_key.strip() == "":
             logger.warning(
-                "[PROVIDER CHECK] OpenAI API key nao configurada; modelo %s sera pulado no fallback.",
+                "[PROVIDER CHECK] OpenAI API key nao configurada; modelo %s sera pulado no fallback. "
+                "Configure OPENAI_API_KEY ou OPENROUTER_API_KEY no ambiente para habilitar GPT models.",
                 model,
             )
             return False

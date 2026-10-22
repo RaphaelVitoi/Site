@@ -379,6 +379,18 @@ async def _evaluate_api_error(error_msg: str, provider_name: str, provider_key: 
                 return "abort_provider"
         return "retry"
     if any(err in error_msg for err in ["401", "403", "unauthorized", "credit", "balance", "402"]):
+        # SOTA GOLD: Distinguish empty/missing API key from invalid key
+        if "empty" in error_msg.lower() or "incorrect api key provided: empty" in error_msg.lower():
+            logger.error(
+                "[OPENAI AUTH] API key vazia ou nao configurada para %s. "
+                "Configure OPENAI_API_KEY ou OPENROUTER_API_KEY no ambiente. "
+                "Modelo sera pulado no fallback.",
+                provider_name,
+            )
+        else:
+            logger.warning(
+                "[OPENAI AUTH] Chave invalida/revogada para %s. Bloqueando chave na sessao.", provider_name
+            )
         _block_key(provider_key)
         return "abort_key"
     if "429" in error_msg:
