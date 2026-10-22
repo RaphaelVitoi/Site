@@ -553,12 +553,12 @@ def _check_provider_availability_sync(provider: str, model: str) -> bool:
         except Exception:
             return False
 
-    # Para GPT-6.0, verifica API key antes de tentar fallback
-    if "gpt-6" in model.lower() or "gpt-5.6" in model.lower():
+    # SOTA GOLD: Verifica API key para qualquer modelo GPT/OpenAI
+    if "gpt" in model.lower():
         api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
         if not api_key or api_key.strip() == "":
             logger.warning(
-                "[ROUTING POLICY] OpenAI API key nao configurada; modelo %s sera pulado no fallback.",
+                "[ROUTING POLICY] OpenAI/OpenRouter API key nao configurada; modelo %s sera pulado no fallback.",
                 model,
             )
             return False
