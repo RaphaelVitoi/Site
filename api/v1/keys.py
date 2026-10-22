@@ -18,4 +18,4 @@ LAB_MANAGER_KEY: web.AppKey[LabManager] = web.AppKey("lab_manager", LabManager)
 AUDIT_ENGINE_KEY: web.AppKey[Any] = web.AppKey("audit_engine")
 START_TIME_KEY: web.AppKey[float] = web.AppKey("start_time", float)
 BG_TASKS_KEY: web.AppKey[set[asyncio.Task[Any]]] = web.AppKey("bg_tasks", set)
-REQUEST_ID_KEY: web.RequestKey[str] = web.RequestKey("request_id", str)
+REQUEST_ID_KEY: str = "request_id"

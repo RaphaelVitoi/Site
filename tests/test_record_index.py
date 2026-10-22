@@ -21,7 +21,7 @@ from datetime import date
 import os
 from pathlib import Path
 import re
-import subprocess
+import subprocess  # noqa: S404
 import sys
 
 import pytest

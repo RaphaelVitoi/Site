@@ -12,7 +12,7 @@ from __future__ import annotations
 import importlib
 import json
 from pathlib import Path
-import subprocess
+import subprocess  # noqa: S404
 import sys
 
 import pytest

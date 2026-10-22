@@ -13,7 +13,7 @@ perigosa e a outra e o falso positivo que a correcao nao pode criar.
 from __future__ import annotations
 
 # pylint: disable=redefined-outer-name,protected-access
-import subprocess
+import subprocess  # noqa: S404
 
 import pytest
 

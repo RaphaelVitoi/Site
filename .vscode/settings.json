@@ -407,7 +407,9 @@
         "*.dio.svg": "hediet.vscode-drawio",
         "*.excalidraw": "editor.excalidraw",
         "*.excalidraw.json": "editor.excalidraw",
-        "*.excalidraw.svg": "editor.excalidraw"
+        "*.excalidraw.svg": "editor.excalidraw",
+        "*.md": "ultimateViewer.preview",
+        "*.png": "ultimateViewer.preview"
     },
     "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
     "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,

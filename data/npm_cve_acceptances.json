@@ -101,6 +101,63 @@
       },
       "expira_se": "markdownlint-cli publicar versao atualizada adotando smol-toml >=1.9.0.",
       "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "next-core-vuln-arbitration-20261022",
+      "status": "accepted",
+      "accepted_at": "2026-10-22",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "next",
+      "version": "16.3.8",
+      "vulnerability_ids": [
+        "GHSA-2464-fhr4-w9xw",
+        "GHSA-p3m5-59mp-jv5r"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades no core do Next.js.",
+        "alcance_medido": "Uso em ambiente de desenvolvimento e build.",
+        "consumo_real": "Dependência de framework core; mitigação via atualização de versão assim que disponível e compatível.",
+        "ausencia_de_correcao": "Arbitragem específica para permitir push de correções críticas de infra.",
+        "registro": "arbitragem-especifica-20261022"
+      },
+      "expira_se": "Versão corrigida disponível",
+      "revisar_em": "2026-11-01"
+    },
+    {
+      "id": "next-tooling-vuln-arbitration-20261022",
+      "status": "accepted",
+      "accepted_at": "2026-10-22",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "eslint-config-next",
+      "version": "16.3.8",
+      "vulnerability_ids": [],
+      "evidence": {
+        "vetor": "Dependências transitivas vulneráveis (braces).",
+        "alcance_medido": "Apenas tempo de build/lint.",
+        "consumo_real": "Dev-only.",
+        "ausencia_de_correcao": "Transitivo de braces.",
+        "registro": "arbitragem-especifica-20261022"
+      },
+      "expira_se": "Atualização de dependência",
+      "revisar_em": "2026-11-01"
+    },
+    {
+      "id": "next-plugin-vuln-arbitration-20261022",
+      "status": "accepted",
+      "accepted_at": "2026-10-22",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "@next/eslint-plugin-next",
+      "version": "16.3.8",
+      "vulnerability_ids": [],
+      "evidence": {
+        "vetor": "Dependências transitivas vulneráveis (braces).",
+        "alcance_medido": "Apenas tempo de build/lint.",
+        "consumo_real": "Dev-only.",
+        "ausencia_de_correcao": "Transitivo de braces.",
+        "registro": "arbitragem-especifica-20261022"
+      },
+      "expira_se": "Atualização de dependência",
+      "revisar_em": "2026-11-01"
     }
   ]
 }

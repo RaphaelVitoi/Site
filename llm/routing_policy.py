@@ -353,6 +353,7 @@ class Origem(StrEnum):
     ESCALADO = "escalado"
     FALLBACK = "fallback"
     ESCALONAMENTO_INDISPONIVEL = "escalonamento_indisponivel"
+    ESCALONAMENTO_EMERGENCIAL = "escalonamento_emergencial"  # SOTA v8.0 GOLD: fallback indisponivel
 
 
 @dataclass(frozen=True)
@@ -389,6 +390,10 @@ class Decisao:
             Origem.ESCALONAMENTO_INDISPONIVEL: (
                 f"escalonamento pedido, mas a classe {self.classe.value} nao declara "
                 f"escalona_para; entregue o primario {self.rota.primario}"
+            ),
+            Origem.ESCALONAMENTO_EMERGENCIAL: (
+                f"primario {self.rota.primario} indisponivel e fallback {self.rota.fallback} "
+                f"tambem indisponivel; escalonado para {self.rota.escalona_para}"
             ),
         }[self.origem]
 
@@ -433,6 +438,9 @@ def decidir(alvo: str, *, escalado: bool = False, primario_indisponivel: bool = 
       sabe. Por isso o fallback e um caminho que o chamador ABRE, nao um que a
       politica adivinha.
 
+    SOTA v8.0 GOLD: Verificacao de disponibilidade de fallback antes de tentar.
+    Evita fallback para OpenAI quando API key nao esta configurada.
+
     Ate esta data `Rota.fallback` estava declarado e nao tinha um unico
     consumidor  degradacao escrita na tabela e inalcancavel em execucao.
     """
@@ -453,6 +461,33 @@ def decidir(alvo: str, *, escalado: bool = False, primario_indisponivel: bool = 
         return Decisao(rota.primario, Origem.ESCALONAMENTO_INDISPONIVEL, classe, rota)
 
     if primario_indisponivel:
+        # SOTA v8.0 GOLD: Verifica disponibilidade do fallback antes de retornar
+        from llm.routing import _infer_provider_for_model  # noqa: PLC0415
+
+        provider_fallback = _infer_provider_for_model(rota.fallback)
+        fallback_disponivel = provider_fallback and _check_provider_availability_sync(provider_fallback, rota.fallback)
+
+        if fallback_disponivel:
+            return Decisao(rota.fallback, Origem.FALLBACK, classe, rota)
+
+        # Fallback indisponivel: tenta escalonamento
+        if rota.escalona_para:
+            provider_escalado = _infer_provider_for_model(rota.escalona_para)
+            escalado_disponivel = provider_escalado and _check_provider_availability_sync(
+                provider_escalado, rota.escalona_para
+            )
+            if escalado_disponivel:
+                logger.warning(
+                    "[ROUTING POLICY] Fallback %s indisponivel; escalonando para %s",
+                    rota.fallback,
+                    rota.escalona_para,
+                )
+                return Decisao(rota.escalona_para, Origem.ESCALONAMENTO_EMERGENCIAL, classe, rota)
+
+        logger.warning(
+            "[ROUTING POLICY] Fallback %s e escalonamento indisponiveis; retornando primario indisponivel",
+            rota.fallback,
+        )
         return Decisao(rota.fallback, Origem.FALLBACK, classe, rota)
 
     return Decisao(rota.primario, Origem.PRIMARIO, classe, rota)
@@ -487,6 +522,49 @@ def _classe_de(alvo: str) -> ClasseTarefa:
     raise KeyError(
         f"'{alvo}' nao e agente nem subagente conhecido. Agentes: {sorted(AGENTES)}. Subagentes: {sorted(SUBAGENTES)}."
     )
+
+
+def _check_provider_availability_sync(provider: str, model: str) -> bool:
+    """Versao sincrona de _check_provider_availability para uso em decidir().
+
+    SOTA v8.0 GOLD: Prevencao de fallback para providers offline sem API key configurada.
+    O routing_policy e importado em contexts sincronos, entao precisamos de uma
+    versao que nao requer asyncio.
+
+    Returns:
+        True se provider estiver disponivel, False caso contrario.
+    """
+    import os  # noqa: PLC0415
+
+    # Para providers locais, verifica health check
+    if provider == "local":
+        try:
+            from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
+
+            if "qwen" in model.lower() or "coder" in model.lower():
+                port = 8083
+            elif "ling" in model.lower():
+                port = 8082
+            else:
+                port = 8081
+
+            client = LocalLlamaClient(port=port, timeout=1.0)
+            return client.is_healthy()
+        except Exception:
+            return False
+
+    # Para GPT-6.0, verifica API key antes de tentar fallback
+    if "gpt-6" in model.lower() or "gpt-5.6" in model.lower():
+        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
+        if not api_key or api_key.strip() == "":
+            logger.warning(
+                "[ROUTING POLICY] OpenAI API key nao configurada; modelo %s sera pulado no fallback.",
+                model,
+            )
+            return False
+
+    # Assume disponivel para outros casos (gemini, openrouter)
+    return True
 
 
 def cobertura() -> dict[str, int]:

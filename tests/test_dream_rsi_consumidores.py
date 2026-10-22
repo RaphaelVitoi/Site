@@ -14,7 +14,7 @@ import asyncio
 import json
 from pathlib import Path
 import re
-import subprocess
+import subprocess  # noqa: S404
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 

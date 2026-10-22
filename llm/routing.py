@@ -542,7 +542,7 @@ DOMINIO_POR_AGENTE: dict[str, str] = {
 }
 
 
-def dominio_do_agente(agent: str) -> str | None:
+def dominio_do_agente(agent: str | None) -> str | None:
     """Dominio de trabalho do agente, sem o `arroba`.
 
     Aceita `@implementor` e `implementor`: a chave vive no manifesto sem arroba,

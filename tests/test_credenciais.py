@@ -20,7 +20,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
-import subprocess
+import subprocess  # noqa: S404
 
 RAIZ = Path(__file__).resolve().parent.parent
 FONTE = RAIZ / "data" / "PADROES_DE_CREDENCIAL.json"

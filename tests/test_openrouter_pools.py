@@ -89,7 +89,7 @@ async def test_circuit_breaker_401_revocation(mock_env_pools):
     s8_dead = _key_sha8(key_dead)
     item = next(x for x in telemetry if x["sha8"] == s8_dead)
     assert item["is_revoked"] is True
-    assert item["score"] < -900.0
+    assert item["score"] < -900.0  # type: ignore[comparison]
 
 
 @pytest.mark.asyncio
@@ -138,5 +138,5 @@ async def test_telemetry_summary(mock_env_pools):
     summary = mgr.get_telemetry_summary()
     assert len(summary) == 16  # 3 + 3 + 5 + 5
     for item in summary:
-        assert len(item["sha8"]) == 8
+        assert len(item["sha8"]) == 8  # type: ignore[arg-type]
         assert item["tier"] in (1, 2, 3, 4)
