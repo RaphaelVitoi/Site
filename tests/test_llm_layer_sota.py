@@ -312,7 +312,7 @@ def test_extract_provider_keys_filters_project_ids() -> None:
         "NOUS_API_KEY": "CHAVE_SINTETICA_NOUS_TOKEN_01",
     }
 
-    gemini_keys, anthropic_keys, openrouter_keys, nous_keys = _extract_provider_keys(dummy_env)
+    gemini_keys, _anthropic_keys, openrouter_keys, nous_keys = _extract_provider_keys(dummy_env)
     assert len(gemini_keys) == 1
     assert gemini_keys[0] == "CHAVE_SINTETICA_GEMINI_POOL_01"
     assert "projects/my-test-project-12345" not in gemini_keys

@@ -251,6 +251,7 @@ def test_o_status_e_a_mensagem_continuam_os_de_antes():
     ):
         resp = middleware._recusa(req, status, motivo)
         assert resp.status == status
+        assert resp.text is not None, f"Response text should not be None for status {status}"
         error_data = json.loads(resp.text)
         assert error_data["error"] == esperado, f"a mensagem de {motivo} mudou"
 
