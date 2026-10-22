@@ -60,7 +60,7 @@ dependencies = [
     "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
     "google-genai>=2.32.0",
-    "openai>=3.36.1",
+    "openai>=3.37.0",
     "anthropic>=2.1.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
