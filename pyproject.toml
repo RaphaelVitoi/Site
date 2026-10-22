@@ -72,14 +72,14 @@ dependencies = [
     # moviepy REMOVIDO em 2026-08-21: exige pillow<12.0, prendendo o projeto em
     # Pillow 11.x (10 CVEs, todas corrigidas em 12.3.0). 2.2.1 e a ultima versao
     # e nao levanta o teto. Zero imports no codigo - so figurava aqui.
-    "opencv-python-headless>=5.0.0.93,<5.0.0",
+    "opencv-python-headless>=5.0.0.93,<6.0.0",
     # ── UTILITARIOS ───────────────────────────────────────────────────
     "regex>=2026.9.29",
     "requests>=2.34.2,<3.0.0",
     "PyYAML>=6.0.3,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",
     "rich>=15.0.0,<16.0.0",
-    "python-dateutil>=3.0.0,<3.0.0",
+    "python-dateutil>=3.0.0,<4.0.0",
     "tenacity>=9.2.1,<10.0.0",
     "defusedxml>=0.7.1",
     # ── FILESYSTEM & CLOUD ────────────────────────────────────────────
@@ -111,7 +111,7 @@ dependencies = [
 nexus = "scripts.cli.nexus:app"
 
 [build-system]
-requires = ["setuptools>=68.0.0", "wheel"]
+requires = ["setuptools>=84.2.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -190,13 +190,13 @@ dev = [
 # quatro sao do chromadb, sem correcao disponivel, e o risco delas ja esta
 # analisado e aceito no bloco de dependencias acima.
 constraint-dependencies = [
-    "starlette>=1.3.1",
-    "cryptography>=50.0.0",
+    "starlette>=1.9.0",
+    "cryptography>=50.0.2",
     "pyasn1>=0.6.4",
-    "setuptools>=83.0.0",
-    "torch>=2.13.0",
-    "transformers>=5.10.0",
-    "httpx2>=2.12.0",
+    "setuptools>=84.2.1",
+    "torch>=2.14.1",
+    "transformers>=5.20.2",
+    "httpx2>=2.16.0",
     # MEDIDO em 2026-09-30 (auditoria de backend, SEC-13). O `pip-audit` deste
     # projeto roda por `python -m pip_audit` e DEVIA estar barrando isso no
     # pre-commit -- mas `npm run python:audit` falhava com `uv trampoline failed
