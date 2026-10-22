@@ -1,7 +1,18 @@
 ﻿# ==============================================================================
-# TIER 0 POWERSHELL PROFILE - SOTA v7.0 GOLD PROTOCOL
+# TIER 0 POWERSHELL PROFILE - SOTA v8.0 GOLD PROTOCOL
 # Homeostase de performance e interop WSL sem elevacao implicita.
+# PowerShell 7.6.8 Runtime Harmonization
 # ==============================================================================
+
+# PowerShell 7.6.8 Runtime Harmonization
+$pwsh768Dir = 'C:\Users\rapha\AppData\Local\Programs\PowerShell\7'
+$pwsh768Exe = Join-Path $pwsh768Dir 'pwsh.exe'
+if (Test-Path -LiteralPath $pwsh768Exe) {
+    if ($env:PATH -notmatch [regex]::Escape($pwsh768Dir)) {
+        $env:PATH = "$pwsh768Dir;$env:PATH"
+    }
+    Set-Alias -Name pwsh -Value $pwsh768Exe -Scope Global -Option AllScope -Force -ErrorAction SilentlyContinue
+}
 
 # 1. Ambiente de shell sem alterar politica de execucao do host
 $ProgressPreference = 'SilentlyContinue'
