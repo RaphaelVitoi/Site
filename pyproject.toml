@@ -12,20 +12,20 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     # ── NUCLEO ASSINCRONO ──────────────────────────────────────────────
-    "aiofiles>=24.1.0",
-    "aiohttp>=3.11.0",
-    "aiosqlite>=0.21.0",
-    "fastapi>=0.115.0",
-    "multidict>=6.9.1",
-    "uvicorn[standard]>=0.34.0",
+    "aiofiles>=25.1.0",
+    "aiohttp>=3.14.5",
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.160.0",
+    "multidict>=7.1.0",
+    "uvicorn[standard]>=0.54.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
-    "pydantic>=2.10.0",
-    "pydantic-settings>=2.14.2",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.1",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
     # ── MOTOR MATEMATICO & ANALYTICS ──────────────────────────────────
-    "numpy>=2.2.0",
-    "pandas>=2.2.0",
-    "scikit-learn>=1.6.0",
-    "scipy>=1.15.0",
+    "numpy>=2.5.4",
+    "pandas>=3.1.0",
+    "scikit-learn>=1.9.1",
+    "scipy>=1.18.1",
     # ── RAG & MEMORIA VETORIAL ─────────────────────────────────────────
     # SEGURANCA: chromadb carrega CINCO advisories abertas, nenhuma com versao
     # de correcao publicada (medido com `pip-audit -r requirements.txt` em
@@ -53,56 +53,56 @@ dependencies = [
     # A fase 3 do cwv_gate.ps1 roda somente `npm audit`, entao NENHUMA destas
     # e barrada por portao: a revisao do lado Python e manual, pela §2 do
     # CLAUDE.md.
-    "chromadb>=0.6.0",
-    "lancedb>=0.17.0,<1.0.0",  # 0.38.0: atualizado 2026-09-20 para evitar PYSEC-2026-311/3813/3814/3815 do chromadb
-    "pyarrow>=18.0.0",
-    "onnxruntime>=1.20.0",
-    "sentence-transformers>=5.6.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
+    "chromadb>=1.5.9",
+    "lancedb>=0.40.0,<1.0.0",  # 0.38.0: atualizado 2026-09-20 para evitar PYSEC-2026-311/3813/3814/3815 do chromadb
+    "pyarrow>=26.0.0",
+    "onnxruntime>=1.31.0",
+    "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
-    "google-genai>=2.23.0",
-    "openai>=1.58.0",
-    "anthropic>=0.42.0",
-    "httpx>=0.28.0",
+    "google-genai>=2.32.0",
+    "openai>=3.36.1",
+    "anthropic>=2.1.0",
+    "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
-    "pypdf>=6.19.0,<7.0.0",  # 6.19.0: atualizado 2026-10-04 para sanar alertas 211-218 (GHSA-265f-4x97-w84f)
+    "pypdf>=6.21.2,<7.0.0",  # 6.19.0: atualizado 2026-10-04 para sanar alertas 211-218 (GHSA-265f-4x97-w84f)
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
-    "Pillow>=12.3.0",
+    "Pillow>=13.0.0",
     # ── MULTIMIDIA (opcional — carregamento lazy) ──────────────────────
     # moviepy REMOVIDO em 2026-08-21: exige pillow<12.0, prendendo o projeto em
     # Pillow 11.x (10 CVEs, todas corrigidas em 12.3.0). 2.2.1 e a ultima versao
     # e nao levanta o teto. Zero imports no codigo - so figurava aqui.
-    "opencv-python-headless>=4.13.0,<5.0.0",
+    "opencv-python-headless>=5.0.0.93,<5.0.0",
     # ── UTILITARIOS ───────────────────────────────────────────────────
-    "regex>=2026.5.0",
-    "requests>=2.34.0,<3.0.0",
-    "PyYAML>=6.0.2,<7.0.0",
-    "tqdm>=4.67.0,<5.0.0",
+    "regex>=2026.9.29",
+    "requests>=2.34.2,<3.0.0",
+    "PyYAML>=6.0.3,<7.0.0",
+    "tqdm>=4.70.1,<5.0.0",
     "rich>=15.0.0,<16.0.0",
-    "python-dateutil>=2.9.0,<3.0.0",
-    "tenacity>=9.1.0,<10.0.0",
+    "python-dateutil>=3.0.0,<3.0.0",
+    "tenacity>=9.2.1,<10.0.0",
     "defusedxml>=0.7.1",
     # ── FILESYSTEM & CLOUD ────────────────────────────────────────────
     "watchdog>=6.0.0,<7.0.0",
-    "watchfiles>=1.2.0,<2.0.0",
-    "cloudpathlib>=0.24.0,<1.0.0",
+    "watchfiles>=1.3.0,<2.0.0",
+    "cloudpathlib>=0.26.0,<1.0.0",
     # ── INFRA & MONITORAMENTO ─────────────────────────────────────────
-    "psutil>=7.2.0,<8.0.0",
+    "psutil>=7.2.2,<8.0.0",
     "loguru>=0.7.3",
-    "typer>=0.25.1",
-    "edge-tts>=7.2.8",
+    "typer>=0.27.3",
+    "edge-tts>=7.3.1",
     "mcp>=2.3.0",
-    "nanobind>=2.15.0",
+    "nanobind>=3.1.0",
     "pyperclip>=1.11.0",
-    "matplotlib>=3.9.0",
-    "seaborn>=0.13.0",
+    "matplotlib>=3.11.2",
+    "seaborn>=0.13.2",
     # ── SISTEMA 1 (DECISION ENGINE) ────────────────────────────────────────────
     # Laya: non-autoregressive System 1 typed-decisions engine; single forward
     # pass (~33 ms on T4). Router picks the checkpoint per request
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.3.4",
+    "laya>=0.4.13",
     "accelerate>=1.15.0",
     "timesfm[torch]==3.0.2",
 ]
@@ -122,36 +122,36 @@ packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "work
 
 # Instalado com: uv sync --extra dev
 dev = [
-    "ruff>=0.16.7",
-    "pylint>=4.0.7",
+    "ruff>=0.17.1",
+    "pylint>=4.1.3",
     "pyright>=1.1.414",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
-    "pytest-mock>=3.15.0",
+    "pytest-mock>=3.17.0",
     "pytest-xdist>=3.8.0",
     "pip-audit>=2.10.1",
-    "httpx>=0.28.0",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]
 dev = [
-    "ruff>=0.16.7",
-    "pylint>=4.0.7",
+    "ruff>=0.17.1",
+    "pylint>=4.1.3",
     "pyright>=1.1.414",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
-    "pytest-mock>=3.15.0",
+    "pytest-mock>=3.17.0",
     "pytest-xdist>=3.8.0",
     "pip-audit>=2.10.1",
-    "httpx>=0.28.0",
+    "httpx>=0.28.1",
     "pytest-watcher>=0.6.3",
-    "cmake>=4.4.2",
-    "ninja>=1.13.0",
-    "locust>=2.46.3",
+    "cmake>=4.4.4",
+    "ninja>=1.13.2",
+    "locust>=2.47.0",
     "types-aiofiles>=25.1.0.20260518",
-    "types-psutil>=7.2.2.20260518",
+    "types-psutil>=7.2.2.20260906",
     "types-defusedxml>=0.7.0.20260504",
     "types-PyYAML>=6.0.12.20260906",
 ]

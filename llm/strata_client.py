@@ -20,6 +20,19 @@ from typing import Any
 
 import aiohttp
 
+
+class StrataServerOfflineError(Exception):
+    """SOTA GOLD: Exception raised when Strata server is unreachable."""
+
+    def __init__(self, port: int):
+        self.port = port
+        self.message = (
+            f"⚠️ [SOTA-LOCAL] Strata server is offline or unreachable on port {port}. "
+            f"Please ensure the server is running. Start it using the Strata startup script."
+        )
+        super().__init__(self.message)
+
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_STRATA_HOST = "127.0.0.1"
@@ -295,7 +308,7 @@ class LocalStrataClient:
             return result
         except Exception as e:
             logger.exception("Falha ao chamar endpoint /v1/responses do Strata")
-            raise ConnectionError(f"Strata offline na porta {self.port}") from e
+            raise StrataServerOfflineError(self.port) from e
 
 
 class AsyncStrataClient:

@@ -17,6 +17,19 @@ from typing import Any
 import urllib.error
 import urllib.request
 
+
+class LlamaServerOfflineError(Exception):
+    """SOTA GOLD: Exception raised when llama.cpp server is unreachable."""
+
+    def __init__(self, port: int):
+        self.port = port
+        self.message = (
+            f"⚠️ [SOTA-LOCAL] llama.cpp server is offline or unreachable on port {port}. "
+            f"Please ensure the server is running. Start it using: ./llama-server -m <model_path> --port {port}."
+        )
+        super().__init__(self.message)
+
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_G9_PORT = 8081
