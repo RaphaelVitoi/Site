@@ -41,7 +41,7 @@ function Get-Sha8([string]$s) {
   }
 }
 
-function Prompt-SecureKeys([string]$tierName, [int]$count) {
+function Read-SecureKeys([string]$tierName, [int]$count) {
   $keys = @()
   Write-Host "`n=== Entrada Segura para $tierName ($count chaves) ===" -ForegroundColor Cyan
   for ($i = 1; $i -le $count; $i++) {
@@ -72,10 +72,10 @@ if ($JsonFile -and (Test-Path -LiteralPath $JsonFile)) {
 
 # 2. Carregamento Interativo se solicitado
 if ($Interactive) {
-  if ($Tier1Keys.Count -eq 0) { $Tier1Keys = Prompt-SecureKeys "Tier 1 (Cognitive Core)" 3 }
-  if ($Tier2Keys.Count -eq 0) { $Tier2Keys = Prompt-SecureKeys "Tier 2 (Superagents)" 3 }
-  if ($Tier3Keys.Count -eq 0) { $Tier3Keys = Prompt-SecureKeys "Tier 3 (Batch/Dream)" 5 }
-  if ($Tier4Keys.Count -eq 0) { $Tier4Keys = Prompt-SecureKeys "Tier 4 (Subagents)" 5 }
+  if ($Tier1Keys.Count -eq 0) { $Tier1Keys = Read-SecureKeys "Tier 1 (Cognitive Core)" 3 }
+  if ($Tier2Keys.Count -eq 0) { $Tier2Keys = Read-SecureKeys "Tier 2 (Superagents)" 3 }
+  if ($Tier3Keys.Count -eq 0) { $Tier3Keys = Read-SecureKeys "Tier 3 (Batch/Dream)" 5 }
+  if ($Tier4Keys.Count -eq 0) { $Tier4Keys = Read-SecureKeys "Tier 4 (Subagents)" 5 }
 }
 
 $pools = @{
