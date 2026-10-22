@@ -340,6 +340,98 @@ def _get_provider_strategy(provider: str) -> LLMProviderStrategy | None:
     return _STRATEGIES_MAP.get(provider)
 
 
+def _check_local_llama_availability(model: str) -> bool:
+    """Check local LLaMA provider health based on model name."""
+    try:
+        from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
+
+        if "qwen" in model.lower() or "coder" in model.lower():
+            port = 8083
+        elif "ling" in model.lower():
+            port = 8082
+        else:
+            port = 8081
+
+        client = LocalLlamaClient(port=port, timeout=2.0)
+        return client.is_healthy()
+    except Exception:
+        return False
+
+
+async def _check_strata_availability(strategy: LLMProviderStrategy, model: str) -> bool:
+    """Check Strata provider health."""
+    try:
+        return not await strategy.check_quarantine(model, "")
+    except Exception:
+        return False
+
+
+async def _check_openrouter_availability() -> bool:
+    """Check OpenRouter provider has any available key."""
+    try:
+        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+        # Try each tier for any available key
+        for tier in (1, 2, 3, 4):
+            key, _ = await openrouter_pool_manager.get_key_for_tier(tier, allow_fallback=False)
+            if key is not None:
+                return True
+        return False
+    except Exception:
+        return False
+
+
+def _check_gemini_availability() -> bool:
+    """Check Gemini provider has available keys."""
+    try:
+        from llm.gemini_pool import GeminiPoolManager  # noqa: PLC0415
+
+        manager = GeminiPoolManager(read_registry=False)
+        return manager.available_keys_count() > 0
+    except Exception:
+        return False
+
+
+def _check_openai_key_availability(model: str) -> bool:
+    """Check OpenAI API key is configured for GPT models."""
+    if "gpt-6" in model.lower() or "gpt-5.6" in model.lower():
+        api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
+        if not api_key or api_key.strip() == "":
+            logger.warning(
+                "[PROVIDER CHECK] OpenAI API key nao configurada; modelo %s sera pulado no fallback.",
+                model,
+            )
+            return False
+    return True
+
+
+async def _check_provider_availability(provider: str, model: str) -> bool:
+    """Verifica se um provider esta disponivel antes de tentar chamada.
+
+    SOTA v8.0 GOLD: Prevencao de fallback desnecessario para providers offline.
+    Evita tentativas de chamada a OpenAI quando modelo local deveria ser usado.
+
+    Returns:
+        True se provider estiver disponivel, False caso contrario.
+    """
+    strategy = _get_provider_strategy(provider)
+    if strategy is None:
+        return False
+
+    # Dispatch to provider-specific checkers
+    if provider == "local":
+        return _check_local_llama_availability(model)
+    if provider == "strata":
+        return await _check_strata_availability(strategy, model)
+    if provider == "openrouter":
+        return await _check_openrouter_availability()
+    if provider == "gemini":
+        return _check_gemini_availability()
+
+    # For cloud providers without explicit pool, check OpenAI key if GPT model
+    return _check_openai_key_availability(model)
+
+
 @dataclass
 class ProviderContext:
     """Context data needed across provider executions."""

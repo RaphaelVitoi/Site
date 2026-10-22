@@ -4,7 +4,7 @@
 from pathlib import Path
 import re as _re
 import sqlite3
-import subprocess
+import subprocess  # noqa: S404
 import sys
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, Mock, patch

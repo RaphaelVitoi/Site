@@ -266,7 +266,7 @@ def hex_rgb(h: str) -> tuple[int, int, int]:
 
 
 def luminancia(rgb: tuple[int, int, int]) -> float:
-    def canal(v: int) -> float:
+    def canal(v: float) -> float:
         v /= 255
         return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
 
@@ -281,6 +281,8 @@ def contraste(a: tuple[int, int, int], b: tuple[int, int, int]) -> float:
 
 def hsl_rgb(valor: str) -> tuple[int, int, int]:
     m = re.match(r"hsl\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)", valor.strip())
+    if m is None:
+        raise ValueError(f"Invalid HSL color format: {valor}")
     h, s, lum = (float(x) for x in m.groups())
     r, g, b = colorsys.hls_to_rgb(h / 360, lum / 100, s / 100)
     return round(r * 255), round(g * 255), round(b * 255)

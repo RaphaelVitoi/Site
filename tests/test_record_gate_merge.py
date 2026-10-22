@@ -16,7 +16,7 @@ from __future__ import annotations
 # pylint: disable=redefined-outer-name,protected-access
 import importlib
 from pathlib import Path
-import subprocess
+import subprocess  # noqa: S404
 import sys
 
 import pytest

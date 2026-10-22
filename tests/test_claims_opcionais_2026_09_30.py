@@ -90,6 +90,7 @@ async def test_anon_key_continua_bloqueada_pelo_role():
         with patch.object(middleware, "_jwt_secret", return_value=SECREDO):
             resp = await _handle_jwt_token_auth(token_anon, _request(), _handler_que_nao_deve_passar)
     assert resp.status == 403
+    assert resp.text is not None
     assert "usuario autenticado" in resp.text
 
 

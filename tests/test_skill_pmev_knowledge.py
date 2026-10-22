@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 import shutil
 import sqlite3
-import subprocess
+import subprocess  # noqa: S404
 import sys
 import zipfile
 

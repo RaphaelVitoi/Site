@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 import re
 import shutil
-import subprocess
+import subprocess  # noqa: S404
 import sys
 
 import pytest

@@ -251,7 +251,8 @@ def test_o_status_e_a_mensagem_continuam_os_de_antes():
     ):
         resp = middleware._recusa(req, status, motivo)
         assert resp.status == status
-        assert json.loads(resp.text)["error"] == esperado, f"a mensagem de {motivo} mudou"
+        error_data = json.loads(resp.text)
+        assert error_data["error"] == esperado, f"a mensagem de {motivo} mudou"
 
 
 async def test_o_middleware_de_auth_nao_deja_o_registro_vazar_para_o_cliente():
@@ -282,8 +283,8 @@ async def test_o_middleware_de_auth_nao_deja_o_registro_vazar_para_o_cliente():
     ):
         resp = await middleware.auth_middleware(req, _handler)
     assert resp.status == 403
-    assert "token_legado_nao_configurada" not in resp.text
-    assert "API_SECRET_TOKEN nao configurada" in resp.text
+    assert "token_legado_nao_configurada" not in (resp.text or "")
+    assert "API_SECRET_TOKEN nao configurada" in (resp.text or "")
     assert middleware.CORRELATION_HEADER in resp.headers
 
 
@@ -295,10 +296,10 @@ def test_a_resposta_de_recusa_preserva_os_codigos_http_originais():
     assert middleware._recusa(_request(), 403, "rota_de_operador").status == 403
 
 
-def test_o_error_id_aparece_somente_nos_motivos_que_o_ja_pediam():
+def test_o_error_id_aparece_somente_nos_motivos_que_o_ja_pediam() -> None:
     """O `error_id` ja existia em `jwt_invalido`/`rota_de_operador` para casar
     com o log. Os motivos novos nao o recebem: `token_ausente` nao tem o que
     correlacionar alem do proprio 401."""
-    assert "error_id" not in middleware._recusa(_request(), 401, "token_ausente").text
-    assert "error_id" in middleware._recusa(_request(), 403, "jwt_invalido").text
-    assert "error_id" in middleware._recusa(_request(), 403, "rota_de_operador").text
+    assert "error_id" not in middleware._recusa(_request(), 401, "token_ausente").text  # type: ignore[arg-type]
+    assert "error_id" in middleware._recusa(_request(), 403, "jwt_invalido").text  # type: ignore[arg-type]
+    assert "error_id" in middleware._recusa(_request(), 403, "rota_de_operador").text  # type: ignore[arg-type]

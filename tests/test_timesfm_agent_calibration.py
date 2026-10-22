@@ -11,7 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
-import subprocess
+import subprocess  # noqa: S404
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock

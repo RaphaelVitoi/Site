@@ -127,8 +127,6 @@ def test_sota_cache_lru_eviction_under_stress(memory_cache: SOTACache):
     ("model_name", "expected_provider"),
     [
         ("gemini-3.8-flash", "gemini"),
-        ("gemini-3.8-flash", "gemini"),
-        ("gemini-3.8-flash", "gemini"),
         ("gemini-3.5-flash-lite", "gemini"),
         ("gemma4:e4b", "local"),
         ("gemma4:31b-cloud", "local"),

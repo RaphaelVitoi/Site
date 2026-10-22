@@ -92,7 +92,7 @@ def test_mcp_tool_interceptor_telemetry_ledger(tmp_path: Path) -> None:
     assert telem1.overhead_us >= 0.0
 
     # Chamada 2: SQL / Database
-    _, telem2 = interceptar_e_podar_ferramentas_s1(
+    _, _telem2 = interceptar_e_podar_ferramentas_s1(
         tools=tools_mock,
         prompt="Executar query SQL nas tabelas de logs",
         registrar_telemetria=True,
@@ -113,10 +113,10 @@ def test_avaliar_impacto_sessao_benchmark_regime() -> None:
 
     res = medir_interceptador_mcp(forcar_benchmark=True)
     assert res["fonte"] == "benchmark_regime"
-    assert res["economia_media_tokens_pct"] > 0.0
+    assert res["economia_media_tokens_pct"] > 0.0  # type: ignore[comparison]
     assert "Capacidade S1 em regime" in str(res["status"])
     # Em regime com warmup descartado, o overhead deve ser estritamente sub-segundo (normalmente < 50ms)
-    assert float(res["overhead_latencia_us"]) < 200_000.0
+    assert float(res["overhead_latencia_us"]) < 200_000.0  # type: ignore[arg-type]
 
 
 def test_dream_replay_simulator_persiste_e_exporta_trios(tmp_path: Path) -> None:
