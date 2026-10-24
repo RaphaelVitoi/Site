@@ -24,15 +24,15 @@ export async function GET() {
 
 	const relay = resolveGemmaRelayConfig();
 	if (!relay.ok) {
-		return NextResponse.json({ error: relay.error }, { status: 503 });
+		return NextResponse.json({ online: false, error: relay.error }, { status: 200 });
 	}
 
 	try {
 		const healthUrl = new URL('/', relay.upstreamUrl);
 		const upstream = await fetch(healthUrl, { cache: 'no-store' });
-		return NextResponse.json({ online: upstream.ok }, { status: upstream.ok ? 200 : 503 });
+		return NextResponse.json({ online: upstream.ok }, { status: 200 });
 	} catch {
-		return NextResponse.json({ online: false }, { status: 503 });
+		return NextResponse.json({ online: false }, { status: 200 });
 	}
 }
 

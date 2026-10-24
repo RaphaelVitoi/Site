@@ -178,7 +178,8 @@ function useHeaderState() {
 
     const checkGemma = () => {
       fetch('/api/v1/gemma')
-        .then((res) => setGemmaOnline(res.ok))
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { online?: boolean } | null) => setGemmaOnline(Boolean(data?.online)))
         .catch(() => setGemmaOnline(false));
     };
     checkGemma();
