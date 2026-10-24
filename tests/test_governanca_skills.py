@@ -281,7 +281,7 @@ def test_os_documentos_gerados_publicam_exatamente_as_skills_do_manifesto():
         texto = doc.read_text(encoding="utf-8")
 
         esperado = "\n".join(f"- `{s}`" for s in dados.get("skills", [])) or "- N/A"
-        bloco = texto.split("## Skills Especializadas\n", 1)[-1].split("\n\n", 1)[0]
+        bloco = texto.split("## Skills Especializadas\n", 1)[-1].lstrip("\n").split("\n\n", 1)[0]
         if bloco != esperado:
             fora.append(agente)
 

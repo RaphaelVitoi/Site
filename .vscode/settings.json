@@ -573,15 +573,14 @@
     },
     "r.executablePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
     "r.rpath.windows": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
-    "r.consolePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.consolePath": "arf",
     "r.consoleArgs": [
         "--no-save",
         "--no-restore"
     ],
     "r.bracketedPaste": true,
     "r.sessionWatcher": true,
-    "r.plot.backend": "jgd",
-    "r.interactive.plotBackend": "jgd",
+    "r.plot.backend": "httpgd",
     "r.plot.jgd.historyLimit": 100,
     "r.plot.jgd.exportWidth": 8,
     "r.plot.jgd.exportHeight": 6,

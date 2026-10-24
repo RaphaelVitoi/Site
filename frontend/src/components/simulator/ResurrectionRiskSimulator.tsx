@@ -321,7 +321,7 @@ export default function ResurrectionRiskSimulator() {
 								}}
 							/>
 							<Legend
-								verticalAlign="top"
+								position="top"
 								height={36}
 								wrapperStyle={{
 									fontSize: '10px',

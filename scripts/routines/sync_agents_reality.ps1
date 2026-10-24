@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     Sincroniza a realidade das pastas com os agentes listados no Manifesto SOTA.
 .DESCRIPTION
@@ -46,10 +46,10 @@ foreach ($Agent in $AgentNames) {
     #   $Model = if ($AgentProps.primary_model) { ... } else { 'meta-llama/...' }
     # e o template gravava **Motor Base:** `$Model` nos 19 .md. O resultado:
     # documentacao repetindo um valor que vive no manifesto, envelhecendo em
-    # silencio — os arquivos commitados diziam `gemini-2.5-pro` enquanto o
+    # silencio -- os arquivos commitados diziam `gemini-2.5-pro` enquanto o
     # manifesto ja estava em `gemini-3.5-flash-lite`, duas geracoes a frente.
     # O documento agora aponta para a fonte em vez de copia-la.
-    $MotorBase = 'roteado dinamicamente — ver `data/agents_manifest.json` (preferencia) e `llm/routing_policy.py` (modelo concreto)'
+    $MotorBase = 'roteado dinamicamente -- ver `data/agents_manifest.json` (preferencia) e `llm/routing_policy.py` (modelo concreto)'
 
     $AgentDocPath = Join-Path $ProjectRoot ".claude\agents\$($Agent).md"
     $MemoryDir = Join-Path $ProjectRoot ".claude\agent-memory\$Agent"
@@ -65,7 +65,7 @@ foreach ($Agent in $AgentNames) {
     $SkillsList = if ($AgentProps.skills) { ($AgentProps.skills | ForEach-Object { "- ``$_``" }) -join "`n" } else { "- N/A" }
     $ScriptsList = if ($AgentProps.specialized_scripts) { ($AgentProps.specialized_scripts | ForEach-Object { "- ``$_``" }) -join "`n" } else { "- N/A" }
 
-    $Template = "# Identidade e Escopo: @$Agent`n`n**Cor Emblematica:** ``$Color`` | **Motor Base:** $MotorBase`n`n$($AgentProps.identidade)`n`n## Competencias`n$($AgentProps.competencias)`n`n## Skills Especializadas`n$SkillsList`n`n## Scripts & Ferramentas Integradas`n$ScriptsList`n`n## Sinergia`n$($AgentProps.sinergia)`n`n## Gatilho de Roteamento (routing_pattern)`n``$RoutingPattern``"
+    $Template = "# Identidade e Escopo: @$Agent`n`n**Cor Emblematica:** ``$Color`` | **Motor Base:** $MotorBase`n`n$($AgentProps.identidade)`n`n## Competencias`n`n$($AgentProps.competencias)`n`n## Skills Especializadas`n`n$SkillsList`n`n## Scripts & Ferramentas Integradas`n`n$ScriptsList`n`n## Sinergia`n`n$($AgentProps.sinergia)`n`n## Gatilho de Roteamento (routing_pattern)`n`n``$RoutingPattern```n"
     Write-TextSOTA -Path $AgentDocPath -Content $Template -Encoding $Utf8NoBom
     Write-Host "[ + ] Identidade sincronizada para @$Agent (Skills & Scripts integrados)" -ForegroundColor Green
 

@@ -5,7 +5,7 @@ import { icmWorkerPool } from './icmWorkerPool';
 import { moneyUnits } from './chipLedger';
 
 const transitionSchema = z.object({
-  tableStacks: z.array(z.object({ id: z.string(), stack: z.number().finite().nonnegative() }).strict()).min(2).max(9),
+  tableStacks: z.array(z.object({ id: z.string(), stack: z.number().nonnegative() }).strict()).min(2).max(9),
   // First ID takes the worst remaining place; no equal sharing is inferred.
   eliminationOrder: z.array(z.string()).max(9),
 }).strict();
@@ -14,7 +14,7 @@ export const IcmTransitionRequestSchema = z.object({
   origin: z.enum(['identity-default', 'user-assumption']),
   horizon: z.literal('after-table-settlement'),
   fold: transitionSchema, win: transitionSchema, loss: transitionSchema,
-  probabilities: z.array(z.number().finite().min(0).max(1)).min(1).max(21),
+  probabilities: z.array(z.number().min(0).max(1)).min(1).max(21),
   iterations: z.number().int().min(100).max(20000).default(2000),
   seed: z.number().int().min(0).max(0xffffffff).default(1),
 }).strict();

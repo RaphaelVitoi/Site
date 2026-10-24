@@ -158,6 +158,91 @@
       },
       "expira_se": "Atualização de dependência",
       "revisar_em": "2026-11-01"
+    },
+    {
+      "id": "zod-collection-dos-dev-tooling-20261024",
+      "status": "accepted",
+      "accepted_at": "2026-10-24",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "zod",
+      "version": "3.25.76",
+      "vulnerability_ids": [
+        "GHSA-mrhx-c7xc-m3w5"
+      ],
+      "evidence": {
+        "vetor": "Esgotamento de memoria (DoS) no Zod <4.6.6 ao validar colecoes restringidas sob certas configuracoes.",
+        "alcance_medido": "O codigo de producao do frontend (frontend/src) migrou integralmente para Zod 4.6.7 (zero consumo de Zod 3 em producao). A versao 3.25.76 permanece estritamente como dependencia transitiva de ferramentas dev-only (puppeteer-core, chromium-bidi, eslint-plugin-react-hooks, zod-validation-error).",
+        "consumo_real": "Ferramentas de lint e testes estaticos locais. Nenhuma entrada externa nao confiavel e validada com Zod 3.",
+        "ausencia_de_correcao": "Nao ha patch publicado na linha 3.x; a correcao oficial reside em Zod 4.6.6+, versao major incompativel com ferramentas que ainda dependem da API v3.",
+        "registro": "reports/REGISTRO-2026-10-24-auditoria-geral-saneamento-e-reconciliacao.md"
+      },
+      "expira_se": "Dependencias dev transitivas atualizarem para Zod 4 compativel, ou patch 3.x for publicado.",
+      "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "fast-uri-normalization-spoofing-dev-prisma-20261024",
+      "status": "accepted",
+      "accepted_at": "2026-10-24",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "fast-uri",
+      "version": "3.1.8",
+      "vulnerability_ids": [
+        "GHSA-333x-w4r6-6crp",
+        "GHSA-w74x-v6f9-j3xg",
+        "GHSA-xhq7-xmqj-769h",
+        "GHSA-wjr9-j795-jxcr"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidade de normalizacao e decodificacao de scheme URI em fast-uri <=3.1.8.",
+        "alcance_medido": "Dependencia estritamente transitiva de @prisma/dev -> @prisma/streams-local -> ajv -> fast-uri. Zero importacao no codigo de frontend ou backend.",
+        "consumo_real": "Utilizado internamente pelo validador JSON Schema ajv em tempo de desenvolvimento CLI.",
+        "ausencia_de_correcao": "Cadeia transitiva do Prisma dev encapsula a versao instalada.",
+        "registro": "reports/REGISTRO-2026-10-24-auditoria-geral-saneamento-e-reconciliacao.md"
+      },
+      "expira_se": "Prisma atualizar cadeia transitiva com fast-uri >=3.1.9.",
+      "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "vitest-mocker-code-injection-dev-20261024",
+      "status": "accepted",
+      "accepted_at": "2026-10-24",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "vitest",
+      "version": "4.1.11",
+      "vulnerability_ids": [
+        "GHSA-qxg6-89mg-rqv8",
+        "GHSA-xp26-3454-mjgp"
+      ],
+      "evidence": {
+        "vetor": "Injecao de codigo e traversal em mock registration no @vitest/mocker <=4.1.11.",
+        "alcance_medido": "O projeto nao utiliza Vitest como test runner (100% dos testes frontend executam via Jest - 111 suites / 739 testes verdes). O pacote existe unicamente como dependencia transitiva de utilitarios de tipos e desenvolvimento.",
+        "consumo_real": "Zero execucao em runtime de producao e zero execucao no pipeline de testes.",
+        "ausencia_de_correcao": "A versao corrigida e Vitest 5.x (major bump com breaking changes em test runners transitivos).",
+        "registro": "reports/REGISTRO-2026-10-24-auditoria-geral-saneamento-e-reconciliacao.md"
+      },
+      "expira_se": "Vitest transitivo for atualizado para v5 ou purgado da arvore.",
+      "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "vitest-mocker-subpkg-dev-20261024",
+      "status": "accepted",
+      "accepted_at": "2026-10-24",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "@vitest/mocker",
+      "version": "4.1.11",
+      "vulnerability_ids": [
+        "GHSA-qxg6-89mg-rqv8",
+        "GHSA-xp26-3454-mjgp"
+      ],
+      "evidence": {
+        "vetor": "Injecao de codigo no registrador de mock manual.",
+        "alcance_medido": "Subpacote do Vitest presente exclusivamente em dependencias transitivas dev. Suite oficial e 100% Jest.",
+        "consumo_real": "Zero consumo no runtime ou no ciclo de vida de execucao.",
+        "ausencia_de_correcao": "Fix na versao major 5.x do Vitest.",
+        "registro": "reports/REGISTRO-2026-10-24-auditoria-geral-saneamento-e-reconciliacao.md"
+      },
+      "expira_se": "Vitest transitivo atualizar para v5.",
+      "revisar_em": "2026-12-31"
     }
   ]
 }

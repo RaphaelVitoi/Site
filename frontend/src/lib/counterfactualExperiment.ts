@@ -16,13 +16,13 @@ export const COUNTERFACTUAL_MODEL = {
   status: 'experimental-assumptions',
 } as const;
 
-const utility = z.number().finite().min(-1e12).max(1e12);
+const utility = z.number().min(-1e12).max(1e12);
 export const CounterfactualContextSchema = z.object({
   chipLedger: ChipLedgerSchema.optional(),
   population: z.array(TournamentPlayerSchema).min(2),
   selection: z.object({ room: z.enum(['PokerStars', 'GGPoker']), playerIds: z.array(z.string()), participantIds: z.array(z.string()) }),
   conditions: TournamentConditionsSchema,
-  prizes: z.array(z.number().finite().positive()),
+  prizes: z.array(z.number().positive()),
   heroId: z.string().min(1),
 });
 export const CounterfactualRequestSchema = z.object({
@@ -34,7 +34,7 @@ export const CounterfactualRequestSchema = z.object({
     fold: utility,
     win: utility,
     loss: utility,
-    probabilities: z.array(z.number().finite().min(0).max(1)).min(1).max(21),
+    probabilities: z.array(z.number().min(0).max(1)).min(1).max(21),
   }).strict(),
 }).strict();
 export type CounterfactualRequest = z.infer<typeof CounterfactualRequestSchema>;

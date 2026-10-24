@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import type { InsolvencyWorkerRequest, InsolvencyWorkerResponse } from './insolvencyProtocol';
 
-const finite = z.number().finite();
+const finite = z.number();
 const envelope = z.object({
   type: z.enum(['MATRIX', 'MULTIWAY_MATRIX']),
-  id: z.number().int().nonnegative().safe(),
+  id: z.number().int().nonnegative(),
   outputKind: z.literal('working-model'),
 });
 const responseSchema = z.union([

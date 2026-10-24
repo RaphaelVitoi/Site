@@ -305,22 +305,28 @@ def _especialidade(m: str, domain: str | None) -> int:
     return scorer(m) if scorer else 0
 
 
+def _is_local_model(model_l: str) -> bool:
+    if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
+        return True
+    if "qwen" in model_l and "/" not in model_l:
+        return True
+    return "ai9stars" in model_l or "ling" in model_l
+
+
 def _infer_provider_for_model(model: str) -> str | None:
     model_l = model.lower()
     if "space-bunny" in model_l or model_l.startswith("hermes/"):
         return "hermes"
     if "strata" in model_l:
         return "strata"
-    if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
-        return "local"
-    if "qwen" in model_l and "/" not in model_l:
-        return "local"
-    if "ai9stars" in model_l or "ling" in model_l:
+    if _is_local_model(model_l):
         return "local"
     if "gemini" in model_l:
         return "gemini"
     if "claude" in model_l or "anthropic" in model_l:
         return "anthropic"
+    if "gpt" in model_l or "openai" in model_l:
+        return "openai"
     if "/" in model_l:
         return "openrouter"
     return None

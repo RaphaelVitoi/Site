@@ -116,6 +116,12 @@ body {
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .ticker-content {
+        animation: none;
+    }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;

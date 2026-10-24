@@ -532,14 +532,29 @@ body:has(.simulator-immersive) main.grow {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .animate-sota-in,
+  .animate-fade-up,
   html body .animate-sota-in,
   html body .animate-fade-up {
     animation: none;
     opacity: 1;
     transform: none;
   }
+  .pulse-glow,
   html body .pulse-glow {
     animation: none;
+  }
+  .glass-panel {
+    transition: none;
+    transform: none;
+  }
+  .sota-range-slider::-webkit-slider-thumb {
+    transition: none;
+    transform: none;
+  }
+  .sota-range-slider::-moz-range-thumb {
+    transition: none;
+    transform: none;
   }
 }
 
@@ -789,6 +804,20 @@ body:has(.simulator-immersive) main.grow {
   box-shadow:
     0 0 20px var(--slider-color-light),
     0 0 0 8px var(--slider-glow-active);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-panel,
+  .glass-panel:hover,
+  .sota-range-slider::-webkit-slider-thumb,
+  .sota-range-slider::-webkit-slider-thumb:hover,
+  .sota-range-slider::-webkit-slider-thumb:active,
+  .sota-range-slider::-moz-range-thumb,
+  .sota-range-slider::-moz-range-thumb:hover,
+  .sota-range-slider::-moz-range-thumb:active {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* ==========================================================================

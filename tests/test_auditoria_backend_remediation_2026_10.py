@@ -15,8 +15,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+import re
 import sqlite3
 
+from packaging.version import Version
 import pytest
 
 from api.v1.handlers import _get_raw_content_type
@@ -51,8 +53,12 @@ def test_multidict_pinned_in_dependencies() -> None:
     req_text = req_file.read_text(encoding="utf-8")
     pyproj_text = pyproj_file.read_text(encoding="utf-8")
 
-    assert "multidict>=6.9.1" in req_text
-    assert "multidict>=6.9.1" in pyproj_text
+    m_req = re.search(r"multidict>=(\d+\.\d+(?:\.\d+)?)", req_text)
+    m_pyproj = re.search(r"multidict>=(\d+\.\d+(?:\.\d+)?)", pyproj_text)
+    assert m_req is not None
+    assert m_pyproj is not None
+    assert Version(m_req.group(1)) >= Version("6.9.1")
+    assert Version(m_pyproj.group(1)) >= Version("6.9.1")
 
 
 def test_openrouter_pool_manager_and_get_openrouter_pool() -> None:

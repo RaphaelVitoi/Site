@@ -7,23 +7,23 @@ import { TournamentConditionsSchema, resolveTournamentPayouts, type TournamentCo
 import { validateChipLedger, validatePrizeLedger, type ChipLedger } from './chipLedger';
 import { FieldModelSchema } from './fieldModel';
 
-const positive = z.number().finite().positive();
-const nonnegative = z.number().finite().nonnegative();
-const nativeSchema = z.object({
-  handdata: z.object({
+const positive = z.number().positive();
+const nonnegative = z.number().nonnegative();
+const nativeSchema = z.looseObject({
+  handdata: z.looseObject({
     stacks: z.array(positive).min(2).max(9),
     blinds: z.tuple([positive, nonnegative, nonnegative]),
     anteType: z.string().optional(), skipSb: z.boolean().optional(),
     movingBu: z.boolean().optional(), straddleType: z.string().optional(),
-  }).passthrough(),
-  eqmodel: z.object({
+  }),
+  eqmodel: z.looseObject({
     id: z.enum(['mtticm', 'malmuthharvil']),
     otherstacks: z.array(positive).optional(),
-    structure: z.object({ name: z.string().optional(), chips: positive.optional(), prizes: z.record(z.string(), nonnegative) }).passthrough(),
-  }).passthrough(),
+    structure: z.looseObject({ name: z.string().optional(), chips: positive.optional(), prizes: z.record(z.string(), nonnegative) }),
+  }),
   treeconfig: z.record(z.string(), z.unknown()).optional(),
   engine: z.record(z.string(), z.unknown()).optional(),
-}).passthrough();
+});
 export type HRCHandConfig = z.infer<typeof nativeSchema>;
 
 export function readHRCHandConfig(value: unknown): HRCHandConfig {
