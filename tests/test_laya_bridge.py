@@ -27,7 +27,7 @@ LAYA_DISP = LayaRouter.disponivel()
 class TestLayaReal:
     def test_route_ingles_verificado(self):
         # Saida verificada via REPL: model=english, script=latin, non_latin=0.0
-        i = classificar_intencao("Hello world deployment error")
+        i = classificar_intencao("This is a deployment error with the server")
         assert i.idioma == "english"
         assert i.script == "latin"
         assert i.is_english is True
