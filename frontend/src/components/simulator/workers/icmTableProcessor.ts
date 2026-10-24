@@ -6,7 +6,7 @@ import { TournamentConditionsSchema, resolveTournamentPayouts, validateTournamen
 const requestSchema = z.object({
   id: z.string(),
   players: z.array(TournamentPlayerSchema).min(2),
-  prizes: z.array(z.number().finite().nonnegative()),
+  prizes: z.array(z.number().nonnegative()),
   conditions: TournamentConditionsSchema,
   selection: z.object({
     room: z.enum(['PokerStars', 'GGPoker']),

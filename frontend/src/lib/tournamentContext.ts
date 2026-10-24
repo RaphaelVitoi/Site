@@ -8,27 +8,27 @@ import { FieldModelSchema } from './fieldModel';
 export const TABLE_CAPACITY = { PokerStars: 9, GGPoker: 8 } as const;
 export type PokerRoom = keyof typeof TABLE_CAPACITY;
 export const TournamentPlayerSchema = z.object({
-  id: z.string().min(1), name: z.string().min(1), stack: z.number().finite().nonnegative(),
+  id: z.string().min(1), name: z.string().min(1), stack: z.number().nonnegative(),
   tableId: z.string().min(1).optional(), seat: z.number().int().positive().optional(),
 });
 const snapshotSchema = z.object({
   fieldModel: FieldModelSchema.optional(),
   tournamentType: z.literal('MTT').default('MTT'),
   variant: z.literal('NLHE').default('NLHE'),
-  declaredTotalChips: z.number().finite().positive().optional(),
-  fullPrizes: z.array(z.number().finite().positive()).optional(),
+  declaredTotalChips: z.number().positive().optional(),
+  fullPrizes: z.array(z.number().positive()).optional(),
   totalEntries: z.number().int().positive().optional(),
   remainingPlayers: z.number().int().min(2).optional(),
   paidPlaces: z.number().int().positive().optional(),
-  totalPrizePool: z.number().finite().positive().optional(),
-  remainingPrizePool: z.number().finite().positive().optional(),
+  totalPrizePool: z.number().positive().optional(),
+  remainingPrizePool: z.number().positive().optional(),
   payoutUnit: z.enum(['percent-remaining-pool', 'absolute']).optional(),
   room: z.enum(['PokerStars', 'GGPoker']).optional(),
   tournamentId: z.string().optional(),
   stackUnit: z.enum(['bb', 'chips']),
-  bigBlind: z.number().finite().positive().optional(),
-  smallBlind: z.number().finite().nonnegative().optional(),
-  ante: z.number().finite().nonnegative().optional(),
+  bigBlind: z.number().positive().optional(),
+  smallBlind: z.number().nonnegative().optional(),
+  ante: z.number().nonnegative().optional(),
   anteType: z.string().optional(),
   handId: z.string().optional(),
   buttonSeat: z.number().int().positive().optional(),
@@ -37,7 +37,7 @@ const snapshotSchema = z.object({
   structureSource: StructureSourceSchema.optional(),
   hrcConfig: z.record(z.string(), z.unknown()).optional(),
   players: z.array(TournamentPlayerSchema).min(2),
-  prizes: z.array(z.number().finite().nonnegative()).optional(),
+  prizes: z.array(z.number().nonnegative()).optional(),
 });
 export type TournamentPlayer = z.infer<typeof TournamentPlayerSchema>;
 export type TournamentSnapshot = z.infer<typeof snapshotSchema> & {

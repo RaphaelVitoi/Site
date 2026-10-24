@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 export const TournamentConditionsSchema = z.object({
-  fieldSize: z.number().int().positive().safe(),
-  remainingPlayers: z.number().int().min(2).safe(),
-  paidPlaces: z.number().int().positive().safe(),
-  totalPrizePool: z.number().finite().positive(),
-  remainingPrizePool: z.number().finite().positive(),
-  declaredTotalChipsBb: z.number().finite().positive().optional(),
+  fieldSize: z.number().int().positive(),
+  remainingPlayers: z.number().int().min(2),
+  paidPlaces: z.number().int().positive(),
+  totalPrizePool: z.number().positive(),
+  remainingPrizePool: z.number().positive(),
+  declaredTotalChipsBb: z.number().positive().optional(),
   payoutUnit: z.enum(['percent-remaining-pool', 'absolute']),
 });
 export type TournamentConditions = z.infer<typeof TournamentConditionsSchema>;

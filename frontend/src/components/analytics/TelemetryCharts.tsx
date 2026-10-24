@@ -14,7 +14,6 @@ import {
 	Bar,
 	BarChart,
 	CartesianGrid,
-	Cell,
 	Line,
 	LineChart,
 	ResponsiveContainer,
@@ -145,6 +144,33 @@ const HistogramTooltip = ({ active, payload }: CustomHistogramTooltipProps) => {
 				</p>
 			</div>
 		</div>
+	);
+};
+
+interface HistogramBarProps {
+	x?: number;
+	y?: number;
+	width?: number;
+	height?: number;
+	payload?: { range?: string };
+	histogramData?: HistogramTooltipPayload[];
+}
+
+const HistogramBar = (props: HistogramBarProps) => {
+	const { x, y, width, height, payload, histogramData } = props;
+	const entry = histogramData?.find((e) => e.range === payload?.range);
+	return (
+		<rect
+			x={x}
+			y={y}
+			width={width}
+			height={height}
+			fill={entry ? `url(#histGrad-${entry.id})` : 'transparent'}
+			stroke={entry?.color}
+			strokeWidth={1.5}
+			rx={8}
+			ry={8}
+		/>
 	);
 };
 
@@ -865,16 +891,8 @@ ${zoneRows}
 									name="Decisões"
 									radius={[8, 8, 0, 0]}
 									isAnimationActive={false}
-								>
-									{analytics.histogramData.map((entry) => (
-										<Cell
-											key={`hist-cell-${entry.range}`}
-											fill={`url(#histGrad-${entry.id})`}
-											stroke={entry.color}
-											strokeWidth={1.5}
-										/>
-									))}
-								</Bar>
+									shape={<HistogramBar histogramData={analytics.histogramData} />}
+								/>
 							</BarChart>
 						</ResponsiveContainer>
 					</div>

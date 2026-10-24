@@ -82,7 +82,7 @@ export function InsolvencyRadar({ data }: Readonly<InsolvencyRadarProps>) {
 					}}
 				/>
 				<Legend
-					verticalAlign="bottom"
+					position="bottom"
 					wrapperStyle={{
 						paddingTop: '16px',
 						fontSize: '0.7rem',

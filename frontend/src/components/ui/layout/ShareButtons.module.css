@@ -35,7 +35,12 @@
     color: #ccc;
     font-size: 1.2rem;
     text-decoration: none;
-    transition: all 0.2s ease-in-out;
+    transition:
+        color 0.2s ease-in-out,
+        background-color 0.2s ease-in-out,
+        border-color 0.2s ease-in-out,
+        transform 0.2s ease-in-out,
+        box-shadow 0.2s ease-in-out;
 }
 
 .button:hover {
@@ -60,4 +65,11 @@
     background-color: #25D366;
     border-color: #25D366;
     color: #064e3b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .button {
+        transition: none;
+        transform: none;
+    }
 }

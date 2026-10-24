@@ -3,9 +3,9 @@ import { FieldModelSchema } from './fieldModel';
 
 export const ChipLedgerSchema = z.object({
   fieldModel: FieldModelSchema.optional(),
-  total: z.number().int().positive().safe(),
-  bigBlind: z.number().int().positive().safe(),
-  players: z.array(z.object({ id: z.string(), chips: z.number().int().nonnegative().safe() })).min(2),
+  total: z.number().int().positive(),
+  bigBlind: z.number().int().positive(),
+  players: z.array(z.object({ id: z.string(), chips: z.number().int().nonnegative() })).min(2),
   buttonId: z.string(),
   seatOrder: z.array(z.string()).min(2).max(9),
 });

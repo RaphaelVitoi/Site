@@ -5,7 +5,7 @@ export const FieldModelSchema = z.object({
   countOrigin: z.enum(['table-mean-estimate', 'user', 'imported-scenario']),
   remainingPlayers: z.number().int().min(2),
   estimatedPlayerIds: z.array(z.string()),
-  originalExternalStacks: z.array(z.number().finite().positive()).optional(),
+  originalExternalStacks: z.array(z.number().positive()).optional(),
 });
 export type FieldModel = z.infer<typeof FieldModelSchema>;
 

@@ -174,8 +174,8 @@ def test_thinking_level_vai_dentro_de_generation_config():
     assert req["generation_config"]["thinking_level"] == "high"
 
 
-def test_gemini_38_flash_nao_aceita_minimal():
-    """gemini-3.8-flash aceita low/medium/high, mas nao minimal."""
+def test_gemini_37_flash_adapter_rejeita_nao_autorizado():
+    """gemini-3.7-flash adapter rejeita construcao por modelo nao autorizado."""
     assert get("gemini-3.8-flash").thinking_level in {"low", "medium", "high"}
     with pytest.raises(ParametroRejeitadoError, match="nao autorizado"):
         GoogleGenAIAdapter.build("gemini-3.7-flash", USUARIO)

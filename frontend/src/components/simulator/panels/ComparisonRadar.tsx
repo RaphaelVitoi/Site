@@ -210,8 +210,7 @@ export default function ComparisonRadar({
 								/>
 
 								<Legend
-									verticalAlign="bottom"
-									align="center"
+									position="bottom"
 									wrapperStyle={{
 										paddingTop: '16px',
 										fontSize: '0.62rem',

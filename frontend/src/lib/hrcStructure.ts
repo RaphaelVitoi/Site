@@ -3,17 +3,17 @@ import { readHRCPrizes } from './hrcPrizes';
 import type { TournamentSnapshot } from './tournamentContext';
 
 const amount = z.union([z.number(), z.string().regex(/^\d+(?:\.\d+)?$/).transform(Number)])
-  .pipe(z.number().finite().positive());
+  .pipe(z.number().positive());
 const structureSchema = z.object({
   name: z.string().min(1), chips: amount,
   prizes: z.record(z.string(), amount),
   bountyType: z.string().optional(),
-  progressiveFactor: z.number().finite().min(0).max(1).optional(),
-}).passthrough();
+  progressiveFactor: z.number().min(0).max(1).optional(),
+}).loose();
 export const StructureSourceSchema = z.object({
-  rawInput: z.string(), path: z.string(), name: z.string(), chips: z.number().finite().positive(),
-  fullPrizes: z.array(z.number().finite().positive()).min(1),
-  bountyType: z.string().optional(), progressiveFactor: z.number().finite().min(0).max(1).optional(),
+  rawInput: z.string(), path: z.string(), name: z.string(), chips: z.number().positive(),
+  fullPrizes: z.array(z.number().positive()).min(1),
+  bountyType: z.string().optional(), progressiveFactor: z.number().min(0).max(1).optional(),
 });
 export type HRCStructureSource = z.infer<typeof StructureSourceSchema>;
 
