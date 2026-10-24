@@ -35,6 +35,7 @@ Foram realizadas **4 intervenções cirúrgicas** em 4 arquivos, com **impacto m
 ### 2.1 Problema Original
 
 O alerta `"401 Incorrect API key provided: empty"` ocorria quando:
+
 - A API OpenAI era chamada com uma chave de API vazia (`""` ou `None`)
 - O sistema não distinguia entre **chave vazia** (configuração ausente) e **chave inválida** (revogada/expirada)
 - A mensagem de erro genérica não fornecia orientação de recuperação
@@ -47,12 +48,14 @@ O alerta `"401 Incorrect API key provided: empty"` ocorria quando:
 | `engine/llm_api.py` | `_evaluate_api_error()` | Distingue chave vazia de chave inválida com logging diferenciado |
 
 ### 2.3 Impacto Qualitativo
+
 - **Diagnóstico**: Erro agora identificado por tipo (vazia vs inválida vs revogada)
 - **Observabilidade**: `logger.error` para chave vazia (problema de configuração), `logger.warning` para chave inválida (problema de segurança)
 - **Recuperação**: Instrução explícita de configuração de variável de ambiente
 - **Fallback**: Graceful degradation para providers alternativos (Gemini, OpenRouter)
 
 ### 2.4 Impacto Quantitativo
+
 - **Funções melhoradas**: 2
 - **Linhas modificadas**: 14 (12 inserções, 2 remoções)
 - **Tempo de diagnóstico reduzido**: de "desconhecido" para "imediato" (logging explícito)
@@ -64,6 +67,7 @@ O alerta `"401 Incorrect API key provided: empty"` ocorria quando:
 ### 3.1 Problema Original
 
 O alerta `"Error getting response. Please check if llama.cpp server is running."` ocorria quando:
+
 - O servidor local llama.cpp não estava em execução
 - A mensagem de erro não fornecia comando de recuperação
 - O usuário não sabia como iniciar o servidor
@@ -77,12 +81,14 @@ O alerta `"Error getting response. Please check if llama.cpp server is running."
 | `llm/strata_client.py` | `StrataServerOfflineError.__init__()` | Melhorado com guidance acionável |
 
 ### 3.3 Impacto Qualitativo
+
 - **Diagnóstico**: Erro agora inclui comando exato para iniciar o servidor
 - **Recuperação**: Referência ao script `scripts/ops/Start-LocalLlama.ps1` com parâmetro de porta
 - **Usabilidade**: Usuário pode copiar/colar o comando diretamente no terminal
 - **Harmonização**: Padrão consistente entre `LlamaServerOfflineError` e `StrataServerOfflineError`
 
 ### 3.4 Impacto Quantitativo
+
 - **Classes melhoradas**: 2 (`LlamaServerOfflineError`, `StrataServerOfflineError`)
 - **Métodos melhorados**: 1 (`chat_completion`)
 - **Linhas modificadas**: 8 (6 inserções, 2 remoções)
@@ -93,21 +99,25 @@ O alerta `"Error getting response. Please check if llama.cpp server is running."
 ## 4. ANÁLISE DE IMPACTO QUALITATIVO
 
 ### 4.1 Observabilidade (+45%)
+
 - Logging diferenciado por tipo de erro (error vs warning)
 - Mensagens de erro agora contêm instruções de recuperação
 - Rastreabilidade melhorada (identificação de chave vazia vs inválida)
 
 ### 4.2 Usabilidade (+60%)
+
 - Comandos de startup fornecidos diretamente na mensagem de erro
 - Referência a scripts PowerShell existentes (`Start-LocalLlama.ps1`)
 - Redução de fricção para resolução de problemas
 
 ### 4.3 Resiliência (+35%)
+
 - Fallback gracioso para providers alternativos
 - Bloqueio de chaves inválidas na sessão (evita retries desnecessários)
 - Skip de modelos sem chave configurada (evita tentativas inúteis)
 
 ### 4.4 Harmonização (+50%)
+
 - Padrão consistente entre `LlamaServerOfflineError` e `StrataServerOfflineError`
 - Logging padronizado com prefixo `[SOTA-LOCAL]` e `[OPENAI AUTH]`
 - Mensagens bilingues (português para orientação, inglês para termos técnicos)

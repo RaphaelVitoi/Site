@@ -310,7 +310,8 @@ export default function GemmaPortal() {
       return;
     }
     fetch('/api/v1/gemma')
-      .then((res) => setServerOnline(res.ok))
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { online?: boolean } | null) => setServerOnline(Boolean(data?.online)))
       .catch(() => setServerOnline(false));
   }, [sessionStatus]);
 
