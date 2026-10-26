@@ -16,7 +16,6 @@ import json
 import logging
 import re
 from typing import TypedDict
-import urllib.error
 import urllib.request
 
 import aiohttp

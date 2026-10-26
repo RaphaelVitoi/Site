@@ -202,7 +202,7 @@ def test_o_modo_sandbox_nao_passa_pela_validacao_de_comando() -> None:
     # normaliza aspas, e uma guarda que casa em `"sandbox"` deixa de casar
     # assim que alguem escrever `'sandbox'` -- que e exatamente o que o
     # unparse devolve. Guard que depende de grafia e guard que some.
-    ramos = [no for no in ast.walk(fn) if _e_o_ramo_sandbox(no)]
+    ramos = [no for no in ast.walk(fn) if isinstance(no, ast.If) and _e_o_ramo_sandbox(no)]
     assert len(ramos) == 1, (
         f"o ramo sandbox de _execute_commands mudou de forma: {len(ramos)} "
         "candidatos. Reveja o mapa de enforcement em KERNEL.md \u00a73 e ajuste "

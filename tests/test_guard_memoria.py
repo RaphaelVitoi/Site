@@ -50,7 +50,7 @@ def nx():
         spec.loader.exec_module(m)
         subprocess_proxy = SimpleNamespace(**vars(m.subprocess))
         subprocess_proxy.Popen = MagicMock()
-        m.subprocess = subprocess_proxy
+        m.__dict__["subprocess"] = subprocess_proxy
         yield m
     except SystemExit:
         yield m
