@@ -249,7 +249,7 @@ def test_o_axe_confirma_a_hierarquia_no_dom() -> None:
     """
     import json
     import shutil
-    import subprocess
+    import subprocess  # nosec # noqa: S404  # Record-Id: registro-2026-10-26-saneamento-tipagem-linters-e-reconciliacao-de-ancoras
     import urllib.request
 
     sonda = RAIZ / "scripts" / "ops" / "runtime_quality_probe.mjs"

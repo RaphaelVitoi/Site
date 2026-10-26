@@ -183,7 +183,7 @@ def test_guard_declara_o_que_nao_e_dependencia_de_runtime() -> None:
     Sem esta assercao, quem le o guard nao sabe se a ausencia delas e esquecimento
     ou decisao -- e um `COPY cli ./cli` posterior passaria despercebido.
     """
-    modulos, pacotes = _fecho_transitivo(MODULO_DO_CMD)
+    _, pacotes = _fecho_transitivo(MODULO_DO_CMD)
     assert not (ACHADOS_NAO_RUNTIME & pacotes), (
         "cli/ ou scripts/ passaram a ser dependencia de execucao do CMD. "
         "Se essa intencao e deliberada, inclua-os no Dockerfile e remova-os de "

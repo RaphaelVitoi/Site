@@ -231,9 +231,10 @@ async def test_timesfm_api_opt_in_uses_pretrained_weights(monkeypatch):
     req._read_bytes = json.dumps(payload).encode("utf-8")
 
     response = await handle_timesfm_forecast(req)
+    assert response.status == 200
+    assert response.text is not None
 
     data = json.loads(response.text)
-    assert response.status == 200
     assert data["weights_loaded"] is True
     assert data["model_used"] == "google/timesfm-2.5-200m-pytorch"
     assert data["results"]["metric"]["mean_prediction"] == [20.0, 20.0]
@@ -318,6 +319,7 @@ async def test_timesfm_3_research_mode_is_not_served_by_product_api():
     response = await handle_timesfm_forecast(req)
 
     assert response.status == 403
+    assert response.text is not None
     assert "n\u00e3o comerciais" in json.loads(response.text)["error"]
 
 
