@@ -1,0 +1,58 @@
+# CodeRabbit Configuration — Protocolo Chico SOTA v8.0 GOLD
+# Documentação: https://docs.coderabbit.ai/guides/configure-coderabbit
+
+version: "2"
+language: "pt-BR"
+early_access: false
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "master"
+      - "main"
+    ignore_title_keywords:
+      - "WIP"
+      - "Draft"
+      - "⚡ Bolt:"
+      - "chore(deps"
+      - "dependabot"
+
+  tools:
+    ruff:
+      enabled: true
+    eslint:
+      enabled: true
+    markdownlint:
+      enabled: true
+
+  path_filters:
+    - "!node_modules/**"
+    - "!.next/**"
+    - "!.venv/**"
+    - "!**/*.lock"
+    - "!package-lock.json"
+    - "!uv.lock"
+    - "!core/vendor/**"
+    - "!**/.system_generated/**"
+    - "!reports/telemetry/**"
+
+  instructions: |
+    Você está revisando código do ecossistema SOTA v8.0 GOLD (PokerRacional / Site).
+    Siga estritamente as seguintes diretivas:
+    1. TARGET LOCK & LIMITED SCOPE: Rejeite ou aponte alterações fora do escopo do PR. Não altere contratos e assinaturas estáveis.
+    2. SEGURANÇA E CREDENCIAIS: Nenhuma credencial em texto claro (API keys, segredos). Chaves devem vir exclusivamente de variáveis de ambiente.
+    3. PURIFICAÇÃO UTF-8: Zero mojibake ou caracteres corrompidos. Documentação e código limpos.
+    4. PYTHON 3.12+: Tipagem estrita PEP 585/604, 'from __future__ import annotations', zero Any desnecessário, ruff como linter/formatter.
+    5. FRONTEND: Next.js 16 + React 19 + Tailwind CSS 4. Preservar selagem de referências e evitar React.memo desnecessário a jusante de props instáveis.
+    6. MATEMÁTICA / KATEX: Escapar KaTeX com '\$' em documentações. Diagramas Mermaid válidos (sem gantt ou xychart-beta).
+
+chat:
+  auto_reply: true
