@@ -388,9 +388,7 @@ async def _evaluate_api_error(error_msg: str, provider_name: str, provider_key: 
                 provider_name,
             )
         else:
-            logger.warning(
-                "[OPENAI AUTH] Chave invalida/revogada para %s. Bloqueando chave na sessao.", provider_name
-            )
+            logger.warning("[OPENAI AUTH] Chave invalida/revogada para %s. Bloqueando chave na sessao.", provider_name)
         _block_key(provider_key)
         return "abort_key"
     if "429" in error_msg:

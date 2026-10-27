@@ -38,6 +38,38 @@ updates:
           - "*"
         update-types: ["minor", "patch"]
 
+  # Rust Cargo dependencies (nexus-core-rust)
+  - package-ecosystem: "cargo"
+    directory: "/core/nexus-core-rust"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps-rust)"
+      include: "scope"
+    groups:
+      rust-dependencies:
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
+
+  # Rust WASM dependencies (wasm-equity)
+  - package-ecosystem: "cargo"
+    directory: "/wasm-equity"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore(deps-wasm)"
+      include: "scope"
+    groups:
+      wasm-dependencies:
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
+
   # GitHub Actions CI/CD workflows
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -52,4 +84,3 @@ updates:
         patterns:
           - "actions/*"
           - "astral-sh/*"
-
