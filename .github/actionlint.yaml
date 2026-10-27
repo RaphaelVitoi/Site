@@ -14,5 +14,6 @@ config-variables:
   - UPLOAD_ARTIFACTS
   - AGENTCORE_ECR_REPOSITORY_URI
 paths:
-  ignore:
-    - "skills/**"
+  "skills/**":
+    ignore:
+      - ".*"
