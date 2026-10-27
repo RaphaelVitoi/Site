@@ -70,4 +70,10 @@ def test_core_dependency_cycle_detection() -> None:
 @pytest.mark.unit
 def test_core_speedforce_availability_flag() -> None:
     """Garante que a flag de disponibilidade do core nativo reflete o ambiente."""
-    assert RUST_CORE_AVAILABLE is True
+    try:
+        import nexus_core_rust
+
+        has_rust = nexus_core_rust is not None
+    except ImportError:
+        has_rust = False
+    assert RUST_CORE_AVAILABLE is has_rust
