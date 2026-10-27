@@ -128,6 +128,10 @@ test('simulator activates Quiz ICM lens, renders interactive quiz, and preserves
 
   await expect(page.getByText(/Laboratório Didático ICM/i)).toBeVisible();
   await expect(page.getByText(/Quiz Dinâmico SOTA/i)).toBeVisible();
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+  });
+  await page.waitForTimeout(600);
 
   await page.addScriptTag({ path: require.resolve('axe-core') });
   const results = await page.evaluate(async () => {

@@ -35,6 +35,9 @@ def mock_pool_keys(monkeypatch):
         monkeypatch.setenv(f"GEMINI_API_KEY_{i}", k)
     monkeypatch.setenv("GEMINI_PROJECT_ID", "projects/913870412920")
     monkeypatch.setenv("GEMINI_PROJECT_NAME", "original-498419")
+    from llm.gemini_pool import gemini_pool_manager
+
+    gemini_pool_manager.reload_from_environment(read_registry=False)
     return keys
 
 
