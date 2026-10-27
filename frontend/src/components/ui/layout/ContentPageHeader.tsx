@@ -61,7 +61,7 @@ export function ContentPageHeader({
                 </div>
                 {category && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-bright w-fit rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-bold tracking-[0.15em] text-amber-300 uppercase shadow-inner">
+                    <span className="w-fit rounded-lg border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-xs font-bold tracking-[0.15em] text-amber-300 uppercase shadow-inner">
                       {category}
                     </span>
                     <div className="flex gap-1.5 pl-1 opacity-40">

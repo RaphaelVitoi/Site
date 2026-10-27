@@ -130,7 +130,7 @@ packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "work
 
 # Instalado com: uv sync --extra dev (ou pip install -e .[dev])
 dev = [
-    "ruff>=0.17.2",
+    "ruff>=0.17.3",
     "pylint>=4.1.3",
     "pyright>=1.1.414",
     "pytest>=9.1.1",
@@ -144,7 +144,7 @@ dev = [
 
 [dependency-groups]
 dev = [
-    "ruff>=0.17.2",
+    "ruff>=0.17.3",
     "pylint>=4.1.3",
     "pyright>=1.1.414",
     "pytest>=9.1.1",
