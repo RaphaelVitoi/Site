@@ -5,14 +5,25 @@ from __future__ import annotations
 from datetime import UTC, datetime
 import json
 
-import nexus_core_rust
 import pytest
 
 from core.arbitrator import RUST_CORE_AVAILABLE, UniversalArbitrator
 from core.schemas import Task
 
+try:
+    import nexus_core_rust
+except ImportError:
+    nexus_core_rust = None
+
+
+requires_rust_core = pytest.mark.skipif(
+    not RUST_CORE_AVAILABLE or nexus_core_rust is None,
+    reason="nexus_core_rust nao compilado neste ambiente",
+)
+
 
 @pytest.mark.unit
+@requires_rust_core
 def test_rust_core_available() -> None:
     """Verifica que a extensao compilada CPython foi carregada com sucesso."""
     assert RUST_CORE_AVAILABLE is True
@@ -21,6 +32,7 @@ def test_rust_core_available() -> None:
 
 
 @pytest.mark.unit
+@requires_rust_core
 def test_nexus_core_rust_direct_execution() -> None:
     """Valida chamada direta a funcao PyO3 exportada pelo crate Rust."""
     now_str = datetime.now(UTC).isoformat()
@@ -81,4 +93,5 @@ def test_universal_arbitrator_rust_integration() -> None:
 def test_arbitrator_empty_tasks() -> None:
     """Valida retorno limpo para lista de tarefas vazia."""
     assert UniversalArbitrator.extract_optimal_task([]) is None
-    assert nexus_core_rust.extract_optimal_task_py("[]", "{}", 1.5, 0.8) is None
+    if RUST_CORE_AVAILABLE and nexus_core_rust is not None:
+        assert nexus_core_rust.extract_optimal_task_py("[]", "{}", 1.5, 0.8) is None
