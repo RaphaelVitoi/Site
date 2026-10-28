@@ -12,7 +12,7 @@ if command -v git-lfs >/dev/null 2>&1; then
     git lfs pre-push "$@"
 fi
 
-export SOTA_SUITE_WORKERS="${SOTA_SUITE_WORKERS:-4}"
+export SOTA_SUITE_WORKERS="${SOTA_SUITE_WORKERS:-6}"
 export SOTA_SUITE_MIN_RAM_GIB="${SOTA_SUITE_MIN_RAM_GIB:-3}"
 
 if command -v uv >/dev/null 2>&1; then
