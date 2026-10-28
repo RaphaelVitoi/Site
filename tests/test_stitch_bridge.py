@@ -279,3 +279,157 @@ def test_stitch_client_rejects_non_https_base_url(base_url: str) -> None:
     with pytest.raises(ValueError, match="https"):
         StitchClient(api_key="k", base_url=base_url)
     assert StitchClient(api_key="k")._base_url.startswith("https://")
+
+
+def test_stitch_project_dual_dict_and_dataclass_access() -> None:
+    """Valida acesso tanto por atributo quanto por dicionario em StitchProject."""
+    proj = StitchProject.from_dict(
+        {
+            "name": "projects/18242753218562483944",
+            "title": "Nexus PMev & Poker Racional UI",
+            "createTime": "2026-09-04T23:23:30Z",
+            "updateTime": "2026-10-28T11:12:46Z",
+            "metadata": {"userRole": "OWNER"},
+        }
+    )
+    assert isinstance(proj, dict)
+    assert proj.project_id == "18242753218562483944"
+    assert proj.title == "Nexus PMev & Poker Racional UI"
+    assert proj["title"] == "Nexus PMev & Poker Racional UI"
+    assert proj.get("createTime") == "2026-09-04T23:23:30Z"
+    assert proj.get("metadata", {}).get("userRole") == "OWNER"
+
+
+def test_stitch_screen_dual_dict_and_dataclass_access() -> None:
+    """Valida acesso tanto por atributo quanto por dicionario em StitchScreen."""
+    screen = StitchScreen.from_dict(
+        {
+            "name": "projects/18242753218562483944/screens/3260535219730569926",
+            "title": "DESIGN.md",
+            "deviceType": "DESKTOP",
+            "screenshotUrl": "https://example.com/shot.png",
+            "htmlUrl": "https://example.com/index.html",
+        }
+    )
+    assert isinstance(screen, dict)
+    assert screen.id == "3260535219730569926"
+    assert screen.device_type == "DESKTOP"
+    assert screen.screenshot_url == "https://example.com/shot.png"
+    assert screen.html_url == "https://example.com/index.html"
+    assert screen["deviceType"] == "DESKTOP"
+    assert screen.get("screenshotUrl") == "https://example.com/shot.png"
+
+
+def test_stitch_client_download_file() -> None:
+    """Valida chamada do metodo download_file."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "structuredContent": {
+                "content": "PGh0bWw+PGhlYWQ+PC9oZWFkPjxib2R5PjxoMT5OZXh1czwvaDE+PC9ib2R5PjwvaHRtbD4=",
+                "mimeType": "text/html",
+            }
+        },
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        res = client.download_file("projects/10/files/file123")
+        assert res.get("mimeType") == "text/html"
+        assert _args_enviados(m)["name"] == "projects/10/files/file123"
+
+
+def test_stitch_client_edit_screens() -> None:
+    """Valida chamada do metodo edit_screens."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"output": "Screens updated"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        res = client.edit_screens(
+            project_id="10",
+            screen_ids=["projects/10/screens/screen1", "screen2"],
+            prompt="Adicionar gradiente dourado",
+            model_tier="BALANCED",
+        )
+        assert res.get("output") == "Screens updated"
+        args = _args_enviados(m)
+        assert args["projectId"] == "10"
+        assert args["selectedScreenIds"] == ["screen1", "screen2"]
+        assert args["modelId"] == "GEMINI_3_8_FLASH"
+
+
+def test_stitch_client_generate_variants() -> None:
+    """Valida chamada do metodo generate_variants."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"variantsCount": 3}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        res = client.generate_variants(
+            project_id="10",
+            screen_ids=["screenA"],
+            prompt="Explorar variantes com alto contraste",
+            variant_count=4,
+            creative_range="REIMAGINE",
+            aspects=["COLOR_SCHEME", "LAYOUT"],
+            model_tier="SPEED",
+        )
+        assert res.get("variantsCount") == 3
+        args = _args_enviados(m)
+        assert args["projectId"] == "10"
+        assert args["selectedScreenIds"] == ["screenA"]
+        assert args["modelId"] == "GEMINI_3_5_FLASH_LITE"
+        assert args["variantOptions"]["variantCount"] == 4
+        assert args["variantOptions"]["creativeRange"] == "REIMAGINE"
+        assert args["variantOptions"]["aspects"] == ["COLOR_SCHEME", "LAYOUT"]
+
+
+def test_stitch_client_apply_design_system_and_create_from_design_md() -> None:
+    """Valida criacao de DS via design md e aplicacao a telas."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"status": "SUCCESS"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        res_create = client.create_design_system_from_design_md(
+            project_id="10",
+            screen_instance_id="inst_1",
+            source_screen="projects/10/screens/sc1",
+        )
+        assert res_create.get("status") == "SUCCESS"
+        args_create = _args_enviados(m)
+        assert args_create["projectId"] == "10"
+        assert args_create["selectedScreenInstance"]["id"] == "inst_1"
+
+        res_apply = client.apply_design_system(
+            project_id="10",
+            asset_id="assets/ds123",
+            selected_screen_instances=[{"id": "inst_1", "sourceScreen": "projects/10/screens/sc1"}],
+        )
+        assert res_apply.get("status") == "SUCCESS"
+        args_apply = _args_enviados(m)
+        assert args_apply["projectId"] == "10"
+        assert args_apply["assetId"] == "ds123"

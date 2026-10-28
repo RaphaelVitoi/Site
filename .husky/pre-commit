@@ -8,6 +8,7 @@
 set -e
 
 export SOTA_SUITE_WORKERS="${SOTA_SUITE_WORKERS:-6}"
+export SOTA_SUITE_MIN_RAM_GIB="${SOTA_SUITE_MIN_RAM_GIB:-4}"
 
 # 1. Portao de qualidade existente (CWV, a11y, CVE, SRI).
 npm run sota:audit

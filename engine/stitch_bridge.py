@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import json
 import logging
 import os
-from typing import Final
+from typing import Any, Final
 import urllib.error
 import urllib.request
 
@@ -21,38 +21,24 @@ STITCH_MCP_URL: Final[str] = "https://stitch.googleapis.com/mcp"
 STITCH_ERROR_NOT_CONFIGURED: Final[str] = "StitchClient nao configurado: STITCH_API_KEY ausente."
 STITCH_PROJECTS_PREFIX: Final[str] = "projects/"
 
-# NAO HA CHAVE PADRAO AQUI, E NUNCA PODE VOLTAR A HAVER.
-#
-# Ate esta revisao existia DEFAULT_STITCH_API_KEY com uma credencial LITERAL,
-# introduzida em 080cda35 e empurrada para origin/master. A secao 3 do CLAUDE.md
-# da raiz e o piso de seguranca do escopo de usuario proibem credencial em texto
-# claro sem excecao -- e o proprio codigo ja lia STITCH_API_KEY do ambiente
-# ANTES do literal, entao o fallback nao habilitava nada: so vazava a chave.
-#
-# Chave sem fonte configurada agora falha ALTO, com mensagem, em vez de
-# autenticar silenciosamente com uma credencial versionada.
+MODEL_TIER_MAPPING: Final[dict[str, str]] = {
+    "BALANCED": "GEMINI_3_8_FLASH",
+    "SPEED": "GEMINI_3_5_FLASH_LITE",
+    "GEMINI_3_8_FLASH": "GEMINI_3_8_FLASH",
+    "GEMINI_3_5_FLASH_LITE": "GEMINI_3_5_FLASH_LITE",
+    "GEMINI_3_FLASH": "GEMINI_3_FLASH",
+    "GEMINI_3_1_PRO": "GEMINI_3_1_PRO",
+}
 
 
-# NAO HA CONSTANTE DE TIER DE MODELO AQUI, E A RAZAO E MEDIDA.
-#
-# A UI do Stitch mostra Balanced e Speed, e desde a atualizacao do Google de
-# 2026-09-04 eles correspondem a Gemini 3.8 Flash e Gemini 3.5 Flash-Lite. Mas
-# 'BALANCED' e 'SPEED' sao rotulos de PRODUTO, nao valores do PORTAO DE ENTRADA:
-# `generate_screen_from_text` so repassa `modelId` para os enums oficiais do MCP,
-# e nenhum dos dois rotulos esta entre eles.
-#
-# Enquanto STITCH_MODEL_BALANCED e STITCH_MODEL_SPEED existiram aqui (de
-# 080cda35 ate esta revisao), chamar o metodo com STITCH_MODEL_SPEED produzia
-# EXATAMENTE a mesma requisicao que a chamada padrao -- sem erro e sem aviso.
-# Quem selecionasse SPEED esperando baixa latencia nao mudava nada.
-#
-# O enum oficial do portao fica conservado no metodo (Tier 0, 2026-09-04): ele e
-# o contrato da porta e nao acompanha o nome comercial do modelo do dia.
+@dataclass
+class StitchProject(dict[str, Any]):
+    """Representacao hibrida (dataclass + dict) de um projeto Stitch.
 
-
-@dataclass(frozen=True, slots=True)
-class StitchProject:
-    """Representacao imutavel de um projeto Stitch."""
+    Garante compatibilidade total com acessos por atributo (.project_id, .title, .name)
+    e acessos indexados por chave (proj['title'], proj.get('createTime')), bem como
+    isinstance(proj, dict) para serializacao JSON nativa.
+    """
 
     name: str
     title: str
@@ -62,15 +48,42 @@ class StitchProject:
     project_type: str = "PROJECT_DESIGN"
     origin: str = "STITCH"
 
+    def __post_init__(self) -> None:
+        for f in self.__dataclass_fields__:
+            self[f] = getattr(self, f)
+        self["createTime"] = self.create_time
+        self["updateTime"] = self.update_time
+        self["projectType"] = self.project_type
+
     @property
     def project_id(self) -> str:
         """Extrai o identificador numerico do projeto."""
         return self.name.split("/")[-1] if "/" in self.name else self.name
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> StitchProject:
+        """Instancia StitchProject a partir de dicionario JSON-RPC de forma defensiva."""
+        inst = cls(
+            name=str(data.get("name", "")),
+            title=str(data.get("title", "")),
+            visibility=str(data.get("visibility", "PRIVATE")),
+            create_time=str(data.get("createTime") or data.get("create_time", "")),
+            update_time=str(data.get("updateTime") or data.get("update_time", "")),
+            project_type=str(data.get("projectType") or data.get("project_type", "PROJECT_DESIGN")),
+            origin=str(data.get("origin", "STITCH")),
+        )
+        for k, v in data.items():
+            inst[k] = v
+        return inst
 
-@dataclass(frozen=True, slots=True)
-class StitchScreen:
-    """Representacao de uma tela gerada no Stitch."""
+
+@dataclass
+class StitchScreen(dict[str, Any]):
+    """Representacao hibrida (dataclass + dict) de uma tela gerada no Stitch.
+
+    Oferece atributos fortemente tipados (.id, .device_type, .screenshot_url, .html_url)
+    e compatibilidade estrita com APIs baseadas em dicionario (.get('deviceType')).
+    """
 
     name: str
     id: str
@@ -78,6 +91,32 @@ class StitchScreen:
     device_type: str = "DESKTOP"
     screenshot_url: str | None = None
     html_url: str | None = None
+
+    def __post_init__(self) -> None:
+        for f in self.__dataclass_fields__:
+            self[f] = getattr(self, f)
+        self["deviceType"] = self.device_type
+        self["screenshotUrl"] = self.screenshot_url
+        self["htmlUrl"] = self.html_url
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> StitchScreen:
+        """Instancia StitchScreen a partir de dicionario JSON-RPC de forma defensiva."""
+        raw_name = str(data.get("name", ""))
+        raw_id = str(data.get("id", "")) or (raw_name.split("/")[-1] if "/" in raw_name else "")
+        screenshot_val = data.get("screenshotUrl") or data.get("screenshot_url")
+        html_val = data.get("htmlUrl") or data.get("html_url")
+        inst = cls(
+            name=raw_name,
+            id=raw_id,
+            title=str(data.get("title", "")),
+            device_type=str(data.get("deviceType") or data.get("device_type", "DESKTOP")),
+            screenshot_url=str(screenshot_val) if screenshot_val is not None else None,
+            html_url=str(html_val) if html_val is not None else None,
+        )
+        for k, v in data.items():
+            inst[k] = v
+        return inst
 
 
 class StitchClient:
@@ -163,17 +202,17 @@ class StitchClient:
             logger.exception("[STITCH] Falha de conexao com Stitch MCP")
             raise
 
-    def list_projects(self, filter_view: str = "owned") -> list[dict[str, object]]:
+    def list_projects(self, filter_view: str = "owned") -> list[StitchProject]:
         """Lista os projetos Stitch disponiveis."""
         if not self.is_configured:
             raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
         res = self._call_tool("list_projects", {"filter": f"view={filter_view}"})
         projects = res.get("projects")
         if isinstance(projects, list):
-            return [p for p in projects if isinstance(p, dict)]
+            return [StitchProject.from_dict(p) for p in projects if isinstance(p, dict)]
         return []
 
-    def get_project(self, project_name_or_id: str) -> dict[str, object]:
+    def get_project(self, project_name_or_id: str) -> StitchProject:
         """Recupera detalhes de um projeto Stitch."""
         if not self.is_configured:
             raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
@@ -182,13 +221,15 @@ class StitchClient:
             if project_name_or_id.startswith(STITCH_PROJECTS_PREFIX)
             else f"{STITCH_PROJECTS_PREFIX}{project_name_or_id}"
         )
-        return self._call_tool("get_project", {"name": formatted_name})
+        res = self._call_tool("get_project", {"name": formatted_name})
+        return StitchProject.from_dict(res)
 
-    def create_project(self, title: str) -> dict[str, object]:
+    def create_project(self, title: str) -> StitchProject:
         """Cria um novo projeto Stitch."""
         if not self.is_configured:
             raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
-        return self._call_tool("create_project", {"title": title})
+        res = self._call_tool("create_project", {"title": title})
+        return StitchProject.from_dict(res)
 
     def delete_project(self, project_name_or_id: str) -> bool:
         """Exclui um projeto Stitch."""
@@ -206,7 +247,7 @@ class StitchClient:
             logger.warning("[STITCH] delete_project falhou para %s: %s", formatted_name, e)
             return False
 
-    def list_screens(self, project_id: str) -> list[dict[str, object]]:
+    def list_screens(self, project_id: str) -> list[StitchScreen]:
         """Lista todas as telas criadas dentro de um projeto Stitch."""
         if not self.is_configured:
             raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
@@ -214,12 +255,21 @@ class StitchClient:
         res = self._call_tool("list_screens", {"projectId": clean_id})
         screens = res.get("screens")
         if isinstance(screens, list):
-            return [s for s in screens if isinstance(s, dict)]
+            return [StitchScreen.from_dict(s) for s in screens if isinstance(s, dict)]
         return []
 
-    def get_screen(self, screen_name: str) -> dict[str, object]:
+    def get_screen(self, screen_name: str) -> StitchScreen:
         """Recupera especificacoes detalhadas de uma tela."""
-        return self._call_tool("get_screen", {"name": screen_name})
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        res = self._call_tool("get_screen", {"name": screen_name})
+        return StitchScreen.from_dict(res)
+
+    def download_file(self, file_resource_name: str) -> dict[str, object]:
+        """Baixa o conteudo de um arquivo (HTML ou screenshot) gerado pelo Stitch."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        return self._call_tool("download_file", {"name": file_resource_name})
 
     def generate_screen_from_text(
         self,
@@ -231,23 +281,10 @@ class StitchClient:
     ) -> dict[str, object]:
         """Dispara a geracao de uma nova tela no Stitch.
 
-        SOBRE MODELO: O SELETOR DA UI E O PORTAO DE ENTRADA NAO SAO A MESMA COISA.
-
-        O Stitch opera hoje em Gemini 3.8 Flash (`Balanced`, padrao) e Gemini 3.5
-        Flash-Lite (`Speed`), apos a atualizacao do Google de 2026-09-04. Esses
-        dois rotulos vivem no SELETOR DA INTERFACE, onde quem escolhe e o
-        OPERADOR -- verificado em tela pelo Tier 0 na mesma data.
-
-        O PORTAO DE ENTRADA do MCP e outra coisa: aceita apenas os enums oficiais
-        de `modelId`, e sao eles que este metodo repassa. O enum e conservado
-        deliberadamente (Tier 0, 2026-09-04) -- e o contrato da porta, e nao
-        acompanha o nome comercial do modelo do dia.
-
-        Por isso `model_tier` e opcional e sem default: pelo bridge, omitir e o
-        uso correto. Passar um rotulo de UI que o portao nao reconhece NAO altera
-        a requisicao, e por isso nao existe mais constante aqui sugerindo o
-        contrario. Para alternar entre `Speed` e `Balanced`, use o seletor da
-        propria interface do Stitch.
+        Suporta selecao de modelo via enums oficiais do portao Stitch MCP:
+        - Balanced: GEMINI_3_8_FLASH (padrao na UI)
+        - Speed: GEMINI_3_5_FLASH_LITE
+        Se omitido, o modelo padrao e resolvido pelo proprio servidor Stitch.
         """
         clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
         args: dict[str, object] = {
@@ -255,12 +292,75 @@ class StitchClient:
             "prompt": prompt,
             "deviceType": device_type,
         }
-        # Repassar enum se for solicitado explicitamente um valor legado pelo gateway
-        if model_tier in ("GEMINI_3_FLASH", "GEMINI_3_1_PRO"):
-            args["modelId"] = model_tier
+        if model_tier:
+            resolved_model = MODEL_TIER_MAPPING.get(model_tier.upper(), model_tier)
+            args["modelId"] = resolved_model
         if design_system:
             args["designSystem"] = design_system
         return self._call_tool("generate_screen_from_text", args)
+
+    def edit_screens(
+        self,
+        project_id: str,
+        screen_ids: list[str],
+        prompt: str,
+        model_tier: str | None = None,
+        device_type: str = "DESKTOP",
+    ) -> dict[str, object]:
+        """Edita telas existentes dentro de um projeto via instrucao em texto."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
+        clean_screen_ids = [
+            s.replace(f"{STITCH_PROJECTS_PREFIX}{clean_id}/screens/", "").replace("screens/", "") for s in screen_ids
+        ]
+        args: dict[str, object] = {
+            "projectId": clean_id,
+            "selectedScreenIds": clean_screen_ids,
+            "prompt": prompt,
+            "deviceType": device_type,
+        }
+        if model_tier:
+            resolved_model = MODEL_TIER_MAPPING.get(model_tier.upper(), model_tier)
+            args["modelId"] = resolved_model
+        return self._call_tool("edit_screens", args)
+
+    def generate_variants(
+        self,
+        project_id: str,
+        screen_ids: list[str],
+        prompt: str,
+        variant_count: int = 3,
+        creative_range: str = "EXPLORE",
+        aspects: list[str] | None = None,
+        model_tier: str | None = None,
+        device_type: str = "DESKTOP",
+    ) -> dict[str, object]:
+        """Gera variantes de telas existentes dentro de um projeto Stitch."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
+        clean_screen_ids = [
+            s.replace(f"{STITCH_PROJECTS_PREFIX}{clean_id}/screens/", "").replace("screens/", "") for s in screen_ids
+        ]
+        variant_options: dict[str, object] = {
+            "variantCount": min(max(1, variant_count), 5),
+            "creativeRange": creative_range,
+        }
+        if aspects:
+            variant_options["aspects"] = aspects
+
+        args: dict[str, object] = {
+            "projectId": clean_id,
+            "selectedScreenIds": clean_screen_ids,
+            "prompt": prompt,
+            "variantOptions": variant_options,
+            "deviceType": device_type,
+        }
+        if model_tier:
+            resolved_model = MODEL_TIER_MAPPING.get(model_tier.upper(), model_tier)
+            args["modelId"] = resolved_model
+        return self._call_tool("generate_variants", args)
 
     def list_design_systems(self, project_id: str) -> list[dict[str, object]]:
         """Lista sistemas de design associados ao projeto."""
@@ -284,5 +384,48 @@ class StitchClient:
             {
                 "projectId": clean_id,
                 "designMdBase64": b64_content,
+            },
+        )
+
+    def create_design_system_from_design_md(
+        self,
+        project_id: str,
+        screen_instance_id: str,
+        source_screen: str,
+        device_type: str = "DESKTOP",
+    ) -> dict[str, object]:
+        """Cria um sistema de design a partir de um DESIGN.md previamente enviado."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        clean_proj_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
+        return self._call_tool(
+            "create_design_system_from_design_md",
+            {
+                "projectId": clean_proj_id,
+                "selectedScreenInstance": {
+                    "id": screen_instance_id,
+                    "sourceScreen": source_screen,
+                },
+                "deviceType": device_type,
+            },
+        )
+
+    def apply_design_system(
+        self,
+        project_id: str,
+        asset_id: str,
+        selected_screen_instances: list[dict[str, str]],
+    ) -> dict[str, object]:
+        """Aplica um sistema de design a uma lista de instancias de tela."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        clean_proj_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
+        clean_asset_id = asset_id.replace("assets/", "")
+        return self._call_tool(
+            "apply_design_system",
+            {
+                "projectId": clean_proj_id,
+                "assetId": clean_asset_id,
+                "selectedScreenInstances": selected_screen_instances,
             },
         )

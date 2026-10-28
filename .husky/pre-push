@@ -13,6 +13,7 @@ if command -v git-lfs >/dev/null 2>&1; then
 fi
 
 export SOTA_SUITE_WORKERS="${SOTA_SUITE_WORKERS:-6}"
+export SOTA_SUITE_MIN_RAM_GIB="${SOTA_SUITE_MIN_RAM_GIB:-4}"
 
 if command -v uv >/dev/null 2>&1; then
     uv run --no-sync python scripts/ops/suite_verde.py
