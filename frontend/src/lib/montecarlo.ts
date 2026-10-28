@@ -132,9 +132,9 @@ function pickWinner(
 
 
 interface MonteCarloAccumulators {
-	totalEquity: number[];
-	sumSquares: number[];
-	placementCounts: number[][];
+	totalEquity: Float64Array;
+	sumSquares: Float64Array;
+	placementCounts: Uint32Array;
 }
 
 function runSingleMonteCarloIteration(
@@ -145,6 +145,7 @@ function runSingleMonteCarloIteration(
 	accumulators: MonteCarloAccumulators,
 	isBusted: Uint8Array | null,
 	random: () => number,
+	k: number,
 ) {
 	let remainingTotalChips = totalChips;
 	let availablePlayers = (1 << numPlayers) - 1; // Bitmask (funciona rápido até 31 jogadores)
@@ -153,8 +154,7 @@ function runSingleMonteCarloIteration(
 		isBusted.fill(0);
 	}
 
-	const numPrizes = activePrizes.length;
-	for (let j = 0; j < numPrizes; j++) {
+	for (let j = 0; j < k; j++) {
 		if (remainingTotalChips <= 0) break;
 
 		const winnerIdx = pickWinner(
@@ -169,12 +169,14 @@ function runSingleMonteCarloIteration(
 		// Distribui o prêmio e remove o jogador da pool
 		if (winnerIdx !== -1) {
 			const prize = activePrizes[j] ?? 0;
-			accumulators.totalEquity[winnerIdx] = (accumulators.totalEquity[winnerIdx] ?? 0) + prize;
-			accumulators.sumSquares[winnerIdx] = (accumulators.sumSquares[winnerIdx] ?? 0) + prize * prize;
-			const pRow = accumulators.placementCounts[winnerIdx];
-			if (pRow) {
-				pRow[j] = (pRow[j] ?? 0) + 1;
-			}
+			// TypedArrays garantem acesso rápido, evitando check nullish em cada look up
+			accumulators.totalEquity[winnerIdx] = (accumulators.totalEquity[winnerIdx] as number) + prize;
+			accumulators.sumSquares[winnerIdx] = (accumulators.sumSquares[winnerIdx] as number) + prize * prize;
+
+			// Flat TypedArray com índices matemáticos em vez de multi-dimensional number[][] para redução de alocação de objetos e GC (Performance Optimzation)
+			const flatIndex = winnerIdx * k + j;
+			accumulators.placementCounts[flatIndex] = (accumulators.placementCounts[flatIndex] as number) + 1;
+
 			remainingTotalChips -= stacks[winnerIdx] || 0;
 
 			if (isBusted) {
@@ -294,9 +296,9 @@ interface MonteCarloWithZerosParams {
 interface ActiveResultsAggregationParams {
 	numActive: number;
 	activeIndices: number[];
-	totalActiveEquity: number[];
-	sumActiveSquares: number[];
-	placementActiveCounts: number[][];
+	totalActiveEquity: Float64Array;
+	sumActiveSquares: Float64Array;
+	placementActiveCounts: Uint32Array;
 	iterations: number;
 	kActive: number;
 	equities: number[];
@@ -322,21 +324,21 @@ function populateActivePlayerResults(params: ActiveResultsAggregationParams): vo
 
 	for (let a = 0; a < numActive; a++) {
 		const origIdx = activeIndices[a]!;
-		const eq = totalActiveEquity[a]! / iterations;
+		const totalEq = totalActiveEquity[a] as number;
+		const eq = totalEq / iterations;
 		equities[origIdx] = eq;
 
 		if (iterations > 1) {
-			const sumSq = sumActiveSquares[a] ?? 0;
-			const s2 = Math.max(0, (sumSq - (totalActiveEquity[a]! * totalActiveEquity[a]!) / iterations) / (iterations - 1));
+			const sumSq = sumActiveSquares[a] as number;
+			const s2 = Math.max(0, (sumSq - (totalEq * totalEq) / iterations) / (iterations - 1));
 			variancePerPlayer[origIdx] = Number(s2.toFixed(4));
 			stdErrorPerPlayer[origIdx] = Number(Math.sqrt(s2 / iterations).toFixed(4));
 		}
 
-		const activePlacementRow = placementActiveCounts[a];
 		const targetRow = placementDistribution[origIdx];
-		if (activePlacementRow && targetRow) {
+		if (targetRow) {
 			for (let j = 0; j < kActive; j++) {
-				targetRow[j] = (activePlacementRow[j] ?? 0) / iterations;
+				targetRow[j] = (placementActiveCounts[a * kActive + j] as number) / iterations;
 			}
 		}
 	}
@@ -402,9 +404,9 @@ function calculateIcmMonteCarloWithZeros(params: MonteCarloWithZerosParams): Mon
 
 	const activeStacks = activeIndices.map((i) => stacks[i] ?? 0);
 	const numActive = activeIndices.length;
-	const totalActiveEquity = new Array(numActive).fill(0);
-	const sumActiveSquares = new Array(numActive).fill(0);
-	const placementActiveCounts: number[][] = Array.from({ length: numActive }, () => new Array(kActive).fill(0));
+	const totalActiveEquity = new Float64Array(numActive);
+	const sumActiveSquares = new Float64Array(numActive);
+	const placementActiveCounts = new Uint32Array(numActive * kActive);
 	const isBusted = numActive > 30 ? new Uint8Array(numActive) : null;
 
 	const activeAccumulators: MonteCarloAccumulators = {
@@ -422,6 +424,7 @@ function calculateIcmMonteCarloWithZeros(params: MonteCarloWithZerosParams): Mon
 			activeAccumulators,
 			isBusted,
 			random,
+			kActive
 		);
 	}
 
@@ -488,9 +491,9 @@ function calculateIcmMonteCarloStandard(params: MonteCarloStandardParams): Monte
 		random,
 	} = params;
 
-	const totalEquity = new Array(numPlayers).fill(0);
-	const sumSquares = new Array(numPlayers).fill(0);
-	const placementCounts: number[][] = Array.from({ length: numPlayers }, () => new Array(k).fill(0));
+	const totalEquity = new Float64Array(numPlayers);
+	const sumSquares = new Float64Array(numPlayers);
+	const placementCounts = new Uint32Array(numPlayers * k);
 
 	const isBusted = numPlayers > 30 ? new Uint8Array(numPlayers) : null;
 	if (numPlayers > 30 && !isBusted) {
@@ -512,23 +515,30 @@ function calculateIcmMonteCarloStandard(params: MonteCarloStandardParams): Monte
 			accumulators,
 			isBusted,
 			random,
+			k
 		);
 	}
 
-	const equities = totalEquity.map((e) => e / iterations);
-	const variancePerPlayer = totalEquity.map((tot, i) => {
+	const equities = Array.from(totalEquity).map((e) => (e as number) / iterations);
+	const variancePerPlayer = Array.from(totalEquity).map((tot, i) => {
 		if (iterations <= 1) return 0;
-		const sumSq = sumSquares[i] ?? 0;
-		const s2 = Math.max(0, (sumSq - (tot * tot) / iterations) / (iterations - 1));
+		const sumSq = sumSquares[i] as number;
+		const s2 = Math.max(0, (sumSq - ((tot as number) * (tot as number)) / iterations) / (iterations - 1));
 		return Number(s2.toFixed(4));
 	});
 	const stdErrorPerPlayer = variancePerPlayer.map((s2) => {
 		if (iterations <= 1) return 0;
 		return Number(Math.sqrt(s2 / iterations).toFixed(4));
 	});
-	const placementDistribution: number[][] = placementCounts.map((row) =>
-		row.map((cnt) => cnt / iterations),
-	);
+
+	const placementDistribution: number[][] = [];
+	for (let i = 0; i < numPlayers; i++) {
+		const row = [];
+		for (let j = 0; j < k; j++) {
+			row.push((placementCounts[i * k + j] as number) / iterations);
+		}
+		placementDistribution.push(row);
+	}
 
 	return {
 		equities,
