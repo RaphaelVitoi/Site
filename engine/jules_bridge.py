@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import json
 import logging
 import os
+import re
 from typing import Final
 import urllib.error
 import urllib.request
@@ -227,6 +228,26 @@ class JulesClient:
                     files_changed=data.get("filesChanged", []),
                 )
         except urllib.error.HTTPError as e:
+            if e.code == 404:
+                # Fallback SOTA: a API v1alpha armazena o patch dentro dos artefatos em activities (busca do mais recente ao mais antigo)
+                activities = self.get_activities(session_id)
+                for act in reversed(activities):
+                    artifacts = act.get("artifacts")
+                    if isinstance(artifacts, list):
+                        for art in reversed(artifacts):
+                            if isinstance(art, dict):
+                                cs = art.get("changeSet")
+                                if isinstance(cs, dict) and "gitPatch" in cs:
+                                    gp = cs["gitPatch"]
+                                    if isinstance(gp, dict):
+                                        patch = str(gp.get("unidiffPatch", ""))
+                                        if patch:
+                                            files = re.findall(r"diff --git a/(.*?) b/", patch)
+                                            return JulesDiffResult(
+                                                session_id=session_id,
+                                                diff_content=patch,
+                                                files_changed=files,
+                                            )
             err_msg = e.read().decode("utf-8", errors="replace")
             logger.exception("[JULES] Erro HTTP %d ao obter diff: %s", e.code, err_msg)
             raise RuntimeError(f"Erro ao obter diff do Jules ({e.code}): {err_msg}") from e

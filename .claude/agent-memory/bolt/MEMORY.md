@@ -1,16 +1,17 @@
 # MEMORIA SIMBIOTICA - @bolt
 
 > **Status:** Ativo | **Aura:** `gold` | **Origem:** Google Jules, cron noturno ~03:20 UTC
-> **Padroes:** ``#reflexao`` - Otimizacao sem medicao e aposta. Um numero medido
-> precede qualquer diff, e refutar uma hipotese e entrega tao valida quanto
+> **Modelo Ativo:** `Gemini 3.1 Pro` (preferência oficial em jules.google.com/settings/general)
+> **Padrões:** ``#reflexao`` - Otimização sem medição é aposta. Um número medido
+> precede qualquer diff, e refutar uma hipótese é entrega tão válida quanto
 > aplicar um patch.
 
-Memoria episodica do agente autonomo de nuvem `Bolt`, executado pelo Google
-Jules. Vive aqui, e nao em `.jules/`, por decisao registrada na §10.6 (a) do
+Memória episódica do agente autônomo de nuvem `Bolt`, executado pelo Google
+Jules. Vive aqui, e não em `.jules/`, por decisão registrada na §10.6 (a) do
 `CLAUDE.md`: a §9 estabelece `.claude/agent-memory/<agente>/MEMORY.md` como o
-diretorio canonico de memoria viva de agente, e um segundo lugar para a mesma
-classe de artefato seria a fonte paralela que a §3 proibe. A convencao de nome
-e do fornecedor; a taxonomia e do projeto, e ela vence.
+diretório canônico de memória viva de agente, e um segundo lugar para a mesma
+classe de artefato seria a fonte paralela que a §3 proíbe. A convenção de nome
+é do fornecedor; a taxonomia é do projeto, e ela vence.
 
 ## Reflexoes e Insight SOTA
 
@@ -72,3 +73,20 @@ Origem: sessao Jules, 2026-09-06.
 
 - ``#aprendizado`` **`Float32Array.set([a, b, c], offset)` aloca no heap silenciosamente.** Substituir variáveis soltas num micro-array literais (`[a, b, c]`) só para alimentar o método `.set` desencadeia alocação e GC Churn massivos dentro do Regret Matching loop.
   **Ação:** Desenrolar as chamadas iterativas de atribuição `array[idx] = val` de forma plana se o tamanho da tupla for pequeno (ex: 3 ações no CFR).
+
+### 2026-10-28 -- Linearização de Acumuladores Monte Carlo com TypedArrays e Selagem de Escopo
+
+Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Executado sob **Gemini 3.1 Pro**.
+
+- ``#aprendizado`` **Linearização de matrizes e TypedArrays eliminam GC Churn no V8.** A substituição dos acumuladores dinâmicos `number[]` e matrizes `number[][]` (`placementCounts`, `totalEquity`, `sumSquares`) em `frontend/src/lib/montecarlo.ts` por buffers lineares `Float64Array` e `Uint32Array` mapeados por `winnerIdx * k + j` reduz drasticamente as pausas de Minor GC em simulações massivas (>100.000 iterações), mantendo 100% de paridade nos testes de reprodutibilidade por semente e variância amostral.
+  **Ação:** Validado e integrado ao `master`.
+
+- ``#target_lock`` **SELAGEM ARQUITETURAL DEFINITIVA (CFR & MONTE CARLO):**
+  Tanto `frontend/src/lib/montecarlo.ts` quanto `frontend/src/components/simulator/workers/cfr.worker.ts` atingiram o teto de otimização de hot-loops no V8. Qualquer tentativa adicional de micro-otimização (troca de laços `for`, verificação nula redundante, remoção cosmética de checks) é **expressamente proibida** sem novo profiling de produção comprovando gargalo inédito. Sessões que tocarem nestes arquivos sem autorização do Tier 0 violam o Target Lock.
+
+- ``#diretriz_gemini_3_1_pro`` **Novas Fronteiras de Alto Impacto para o Gemini 3.1 Pro:**
+  Com o raciocínio aprofundado do Gemini 3.1 Pro, as metas do cron noturno evoluem de micro-sintaxe para arquitetura de ponta:
+  1. **Lazy Loading & Dynamic Imports:** Code-splitting de painéis analíticos pesados em `frontend/src/components/simulator/panels/` (ex: painéis de Nash, visualizadores de árvore de decisão).
+  2. **Selagem de Referências e Prevenção de Leak em Hooks:** Auditoria de hooks como `useMonteCarloConvergence.ts` e `useQuantumEngine.ts` para garantir que objetos de configuração instáveis não vazem re-renderizações para componentes filhos.
+  3. **Otimização de Estruturas de Range / Matrizes de Poker:** Otimização de lookups matriciais em `frontend/src/lib/poker/`.
+  4. **Entrega por Refutação (§10.1):** O Gemini 3.1 Pro deve medir baseline antes de gerar qualquer diff. Se a melhoria projetada for inferior a 5% ou degradar legibilidade/manutenibilidade, a hipótese deve ser **refutada e arquivada** no resumo da sessão, encerrando com sucesso sem criar Pull Request.
