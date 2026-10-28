@@ -2,7 +2,7 @@
 
 > **Repositório Monitorado:** `RaphaelVitoi/Site`
 > **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules
-> **Data de Atualização:** `2026-09-05 14:56:10 UTC`
+> **Data de Atualização:** `2026-10-28 11:39:55 UTC`
 > **Origem dos Dados:** Google Cloud Stitch MCP (`https://stitch.googleapis.com/mcp`)
 
 ---
@@ -19,7 +19,6 @@
 > [!NOTE]
 > **Atualização de Modelos de Fronteira no Stitch:**
 > Conforme verificado na interface de produção do Stitch (`stitch.withgoogle.com`), a geração de UI opera com dois tiers:
->
 > - ⚡ **Speed**: `Gemini 3.5 Flash-Lite` (*rapid collaboration, still good quality*) — menor latência e custo marginal nulo.
 > - ✨ **Balanced (Padrão)**: `Gemini 3.8 Flash` (*balance between speed and high quality*) — alta fidelidade estética e adesão a design systems.
 > - *Nota de Descontinuação:* Os modelos da geração anterior (`Gemini 3 Flash` e `Gemini 3.1 Pro`) foram descontinuados na produção.
@@ -37,14 +36,13 @@
 ## 3. Detalhamento dos Projetos e Telas
 
 ### Projeto `18242753218562483944` — Nexus PMev & Poker Racional UI
-
 - **Nome Canônico:** `projects/18242753218562483944`
 - **Tipo de Projeto:** `PROJECT_DESIGN` | **Origem:** `STITCH`
-- **Última Atualização:** `2026-09-04T23:23:30.776763Z`
+- **Última Atualização:** `2026-10-28T11:12:46.414017Z`
 - **Permissão / Papel:** `OWNER`
 - **Inventário de Telas (2):**
-  - `projects/18242753218562483944/screens/3260535219730569926`: **DESIGN.md** (`DESKTOP`)
   - `projects/18242753218562483944/screens/6fbe16eba4d84af4be932290191c26ad`: **Nexus PMev - Ping Test** (`DESKTOP`)
+  - `projects/18242753218562483944/screens/3260535219730569926`: **DESIGN.md** (`DESKTOP`)
 - **Design Systems Integrados (1):**
   - 🎨 **Obsidian Analytics** (`assets/6f9c8c6e7114422393d45b0c4ca02808`)
     - Tipografia: `GEIST` / `JetBrains Mono` | Acento Primário: `#f2b72b`
