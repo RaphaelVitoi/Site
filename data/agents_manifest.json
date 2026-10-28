@@ -151,6 +151,7 @@
       "opentargets-database",
       "sota-consciousness-memory-rag",
       "timesfm-forecasting",
+      "exa-search-engine",
       "site-session-handoff"
     ],
     "specialized_scripts": [

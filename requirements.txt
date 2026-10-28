@@ -14,7 +14,7 @@ uvicorn[standard]>=0.54.0
 
 # ── PYDANTIC & SETTINGS ───────────────────────────────────────────────────────
 pydantic>=2.14.1
-pydantic-settings>=2.16.1
+pydantic-settings>=2.16.2
 
 # ── MOTOR MATEMATICO, GRAFOS & ANALYTICS ─────────────────────────────────────
 numpy>=2.5.4
@@ -44,7 +44,7 @@ openai>=3.39.0
 anthropic>=2.3.0
 httpx>=0.28.1
 mcp>=2.3.0
-laya>=0.4.15
+laya>=0.4.17
 
 # ── SERIES TEMPORAIS & INFERENCIA ────────────────────────────────────────────
 accelerate>=1.15.0
