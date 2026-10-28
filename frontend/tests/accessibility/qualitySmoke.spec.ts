@@ -131,7 +131,7 @@ test('simulator activates Quiz ICM lens, renders interactive quiz, and preserves
   await page.evaluate(async () => {
     await document.fonts.ready;
   });
-  await page.waitForTimeout(600);
+  await expect(page.getByText(/Questão/i)).toBeVisible();
 
   await page.addScriptTag({ path: require.resolve('axe-core') });
   const results = await page.evaluate(async () => {
