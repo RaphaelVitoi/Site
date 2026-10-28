@@ -106,4 +106,16 @@ Set-Alias nexus-keys Invoke-NexusKeys
 Set-Alias nexus-fix Invoke-NexusFix
 Set-Alias nexus-handoff Invoke-NexusHandoff
 
-Set-Alias nx nexus-watch
+# 6. NEXUS SOTA ENTRYPOINT (Friccao Zero de qualquer diretorio)
+function Invoke-Nexus {
+    $root = $PWD
+    while ($root -and -not (Test-Path -LiteralPath (Join-Path $root "nexus.ps1"))) {
+        $parent = Split-Path -Parent $root
+        if (-not $parent -or $parent -eq $root) { $root = $null; break }
+        $root = $parent
+    }
+    if (-not $root) { $root = "C:\Users\rapha\.gemini\Site" }
+    & (Join-Path $root "nexus.ps1") @args
+}
+Set-Alias nexus Invoke-Nexus -Scope Global -Option AllScope -Force
+Set-Alias nx-watch Invoke-NexusWatch -Scope Global -Option AllScope -Force

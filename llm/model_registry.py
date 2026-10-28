@@ -243,7 +243,7 @@ GPT_5_6_SOL = "gpt-5.6-sol"
 
 
 MODEL_REGISTRY: dict[str, ModelCapability] = {
-    # — ANTHROPIC — Geração 5.5 (Atualizada 2026-10-20)
+    # - ANTHROPIC - Geracao 5.5 (Atualizada 2026-10-20)
     "claude-opus-5.5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-5-5",
@@ -259,7 +259,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         supports_mid_conversation_system=True,
         requires_streaming_above=16_000,
         verification=VerificationStatus.VERIFICADO,
-        notas="Claude Opus 5.5: Primário canônico de Governança e Código Cirúrgico (Tier 1 / CHICO).",
+        notas="Claude Opus 5.5: Primario canonico de Governanca e Codigo Cirurgico (Tier 1 / CHICO).",
     ),
     "claude-sonnet-5.5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
@@ -274,7 +274,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         supports_mid_conversation_system=False,
         requires_streaming_above=16_000,
         verification=VerificationStatus.VERIFICADO,
-        notas="Claude Sonnet 5.5: Parceiro de Engenharia de Software e Construção Multi-arquivo.",
+        notas="Claude Sonnet 5.5: Parceiro de Engenharia de Software e Construcao Multi-arquivo.",
     ),
     "claude-haiku-5.5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
@@ -291,7 +291,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         verification=VerificationStatus.VERIFICADO,
         notas="Claude Haiku 5.5: Modelo Tier 1 de Fast Operations da Anthropic (trio com Gemini 3.5 Flash-Lite e GPT-6 Luna).",
     ),
-    # — ANTHROPIC — Geração 5 (mantida disponível; Haiku 4.5 tem regra própria)
+    # - ANTHROPIC - Geracao 5 (mantida disponivel; Haiku 4.5 tem regra propria)
     "claude-opus-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-5",
@@ -442,7 +442,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         motivo_nao_autorizado="Descontinuado em 2026-10-20 em favor de gpt-6.0-luna.",
         notas=("Descontinuado em favor de gpt-6.0-luna."),
     ),
-    # — GOOGLE — Frontier & Geração 4 / 3.8 / 3.1
+    # - GOOGLE - Frontier & Geracao 4 / 3.8 / 3.1
     "gemini-4-argon": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-4-argon",
@@ -560,7 +560,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "'medium' e 'high' (para subagentes de codigo/shell)."
         ),
     ),
-    # — OPENAI — Geração 6.0 (Atualizada 2026-10-20)
+    # - OPENAI - Geracao 6.0 (Atualizada 2026-10-20)
     "gpt-6.0-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-6-sol",
@@ -639,7 +639,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         verification=VerificationStatus.VERIFICADO,
         notas="Alias de chatgpt-6.0-luna.",
     ),
-    # — OPENAI — Geração 5.6 (Descontinuada em 2026-10-20 pelo Tier 0)
+    # - OPENAI - Geracao 5.6 (Descontinuada em 2026-10-20 pelo Tier 0)
     "chatgpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name=GPT_5_6_SOL,

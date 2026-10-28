@@ -10,13 +10,37 @@ param(
     [int]$RefreshSeconds = 3
 )
 
-$ErrorActionPreference = 'SilentlyContinue'
+$ErrorActionPreference = 'Continue'
 $Host.UI.RawUI.WindowTitle = "NEXUS DASHBOARD SOTA v8.0 GOLD - LIVE TELEMETRY & OPERATIONS"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectRoot = Resolve-Path "$ScriptDir\..\.."
-$PythonExe = "$ProjectRoot\.venv\Scripts\python.exe"
-$TelemetryScript = "$ScriptDir\get_dashboard_telemetry.py"
+$ProjectRoot = (Resolve-Path "$ScriptDir\..\..").Path
+$VenvPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
+$TelemetryScript = Join-Path $ScriptDir "get_dashboard_telemetry.py"
+$UvCmd = Get-Command uv -ErrorAction SilentlyContinue
+
+# Resolve o interpretador Python em cascata (venv -> uv -> sistema), como nexus.ps1
+if (Test-Path -LiteralPath $VenvPython) {
+    $PythonExe = $VenvPython
+    $UseUv = $false
+} elseif ($UvCmd) {
+    $PythonExe = $null
+    $UseUv = $true
+} else {
+    $sysPython = Get-Command python, python3 -ErrorAction SilentlyContinue | Select-Object -First 1
+    $PythonExe = if ($sysPython) { $sysPython.Source } else { $null }
+    $UseUv = $false
+}
+
+function Invoke-Telemetry {
+    if ($UseUv) {
+        return (& $UvCmd.Source run --directory $ProjectRoot --no-sync python $TelemetryScript 2>$null)
+    }
+    if ($PythonExe -and (Test-Path -LiteralPath $TelemetryScript)) {
+        return (& $PythonExe $TelemetryScript 2>$null)
+    }
+    return $null
+}
 
 function Format-StatusBadge {
     param([string]$StatusCode)
@@ -53,11 +77,14 @@ while ($true) {
     
     # Coleta de dados via Telemetry Engine
     $data = $null
-    if ((Test-Path $PythonExe) -and (Test-Path $TelemetryScript)) {
+    $telemetryError = $null
+    if (Test-Path -LiteralPath $TelemetryScript) {
         try {
-            $rawJson = & $PythonExe $TelemetryScript
-            $data = $rawJson | ConvertFrom-Json
-        } catch {}
+            $rawJson = Invoke-Telemetry
+            if ($rawJson) { $data = $rawJson | ConvertFrom-Json }
+        } catch {
+            $telemetryError = $_.Exception.Message
+        }
     }
 
     Clear-Host
@@ -65,6 +92,11 @@ while ($true) {
     Write-Host "     NEXUS DASHBOARD & TASK TRACKING ENGINE - CHICO SOTA v8.0 GOLD (2026)       " -ForegroundColor Yellow
     Write-Host "================================================================================" -ForegroundColor Cyan
     Write-Host "  Governanca: Raphael Vitoi | Avatar: Chico | Timestamp: $now" -ForegroundColor DarkGray
+    if ($telemetryError) {
+        Write-Host "  [TELEMETRIA] Erro ao coletar dados: $telemetryError" -ForegroundColor Red
+    } elseif (-not $data) {
+        Write-Host "  [TELEMETRIA] Interpretador Python indisponivel ou sem dados." -ForegroundColor Yellow
+    }
     Write-Host "================================================================================" -ForegroundColor Cyan
 
     # SECAO 1: ACESSIBILIDADE DE MODELOS (Qwen 7B, Gemma 4B, Gemma 31B Cloud)

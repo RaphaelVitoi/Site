@@ -152,6 +152,7 @@
         "!**/skills/**"
     ],
     "files.associations": {
+        "**/.remember/tmp/*.ts": "plaintext",
         ".markdownlintignore": "ignore",
         ".prettierignore": "ignore",
         ".geminiignore": "ignore",
@@ -252,8 +253,8 @@
     "jupyter.askForKernelRestart": false,
     "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
     "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
-    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
-    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**",
+    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
+    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
     "css.lint.unknownAtRules": "ignore",
     "scss.lint.unknownAtRules": "ignore",
     "vitest.rootConfig": "vitest.config.mjs",

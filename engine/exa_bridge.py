@@ -2,7 +2,7 @@
 
 Permite busca semantica na web, extracao de conteudo limpo (markdown),
 pesquisa avancada categorizada e execucao de agentes autonomos de pesquisa profunda (Exa Agent).
-Governança: Protocolo Master Chico SOTA v8.0 GOLD · Membro da Triade (Stitch, Exa & Jules).
+Governanca: Protocolo Master Chico SOTA v8.0 GOLD . Membro da Triade (Stitch, Exa & Jules).
 """
 
 from __future__ import annotations

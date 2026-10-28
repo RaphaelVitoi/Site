@@ -42,3 +42,5 @@ skills/
 **/.git/**
 .husky/
 **/.husky/**
+skills_archive/
+**/skills_archive/**

@@ -24,7 +24,7 @@ class LlamaServerOfflineError(Exception):
     def __init__(self, port: int):
         self.port = port
         self.message = (
-            f"⚠️ [SOTA-LOCAL] llama.cpp server is offline or unreachable on port {port}. "
+            f"[WARN] [SOTA-LOCAL] llama.cpp server is offline or unreachable on port {port}. "
             f"Please ensure the server is running. "
             f"Start it using: ./llama-server -m <model_path> --port {port}. "
             f"Alternatively, run: pwsh -File scripts/ops/Start-LocalLlama.ps1 -Port {port}"

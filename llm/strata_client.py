@@ -27,7 +27,7 @@ class StrataServerOfflineError(Exception):
     def __init__(self, port: int):
         self.port = port
         self.message = (
-            f"⚠️ [SOTA-LOCAL] Strata server is offline or unreachable on port {port}. "
+            f"[WARN] [SOTA-LOCAL] Strata server is offline or unreachable on port {port}. "
             f"Please ensure the server is running. "
             f"Start it using the Strata startup script or check the Strata engine installation."
         )
