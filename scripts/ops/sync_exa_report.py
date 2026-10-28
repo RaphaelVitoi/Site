@@ -3,7 +3,7 @@
 Conecta-se ao servidor Exa MCP (https://mcp.exa.ai/mcp),
 valida ferramentas disponiveis, limites de QPS da equipe, latencia de pesquisa semantica,
 e gera o relatorio reports/integrations/EXA_REPORT.md fidedigno e lastreado em telemetria real.
-Governança: Protocolo Master Chico SOTA v8.0 GOLD · Membro da Triade (Stitch, Exa & Jules).
+Governanca: Protocolo Master Chico SOTA v8.0 GOLD . Membro da Triade (Stitch, Exa & Jules).
 """
 
 from __future__ import annotations
@@ -112,31 +112,31 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     probes = data.get("probe_results", [])
 
     lines: list[str] = [
-        "# Exa MCP — Relatório de Governança, Busca Semântica & Pesquisa Autônoma",
+        "# Exa MCP - Relatorio de Governanca, Busca Semantica & Pesquisa Autonoma",
         "",
-        "> **Repositório Monitorado:** `RaphaelVitoi/Site`",
-        "> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules",
-        f"> **Data de Atualização:** `{now_utc}`",
+        "> **Repositorio Monitorado:** `RaphaelVitoi/Site`",
+        "> **Governanca:** Protocolo Master Chico SOTA v8.0 GOLD . Triade Stitch, Exa & Jules",
+        f"> **Data de Atualizacao:** `{now_utc}`",
         "> **Origem dos Dados:** Exa Hosted MCP (`https://mcp.exa.ai/mcp`) & Exa API (`https://api.exa.ai`)",
         "",
         "---",
         "",
-        "## 1. Resumo Executivo da Conexão Exa MCP",
+        "## 1. Resumo Executivo da Conexao Exa MCP",
         "",
-        "| Dimensão | Valor | Status Operacional |",
+        "| Dimensao | Valor | Status Operacional |",
         "| :--- | :--- | :--- |",
-        f"| **Status de Conexão** | `{status}` | {'✅ Operacional' if 'CONECTADO' in status else '⚠️ Verificar'} |",
+        f"| **Status de Conexao** | `{status}` | {'[OK] Operacional' if 'CONECTADO' in status else '[WARN] Verificar'} |",
         f"| **Equipe / Team** | `{team_name}` (`{team_id}`) | Workspace Pessoal Autenticado |",
         f"| **Taxa Limite (Rate Limit)** | `{qps} QPS` | Capacidade nominal para buscas concorrentes |",
-        f"| **Chave Ativa em Produção** | `{key_name}` | Configurada em `HKCU:\\Environment\\EXA_API_KEY` |",
-        f"| **Latência de Probe Medida** | `{latency} ms` | Ingestão e ranking semântico em tempo real |",
+        f"| **Chave Ativa em Producao** | `{key_name}` | Configurada em `HKCU:\\Environment\\EXA_API_KEY` |",
+        f"| **Latencia de Probe Medida** | `{latency} ms` | Ingestao e ranking semantico em tempo real |",
         "| **Transporte MCP** | HTTP SSE (`text/event-stream` / JSON-RPC 2.0) | Header `Accept: application/json, text/event-stream` |",
         "",
         "---",
         "",
-        "## 2. Catálogo das 4 Ferramentas Exa MCP",
+        "## 2. Catalogo das 4 Ferramentas Exa MCP",
         "",
-        "| Ferramenta MCP | Título Oficial | Função Operacional | Disponibilidade |",
+        "| Ferramenta MCP | Titulo Oficial | Funcao Operacional | Disponibilidade |",
         "| :--- | :--- | :--- | :--- |",
     ]
 
@@ -148,7 +148,7 @@ def format_markdown_report(data: dict[str, Any]) -> str:
             "",
             "---",
             "",
-            "## 3. Validação Empírica & Telemetria de Probe",
+            "## 3. Validacao Empirica & Telemetria de Probe",
             "",
             "- **Consulta de Teste Executada:** `Raphael Vitoi Poker Racional PMev`",
             f"- **Tempo de Resposta:** `{latency} ms`",
@@ -163,8 +163,8 @@ def format_markdown_report(data: dict[str, Any]) -> str:
                 [
                     f"### Resultado #{idx}: {p['title']}",
                     f"- **URL:** [{p['url']}]({p['url']})",
-                    f"- **Data de Publicação:** `{p['published_date']}`",
-                    f"- **Prévia Textual:** *{p['text_preview']}*",
+                    f"- **Data de Publicacao:** `{p['published_date']}`",
+                    f"- **Previa Textual:** *{p['text_preview']}*",
                     "",
                 ]
             )
@@ -175,14 +175,14 @@ def format_markdown_report(data: dict[str, Any]) -> str:
         [
             "---",
             "",
-            "## 4. Esteira de Pesquisa Contínua na Tríade (Jules · Stitch · Exa)",
+            "## 4. Esteira de Pesquisa Continua na Triade (Jules . Stitch . Exa)",
             "",
             "```mermaid",
             "flowchart TD",
-            '    Exa["🔍 Exa MCP (Busca Semântica & Exa Agent)"] --> Theory["🧠 Base Teórica PMev & Estado da Arte"]',
-            '    Theory --> Jules["⚡ Jules Cloud (Refatorações, Monte Carlo & Testes)"]',
-            '    Theory --> Stitch["🎨 Stitch MCP (Prototipagem UI Generativa & Design System)"]',
-            '    Jules --> NexusSite["🚀 Nexus Next.js 16 + aiohttp Backend"]',
+            '    Exa[" Exa MCP (Busca Semantica & Exa Agent)"] --> Theory[" Base Teorica PMev & Estado da Arte"]',
+            '    Theory --> Jules[" Jules Cloud (Refatoracoes, Monte Carlo & Testes)"]',
+            '    Theory --> Stitch[" Stitch MCP (Prototipagem UI Generativa & Design System)"]',
+            '    Jules --> NexusSite[" Nexus Next.js 16 + aiohttp Backend"]',
             "    Stitch --> NexusSite",
             "",
             "    classDef exa fill:#1a2332,stroke:#06b6d4,stroke-width:2px,color:#fff;",
@@ -195,19 +195,19 @@ def format_markdown_report(data: dict[str, Any]) -> str:
             "    class Theory,NexusSite site;",
             "```",
             "",
-            "### Playbook de Invocação Rápida via Python Bridge",
+            "### Playbook de Invocacao Rapida via Python Bridge",
             "",
             "```python",
             "from engine.exa_bridge import ExaClient",
             "",
             "client = ExaClient()",
             "",
-            "# 1. Busca semântica natural:",
+            "# 1. Busca semantica natural:",
             'resp = client.search(query="ICM multiway push fold equilibrium math", num_results=5)',
             "for r in resp.results:",
             '    print(f"{r.title} -> {r.url}")',
             "",
-            "# 2. Busca avançada com filtros:",
+            "# 2. Busca avancada com filtros:",
             "adv_resp = client.search_advanced(",
             '    query="Game Theory Poker Mathematical Foundations",',
             '    category="pdf",',
@@ -225,7 +225,7 @@ def format_markdown_report(data: dict[str, Any]) -> str:
             "```",
             "",
             "---",
-            "*Relatório emitido pelo Sincronizador Exa MCP — Protocolo Chico SOTA v8.0 GOLD*",
+            "*Relatorio emitido pelo Sincronizador Exa MCP - Protocolo Chico SOTA v8.0 GOLD*",
         ]
     )
 

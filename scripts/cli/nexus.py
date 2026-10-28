@@ -1192,7 +1192,9 @@ def _execute_shortcut(key: str):
     if key in cmd_map:
         console.clear()
         console.print(f"[bold #ff79c6]=== EXECUTANDO ATALHO SOTA: [{key.upper()}] ===[/]")
-        subprocess.run(cmd_map[key], cwd=str(BASE_DIR), check=False)
+        result = subprocess.run(cmd_map[key], cwd=str(BASE_DIR), check=False)
+        if result.returncode != 0:
+            console.print(f"[bold red]Atalho [{key.upper()}] encerrou com codigo {result.returncode}.[/]")
 
 
 async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
