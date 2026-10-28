@@ -2251,7 +2251,7 @@ wheels = [
 
 [[package]]
 name = "laya"
-version = "0.4.16"
+version = "0.4.17"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -2260,9 +2260,9 @@ dependencies = [
     { name = "torch" },
     { name = "transformers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/43/c3539f87dd6372bbd288f6b83c261bd92ffd8d73ca6a75c369b498972db4/laya-0.4.16.tar.gz", hash = "sha256:2a8bdad5ad94aaa7f8a3d8e82ae3522072627594a9d10bfbc1a1f3dab300f5bb", size = 1357264, upload-time = "2026-10-28T04:18:14.245Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/31/e7ec2fb5b99b8406b4cb1763fc979341d3061bbc951c3d435b1e57fedc2b/laya-0.4.17.tar.gz", hash = "sha256:c6d004c3d5442ae709848b77d12f125eaea842ddf9abf3e8e275ce1166b902b6", size = 1366831, upload-time = "2026-10-28T10:13:43.052Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/db/6d/014a5305fdfa5626543d8492b3e04db6afb6c63c51c88c8db7b83d08f5ac/laya-0.4.16-py3-none-any.whl", hash = "sha256:12bf6da5a93b89e615a934a109c84b56ecb1ffe9e39a4afc206442b348b6d112", size = 451744, upload-time = "2026-10-28T04:18:12.735Z" },
+    { url = "https://files.pythonhosted.org/packages/06/5e/bd8d19ae67178dd5eb636fbfb0a9bcf9f05a0c47efecb0e3d8822abb7205/laya-0.4.17-py3-none-any.whl", hash = "sha256:53fd1a5d4418cbef2f50dab0702e03d873024efbb336a6cd3fc43672307b8435", size = 456055, upload-time = "2026-10-28T10:13:41.348Z" },
 ]
 
 [[package]]
@@ -3056,7 +3056,7 @@ requires-dist = [
     { name = "google-genai", specifier = ">=2.33.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "lancedb", specifier = ">=0.40.0,<1.0.0" },
-    { name = "laya", specifier = ">=0.4.16" },
+    { name = "laya", specifier = ">=0.4.17" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "mcp", specifier = ">=2.3.0" },
@@ -3078,7 +3078,7 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=26.0.0" },
     { name = "pyautogui", specifier = ">=0.9.54" },
     { name = "pydantic", specifier = ">=2.14.1" },
-    { name = "pydantic-settings", specifier = ">=2.16.1" },
+    { name = "pydantic-settings", specifier = ">=2.16.2" },
     { name = "pylint", marker = "extra == 'dev'", specifier = ">=4.1.3" },
     { name = "pypdf", specifier = ">=6.21.2,<7.0.0" },
     { name = "pyperclip", specifier = ">=1.11.0" },
@@ -4376,7 +4376,7 @@ wheels = [
 
 [[package]]
 name = "pydantic-settings"
-version = "2.16.1"
+version = "2.16.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
@@ -4384,9 +4384,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/05/ca/7817b4bf0c4b15c6a6ab8cdf4cb96c268335a8ca2f525de93b6ebe4c7d28/pydantic_settings-2.16.1.tar.gz", hash = "sha256:aff602a1886338c2df3d1e958e2193a8dc33cec75b91f202e83fd98484b4b0da", size = 303436, upload-time = "2026-10-20T11:37:19.024Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d0/31/21d21e0e38a8f5f7a7f0cde22820117b6d17d6bc36f348129527f915d7f4/pydantic_settings-2.16.2.tar.gz", hash = "sha256:3dc08ffabed2bbd5dc2dd55ead7b78b4e4c5cd776aecd04310db5f1224caaf46", size = 309225, upload-time = "2026-10-28T11:14:28.066Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3c/74/fdf926afe145d8629c4b2ff57f4ea1d64ed7abc4d84d97463b2517a2547e/pydantic_settings-2.16.1-py3-none-any.whl", hash = "sha256:30f5313340da4e8f1b440d1910b92a5bc3ccbb6b4ba70ec2b8395bc921f418f5", size = 80771, upload-time = "2026-10-20T11:37:17.298Z" },
+    { url = "https://files.pythonhosted.org/packages/39/88/4131c51ff87b7cd7f82a1194d0c0a2b7ca68c72d9da04c3b7e69ab91a79f/pydantic_settings-2.16.2-py3-none-any.whl", hash = "sha256:8d523e5c129b097686bde019bd6109bff53f4c8c3f63f1ddf9933ffa42e5ab4f", size = 81994, upload-time = "2026-10-28T11:14:26.716Z" },
 ]
 
 [[package]]

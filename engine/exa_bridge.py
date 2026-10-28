@@ -18,11 +18,63 @@ import urllib.request
 
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "EXA_ERROR_NOT_CONFIGURED",
+    "EXA_MCP_ALL_TOOLS_URL",
+    "EXA_MCP_DEFAULT_URL",
+    "ExaAgentRun",
+    "ExaClient",
+    "ExaSearchResponse",
+    "ExaSearchResult",
+]
+
 EXA_MCP_DEFAULT_URL: Final[str] = "https://mcp.exa.ai/mcp"
 EXA_MCP_ALL_TOOLS_URL: Final[str] = (
     "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_run"
 )
 EXA_ERROR_NOT_CONFIGURED: Final[str] = "ExaClient nao configurado: EXA_API_KEY ausente."
+_MARKER_TITLE: Final[str] = "Title:"
+_MARKER_URL: Final[str] = "URL:"
+_MARKER_PUBLISHED: Final[str] = "Published:"
+_MARKER_AUTHOR: Final[str] = "Author:"
+_MARKDOWN_BLOCK_SPLIT_REGEX: Final[re.Pattern[str]] = re.compile(r"\n---(?:\n|$)")
+
+
+def _parse_markdown_block(block: str) -> ExaSearchResult | None:
+    lines = block.strip().splitlines()
+    title = next((line.split(_MARKER_TITLE, 1)[1].strip() for line in lines if line.startswith(_MARKER_TITLE)), "")
+    url = next((line.split(_MARKER_URL, 1)[1].strip() for line in lines if line.startswith(_MARKER_URL)), "")
+    pub = next(
+        (line.split(_MARKER_PUBLISHED, 1)[1].strip() for line in lines if line.startswith(_MARKER_PUBLISHED)), None
+    )
+    author = next((line.split(_MARKER_AUTHOR, 1)[1].strip() for line in lines if line.startswith(_MARKER_AUTHOR)), None)
+    if not url:
+        return None
+    return ExaSearchResult(
+        url=url,
+        id=url,
+        title=title,
+        author=author if author != "N/A" else None,
+        published_date=pub if pub != "N/A" else None,
+        text=block.strip(),
+    )
+
+
+def _parse_markdown_results(raw_text: str) -> list[ExaSearchResult]:
+    """Parsing defensivo de blocos de texto markdown retornados por web_search_exa."""
+    if not (_MARKER_URL in raw_text or _MARKER_TITLE in raw_text):
+        return []
+    blocks = _MARKDOWN_BLOCK_SPLIT_REGEX.split(raw_text.strip())
+    results: list[ExaSearchResult] = []
+    for b in blocks:
+        item = _parse_markdown_block(b)
+        if item is not None:
+            results.append(item)
+    return results
+
+
+def _parse_structured_results(raw_results: list[Any]) -> list[ExaSearchResult]:
+    return [ExaSearchResult.from_dict(r) if isinstance(r, dict) else ExaSearchResult(url=str(r)) for r in raw_results]
 
 
 @dataclass
@@ -104,30 +156,9 @@ class ExaSearchResponse(dict[str, Any]):
         raw_text = str(data.get("raw_text", ""))
 
         if isinstance(raw_results, list) and raw_results:
-            parsed_results = [
-                ExaSearchResult.from_dict(r) if isinstance(r, dict) else ExaSearchResult(url=str(r))
-                for r in raw_results
-            ]
-        elif raw_text and ("URL:" in raw_text or "Title:" in raw_text):
-            # Parsing defensivo de blocos de texto markdown retornados por web_search_exa
-            blocks = re.split(r"\n---\n|\n---$", raw_text.strip())
-            for b in blocks:
-                lines = b.strip().splitlines()
-                title = next((l.split("Title:", 1)[1].strip() for l in lines if l.startswith("Title:")), "")
-                url = next((l.split("URL:", 1)[1].strip() for l in lines if l.startswith("URL:")), "")
-                pub = next((l.split("Published:", 1)[1].strip() for l in lines if l.startswith("Published:")), None)
-                author = next((l.split("Author:", 1)[1].strip() for l in lines if l.startswith("Author:")), None)
-                if url:
-                    parsed_results.append(
-                        ExaSearchResult(
-                            url=url,
-                            id=url,
-                            title=title,
-                            author=author if author != "N/A" else None,
-                            published_date=pub if pub != "N/A" else None,
-                            text=b.strip(),
-                        )
-                    )
+            parsed_results = _parse_structured_results(raw_results)
+        elif raw_text:
+            parsed_results = _parse_markdown_results(raw_text)
 
         inst = cls(
             results=parsed_results,
@@ -172,6 +203,27 @@ class ExaAgentRun(dict[str, Any]):
         return inst
 
 
+def _extract_json_from_sse_line(line: str) -> dict[str, Any] | None:
+    if not line.startswith("data: "):
+        return None
+    data_str = line[6:].strip()
+    if not data_str:
+        return None
+    try:
+        parsed = json.loads(data_str)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
+        return None
+
+
+def _parse_raw_json_fallback(text: str) -> dict[str, Any] | None:
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else None
+    except json.JSONDecodeError:
+        return None
+
+
 class ExaClient:
     """Cliente JSON-RPC hermetico para o servidor MCP do Exa (https://mcp.exa.ai/mcp)."""
 
@@ -208,22 +260,13 @@ class ExaClient:
         """Decodifica carga de resposta SSE (text/event-stream) ou JSON puro."""
         text = body_bytes.decode("utf-8")
         for line in text.splitlines():
-            if line.startswith("data: "):
-                data_str = line[6:].strip()
-                if data_str:
-                    try:
-                        parsed = json.loads(data_str)
-                        if isinstance(parsed, dict):
-                            return parsed
-                    except json.JSONDecodeError:
-                        continue
-        # Fallback para JSON direto sem envelope SSE
-        try:
-            parsed = json.loads(text)
-            if isinstance(parsed, dict):
+            parsed = _extract_json_from_sse_line(line)
+            if parsed is not None:
                 return parsed
-        except json.JSONDecodeError:
-            pass
+        # Fallback para JSON direto sem envelope SSE
+        fallback = _parse_raw_json_fallback(text)
+        if fallback is not None:
+            return fallback
         return {"raw_text": text}
 
     def _call_tool(self, tool_name: str, arguments: dict[str, object] | None = None) -> dict[str, Any]:

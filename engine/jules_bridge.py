@@ -11,7 +11,7 @@ import json
 import logging
 import os
 import re
-from typing import Final
+from typing import Any, Final
 import urllib.error
 import urllib.request
 
@@ -109,6 +109,25 @@ class JulesDiffResult:
     session_id: str
     diff_content: str
     files_changed: list[str]
+
+
+def _extract_git_patch_from_artifact(artifact: dict[str, Any]) -> str:
+    change_set = artifact.get("changeSet")
+    if not isinstance(change_set, dict):
+        return ""
+    git_patch = change_set.get("gitPatch")
+    if not isinstance(git_patch, dict):
+        return ""
+    return str(git_patch.get("unidiffPatch", ""))
+
+
+def _find_patch_in_artifacts(artifacts: list[Any]) -> str:
+    for art in reversed(artifacts):
+        if isinstance(art, dict):
+            patch = _extract_git_patch_from_artifact(art)
+            if patch:
+                return patch
+    return ""
 
 
 class JulesClient:
@@ -211,6 +230,23 @@ class JulesClient:
             logger.exception("[JULES] Falha ao aprovar plano %s", activity_id)
             return False
 
+    def _extract_diff_from_activities(self, session_id: str) -> JulesDiffResult | None:
+        """Fallback SOTA: busca patch unidiff nos artefatos das atividades da sessao."""
+        activities = self.get_activities(session_id)
+        for act in reversed(activities):
+            artifacts = act.get("artifacts")
+            if not isinstance(artifacts, list):
+                continue
+            patch = _find_patch_in_artifacts(artifacts)
+            if patch:
+                files = re.findall(r"diff --git a/(.*?) b/", patch)
+                return JulesDiffResult(
+                    session_id=session_id,
+                    diff_content=patch,
+                    files_changed=files,
+                )
+        return None
+
     def get_diff(self, session_id: str) -> JulesDiffResult:
         """Coleta o diff unificado gerado pela sessao do Jules."""
         if not self.is_configured:
@@ -229,25 +265,9 @@ class JulesClient:
                 )
         except urllib.error.HTTPError as e:
             if e.code == 404:
-                # Fallback SOTA: a API v1alpha armazena o patch dentro dos artefatos em activities (busca do mais recente ao mais antigo)
-                activities = self.get_activities(session_id)
-                for act in reversed(activities):
-                    artifacts = act.get("artifacts")
-                    if isinstance(artifacts, list):
-                        for art in reversed(artifacts):
-                            if isinstance(art, dict):
-                                cs = art.get("changeSet")
-                                if isinstance(cs, dict) and "gitPatch" in cs:
-                                    gp = cs["gitPatch"]
-                                    if isinstance(gp, dict):
-                                        patch = str(gp.get("unidiffPatch", ""))
-                                        if patch:
-                                            files = re.findall(r"diff --git a/(.*?) b/", patch)
-                                            return JulesDiffResult(
-                                                session_id=session_id,
-                                                diff_content=patch,
-                                                files_changed=files,
-                                            )
+                fallback_result = self._extract_diff_from_activities(session_id)
+                if fallback_result is not None:
+                    return fallback_result
             err_msg = e.read().decode("utf-8", errors="replace")
             logger.exception("[JULES] Erro HTTP %d ao obter diff: %s", e.code, err_msg)
             raise RuntimeError(f"Erro ao obter diff do Jules ({e.code}): {err_msg}") from e

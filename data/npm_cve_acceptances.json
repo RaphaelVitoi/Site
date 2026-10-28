@@ -243,6 +243,26 @@
       },
       "expira_se": "Vitest transitivo atualizar para v5.",
       "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "deepmerge-prototype-poisoning-dev-jest-20261028",
+      "status": "accepted",
+      "accepted_at": "2026-10-28",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "deepmerge",
+      "version": "4.3.1",
+      "vulnerability_ids": [
+        "GHSA-gcqx-w48m-w2h4"
+      ],
+      "evidence": {
+        "vetor": "mergeObject() permite envenenamento de prototipo em objetos retornados quando mescla propriedades de usuario sem validacao.",
+        "alcance_medido": "Grep em todo o codigo de producao do frontend confirma zero consumo de deepmerge em runtime. A dependencia e estritamente transitiva de desenvolvimento via jest -> @jest/core -> jest-config -> deepmerge.",
+        "consumo_real": "Utilizado exclusivamente pelo runner de testes Jest em desenvolvimento e CI para mesclar configuracoes locais do jest.config.js.",
+        "ausencia_de_correcao": "deepmerge 4.3.1 e a versao mais recente na linha 4.x. Correcao no npm audit sugere rebaixar o jest para 25.1.0 (major downgrade regressivo).",
+        "registro": "reports/REGISTRO-2026-10-28-saneamento-reconciliacao-e-elevacao-dependencias-triade-montecarlo.md"
+      },
+      "expira_se": "deepmerge publicar versao corrigida (>4.3.1) ou jest-config migrar para alternativa segura.",
+      "revisar_em": "2026-12-31"
     }
   ]
 }

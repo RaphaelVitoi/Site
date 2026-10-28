@@ -150,7 +150,7 @@ def format_markdown_report(data: dict[str, Any]) -> str:
             "",
             "## 3. Validação Empírica & Telemetria de Probe",
             "",
-            f"- **Consulta de Teste Executada:** `Raphael Vitoi Poker Racional PMev`",
+            "- **Consulta de Teste Executada:** `Raphael Vitoi Poker Racional PMev`",
             f"- **Tempo de Resposta:** `{latency} ms`",
             f"- **Resultados Retornados:** `{len(probes)}`",
             "",

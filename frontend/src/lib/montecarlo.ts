@@ -145,10 +145,10 @@ function runSingleMonteCarloIteration(
 	accumulators: MonteCarloAccumulators,
 	isBusted: Uint8Array | null,
 	random: () => number,
-	k: number,
 ) {
 	let remainingTotalChips = totalChips;
 	let availablePlayers = (1 << numPlayers) - 1; // Bitmask (funciona rápido até 31 jogadores)
+	const k = activePrizes.length;
 
 	if (isBusted) {
 		isBusted.fill(0);
@@ -424,7 +424,6 @@ function calculateIcmMonteCarloWithZeros(params: MonteCarloWithZerosParams): Mon
 			activeAccumulators,
 			isBusted,
 			random,
-			kActive
 		);
 	}
 
@@ -515,7 +514,6 @@ function calculateIcmMonteCarloStandard(params: MonteCarloStandardParams): Monte
 			accumulators,
 			isBusted,
 			random,
-			k
 		);
 	}
 
