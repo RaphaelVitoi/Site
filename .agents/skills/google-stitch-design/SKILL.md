@@ -1,6 +1,6 @@
 ---
 name: google-stitch-design
-description: Runbook e governanca para o Google Cloud Stitch MCP (stitch.withgoogle.com / stitch.googleapis.com). Use ao gerar telas a partir de prompts conceituais, consultar o design system Obsidian Analytics, revisar variantes visuais, editar componentes e integrar resultados em componentes Tailwind CSS 4 / Next.js com suporte a Gemini 3.8 Flash (Balanced) e Gemini 3.5 Flash-Lite (Speed).
+description: "Runbook e governanca para o Google Cloud Stitch MCP (stitch."
 ---
 
 # SKILL: Google Cloud Stitch — UI Generativa & Design Systems SOTA

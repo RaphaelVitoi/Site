@@ -1,6 +1,6 @@
 ---
 name: timesfm-forecasting
-description: Google Research TimesFM (Time Series Foundation Model) engineering and governance runbook. Use when executing time-series forecasting for bankroll projections, EV variance decay, RIO risk, or multivariate telemetry; managing licensing compliance (TimesFM 2.0/2.5 Apache 2.0 commercial production vs 3.0 non-commercial research); or connecting to BigQuery ML AI.FORECAST.
+description: "Google Research TimesFM (Time Series Foundation Model) engineering and governance runbook. Use when executing time-series forecasting for bankroll projections, EV variance decay, RIO risk, or multivariate telemetry; m..."
 ---
 
 # SKILL: Google Research TimesFM — Previsão de Séries Temporais & Governança

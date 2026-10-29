@@ -1,6 +1,6 @@
 ---
 name: chrome-devtools-agent-sota
-description: Official Google Chrome DevTools for Agents protocol and engineering runbook. Use when connecting agents to live Chrome instances over CDP (ports 9222/9223) or MCP (chrome-devtools-mcp), performing visual grounding via the Accessibility Tree, running proactive Lighthouse audits (WCAG accessibility, SEO, Core Web Vitals), automating real user emulations, inspecting network/console/heap, or executing zero-rework frontend validation loops.
+description: "Official Google Chrome DevTools for Agents protocol and engineering runbook. Use when connecting agents to live Chrome instances over CDP (ports 9222/9223) or MCP (chrome-devtools-mcp), performing visual grounding via..."
 ---
 
 # SKILL: Chrome DevTools para Agentes (Padrão Oficial Google)

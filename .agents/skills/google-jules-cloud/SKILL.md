@@ -1,6 +1,6 @@
 ---
 name: google-jules-cloud
-description: Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules.google.com). Use ao despachar tarefas assincronas em VMs descartaveis na nuvem (otimizacoes noturnas Bolt, refatoracoes em massa, geracao de testes), inspecionar sessoes e atividades, aprovar planos via MCP e sincronizar telemetria em reports/integrations/JULES_REPORT.md.
+description: "Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules."
 ---
 
 # SKILL: Google Jules Cloud — Orquestração Assíncrona & Engenharia em Nuvem

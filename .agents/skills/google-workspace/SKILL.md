@@ -1,6 +1,6 @@
 ---
 name: google-workspace
-description: Gold-standard integration and automation runbook for Google Workspace (Google Drive, Calendar, Gmail, Sheets) via MCP servers and Application Default Credentials (ADC). Use whenever searching files, reading/exporting Meet notes and transcripts, managing Google Calendar events, composing/reading Gmail messages, reading or updating Google Sheets, or validating Google Workspace OAuth tokens and MCP server endpoints.
+description: "Gold-standard integration and automation runbook for Google Workspace (Google Drive, Calendar, Gmail, Sheets) via MCP servers and Application Default Credentials (ADC). Use whenever searching files, reading/exporting ..."
 license: Apache-2.0
 metadata:
   version: v1.0.0

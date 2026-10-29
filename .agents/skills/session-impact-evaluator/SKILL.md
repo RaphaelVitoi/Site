@@ -1,6 +1,6 @@
 ---
 name: session-impact-evaluator
-description: Avaliacao objetiva, factual e agnostica de impacto de sessao entre modelos Tier 1, 2 e 3. Use compulsoriamente ao final anunciado de cada sessao para mensurar percentuais de reducao de pendencias, economia de tokens MCP (S1), latencia de ingress, integridade do ledger e taxas de resolucao de fila.
+description: "Avaliacao objetiva, factual e agnostica de impacto de sessao entre modelos Tier 1, 2 e 3."
 ---
 
 # SOTA Session Impact Evaluator (Agnóstico Tiers 1-2-3)

@@ -1,6 +1,6 @@
 ---
 name: sota-server-lifecycle-warmup
-description: Use para orquestrar a subida de servidores, compilação de produção (build Turbopack), higienização atômica de processos, recarga de variáveis (.env), aquecimento (warmup) HTTP e validação de hidratação cliente/servidor no ecossistema Site (Backend aiohttp 17042, Frontend Next.js 3000, SQLite dev.db e Chrome CDP 9222).
+description: "Use para orquestrar a subida de servidores, compilação de produção (build Turbopack), higienização atômica de processos, recarga de variáveis (."
 ---
 
 # SKILL: SOTA Server Lifecycle, Build & Warmup Orchestrator
