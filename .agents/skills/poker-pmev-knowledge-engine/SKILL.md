@@ -1,6 +1,6 @@
 ---
 name: poker-pmev-knowledge-engine
-description: Busca, download e leitura de material de Poker e PMev (Google Drive via ADC, arquivos locais) com indice SQLite FTS5 enderecado por conteudo. Le PDF, DOCX, PPTX, XLSX, texto, saves HRC (.hrcz) e metadados de video. Escrita restrita a docs/research/pmev/ e scratch/.
+description: "Busca, download e leitura de material de Poker e PMev (Google Drive via ADC, arquivos locais) com indice SQLite FTS5 enderecado por conteudo."
 license: Apache-2.0
 metadata:
   version: v1.1.0

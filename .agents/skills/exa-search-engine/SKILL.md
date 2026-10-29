@@ -1,6 +1,6 @@
 ---
 name: exa-search-engine
-description: Runbook, governanca e ponte de execucao para o Exa MCP (mcp.exa.ai/mcp / api.exa.ai). Use ao realizar buscas semanticas na web em linguagem natural, buscas avancadas categorizadas, extracao de paginas em markdown limpo e execucao de pesquisas profundas multietapa com o Exa Agent sob o Protocolo Chico SOTA v8.0 Gold.
+description: "Runbook, governanca e ponte de execucao para o Exa MCP (mcp."
 ---
 
 # SKILL: Exa MCP — Busca Semântica, Web Fetch & Exa Agent SOTA

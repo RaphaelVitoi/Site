@@ -1,6 +1,6 @@
 ---
 name: site-session-handoff
-description: Use when closing or handing off a non-trivial session in the Site ecosystem; produce evidence-bounded official reports, preserve learning and user feedback, verify identity and memory records, and pass authorized pre-commit/pre-push gates without sweeping unrelated changes.
+description: "Use when closing or handing off a non-trivial session in the Site ecosystem; produce evidence-bounded official reports, preserve learning and user feedback, verify identity and memory records, and pass authorized pre-..."
 ---
 
 # Site Session Handoff & Calibration

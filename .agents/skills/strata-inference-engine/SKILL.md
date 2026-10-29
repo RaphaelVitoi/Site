@@ -1,6 +1,6 @@
 ---
 name: strata-inference-engine
-description: Runbook, governanca e integracao da engine Strata v0.1.39 (MoE 125B Qwen3.8-Flash-Next / ISTA-DASLab Coder). Use para consultar a arquitetura de cache hibrido de experts, gerenciar VRAM elastica (/v1/vram), despachar chamadas via OpenAI Responses API (/v1/responses), operar o cliente Python (Site/llm/strata_client.py) e inicializar o no local via scripts/ops/Start-StrataNode.ps1.
+description: "Runbook, governanca e integracao da engine Strata v0."
 ---
 
 # SKILL: Strata MoE 125B — Engine de Inferência & Orquestração Híbrida
