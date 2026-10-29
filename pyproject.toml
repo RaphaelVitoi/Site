@@ -60,8 +60,8 @@ dependencies = [
     "onnxruntime>=1.31.1",
     "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
-    "google-genai>=2.33.0",
-    "openai>=3.40.0",
+    "google-genai>=2.34.0",
+    "openai>=3.41.0",
     "anthropic>=2.3.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────

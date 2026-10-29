@@ -374,7 +374,6 @@
     "turboConsoleLog.addSemicolonInTheEnd": true,
     "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
     "redhat.telemetry.enabled": false,
-    "antigravity.enableTelemetry": false,
     "gdl.openTarget": "system",
     "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
         "build/QuantumTensorEngine.sln"
@@ -401,7 +400,7 @@
         "*.docx": "cweijan.officeViewer",
         "*.doc": "cweijan.officeViewer",
         "*.pptx": "cweijan.officeViewer",
-        "*.parquet": "parquetViewer.parquetViewer",
+        "*.parquet": "cweijan.parquetViewer",
         "*.drawio": "hediet.vscode-drawio",
         "*.dio": "hediet.vscode-drawio",
         "*.dio.png": "hediet.vscode-drawio",
@@ -424,7 +423,7 @@
     "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
     "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
     "wam.switchDevinCli": true,
-    "files.autoSave": "afterDelay",
+    "files.autoSave": "off",
     "editor.codeActions.triggerOnFocusChange": true,
     "editor.definitionLinkOpensInPeek": true,
     "editor.experimental.asyncTokenizationLogging": true,

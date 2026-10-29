@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     NEXUS DASHBOARD SOTA v8.0 GOLD - Gateway Executivo Unificado (CEO Level)
 .DESCRIPTION
@@ -36,7 +36,10 @@ if ($args.Count -gt 0) {
 
     # Rota: Telemetria Estendida de Servicos e Modelos (Start-NexusDashboard.ps1)
     if ($firstArg -in @('-t', '--telemetry', '--monitor', '-monitor')) {
-        $remainingArgs = if ($args.Count -gt 1) { $args[1..($args.Count - 1)] } else { @() }
+        # @(...) obrigatorio: com um unico argumento, $args[1..1] devolve uma STRING e o splat
+        # a entregaria caractere a caractere ("-Once" virava '-', 'O', 'n'...).
+        $remainingArgs = @()
+        if ($args.Count -gt 1) { $remainingArgs = @($args[1..($args.Count - 1)]) }
         $telemetryScript = Join-Path $ScriptDir 'scripts\ops\Start-NexusDashboard.ps1'
         if (Test-Path -LiteralPath $telemetryScript) {
             $pwshExe = (Get-Command pwsh -ErrorAction SilentlyContinue).Source

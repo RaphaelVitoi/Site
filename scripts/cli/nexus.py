@@ -20,7 +20,7 @@ import sqlite3
 import subprocess  # nosec # noqa: S404
 import sys
 import time
-from typing import Any
+from typing import Any, NamedTuple
 
 import httpx
 from loguru import logger
@@ -664,8 +664,8 @@ def _is_port_open(port: int, host: str = "127.0.0.1") -> bool:
 
 def _build_system_status_panel() -> Panel:
     sys_table = Table.grid(expand=True, padding=(0, 1))
-    sys_table.add_column(style=STYLE_BOLD_WHITE, justify="left", width=16)
-    sys_table.add_column()
+    sys_table.add_column(style=STYLE_BOLD_WHITE, justify="left", no_wrap=True, min_width=16)
+    sys_table.add_column(overflow="fold")
 
     cpu_raw: Any = psutil.cpu_percent()
     cpu_val = float(cpu_raw) if isinstance(cpu_raw, (int, float)) else 0.0
@@ -716,8 +716,8 @@ def _build_system_status_panel() -> Panel:
 
 def _build_task_status_panel(counts: dict) -> Panel:
     task_table = Table.grid(expand=True, padding=(0, 1))
-    task_table.add_column(style=STYLE_BOLD_WHITE, justify="left", width=16)
-    task_table.add_column(justify="right")
+    task_table.add_column(style=STYLE_BOLD_WHITE, justify="left", no_wrap=True, min_width=16)
+    task_table.add_column(justify="right", overflow="fold")
 
     pending = counts.get("pending", 0)
     running = counts.get("running", 0)
@@ -734,37 +734,61 @@ def _build_task_status_panel(counts: dict) -> Panel:
     task_table.add_row("Concluidas", f"[bold #50fa7b]{completed}[/]")
     task_table.add_row("Falhas", f"[bold #ff5555]{failed}[/]")
     task_table.add_row("Total na Malha", f"[bold #f8f8f2]{total}[/]")
+    # Taxa DERIVADA das contagens; sem tarefa decidida nao ha taxa, e nao se inventa uma.
+    decididas = completed + failed
+    if decididas:
+        taxa = completed / decididas * 100
+        task_table.add_row("Taxa de Sucesso", f"[bold {_color_threshold(taxa, (70, 90), reverse=True)}]{taxa:.1f}%[/]")
     task_table.add_row("", "")
     task_table.add_row("Volume do DAL", f"[{db_color}]{db_size_kb:.1f} KB[/]")
-    task_table.add_row("DAG Integrity", "[bold #50fa7b]SINC[/]")
 
     return Panel(
         task_table, title="[bold #ff79c6]ESTADO DO KERNEL[/]", border_style="#ff79c6", padding=(1, 2), box=box.ROUNDED
     )
 
 
+# Servicos que o dashboard MEDE (porta aberta). Antes o painel exibia como fatos
+# "Friccao Zero ATIVADO", "Quantum Metrics ATIVO", "Antevisao Sem. ONLINE" e
+# "DAG Integrity SINC": literais sem medidor por tras -- o padrao que esta base
+# ja reprovou em outros lugares (o medidor que reporta sem estar ligado ao que mede).
+_DASH_SERVICES: tuple[tuple[str, int], ...] = (
+    ("Ollama", 11434),
+    ("Gemma Server", 17043),
+    ("Backend API", 17042),
+    ("Strata 125B MoE", 8080),
+)
+
+
+def _probe_services() -> dict[str, bool]:
+    """Sonda as portas em paralelo: o custo do quadro e o da mais lenta, nao a soma."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=len(_DASH_SERVICES)) as pool:
+        abertas = list(pool.map(lambda s: _is_port_open(s[1]), _DASH_SERVICES))
+    return {nome: aberta for (nome, _), aberta in zip(_DASH_SERVICES, abertas, strict=True)}
+
+
 def _build_metrics_panel() -> Panel:
     table = Table.grid(expand=True, padding=(0, 1))
-    table.add_column(style=STYLE_BOLD_WHITE, justify="left", width=16)
-    table.add_column(justify="right")
+    table.add_column(style=STYLE_BOLD_WHITE, justify="left", no_wrap=True, min_width=16)
+    table.add_column(justify="right", overflow="fold")
 
-    table.add_row("Autonomia", "[bold #bd93f9]W3 (GOD MODE)[/]")
-    table.add_row("Friccao Zero", "[bold #50fa7b]ATIVADO[/]")
+    table.add_row("Autonomia (politica)", "[bold #bd93f9]W3 (GOD MODE)[/]")
     # Dizia "LanceDB (Hybrid)". O motor e ChromaDB: `memory_rag.py` usa
     # chromadb.PersistentClient com ONNXMiniLM_L6_V2, e `lancedb` nao esta
     # instalado neste ambiente. Medido em 2026-08-28.
     table.add_row("RAG Engine", "[bold #8be9fd]ChromaDB (ONNX MiniLM-L6-v2)[/]")
-    table.add_row("Antevisao Sem.", "[bold #50fa7b]ONLINE[/]")
-    table.add_row("I/O Latency Target", "[bold #50fa7b]O(1)[/]")
     table.add_row("CLI Version", "[bold #f8f8f2]v8.0 GOLD[/]")
-    table.add_row("Cortex Override", "[dim #6272a4]Standby[/]")
-    table.add_row("Quantum Metrics", "[bold #8be9fd]ATIVO[/]")
-    strata_alive = _is_port_open(8080)
-    strata_status = "[bold #50fa7b]ONLINE (:8080)[/]" if strata_alive else "[dim #6272a4]STANDBY[/]"
-    table.add_row("Strata 125B MoE", strata_status)
+    table.add_row("", "")
+    estado = _probe_services()
+    for nome, porta in _DASH_SERVICES:
+        if estado[nome]:
+            table.add_row(nome, f"[bold #50fa7b]ONLINE[/] [dim #6272a4]:{porta}[/]")
+        else:
+            table.add_row(nome, f"[dim #6272a4]standby :{porta}[/]")
 
     return Panel(
-        table, title="[bold #bd93f9]PARAMETROS VITOI[/]", border_style="#bd93f9", padding=(1, 2), box=box.ROUNDED
+        table, title="[bold #bd93f9]SERVICOS & PARAMETROS[/]", border_style="#bd93f9", padding=(1, 2), box=box.ROUNDED
     )
 
 
@@ -1019,7 +1043,7 @@ def _build_calibration_panel() -> Panel:
 
     return Panel(
         table,
-        title="[bold #50fa7b]CALIBRACAO DE AGENTES & MOTOR TEMPORAL TIMESFM (Pressione [K] para Painel Completo)[/]",
+        title="[bold #50fa7b]CALIBRACAO DE AGENTES & TIMESFM  [K][/]",
         border_style="#50fa7b",
         padding=(0, 2),
         box=box.ROUNDED,
@@ -1040,7 +1064,6 @@ def _build_notifications_panel() -> Panel:
     health_color = "#50fa7b" if "HOMEOSTASE" in report.health_status else "#f1fa8c"
     health_col = (
         f"[bold #50fa7b]Dream-RSI:[/] [white]{report.dream_trees_count} arvores[/] ([white]{report.dream_nodes_count} nos[/])\n"
-        f"[dim]Poda Preditiva TimesFM:[/] [bold #50fa7b]-15.1% espaco[/] | [dim]Monotonicidade:[/] [bold #50fa7b]100%[/]\n"
         f"[bold #8be9fd]Token Headroom:[/] [white]{report.token_budget_consumed:,} / {report.token_budget_limit:,}[/] ([bold #50fa7b]+{report.token_headroom_percent:.1f}% livre[/])\n"
         f"[bold #bd93f9]Integridade Global:[/] [bold {health_color}]{report.health_status}[/]"
     )
@@ -1059,79 +1082,153 @@ def _build_notifications_panel() -> Panel:
     recs_str = "\n".join(recs_lines) if recs_lines else "[dim #6272a4]Nenhuma recomendacao pendente.[/]"
 
     grid.add_row(health_col, recs_str)
+    corpo: Any = grid if console.width >= 100 else Group(health_col, "", recs_str)
 
     return Panel(
-        grid,
-        title="[bold #ff79c6]NOTIFICACOES, STATUS DINAMICO & RECOMENDACOES (Pressione [D], [T] ou [K])[/]",
+        corpo,
+        title="[bold #ff79c6]NOTIFICACOES, STATUS DINAMICO & RECOMENDACOES  [D] [T] [K][/]",
         border_style="#ff79c6",
         padding=(0, 2),
         box=box.ROUNDED,
     )
 
 
+class _Atalho(NamedTuple):
+    """Fonte UNICA dos atalhos: alimenta o rodape, o despacho e as teclas validas."""
+
+    tecla: str
+    grupo: str
+    comando: str
+    descricao: str
+    argv: tuple[str, ...]
+    destrutivo: bool = False
+
+
+_GRP_OPERACOES = "OPERACOES"
+_GRP_AGENTES = "AGENTES"
+_GRP_ESTATISTICAS = "ESTATISTICAS"
+_GRP_BANCO = "BANCO (DAL)"
+
+
+_DASHBOARD_SHORTCUTS: tuple[_Atalho, ...] = (
+    _Atalho("1", _GRP_OPERACOES, "ops worker", "Ligar Orquestrador", ("ops", "worker", "-f")),
+    _Atalho("2", _GRP_OPERACOES, "ops watch", "Hot-reload / Vigilia", ("ops", "watch")),
+    _Atalho("3", _GRP_OPERACOES, "ops sanitize", "Higiene SOTA", ("ops", "sanitize")),
+    _Atalho("4", _GRP_OPERACOES, "ops quality-gate", "Validar Pipeline CI", ("ops", "quality-gate")),
+    _Atalho("r", _GRP_OPERACOES, "ops optimize-ram", "Esvaziar e Otimizar RAM", ("ops", "optimize-ram")),
+    _Atalho("m", _GRP_OPERACOES, "ops maintenance", "Manutencao Geral SOTA", ("ops", "maintenance")),
+    _Atalho("a", _GRP_OPERACOES, "ops check-ascii", "Blindagem ASCII", ("ops", "check-ascii")),
+    _Atalho("x", _GRP_OPERACOES, "ops strata", "Strata MoE 125B", ("ops", "strata")),
+    _Atalho("g", _GRP_OPERACOES, "ops start-gemma", "Servidor Gemma local", ("ops", "start-gemma", "-f")),
+    _Atalho("i", _GRP_OPERACOES, "ops chat-gemma", "Chat Gemma interativo", ("ops", "chat-gemma")),
+    _Atalho("5", _GRP_AGENTES, "agent handoff", "Sessao Web (Clipboard)", ("agent", "handoff")),
+    _Atalho(
+        "6", _GRP_AGENTES, "agent route", "Testar Roteamento",
+        ("agent", "route", "Teste de roteamento do dashboard"),
+    ),
+    _Atalho(
+        "d", _GRP_AGENTES, "agent dream-optimize", "Fase de Sonho (TimesFM 3.0)",
+        ("agent", "dream-optimize", "--model", "3.0", "--research"),
+    ),
+    _Atalho("k", _GRP_AGENTES, "calib-forecast", "Calibracao & TimesFM", ("agent", "calibration-forecast")),
+    _Atalho("p", _GRP_AGENTES, "triad status", "Triade (Exa/Stitch/Jules)", ("triad", "status")),
+    _Atalho("t", _GRP_ESTATISTICAS, "stats timesfm", "Oraculo de Series Temporais", ("stats", "timesfm")),
+    _Atalho("7", _GRP_ESTATISTICAS, "stats daily", "Status Diario", ("stats", "daily")),
+    _Atalho("8", _GRP_ESTATISTICAS, "stats historian", "Motor Preditivo", ("stats", "historian")),
+    _Atalho("s", _GRP_ESTATISTICAS, "status", "Status Vital", ("status",)),
+    _Atalho("9", _GRP_BANCO, "db audit-dag", "Auditoria DAG", ("db", "audit-dag")),
+    _Atalho("v", _GRP_BANCO, "db vacuum", "Otimizar DB (VACUUM)", ("db", "vacuum")),
+    _Atalho("0", _GRP_BANCO, "db purge-orphans", "Limpar Orfas FAILED", ("db", "purge-orphans"), True),
+    _Atalho("c", _GRP_BANCO, "db clear-pending", "Aniquilar Pendentes", ("db", "clear-pending", "--confirm"), True),
+    _Atalho("f", _GRP_BANCO, "db clear-failed", "Aniquilar Falhas", ("db", "clear-failed", "--confirm"), True),
+)
+_ATALHOS_POR_TECLA: dict[str, _Atalho] = {a.tecla: a for a in _DASHBOARD_SHORTCUTS}
+_COR_GRUPO: dict[str, str] = {
+    _GRP_OPERACOES: "#50fa7b",
+    _GRP_AGENTES: "#8be9fd",
+    _GRP_ESTATISTICAS: "#bd93f9",
+    _GRP_BANCO: "#f1fa8c",
+}
+
+
 def _build_footer_panel() -> Panel:
-    grid = Table.grid(expand=True, padding=(0, 2))
-    grid.add_column(ratio=1)
-    grid.add_column(ratio=1)
-    grid.add_column(ratio=1)
+    """Rodape DERIVADO de _DASHBOARD_SHORTCUTS, com colunas que acompanham a largura do terminal."""
+    largura = console.width
+    if largura >= 110:
+        n_cols = 3
+    elif largura >= 72:
+        n_cols = 2
+    else:
+        n_cols = 1
 
-    c1 = (
-        "[1] [bold #50fa7b]nexus ops worker[/]\n[dim #6272a4]    Ligar Orquestrador[/]\n\n"
-        "[2] [bold #50fa7b]nexus ops watch[/]\n[dim #6272a4]    Hot-reload / Vigilia[/]\n\n"
-        "[3] [bold #50fa7b]nexus ops sanitize[/]\n[dim #6272a4]    Higiene SOTA[/]\n\n"
-        "[4] [bold #50fa7b]nexus ops quality-gate[/]\n[dim #6272a4]    Validar Pipeline CI[/]\n\n"
-        "[R] [bold #50fa7b]nexus ops optimize-ram[/]\n[dim #6272a4]    Esvaziar e Otimizar RAM[/]\n\n"
-        "[X] [bold #50fa7b]nexus ops strata[/]\n[dim #6272a4]    Strata MoE 125B[/]\n\n"
-        "[M] [bold #50fa7b]nexus ops maintenance[/]\n[dim #6272a4]    Manutencao Geral SOTA[/]\n\n"
-        "[A] [bold #50fa7b]nexus ops check-ascii[/]\n[dim #6272a4]    Blindagem ASCII[/]"
+    grupos: dict[str, list[_Atalho]] = {}
+    for atalho in _DASHBOARD_SHORTCUTS:
+        grupos.setdefault(atalho.grupo, []).append(atalho)
+
+    colunas: list[list[Table]] = [[] for _ in range(n_cols)]
+    alturas = [0] * n_cols
+    for nome, itens in grupos.items():
+        bloco = Table.grid(padding=(0, 1))
+        bloco.add_column(no_wrap=True)
+        bloco.add_column()
+        bloco.add_row("", f"[bold underline {_COR_GRUPO[nome]}]{nome}[/]")
+        for a in itens:
+            cor = "#ff5555" if a.destrutivo else _COR_GRUPO[nome]
+            bloco.add_row(
+                f"[{cor}]{escape('[' + a.tecla.upper() + ']')}[/]",
+                f"[bold {cor}]nexus {a.comando}[/] [dim #6272a4]{a.descricao}[/]",
+            )
+        destino = alturas.index(min(alturas))
+        colunas[destino].append(bloco)
+        alturas[destino] += len(itens) + 2
+
+    grade = Table.grid(expand=True, padding=(0, 2))
+    for _ in range(n_cols):
+        grade.add_column(ratio=1)
+    grade.add_row(*[Group(*[parte for b in col for parte in (b, "")]) for col in colunas])
+
+    legenda = Align.center(
+        "[dim #f8f8f2]Pressione a [bold]TECLA[/] do atalho  |  [bold]Q[/] ou [bold]Ctrl+C[/] sai  |  "
+        "[#ff5555]vermelho[/] = pede confirmacao[/]"
     )
-    c2 = (
-        "[5] [bold #8be9fd]nexus agent handoff[/]\n[dim #6272a4]    Sessao Web (Clipboard)[/]\n\n"
-        "[6] [bold #8be9fd]nexus agent route[/]\n[dim #6272a4]    Testar Roteamento[/]\n\n"
-        "[D] [bold #ff79c6]nexus dream-optimize[/]\n[dim #6272a4]    Fase de Sonho (TimesFM 3.0)[/]\n\n"
-        "[K] [bold #50fa7b]nexus calib-forecast[/]\n[dim #6272a4]    Calibracao & TimesFM[/]\n\n"
-        "[T] [bold #bd93f9]nexus stats timesfm[/]\n[dim #6272a4]    Oraculo de Series Temporais[/]\n\n"
-        "[7] [bold #8be9fd]nexus stats daily[/]\n[dim #6272a4]    Status Diario[/]\n\n"
-        "[8] [bold #8be9fd]nexus stats historian[/]\n[dim #6272a4]    Motor Preditivo[/]"
-    )
-    c3 = (
-        "[9] [bold #f1fa8c]nexus db audit-dag[/]\n[dim #6272a4]    Auditoria DAG[/]\n\n"
-        "[0] [bold #f1fa8c]nexus db purge-orphans[/]\n[dim #6272a4]    Limpar Orfas FAILED[/]\n\n"
-        "[C] [bold #ff5555]nexus db clear-pending[/]\n[dim #6272a4]    Aniquilar Pendentes[/]\n\n"
-        "[F] [bold #ff5555]nexus db clear-failed[/]\n[dim #6272a4]    Aniquilar Falhas[/]\n\n"
-        "[V] [bold #f1fa8c]nexus db vacuum[/]\n[dim #6272a4]    Otimizar DB (VACUUM)[/]\n\n"
-        "[P] [bold #f1fa8c]nexus triad status[/]\n[dim #6272a4]    Triade SOTA (Exa/Stitch/Jules)[/]\n\n"
-        "[S] [bold #8be9fd]nexus status[/] | [Q] [bold #ff5555]Sair[/]"
-    )
-
-    grid.add_row(c1, c2, c3)
-
-    instructions = "\n[dim #f8f8f2 align=center]Pressione a [bold]TECLA[/] correspondente para executar o atalho ao vivo, [bold]Q[/] ou [bold]Ctrl+C[/] para sair.[/]"
-
     return Panel(
-        Group(grid, instructions),
-        title="[bold #50fa7b]COMANDOS CEO (Pressione o Atalho)[/]",
+        Group(grade, legenda),
+        title="[bold #50fa7b]COMANDOS CEO[/]",
         border_style="#50fa7b",
         box=box.ROUNDED,
     )
 
 
 def _generate_dashboard_ui(counts: dict) -> Group:
-    header_text = f"[bold #ff79c6]NEXUS SOTA GOD MODE DASHBOARD v8.0 GOLD[/] | [#8be9fd]CEO: Raphael Vitoi[/] | [#f1fa8c]{datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S UTC')}[/]"
-    header = Panel(Align.center(header_text, vertical="middle"), style="#6272a4", box=box.ROUNDED)
+    agora = datetime.now(UTC)
+    cabecalho = (
+        "[bold #ff79c6]NEXUS SOTA GOD MODE DASHBOARD v8.0 GOLD[/]\n"
+        f"[#8be9fd]CEO: Raphael Vitoi[/] | [#f1fa8c]{agora:%Y-%m-%d %H:%M:%S} UTC[/]"
+    )
+    header = Panel(Align.center(cabecalho, vertical="middle"), style="#6272a4", box=box.ROUNDED)
 
-    col_table = Table.grid(expand=True, padding=(0, 2))
-    col_table.add_column(ratio=1)
-    col_table.add_column(ratio=1)
-    col_table.add_column(ratio=1)
+    sistema = _build_system_status_panel()
+    tarefas = _build_task_status_panel(counts)
+    servicos = _build_metrics_panel()
 
-    col_table.add_row(_build_system_status_panel(), _build_task_status_panel(counts), _build_metrics_panel())
+    if console.width >= 110:
+        # Largo: tres colunas lado a lado.
+        col_table = Table.grid(expand=True, padding=(0, 2))
+        for _ in range(3):
+            col_table.add_column(ratio=1)
+        col_table.add_row(sistema, tarefas, servicos)
+        corpo: list[Any] = [col_table]
+    else:
+        # Estreito: empilha. Tres colunas a 80 colunas truncavam os valores com "...".
+        corpo = [sistema, tarefas, servicos]
 
-    notif_panel = _build_notifications_panel()
-    calib_panel = _build_calibration_panel()
-    footer = _build_footer_panel()
-
-    return Group(header, col_table, notif_panel, calib_panel, footer)
+    return Group(
+        header,
+        *corpo,
+        _build_notifications_panel(),
+        _build_calibration_panel(),
+        _build_footer_panel(),
+    )
 
 
 # Flag de modulo, e nao atributo pendurado na propria funcao. As duas formas do
@@ -1160,73 +1257,41 @@ def _get_key() -> str | None:
     return None
 
 
-def _execute_shortcut(key: str):
+def _execute_shortcut(key: str) -> int | None:
+    """Executa o atalho e DEVOLVE o codigo de saida (None = nada foi executado)."""
     if key == "q":
-        return
-    cmd_map = {
-        "1": [sys.executable, __file__, "ops", "worker", "-f"],
-        "2": [sys.executable, __file__, "ops", "watch"],
-        "3": [sys.executable, __file__, "ops", "sanitize"],
-        "4": [sys.executable, __file__, "ops", "quality-gate"],
-        "5": [sys.executable, __file__, "agent", "handoff"],
-        "6": [sys.executable, __file__, "agent", "route", "Teste de roteamento do dashboard"],
-        "7": [sys.executable, __file__, "stats", "daily"],
-        "8": [sys.executable, __file__, "stats", "historian"],
-        "9": [sys.executable, __file__, "db", "audit-dag"],
-        "0": [sys.executable, __file__, "db", "purge-orphans"],
-        "c": [sys.executable, __file__, "db", "clear-pending", "--confirm"],
-        "f": [sys.executable, __file__, "db", "clear-failed", "--confirm"],
-        "v": [sys.executable, __file__, "db", "vacuum"],
-        "r": [sys.executable, __file__, "ops", "optimize-ram"],
-        "m": [sys.executable, __file__, "ops", "maintenance"],
-        "g": [sys.executable, __file__, "ops", "start-gemma", "-f"],
-        "i": [sys.executable, __file__, "ops", "chat-gemma"],
-        "s": [sys.executable, __file__, "status"],
-        "k": [sys.executable, __file__, "agent", "calibration-forecast"],
-        "d": [sys.executable, __file__, "agent", "dream-optimize", "--model", "3.0", "--research"],
-        "t": [sys.executable, __file__, "stats", "timesfm"],
-        "a": [sys.executable, __file__, "ops", "check-ascii"],
-        "p": [sys.executable, __file__, "triad", "status"],
-        "x": [sys.executable, __file__, "ops", "strata"],
-    }
-    if key in cmd_map:
-        console.clear()
-        console.print(f"[bold #ff79c6]=== EXECUTANDO ATALHO SOTA: [{key.upper()}] ===[/]")
-        result = subprocess.run(cmd_map[key], cwd=str(BASE_DIR), check=False)
-        if result.returncode != 0:
-            console.print(f"[bold red]Atalho [{key.upper()}] encerrou com codigo {result.returncode}.[/]")
+        return None
+    atalho = _ATALHOS_POR_TECLA.get(key)
+    if atalho is None:
+        return None
+
+    console.clear()
+    console.print(f"[bold #ff79c6]=== EXECUTANDO ATALHO SOTA: {escape('[' + key.upper() + ']')} nexus {atalho.comando} ===[/]")
+    if atalho.destrutivo:
+        resposta = console.input("[bold #ff5555]Acao DESTRUTIVA e irreversivel. Digite SIM para confirmar: [/]")
+        if resposta.strip().upper() != "SIM":
+            console.print("[yellow]Cancelado. Nada foi alterado.[/]")
+            return None
+
+    cmd = [sys.executable, __file__, *atalho.argv]
+    inicio = time.perf_counter()
+    try:
+        codigo = getattr(subprocess.run(cmd, cwd=str(BASE_DIR), check=False), "returncode", None)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Atalho interrompido (Ctrl+C). Retornando ao dashboard.[/]")
+        return 130
+    duracao = time.perf_counter() - inicio
+    if codigo == 0:
+        console.print(f"\n[bold #50fa7b]{escape('[OK]')}[/] [dim]concluido em {duracao:.1f}s[/]")
+    else:
+        console.print(f"\n[bold #ff5555]{escape('[FALHA]')}[/] [dim]codigo de saida {codigo} apos {duracao:.1f}s[/]")
+    return codigo
 
 
 async def _poll_for_action(live: Live, qm: QueueManager) -> str | None:
     counts = await qm.get_task_counts()
     live.update(_generate_dashboard_ui(counts))
-    valid_keys = {
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "0",
-        "c",
-        "f",
-        "v",
-        "r",
-        "m",
-        "g",
-        "i",
-        "s",
-        "k",
-        "d",
-        "t",
-        "a",
-        "p",
-        "x",
-        "q",
-    }
+    valid_keys = {a.tecla for a in _DASHBOARD_SHORTCUTS} | {"q"}
     for _ in range(50):
         await asyncio.sleep(0.1)
         key = _get_key()
@@ -1257,9 +1322,12 @@ async def render_dashboard(
         return
 
     qm = QueueManager()
+    # cpu_percent() sem leitura previa devolve 0.0: o primeiro quadro mostrava CPU zerada.
+    psutil.cpu_percent(interval=None)
 
     try:
         if once:
+            await asyncio.sleep(0.2)
             counts = await qm.get_task_counts()
             console.print(_generate_dashboard_ui(counts))
             return

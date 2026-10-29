@@ -128,6 +128,7 @@ def _ports_status() -> dict[str, bool]:
         "ollama_11434": is_port_open(11434),
         "gemma_server_17043": is_port_open(17043),
         "backend_8000": is_port_open(8000),
+        "backend_17042": is_port_open(17042),
         "vulkan_8080": is_port_open(8080),
     }
 
@@ -157,7 +158,10 @@ def _collect_task_counts(cursor: sqlite3.Cursor, counts: dict[str, Any]) -> None
         category, _ = classify_task_status(row["status"], row["metadata"])
         if category in counts:
             counts[category] += 1
-        if row["status"] in ("completed", "running", "pending", "failed"):
+        # So conta pelo status cru quando a categoria NAO e o proprio status: para
+        # completed/running/failed as duas linhas incrementavam o mesmo contador e o
+        # total de "concluidas" saia em dobro (58 de 29 tarefas, medido em 2026-10-29).
+        if row["status"] in ("completed", "running", "pending", "failed") and category != row["status"]:
             counts[row["status"]] += 1
 
 
