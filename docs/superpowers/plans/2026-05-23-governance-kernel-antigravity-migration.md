@@ -1,3 +1,11 @@
+---
+title: "Governance Kernel And Antigravity Migration Implementation Plan"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Governance Kernel And Antigravity Migration Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -721,9 +729,9 @@ git commit -m "feat: migrate governance to canonical kernel architecture"
 - VS Code non-canonical cleanup: covered by Task 5.
 - Risk treatment and fallback validation: covered by Tasks 2 and 6.
 
-## Placeholder Check
+## MARCADOR_POSICAO Check
 
-No `TODO`, `TBD`, or unresolved references were intentionally left in this plan. Every task contains exact file paths, commands, or concrete content to write.
+No `PENDENTE`, `A_DEFINIR`, or unresolved references were intentionally left in this plan. Every task contains exact file paths, commands, or concrete content to write.
 
 ## Type And Name Consistency Check
 

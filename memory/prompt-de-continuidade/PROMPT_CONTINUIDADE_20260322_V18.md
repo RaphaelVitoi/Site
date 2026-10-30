@@ -4,9 +4,9 @@ description: Sessao 2026-03-22 (tarde). Motor ICM implementado parcialmente. Fal
 type: project
 ---
 
-## Estado Atual (2026-03-22 - sessao tarde)
+# Estado Atual (2026-03-22 - sessao tarde)
 
-### O que aconteceu nesta sessao
+## O que aconteceu nesta sessao
 
 - Alinhamento teorico completo: conservacao de fichas, teto emergente (nao hardcodado), curva concava, aggressionFactor como risco de colisao (nao colisao), HU final = ChipEV (N_remanescentes = 2)
 - Curadoria de features aprovada por Raphael

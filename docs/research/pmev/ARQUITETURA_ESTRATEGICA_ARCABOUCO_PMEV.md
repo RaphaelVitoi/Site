@@ -1,10 +1,18 @@
+---
+title: "Arquitetura Estratégica Unificada do Arcabouço Poker & PMev"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Arquitetura Estratégica Unificada do Arcabouço Poker & PMev
 
 ## Paradigma Raphael Vitoi — Ecossistema Nexus SOTA v8.0 GOLD
 
-> **Data de Consolidação:** 13 de Setembro de 2026  
-> **Fontes Integradas:** Google Drive API v3 (4.021 itens), Microsoft OneDrive (15.786 itens) e Repositório Local (`Site/engine/` & `docs/research/pmev/`).  
-> **Matriz de Evidência Pós-Flop:** **Aula 1.2 (Raphael Vitoi)** — corpus-fonte com 97 nós/figuras descritos; o fixture operacional local contém 7 `EvidencePair`, ainda sem reprodução independente enquanto faltarem build, e-Nash e unidade explícitos (board Kd Jc Ts, BTN RP 21,4% vs. BB RP 12,9%).  
+> **Data de Consolidação:** 13 de Setembro de 2026
+> **Fontes Integradas:** Google Drive API v3 (4.021 itens), Microsoft OneDrive (15.786 itens) e Repositório Local (`Site/engine/` & `docs/research/pmev/`).
+> **Matriz de Evidência Pós-Flop:** **Aula 1.2 (Raphael Vitoi)** — corpus-fonte com 97 nós/figuras descritos; o fixture operacional local contém 7 `EvidencePair`, ainda sem reprodução independente enquanto faltarem build, e-Nash e unidade explícitos (board Kd Jc Ts, BTN RP 21,4% vs. BB RP 12,9%).
 > **Fundamentação Acadêmica:** Microeconomia de Torneios (Moldovanu & Sela, 2001/2006), Processos Estocásticos de Absorção (Diaconis & Ethier), Benchmark Empírico de Resíduos (Kim, 2025), Teoria dos Jogos Algorítmica (Brown et al., ReBeL 2020) e Equilíbrio Quantal (McKelvey & Palfrey, AQRE).
 
 ---
@@ -37,7 +45,7 @@ A fundação conceitual e analítica pós-flop do ecossistema é consolidada em 
 
 ### 2.1 A Matriz Conceitual de Toy Games: `Entendendo o ICM e suas heurísticas.docx` (5,72 MB)
 
-* **Ledger Estruturado:** [`docs/research/pmev/ENTENDENDO_ICM_HEURISTICAS_LEDGER.md`](file:///c:/Users/rapha/.gemini/Site/docs/research/pmev/ENTENDENDO_ICM_HEURISTICAS_LEDGER.md) (26.000 caracteres, 201 parágrafos).
+* **Ledger Estruturado:** [`docs/research/pmev/ENTENDENDO_ICM_HEURISTICAS_LEDGER.md`](ENTENDENDO_ICM_HEURISTICAS_LEDGER.md) (26.000 caracteres, 201 parágrafos).
 * **Fundamentação de Toy Games:** Modela o confronto clássico de river polarizado em board neutro ($22223$), pote de 100 fichas e shove de 100 fichas:
   $$\text{Range IP: } \{AA, QQ, JJ\} \text{ (18 combos)}, \quad \text{Range OOP: } \{KK\} \text{ (6 combos - bluffcatcher puro)}$$
 * **ChipEV vs. Teto de RP:** Enquanto no ChipEV o defensor paga $1-a = 50\%$ para neutralizar blefes, o ICM impõe o *Teto do RP*, fixando a defesa estritamente no limite de risco aceitável.
@@ -45,7 +53,7 @@ A fundação conceitual e analítica pós-flop do ecossistema é consolidada em 
 
 ### 2.2 A Matriz Empírica Pós-Flop: `Aula 1.2.docx` (31,3 MB)
 
-* **Ledger Estruturado:** [`docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md`](file:///c:/Users/rapha/.gemini/Site/docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md) (329 parágrafos, 97 figuras/nós gráficos pareados HRC Pós-Flop vs. GTO Wizard).
+* **Ledger Estruturado:** [`docs/research/pmev/AULA_1_2_EVIDENCE_LEDGER.md`](AULA_1_2_EVIDENCE_LEDGER.md) (329 parágrafos, 97 figuras/nós gráficos pareados HRC Pós-Flop vs. GTO Wizard).
 * **Cenário Real de FT 9-Max:** MTT Vanilla de \$11, field de 126 entradas, premiação estruturada (\$237,34 a \$36,47).
 * **Confronto:** BTN abre min-raise, SB fold, BB call. BTN com 38 BB e BB com 53 BB em pote de 5,63 BB no bordo dinâmico $K\diamondsuit J\clubsuit T\spadesuit$.
 * **Assimetria de Risk Premium Medida:**
@@ -57,7 +65,7 @@ A fundação conceitual e analítica pós-flop do ecossistema é consolidada em 
 
 ### 2.3 Formalizações Teóricas Adicionais: EV do Fold Positivo, FGS Dinâmico e Anatomia das RIO (Raphael Vitoi)
 
-A partir dos manuscritos fundamentais [`Site/docs/research/materials/icmteoriaadicionalpt1.txt`](file:///c:/Users/rapha/.gemini/Site/docs/research/materials/icmteoriaadicionalpt1.txt) e [`Site/docs/research/materials/icmteoriaadicionalpt2.txt`](file:///c:/Users/rapha/.gemini/Site/docs/research/materials/icmteoriaadicionalpt2.txt), integram-se quatro teoremas estruturais ao arcabouço:
+A partir dos manuscritos fundamentais [`Site/docs/research/materials/icmteoriaadicionalpt1.txt`](../materials/icmteoriaadicionalpt1.txt) e [`Site/docs/research/materials/icmteoriaadicionalpt2.txt`](../materials/icmteoriaadicionalpt2.txt), integram-se quatro teoremas estruturais ao arcabouço:
 
 1. **O Teorema do EV do Fold Dinâmico em ICM:**
    * Em ChipEV puro, $EV_{\text{fold}} = -\text{antes} = -0,125\text{ BB}$. Logo, qualquer mão com $EV > -0,125\text{ BB}$ (por exemplo, $-0,10\text{ BB}$) já se constitui matematicamente como um open lucrativo.
@@ -200,7 +208,7 @@ Quatro hipóteses concentram os maiores riscos de degeneração formal ou sobrea
 
 ```text
                   FRONTEIRAS DE FALSIFICAÇÃO CRÍTICAS
-                  
+
   [H_4: MDF River]                    [H_7: Opcionalidade SPR]
    MDF* = P / (P + B*(1 + ΔRP))        dΩ/ds quebra monotonia em
    Colapso da defesa linear            S_eff ∈ [20, 25] bb (Push/Fold)

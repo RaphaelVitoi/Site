@@ -1,3 +1,11 @@
+---
+title: "Relatorio Executivo de Auditoria Sob Demanda - Delegacao Proativa do @curator"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio Executivo de Auditoria Sob Demanda - Delegacao Proativa do @curator
 
 **Data:** 2026-03-24
@@ -44,6 +52,6 @@ A inatividade do @organizador representa um **gargalo significativo** para a hom
 
 O @curator operou com **excelencia em sua logica de delegacao e escalonamento**. Ele identificou problemas, tentou delegar proativamente e, diante de uma falha critica persistente, escalou corretamente. No entanto, a falha do agente `@organizador` impediu a concretizacao das acoes delegadas.
 
-**Nivel de Risco:** `High` (para o sistema como um todo, devido a inatividade do @organizador, nao devido a falha do @curator).
+**Nivel de Risco:** `High` (para o sistema como um PENDENTE, devido a inatividade do @organizador, nao devido a falha do @curator).
 
 **Sintese:** A logica do @curator para delegacao e escalonamento esta `Perfect`. A execucao da delegacao, no entanto, foi comprometida pela inatividade critica do `@organizador`. Uma acao imediata e necessaria para restaurar ou substituir o @organizador.

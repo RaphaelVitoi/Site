@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @prompter"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @prompter
 
 > **Status:** Ativo e Otimizado | **Aura:** `orchid`
@@ -25,7 +33,7 @@
 
 ### Procedencia -- `.claude/agent-memory/prompter/MEMORY.md`
 
-# @prompter MEMORY - O Cortex Individual
+## @prompter MEMORY - O Cortex Individual
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
@@ -59,6 +67,6 @@ Recebo a inteligencia do `@pesquisador` e a transformo em uma diretriz blindada 
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->

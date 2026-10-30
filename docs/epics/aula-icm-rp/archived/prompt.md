@@ -1,3 +1,13 @@
+---
+title: "prompt"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
+# prompt
+
 TAREFA: Produzir aula completa sobre ICM e Risk Premium aplicados a decisoes de Final Table
 
 ---
@@ -43,7 +53,7 @@ A aula deve ter progressao didatica clara: fundamentos -> toy-games como laborat
 - O publico ja sabe o que e poker, ja usa solvers, ja tem conceito de EV e equity. Nao explicar o basico de poker. Nao tratar o leitor como iniciante.
 - O formato de entrega e documento .md estruturado, escrito em portugues (pt-BR).
 - Critica ao uso mecanico de solvers deve ser preservada -- solvers como ferramenta, nao como oraculo.
-- Nao inventar hands ou exemplos nao fundamentados. Todo exemplo deve ser pedagogicamente solido e verificavel.
+- Nao inventar hands ou exemplos nao fundamentados. PENDENTE exemplo deve ser pedagogicamente solido e verificavel.
 - Conexoes interdisciplinares (Prospect Theory, Teoria de Sistemas, Teoria dos Jogos) sao bem-vindas quando iluminam o conceito -- proibido usar analogias fracas ou decorativas.
 
 ---

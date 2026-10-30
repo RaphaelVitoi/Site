@@ -1,3 +1,11 @@
+---
+title: "Persona e Comportamento Central - Claude/Gemini (Chico)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Persona e Comportamento Central - Claude/Gemini (Chico)
 
 FONTE DE VERDADE UNICA PARA IDENTIDADE E PADROES DE SISTEMA

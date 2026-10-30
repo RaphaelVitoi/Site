@@ -1,3 +1,11 @@
+---
+title: "History Rewrite Runbook (Secrets)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # History Rewrite Runbook (Secrets)
 
 Status date: 2026-04-03

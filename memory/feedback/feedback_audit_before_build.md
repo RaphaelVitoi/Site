@@ -4,6 +4,8 @@ description: Sempre verificar se globals.css, layout.tsx e dependencias visuais 
 type: feedback
 ---
 
+
+# feedback audit before build
 Antes de trabalhar em qualquer feature visual, verificar que globals.css esta completo e que layout.tsx importa Header/Footer/fonts.
 
 **Why:** Na sessao 20260320, descobrimos que globals.css foi truncado de 1783 para 18 linhas (provavelmente por migracao Tailwind v4). O build passava sem erro mas o site inteiro estava sem estilo. Ninguem percebeu porque o build so checa tipos, nao valida CSS.

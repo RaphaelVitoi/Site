@@ -1,3 +1,11 @@
+---
+title: "VALIDATION FRAMEWORKS (@validador)"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # VALIDATION FRAMEWORKS (@validador)
 
 > **Status:** Ativo | **Objetivo:** Garantir precisao factual antes do lancamento de qualquer feature especialista.

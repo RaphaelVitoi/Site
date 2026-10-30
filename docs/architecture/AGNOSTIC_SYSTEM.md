@@ -1,3 +1,11 @@
+---
+title: "SISTEMA AGNÓSTICO SOTA v7.0 GOLD"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SISTEMA AGNÓSTICO SOTA v7.0 GOLD
 
 Este manifesto formaliza a natureza universal e independente do ecossistema Site/Nexus.

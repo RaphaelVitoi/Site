@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @gemma4"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @gemma4
 
 > **Status:** Ativo e Otimizado | **Aura:** `light_salmon3`

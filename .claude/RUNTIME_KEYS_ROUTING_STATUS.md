@@ -1,3 +1,11 @@
+---
+title: "Runtime Keys and Routing Status"
+type: routing
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Runtime Keys and Routing Status
 
 - timestamp: 2026-08-25T02:59:50.069318+00:00

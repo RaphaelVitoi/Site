@@ -1,3 +1,11 @@
+---
+title: "SPEC: MasterSimulator Component (TrueICM Engine)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: MasterSimulator Component (TrueICM Engine)
 
 **ID:** SPEC-20260317-001

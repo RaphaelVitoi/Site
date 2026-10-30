@@ -1,8 +1,16 @@
+---
+title: "ARQUITETURA TÉCNICA PADRÃO-OURO (SOTA v8.0 GOLD) — ECOSSISTEMA RAPHAEL VITOI"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # ARQUITETURA TÉCNICA PADRÃO-OURO (SOTA v8.0 GOLD) — ECOSSISTEMA RAPHAEL VITOI
 
-> **Data de Corte da Análise:** Agosto de 2026  
-> **Autoridade & Governança:** Raphael Vitoi  
-> **Orquestrador Central:** Chico / Antigravity Suite (2.0, CLI, IDE, SDK)  
+> **Data de Corte da Análise:** Agosto de 2026
+> **Autoridade & Governança:** Raphael Vitoi
+> **Orquestrador Central:** Chico / Antigravity Suite (2.0, CLI, IDE, SDK)
 > **Status:** Ativo, Persistente e Vinculante
 
 ---

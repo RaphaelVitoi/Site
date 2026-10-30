@@ -1,3 +1,11 @@
+---
+title: "PRD: Aula Completa sobre ICM e Risk Premium em Final Tables"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PRD: Aula Completa sobre ICM e Risk Premium em Final Tables
 
 **Autor:** @planner | **Data:** 2026-03-08 | **Status:** rascunho

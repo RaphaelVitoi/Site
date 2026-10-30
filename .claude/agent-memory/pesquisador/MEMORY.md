@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @pesquisador"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @pesquisador
 
 > **Status:** Ativo e Otimizado | **Aura:** `medium_orchid`
@@ -58,7 +66,7 @@ Recebo a missão do `@architect`, investigo o desconhecido e entrego a inteligê
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/pesquisador/MEMORY.md`
 
@@ -96,6 +104,6 @@ Recebo a missAo do `@architect`, investigo o desconhecido e entrego a inteligAan
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->

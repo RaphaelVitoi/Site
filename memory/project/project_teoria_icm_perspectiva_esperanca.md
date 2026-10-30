@@ -4,9 +4,9 @@ description: Contribuições originais de Raphael ao framework ICM pós-flop. Tr
 type: project
 ---
 
-## Contribuições Originais de Raphael Vitoi
+# Contribuições Originais de Raphael Vitoi
 
-### Os três conceitos centrais
+## Os três conceitos centrais
 
 **Expectativa Matemática** — o referencial decisório correto dentro de um cenário dado.
 Não é "qual o ICM EV deste pot" mas "dentro do meu referencial (estrutura, payouts, stacks da mesa), qual é a expectativa matematicamente fundamentada para esta ação?"

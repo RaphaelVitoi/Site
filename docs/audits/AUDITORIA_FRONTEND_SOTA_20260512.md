@@ -1,3 +1,11 @@
+---
+title: "Relatorio de Auditoria Tecnica: Frontend SOTA Gold (VITOI-QUANTUM)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio de Auditoria Tecnica: Frontend SOTA Gold (VITOI-QUANTUM)
 
 **Data:** 2026-05-12

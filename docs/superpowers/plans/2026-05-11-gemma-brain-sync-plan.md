@@ -1,3 +1,11 @@
+---
+title: "Gemma 4 Brain-Sync Implementation Plan"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Gemma 4 Brain-Sync Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -10,7 +18,7 @@
 
 ---
 
-### Task 1: Backend Snapshot Support
+## Task 1: Backend Snapshot Support
 
 **Files:**
 
@@ -145,7 +153,7 @@ function TelemetryCard({ snapshot }: { snapshot: any }) {
 
 // Inside response display area:
 {messages.map((m, i) => (
-  m.role === 'telemetry' ? <TelemetryCard key={i} snapshot={JSON.parse(m.content)} /> : 
+  m.role === 'telemetry' ? <TelemetryCard key={i} snapshot={JSON.parse(m.content)} /> :
   <div key={i} className={m.role === 'user' ? 'text-text-muted text-right' : 'text-white'}>{m.content}</div>
 ))}
 ```
@@ -180,10 +188,10 @@ async function handleConsult() {
           'Content-Type': 'application/json',
           'X-Vitoi-Auth': 'sota-token-2026'
         },
-        body: JSON.stringify({ 
-            prompt, 
+        body: JSON.stringify({
+            prompt,
             physics_snapshot: snapshot,
-            max_tokens: 1024 
+            max_tokens: 1024
         })
     });
     // ... logic for assistant response stream

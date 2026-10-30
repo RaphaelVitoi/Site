@@ -1,9 +1,17 @@
+---
+title: "Contexto Canônico do Projeto Site — Poker Racional (SOTA v8.0 GOLD)"
+type: index
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Contexto Canônico do Projeto Site — Poker Racional (SOTA v8.0 GOLD)
 
 > **Documento Canônico Central de Contexto e Realidade Operacional**
 > **Última Atualização:** 2026-10-27 · **Corte de Conhecimento:** Outubro/2026 · **Protocolo Chico SOTA v8.0 GOLD**
 > **Raiz Canônica:** `C:\Users\rapha\.gemini\Site` · **Consumido por:** `engine/cognitive.py`, `agents/context_builder.py`, `memory_rag.py`, backend runtime e agentes autônomos.
-> **Ancestral Histórico Preservado:** [project-context.md (Snapshot 2026-09-22)](file:///c:/Users/rapha/.gemini/Site/.claude/.ARQUIVE/contexto-2026-09-22/project-context.md)
+> **Ancestral Histórico Preservado:** [project-context.md (Snapshot 2026-09-22)](.ARQUIVE/contexto-2026-09-22/project-context.md)
 
 ---
 
@@ -13,7 +21,7 @@ O repositório central do ecossistema **Poker Racional** materializa a união en
 
 - **Autoridade e Soberania Teórica:** **Raphael Vitoi** (Tier 0). Formulação conceitual do PMev, liderança estratégica, CEO e árbitro supremo.
 - **Domínio Multidisciplinar:** Poker de alta performance (MTTs, PKO, Mystery Bounty), Teoria dos Jogos (GTO, Nash, exploitativo), Psicologia Cognitiva e Neuropsicologia de Alta Performance, Filosofia Existencialista, Autonomia Ética e Antifragilidade.
-- **Cosmovisão Fundacional:** Inspirada em [.claude/GOVERNANCA/COSMOVISAO.md](file:///c:/Users/rapha/.gemini/Site/.claude/GOVERNANCA/COSMOVISAO.md):
+- **Cosmovisão Fundacional:** Inspirada em [.claude/GOVERNANCA/COSMOVISAO.md](GOVERNANCA/COSMOVISAO.md):
   - *Ceticismo à Razão:* Rejeição de dogmas herdados e verdades não testadas; primazia absoluta da evidência mensurável e da lógica dedutiva.
   - *Polimatia:* Capacidade de entrelaçar domínios díspares em sistemas isomórficos (ex: Poker $\leftrightarrow$ Teoria dos Jogos $\leftrightarrow$ Negociação Ética $\leftrightarrow$ Arquitetura de Software).
   - *Economia Generalizada:* Otimização holística não apenas de capital financeiro, mas de latência, tokens, ciclos de CPU/GPU, contexto neural e energia cognitiva.
@@ -75,7 +83,7 @@ A infraestrutura local foi arquitetada para maximizar a autossuficiência de com
 
 ## 5. Governança Piramidal de 8 Tiers (Protocolo CHICO SOTA v8.0 GOLD)
 
-A estrutura de governança do ecossistema é estritamente piramidal e monocrática, conforme consagrado no [CLAUDE.md (§0)](file:///c:/Users/rapha/.gemini/Site/CLAUDE.md#L11):
+A estrutura de governança do ecossistema é estritamente piramidal e monocrática, conforme consagrado no [CLAUDE.md (§0)](../CLAUDE.md):
 
 | Tier | Designação | Componentes e Modelos | Papel Canônico no Ecossistema |
 | :--- | :--- | :--- | :--- |
@@ -92,7 +100,7 @@ A estrutura de governança do ecossistema é estritamente piramidal e monocráti
 
 ## 6. Matriz Canônica de Roteamento & Precedência Econômica
 
-Conforme estabelecido em [CLAUDE.md (§3)](file:///c:/Users/rapha/.gemini/Site/CLAUDE.md#L415) e implementado em [llm/routing_policy.py](file:///c:/Users/rapha/.gemini/Site/llm/routing_policy.py):
+Conforme estabelecido em [CLAUDE.md (§3)](../CLAUDE.md) e implementado em [llm/routing_policy.py](../llm/routing_policy.py):
 
 ### 6.1 Fontes Únicas por Decisão de Roteamento
 
@@ -129,7 +137,7 @@ A Economia Generalizada impõe rigorosa hierarquia orçamentária:
 
 ## 7. Cadeia de Verificabilidade e Engine Capabilities
 
-Conforme o [Plano Padrão-Ouro de Capacidades (docs/architecture/ENGINE_CAPABILITY_INTEGRATION_PLAN.md)](file:///c:/Users/rapha/.gemini/Site/docs/architecture/ENGINE_CAPABILITY_INTEGRATION_PLAN.md):
+Conforme o [Plano Padrão-Ouro de Capacidades (docs/architecture/ENGINE_CAPABILITY_INTEGRATION_PLAN.md)](../docs/architecture/ENGINE_CAPABILITY_INTEGRATION_PLAN.md):
 
 1. **A Cadeia Obrigatória:**
 
@@ -169,7 +177,7 @@ Conforme o [Plano Padrão-Ouro de Capacidades (docs/architecture/ENGINE_CAPABILI
 O presente ecossistema é fruto de um processo rigoroso de convergência arquitetural:
 
 1. **A Gênese e a Fusão `.cerebro` $\rightarrow$ `.claude` (2026-09-01):** Absorção de diretórios legados dispersos numa árvore canônica unificada sob governança centralizada.
-2. **O Snapshot de Transição (2026-09-22):** Preservado intacto como referencial arqueológico e de ontologia original em [`.claude/.ARQUIVE/contexto-2026-09-22/project-context.md`](file:///c:/Users/rapha/.gemini/Site/.claude/.ARQUIVE/contexto-2026-09-22/project-context.md), mantendo as primeiras formulações da unificação dos 20 agentes, Route Groups e contratos de API v1.
+2. **O Snapshot de Transição (2026-09-22):** Preservado intacto como referencial arqueológico e de ontologia original em [`.claude/.ARQUIVE/contexto-2026-09-22/project-context.md`](.ARQUIVE/contexto-2026-09-22/project-context.md), mantendo as primeiras formulações da unificação dos 20 agentes, Route Groups e contratos de API v1.
 3. **A Consolidação SOTA v8.0 GOLD (Outubro/2026):**
    - Formalização dos 8 Tiers de Governança Piramidal;
    - Incorporação da geração de modelos de fronteira (Claude 5.5, ChatGPT 6.0, Gemini 3.8 Flash / 4 Argon);

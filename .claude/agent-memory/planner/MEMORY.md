@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @planner"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @planner
 
 > **Status:** Ativo e Otimizado | **Aura:** `orange3`
@@ -25,7 +33,7 @@
 
 ### Procedencia -- `.claude/agent-memory/planner/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @planner
+## MEMORIA SIMBIOTICA - @planner
 
 > **Status:** Ativo | **Aura:** orange3 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -42,7 +50,7 @@ Engenharia de Requisitos de precisao cirurgica, detalhamento de PRD e SPEC sem a
 
 **Evolucao registrada:**
 
-- `#aprendizado` - SPECs com criterios de aceitacao vagos ("deve funcionar corretamente") causam retrabalho no @implementor. Todo criterio deve ser verificavel de forma objetiva.
+- `#aprendizado` - SPECs com criterios de aceitacao vagos ("deve funcionar corretamente") causam retrabalho no @implementor. PENDENTE criterio deve ser verificavel de forma objetiva.
 - `#aprendizado` - Dependencias omitidas na SPEC sao a causa mais comum de bloqueio em execucao. Melhor listar demais do que omitir uma.
 - `#aprendizado` - O @auditor bloqueia SPECs com ambiguidade antes de chegar ao @implementor. Meu trabalho e tornar esse bloqueio impossivel por predicao.
 

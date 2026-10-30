@@ -1,3 +1,11 @@
+---
+title: "Fronteira de Integrações de Host"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Fronteira de Integrações de Host
 
 ## Regra padrão

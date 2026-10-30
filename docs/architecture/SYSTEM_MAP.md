@@ -1,3 +1,11 @@
+---
+title: "Mapa Sistêmico do Site"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Mapa Sistêmico do Site
 
 ## Princípio de composição

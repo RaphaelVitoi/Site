@@ -1,3 +1,11 @@
+---
+title: "Relatorio de Verificacao: Auditoria Completa do Sistema"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio de Verificacao: Auditoria Completa do Sistema
 
 Data: 2026-03-28

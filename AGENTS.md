@@ -1,3 +1,11 @@
+---
+title: "Governança — projeto `Site`"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Governança — projeto `Site`
 
 > **Este arquivo é um ponteiro. A governança canônica está em

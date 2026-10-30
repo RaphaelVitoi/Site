@@ -1,3 +1,11 @@
+---
+title: "Mapa de Roteamento de Tarefas (SOTA)"
+type: routing
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Mapa de Roteamento de Tarefas (SOTA)
 
 > **Revisão de 2026-08-29 — este arquivo é escrito à mão.** O texto anterior

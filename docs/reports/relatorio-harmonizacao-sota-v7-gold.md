@@ -1,8 +1,16 @@
+---
+title: "RELATÓRIO TÉCNICO DE HARMONIZAÇÃO E ESTADO DA ARTE (SOTA v7.0 GOLD)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # RELATÓRIO TÉCNICO DE HARMONIZAÇÃO E ESTADO DA ARTE (SOTA v7.0 GOLD)
 
-> **Data de Emissão:** 2026-08-17  
-> **Autoridade:** Chico (Super-Admin / Arquiteto do Sistema)  
-> **Governança:** Raphael Vitoi  
+> **Data de Emissão:** 2026-08-17
+> **Autoridade:** Chico (Super-Admin / Arquiteto do Sistema)
+> **Governança:** Raphael Vitoi
 > **Status Operacional:** NOMINAL (100% Green / Zero-Entropy)
 
 ---

@@ -1,3 +1,11 @@
+---
+title: "RELATÓRIO DE ANÁLISE MINUCIOSA: BACKEND SOTA & MOTORES MATEMÁTICOS (VITOI GOLD)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # RELATÓRIO DE ANÁLISE MINUCIOSA: BACKEND SOTA & MOTORES MATEMÁTICOS (VITOI GOLD)
 
 Este relatório apresenta um aprofundamento rigoroso na arquitetura matemática, lógica probabilística e testes unitários do backend do projeto **Poker Racional (Paradigma Vitoi)**.
@@ -20,7 +28,7 @@ graph TD
 
 ### 1.1. A Equação Unificada da Perspectiva (PM & PMev)
 
-A **Perspectiva Matemática (PM)** (Layer 4) não é responsável pelo cálculo inicial de RIO ou do EV do Fold (que pertencem às camadas anteriores, notadamente a Layer 3). A Perspectiva Matemática atua como a camada onde encapsulamos a nova métrica. Ela unifica as dimensões estratégica, probabilística, matemática/monetária e preditiva em uma **Análise Preditiva e Precursiva em camadas e galhos profundos da árvore de decisão** (projetando que se Hero joga a ação $X$, ancorado nas probabilidades $a, b, c$, quais serão os outcomes reais das decisões subsequentes $\alpha, \beta, \gamma$ sob a perspectiva dimensional). Envelopa todo o sistema iterativo das camadas anteriores em nós preditivos estruturados para determinar a **probabilidade realística preditiva do melhor outcome possível**. A nível de consolidação, a PM expressa a porcentagem final de equidade do prize pool:
+A **Perspectiva Matemática (PM)** (Layer 4) não é responsável pelo cálculo inicial de RIO ou do EV do Fold (que pertencem às camadas anteriores, notadamente a Layer 3). A Perspectiva Matemática atua como a camada onde encapsulamos a nova métrica. Ela unifica as dimensões estratégica, probabilística, matemática/monetária e preditiva em uma **Análise Preditiva e Precursiva em camadas e galhos profundos da árvore de decisão** (projetando que se Hero joga a ação $X$, ancorado nas probabilidades $a, b, c$, quais serão os outcomes reais das decisões subsequentes $\alpha, \beta, \gamma$ sob a perspectiva dimensional). Envelopa PENDENTE o sistema iterativo das camadas anteriores em nós preditivos estruturados para determinar a **probabilidade realística preditiva do melhor outcome possível**. A nível de consolidação, a PM expressa a porcentagem final de equidade do prize pool:
 
 $$\text{PM} = \text{Expectativa} - (\text{RIO}_{\text{mw}} + \text{EV}_{\text{fold\_dynamic}})$$
 
@@ -93,7 +101,7 @@ Onde:
 
 ### 1.4. Roteamento de Frequência de Ação e Inércia do ICM
 
-No pós-flop, a agressão topologicalmente guiada em [math_sota.py](file:///C:/users/rapha/.gemini/antigravity/worktrees/Site/thorough-backend-code-analysis/engine/math_sota.py#L44-L98) e Rust (`solve_icm_distortion_v2`) atualiza as frequências de Nash (Fold/Call/Raise) aplicando a inércia do pote:
+No pós-flop, a agressão topologicalmente guiada em `math_sota.py` e Rust (`solve_icm_distortion_v2`) atualiza as frequências de Nash (Fold/Call/Raise) aplicando a inércia do pote:
 
 * **Agressão Efetiva Amortecida:**
     $$\text{Agg}_{\text{effective}} = 1.0 + (\text{Agg}_{\text{topological}} - 1.0) \times \left( \frac{1}{1 + \text{Gravity} \times 0.12} \right)$$
@@ -109,7 +117,7 @@ No pós-flop, a agressão topologicalmente guiada em [math_sota.py](file:///C:/u
 
 ### 1.5. Atualização de Range Posterior (Teorema de Bayes)
 
-A contração de ranges no motor [bayesian_range.py](file:///C:/users/rapha/.gemini/antigravity/worktrees/Site/thorough-backend-code-analysis/engine/bayesian_range.py) processa cada ação observada para ajustar o prior do range oponente:
+A contração de ranges no motor `bayesian_range.py` processa cada ação observada para ajustar o prior do range oponente:
 
 $$P(\text{Mão}_{r,c} \mid \text{Ação}) = \frac{P(\text{Ação} \mid \text{Mão}_{r,c}) \times P(\text{Mão}_{r,c})}{\sum_{i=1}^{13} \sum_{j=1}^{13} P(\text{Ação} \mid \text{Mão}_{i,j}) \times P(\text{Mão}_{i,j})}$$
 

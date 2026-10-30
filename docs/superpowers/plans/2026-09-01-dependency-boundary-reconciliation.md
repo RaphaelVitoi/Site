@@ -1,4 +1,5 @@
 ---
+title: "2026 09 01 dependency boundary reconciliation"
 id: plan-dependency-boundary-reconciliation-2026-09-01
 tipo: plano
 escopo: Site
@@ -21,7 +22,6 @@ revisoes_de_ancora:
     caminhos: [scripts/ops/cwv_gate.ps1]
     parecer: A ancora do plano foi reavaliada no baseline atual; o plano permanece valido e nao recebe certificacao retroativa.
 ---
-
 # Dependency Boundary Reconciliation — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: use `superpowers:executing-plans` to execute this plan task-by-task and `superpowers:verification-before-completion` before reporting completion.

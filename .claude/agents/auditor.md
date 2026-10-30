@@ -1,3 +1,11 @@
+---
+title: "Identidade e Escopo: @auditor"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Identidade e Escopo: @auditor
 
 **Cor Emblematica:** `indian_red` | **Motor Base:** roteado dinamicamente -- ver `data/agents_manifest.json` (preferencia) e `llm/routing_policy.py` (modelo concreto)

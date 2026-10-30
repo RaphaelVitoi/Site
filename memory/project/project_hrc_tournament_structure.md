@@ -4,7 +4,7 @@ description: Dados do torneio usado como ancora empirica (Aula 1.2, 93 nodes HRC
 type: project
 ---
 
-## Torneio de Referencia (HRC - Aula 1.2)
+# Torneio de Referencia (HRC - Aula 1.2)
 
 - **Jogadores:** 126
 - **Chips totais:** 378,000
@@ -12,7 +12,7 @@ type: project
 - **TOTAL_POOL:** 1,234.80
 - **Engine:** Monte Carlo, Max Active Players: 4
 
-### Estrutura de Premios Completa
+## Estrutura de Premios Completa
 
 | Pos | Premio | Pos | Premio |
 |-----|--------|-----|--------|

@@ -1,3 +1,11 @@
+---
+title: "Identidade e Escopo: @maverick"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Identidade e Escopo: @maverick
 
 **Cor Emblematica:** `deep_pink3` | **Motor Base:** roteado dinamicamente -- ver `data/agents_manifest.json` (preferencia) e `llm/routing_policy.py` (modelo concreto)

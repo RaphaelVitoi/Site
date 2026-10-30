@@ -1,3 +1,11 @@
+---
+title: "CERTIFICACAO SOTA DE INTEGRIDADE E SEGURANCA (v6.0)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # CERTIFICACAO SOTA DE INTEGRIDADE E SEGURANCA (v6.0)
 
 **Data de Emissao:** 2026-05-21

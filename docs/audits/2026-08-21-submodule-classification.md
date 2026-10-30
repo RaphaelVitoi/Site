@@ -1,3 +1,11 @@
+---
+title: "Classificação de Submódulos — 21/08/2026"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Classificação de Submódulos — 21/08/2026
 
 ## Escopo

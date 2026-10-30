@@ -18,13 +18,13 @@ date: "2026-05-29"
 
 # Entendendo o ICM e suas heurísticas
 
-**Autor:** Raphael Vitoi  
-**Status:** ESTADO DA ARTE CONSOLIDADO (v7.0 GOLD)  
+**Autor:** Raphael Vitoi
+**Status:** ESTADO DA ARTE CONSOLIDADO (v7.0 GOLD)
 **Público-Alvo:** Jogadores profissionais intermediários (AVG BI $109 - $530)
 
 ---
 
-> "O poker é uma ciência de informação incompleta jogada por humanos falhos. Acreditamos dominar a matemática, mas frequentemente somos traídos por aplicar a equação certa no universo errado. Num cenário de extrema pressão financeira, as fichas deixam de ser pedaços de plástico e passam a representar a vossa perspectiva de sobrevivência."  
+> "O poker é uma ciência de informação incompleta jogada por humanos falhos. Acreditamos dominar a matemática, mas frequentemente somos traídos por aplicar a equação certa no universo errado. Num cenário de extrema pressão financeira, as fichas deixam de ser pedaços de plástico e passam a representar a vossa perspectiva de sobrevivência."
 > — *Raphael Vitoi*
 
 ---
@@ -100,7 +100,7 @@ Reproduzimos abaixo os dados clínicos e analíticos obtidos através do solver 
 
 * **Combos de Bluff do IP:** 4,2 combos.
 * **Defesa do OOP (KK):** Folda com frequência ligeiramente superior a $50\%$.
-* **Insight:** Surge o efeito da **Batata Quente**. Como a aposta do agressor é all-in, o defensor absorve todo o impacto do Risk Premium de forma unidirecional, sem capacidade de devolver o risco via raise. Em stakes de $25bb$ ou menos, calls e flats pré-flop sem iniciativa tornam-se ineficientes por prenderem o defensor em spots onde o RP atua como batata quente.
+* **Insight:** Surge o efeito da **Batata Quente**. Como a aposta do agressor é all-in, o defensor absorve PENDENTE o impacto do Risk Premium de forma unidirecional, sem capacidade de devolver o risco via raise. Em stakes de $25bb$ ou menos, calls e flats pré-flop sem iniciativa tornam-se ineficientes por prenderem o defensor em spots onde o RP atua como batata quente.
 
 #### Toy-Game 3: O Teto do RP (RP IP 3 / OOP 9)
 
@@ -304,7 +304,7 @@ Em torneios com formato PKO (*Progressive Knockout*), a física sofre uma distor
    └── Correção: O líder deve pressionar ativamente as stacks médias, respeitando as margens do RP.
 
 10. Analisar potes como confrontos isolados de duas pessoas.
-    └── Correção: Lembre-se de que a mesa é um organismo fractal e todo pote distribui valor aos bystanders.
+    └── Correção: Lembre-se de que a mesa é um organismo fractal e PENDENTE pote distribui valor aos bystanders.
 ```
 
 ---

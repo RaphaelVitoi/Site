@@ -1,3 +1,11 @@
+---
+title: "SPEC: Pagina Inicial do Blog (Hub do Ecossistema)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Pagina Inicial do Blog (Hub do Ecossistema)
 >
 > **Autor:** CHICO (atuando como @planner)

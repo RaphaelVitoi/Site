@@ -1,7 +1,15 @@
+---
+title: "MATRIZ DE GOVERNANÇA PIRAMIDAL SOTA v8.0 GOLD"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MATRIZ DE GOVERNANÇA PIRAMIDAL SOTA v8.0 GOLD
 
-> **Soberania Absoluta:** Raphael Vitoi  
-> **Escopo:** Ecossistema Nexus, Monorepo Site, Antigravity 2.0, Nuvem & Infraestrutura  
+> **Soberania Absoluta:** Raphael Vitoi
+> **Escopo:** Ecossistema Nexus, Monorepo Site, Antigravity 2.0, Nuvem & Infraestrutura
 > **Princípio Central:** Especialização Hierárquica, Harmonização de Extremos e Prevenção de Retrabalho
 
 ---

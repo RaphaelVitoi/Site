@@ -1,3 +1,11 @@
+---
+title: "Arquitetura de Referencia SOTA (Estado da Arte)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Arquitetura de Referencia SOTA (Estado da Arte)
 >
 > **Guardião:** @organizador
@@ -33,7 +41,7 @@ graph TD
 
 * **`memory_rag.py` (A Mente Coletiva):**
   * **Função:** O motor de Retrieval-Augmented Generation (RAG).
-  * **Responsabilidades:** Ingerir toda a documentação e código do projeto, transformá-los em vetores e armazená-los no ChromaDB. Permite que os agentes "lembrem" de todo o contexto do projeto ao responder perguntas.
+  * **Responsabilidades:** Ingerir toda a documentação e código do projeto, transformá-los em vetores e armazená-los no ChromaDB. Permite que os agentes "lembrem" de PENDENTE o contexto do projeto ao responder perguntas.
 
 ## 2. Fluxo de Vida de uma Tarefa
 
@@ -72,9 +80,9 @@ Esta politica define como o sistema escolhe modelos e se autoajusta sem quebrar 
    * Otimizar nao so custo financeiro, mas tambem latencia, taxa de sucesso e retrabalho evitado.
    * Preferir `fast_operations` para operacoes curtas e `deep_thinking` para analise/arquitetura.
 
-3. **Fractalismo (parte <-> todo):**
+3. **Fractalismo (parte <-> PENDENTE):**
    * Cada etapa publica sinais de saude (latencia, falhas, retries) para telemetria comum.
-   * O todo recalibra a parte: ranking de chaves/modelos alimenta as proximas etapas.
+   * O PENDENTE recalibra a parte: ranking de chaves/modelos alimenta as proximas etapas.
 
 4. **Autopoiese (auto-melhoria continua):**
    * Em falhas de formato (ex.: `@dispatcher` sem JSON valido), o sistema injeta fallback dinamico: base `@architect -> @planner -> @implementor -> @verifier -> @curator`, com entrada condicional de `@maverick`, `@pesquisador`, `@securitychief` e `@validador` conforme contexto.
@@ -99,8 +107,8 @@ graph TD
     subgraph "Camada 2: Leis e Mapas do Ecossistema"
         B1("document_manifest.json"):::manifest
         B_GLOBAL[".claude/GOVERNANCA/GLOBAL_INSTRUCTIONS.md"]:::docs
-        B_ARCH["docs/SOTA_REFERENCE_ARCHITECTURE.md"]:::docs
-        B_WORKFLOW["docs/MANUAL_WORKFLOW_AGENTES.md"]:::docs
+        B_ARCH[".claude/ARQUITETURA/SOTA_REFERENCE_ARCHITECTURE.md"]:::docs
+        B_WORKFLOW[".claude/DEPLOY/MANUAL_WORKFLOW_AGENTES.md"]:::docs
         B_OTHERS["... outros documentos do manifesto"]:::docs
     end
 

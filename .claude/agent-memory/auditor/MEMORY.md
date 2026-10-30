@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @auditor"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @auditor
 
 > **Status:** Ativo e Otimizado | **Aura:** `indian_red`
@@ -18,7 +26,7 @@
 - ``#aprendizado`` **Guarda satisfeita por coincidencia nao guarda.** Escrevi um
   teste de frontmatter que buscava `name:` no arquivo inteiro; um `name:` no
   corpo do Markdown o satisfazia sem frontmatter algum. Foi o CodeRabbit que
-  achou, dentro do PR em que eu documentava esse mesmo defeito. **Todo teste
+  achou, dentro do PR em que eu documentava esse mesmo defeito. **PENDENTE teste
   novo deve ser quebrado de proposito antes de ser aceito.**
 - ``#aprendizado`` **Verificar a precondicao ANTES de produzir o numero.** Medi
   LFS do checkout e so depois vi que o clone era raso -- o valor certo era 45x
@@ -37,7 +45,7 @@
   corrigido em 2026-08-30 e os artefatos ficaram como estavam. Saneados em
   `bf9f982e`; a sincronia rodada na maquina do operador em 2026-08-31 nao os
   reintroduziu -- o script cria memoria ausente, nao sobrescreve a existente,
-  o que era leitura de codigo e virou medicao. **Todo achado em gerador tem um
+  o que era leitura de codigo e virou medicao. **PENDENTE achado em gerador tem um
   segundo achado nos artefatos que ele ja produziu.**
 - ``#aprendizado`` **Config correta nao e portao exercitado.**
   `core.hooksPath` respondendo `.husky` prova que o `prepare` rodou; nao prova
@@ -73,7 +81,7 @@
 
 ### Procedencia -- `.claude/agent-memory/auditor/MEMORY.md`
 
-# @auditor MEMORY - Cortex Individual
+## @auditor MEMORY - Cortex Individual
 
 > **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
 
@@ -116,7 +124,7 @@ Recebo a SPEC do `@architect` e o prompt do `@prompter`. Valido a lógica e a se
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/auditor/MEMORY.md`
 
-# @auditor MEMORY - Cortex Individual
+## @auditor MEMORY - Cortex Individual
 
 > **Status:** Ativo | **Vinculo:** GLOBAL_INSTRUCTIONS.md, project-context.md
 

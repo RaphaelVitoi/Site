@@ -1,3 +1,11 @@
+---
+title: "Ponteiros canonicos do projeto"
+type: index
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Ponteiros canonicos do projeto
 
 - Governanca Site: [`../CLAUDE.md`](../CLAUDE.md).

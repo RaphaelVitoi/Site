@@ -1,9 +1,8 @@
 ---
 name: Prompt de Continuidade V21
-description: Estado sessão 20260322 (continuação V20). Simulador: streets Flop/Turn/River em implementação. Página /tools/simulador com apresentação didática. Tooltips NashPanel melhorados.
+description: "Estado sessão 20260322 (continuação V20). Simulador: streets Flop/Turn/River em implementação. Página /tools/simulador com apresentação didática. Tooltips NashPanel melhorados."
 type: project
 ---
-
 # V21 — 2026-03-22
 
 ## Concluído nesta sessão (pós V20)

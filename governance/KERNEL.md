@@ -1,3 +1,11 @@
+---
+title: "Governance Kernel — ponteiro"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Governance Kernel — ponteiro
 
 > **A doutrina canônica do projeto `Site` é [`../CLAUDE.md`](../CLAUDE.md).**

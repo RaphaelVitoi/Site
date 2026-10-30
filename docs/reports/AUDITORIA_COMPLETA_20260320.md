@@ -1,3 +1,11 @@
+---
+title: "Auditoria Completa do Ecossistema trueICM"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Auditoria Completa do Ecossistema trueICM
 
 **Data:** 2026-03-20 | **Auditor:** Claude Opus 4.6 (CHICO)
@@ -93,7 +101,7 @@ Header.tsx (84 linhas) e Footer.tsx existem em components/layout/ mas NAO sao im
 
 ## IV. PROBLEMAS GRAVES (P1)
 
-### P1-1: Homepage placeholder
+### P1-1: Homepage MARCADOR_POSICAO
 page.tsx raiz (30 linhas): "Nexus SOTA Engine - Ecossistema ativo." Com unico link para /aula-icm. Nao e homepage de produto.
 
 ### P1-2: 12 componentes dead code (~2.841 linhas)
@@ -191,7 +199,7 @@ Menciona Agent-TaskManager.psm1 e Agent-Autopoiesis.psm1 que nao existem.
 
 ### O que o sistema NAO e:
 1. Um site funcional visualmente. Sem globals.css restaurado = texto branco sem estilo. Sem Header/Footer = sem navegacao. Sem FontAwesome = icones invisiveis.
-2. Um produto deployavel. Homepage placeholder, IP hardcoded, public/docs desincronizado.
+2. Um produto deployavel. Homepage MARCADOR_POSICAO, IP hardcoded, public/docs desincronizado.
 3. Um simulador completo. MasterSimulator usa 4 de ~14 componentes construidos.
 
 ### Metafora:

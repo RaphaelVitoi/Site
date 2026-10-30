@@ -1,3 +1,11 @@
+---
+title: "Archivo de contexto sustituido — 2026-09-22"
+type: context
+status: archived
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Archivo de contexto sustituido — 2026-09-22
 
 Os arquivos deste diretorio preservam integralmente versoes de contexto

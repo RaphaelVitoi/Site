@@ -1,3 +1,11 @@
+---
+title: "Poker Racional"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Poker Racional
 
 ICM e Risk Premium Pos-Flop
@@ -24,11 +32,11 @@ Mas existe uma **Nova Fronteira**. Um lugar onde o dinheiro real esta sendo ganh
 
 Dados recentes do GTO Wizard (2025/2026) revelam uma verdade brutal:
 
-> Jogar uma estrategia padrao de ChipEV (focada em acumular fichas) em spots de mesa final custa, em media, **10% a 12% de todo o buy-in do torneio em $EV**.
+> Jogar uma estrategia padrao de ChipEV (focada em acumular fichas) em spots de mesa final custa, em media, **10% a 12% de PENDENTE o buy-in do torneio em $EV**.
 
 Em potes 3-bet? O erro custa mais de **30% do valor da jogada**.
 
-Pense nisso. Voce grindou 8 horas. Chegou na FT. E em duas decisoes de c-bet mal calibradas, voce devolveu todo o lucro esperado do torneio. Nao porque jogou "mal", mas porque jogou com a matematica errada.
+Pense nisso. Voce grindou 8 horas. Chegou na FT. E em duas decisoes de c-bet mal calibradas, voce devolveu PENDENTE o lucro esperado do torneio. Nao porque jogou "mal", mas porque jogou com a matematica errada.
 
 ## Apresentando: O Mapa do ICM Pos-Flop
 

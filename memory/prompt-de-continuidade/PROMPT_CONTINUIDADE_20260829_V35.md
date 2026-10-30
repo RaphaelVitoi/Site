@@ -1,4 +1,5 @@
 ---
+title: "PROMPT CONTINUIDADE 20260829 V35"
 id: prompt-continuidade-20260829-v35
 tipo: memoria
 escopo: Site
@@ -30,7 +31,6 @@ verificado:
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante os testes unitarios
 ---
-
 # PROTOCOLO DE CONTINUIDADE SOTA v8.0 GOLD — PROMPT MESTRE V35
 
 ```markdown

@@ -4,6 +4,8 @@ description: Separar mudancas proprias de pre-existentes. Nunca git add -A cegam
 type: feedback
 ---
 
+
+# feedback commit only session changes
 Quando o working tree tem centenas de mudancas de sessoes anteriores, NUNCA fazer git add -A cegamente no primeiro commit. Stage apenas os arquivos modificados na sessao atual.
 
 **Why:** Sessao P2 tinha 334 mudancas pendentes. O primeiro commit (P2 Higiene) incluiu apenas 14 arquivos da sessao. O segundo (sincronizacao) so foi feito apos verificar que todas as 320 restantes eram legitimas.

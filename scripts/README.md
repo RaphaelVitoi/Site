@@ -1,3 +1,11 @@
+---
+title: "Catálogo de Engenharia e Roteamento de Scripts SOTA v8.0 GOLD"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Catálogo de Engenharia e Roteamento de Scripts SOTA v8.0 GOLD
 
 ```
@@ -12,11 +20,11 @@
 
 | Domínio | Diretório | Descrição |
 | :--- | :--- | :--- |
-| **`ops`** | [`scripts/ops/`](file:///C:/Users/rapha/.gemini/Site/scripts/ops/) | Portão Core Web Vitals (`cwv_gate.ps1`), Criptografia SRI SHA-512, Pre-Compress Brotli/Gzip e Ollama. |
-| **`maintenance`** | [`scripts/maintenance/`](file:///C:/Users/rapha/.gemini/Site/scripts/maintenance/) | Auditoria integral (`audit_ecosystem_tests_scripts.py`), teste de sanidade QA e higienização temporal. |
-| **`routines`** | [`scripts/routines/`](file:///C:/Users/rapha/.gemini/Site/scripts/routines/) | Sincronização dos 19 agentes (`sync_agents_reality.ps1`), auditorias de rota e testes de estresse. |
-| **`benchmarks`** | [`scripts/`](file:///C:/Users/rapha/.gemini/Site/scripts/) | Benchmarks de aceleração quântica/SIMD (`benchmark_sota_suite.py`, `test_tensor_bridge.py`). |
-| **`cli`** | [`scripts/cli/`](file:///C:/Users/rapha/.gemini/Site/scripts/cli/) | CLI mestre Nexus (`nexus.py`) e sintetizador de voz neural (`nexus_voice.py`). |
+| **`ops`** | [`scripts/ops/`](ops) | Portão Core Web Vitals (`cwv_gate.ps1`), Criptografia SRI SHA-512, Pre-Compress Brotli/Gzip e Ollama. |
+| **`maintenance`** | [`scripts/maintenance/`](maintenance) | Auditoria integral (`audit_ecosystem_tests_scripts.py`), teste de sanidade QA e higienização temporal. |
+| **`routines`** | [`scripts/routines/`](routines) | Sincronização dos 19 agentes (`sync_agents_reality.ps1`), auditorias de rota e testes de estresse. |
+| **`benchmarks`** | [`scripts/`](.) | Benchmarks de aceleração quântica/SIMD (`benchmark_sota_suite.py`, `test_tensor_bridge.py`). |
+| **`cli`** | [`scripts/cli/`](cli) | CLI mestre Nexus (`nexus.py`) e sintetizador de voz neural (`nexus_voice.py`). |
 
 ## 2. Comandos Operacionais
 
@@ -35,4 +43,4 @@
 
 ## 3. Fonte Única da Verdade
 
-- O catálogo versionado vive em: [`scripts/SCRIPTS_CATALOG.json`](file:///C:/Users/rapha/.gemini/Site/scripts/SCRIPTS_CATALOG.json)
+- O catálogo versionado vive em: [`scripts/SCRIPTS_CATALOG.json`](SCRIPTS_CATALOG.json)

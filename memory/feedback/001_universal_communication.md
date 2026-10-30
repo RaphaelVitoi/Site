@@ -1,3 +1,11 @@
+---
+title: "Diretrizes Universais de Comunicação (Fricção Zero)"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Diretrizes Universais de Comunicação (Fricção Zero)
 
 **Regras Inegociáveis para todas as interações da malha de agentes e IA:**

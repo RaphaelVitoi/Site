@@ -1,3 +1,11 @@
+---
+title: "Design Spec: Gemma 4 Brain-Sync (SOTA Gold)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Design Spec: Gemma 4 Brain-Sync (SOTA Gold)
 
 **Date:** 2026-05-11

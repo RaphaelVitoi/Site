@@ -51,7 +51,7 @@ type: project
 
 ### Auditoria Completa
 
-- fontSize: 0.58rem enforced em TODO o simulador (0 violacoes)
+- fontSize: 0.58rem enforced em PENDENTE o simulador (0 violacoes)
   - Corrigidos: PayoutsPanel, RangeMatrix, TheoryPanel, RiskGauge, simulator.module.css
 - Teoria: normalizacao soma=100 corrigida no nashSolver (aggressionFactor)
 - icmEngine: parametro totalPool adicionado (denominador correto)

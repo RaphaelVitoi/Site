@@ -1,3 +1,11 @@
+---
+title: "🧠 TEORIA DA PERSPECTIVA MATEMÁTICA (Paradigma VITOI)"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # 🧠 TEORIA DA PERSPECTIVA MATEMÁTICA (Paradigma VITOI)
 
 > **PONTEIRO CANÔNICO** — Este é um ponteiro para o manifesto central.

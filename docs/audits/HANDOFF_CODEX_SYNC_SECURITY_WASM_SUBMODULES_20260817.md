@@ -1,3 +1,11 @@
+---
+title: "Handoff de Sessao - Sincronizacao, Seguranca, WASM e Submodulos"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Handoff de Sessao - Sincronizacao, Seguranca, WASM e Submodulos
 
 > Data: 17 de agosto de 2026

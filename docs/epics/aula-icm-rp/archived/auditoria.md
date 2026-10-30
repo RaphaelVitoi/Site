@@ -1,3 +1,11 @@
+---
+title: "Relatorio de Auditoria: Aula ICM e Risk Premium em Final Tables"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio de Auditoria: Aula ICM e Risk Premium em Final Tables
 
 **Auditor:** @auditor | **Data:** 2026-03-08

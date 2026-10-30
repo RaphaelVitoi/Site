@@ -1,3 +1,11 @@
+---
+title: "Skillmaster Config"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Skillmaster Config
 
 Este arquivo documenta o formato do `skillmaster_config.json` e evita comentarios dentro do JSON.

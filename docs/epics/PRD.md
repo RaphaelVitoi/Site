@@ -1,3 +1,11 @@
+---
+title: "PRD: Fortaleza SOTA (Identidade e Validacao Economica)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PRD: Fortaleza SOTA (Identidade e Validacao Economica)
 
 ## 1. Visao Geral

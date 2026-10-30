@@ -1,3 +1,11 @@
+---
+title: "Walkthrough: Refatoração dos Motores Matemáticos (Purificação de Bounty e Pure Vanilla Standard)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Walkthrough: Refatoração dos Motores Matemáticos (Purificação de Bounty e Pure Vanilla Standard)
 
 Este walkthrough documenta a purificação de todas as camadas do ecossistema SOTA para remover referências a Bounty, PKO, `bountyValue`, e `pkoValue`, deixando o simulador estritamente alinhado à modalidade **Vanilla MTT Texas Holdem** (com possibilidade de upgrade futuro para PSKO).

@@ -1,12 +1,20 @@
+---
+title: "TRATADO CANÔNICO DA PERSPECTIVA MATEMÁTICA (PMev)"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # TRATADO CANÔNICO DA PERSPECTIVA MATEMÁTICA (PMev)
 
 ## Teoria Unificada dos Jogos Estocásticos Não-Ergódicos, Dinâmica de Risco Pós-Flop e Decisão em Torneios
 
-**Autor & Proponente Teórico:** Raphael Vitoi  
-*Psicólogo (UEMG), Jogador/Educador de Poker Profissional, CEO PokerRacional, Criador do trueicm.com*  
-**Governança & Arquitetura de Sistemas:** Protocolo Chico SOTA v8.0 GOLD  
-**Classificação Temática (MSC 2020):** 91A15 (Stochastic Games), 91A26 (Rationality and Learning), 91B06 (Decision Theory), 62C10 (Bayesian Analysis)  
-**Data de Canonização:** 2026-08-23  
+**Autor & Proponente Teórico:** Raphael Vitoi
+*Psicólogo (UEMG), Jogador/Educador de Poker Profissional, CEO PokerRacional, Criador do trueicm.com*
+**Governança & Arquitetura de Sistemas:** Protocolo Chico SOTA v8.0 GOLD
+**Classificação Temática (MSC 2020):** 91A15 (Stochastic Games), 91A26 (Rationality and Learning), 91B06 (Decision Theory), 62C10 (Bayesian Analysis)
+**Data de Canonização:** 2026-08-23
 
 ---
 

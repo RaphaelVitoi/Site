@@ -1,3 +1,11 @@
+---
+title: "Relatorio de Auditoria Holistica Contextual (SOTA) - 2026-05-15"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio de Auditoria Holistica Contextual (SOTA) - 2026-05-15
 
 ## Escopo da Auditoria

@@ -1,3 +1,11 @@
+---
+title: "Mapa de Rotas do Frontend (Poker Racional)"
+type: routing
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Mapa de Rotas do Frontend (Poker Racional)
 
 > **CANONICO.** Qualquer agente (Claude, Gemini, ou outro) que edite rotas DEVE consultar e atualizar este arquivo.

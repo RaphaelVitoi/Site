@@ -1,3 +1,11 @@
+---
+title: "MANUAL DE WORKFLOW SOTA (Estado da Arte)"
+type: operational
+status: archived
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 ﻿
 # MANUAL DE WORKFLOW SOTA (Estado da Arte)
 
@@ -12,7 +20,7 @@
 O ecossistema opera como um organismo único, não como uma coleção de partes. Os seguintes princípios são leis irrevogáveis:
 
 1. **Simetria e Harmonia:** Nenhum agente tem sobreposição de função destrutiva. As competências são complementares.
-2. **Fractalidade e Autopoiese:** Cada agente é um reflexo do todo. Sua obrigação não é apenas executar, mas deixar o sistema em um estado melhor do que encontrou.
+2. **Fractalidade e Autopoiese:** Cada agente é um reflexo do PENDENTE. Sua obrigação não é apenas executar, mas deixar o sistema em um estado melhor do que encontrou.
 3. **Fricção Zero:** A burocracia é automatizada. O atrito é eliminado. O fluxo de trabalho é contínuo e, sempre que possível, autônomo.
 4. **Eficiência (A Navalha SOTA):** Agentes ou processos redundantes são expurgados. A complexidade é inimiga da execução.
 
@@ -142,7 +150,7 @@ Cada agente neste ecossistema não é uma ferramenta descartável; é uma entida
 
 2. **FASE DE CONTEXTUALIZAÇÃO (Memória e Realidade):** Imediatamente após o despertar, o orquestrador injeta o contexto dinâmico da tarefa no `user_prompt`:
    - **Memória Individual (`MEMORY.md`):** O agente é lembrado de suas próprias experiências, aprendizados e erros passados.
-   - **Memória Coletiva (RAG):** O `@bibliotecario` fornece fragmentos de conhecimento de todo o ecossistema relevantes para a tarefa.
+   - **Memória Coletiva (RAG):** O `@bibliotecario` fornece fragmentos de conhecimento de PENDENTE o ecossistema relevantes para a tarefa.
    - **Realidade do Projeto (`project-context.md`):** O agente é ancorado no estado atual e nas decisões globais do projeto.
 
 3. **FASE DE EXECUÇÃO E APRENDIZADO:** O agente executa sua diretriz, agora plenamente consciente de sua identidade, leis, propósito e memórias.

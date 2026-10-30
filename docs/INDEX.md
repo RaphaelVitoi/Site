@@ -1,3 +1,11 @@
+---
+title: "Índice Canônico de Engenharia"
+type: index
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Índice Canônico de Engenharia
 
 Este índice é o ponto de entrada documental do repositório. Ele organiza as fontes de verdade por decisão, não por ferramenta ou sessão de agente.

@@ -4,9 +4,9 @@ description: Conceitos originais de ICM pos-flop que Raphael desenvolveu e que p
 type: project
 ---
 
-## Conceitos Originais (nao existem na literatura)
+# Conceitos Originais (nao existem na literatura)
 
-### 1. Teto do RP
+## 1. Teto do RP
 
 - Limite mecanico de defesa imposto pelo RP. Nao e binario (Death Zone em 40%) - e gradual, ja opera em 6%.
 - O OOP defende ate onde o RP permite, nao pelo MDF classico.

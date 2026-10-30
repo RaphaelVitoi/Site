@@ -1,3 +1,11 @@
+---
+title: "Relatorio de Auditoria -- Sistema Poker Racional"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio de Auditoria -- Sistema Poker Racional
 **Data:** 2026-03-28 | **Versao auditada:** `d4263fa` (branch `main`)
 **Status final:** APROVADO -- sistema pronto para produto
@@ -68,7 +76,7 @@ Solucao: acesso por atributo de modulo (`_core_config.VALID_AGENTS`) + sincroniz
 
 | # | Arquivo | Problema |
 |---|---------|----------|
-| 10 | `aulas/icm-masterclass/page.tsx` | Secao `#simulador-section` era placeholder com link circular para a propria pagina |
+| 10 | `aulas/icm-masterclass/page.tsx` | Secao `#simulador-section` era MARCADOR_POSICAO com link circular para a propria pagina |
 
 O MasterSimulator existia e funcionava, mas nunca foi conectado a rota publica. `SimuladorLazy.tsx` criado como wrapper `'use client'` para `next/dynamic` com `ssr: false` -- requisito do App Router que proibe dynamic imports em Server Components. `ReferencialAula12` tambem estava implementada mas nunca importada no `MasterSimulator`.
 

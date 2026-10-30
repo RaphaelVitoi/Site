@@ -52,10 +52,6 @@
       "path": ".claude/DEPLOY/DEPLOY.md"
     },
     {
-      "name": "INVENTARIO DE FERRAMENTAS",
-      "path": ".claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md"
-    },
-    {
       "name": "PROTOCOLO DE ROTEAMENTO HOLOGRAFICO",
       "path": ".claude/ARQUITETURA/HOLOGRAPHIC_ROUTING_PROTOCOL.md"
     },

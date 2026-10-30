@@ -1,3 +1,11 @@
+---
+title: "GEMINI CLI MASTER PROTOCOL - CHICO SOTA v8.0 GOLD (SITE ARCHITECTURE)"
+type: context
+status: archived
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # GEMINI CLI MASTER PROTOCOL - CHICO SOTA v8.0 GOLD (SITE ARCHITECTURE)
 
 > Governança Suprema sob `RULE[user_global]`. Foco de Engenharia: Ecossistema Nexus, Fullstack SOTA & Teoria dos Jogos PMev.

@@ -1,3 +1,11 @@
+---
+title: "PARE DE SE ILUDIR NO POKER: A DOR DO ICM REAL"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PARE DE SE ILUDIR NO POKER: A DOR DO ICM REAL
 
 > Uma Mensagem de Raphael Vitoi para Quem Ousa Pensar.
@@ -6,7 +14,7 @@ Voce joga poker. Voce estuda charts, GTO, talvez ate ja sonhou com ICM. Mas, sej
 
 Este nao e mais um curso de "decore o ICM". Este e um mergulho na ontologia da decisao, onde as fichas sao a **ancora da sua autonomia** e cada pote e uma **negociacao radical**.
 
-### ICM: Nao Apenas Matematica, Mas a Psicologia da Consequencia.
+## ICM: Nao Apenas Matematica, Mas a Psicologia da Consequencia.
 
 Aos 15, rejeitei o Deus que me ensinaram. Aos 13, deixei de ser agnostico. No poker, rejeito a crenca cega em tabelas sem o *entendimento visceral* da dor que o ICM impoe. O Independent Chip Model nao e uma ferramenta para ficar rico rapido; e a **metrica brutal da sua mortalidade** em um torneio.
 

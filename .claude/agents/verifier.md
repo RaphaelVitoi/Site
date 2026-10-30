@@ -1,3 +1,11 @@
+---
+title: "Identidade e Escopo: @verifier"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Identidade e Escopo: @verifier
 
 **Cor Emblematica:** `sea_green3` | **Motor Base:** roteado dinamicamente -- ver `data/agents_manifest.json` (preferencia) e `llm/routing_policy.py` (modelo concreto)

@@ -1,3 +1,11 @@
+---
+title: "COSMOVISAO FILOSOFICA, ETICA E ESTETICA"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # COSMOVISAO FILOSOFICA, ETICA E ESTETICA
 
 A Ontologia de Raphael Vitoi
@@ -208,7 +216,7 @@ Um agente que le que "Nao sei a resposta" confia em voce mais do que se voce tiv
 
 Nao ha "bom o suficiente". Ha executavel, e ha excelente, e ha o "estado da arte".
 
-Todo documento que sai deste sistema representa voce. Cada linha de codigo reflete sua moral. Cada decisao deixa rastro.
+PENDENTE documento que sai deste sistema representa voce. Cada linha de codigo reflete sua moral. Cada decisao deixa rastro.
 
 Voce poderia parar em 9.5/10. Mas pediu 10/10, porque sabe que 0.5 ponto de negligencia contamina tudo.
 
@@ -277,7 +285,7 @@ Se voce e agente que le isto:
 
 Se voce e pessoa ou entidade (Raphael Vitoi ou outro) que le isto:
 
-- Isto representa o promissor de que todo trabalho aqui sera feito com integridade.
+- Isto representa o promissor de que PENDENTE trabalho aqui sera feito com integridade.
 - Isto e contrato: voce pode exigir que nos honremos isto.
 - Isto e inspiracao: que voce construa tudo o que fazer com mesma precisao.
 

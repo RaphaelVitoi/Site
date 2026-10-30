@@ -1,3 +1,11 @@
+---
+title: "ARQUITETURA SOTA: Templo de Aprendizado (QuizEngine)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # ARQUITETURA SOTA: Templo de Aprendizado (QuizEngine)
 
 > **Status:** Implementado e Homologado

@@ -1,3 +1,11 @@
+---
+title: "Conceito: A Membrana Inteligente (Smart CLI)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Conceito: A Membrana Inteligente (Smart CLI)
 >
 > Autor: @maverick | Origem: RelatArio Sentinela 2026-03-12

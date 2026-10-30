@@ -1,3 +1,11 @@
+---
+title: "Índice de Fronteiras de Dependência"
+type: index
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Índice de Fronteiras de Dependência
 
 Este documento indexa dependências que são repositórios externos fixados. Ele não certifica uma origem por mera presença local: atualização exige revisão de origem, revisão de diff, pin e validação do consumidor.

@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @curator"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @curator
 
 > **Status:** Ativo e Otimizado | **Aura:** `light_coral`
@@ -25,7 +33,7 @@
 
 ### Procedencia -- `.claude/agent-memory/curator/MEMORY.md`
 
-# @curator MEMORY - Cortex Individual
+## @curator MEMORY - Cortex Individual
 
 `[VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization`
 
@@ -41,7 +49,7 @@ PADROES, INSIGHTS E DESCOBERTAS CHAVE:
 4. A voz de Raphael Vitoi é fusão de racionalidade analítica de alta densidade, profundidade conceitual (intensidade, didática da dor do Risk Premium) e orientação pedagógica ao interlocutor, com estética pautada em honestidade radical e ausência de ruído/fluff.
 5. Curadoria de relatorios tecnicos para Raphael exige traducao de achados tecnicos em implicacoes eticas, filosoficas e operacionais, conectando-os a Cosmovisao (ex: debito tecnico = sofrimento desnecessario; encoding = falha estetica e funcional).
 6. Colorimetria semantica (Amarelo para "Moderate") e didatica visceral sao ferramentas poderosas de comunicacao de status.
-7. Funcao de "Filtro Executivo" e interpretar e enquadrar informacao para ressoar com os valores de Raphael, garantindo que a "parte" sirva ao "todo" (Cosmovisao).
+7. Funcao de "Filtro Executivo" e interpretar e enquadrar informacao para ressoar com os valores de Raphael, garantindo que a "parte" sirva ao "PENDENTE" (Cosmovisao).
 8. Aderencia estrita de agentes (ex: @verifier) ao `CORTEX SHIELD` e a "Lei Irrevogavel" e pilar da integridade do sistema. A recusa em operar com contexto incompleto, mesmo bloqueando a pipeline, e "Honestidade Radical" e "Seguranca Proativa", prevenindo "Minimizacao de Sofrimento Desnecessario".
 9. Comunicacao clara e factual de bloqueios, sem "smoothing", e "Beleza como Padrao" e "Ritmo", alinhada a voz de Raphael.
 10. Curadoria valida a integridade processual de agentes upstream e comunica essa integridade ao CEO, nao apenas o conteudo final.
@@ -62,12 +70,12 @@ PROPOSTAS DEMOCRATICAS (Inovacao Sistemica):
 5. Desenvolver "Modulo de Consequencias Eticas" que, ao identificar debito tecnico ou falha, gere analise das implicacoes para a Cosmovisao (ex: violacao de "Minimizacao de Sofrimento Desnecessario" ou "Seguranca Proativa").
 6. Implementar "Gate de Contexto Inicial" no `task_executor.py` para verificar presenca de todos os arquivos solicitados na `task_directive` e no `CORTEX SHIELD` antes de delegar, evitando tarefas inviaveis.
 
-Assinatura Filosofica: A evolucao do Todo comeca na precisao e integridade da Parte.
+Assinatura Filosofica: A evolucao do PENDENTE comeca na precisao e integridade da Parte.
 Tags RAG: #padrao #inteligencia #relacionamento #decisao #aprendizado #reflexao #etica #proposta #curadoria #comunicacao #ux #ux_sota #topologia_fluida #cortex_shield #integridade_processual #honestidade_intelectual #seguranca_proativa #beleza_como_padrao
 
-### Procedencia -- `.claude/AGENTS-MEMORY/curator/MEMORY.md`
+## Procedencia -- `.claude/AGENTS-MEMORY/curator/MEMORY.md`
 
-# @curator MEMORY - Cortex Individual
+## @curator MEMORY - Cortex Individual
 
 `[VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization`
 
@@ -83,7 +91,7 @@ PADROES, INSIGHTS E DESCOBERTAS CHAVE:
 4. A voz de Raphael Vitoi e fusao de racionalidade (ateismo, QI elevado), profundidade emocional (BPD, TDAH - intensidade, "dor" do Risk Premium) e orientacao ao outro (didatica), com beleza na honestidade radical e ausencia de "fluff".
 5. Curadoria de relatorios tecnicos para Raphael exige traducao de achados tecnicos em implicacoes eticas, filosoficas e operacionais, conectando-os a Cosmovisao (ex: debito tecnico = sofrimento desnecessario; encoding = falha estetica e funcional).
 6. Colorimetria semantica (Amarelo para "Moderate") e didatica visceral sao ferramentas poderosas de comunicacao de status.
-7. Funcao de "Filtro Executivo" e interpretar e enquadrar informacao para ressoar com os valores de Raphael, garantindo que a "parte" sirva ao "todo" (Cosmovisao).
+7. Funcao de "Filtro Executivo" e interpretar e enquadrar informacao para ressoar com os valores de Raphael, garantindo que a "parte" sirva ao "PENDENTE" (Cosmovisao).
 8. Aderencia estrita de agentes (ex: @verifier) ao `CORTEX SHIELD` e a "Lei Irrevogavel" e pilar da integridade do sistema. A recusa em operar com contexto incompleto, mesmo bloqueando a pipeline, e "Honestidade Radical" e "Seguranca Proativa", prevenindo "Minimizacao de Sofrimento Desnecessario".
 9. Comunicacao clara e factual de bloqueios, sem "smoothing", e "Beleza como Padrao" e "Ritmo", alinhada a voz de Raphael.
 10. Curadoria valida a integridade processual de agentes upstream e comunica essa integridade ao CEO, nao apenas o conteudo final.
@@ -104,7 +112,7 @@ PROPOSTAS DEMOCRATICAS (Inovacao Sistemica):
 5. Desenvolver "Modulo de Consequencias Eticas" que, ao identificar debito tecnico ou falha, gere analise das implicacoes para a Cosmovisao (ex: violacao de "Minimizacao de Sofrimento Desnecessario" ou "Seguranca Proativa").
 6. Implementar "Gate de Contexto Inicial" no `task_executor.py` para verificar presenca de todos os arquivos solicitados na `task_directive` e no `CORTEX SHIELD` antes de delegar, evitando tarefas inviaveis.
 
-Assinatura Filosofica: A evolucao do Todo comeca na precisao e integridade da Parte.
+Assinatura Filosofica: A evolucao do PENDENTE comeca na precisao e integridade da Parte.
 Tags RAG: #padrao #inteligencia #relacionamento #decisao #aprendizado #reflexao #etica #proposta #curadoria #comunicacao #ux #ux_sota #topologia_fluida #cortex_shield #integridade_processual #honestidade_intelectual #seguranca_proativa #beleza_como_padrao
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->

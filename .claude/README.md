@@ -1,3 +1,11 @@
+---
+title: "Contexto `.claude` do projeto Site"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Contexto `.claude` do projeto Site
 
 Este diretorio contem memoria, contexto de runtime, especificacoes e arquivos de

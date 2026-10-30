@@ -1,3 +1,11 @@
+---
+title: "Yi  Andice Mestre do Ecossistema v5.1"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Yi  Andice Mestre do Ecossistema v5.1
 >
 > Gerado pelo @organizador | Data: 2026-05-20

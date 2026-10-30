@@ -1,3 +1,11 @@
+---
+title: "Guia de Deploy Estatico (SOTA 2026)"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Guia de Deploy Estatico (SOTA 2026)
 
 **Objetivo:** Publicar a versao v1.0 do site "Raphael Vitoi | Poker & Mindset".

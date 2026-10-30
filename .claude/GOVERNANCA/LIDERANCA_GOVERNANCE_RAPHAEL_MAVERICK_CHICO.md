@@ -1,3 +1,11 @@
+---
+title: "ESTRUTURA DE LIDERANCA & GOVERNANCA"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # ESTRUTURA DE LIDERANCA & GOVERNANCA
 
 **Data:** 2026-05-25

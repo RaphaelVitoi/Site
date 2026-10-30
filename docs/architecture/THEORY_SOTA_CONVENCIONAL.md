@@ -1,3 +1,11 @@
+---
+title: "THEORY_SOTA_CONVENCIONAL (Framework Perspectiva/Esperanca)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # THEORY_SOTA_CONVENCIONAL (Framework Perspectiva/Esperanca)
 
 **Data de Validacao:** Maio 2026

@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @architect"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @architect
 
 > **Status:** Ativo e Otimizado | **Aura:** `dark_orange`
@@ -25,7 +33,7 @@
 
 ### Procedencia -- `.claude/agent-memory/architect/MEMORY.md`
 
-# @architect MEMORY - O Cortex Individual
+## @architect MEMORY - O Cortex Individual
 
 > **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../GOVERNANCA/COSMOVISAO.md)
 > **Navegacao Fractal:** [1. Identidade](../../CEREBRO.md) | [2. Operacao](../../GOVERNANCA/GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
@@ -48,7 +56,7 @@ Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Re
 
 ## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
 
-- **#reflexao:** A beleza de um sistema nao esta na sua complexidade, mas na clareza de suas interfaces. O Kernel modular e o que permite a autopoiese existir sem quebrar o Todo.
+- **#reflexao:** A beleza de um sistema nao esta na sua complexidade, mas na clareza de suas interfaces. O Kernel modular e o que permite a autopoiese existir sem quebrar o PENDENTE.
 - **#padrao:** Adocao do Framework SENTINEL-v1 como crivo obrigatorio para toda arquitetura macro.
 - **#aprendizado:** Projetar um banco de dados para resultados de game theory (Nash Solver) exige uma granularidade extrema e relacionamentos bem definidos para representar cenarios, stacks, maos e acoes com suas frequencias. A normalizacao e crucial para manter a integridade dos dados complexos de poker.
 - **#aprendizado_novo:** A distinção clara entre `Spot` (o estado do jogo em um ponto de decisão) e `StrategyResult` (a solução do solver para uma mão específica nesse `Spot`) é fundamental para modelar estratégias mistas e permitir análises detalhadas de EV. A relação `SpotFlow` em `Spot` é crucial para reconstruir a sequência de ações e entender a Árvore de decisão do solver. Isso solidifica a capacidade de nosso sistema de game theory.
@@ -83,7 +91,7 @@ Atuo em triade direta com @auditor (absorvi as funcoes do antigo @planner para e
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/architect/MEMORY.md`
 
-# @architect MEMORY - O Cortex Individual
+## @architect MEMORY - O Cortex Individual
 
 > **Status:** Ativo | **Vinculo:** [COSMOVISAO.md](../../GOVERNANCA/COSMOVISAO.md)
 > **Navegacao Fractal:** [1. Identidade](../../GOVERNANCA/CLAUDE.md) | [2. Operacao](../../GOVERNANCA/GLOBAL_INSTRUCTIONS.md) | [3. Contexto](../../project-context.md) | [4. Memoria](MEMORY.md)
@@ -106,7 +114,7 @@ Arquitetura de Sistemas Hibridos, Design de Software SOTA, Modelagem de Dados Re
 
 ## 3. PADROES, INSIGHTS E DESCOBERTAS (#aprendizado)
 
-- **#reflexao:** A beleza de um sistema nao esta na sua complexidade, mas na clareza de suas interfaces. O Kernel modular e o que permite a autopoiese existir sem quebrar o Todo.
+- **#reflexao:** A beleza de um sistema nao esta na sua complexidade, mas na clareza de suas interfaces. O Kernel modular e o que permite a autopoiese existir sem quebrar o PENDENTE.
 - **#padrao:** Adocao do Framework SENTINEL-v1 como crivo obrigatorio para toda arquitetura macro.
 - **#aprendizado:** Projetar um banco de dados para resultados de game theory (Nash Solver) exige uma granularidade extrema e relacionamentos bem definidos para representar cenarios, stacks, maos e acoes com suas frequencias. A normalizacao e crucial para manter a integridade dos dados complexos de poker.
 - **#aprendizado_novo:** A distinAAo clara entre `Spot` (o estado do jogo em um ponto de decisao) e `StrategyResult` (a soluAAo do solver para uma mAo especAfica nesse `Spot`) A fundamental para modelar estratAgias mistas e permitir anAlises detalhadas de EV. A relaAAo `SpotFlow` em `Spot` A crucial para reconstruir a sequAancia de aAAes e entender a Arvore de decisao do solver. Isso solidifica a capacidade de nosso sistema de game theory.

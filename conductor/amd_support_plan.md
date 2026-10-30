@@ -1,3 +1,11 @@
+---
+title: "Plano: Suporte AMD e Consenso de Entidades"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Plano: Suporte AMD e Consenso de Entidades
 
 ## Objetivo

@@ -1,4 +1,5 @@
 ---
+title: "EXPERIMENTOS CONTROLADOS H3 H4 H8"
 id: research-pmev-experimentos-controlados-h3-h4-h8
 tipo: protocolo
 escopo: Site
@@ -13,7 +14,6 @@ verificado:
 nao_verificado:
   - nenhuma hipotese foi validada por solver ou por dados de jogadores neste protocolo de desenho
 ---
-
 # H3, H4 e H8 — Protocolo de Experimentos Controlados
 
 ## Regra comum

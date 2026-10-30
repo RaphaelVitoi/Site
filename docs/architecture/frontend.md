@@ -1,3 +1,11 @@
+---
+title: "Arquitetura Frontend"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Arquitetura Frontend
 
 Este documento descreve a arquitetura geral do frontend da aplicacao.

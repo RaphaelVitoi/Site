@@ -1,3 +1,11 @@
+---
+title: "Instrucoes de hospedeiro para GitHub Copilot"
+type: rule
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Instrucoes de hospedeiro para GitHub Copilot
 
 Este arquivo adapta o contexto para o Copilot; nao duplica governanca ou

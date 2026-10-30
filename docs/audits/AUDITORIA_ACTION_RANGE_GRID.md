@@ -1,3 +1,11 @@
+---
+title: "Auditoria Tecnica: ActionRangeGrid & Fundamentacao ICM (SOTA Gold)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Auditoria Tecnica: ActionRangeGrid & Fundamentacao ICM (SOTA Gold)
 
 ## 1. Coerencia Matematica e Equilibrio (Analise de Dados)

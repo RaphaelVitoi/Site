@@ -1,9 +1,8 @@
 ---
 name: Prompt de Continuidade V25
-description: Estado da sessao 20260322 - fichas visuais, EP fix, pay jumps, legenda estruturas. PENDENTE: readability global ReferencialAula12
+description: "Estado da sessao 20260322 - fichas visuais, EP fix, pay jumps, legenda estruturas. PENDENTE: readability global ReferencialAula12"
 type: project
 ---
-
 # Continuidade — Sessão 20260322 V25
 
 ## Ultimo commit: 49a9032
@@ -25,7 +24,7 @@ type: project
 - Analisar a página inteira
 - Entender como economizar espaço e maximizar uso de forma harmoniosa e elegante
 - Evitar problemas de readability que existem agora
-- A legenda top-heavy/flat/híbrida foi adicionada mas o layout como um todo precisa de revisão
+- A legenda top-heavy/flat/híbrida foi adicionada mas o layout como um PENDENTE precisa de revisão
 
 **Arquivo**: `frontend/src/components/simulator/ReferencialAula12.tsx`
 

@@ -1,3 +1,11 @@
+---
+title: "Matriz de Roteamento de Mudanças"
+type: routing
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Matriz de Roteamento de Mudanças
 
 Use esta matriz antes de alterar arquivos. Ela evita mudanças transversais sem dono, testes ou contrato explícito.

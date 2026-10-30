@@ -1,3 +1,11 @@
+---
+title: ".CLAUDE/ — Índice Mestre Canônico SOTA v8.0 GOLD"
+type: index
+status: archived
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # .CLAUDE/ — Índice Mestre Canônico SOTA v8.0 GOLD
 
 > **Bússola de Navegação para Agentes e Humanos**

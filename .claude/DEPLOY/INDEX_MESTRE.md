@@ -1,3 +1,11 @@
+---
+title: "Indice operacional do projeto"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Indice operacional do projeto
 
 - Governanca e gates: [`../../CLAUDE.md`](../../CLAUDE.md).

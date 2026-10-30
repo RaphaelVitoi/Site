@@ -1,3 +1,11 @@
+---
+title: "Matriz de Distribuicao de Conhecimento - Workflow v5"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Matriz de Distribuicao de Conhecimento - Workflow v5
 
 > Criado: 2026-03-12 | Versao: 1.0 | Proposito: Eliminar redundancia documental e garantir versionamento de referencia unico

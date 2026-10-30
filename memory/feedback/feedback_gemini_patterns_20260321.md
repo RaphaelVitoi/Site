@@ -4,7 +4,7 @@ description: Como Raphael interage com Gemini vs Claude, padroes de fabricacao d
 type: feedback
 ---
 
-## Como Raphael usa modelos de IA
+# Como Raphael usa modelos de IA
 
 - Usa como sparring intelectual, nao como oraculo. Quer steelmanning e resistencia, nao validacao.
 - Metodo socratico invertido: ele ja sabe a resposta, testa se o modelo chega la e como.

@@ -1,3 +1,11 @@
+---
+title: "Aceite de Risco — chromadb 1.5.9 (5 advisories sem correção)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Aceite de Risco — chromadb 1.5.9 (5 advisories sem correção)
 
 **Data:** 2026-09-20

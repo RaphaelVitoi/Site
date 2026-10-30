@@ -1,9 +1,8 @@
 ---
 name: Prompt de Continuidade V19
-description: Estado completo sessão 20260322. Motor ICM funcional, auditoria aula-icm concluída. Próximo: página formal E/P/E.
+description: "Estado completo sessão 20260322. Motor ICM funcional, auditoria aula-icm concluída. Próximo: página formal E/P/E."
 type: project
 ---
-
 # V19 — 2026-03-22
 
 ## Simulador: FUNCIONAL E LIMPO

@@ -1,3 +1,11 @@
+---
+title: "RELATORIO DE ENTREGA SOTA - 2026-05-14"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # RELATORIO DE ENTREGA SOTA - 2026-05-14
 
 > **Orquestrador:** @chico (Tier 1) | **Status:** GOLD / FINALIZADO
