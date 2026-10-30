@@ -1,3 +1,11 @@
+---
+title: "Validacao Matematica das Hipoteses Paradigmaticas  v1"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Validacao Matematica das Hipoteses Paradigmaticas  v1
 
 **Autoria:** Raphael Vitoi (teoria) + derivacoes formais (2026)
@@ -34,9 +42,9 @@ Dependencia logica entre os componentes PM:
 
 ```text
 EV_fold(ICM) > 0    RIO(N) ~ O(N2)    Ci < 1 em MW
-                                              
+
                                     PM calculavel em pre-flop
-                                              
+
                               [D6] transposicao pos-flop  PM em qualquer street
 ```
 
@@ -98,7 +106,7 @@ Para `d_pj  0` (payjump iminente), `p_j` e grande e a condicao e satisfeita com 
 
 ### Corolario: por que chipEV sempre negativo
 
-Em chipEV, a estrutura de premios e flat: `p_i = constante`. Logo `p_j = 0` para todo j. A condicao suficiente colapsa para `0 > 0`, que e falso. Portanto:
+Em chipEV, a estrutura de premios e flat: `p_i = constante`. Logo `p_j = 0` para PENDENTE j. A condicao suficiente colapsa para `0 > 0`, que e falso. Portanto:
 
 ```text
 EV_fold(chipEV) = antes < 0   sempre

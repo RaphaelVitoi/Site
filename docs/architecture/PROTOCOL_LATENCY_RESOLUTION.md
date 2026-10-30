@@ -1,3 +1,11 @@
+---
+title: "PROTOCOLO SOTA: RESOLUCAO DE LATENCIA PROGRESSIVA"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PROTOCOLO SOTA: RESOLUCAO DE LATENCIA PROGRESSIVA
 
 > **Status:** Ativo | **Implementacao:** Raphael Vitoi & CHICO System

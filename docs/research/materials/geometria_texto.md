@@ -1,3 +1,11 @@
+---
+title: "A GEOMETRIA DO RISCO"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # A GEOMETRIA DO RISCO
 
 A Desconstrucao do Pos-Flop sob a Otica do ICM

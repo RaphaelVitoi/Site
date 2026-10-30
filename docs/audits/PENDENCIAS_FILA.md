@@ -1,3 +1,11 @@
+---
+title: "PENDENCIAS — Fila de bloqueio do Site"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PENDENCIAS — Fila de bloqueio do Site
 
 Escopo: itens que **nao** bloqueiam o portao de commit, mas nao estao fechados.

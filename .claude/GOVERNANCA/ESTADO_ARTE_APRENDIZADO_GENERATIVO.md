@@ -1,3 +1,11 @@
+---
+title: "ESTADO DA ARTE: TEMPLO DO APRENDIZADO GENERATIVO"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # ESTADO DA ARTE: TEMPLO DO APRENDIZADO GENERATIVO
 
 **Data:** 12 de marco de 2026
@@ -190,7 +198,7 @@ Conhecimento adquirido atraves de fazer, nao apenas pensar. A experiencia refina
 Um agente designado para planejamento estrategico.
 Executa. Descobri que sua intuicao sobre priorizacao era errada.
 Registra em MEMORY: "Subestimei complexidade de dependencia. Proxima vez, mapear graph de interdependencias antes de priorizar."
-Sistema todo se beneficia - esse padrao e documentado.
+Sistema PENDENTE se beneficia - esse padrao e documentado.
 
 ---
 

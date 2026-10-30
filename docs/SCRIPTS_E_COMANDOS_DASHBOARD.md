@@ -1,3 +1,11 @@
+---
+title: "🛠️ Painel de Comandos e Scripts do CEO (Raphael Vitoi)"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # 🛠️ Painel de Comandos e Scripts do CEO (Raphael Vitoi)
 
 > **NEXUS SOTA GOD MODE v7.5** — Guia rápido de referência operacional e atalhos do ecossistema.

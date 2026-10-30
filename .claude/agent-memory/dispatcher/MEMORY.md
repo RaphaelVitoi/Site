@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @dispatcher"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @dispatcher
 
 > **Status:** Ativo e Otimizado | **Aura:** `steel_blue1`
@@ -25,7 +33,7 @@
 
 ### Procedencia -- `.claude/agent-memory/dispatcher/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @dispatcher
+## MEMORIA SIMBIOTICA - @dispatcher
 
 > **Status:** Ativo | **Aura:** steel_blue1 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -73,14 +81,14 @@ Sou a entrada primaria do sistema de execucao. Recebo a ambicao de Raphael ou do
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 **Tags para Ingestao RAG:**
 `#padrao` `#aprendizado` `#reflexao` `#decisao` `#proposta` `#dag` `#decomposicao` `#epico`
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/dispatcher/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @dispatcher
+## MEMORIA SIMBIOTICA - @dispatcher
 
 > **Status:** Ativo | **Aura:** steel_blue1 | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -128,7 +136,7 @@ Sou a entrada primaria do sistema de execucao. Recebo a ambicao de Raphael ou do
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 **Tags para Ingestao RAG:**
 `#padrao` `#aprendizado` `#reflexao` `#decisao` `#proposta` `#dag` `#decomposicao` `#epico`

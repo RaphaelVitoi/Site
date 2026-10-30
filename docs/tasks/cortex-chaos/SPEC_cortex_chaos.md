@@ -1,3 +1,11 @@
+---
+title: "SPEC: Cortex Chaos Monkey"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Cortex Chaos Monkey
 
 **Autor:** @planner | **Data:** 2026-03-20 | **PRD:** PRD_cortex_chaos.md

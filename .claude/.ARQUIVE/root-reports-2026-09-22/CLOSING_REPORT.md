@@ -1,3 +1,11 @@
+---
+title: "FORMATO DE FECHAMENTO - Sessão Jules / Bolt ⚡"
+type: executive
+status: archived
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # FORMATO DE FECHAMENTO - Sessão Jules / Bolt ⚡
 
 **1. Hipóteses Levantadas**

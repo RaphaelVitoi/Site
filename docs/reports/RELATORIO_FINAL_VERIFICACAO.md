@@ -1,3 +1,11 @@
+---
+title: "RELATORIO DE AUDITORIA SOTA v4.2 GOLD - 2026-05-08"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # RELATORIO DE AUDITORIA SOTA v4.2 GOLD - 2026-05-08
 
 ## 1. Escopo da Auditoria

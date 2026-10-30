@@ -1,3 +1,11 @@
+---
+title: "SPEC: GET /key-health-summary"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: GET /key-health-summary
 
 ## Objective

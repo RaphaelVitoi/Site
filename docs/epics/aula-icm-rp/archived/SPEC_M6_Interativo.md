@@ -1,3 +1,11 @@
+---
+title: "SPEC: Modulo 6 - Simulador Interativo de Toy-Games"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Modulo 6 - Simulador Interativo de Toy-Games
 
 **Autor:** @planner | **Data:** 2026-03-11 | **PRD:** `PRD_M6_Interativo.md`

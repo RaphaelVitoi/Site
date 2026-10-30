@@ -1,4 +1,5 @@
 ---
+title: "PMEV SPEC V0 1"
 id: research-pmev-spec-v0-1
 tipo: especificacao
 escopo: Site
@@ -14,7 +15,6 @@ verificado:
 nao_verificado:
   - validacao empirica, exportacao de solver, hand history e adaptador de runtime permanecem fora deste contrato minimo
 ---
-
 # PMev Spec v0.1 — Contrato Minimo Reproduzivel
 
 ## Objetivo

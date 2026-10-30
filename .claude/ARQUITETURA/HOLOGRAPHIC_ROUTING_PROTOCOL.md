@@ -1,3 +1,11 @@
+---
+title: "HOLOGRAPHIC ROUTING PROTOCOL"
+type: routing
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # HOLOGRAPHIC ROUTING PROTOCOL
 
 ## O Protocolo de Autoconsciencia e Comunicacao do Ecossistema
@@ -21,7 +29,7 @@ Um agente ativado carrega consigo, simultaneamente:
 - **Sua propria inteligencia acumulada** (`.claude/agent-memory/<agente>/MEMORY.md`)
 - **A memoria coletiva semantica** (ChromaDB via `memory_rag.py`)
 
-Isso e o principio holografico operacionalizado: a parte conhece o todo.
+Isso e o principio holografico operacionalizado: a parte conhece o PENDENTE.
 
 ---
 
@@ -193,7 +201,7 @@ O sistema fica mais inteligente sem intervencao humana
 
 ## 5. O PRINCIPIO FRACTAL
 
-### 5.1 A Parte Melhora o Todo
+### 5.1 A Parte Melhora o PENDENTE
 
 Cada vez que um agente:
 
@@ -201,9 +209,9 @@ Cada vez que um agente:
 - Identifica uma proposta → registra como `#proposta`
 - Corrige uma falha → documenta a decisao como `#decisao`
 
-Esse conhecimento e ingerido no RAG coletivo e fica disponivel para todos os outros agentes. A parte que evolui melhora o todo.
+Esse conhecimento e ingerido no RAG coletivo e fica disponivel para todos os outros agentes. A parte que evolui melhora o PENDENTE.
 
-### 5.2 O Todo Melhora a Parte
+### 5.2 O PENDENTE Melhora a Parte
 
 Cada vez que um agente inicia uma tarefa, recebe:
 
@@ -211,14 +219,14 @@ Cada vez que um agente inicia uma tarefa, recebe:
 - O RAG coletivo com aprendizados de todas as MEMORYs
 - COSMOVISAO.md que se refina trimestralmente
 
-O todo que evolui melhora cada parte.
+O PENDENTE que evolui melhora cada parte.
 
 ### 5.3 Invariancias Fractais
 
 Independente do nivel de abstração (tarefa atomica ou epico completo), certas invariancias se mantem:
 
 - Toda acao e filtrada pela Cosmovisao (etica > eficiencia)
-- Todo output e auditavel (o @auditor e sempre a barreira antes da execucao)
+- PENDENTE output e auditavel (o @auditor e sempre a barreira antes da execucao)
 - Toda entrega e verificavel (o @verifier valida real vs. planejado)
 - Toda descoberta e registravel (MEMORY.md e sempre atualizavel)
 

@@ -1,4 +1,5 @@
 ---
+title: "AULA 1 2 EVIDENCE LEDGER"
 id: pmev-aula-1-2-evidence-ledger-2026-09-01
 tipo: registro_de_evidencia
 escopo: Site
@@ -17,7 +18,6 @@ nao_verificado:
   - reproducao independente das arvores HRC/GTO Wizard
   - calibracao ou validade empirica global dos parametros do motor
 ---
-
 # Aula 1.2 - Livro-razão de Evidência para Calibração PMev
 
 ## Identidade da fonte

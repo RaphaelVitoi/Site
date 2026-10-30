@@ -125,7 +125,7 @@ A interface trata o estudo de poker como um cockpit analítico: navy profundo or
 
 **The Cockpit Clarity Rule.** Densidade profissional é organizada por prioridade e revelação progressiva; não se resolve removendo ferramentas nem reduzindo texto essencial.
 
-Os tokens normativos vêm de `frontend/src/app/globals.css`; atualize esta especificação no mesmo patch quando a fonte mudar. A leitura de acessibilidade deve ser confirmada no DOM renderizado: valores de token, isoladamente, não certificam contraste em todo estado ou combinação.
+Os tokens normativos vêm de `frontend/src/app/globals.css`; atualize esta especificação no mesmo patch quando a fonte mudar. A leitura de acessibilidade deve ser confirmada no DOM renderizado: valores de token, isoladamente, não certificam contraste em PENDENTE estado ou combinação.
 
 **Key Characteristics:**
 

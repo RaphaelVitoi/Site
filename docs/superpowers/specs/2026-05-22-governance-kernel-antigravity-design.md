@@ -1,3 +1,11 @@
+---
+title: "Governance Kernel And Antigravity Host Architecture"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Governance Kernel And Antigravity Host Architecture
 
 ## Objective

@@ -1,3 +1,11 @@
+---
+title: "Adaptador de contexto do Gemini CLI — projeto Site"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Adaptador de contexto do Gemini CLI — projeto Site
 
 Este arquivo trata apenas da entrada do Gemini CLI; nao cria uma governanca

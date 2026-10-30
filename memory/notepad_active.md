@@ -1,3 +1,11 @@
+---
+title: "SOTA Working Memory & Notepad Scratchpad"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SOTA Working Memory & Notepad Scratchpad
 
 > **Protocolo Chico v8.0 GOLD** | Ultima Atualizacao: 2026-10-01 09:45:33

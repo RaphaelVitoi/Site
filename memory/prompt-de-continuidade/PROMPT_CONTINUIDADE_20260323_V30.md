@@ -25,7 +25,7 @@ type: project
 
 - Criado `frontend/src/components/quiz/types.ts` (modulo faltante que quebrava 5 imports)
 - Corrigido tipagem em `templo/analytics/page.tsx` (Object.entries cast)
-- Resultado: 0 erros TypeScript em todo o projeto
+- Resultado: 0 erros TypeScript em PENDENTE o projeto
 
 ### Correcao critica dos agentes
 
@@ -76,7 +76,7 @@ type: project
 
 ### TypeScript
 
-- 0 erros em todo o projeto
+- 0 erros em PENDENTE o projeto
 - Dev server: funcional em localhost:3000
 
 ### 5 tabs do simulador

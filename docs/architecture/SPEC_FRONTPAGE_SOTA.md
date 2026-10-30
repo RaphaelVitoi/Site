@@ -1,3 +1,11 @@
+---
+title: "SOTA FRONTPAGE: ARQUITETURA TECNICA E TEORICA"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SOTA FRONTPAGE: ARQUITETURA TECNICA E TEORICA
 
 > "O Edge Mudou de Lugar. A soberania agora pertence a quem domina a Geometria do Risco."

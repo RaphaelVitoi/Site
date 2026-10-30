@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @skillmaster"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @skillmaster
 
 > **Status:** Ativo e Otimizado | **Aura:** `dark_khaki`
@@ -24,7 +32,7 @@
 
 ### Procedencia -- `.claude/agent-memory/skillmaster/MEMORY.md`
 
-# @skillmaster MEMORY - O Cortex Individual
+## @skillmaster MEMORY - O Cortex Individual
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
@@ -57,7 +65,7 @@ Trabalho silencioso. Sincronizo as memorias de todos os outros via `rag_ingest` 
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->
 

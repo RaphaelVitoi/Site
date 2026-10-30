@@ -1,3 +1,11 @@
+---
+title: "Padrao Ouro SOTA: Aprofundamento do Frontend Implementation Plan"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Padrao Ouro SOTA: Aprofundamento do Frontend Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -10,7 +18,7 @@
 
 ---
 
-### Task 1: Blindagem de Ambiente e Mock de Seguranca (Auth.js)
+## Task 1: Blindagem de Ambiente e Mock de Seguranca (Auth.js)
 
 **Files:**
 
@@ -130,9 +138,9 @@ git commit -m "feat: upgrade perspective panel to v4.6 gold with dynamic margina
 
 ```typescript
 // Remover a implementacao inline de telemetria e substituir por:
-<WasmTelemetryWidget 
-  wasmLogs={wasmLogs} 
-  resultCi={result.ci} 
+<WasmTelemetryWidget
+  wasmLogs={wasmLogs}
+  resultCi={result.ci}
 />
 ```
 

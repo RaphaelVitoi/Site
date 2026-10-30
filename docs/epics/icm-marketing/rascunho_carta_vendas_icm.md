@@ -1,8 +1,16 @@
+---
+title: "A Arte da Decisao sob Pressao: Dominando o ICM com Raphael Vitoi"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # A Arte da Decisao sob Pressao: Dominando o ICM com Raphael Vitoi
 
 Prezado(a) Jogador(a) de Poker,
 
-Voce ja sentiu aquela pontada de duvida crucial em momentos decisivos de um torneio? Aquela sensacao de que, apesar de todo o seu esforco, o ICM parece um labirinto impenetravel, e que a cada bolha ou salto de premio, o valor das suas fichas escorrega por entre os dedos?
+Voce ja sentiu aquela pontada de duvida crucial em momentos decisivos de um torneio? Aquela sensacao de que, apesar de PENDENTE o seu esforco, o ICM parece um labirinto impenetravel, e que a cada bolha ou salto de premio, o valor das suas fichas escorrega por entre os dedos?
 
 A maioria dos jogadores entende o ICM de forma superficial. Eles memorizam tabelas, seguem regras genericas, mas falham em compreender a **arquitetura profunda da decisao** que o ICM revela. Em vez de dominar, sao dominados pela pressao. Isso nao e uma falha de carater; e uma falha de **metodologia**.
 

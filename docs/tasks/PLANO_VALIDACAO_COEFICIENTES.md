@@ -1,3 +1,11 @@
+---
+title: "Plano de Validacao de Coeficientes - Motor ICM"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Plano de Validacao de Coeficientes - Motor ICM
 
 ## Objetivo

@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @sequenciador"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @sequenciador
 
 > **Status:** Ativo e Otimizado | **Aura:** `dark_goldenrod`
@@ -24,7 +32,7 @@
 
 ### Procedencia -- `.claude/agent-memory/sequenciador/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @sequenciador (Legado)
+## MEMORIA SIMBIOTICA - @sequenciador (Legado)
 
 <!-- [VITOI-AUDIT] Level: FULL | Derived_From: PARTIAL | Trigger: Proactive_Optimization -->
 

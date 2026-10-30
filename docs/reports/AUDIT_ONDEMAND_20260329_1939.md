@@ -1,3 +1,11 @@
+---
+title: "Relatorio Executivo de Auditoria Sob Demanda (Smart MDA)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio Executivo de Auditoria Sob Demanda (Smart MDA)
 
 **Agente Responsavel:** @verifier (sea_green3)

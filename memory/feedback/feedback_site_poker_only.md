@@ -4,6 +4,8 @@ description: O produto/site trueICM.com e sobre poker, nao financas. Componentes
 type: feedback
 ---
 
+
+# feedback site poker only
 O site e produto sao exclusivamente sobre poker. Nao ha espaco para componentes de financas/startup (cap table, valuation pre/post-money, option pool).
 
 **Why:** Raphael corrigiu quando a Fase 4 ia manter IcmSimulator/IcmCapTable/IcmCharts como componentes validos. O site e trueICM.com, focado em ICM de poker.

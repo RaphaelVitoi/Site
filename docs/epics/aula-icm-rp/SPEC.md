@@ -1,3 +1,11 @@
+---
+title: "SPEC: Smart CLI v2.0 - \"A Membrana Inteligente\""
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Smart CLI v2.0 - "A Membrana Inteligente"
 
 > **Autor:** @planner | **Baseado em:** IDENTITY_SPEC.md (@maverick)

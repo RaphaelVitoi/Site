@@ -1,3 +1,11 @@
+---
+title: "Relatorio de Pesquisa: Aula ICM e Risk Premium em Final Tables"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio de Pesquisa: Aula ICM e Risk Premium em Final Tables
 
 **Autor da aula:** Raphael Vitoi

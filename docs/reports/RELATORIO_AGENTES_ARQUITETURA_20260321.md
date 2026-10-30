@@ -1,3 +1,11 @@
+---
+title: "Relatorio: Arquitetura de Agentes - Diagnostico e Guia de Uso Maximo"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio: Arquitetura de Agentes - Diagnostico e Guia de Uso Maximo
 
 **Data:** 2026-03-21 | **Autor:** Claude Opus 4.6 (sessao P1)

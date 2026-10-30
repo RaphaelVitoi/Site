@@ -1,3 +1,11 @@
+---
+title: "KPIs de Sucesso para o Aprendizado Generativo"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # KPIs de Sucesso para o Aprendizado Generativo
 > **Autor:** CHICO (em modo de planejamento estrategico)
 > **Destinatario:** @maverick (para monitoramento e relatorios sentinela)

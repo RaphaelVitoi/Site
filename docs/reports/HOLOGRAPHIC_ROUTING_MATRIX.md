@@ -1,3 +1,11 @@
+---
+title: "MATRIZ HOLOGRAFICA DE ROTEAMENTO (SOTA)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MATRIZ HOLOGRAFICA DE ROTEAMENTO (SOTA)
 
 > **Gerado Automaticamente** | Data: 2026-03-20 14:30:51

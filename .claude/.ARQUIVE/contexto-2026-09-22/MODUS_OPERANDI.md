@@ -1,3 +1,11 @@
+---
+title: "CHICO SYSTEM - Modus Operandi & SOTA Engineering Laws"
+type: operational
+status: archived
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # CHICO SYSTEM - Modus Operandi & SOTA Engineering Laws
 
 ## LEI 0: A ONTOLOGIA SOTA Absoluto (CORTEX SHIELD DA IDE)
@@ -29,7 +37,7 @@ Este bloco condensa a ontologia do SOTA Absoluto em instrucoes de sistema puras,
 ## 3. Resiliencia Headless (Anti-Deadlock)
 
 - **O Problema:** Rotinas chamadas em background congelam esperando `Read-Host` ou `input()`.
-- **A Solucao SOTA:** Todo script interativo DEVE suportar `-Force`. Se ativo, evite interacao e use fallbacks.
+- **A Solucao SOTA:** PENDENTE script interativo DEVE suportar `-Force`. Se ativo, evite interacao e use fallbacks.
 
 ## 4. Ancoragem de Caminhos (Absolute Pathing)
 
@@ -60,4 +68,4 @@ Este bloco condensa a ontologia do SOTA Absoluto em instrucoes de sistema puras,
 ## 9. A Engenharia da Antevisao e Economia Generalizada
 
 - **O Principio:** A execucao mecanica sem visao de futuro gera divida tecnica. A sofisticacao e a inteligencia devem sempre substituir a forca bruta e a complexidade.
-- **A Diretriz:** Todo movimento arquitetural deve ser guiado por 3 passos: 1. **Antevisao:** Construir a imagem mental do objetivo final, prevendo o impacto e as portas que a implementacao abrira. 2. **Previsao:** Identificar colisoes, bugs e redundancias potenciais antes de forjar o codigo. 3. **Economia Generalizada:** Escolher a rota mais limpa, atomica e eficiente que evite retrabalho futuro. Se um problema pode ser evitado por design, ele nao deve existir para ser corrigido.
+- **A Diretriz:** PENDENTE movimento arquitetural deve ser guiado por 3 passos: 1. **Antevisao:** Construir a imagem mental do objetivo final, prevendo o impacto e as portas que a implementacao abrira. 2. **Previsao:** Identificar colisoes, bugs e redundancias potenciais antes de forjar o codigo. 3. **Economia Generalizada:** Escolher a rota mais limpa, atomica e eficiente que evite retrabalho futuro. Se um problema pode ser evitado por design, ele nao deve existir para ser corrigido.

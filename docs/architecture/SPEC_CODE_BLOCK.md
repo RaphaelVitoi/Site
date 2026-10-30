@@ -1,3 +1,11 @@
+---
+title: "SPEC: Componente CodeBlock"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Componente CodeBlock
 
 > **Autor:** CHICO (atuando como @planner)

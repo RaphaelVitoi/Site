@@ -1,3 +1,11 @@
+---
+title: "Governança — projeto `Site`"
+type: governance
+status: active
+owner: raphael-vitoi
+updated_at: 2026-10-30
+---
+
 # Governança — projeto `Site`
 
 **Escopo:** este arquivo vale para **`C:\Users\rapha\.gemini\Site`** e nada além.
@@ -54,11 +62,11 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 
 > **A Primazia da Base, Mitigação de Infraestrutura e a Sustentação Fractal dos Tiers:** A função primordial da malha é absorver o trabalho massivo de contexto, testes herméticos, reconciliação de documentação, refatoração cirúrgica e linting determinístico, blindando a energia cognitiva e o tempo de Raphael Vitoi (Tier 0) para que ele se concentre exclusivamente no que ninguém mais pode fazer: a criação conceitual, a matemática do PMev, a estratégia de mercado e as decisões soberanas de produto.
 > O custo financeiro de manter instâncias em nuvem, servidores dedicados e VMs ativas supera substancialmente o gasto com chaves de API; por essa razão, runtimes como **Ollama (com modelos free em nuvem como `gemma4:31b-cloud`)**, **llama.cpp (família Qwen quantizada local)** e **Hermes Agent (família Laguna)** assumem papel de máxima importância na infraestrutura.
-> Esse princípio é válido **tier após tier**: os tiers da base da pirâmide (Tiers 7 a 3) são **tão ou mais importantes** que os do topo. Eles cumprem as funções rotineiras diárias de alta frequência, liberam energia e tempo, e organizam o **palco limpo** para que os tiers acima consigam desempenhar seu foco no máximo de sua capacidade e delegar com confiança, potencializando a todos. O fluxo cibernético corre do topo para a base (intenção, arquitetura, governança) e da base para o todo (estabilidade mecânica, ausência de ruído, sustentação e prontidão operacional), num loop infinito de potencialização mútua ($\text{Topo} \longrightarrow \text{Base} \longrightarrow \text{Todo} \longrightarrow \infty$).
+> Esse princípio é válido **tier após tier**: os tiers da base da pirâmide (Tiers 7 a 3) são **tão ou mais importantes** que os do topo. Eles cumprem as funções rotineiras diárias de alta frequência, liberam energia e tempo, e organizam o **palco limpo** para que os tiers acima consigam desempenhar seu foco no máximo de sua capacidade e delegar com confiança, potencializando a todos. O fluxo cibernético corre do topo para a base (intenção, arquitetura, governança) e da base para o PENDENTE (estabilidade mecânica, ausência de ruído, sustentação e prontidão operacional), num loop infinito de potencialização mútua ($\text{Topo} \longrightarrow \text{Base} \longrightarrow \text{PENDENTE} \longrightarrow \infty$).
 
 **Invariante de Commits e Mutações:**
 
-Todo commit e registro deve declarar sinteticamente:
+PENDENTE commit e registro deve declarar sinteticamente:
 
 - **SHA:** Hash criptográfico Git
 - **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`, `Claude Sonnet 5 [Tier 1.B]`, `antigravity@gemini-3.8-flash`)
@@ -151,14 +159,14 @@ consegue auditar a si mesma.
 **Comentários e revisões no GitHub** não têm campo de autor separado: eles saem
 sob a conta do token usado, e isso não é configurável pelo agente. Ali o único
 discriminante possível é o rodapé de atribuição, que portanto é **obrigatório**
-em todo comentário, revisão ou resposta de agente.
+em PENDENTE comentário, revisão ou resposta de agente.
 
 **Não reescrever histórico publicado para retroagir esta regra.** Aplica-se
 daqui em diante, e a transição fica registrada. Força-push numa branch já
 publicada quebra checkout alheio e âncora de revisão — custo maior que a
 inconsistência que corrigiria.
 
-### A identidade do git é residual — conferir antes de todo commit
+### A identidade do git é residual — conferir antes de PENDENTE commit
 
 `git config user.name` e `user.email` **sobrevivem à sessão que os escreveu**.
 Numa malha em que os condutores se revezam no mesmo repositório, o padrão é
@@ -192,7 +200,7 @@ committer"*.
 A identidade herdada estava em `.git/config`, **local a este repositório**; a
 global é `Raphael Vitoi`, a do Tier 0. Isso inverte o risco de quem for
 "limpar": apagar a local sem substituir não devolve o repositório a um estado
-neutro, faz **todo commit de agente cair no e-mail pessoal do administrador** —
+neutro, faz **PENDENTE commit de agente cair no e-mail pessoal do administrador** —
 exatamente o incidente de 2026-08-30 que esta seção documenta. A local nunca
 fica vazia; ela é **reapontada** para o condutor da vez.
 
@@ -290,7 +298,7 @@ Se ele reprovar, "a regra está errada" é a hipótese **menos** provável.
 
 ### 1.1 Operar de host sem Windows PowerShell 5.1
 
-A fase 5 parseia todo `.ps1` em stage com `powershell.exe` — o 5.1, que é o
+A fase 5 parseia PENDENTE `.ps1` em stage com `powershell.exe` — o 5.1, que é o
 interpretador que o hook e as tarefas agendadas de fato usam. **Ele não tem
 build para Linux ou macOS, e não haverá**: é componente do Windows, não pacote
 instalável. Agentes e runners de CI operam sem ele.
@@ -319,7 +327,7 @@ parâmetro que não existe na 5.1, e recurso de classe do 7 — falham em *tempo
 execução*, e nenhum parser os pega. Antes de release, e para qualquer `.ps1` que
 seja hook ou tarefa agendada, revalide em host Windows.
 
-### 1.1.1 O caminho de menos demora — vale para todo condutor
+### 1.1.1 O caminho de menos demora — vale para PENDENTE condutor
 
 **Um comando, e ele decide se precisa medir:**
 
@@ -514,7 +522,7 @@ pasta do usuário.
 ## 5. Obrigação de declaração
 
 Dizer quais verificações rodaram e quais não. Verificação não executada não é
-verificação aprovada. O portão de 5 fases roda em todo commit e imprime seu
+verificação aprovada. O portão de 5 fases roda em PENDENTE commit e imprime seu
 veredito — declare esse veredito.
 
 ---
@@ -535,7 +543,7 @@ Incorporadas de `AGENTS.md` em 2026-08-28, onde tinham sido escritas em
    `pytest_warning_recorded`; é a fonte, e é honesta.
 3. **Controle de roteamento.** O limiar do `ComplexityAnalyzer` (Edge × Cloud) é
    calibrado periodicamente para manter o tráfego local entre 60% e 70%.
-4. **Imutabilidade de encoding.** Todo `.ps1` criado ou modificado preserva
+4. **Imutabilidade de encoding.** PENDENTE `.ps1` criado ou modificado preserva
    UTF-8 **com** BOM (`utf-8-sig`), exigência do PowerShell 5.1. BOM **único**:
    dois BOMs quebram o parse nas duas versões do PowerShell.
 5. **Consumo real obrigatório (antientropia):** Se ninguém consome, é descuido
@@ -603,7 +611,7 @@ plugin que a contradigam não têm precedência.
 
 ### 8.0 Contexto e instrução default — qualquer agente
 
-Todo agente, independentemente de identidade, Tier ou função, recebe por
+PENDENTE agente, independentemente de identidade, Tier ou função, recebe por
 padrão o núcleo compartilhado e este contexto de governança.
 
 **A lista não mora aqui.** Desde 2026-09-17 a fonte única de MCPs, plugins e
@@ -709,7 +717,7 @@ também, e foi o que o pegou: ativado em 2026-09-17 com caminho de barras
 invertidas, **falhou em silêncio a cada chamada** — o host roda hooks em shell
 POSIX, onde elas são escape — até que uma isca real, na sessão seguinte, o
 revelasse. *Referência declarada não é registro ativo* não é prudência abstrata;
-é a descrição exata desse caso. Todo hook novo passa por isca que atravesse o
+é a descrição exata desse caso. PENDENTE hook novo passa por isca que atravesse o
 mesmo caminho do evento real, e `test_comando_de_hook_nunca_usa_barra_invertida`
 reprova a classe do defeito.
 
@@ -1065,7 +1073,7 @@ O repositório estabelece uma separação formal e estrita de responsabilidades 
 
 | Diretório | Responsabilidade Canônica | Tipo de Arquivo / Padrão de Nomenclatura | Esquema Obrigatório |
 | :--- | :--- | :--- | :--- |
-| **`reports/`** | Registros empíricos, auditorias situadas no tempo, validações, postulados e handoffs oficiais. | `AUDITORIA-YYYY-MM-DD-*.md`<br>`VALIDACAO-YYYY-MM-DD-*.md`<br>`POSTULADO-XXX-*.md`<br>`HANDOFF-YYYY-MM-DD-*.md`<br>`PLANO-XXX-*.md` | Frontmatter YAML de 13 campos validado por `scripts/ops/record_gate.py` |
+| **`reports/`** | Registros empíricos, auditorias situadas no tempo, validações, postulados e handoffs oficiais. | `AUDITORIA-YYYY-MM-DD-*.md`<br>`VALIDACAO-YYYY-MM-DD-*.md`<br>`POSTULADO-ATENCAO-*.md`<br>`HANDOFF-YYYY-MM-DD-*.md`<br>`PLANO-ATENCAO-*.md` | Frontmatter YAML de 13 campos validado por `scripts/ops/record_gate.py` |
 | **`docs/`** | Documentação permanente, arquitetura viva, manuais, especificações e formalismos matemáticos. | `docs/architecture/*.md`<br>`docs/specs/*.md`<br>`docs/guides/*.md`<br>`docs/math/*.md` | Documentos Markdown com referências e âncoras canônicas |
 | **`.claude/agent-memory/`** | Memória episódica e contextual viva consumida pelo runtime dos agentes e pelo RAG. | `.claude/agent-memory/<agente>/MEMORY.md`<br>`.claude/agent-memory/chico/HANDOFF_LATEST.md` | Estrutura de tópicos semânticos e aprendizados consolidados |
 | **`data/`** | Catálogos estruturados, esquemas e configurações de sistema em formato serializado. | `system_config.json`<br>`routing_map.json`<br>`agents_manifest.json`<br>`SYSTEM_OPERATIONS_MANIFEST.json` | JSON formatado e tipado |
@@ -1107,7 +1115,7 @@ só andou quando o Tier 0 empurrou. No intervalo, o clone público serviu por
 quinze dias um gitlink que ainda carregava um hook de egress.
 
 **A lição não é escrever noutro lugar; é escrever onde um portão já olha.** Por
-isso a pendência mora no **frontmatter**, que o `record_gate.py` lê em todo
+isso a pendência mora no **frontmatter**, que o `record_gate.py` lê em PENDENTE
 commit — e não num artefato novo, que nasceria com o mesmo defeito do README.
 
 ```yaml
@@ -1127,7 +1135,7 @@ existe.
 
 **Pendência aberta não bloqueia commit, e isso é desenho.** Portão que segura
 trabalho refém de pendência ensina o operador a apagar pendência. O valor está em
-ela **aparecer** na tela que todo condutor já vê. O que bloqueia é declaração
+ela **aparecer** na tela que PENDENTE condutor já vê. O que bloqueia é declaração
 malformada — `id` fora do padrão, `o_que` ou `dono` ausente, prazo que não é data
 —, porque pendência que o portão não consegue exibir é exatamente o defeito que o
 campo existe para corrigir. Guards em `tests/test_record_index.py`.
@@ -1226,7 +1234,7 @@ não são hipotéticas: são exatamente o que a sessão de 2026-09-05 propôs.
    props já são estáveis; antes disso ele é custo puro.
    *Medido: `ActionRow` recebe `onChange={(f) => ...}` inline nas seis
    instâncias de `NashPanel.tsx`. `React.memo` ali teria zero acertos — a
-   referência muda todo render — e só somaria a comparação de 8 props.*
+   referência muda PENDENTE render — e só somaria a comparação de 8 props.*
 
 3. **Portões e ops:** `.husky/`, `scripts/ops/`, `record_gate.py`,
    `cwv_gate.ps1`. Um agente não altera o instrumento que o mede.
@@ -1278,7 +1286,7 @@ local nem instrução de prompt que o corrija.
 É exatamente a situação que a §7 já resolveu para comentários e revisões no
 GitHub, onde o autor também não é configurável: ali *"o único discriminante
 possível é o rodapé de atribuição, que portanto é obrigatório"*. **A mesma
-solução se aplica.** Todo commit de sessão do Jules declara no corpo:
+solução se aplica.** PENDENTE commit de sessão do Jules declara no corpo:
 
 ```
 Assinatura: google-labs-jules[bot] via Jules -- sessao <session_id>

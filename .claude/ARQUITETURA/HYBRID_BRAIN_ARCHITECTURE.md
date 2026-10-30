@@ -1,3 +1,11 @@
+---
+title: "ARQUITETURA DO CEREBRO HIBRIDO (IDE Assistant  Background Executor)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # ARQUITETURA DO CEREBRO HIBRIDO (IDE Assistant  Background Executor)
 
 > **Status:** Ativo e Integrado (Workflow v8.0 GOLD - Quartetos Dinamicos & Economia Generalizada)

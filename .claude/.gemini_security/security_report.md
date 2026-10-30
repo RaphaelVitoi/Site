@@ -1,3 +1,11 @@
+---
+title: "Security Audit Report - SOTA IA Integration"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Security Audit Report - SOTA IA Integration
 
 **Date:** 2026-04-13 (Última atualização: 2026-09-01)

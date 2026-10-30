@@ -1,3 +1,11 @@
+---
+title: "Instrucoes operacionais do runtime"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Instrucoes operacionais do runtime
 
 Este arquivo e injetado nos prompts dos agentes pelo backend. Ele contem regras

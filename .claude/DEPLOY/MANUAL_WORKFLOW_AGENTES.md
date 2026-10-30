@@ -1,3 +1,11 @@
+---
+title: "Contrato de execucao dos agentes"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Contrato de execucao dos agentes
 
 Este arquivo e consumido pelo runtime Python. Ele descreve o contrato comum,

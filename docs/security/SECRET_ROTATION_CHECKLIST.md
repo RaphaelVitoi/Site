@@ -1,3 +1,11 @@
+---
+title: "Secret Rotation Checklist"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Secret Rotation Checklist
 
 Status date: 2026-04-03

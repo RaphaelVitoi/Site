@@ -1,4 +1,12 @@
-## CHANGELOG DE AUDITORIA
+---
+title: "SPEC: Aula Completa sobre ICM e Risk Premium em Final Tables"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
+# CHANGELOG DE AUDITORIA
 
 **Auditado por @auditor** | **Data: 2026-03-08**
 
@@ -22,7 +30,7 @@
 
 ---
 
-# SPEC: Aula Completa sobre ICM e Risk Premium em Final Tables
+## SPEC: Aula Completa sobre ICM e Risk Premium em Final Tables
 
 **Autor:** @planner | **Data:** 2026-03-08 | **PRD:** PRD.md
 

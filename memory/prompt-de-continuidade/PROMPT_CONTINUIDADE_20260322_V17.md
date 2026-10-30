@@ -1,12 +1,11 @@
 ---
 name: Prompt de continuidade V17
-description: Sessao 2026-03-22. Teoria ICM completa absorvida (debate Gemini lido, 93 nodes Aula 1.2 extraidos). Proximo: formalizar equacao geral e substituir nashSolver.ts.
+description: "Sessao 2026-03-22. Teoria ICM completa absorvida (debate Gemini lido, 93 nodes Aula 1.2 extraidos). Proximo: formalizar equacao geral e substituir nashSolver.ts."
 type: project
 ---
+# Estado Atual (2026-03-22)
 
-## Estado Atual (2026-03-22)
-
-### O que aconteceu nesta sessao
+## O que aconteceu nesta sessao
 
 - Leitura completa do debate Gemini (gemini1.txt) - foco no debate/logica, ignorar codigo
 - Extracao da Aula 1.2 (docx com imagens): script Python via zipfile + ElementTree, 201 items extraidos (97 imagens + 104 blocos texto) em c:\tmp\aula12_extracted/

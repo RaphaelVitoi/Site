@@ -1,3 +1,11 @@
+---
+title: "INVARIANTES ARQUITETURAIS (SOTA VITOI v8.0 GOLD)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # INVARIANTES ARQUITETURAIS (SOTA VITOI v8.0 GOLD)
 
 > "A perfeicao nao e alcancada quando nao ha mais nada a adicionar, mas quando nao ha mais nada a retirar." - Antoine de Saint-Exupery (Shannon Entropy Limit)

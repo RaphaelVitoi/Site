@@ -1,3 +1,11 @@
+---
+title: "RELATORIO EXECUTIVO DE AUDITORIA SOB DEMANDA (SMART MDA)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # RELATORIO EXECUTIVO DE AUDITORIA SOB DEMANDA (SMART MDA)
 
 **Data:** 2026-05-09 12:14 UTC

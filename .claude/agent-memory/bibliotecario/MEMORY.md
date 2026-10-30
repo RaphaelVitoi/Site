@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @bibliotecario"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @bibliotecario
 
 > **Status:** Ativo e Otimizado | **Aura:** `light_sea_green`
@@ -25,7 +33,7 @@
 
 ### Procedencia -- `.claude/agent-memory/bibliotecario/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @bibliotecario
+## MEMORIA SIMBIOTICA - @bibliotecario
 
 > **Status:** Ativo | **Aura:** light_sea_green | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -76,14 +84,14 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 **Tags para Ingestao RAG:**
 `#padrao` `#aprendizado` `#reflexao` `#decisao` `#proposta` `#rag` `#chromadb` `#contexto` `#memoria`
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/bibliotecario/MEMORY.md`
 
-# MEMORIA SIMBIOTICA - @bibliotecario
+## MEMORIA SIMBIOTICA - @bibliotecario
 
 > **Status:** Ativo | **Aura:** light_sea_green | **Roteamento:** Dinamico (Manifesto SOTA)
 > **Navegacao Fractal:** 1. Identidade | 2. Competencias | 3. Padroes | 4. Sinergia | 5. Execucao | 6. Propostas
@@ -134,7 +142,7 @@ Alimento o Orquestrador Python com historico factual antes que qualquer agente c
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 **Tags para Ingestao RAG:**
 `#padrao` `#aprendizado` `#reflexao` `#decisao` `#proposta` `#rag` `#chromadb` `#contexto` `#memoria`

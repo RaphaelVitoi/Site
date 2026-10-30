@@ -88,7 +88,7 @@ stacks + prizes(FT real) → M-H(icmEngine) → RP derivado(rpDeriver) → effec
 
 ### TypeScript
 
-- 0 erros em todo o projeto
+- 0 erros em PENDENTE o projeto
 
 ## Pendente
 

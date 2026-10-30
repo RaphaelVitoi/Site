@@ -1,3 +1,11 @@
+---
+title: "ARQUITETURA MATEMATICA SOTA v7.0 GOLD (NEXUS)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # ARQUITETURA MATEMATICA SOTA v7.0 GOLD (NEXUS)
 
 > "A soberania nao e um estado, mas uma constante termodinamica."  Manifesto v7.0

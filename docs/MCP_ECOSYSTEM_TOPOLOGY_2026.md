@@ -1,8 +1,16 @@
+---
+title: "TOPOLOGIA E MAPEAMENTO DO ECOSSISTEMA MCP SOTA v8.0 GOLD (2026)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # TOPOLOGIA E MAPEAMENTO DO ECOSSISTEMA MCP SOTA v8.0 GOLD (2026)
 
-> **Autoridade & Governança:** Raphael Vitoi  
-> **Orquestração Geral:** Chico / Antigravity Mesh  
-> **Data de Corte:** Agosto de 2026  
+> **Autoridade & Governança:** Raphael Vitoi
+> **Orquestração Geral:** Chico / Antigravity Mesh
+> **Data de Corte:** Agosto de 2026
 > **Status:** Ativo, Auditado e Integrado
 
 ---

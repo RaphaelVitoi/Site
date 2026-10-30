@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @organizador"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @organizador
 
 > **Status:** Ativo e Otimizado | **Aura:** `cadet_blue`
@@ -65,7 +73,7 @@ Sou o chão onde todos pisam. Mantenho o `project-context.md` impecável para o 
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/organizador/MEMORY.md`
 
@@ -110,6 +118,6 @@ Sou o chAo onde todos pisam. Mantenho o `project-context.md` impecAvel para o RA
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->

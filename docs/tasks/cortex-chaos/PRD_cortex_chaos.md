@@ -1,3 +1,11 @@
+---
+title: "PRD: Modulo de Chaos Engineering (Cortex Chaos)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PRD: Modulo de Chaos Engineering (Cortex Chaos)
 
 **Autor:** @planner | **Data:** 2026-03-20 | **Status:** rascunho

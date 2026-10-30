@@ -1,12 +1,11 @@
 ---
 name: Prompt de continuidade V16
-description: Sessao 2026-03-21. Contexto teorico completo absorvido. globals.css restaurado. Proximo: formalizar teoria ICM e injetar no motor.
+description: "Sessao 2026-03-21. Contexto teorico completo absorvido. globals.css restaurado. Proximo: formalizar teoria ICM e injetar no motor."
 type: project
 ---
+# Estado Atual (2026-03-21)
 
-## Estado Atual (2026-03-21)
-
-### O que aconteceu nesta sessao
+## O que aconteceu nesta sessao
 
 - globals.css restaurado (176 → 1781 linhas) e commitado (commit 9743b3e)
 - Raphael enviou material completo da teoria ICM original:
@@ -16,14 +15,14 @@ type: project
 - Avaliacao completa do site e simulador realizada (2 agentes em paralelo)
 - 3 memorias novas salvas: teoria original, avaliacao, padroes de interacao com modelos
 - Raphael explicou como usa modelos (sparring dialetico, steelmanning, nao oraculo)
-- Confirmado: conteudo textual no site e placeholder degradado pela Gemini. Fonte real e o material que Raphael enviou + material privado
+- Confirmado: conteudo textual no site e MARCADOR_POSICAO degradado pela Gemini. Fonte real e o material que Raphael enviou + material privado
 
 ### Resultado da avaliacao
 
 - **Arquitetura**: solida, nao precisa ser repensada. 29 arquivos bem organizados.
 - **Motor (nashSolver.ts)**: errado. Linear com 5 constantes fixas. Nao captura Teto do RP gradual, inversao Parte II, Vantagem de Risco.
 - **Conteudo textual no site**: remix mal feito dos originais de Raphael pela Gemini. Ele nem leu, integrou pelo visual.
-- **Parte interativa**: placeholder funcional. Matematica errada. Raphael nunca mexeu nisso.
+- **Parte interativa**: MARCADOR_POSICAO funcional. Matematica errada. Raphael nunca mexeu nisso.
 
 ### Fontes disponiveis para trabalho
 

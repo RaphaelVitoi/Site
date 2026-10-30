@@ -1,4 +1,5 @@
 ---
+title: "feedback 20260829 sessao v8 gold 10 10"
 id: feedback-20260829-sessao-v8-gold-10-10
 tipo: memoria
 escopo: Site
@@ -24,7 +25,6 @@ verificado:
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante os testes unitarios
 ---
-
 # Feedback da Sessão: 2026-08-29 (SOTA v8.0 GOLD)
 
 **Avaliação do Usuário Soberano (Tier 0 - Raphael Vitoi):**

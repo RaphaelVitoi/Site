@@ -1,3 +1,11 @@
+---
+title: "HandRanks.dat — REMOVIDO por decisao (2026-09-17)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # HandRanks.dat — REMOVIDO por decisao (2026-09-17)
 
 **Status:** FECHADO. Substitui a pendencia de "auditoria de layout".

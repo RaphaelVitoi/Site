@@ -61,7 +61,7 @@ stacks + prizes(FT real) -> BF(perspectiva.ts) -> RP derivado(rpDeriver) -> effe
 
 ### TypeScript
 
-- 0 erros em todo o projeto
+- 0 erros em PENDENTE o projeto
 
 ### 10 cenarios do simulador
 

@@ -1,3 +1,11 @@
+---
+title: "Relatorio de Status: Refatoracao Tecnica (Fase 1)"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio de Status: Refatoracao Tecnica (Fase 1)
 
 **Data:** 2026-03-13 | **Agente:** @implementor

@@ -1,3 +1,11 @@
+---
+title: "Identidade e Escopo: @chico"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Identidade e Escopo: @chico
 
 **Cor Emblematica:** `dodger_blue2` | **Motor Base:** roteado dinamicamente -- ver `data/agents_manifest.json` (preferencia) e `llm/routing_policy.py` (modelo concreto)

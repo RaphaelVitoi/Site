@@ -1,3 +1,11 @@
+---
+title: "Quarentena de catálogo de plugins Claude — 2026-08-21"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Quarentena de catálogo de plugins Claude — 2026-08-21
 
 ## Decisão

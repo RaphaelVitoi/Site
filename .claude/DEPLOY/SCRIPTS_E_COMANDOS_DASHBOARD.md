@@ -1,3 +1,13 @@
+---
+title: "SCRIPTS E COMANDOS DASHBOARD"
+type: operational
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
+# SCRIPTS E COMANDOS DASHBOARD
+
 ﻿# Dashboard Vivo: Scripts e Comandos (Curado)
 
 > Atualizado em: 2026-03-28 09:40:59

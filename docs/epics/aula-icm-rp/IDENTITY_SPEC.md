@@ -1,3 +1,11 @@
+---
+title: "IDENTITY SPEC: A Voz da CLI Inteligente"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # IDENTITY SPEC: A Voz da CLI Inteligente
 
 > **Autor:** @maverick | **Status:** Definicao Estetica

@@ -1,3 +1,11 @@
+---
+title: "Perspectiva Matematica  Framework Completo v2"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Perspectiva Matematica  Framework Completo v2
 
 **Autoria:** Raphael Vitoi (2026)
@@ -185,7 +193,7 @@ $$E = \frac{BF}{2 + BF} \approx \frac{1.388}{3.388} \approx 41\%$$
 
 Portanto, postula-se que e estruturalmente improvavel que um Bluffcatcher necessite de mais de $45\%$ de equidade para pagar no River. Cenarios com equidade maior exigiriam ou estruturas de payout aberrantes (satelites) ou sizings de overbet do agressor que o proprio modelo GTO proibe por violar a auto-preservacao de stack (suicidio de EV do agressor).
 
-O simulador em [perspectiva.ts](file:///C:/users/rapha/.gemini/Site/frontend/src/lib/perspectiva.ts) deve calcular as equidades limites de forma livre, permitindo que a matematica flua sem cap limitador, testando esta hipotese em spots extremos.
+O simulador em [perspectiva.ts](../../frontend/src/lib/perspectiva.ts) deve calcular as equidades limites de forma livre, permitindo que a matematica flua sem cap limitador, testando esta hipotese em spots extremos.
 
 ---
 

@@ -1,10 +1,18 @@
+---
+title: "Protocolo de Handoff SOTA v7.0 GOLD - Harmonização e Estado da Arte"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Protocolo de Handoff SOTA v7.0 GOLD - Harmonização e Estado da Arte
 
-> **Data:** 17 de agosto de 2026  
-> **Repositório:** `RaphaelVitoi/Site`  
-> **Branch Atual:** `fix-antigravity-sync-errors`  
-> **Autoridade:** Chico (Super-Admin / Arquiteto do Sistema)  
-> **Governança:** Raphael Vitoi  
+> **Data:** 17 de agosto de 2026
+> **Repositório:** `RaphaelVitoi/Site`
+> **Branch Atual:** `fix-antigravity-sync-errors`
+> **Autoridade:** Chico (Super-Admin / Arquiteto do Sistema)
+> **Governança:** Raphael Vitoi
 > **Status:** 100% GREEN (366/366 Testes Passando, 0 Avisos/Erros, Clean Worktree)
 
 ---

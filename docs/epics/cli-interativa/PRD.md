@@ -1,3 +1,11 @@
+---
+title: "PRD: A Membrana Inteligente (Smart CLI v2.0)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PRD: A Membrana Inteligente (Smart CLI v2.0)
 
 > **Autor:** @planner (via CHICO) | **Epico:** CLI-INTERATIVA

@@ -1,3 +1,11 @@
+---
+title: "SPEC: Pipeline de Ingestao (Receptor Web)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Pipeline de Ingestao (Receptor Web)
 
 **Autor:** CHICO (atuando como @planner) | **Data:** 2026-03-16 | **PRD:** PRD.md

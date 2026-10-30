@@ -1,3 +1,11 @@
+---
+title: "PROVA MATEMATICA: O Teto de Equidade no River sob Pressao de ICM"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PROVA MATEMATICA: O Teto de Equidade no River sob Pressao de ICM
 
 **Objetivo da Prova Clinica:** Testar, atraves da derivacao algoritmica do Equilibrio de Nash, a validade da afirmacao heuristica de que e estruturalmente impossivel a um Defensor necessitar de mais de 45% de Win Probability (Equidade do seu Range) para justificar um call no river perante um cenario de elevada pressao de ICM (*Independent Chip Model*).

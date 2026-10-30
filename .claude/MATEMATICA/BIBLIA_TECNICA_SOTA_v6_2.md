@@ -1,3 +1,11 @@
+---
+title: "BÍBLIA TÉCNICA E BIOMECÂNICA SOTA v8.0 GOLD"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # BÍBLIA TÉCNICA E BIOMECÂNICA SOTA v8.0 GOLD
 
 **Última revisão:** 2026-09-01 · Protocolo Chico SOTA v8.0 GOLD

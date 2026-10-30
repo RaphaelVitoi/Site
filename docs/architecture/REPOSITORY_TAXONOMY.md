@@ -1,5 +1,5 @@
 ---
-
+title: "REPOSITORY TAXONOMY"
 id: taxonomia-canonica-de-documentacao-e-relatorios
 tipo: especificacao
 escopo: Site
@@ -46,7 +46,6 @@ revisoes_de_ancora:
       Diretorio: `docs/INDEX.md` deixa de apresentar ordem de leitura como ordem de autoridade, e o link morto de MCP_ECOSYSTEM_TOPOLOGY foi corrigido. Nenhum papel, esquema ou contrato documental mudou. Revisado em 2026-09-29; diff: +28/-18 linhas.
 
 ---
-
 # TAXONOMIA CANÔNICA DE DOCUMENTAÇÃO, RELATÓRIOS E MEMÓRIA
 
 ## 1. Estrutura Canônica de Diretórios
@@ -75,10 +74,10 @@ Para eliminar qualquer ambiguidade, duplicidade de fontes ou fragmentação de d
 - **Padrões de Nomenclatura Obrigatórios:**
   - `AUDITORIA-YYYY-MM-DD-<slug>.md` — Auditorias técnicas e de segurança.
   - `VALIDACAO-YYYY-MM-DD-<slug>.md` — Relatórios empíricos de validação.
-  - `POSTULADO-XXX-<slug>.md` — Postulados de teste e integridade.
+  - `POSTULADO-ATENCAO-<slug>.md` — Postulados de teste e integridade.
   - `HANDOFF-YYYY-MM-DD-<slug>.md` — Passagens formais de bastão e sessões.
-  - `PLANO-XXX-<slug>.md` — Planos arquiteturais e de curadoria estrutural.
-- **Regra de Ouro:** **Obrigatório** conter frontmatter YAML com os 13 campos canônicos verificados por [`scripts/ops/record_gate.py`](file:///c:/Users/rapha/.gemini/Site/scripts/ops/record_gate.py).
+  - `PLANO-ATENCAO-<slug>.md` — Planos arquiteturais e de curadoria estrutural.
+- **Regra de Ouro:** **Obrigatório** conter frontmatter YAML com os 13 campos canônicos verificados por [`scripts/ops/record_gate.py`](../../scripts/ops/record_gate.py).
 
 ### 2.2. Diretório `docs/` (Conhecimento Permanente e Arquitetura Viva)
 

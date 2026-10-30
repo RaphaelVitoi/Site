@@ -1,3 +1,11 @@
+---
+title: "PRODUCT OWNERSHIP & SOBERANIA — Aponta para a constituição"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PRODUCT OWNERSHIP & SOBERANIA — Aponta para a constituição
 
 > **A governança de soberania, identidade e autonomia está em [`../../CLAUDE.md`](../../CLAUDE.md) §0.**

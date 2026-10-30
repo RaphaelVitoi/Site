@@ -1,3 +1,11 @@
+---
+title: "SPEC Tecnica: Implementacao da Smart CLI (do.ps1)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC Tecnica: Implementacao da Smart CLI (do.ps1)
 
 > **Autor:** @planner (via CHICO) | **Status:** IMPLEMENTADO

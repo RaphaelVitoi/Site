@@ -1,3 +1,11 @@
+---
+title: "Indice de contexto e documentacao do Site"
+type: index
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Indice de contexto e documentacao do Site
 
 ## Autoridade e operacao

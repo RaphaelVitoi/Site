@@ -1,3 +1,11 @@
+---
+title: "Auditoria de Coerencia: RIO Multiway e Colapso Mecanico da Edge"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Auditoria de Coerencia: RIO Multiway e Colapso Mecanico da Edge
 
 **Data:** 2026-05-08

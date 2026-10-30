@@ -1,3 +1,11 @@
+---
+title: "Plano de Auditoria: MasterSimulator e Teoria do Frontend"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Plano de Auditoria: MasterSimulator e Teoria do Frontend
 
 ## 1. Objetivo

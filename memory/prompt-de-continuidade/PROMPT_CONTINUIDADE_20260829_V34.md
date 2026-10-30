@@ -1,4 +1,5 @@
 ---
+title: "PROMPT CONTINUIDADE 20260829 V34"
 id: prompt-continuidade-20260829-v34
 tipo: memoria
 escopo: Site
@@ -28,7 +29,6 @@ verificado:
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante os testes unitarios
 ---
-
 # Continuidade & Handoff - Sessão 2026-08-29 V34
 
 ## 1. Identidade & Governança Suprema

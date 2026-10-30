@@ -1,3 +1,11 @@
+---
+title: "Arquitetura SOTA: Nodelocking Dinâmico (Block Bet 20%)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Arquitetura SOTA: Nodelocking Dinâmico (Block Bet 20%)
 
 > **Guardião:** @architect & @validador

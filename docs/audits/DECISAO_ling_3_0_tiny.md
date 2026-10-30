@@ -1,3 +1,11 @@
+---
+title: "DECISAO — Ling-3.0-tiny no ecossistema Site"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # DECISAO — Ling-3.0-tiny no ecossistema Site
 
 **Data:** 2026-09-17

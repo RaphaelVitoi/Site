@@ -1,3 +1,11 @@
+---
+title: "Indice de Documentacao - Aula de ICM e Risk Premium"
+type: index
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Indice de Documentacao - Aula de ICM e Risk Premium
 
 > Atualizado: 2026-03-12 | Limpeza e consolidacao de arquivos

@@ -1,4 +1,5 @@
 ---
+title: "2026 09 01 pmev contract port"
 id: plan-pmev-contract-port-2026-09-01
 tipo: plano
 escopo: Site
@@ -18,7 +19,6 @@ verificado:
 nao_verificado:
   - este plano nao constitui validacao empirica de PMev, integracao de runtime ou avaliacao por solver
 ---
-
 # PMev Contract Port — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: use `superpowers:executing-plans` to execute this plan task-by-task and `superpowers:verification-before-completion` before reporting completion.

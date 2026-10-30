@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @bolt"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @bolt
 
 > **Status:** Ativo | **Aura:** `gold` | **Origem:** Google Jules, cron noturno ~03:20 UTC

@@ -1,3 +1,11 @@
+---
+title: "PRD: Pipeline de Ingestao (Receptor Web)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PRD: Pipeline de Ingestao (Receptor Web)
 
 **Autor:** CHICO (atuando como @planner) | **Data:** 2026-03-16 | **Status:** Aprovado para Auditoria

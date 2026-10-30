@@ -1,3 +1,11 @@
+---
+title: "Mapa do contexto do Site"
+type: index
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Mapa do contexto do Site
 
 Este arquivo e um ponteiro de navegacao; nao e fonte independente de teoria ou

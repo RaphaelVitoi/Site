@@ -1,3 +1,11 @@
+---
+title: "SINTESE DE AUTOPOIESE: A FORJA DA INFRAESTRUTURA V3.2"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SINTESE DE AUTOPOIESE: A FORJA DA INFRAESTRUTURA V3.2
 
 > **Data:** 20 de Marco de 2026

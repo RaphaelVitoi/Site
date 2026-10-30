@@ -1,4 +1,5 @@
 ---
+title: "PROMPT CONTINUIDADE 20260903 V36"
 id: prompt-continuidade-20260903-v36
 tipo: memoria
 escopo: Site
@@ -30,7 +31,6 @@ verificado:
 nao_verificado:
   - chamadas reais de rede a APIs pagas durante a suite de testes unitarios
 ---
-
 # PROTOCOLO DE CONTINUIDADE SOTA v8.0 GOLD — PROMPT MESTRE V36
 
 ```markdown
@@ -64,6 +64,6 @@ nao_verificado:
 ## 2. Instruções de Retomada Imediata para o Próximo Agente
 1. Respeitar estritamente a hierarquia e o Axioma de Capacidade Universal.
 2. Manter arquivos de governança livres de bifurcações (regra canônica: "Ponteiro e não cópia").
-3. Todo `.ps1` editado deve preservar codificação UTF-8 com BOM (`utf-8-sig`).
-4. Consultar [`reports/RELATORIO-SESSAO-2026-09-03-GOVERNANCA-E-REFINAMENTO-SOTA.md`](file:///C:/Users/rapha/.gemini/Site/reports/RELATORIO-SESSAO-2026-09-03-GOVERNANCA-E-REFINAMENTO-SOTA.md) para o histórico completo dos marcos e aprendizados da sessão anterior.
+3. PENDENTE `.ps1` editado deve preservar codificação UTF-8 com BOM (`utf-8-sig`).
+4. Consultar [`reports/RELATORIO-SESSAO-2026-09-03-GOVERNANCA-E-REFINAMENTO-SOTA.md`](../../reports/RELATORIO-SESSAO-2026-09-03-GOVERNANCA-E-REFINAMENTO-SOTA.md) para o histórico completo dos marcos e aprendizados da sessão anterior.
 ```

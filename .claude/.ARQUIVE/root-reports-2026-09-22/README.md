@@ -1,3 +1,11 @@
+---
+title: "Relatorios antigos encontrados na raiz"
+type: executive
+status: archived
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorios antigos encontrados na raiz
 
 Os arquivos abaixo foram retirados da raiz sem alterar seu conteudo. Sao

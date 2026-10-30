@@ -1,3 +1,11 @@
+---
+title: "SPEC: Arquitetura de Roteamento e Banco de Dados - Blog NextJS"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Arquitetura de Roteamento e Banco de Dados - Blog NextJS
 
 > **Autor:** @planner (via IDE Assistant)

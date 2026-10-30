@@ -1,3 +1,11 @@
+---
+title: "RELATORIO DE HANDOFF SOTA v7.0 GOLD"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # RELATORIO DE HANDOFF SOTA v7.0 GOLD
 
 ## 1. STATUS ATUAL DO SISTEMA

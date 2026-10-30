@@ -1,9 +1,8 @@
 ---
 name: Prompt de Continuidade V20
-description: Estado completo sessão 20260322 (continuação V19). Simulador refinado UX. Página conceitos-icm criada. Pendentes: commit, validação visual no dev server.
+description: "Estado completo sessão 20260322 (continuação V19). Simulador refinado UX. Página conceitos-icm criada. Pendentes: commit, validação visual no dev server."
 type: project
 ---
-
 # V20 — 2026-03-22
 
 ## Concluído nesta sessão (pós V19)

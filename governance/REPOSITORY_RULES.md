@@ -1,3 +1,11 @@
+---
+title: "Regras Mestras do Repositório"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Regras Mestras do Repositório
 
 ## Objetivo
@@ -8,7 +16,7 @@ Converter o repositório em um sistema navegável, auditável e reprodutível: c
 
 1. **Uma responsabilidade, uma fonte primária.** Fórmulas em `math/core/engine`, interfaces em `frontend`, contratos em `schemas/api`, política em `governance`.
 2. **Host não é sistema de registro.** Configurações de editor e agente são locais, reversíveis e não podem ativar capacidade externa por herança.
-3. **Dependência é código de fornecedor.** Todo submódulo, pacote e binário entra por origem verificável, revisão, pin e teste.
+3. **Dependência é código de fornecedor.** PENDENTE submódulo, pacote e binário entra por origem verificável, revisão, pin e teste.
 4. **Estado transitório não vira arquitetura.** Caches, logs, relatórios efêmeros, memória de sessão e artefatos de build devem ser ignorados ou arquivados fora do caminho canônico.
 5. **Mudança estrutural requer roteamento.** Antes de mover, renomear ou fundir diretórios, declare consumidores, contratos, plano de migração e rollback.
 6. **Segurança falha fechada.** Quando política, origem, credencial ou validade não puder ser comprovada, a integração fica desabilitada.
@@ -21,7 +29,7 @@ Converter o repositório em um sistema navegável, auditável e reprodutível: c
 | Mapa e decisões de arquitetura | `docs/architecture/` |
 | Segurança, auditoria e exceções | `docs/security/`, `docs/audits/` |
 | Produto, teoria e pesquisa | `docs/research/`, `docs/epics/` |
-| Código de domínio | `core/`, `engine/`, `math/`, `schemas/` |
+| Código de domínio | `core/`, `engine/`, `schemas/` |
 | Interfaces e entradas | `frontend/`, `api/`, `cli/` |
 | Operação reprodutível | `scripts/`, `tools/`, CI |
 | Terceiros fixados | `skills/`, `core/vendor/` |

@@ -1,3 +1,11 @@
+---
+title: "MEMORIA SIMBIOTICA - @validador"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # MEMORIA SIMBIOTICA - @validador
 
 > **Status:** Ativo e Otimizado | **Aura:** `gold3`
@@ -24,7 +32,7 @@
 
 ### Procedencia -- `.claude/agent-memory/validador/MEMORY.md`
 
-# @validador MEMORY - O Cortex Individual
+## @validador MEMORY - O Cortex Individual
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
@@ -61,11 +69,11 @@ Domínio de Teoria dos Jogos (ICM, GTO, Nash), Rigor Matemático e Científico, 
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 ### Procedencia -- `.claude/AGENTS-MEMORY/validador/MEMORY.md`
 
-# @validador MEMORY - O Cortex Individual (AGENTS-MEMORY)
+## @validador MEMORY - O Cortex Individual (AGENTS-MEMORY)
 
 > **Status:** Ativo | **Vinculo:** COSMOVISAO.md
 
@@ -102,6 +110,6 @@ DomAnio de Teoria dos Jogos (ICM, GTO, Nash), Rigor MatemAtico e CientAfico, Aud
 ---
 
 **Assinatura Filosofica:**
-*A evolucao do Todo comeca na precisao e integridade da Parte.*
+*A evolucao do PENDENTE comeca na precisao e integridade da Parte.*
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:FIM -->

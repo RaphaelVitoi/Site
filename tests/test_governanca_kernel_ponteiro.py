@@ -399,7 +399,12 @@ def test_adaptadores_declaram_a_mesma_constituicao() -> None:
     Divergencia aqui e o modo como o fork historico nascia: cada um com a sua
     versao do que era canonico, e nenhuma trava.
     """
-    titulo = _ler(CLAUDE).split("\n", 1)[0].lower()
+    texto_claude = _ler(CLAUDE)
+    if texto_claude.startswith("---"):
+        partes = texto_claude.split("---", 2)
+        if len(partes) >= 3:
+            texto_claude = partes[2]
+    titulo = texto_claude.strip().split("\n", 1)[0].lower()
     assert "projeto" in titulo, (
         f"o titulo da constituicao nao contem 'projeto': {titulo!r}. "
         "A declaracao de escopo e o que impede este arquivo de ser confundido "

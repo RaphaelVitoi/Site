@@ -1,3 +1,11 @@
+---
+title: "COHERENCE MANIFEST - Garantia de Harmonia Dos 19 Agentes"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # COHERENCE MANIFEST - Garantia de Harmonia Dos 19 Agentes
 
 **Data:** 2026-05-20 | **Versao:** 2.2 | **Responsavel:** CHICO + @maverick (verificacao continua)

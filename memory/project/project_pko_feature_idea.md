@@ -4,6 +4,8 @@ description: Ideia validada por Raphael de adicionar PKO Value como variavel ao 
 type: project
 ---
 
+
+# project pko feature idea
 Raphael aprovou a ideia de adicionar **PKO Value** como variavel ao simulador ICM.
 
 **Why:** PKO (Progressive Knockout) altera significativamente o calculo de ICM pois o bounty reduz o custo efetivo de um call. Isso precisa estar no simulador.

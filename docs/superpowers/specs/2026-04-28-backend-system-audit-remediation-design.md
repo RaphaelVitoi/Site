@@ -1,3 +1,11 @@
+---
+title: "Backend System Audit Remediation Design"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Backend System Audit Remediation Design
 
 Date: 2026-04-28

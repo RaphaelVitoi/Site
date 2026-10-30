@@ -1,3 +1,11 @@
+---
+title: "Plano padrão-ouro — integração de capacidades matemáticas e engines"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Plano padrão-ouro — integração de capacidades matemáticas e engines
 
 **Governança e autoria conceitual:** Raphael Vitoi

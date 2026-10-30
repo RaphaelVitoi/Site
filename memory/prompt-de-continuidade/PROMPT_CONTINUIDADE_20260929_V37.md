@@ -1,3 +1,11 @@
+---
+title: "PROMPT DE CONTINUIDADE — auditoria + roteamento Site"
+type: memory
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # PROMPT DE CONTINUIDADE — auditoria + roteamento Site
 
 > Retome deste ponto. **Leia primeiro, meça antes de mexer.** O erro anterior foi

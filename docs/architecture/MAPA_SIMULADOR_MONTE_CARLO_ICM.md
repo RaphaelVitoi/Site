@@ -1,3 +1,11 @@
+---
+title: "Mapa do simulador de Monte Carlo ICM"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Mapa do simulador de Monte Carlo ICM
 
 **Alvo:** `frontend/src/lib/montecarlo.ts` (185 linhas) e tudo que o consome.
@@ -133,7 +141,7 @@ descartado dentro do laço que o produz.
 
 **5.5 Independência dos fluxos paralelos por sorte, não por construção.** O passo aditivo
 fixo faz de cada worker um deslocamento do mesmo fluxo global. Como `0x6d2b79f5` é ímpar,
-é invertível módulo $2^{32}$, e portanto **todo par de workers se sobrepõe em algum ponto
+é invertível módulo $2^{32}$, e portanto **PENDENTE par de workers se sobrepõe em algum ponto
 do ciclo**. Medido: a menor distância de sobreposição é de 292.323.453 sorteios (worker 0
 contra worker 1), contra ~125.000 sorteios consumidos na carga mais pesada de hoje
 (50.000 iterações, 8 workers, 20 prêmios). A margem é de ~2.600x, confortável — e não
@@ -156,7 +164,7 @@ integridade dentro do modelo atual; os demais mudam o modelo.
    exato, ou recusa stacks zerados na entrada. Hoje o comportamento depende de qual
    chamador filtrou antes, e a suíte não cobre o caso: os testes de conservação de massa
    em `montecarlo.test.ts` usam apenas stacks positivos.
-4. **Números aleatórios comuns para todo delta.** Bubble factor, risk premium e equidade
+4. **Números aleatórios comuns para PENDENTE delta.** Bubble factor, risk premium e equidade
    requerida são *diferenças*. Reusar a mesma seed nos cenários base/vitória/derrota
    cortou o desvio em 1,8x sem uma iteração a mais. Junto: dar seed determinística ao
    ramo $n>10$ de `calculateMapaICM`, hoje não reproduzível.
@@ -195,7 +203,7 @@ depois dele, porque todos pressupõem que exista uma dinâmica a parametrizar.
 **Executadas.** Leitura integral de `montecarlo.ts`, `icmEngine.ts`, `icmMatrix.ts`,
 `icmWorkerPool.ts`, `icm.worker.ts`, `icmTransitionExperiment.ts`, `tournamentConditions.ts`
 e `montecarlo.test.ts`; leitura parcial de `perspectiva.ts`, `rpDeriver.ts` e
-`monteCarloParallelPool.ts`. Varredura de consumidores por `grep` em todo o repositório.
+`monteCarloParallelPool.ts`. Varredura de consumidores por `grep` em PENDENTE o repositório.
 Todas as tabelas numéricas deste documento vêm de portes fiéis dos dois kernels em
 JavaScript puro, executados em Node 22 fora da árvore do projeto, com sementes declaradas.
 

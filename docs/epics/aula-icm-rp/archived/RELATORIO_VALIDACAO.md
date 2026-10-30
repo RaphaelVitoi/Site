@@ -1,3 +1,13 @@
+---
+title: "RELATORIO VALIDACAO"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
+# RELATORIO VALIDACAO
+
 ## Relatorio de Validacao de Dominio
 
 Data: 2026-03-11

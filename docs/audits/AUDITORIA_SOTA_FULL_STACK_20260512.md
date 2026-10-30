@@ -1,3 +1,11 @@
+---
+title: "Relatorio Executivo de Auditoria  SOTA v4.3+"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Relatorio Executivo de Auditoria  SOTA v4.3+
 
 **Data:** 2026-05-12

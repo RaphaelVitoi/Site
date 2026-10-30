@@ -1,3 +1,11 @@
+---
+title: "Auditoria e Atualizacao: PM Lens Multiway e Correcoes de Tipagem"
+type: executive
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # Auditoria e Atualizacao: PM Lens Multiway e Correcoes de Tipagem
 
 **Data:** 5 de maio de 2026

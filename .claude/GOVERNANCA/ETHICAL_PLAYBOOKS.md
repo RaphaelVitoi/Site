@@ -1,3 +1,11 @@
+---
+title: "ETHICAL PLAYBOOKS (@curator)"
+type: governance
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # ETHICAL PLAYBOOKS (@curator)
 
 > **Status:** Ativo | **Integracao:** BINDING com `curator/MEMORY.md`

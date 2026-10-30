@@ -1,3 +1,11 @@
+---
+title: "SPEC: Pagina de Artigo Individual"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Pagina de Artigo Individual
 >
 > **Autor:** CHICO (atuando como @planner)

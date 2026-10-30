@@ -1,3 +1,11 @@
+---
+title: "SPEC: Maquina de Conteudo (Aulas e Roteamento Curativo)"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # SPEC: Maquina de Conteudo (Aulas e Roteamento Curativo)
 
 > **Autor:** @architect

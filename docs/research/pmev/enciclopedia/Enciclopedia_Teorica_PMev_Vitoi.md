@@ -1,3 +1,13 @@
+---
+title: "Enciclopedia Teorica PMev Vitoi"
+type: theoretical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
+# Enciclopedia Teorica PMev Vitoi
+
 ENCICLOPÉDIA DA TEORIA DA PERSPECTIVA MATEMÁTICA (PMev) E POKER RACIONAL
 Autor: Raphael Vitoi
 Edição Canônica e Consolidação Científica Integral (v7.0 Gold Standard)

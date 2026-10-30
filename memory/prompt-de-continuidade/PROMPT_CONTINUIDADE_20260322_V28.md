@@ -45,7 +45,7 @@ Mudancas da sessao atual (Fase C - Mobile Responsive):
 - Legenda premios usa auto-fit (ja responsiva)
 - Ranges usam flexWrap (ja responsivos)
 - SPR pipeline wraps em <=600px
-- Nenhum fontSize abaixo de 0.58rem em todo o simulador
+- Nenhum fontSize abaixo de 0.58rem em PENDENTE o simulador
 
 ## Pendente: Fase A - Refinamento EquityCalculator
 

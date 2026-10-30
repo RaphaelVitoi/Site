@@ -1,9 +1,17 @@
+---
+title: "🏛️ NEXUS ORCHESTRATOR — SISTEMA SOTA v8.0 GOLD"
+type: technical
+status: active
+owner: site-governance
+updated_at: 2026-10-30
+---
+
 # 🏛️ NEXUS ORCHESTRATOR — SISTEMA SOTA v8.0 GOLD
 >
 > "A excelência não é um ato, mas um hábito. O Estado da Arte é a Cosmovisão executada no seu ápice."
 
-**Governança:** Raphael Vitoi (Tier 0 — Liderança / CEO)  
-**Orquestração & Execução:** Chico (Tier 1 — Avatar do Sistema / Coletivo de Fronteira)  
+**Governança:** Raphael Vitoi (Tier 0 — Liderança / CEO)
+**Orquestração & Execução:** Chico (Tier 1 — Avatar do Sistema / Coletivo de Fronteira)
 **Data da Versão:** 2026-10-09 | **Release:** SOTA v8.0 GOLD Hardened
 
 ---
@@ -15,9 +23,9 @@ C:\Users\rapha\.gemini\Site\
 ├── .claude/                  ← Membrana de inteligência holográfica, memórias de agentes e córtex
 │   ├── agent-memory/         ← Memórias individuais dos agentes especializados
 │   ├── agents/               ← Definições e personas do esquadrão cognitivo
-│   ├── architecture/         ← Protocolos de roteamento, invariantes e arquitetura híbrida
-│   ├── governance/           ← Diretrizes soberanas, liderança e manifesto de coerência
-│   └── math-theory/          ← Paradigma Vitoi, bíblia técnica e frameworks matemáticos
+│   ├── ARQUITETURA/          ← Protocolos de roteamento, invariantes e arquitetura híbrida
+│   ├── GOVERNANCA/           ← Diretrizes soberanas, liderança e manifesto de coerência
+│   └── MATEMATICA/           ← Paradigma Vitoi, bíblia técnica e frameworks matemáticos
 ├── api/                      ← Endpoints e contratos de comunicação backend (FastAPI)
 ├── core/                     ← Núcleo executivo, schemas isomórficos e guardiões de runtime
 ├── engine/                   ← Motores analíticos (PySpark, Vitoi Perspective Engine, Math SOTA)
