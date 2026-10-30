@@ -19,7 +19,6 @@ updated_at: 2026-10-30
 
 - ``#proposta`` - Implementar Knowledge Graphs paralelos ao RAG vetorial para entender relacoes de causa e efeito.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->

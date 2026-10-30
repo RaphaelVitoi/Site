@@ -66,6 +66,8 @@
     ".husky/**",
     "**/.husky/**",
     ".claude/agent-memory/**",
-    "**/.claude/agent-memory/**"
+    "**/.claude/agent-memory/**",
+    ".claude/.ARQUIVE/**",
+    "**/.claude/.ARQUIVE/**"
   ]
 }

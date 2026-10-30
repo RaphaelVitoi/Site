@@ -31,6 +31,7 @@ updated_at: 2026-10-30
 ## 1. Escopo e Método
 
 ### 1.1 Classes de documento auditadas
+
 | Classe | Exemplos | Diretórios |
 |---|---|---|
 | Técnico | SPEC_*, ENGINE_*, SYSTEM_MAP | `docs/architecture/`, `docs/tasks/` |
@@ -45,6 +46,7 @@ updated_at: 2026-10-30
 | Operativo | MODUS_OPERANDI, MANUAL_WORKFLOW, DEPLOY | `.claude/DEPLOY/`, `scripts/` |
 
 ### 1.2 Verificações automatizadas
+
 1. Decodificação UTF-8 e BOM.
 2. Frontmatter YAML (presença, parse, campos obrigatórios).
 3. Hierarquia de headings (H1 único, saltos de nível).
@@ -96,7 +98,9 @@ updated_at: 2026-10-30
 ## 4. Achados Críticos (P0)
 
 ### P0-1 — Referências quebradas em documentos ativos
+
 Documentos canônicos apontam para arquivos inexistentes:
+
 - `.claude/project-context.md`: `CLAUDE.md#L11`, `CLAUDE.md#L415`, `llm/routing_policy.py`, `docs/architecture/ENGINE_CAPABILITY_INTEGRATION_PLAN.md`, snapshot arquivado — todos `file:///` com âncoras `#Lnn` não resolvíveis como heading.
 - `.claude/handoff_payload.md`: 22 links `file:///` para `.claude/GOVERNANCA/*` e `.claude/ARQUITETURA/*` (esquema `file:///` não resolvível por RAG/navegador; casing misto).
 - `docs/architecture/REPOSITORY_TAXONOMY.md`: `scripts/ops/record_gate.py`.
@@ -107,10 +111,13 @@ Documentos canônicos apontam para arquivos inexistentes:
 **Impacto:** agentes e humanos seguem ponteiros mortos; RAG indexa texto com referências falsas.
 
 ### P0-2 — Manifesto de documentos com entrada órfã
+
 `docs/document_manifest.json` lista `.claude/RELATORIOS/INVENTARIO_FERRAMENTAS.md`, mas o diretório `.claude/RELATORIOS/` está **vazio** (0 arquivos). O manifesto é consumido por `task_executor.py` para compor contexto de agentes — entrada fantasma.
 
 ### P0-3 — Topologia do README inconsistente com o disco
+
 `README.md` (seção 1) descreve:
+
 - `.claude/architecture/` → real: `.claude/ARQUITETURA/`
 - `.claude/math-theory/` → real: `.claude/MATEMATICA/`
 - `math/` (REPOSITORY_RULES §2) → **não existe** na raiz (código de domínio está em `core/`, `engine/`, `schemas/`).
@@ -119,6 +126,7 @@ Documentos canônicos apontam para arquivos inexistentes:
 **Impacto:** onboarding e automações que dependem de path quebram.
 
 ### P0-4 — Arquivos gigantes de memória episódica no caminho canônico
+
 - `.claude/agent-memory/chico/HANDOFF_LATEST.md` — 169 KB (42 marcadores PENDENTE/ATENCAO).
 - `.claude/handoff_payload.md` — 149 KB (32 marcadores MARCADOR_POSICAO/PENDENTE).
 Ambos são **memória de sessão**, não referência. Permanecem versionados e indexados, violando `REPOSITORY_RULES.md` §1.4 (estado transitório não vira arquitetura).
@@ -128,7 +136,9 @@ Ambos são **memória de sessão**, não referência. Permanecem versionados e i
 ## 5. Achados Altos (P1)
 
 ### P1-1 — Ausência de frontmatter canônico
+
 Apenas 42/279 documentos têm frontmatter YAML. Dos que têm, o esquema varia (14+ chaves). Proposta: padrão mínimo obrigatório para documentos de referência:
+
 ```yaml
 ---
 title: "..."
@@ -138,26 +148,32 @@ owner: <agente ou humano>
 updated_at: YYYY-MM-DD
 ---
 ```
+
 **Migração:** 237 documentos sem frontmatter; priorizar `docs/`, `governance/`, `.claude/ARQUITETURA/`, `.claude/GOVERNANCA/`.
 
 ### P1-2 — Hierarquia de headings inconsistente
+
 - 34 documentos sem H1 (incluindo documentos ativos de `memory/feedback/`, `.claude/README.md`, `.github/copilot-instructions.md`).
 - 9 com múltiplos H1.
 - 64 com saltos de nível (ex.: H2 → H4).
 **Ação:** normalizar para um H1 por documento e hierarquia contígua.
 
 ### P1-3 — Marcadores de dívida técnica ativos em documentos canônicos
+
 59 arquivos com `PENDENTE/CORRIGIR/ATENCAO/MARCADOR_POSICAO/A_DEFINIR`. Concentração em:
+
 - `.claude/agent-memory/*` (todos os 19 agentes têm PENDENTE/MARCADOR_POSICAO em MEMORY.md).
 - `CLAUDE.md` (18), `.claude/handoff_payload.md` (32), `handoff_payload` (MARCADOR_POSICAO).
 - `docs/superpowers/plans/2026-05-23-governance-kernel-antigravity-migration.md` (MARCADOR_POSICAO, A_DEFINIR, PENDENTE).
 **Ação:** triagem — converter em issues rastreáveis ou remover; documentos canônicos não devem carregar PENDENTE aberto.
 
 ### P1-4 — Duplicata exata
+
 `.claude/MATEMATICA/PLANO_VALIDACAO_COEFICIENTES.md` ≡ `docs/tasks/PLANO_VALIDACAO_COEFICIENTES.md` (hash idêntico).
 **Ação:** manter em `docs/tasks/` (local canônico por `REPOSITORY_RULES.md` §2) e substituir o de `.claude/MATEMATICA/` por ponteiro.
 
 ### P1-5 — Links `file:///` não resolvíveis
+
 `project-context.md` e `handoff_payload.md` usam `file:///c:/...#Lnn`. Navegadores e RAG não resolvem âncoras `#Lnn` como heading.
 **Ação:** substituir por links relativos Markdown (`../CLAUDE.md`) ou remover âncora.
 
@@ -166,24 +182,30 @@ updated_at: YYYY-MM-DD
 ## 6. Achados Médios (P2)
 
 ### P2-1 — Diretório `.claude/.archive` vazio + `.ARQUIVE` com 16 arquivos
+
 `.claude/.archive/` está vazio (0 arquivos); `.claude/.ARQUIVE/` contém snapshot de 2026-09-22. Dois diretórios de arquivo paralelos (casing diferente) — confusão.
 **Ação:** remover `.claude/.archive/` vazio; documentar `.claude/.ARQUIVE/` como arquivo histórico (não indexar no RAG).
 
 ### P2-2 — `.remember/recent.md` com 8 bytes
+
 Estado transitório quase vazio (`# Recent`). Inofensivo, mas não deve ser referência. Manter fora do índice.
 
 ### P2-3 — BOM UTF-8 em 2 arquivos
+
 Dois documentos iniciam com BOM (`\xef\xbb\xbf`). Pode quebrar parsers de frontmatter e grep.
 **Ação:** remover BOM (UTF-8 sem BOM).
 
 ### P2-4 — Fim de linha misto em 1 arquivo
+
 Um documento mistura CRLF e LF. `.gitattributes` normaliza; verificar.
 
 ### P2-5 — Trailing whitespace em múltiplos arquivos
+
 Vários documentos têm > 5 linhas com trailing space. Inofensivo, mas fere lint.
 **Ação:** `ruff format`/`prettier` em lote nos `.md` (com cuidado com tabelas).
 
 ### P2-6 — Encoding inválido em 0 arquivos
+
 Todos os 279 decodificam em UTF-8 (nenhum erro). ✅
 
 ---
@@ -191,7 +213,9 @@ Todos os 279 decodificam em UTF-8 (nenhum erro). ✅
 ## 7. Governança e Runtime
 
 ### 7.1 Autoridade (resolvida)
+
 `governance/KERNEL.md` é ponteiro correto; ordem de autoridade consolidada em 2026-09-29:
+
 1. `CLAUDE.md` (constituição)
 2. `governance/environment.md`
 3. `governance/autonomy.yaml` (intenção, não enforcement)
@@ -200,6 +224,7 @@ Todos os 279 decodificam em UTF-8 (nenhum erro). ✅
 6. Adaptadores (`AGENTS.md`, `GEMINI.md`, `.claude/GOVERNANCA/*`)
 
 ### 7.2 `autonomy.yaml` — dívida conhecida e documentada
+
 - Não é lido por `agents/autonomy.py` (modos hardcoded).
 - `protected_paths` inclui `governance` e `scripts` — bloqueia manutenção da própria governança.
 - `sandbox` não passa por `_validate_command`.
@@ -208,9 +233,11 @@ Todos os 279 decodificam em UTF-8 (nenhum erro). ✅
 **Recomendação:** manter como documento de intenção; não ligar ao runtime sem revisão (já rejeitado por medição).
 
 ### 7.3 `CLAUDE.md` (raiz) — canônico, bem estruturado
+
 1 H1, 47 headings, 84 KB. Pirâmide de 8 Tiers. ✅ Referência de qualidade.
 
 ### 7.4 `governance/REPOSITORY_RULES.md` — inconsistência de localização
+
 Lista `math/` como local canônico de código de domínio, mas o diretório não existe. Corrigir para `core/`, `engine/`, `schemas/`.
 
 ---

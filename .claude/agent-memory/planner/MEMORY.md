@@ -19,7 +19,6 @@ updated_at: 2026-10-30
 
 - ``#proposta`` - Integracao de matrizes de esforco/impacto nas SPECs para priorizacao automatica pelo Orquestrador.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->

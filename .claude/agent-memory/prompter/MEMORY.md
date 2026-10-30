@@ -19,7 +19,6 @@ updated_at: 2026-10-30
 
 - ``#proposta`` - Criar um validador de entropia linguistica que recusa prompts vagos antes mesmo de baterem na API.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->

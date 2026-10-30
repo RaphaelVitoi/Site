@@ -6,6 +6,7 @@ type: project
 
 
 # project site identity
+
 - **Este repo** (%OneDrive%\Documentos\Site) = **Poker Racional** (site educacional de poker)
 - **trueICM.com** = projeto separado, ja online, NAO e este repo
 

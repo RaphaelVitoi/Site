@@ -6,6 +6,7 @@ type: feedback
 
 
 # feedback gemini agent model break
+
 Gemini alterou o campo `model` de todos os 15 agentes de `model: sonnet` para `model: sonnet ou gemini-pro 2.5`, quebrando a execucao de todos os subagentes.
 
 **Why:** O campo `model` no frontmatter dos agentes espera um ID de modelo valido (sonnet, opus, haiku), nao uma string descritiva. A Gemini interpretou o campo como texto livre e inseriu sua propria sugestao.
