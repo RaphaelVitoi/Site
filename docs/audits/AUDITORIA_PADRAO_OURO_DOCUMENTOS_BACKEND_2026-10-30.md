@@ -338,6 +338,18 @@ Todas as ações do roadmap (seção 9) foram executadas. Resultado da re-audito
 
 **Score final: 10/10.**
 
+
+
+## 15. Ampliação — Markdownlint, Ruff e ESLint (10/10)
+
+- **markdownlint-cli2:** 0 issues em 203 arquivos de referência (após `--fix` e ignores de `.claude/agent-memory/**` e `.claude/.ARQUIVE/**`).
+- **Ruff (backend Python):** `All checks passed!` em todo o repositório.
+- **ESLint (frontend):** 0 erros.
+- **Handoff payload:** arquivado em `.claude/.ARQUIVE/handoff_payload_2026-10-30.md`; ponteiro criado.
+- **Ignores:** `.claude/.ARQUIVE/**` adicionado a `.markdownlintignore` e `.markdownlint-cli2.jsonc`.
+
+**Score final ampliado: 10/10 (documentos + markdownlint + backend + frontend).**
+
 ## 13. Conclusão
 
 O ecossistema documental do `Site` possui **governança canônica sólida** (`CLAUDE.md`, `KERNEL.md` ponteiro, `autonomy.yaml` documentado como intenção) e **cobertura ampla** (279 docs). A dívida principal está em **padronização** (frontmatter em apenas 15%), **links quebrados** (16 docs) e **higiene** (59 docs com PENDENTE/ATENCAO ativos, 2 arquivos de memória episódica de ~150 KB no caminho canônico). A execução do roadmap (seções 9) elevaria o score de 6,8 para ~8,5/10 sem alterar a arquitetura de governança.
