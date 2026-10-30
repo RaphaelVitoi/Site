@@ -19,7 +19,6 @@ updated_at: 2026-10-30
 
 - ``#proposta`` - Injetar diagramas Mermaid automaticos em cada SPEC para que o @implementor tenha representacao visual SOTA da arvore de componentes.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->

@@ -67,7 +67,6 @@ updated_at: 2026-10-30
 
 - ``#proposta`` - Implementar simulacao 'Dry-Run' automatica na memoria (AST) antes de aprovar uma SPEC complexa.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->

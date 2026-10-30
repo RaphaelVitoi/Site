@@ -6,6 +6,7 @@ type: feedback
 
 
 # feedback session conductor model and mode
+
 Cada sessão executada no ecossistema deve ter explicitamente registrado:
 
 1. **Modelo condutor exato (`conductor_model`):** identificação nominal do modelo que operou a sessão (ex.: `gemini-3.8-flash`, `claude-opus-5`, `chatgpt-5.6` ou agente especialista).

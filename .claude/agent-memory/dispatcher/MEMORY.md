@@ -19,7 +19,6 @@ updated_at: 2026-10-30
 
 - ``#proposta`` - Implementar alocacao de peso cognitivo por tarefa, permitindo ao Orquestrador balancear a carga entre threads pesadas e leves.
 
-
 ---
 
 <!-- MEMORIA-EPISODICA-CONSOLIDADA:INICIO -->

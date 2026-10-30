@@ -6,6 +6,7 @@ type: feedback
 
 
 # feedback dual model clarity
+
 Claude Opus e Gemini Pro (ambas Pro tier) trabalham juntas no sistema como dupla dinamica (codinome CHICO). Ao fazer edicoes em qualquer arquivo, lembrar que o outro modelo precisa entender o que foi feito e por que.
 
 **Why:** Raphael alterna entre os dois modelos continuamente. Edicoes opacas ou com contexto implicito quebram a continuidade do outro modelo.
