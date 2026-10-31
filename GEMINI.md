@@ -12,6 +12,7 @@ Este arquivo trata apenas da entrada do Gemini CLI; nao cria uma governanca
 paralela.
 
 - Leia `AGENTS.md` e siga o `CLAUDE.md` da raiz como governanca canonica.
+- A Fonte Canonica Unica (SSOT) de identidade do Gemini, 14 regras de Execution Code Policy, Limited Scope (Target Lock), Cognitive Pipeline e Governanca Tier 0 (Raphael Vitoi) reside em `../GEMINI.md`.
 - Preserve escopo, interfaces, autoria e alteracoes existentes conforme as
   regras do projeto.
 - Use `.venv`/`uv` e respeite `pyproject.toml` (`requires-python >=3.12`).
