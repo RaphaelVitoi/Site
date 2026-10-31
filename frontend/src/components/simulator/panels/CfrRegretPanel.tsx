@@ -106,17 +106,17 @@ export default function CfrRegretPanel({
 	}, [preferredModel, regretSamples]);
 
 	const stepsToTarget = useMemo(() => {
-		if (cfrConvergence.estimated_iterations_to_target > 0) {
-			return `${cfrConvergence.estimated_iterations_to_target} iters`;
-		}
 		if (cfrConvergence.status === 'CONVERGED') {
 			return 'Atingida';
+		}
+		if (cfrConvergence.estimated_iterations_to_target > 0) {
+			return `${cfrConvergence.estimated_iterations_to_target} iters`;
 		}
 		if (cfrConvergence.status === 'CONVERGING') {
 			return 'Convergindo';
 		}
-		return 'Calculando';
-	}, [cfrConvergence.estimated_iterations_to_target, cfrConvergence.status]);
+		return regretSamples.length < 4 ? `Coletando (${regretSamples.length}/4)` : 'Calculando';
+	}, [cfrConvergence.estimated_iterations_to_target, cfrConvergence.status, regretSamples.length]);
 
 	const paramsRef = useRef({
 		kappa: 0.85,
@@ -529,7 +529,13 @@ export default function CfrRegretPanel({
 						</div>
 
 						<div className="pt-2 border-t border-white/5 flex justify-between items-center gap-2 text-[0.65rem] font-mono text-text-dim">
-							<span>Status: <strong className="text-white">{cfrConvergence.status}</strong></span>
+							<span>Status: <strong className={cfrConvergence.status === 'CONVERGED' ? 'text-accent-emerald' : cfrConvergence.status === 'CONVERGING' ? 'text-accent-indigo-light' : 'text-text-muted'}>
+								{cfrConvergence.status === 'CONVERGED'
+									? 'Convergido (Nash ε ≤ 0.3%)'
+									: cfrConvergence.status === 'CONVERGING'
+									? 'Convergindo...'
+									: `Amostrando (${regretSamples.length}/4)`}
+							</strong></span>
 							<span className="text-right" title={cfrConvergence.license_tier}>
 								{cfrConvergence.license_tier.split(' ')[0]}
 							</span>
