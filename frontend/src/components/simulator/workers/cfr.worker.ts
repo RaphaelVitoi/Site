@@ -23,6 +23,32 @@ interface CfrConfig {
   equity: number;
 }
 
+function getSuitedConnectivity(gap: number): number {
+  if (gap <= 1) return 0.045;
+  if (gap === 2) return 0.03;
+  if (gap === 3) return 0.015;
+  return 0;
+}
+
+function getOffsuitConnectivity(gap: number): number {
+  if (gap <= 1) return 0.025;
+  if (gap === 2) return 0.01;
+  return 0;
+}
+
+function getBaseEquity(row: number, col: number, rHigh: number, rLow: number, gap: number): number {
+  if (row === col) {
+    // Pares: 22 (~48%) até AA (~86%)
+    return 0.48 + (rHigh / 12) * 0.38;
+  }
+  if (row < col) {
+    // Mãos Suited: potencial de flush + conectividade
+    return 0.22 + ((rHigh * 1.5 + rLow) / 30) * 0.42 + getSuitedConnectivity(gap) + 0.04;
+  }
+  // Mãos Offsuit: sem flush equity, menor jogabilidade pós-flop
+  return 0.14 + ((rHigh * 1.5 + rLow) / 30) * 0.38 + getOffsuitConnectivity(gap);
+}
+
 /**
  * Computa a equidade intrínseca de uma categoria de mão do Texas Hold'em
  * contra uma distribuição ponderada de vilão (169 spots canônicos).
@@ -32,23 +58,8 @@ function computeHandEquity(row: number, col: number, equityBias: number): number
   const rLow = 12 - Math.max(row, col);
   const gap = rHigh - rLow;
 
-  let baseEquity: number;
-  if (row === col) {
-    // Pares: 22 (~48%) até AA (~86%)
-    baseEquity = 0.48 + (rHigh / 12) * 0.38;
-  } else if (row < col) {
-    // Mãos Suited: potencial de flush + conectividade
-    const connectivity = gap <= 1 ? 0.045 : gap <= 2 ? 0.03 : gap <= 3 ? 0.015 : 0;
-    baseEquity = 0.22 + ((rHigh * 1.5 + rLow) / 30) * 0.42 + connectivity + 0.04;
-  } else {
-    // Mãos Offsuit: sem flush equity, menor jogabilidade pós-flop
-    const connectivity = gap <= 1 ? 0.025 : gap <= 2 ? 0.01 : 0;
-    baseEquity = 0.14 + ((rHigh * 1.5 + rLow) / 30) * 0.38 + connectivity;
-  }
-
-  // Modulação pelo parâmetro de equidade do spot (0 a 100, centro 50)
   const factor = 0.70 + (equityBias / 100) * 0.60;
-  return Math.min(0.95, Math.max(0.08, baseEquity * factor));
+  return Math.min(0.95, Math.max(0.08, getBaseEquity(row, col, rHigh, rLow, gap) * factor));
 }
 
 function computeNodeCfr(

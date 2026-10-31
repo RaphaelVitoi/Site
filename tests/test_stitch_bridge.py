@@ -7,6 +7,7 @@ from __future__ import annotations
 
 # pylint: disable=protected-access
 import json
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -176,7 +177,7 @@ def test_stitch_client_generate_screen() -> None:
         assert res["name"] == "projects/10/screens/20"
 
 
-def _args_enviados(mock_urlopen_patch) -> dict[str, object]:
+def _args_enviados(mock_urlopen_patch) -> dict[str, Any]:
     """Extrai os argumentos que o bridge de fato enviou ao portao MCP."""
     req = mock_urlopen_patch.call_args[0][0]
     corpo = json.loads(req.data.decode("utf-8"))

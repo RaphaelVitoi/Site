@@ -62,8 +62,8 @@ def _hls_para_rgb(h: int, s: float, lum: float) -> tuple[int, int, int]:
 
 def _luminancia(rgb: tuple[int, int, int]) -> float:
     def canal(c: int) -> float:
-        c /= 255
-        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+        v = c / 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
 
     r, g, b = rgb
     return 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b)
