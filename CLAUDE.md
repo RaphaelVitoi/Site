@@ -473,12 +473,16 @@ gerador ou o manifesto.
 
 ### 3.1 Pools de Chaves OpenRouter Multi-Tier com Isolamento e Circuit Breaker
 
+**Doutrina Canônica de Segredos (Gold Standard):** Para blindar o repositório contra vazamentos e entropia de chaves órfãs, **nenhum segredo reside em arquivos `.env` ou configs de texto**. O fluxo canônico é:
+`Registro do Windows (HKCU:\Environment / HKLM:\...Environment)` $\longrightarrow$ `utils/env_loader.py` $\longrightarrow$ `os.environ`.
+
 **Estrutura canônica de credenciais (16 chaves) no Windows Registry (`HKCU` e `HKLM`):**
 
 - **Tier 1 (Core Cognitivo — 3 chaves):** `OPENROUTER_TIER1_KEY_1..3` (Claude Opus 5, ChatGPT 6 Astra/Sol, Gemini 3.8 Flash). Zero tolerância a latência ou contenção de cota.
 - **Tier 2 (Superagentes & Pesquisa — 3 chaves):** `OPENROUTER_TIER2_KEY_1..3` (Jules, Stitch, Exa, Devin, Solar-Pro4, Space-Bunny-Alpha). Fallback autorizado para Tier 4 e Tier 1.
 - **Tier 3 (Frota Especialista & Batch — 5 chaves):** `OPENROUTER_TIER3_KEY_1..5` (19 agentes especialistas, dream replay, síntese massiva). Alto throughput, estritamente isolado do Tier 1.
 - **Tier 4 (Subagentes Dedicados — 5 chaves):** `OPENROUTER_TIER4_KEY_1..5` (task-subagents, generalist, research, architect). Fallback autorizado para Tier 3.
+- **HuggingFace (SOTA):** `HF_TOKEN` / `PLATFORM_HF_KEY` (Sincronizado via Registry para suporte a MCP e inferência).
 
 **Circuit Breaker Adaptativo (`llm/openrouter_pool.py`):**
 

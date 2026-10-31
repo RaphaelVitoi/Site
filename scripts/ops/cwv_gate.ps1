@@ -710,11 +710,14 @@ if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
 }
 
 function Test-NpmVulnAceita {
-    param($v, $allVulns, [string[]]$Aceites)
+    param($v, $allVulns, [string[]]$Aceites, [string[]]$visited = @())
     if ($null -eq $v) { return $false }
+    $vName = [string]$v.name
+    if ($visited -contains $vName) { return $false }
+    $visited += $vName
     foreach ($aceite in $Aceites) {
         $partes = $aceite -split '\|'
-        if ($partes[0] -eq $v.name) { return $true }
+        if ($partes[0] -eq $vName) { return $true }
     }
     foreach ($viaItem in @($v.via)) {
         if ($viaItem -is [string]) {
@@ -723,7 +726,7 @@ function Test-NpmVulnAceita {
                 if ($partes[0] -eq $viaItem) { return $true }
             }
             if ($allVulns -and $allVulns.PSObject.Properties[$viaItem]) {
-                if (Test-NpmVulnAceita -v $allVulns.PSObject.Properties[$viaItem].Value -allVulns $allVulns -Aceites $Aceites) {
+                if (Test-NpmVulnAceita -v $allVulns.PSObject.Properties[$viaItem].Value -allVulns $allVulns -Aceites $Aceites -visited $visited) {
                     return $true
                 }
             }

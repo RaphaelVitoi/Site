@@ -1,3 +1,18 @@
+import os
+
+# Prevenir access violations do PyTorch/LanceDB em processos paralelos (pytest-xdist no Windows)
+# Thread limits para evitar contenção de recursos nativos (OpenMP, MKL, BLAS, etc.)
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
+os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
+# PyTorch-specific: evitar alocação de memória compartilhada e contenção de threads
+os.environ.setdefault("TORCH_NUM_THREADS", "1")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "max_split_size_mb:128")
+
 import logging
 from typing import Any
 

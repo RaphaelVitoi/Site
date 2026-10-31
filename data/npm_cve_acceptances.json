@@ -263,6 +263,254 @@
       },
       "expira_se": "deepmerge publicar versao corrigida (>4.3.1) ou jest-config migrar para alternativa segura.",
       "revisar_em": "2026-12-31"
+    },
+    {
+      "id": "eslint-ecosystem-prototype-pollution-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "eslint",
+      "version": "9.x",
+      "vulnerability_ids": [
+        "GHSA-m67c-m2c5-3v7h",
+        "GHSA-8932-4224-8963",
+        "GHSA-wc86-275h-7f5m",
+        "GHSA-2464-fhr4-w9xw",
+        "GHSA-p3m5-59mp-jv5r"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate no ecossistema eslint: @eslint-community/eslint-utils, @eslint/config-array, @eslint/eslintrc, eslint, eslint-plugin-*, eslint-config-*. Poluição de protótipo e DoS via configuração maliciosa.",
+        "alcance_medido": "Todas as dependências afetadas (@eslint-community/eslint-utils, @eslint/config-array, @eslint/eslintrc, @typescript-eslint/*, eslint-plugin-import, eslint-plugin-jsx-a11y, eslint-plugin-react, eslint-config-prettier, eslint-config-next, @next/eslint-plugin-next) são estritamente de desenvolvimento. O lint roda apenas em CI/local (eslint .). Zero presença no bundle de produção Next.js.",
+        "consumo_real": "Ferramenta de lint estático. Não executa no runtime de produção. Entradas analisadas são código controlado pelo repositório.",
+        "ausencia_de_correcao": "ESLint 9.x é a linha atual. Correções para os advisories listados exigem atualizações coordenadas do ecossistema @typescript-eslint, eslint-plugin-* e eslint-config-* que ainda não convergiram sem breaking changes. A versão do Next.js (16.3.8) fixa a cadeia de tooling.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-eslint-ecosystem.md"
+      },
+      "expira_se": "Ecosystem ESLint 9.x / @typescript-eslint / plugins publicarem versões corrigidas sem breaking changes na configuração do projeto.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "jest-ecosystem-moderate-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "jest",
+      "version": "30.5.2",
+      "vulnerability_ids": [
+        "GHSA-v46w-6r3j-5v5x",
+        "GHSA-324q-56hq-6c7h",
+        "GHSA-xmwq-7f5h-8j2r",
+        "GHSA-m67c-m2c5-3v7h",
+        "GHSA-2464-fhr4-w9xw",
+        "GHSA-8932-4224-8963"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate no ecossistema Jest: @jest/core, @jest/expect, @jest/globals, @jest/reporters, @jest/transform, @jest/snapshot, jest-circus, jest-config, jest-resolve-dependencies, jest-runner, jest-runtime, babel-jest, jest-cli. Principalmente prototype pollution e DoS via configuração de testes.",
+        "alcance_medido": "O pacote jest@30.5.2 é dependência de desenvolvimento direta (devDependencies). A suite de testes oficial do projeto roda 100% via Jest (111 suites / 739 testes). Todas as dependências @jest/* e babel-jest são transitivas do Jest. Zero presença em produção.",
+        "consumo_real": "Runner de testes exclusivo de desenvolvimento e CI. Código de teste executa apenas lógica interna do projeto; não processa entradas externas não confiáveis.",
+        "ausencia_de_correcao": "Jest 30.x é a linha atual LTS. As vulnerabilidades listadas afetam versões >=24/25/27/28; patches upstream requerem atualização coordenada de todo o ecossistema @jest/* que pode introduzir breaking changes na configuração de testes existente.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-jest-ecosystem.md"
+      },
+      "expira_se": "Jest 31.x ou patches @jest/* publicarem correções sem breaking changes na configuração de testes do projeto.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "typescript-eslint-ecosystem-moderate-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "@typescript-eslint/eslint-plugin",
+      "version": "8.x",
+      "vulnerability_ids": [
+        "GHSA-m67c-m2c5-3v7h",
+        "GHSA-8932-4224-8963",
+        "GHSA-wc86-275h-7f5m"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate no ecossistema @typescript-eslint: @typescript-eslint/eslint-plugin, @typescript-eslint/parser, @typescript-eslint/type-utils, @typescript-eslint/typescript-estree, @typescript-eslint/utils. Herdadas do ecossistema ESLint (eslint-utils, config-array, eslintrc).",
+        "alcance_medido": "Dependências estritamente de desenvolvimento: @typescript-eslint/* é transitivo via eslint-config-next e configuração ESLint do projeto. Zero importação no código de produção. Executa apenas durante lint (eslint .) em CI/local.",
+        "consumo_real": "Type-checking e lint estático de TypeScript. Não executa no runtime de produção.",
+        "ausencia_de_correcao": "@typescript-eslint 8.x é a linha atual compatível com ESLint 9.x. Correções requerem versão coordenada do ESLint 9.x e plugins que ainda não convergiram.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-typescript-eslint-ecosystem.md"
+      },
+      "expira_se": "@typescript-eslint 9.x ou ESLint 9.x / plugins publicarem versões corrigidas sem breaking changes.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "dev-utilities-glob-minimatch-rimraf-test-exclude-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "glob",
+      "version": "11.x",
+      "vulnerability_ids": [
+        "GHSA-2464-fhr4-w9xw",
+        "GHSA-8932-4224-8963",
+        "GHSA-wc86-275h-7f5m",
+        "GHSA-324q-56hq-6c7h"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate em utilitários de desenvolvimento: glob (<11.0.1), minimatch (<11.0.1), rimraf (>=4.2.0), test-exclude (4.2.2 || >=5.0.0). ReDoS, prototype pollution e path traversal em cenários de desenvolvimento.",
+        "alcance_medido": "Todas são dependências transitivas de ferramentas de build/lint/test: glob/minimatch via rimraf, jest, eslint; rimraf@6.1.3 é devDependency direta (já em versão patchada 6.x); test-exclude via @jest/test-sequence. Zero consumo em runtime de produção.",
+        "consumo_real": "Utilitários de filesystem, limpeza de diretórios e exclusão de testes em tempo de desenvolvimento/CI. Não processam entradas externas não confiáveis.",
+        "ausencia_de_correcao": "glob/minimatch 11.x é major bump com breaking changes; rimraf 6.x já instalado (patchado); test-exclude fixo via Jest. Atualização coordenada quebraria ferramentas dev existentes.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-dev-utilities.md"
+      },
+      "expira_se": "glob/minimatch 11.x compatível com ferramentas dev; rimraf/test-exclude atualizados transitivamente via Jest/ESLint.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "eslint-ecosystem-prototype-pollution-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "eslint",
+      "version": "9.x",
+      "vulnerability_ids": [
+        "GHSA-m67c-m2c5-3v7h",
+        "GHSA-8932-4224-8963",
+        "GHSA-wc86-275h-7f5m",
+        "GHSA-2464-fhr4-w9xw",
+        "GHSA-p3m5-59mp-jv5r"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate no ecossistema eslint: @eslint-community/eslint-utils, @eslint/config-array, @eslint/eslintrc, eslint, eslint-plugin-*, eslint-config-*. Poluição de protótipo e DoS via configuração maliciosa.",
+        "alcance_medido": "Todas as dependências afetadas (@eslint-community/eslint-utils, @eslint/config-array, @eslint/eslintrc, @typescript-eslint/*, eslint-plugin-import, eslint-plugin-jsx-a11y, eslint-plugin-react, eslint-config-prettier, eslint-config-next, @next/eslint-plugin-next) são estritamente de desenvolvimento. O lint roda apenas em CI/local (eslint .). Zero presença no bundle de produção Next.js.",
+        "consumo_real": "Ferramenta de lint estático. Não executa no runtime de produção. Entradas analisadas são código controlado pelo repositório.",
+        "ausencia_de_correcao": "ESLint 9.x é a linha atual. Correções para os advisories listados exigem atualizações coordenadas do ecossistema @typescript-eslint, eslint-plugin-* e eslint-config-* que ainda não convergiram sem breaking changes. A versão do Next.js (16.3.8) fixa a cadeia de tooling.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-eslint-ecosystem.md"
+      },
+      "expira_se": "Ecosystem ESLint 9.x / @typescript-eslint / plugins publicarem versões corrigidas sem breaking changes na configuração do projeto.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "jest-ecosystem-moderate-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "jest",
+      "version": "30.5.2",
+      "vulnerability_ids": [
+        "GHSA-v46w-6r3j-5v5x",
+        "GHSA-324q-56hq-6c7h",
+        "GHSA-xmwq-7f5h-8j2r",
+        "GHSA-m67c-m2c5-3v7h",
+        "GHSA-2464-fhr4-w9xw",
+        "GHSA-8932-4224-8963"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate no ecossistema Jest: @jest/core, @jest/expect, @jest/globals, @jest/reporters, @jest/transform, @jest/snapshot, jest-circus, jest-config, jest-resolve-dependencies, jest-runner, jest-runtime, babel-jest, jest-cli. Principalmente prototype pollution e DoS via configuração de testes.",
+        "alcance_medido": "O pacote jest@30.5.2 é dependência de desenvolvimento direta (devDependencies). A suite de testes oficial do projeto roda 100% via Jest (111 suites / 739 testes). Todas as dependências @jest/* e babel-jest são transitivas do Jest. Zero presença em produção.",
+        "consumo_real": "Runner de testes exclusivo de desenvolvimento e CI. Código de teste executa apenas lógica interna do projeto; não processa entradas externas não confiáveis.",
+        "ausencia_de_correcao": "Jest 30.x é a linha atual LTS. As vulnerabilidades listadas afetam versões >=24/25/27/28; patches upstream requerem atualização coordenada de todo o ecossistema @jest/* que pode introduzir breaking changes na configuração de testes existente.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-jest-ecosystem.md"
+      },
+      "expira_se": "Jest 31.x ou patches @jest/* publicarem correções sem breaking changes na configuração de testes do projeto.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "typescript-eslint-ecosystem-moderate-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "@typescript-eslint/eslint-plugin",
+      "version": "8.x",
+      "vulnerability_ids": [
+        "GHSA-m67c-m2c5-3v7h",
+        "GHSA-8932-4224-8963",
+        "GHSA-wc86-275h-7f5m"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate no ecossistema @typescript-eslint: @typescript-eslint/eslint-plugin, @typescript-eslint/parser, @typescript-eslint/type-utils, @typescript-eslint/typescript-estree, @typescript-eslint/utils. Herdadas do ecossistema ESLint (eslint-utils, config-array, eslintrc).",
+        "alcance_medido": "Dependências estritamente de desenvolvimento: @typescript-eslint/* é transitivo via eslint-config-next e configuração ESLint do projeto. Zero importação no código de produção. Executa apenas durante lint (eslint .) em CI/local.",
+        "consumo_real": "Type-checking e lint estático de TypeScript. Não executa no runtime de produção.",
+        "ausencia_de_correcao": "@typescript-eslint 8.x é a linha atual compatível com ESLint 9.x. Correções requerem versão coordenada do ESLint 9.x e plugins que ainda não convergiram.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-typescript-eslint-ecosystem.md"
+      },
+      "expira_se": "@typescript-eslint 9.x ou ESLint 9.x / plugins publicarem versões corrigidas sem breaking changes.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "dev-utilities-glob-minimatch-rimraf-test-exclude-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "glob",
+      "version": "11.x",
+      "vulnerability_ids": [
+        "GHSA-2464-fhr4-w9xw",
+        "GHSA-8932-4224-8963",
+        "GHSA-wc86-275h-7f5m",
+        "GHSA-324q-56hq-6c7h"
+      ],
+      "evidence": {
+        "vetor": "Vulnerabilidades moderate em utilitários de desenvolvimento: glob (<11.0.1), minimatch (<11.0.1), rimraf (>=4.2.0), test-exclude (4.2.2 || >=5.0.0). ReDoS, prototype pollution e path traversal em cenários de desenvolvimento.",
+        "alcance_medido": "Todas são dependências transitivas de ferramentas de build/lint/test: glob/minimatch via rimraf, jest, eslint; rimraf@6.1.3 é devDependency direta (já em versão patchada 6.x); test-exclude via @jest/test-sequence. Zero consumo em runtime de produção.",
+        "consumo_real": "Utilitários de filesystem, limpeza de diretórios e exclusão de testes em tempo de desenvolvimento/CI. Não processam entradas externas não confiáveis.",
+        "ausencia_de_correcao": "glob/minimatch 11.x é major bump com breaking changes; rimraf 6.x já instalado (patchado); test-exclude fixo via Jest. Atualização coordenada quebraria ferramentas dev existentes.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-dev-utilities.md"
+      },
+      "expira_se": "glob/minimatch 11.x compatível com ferramentas dev; rimraf/test-exclude atualizados transitivamente via Jest/ESLint.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "minimatch-denial-of-service-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "minimatch",
+      "version": "all",
+      "vulnerability_ids": [
+        "GHSA-g3hv-75wg-m249"
+      ],
+      "evidence": {
+        "vetor": "Denial of Service (DoS) via globparts amplification.",
+        "alcance_medido": "Dependência transitiva ubíqua em ferramentas de build e lint (eslint, @typescript-eslint, glob). Zero consumo em runtime de produção.",
+        "consumo_real": "Executado apenas em tempo de build/lint sobre arquivos locais.",
+        "ausencia_de_correcao": "Atualização exigiria bump major em múltiplas ferramentas de tooling.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-dev-utilities.md"
+      },
+      "expira_se": "Versão corrigida adotada por ferramentas de tooling.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "deepmerge-prototype-poisoning-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "deepmerge",
+      "version": "all",
+      "vulnerability_ids": [
+        "GHSA-gcqx-w48m-w2h4"
+      ],
+      "evidence": {
+        "vetor": "Prototype poisoning via mergeObject().",
+        "alcance_medido": "Dependência transitiva do Jest (@jest/core -> jest-config). Zero consumo em runtime de produção.",
+        "consumo_real": "Utilizado para mesclar configurações de testes em ambiente de dev/CI.",
+        "ausencia_de_correcao": "Correção exigiria downgrade do Jest para versões obsoletas.",
+        "registro": "reports/REGISTRO-2026-10-28-saneamento-reconciliacao-e-elevacao-dependencias-triade-montecarlo.md"
+      },
+      "expira_se": "Jest atualizar para versão com deepmerge corrigido.",
+      "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "glob-filesystem-traversal-dev-20261031",
+      "status": "accepted",
+      "accepted_at": "2026-10-31",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "glob",
+      "version": "all",
+      "vulnerability_ids": [
+        "GHSA-3g3m-2fjr-6pw4"
+      ],
+      "evidence": {
+        "vetor": "AbortSignal cancellation bypass allows post-timeout filesystem traversal.",
+        "alcance_medido": "Dependência transitiva de ferramentas de build e test (Jest, rimraf). Zero consumo em runtime de produção.",
+        "consumo_real": "Operações de filesystem em ambiente de dev/CI.",
+        "ausencia_de_correcao": "Atualização exigiria bump major em ferramentas de tooling.",
+        "registro": "reports/REGISTRO-2026-10-31-cve-aceites-dev-utilities.md"
+      },
+      "expira_se": "Ferramentas de tooling adotarem glob corrigido.",
+      "revisar_em": "2027-01-31"
     }
   ]
 }
