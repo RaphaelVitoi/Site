@@ -60,12 +60,33 @@ function Invoke-RouteWarmup {
     )
 
     Write-Host "`n[WARMUP] Aquecendo rotas criticas em $Base..." -ForegroundColor Yellow
+
+    # Pre-aquecimento JIT com tolerancia para compactacao de cache do Turbopack
+    $probeSw = [System.Diagnostics.Stopwatch]::StartNew()
+    $compilerReady = $false
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            $probeResp = Invoke-WebRequest -Uri "$Base/" -Method Get -TimeoutSec 45 -UseBasicParsing -Headers @{ "User-Agent" = "SOTA-Warmup-Orchestrator/1.0" }
+            if ($probeResp.StatusCode -eq 200) {
+                $probeSw.Stop()
+                Write-Host ("  [JIT] Compilador pronto e rota raiz pre-aquecida em {0}ms." -f [math]::Round($probeSw.Elapsed.TotalMilliseconds)) -ForegroundColor DarkGray
+                $compilerReady = $true
+                break
+            }
+        } catch {
+            Start-Sleep -Seconds 2
+        }
+    }
+    if (-not $compilerReady) {
+        Write-Warning "Compilador Turbopack demorou mais que o esperado no pre-aquecimento inicial."
+    }
+
     $results = @()
     foreach ($r in $routes) {
         $url = "$Base$r"
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
         try {
-            $resp = Invoke-WebRequest -Uri $url -Method Get -TimeoutSec 10 -UseBasicParsing -Headers @{ "User-Agent" = "SOTA-Warmup-Orchestrator/1.0" }
+            $resp = Invoke-WebRequest -Uri $url -Method Get -TimeoutSec 30 -UseBasicParsing -Headers @{ "User-Agent" = "SOTA-Warmup-Orchestrator/1.0" }
             $sw.Stop()
             $ms = [math]::Round($sw.Elapsed.TotalMilliseconds, 1)
             $len = if ($resp.Content) { $resp.Content.Length } else { 0 }
@@ -158,6 +179,7 @@ if ($connections) {
             $proc = Get-Process -Id $procId -ErrorAction SilentlyContinue
             if ($proc) {
                 Write-Host "  [RESET] Encerrando processo obsoleto PID $procId ($($proc.ProcessName))..." -ForegroundColor DarkYellow
+                & taskkill /PID $procId /T /F 2>$null
                 Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
             }
         } catch {}
@@ -170,7 +192,11 @@ if ($connections) {
 # -----------------------------------------------------------------------------
 Write-Host "`n[4/5] Inicializando servidor de desenvolvimento (npm run dev)..." -ForegroundColor Yellow
 $frontendDir = Join-Path $Root "frontend"
-$devJob = Start-Process -FilePath "npm.cmd" -ArgumentList "run dev" -WorkingDirectory $frontendDir -PassThru -WindowStyle Hidden
+$logDir = Join-Path $Root "logs"
+$logPath = Join-Path $logDir "dev-frontend.log"
+$errPath = Join-Path $logDir "dev-frontend.err.log"
+
+$devJob = Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm run dev" -WorkingDirectory $frontendDir -RedirectStandardOutput $logPath -RedirectStandardError $errPath -PassThru -WindowStyle Hidden
 
 # Aguardar porta 3000 abrir
 $timeoutSec = 30
