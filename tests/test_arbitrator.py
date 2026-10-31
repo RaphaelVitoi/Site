@@ -35,6 +35,7 @@ def test_rust_core_available() -> None:
 @requires_rust_core
 def test_nexus_core_rust_direct_execution() -> None:
     """Valida chamada direta a funcao PyO3 exportada pelo crate Rust."""
+    assert nexus_core_rust is not None
     now_str = datetime.now(UTC).isoformat()
     tasks = [
         {

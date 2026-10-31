@@ -241,7 +241,7 @@ async def test_ask_oracle_retorna_contexto_e_proveniencia_system1(monkeypatch) -
         return b'{"question":"Como calibrar?","n_results":3}'
 
     monkeypatch.setattr(handlers._te, "get_rag_async", get_rag_async)
-    response = await handlers.handle_ask_oracle(SimpleNamespace(read=read_body))
+    response = await handlers.handle_ask_oracle(cast(web.Request, SimpleNamespace(read=read_body)))
     payload = json.loads(response.text or "{}")
     assert response.status == 200
     assert payload["answer"] == "fragmento local"
@@ -304,10 +304,10 @@ async def test_view_file_separa_visualizacao_e_download_com_nome_original(local_
     arquivo.write_bytes(b"%PDF-1.4\n%%EOF")
 
     inline = await handlers.handle_view_file(
-        SimpleNamespace(rel_url=SimpleNamespace(query={"path": str(arquivo), "raw": "true"}))
+        cast(web.Request, SimpleNamespace(rel_url=SimpleNamespace(query={"path": str(arquivo), "raw": "true"})))
     )
     download = await handlers.handle_view_file(
-        SimpleNamespace(rel_url=SimpleNamespace(query={"path": str(arquivo), "download": "true"}))
+        cast(web.Request, SimpleNamespace(rel_url=SimpleNamespace(query={"path": str(arquivo), "download": "true"})))
     )
 
     assert inline.headers["Content-Disposition"].startswith('inline; filename="tratado didtico.pdf";')

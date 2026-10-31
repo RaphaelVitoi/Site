@@ -318,6 +318,18 @@
         },
         "typescript:S7767": {
             "level": "off"
+        },
+        "typescript:S6747": {
+            "level": "off"
+        },
+        "javascript:S6747": {
+            "level": "off"
+        },
+        "typescript:S6438": {
+            "level": "off"
+        },
+        "javascript:S6438": {
+            "level": "off"
         }
     },
     "rust-analyzer.imports.preferPrelude": true,
