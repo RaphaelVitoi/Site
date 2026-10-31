@@ -19,7 +19,7 @@ dependencies = [
     "multidict>=7.2.1",
     "uvicorn[standard]>=0.54.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
-    "pydantic>=2.14.1",
+    "pydantic>=2.14.2",
     "pydantic-settings>=2.16.2",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
     # ── MOTOR MATEMATICO, GRAFOS & ANALYTICS ──────────────────────────
     "numpy>=2.5.4",
@@ -61,7 +61,7 @@ dependencies = [
     "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
     "google-genai>=2.34.0",
-    "openai>=3.41.0",
+    "openai>=3.42.0",
     "anthropic>=2.3.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
@@ -104,7 +104,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.4.17",
+    "laya>=0.4.18",
     "accelerate>=1.15.0",
     "timesfm[torch]==3.0.2",
     # ── AGENTIC AUTOMATION, COMPUTER USE & BIG DATA OLAP ──────────────────────
@@ -112,7 +112,7 @@ dependencies = [
     "pyautogui>=0.9.54",
     "mss>=10.2.0",
     "playwright>=1.64.1",
-    "pyspark>=4.2.1",
+    "pyspark>=4.3.0",
 ]
 
 [project.scripts]
@@ -160,7 +160,7 @@ dev = [
     "types-aiofiles>=25.1.0.20260518",
     "types-psutil>=7.2.2.20260906",
     "types-defusedxml>=0.7.0.20260504",
-    "types-PyYAML>=6.0.12.20260906",
+    "types-PyYAML>=6.0.12.20261030",
 ]
 
 # ==============================================================================
