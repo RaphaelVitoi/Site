@@ -39,6 +39,7 @@ description: "Runbook, governanca e ponte de execucao para o Google Jules Cloud 
 
 ### Configuração da Conta & Cotas
 
+- **Modelo Operacional Ativo:** `Gemini 3.8 Flash` (selecionado nas preferencias da interface para velocidade extrema, contexto ultra-amplo e raciocinio tecnico sem latencia).
 - **Assinatura:** `Jules in Pro` (Workflows intensivos contínuos)
 - **Cotas:** São próprias da conta e podem mudar; consulte a interface oficial no momento do despacho. O bridge não declara nem garante um teto fixo.
 - **Credenciais:** Chave `JULES_API_KEY` persistida em `HKCU:\Environment:JULES_API_KEY` (Pure ASCII, zero plaintext no Git).
