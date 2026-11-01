@@ -176,9 +176,9 @@ export const HAND_RANKING = [
 function _generatePairs(c: string, suits: string[]): string[] {
 	const combos: string[] = [];
 	for (let i = 0; i < 4; i++) {
-		const s1 = suits.at(i) ?? '';
+		const s1 = suits[i] ?? '';
 		for (let j = i + 1; j < 4; j++) {
-			const s2 = suits.at(j) ?? '';
+			const s2 = suits[j] ?? '';
 			combos.push(`${c}${s1}${c}${s2}`);
 		}
 	}
@@ -194,11 +194,11 @@ function _generateUnpaired(
 ): string[] {
 	const combos: string[] = [];
 	for (let i = 0; i < 4; i++) {
-		const s1 = suits.at(i) ?? '';
+		const s1 = suits[i] ?? '';
 		for (let j = 0; j < 4; j++) {
 			if (isSuited && i !== j) continue;
 			if (isOffsuit && i === j) continue;
-			const s2 = suits.at(j) ?? '';
+			const s2 = suits[j] ?? '';
 			combos.push(`${c1}${s1}${c2}${s2}`);
 		}
 	}
