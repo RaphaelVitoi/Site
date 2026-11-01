@@ -1,0 +1,106 @@
+name: Chrome Extension CI
+
+on:
+  push:
+    paths:
+      - 'extensions/sota-chrome-cockpit/**'
+      - 'extensions/tab-autocomplete-nano/**'
+      - 'extensions/promptive-sentry-1.1.20/**'
+      - 'extensions/superpower-for-gemini-1.7.9.1/**'
+  pull_request:
+    paths:
+      - 'extensions/**'
+
+jobs:
+  lint-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate manifests
+        run: |
+          for ext in extensions/sota-chrome-cockpit extensions/tab-autocomplete-nano extensions/promptive-sentry-1.1.20 extensions/superpower-for-gemini-1.7.9.1; do
+            echo "=== Validating $ext/manifest.json ==="
+            node -e "
+              const fs = require('fs');
+              const m = JSON.parse(fs.readFileSync('$ext/manifest.json', 'utf8'));
+              if (!m.manifest_version || m.manifest_version !== 3) throw new Error('MV3 required');
+              if (!m.name) throw new Error('name required');
+              if (!m.version) throw new Error('version required');
+              if (m.content_security_policy) {
+                const csp = m.content_security_policy.extension_pages || '';
+                if (csp.includes(\"'unsafe-eval'\") || csp.includes(\"'unsafe-inline'\")) throw new Error('Unsafe CSP');
+              }
+              console.log('  OK:', m.name, m.version);
+            "
+          done
+
+      - name: Check Duo Bus sync
+        run: |
+          python scripts/ops/sync-bus.py --check
+
+      - name: Check host_permissions scope
+        run: |
+          node -e "
+            const fs = require('fs');
+            const m = JSON.parse(fs.readFileSync('extensions/sota-chrome-cockpit/manifest.json', 'utf8'));
+            const perms = m.host_permissions || [];
+            const dangerous = perms.filter(p => p === 'https://*/*' || p === 'http://*/*');
+            if (dangerous.length > 0) {
+              console.error('DANGEROUS: wildcard host_permissions found:', dangerous);
+              process.exit(1);
+            }
+            console.log('host_permissions scope: OK');
+          "
+
+      - name: Check manifest key fields
+        run: |
+          node -e "
+            const fs = require('fs');
+            for (const ext of ['sota-chrome-cockpit', 'tab-autocomplete-nano']) {
+              const m = JSON.parse(fs.readFileSync('extensions/' + ext + '/manifest.json', 'utf8'));
+              if (!m.key) console.warn('WARNING:', ext, 'missing key field');
+              else console.log('OK:', ext, 'has fixed ID');
+            }
+          "
+
+  build-and-package:
+    runs-on: ubuntu-latest
+    needs: lint-and-validate
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build manifests (inject OAuth)
+        run: |
+          python scripts/ops/build-manifest.py extensions/superpower-for-gemini-1.7.9.1
+
+      - name: Package extensions
+        run: |
+          for ext in extensions/sota-chrome-cockpit extensions/tab-autocomplete-nano extensions/promptive-sentry-1.1.20 extensions/superpower-for-gemini-1.7.9.1; do
+            name=$(basename $ext)
+            # Remove key field for Web Store (per Chrome docs)
+            python3 -c "
+              import json
+              m = json.load(open('$ext/manifest.json'))
+              m.pop('key', None)
+              json.dump(m, open('/tmp/$name-manifest.json', 'w'), indent=2)
+            "
+            mkdir -p /tmp/dist/$name
+            cp -r $ext/* /tmp/dist/$name/
+            cp /tmp/$name-manifest.json /tmp/dist/$name/manifest.json
+            cd /tmp/dist && zip -r $name.zip $name && cd -
+            echo "Packaged: $name.zip"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: chrome-extensions
+          path: /tmp/dist/*.zip
+          retention-days: 30
