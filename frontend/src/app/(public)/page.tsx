@@ -516,6 +516,85 @@ export default function Home() {
       <Rule />
 
       {/* ════════════════════════════════════════════════════════════
+          SUÍTE DE FERRAMENTAS VISUAIS & MOTORES SOTA
+      ════════════════════════════════════════════════════════════ */}
+      <Section>
+        <div className="space-y-16">
+          <div className="space-y-4 text-center">
+            <EyebrowCentered>Motores e Laboratórios Gráficos</EyebrowCentered>
+            <h2 className="font-display text-center text-[clamp(1.8rem,3.5vw,2.8rem)] tracking-tight text-[#0D0C0A]">
+              Cockpit de Ferramentas Visuais SOTA
+            </h2>
+            <p className="mx-auto max-w-xl text-[1.1rem] leading-[1.8] font-normal text-[#262423]">
+              Motores interativos com renderização gráfica vetorial, aceleração WebAssembly e modelagem Bayesiana em tempo real.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: 'fa-calculator',
+                tag: 'Motor Principal · 9-Max',
+                title: 'Topologia Visual da Mesa',
+                desc: 'Mesa interativa em feltro com cálculo quântico de equidade, fichas 3D dinâmicas, sizing tático e comparação direta de linhas ICMev vs ChipEV.',
+                href: '/simulador',
+                btnText: 'Acessar Laboratório Mestre',
+              },
+              {
+                icon: 'fa-atom',
+                tag: 'Física de Risco',
+                title: 'Matriz de Distorções ICM',
+                desc: 'Mapeamento contínuo da convexidade do prêmio, distorções de pot odds e o colapso da Minimal Defense Frequency sob pressão de bolha.',
+                href: '/simulador/distorcoes',
+                btnText: 'Explorar Distorções',
+              },
+              {
+                icon: 'fa-network-wired',
+                tag: 'IA & Teoria dos Jogos',
+                title: 'Heatmap 13x13 & CFR+',
+                desc: 'Matriz de 169 spots com dimensionamento geométrico Janda multirua, previsão preditiva TimesFM e exportação de ranges em notação formal.',
+                href: '/simulador/gto-cfr',
+                btnText: 'Laboratório CFR+',
+              },
+            ].map((tool) => (
+              <div
+                key={tool.title}
+                className="group flex flex-col justify-between rounded-xl border border-[#DED9D2] bg-[#FAFAF8] p-8 shadow-[0_4px_20px_rgba(13,12,10,0.02)] transition-all duration-500 hover:border-[#B09460]/60 hover:shadow-[0_8px_32px_rgba(176,148,96,0.08)]"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0D0C0A] text-[#B09460] shadow-sm">
+                      <i className={`fa-solid ${tool.icon} text-sm`} />
+                    </div>
+                    <span className="font-mono text-[0.68rem] font-bold tracking-[0.14em] text-[#765421] uppercase">
+                      {tool.tag}
+                    </span>
+                  </div>
+                  <h3 className="font-display text-lg font-bold text-[#0D0C0A] tracking-tight">
+                    {tool.title}
+                  </h3>
+                  <p className="font-serif text-[0.98rem] leading-[1.7] text-[#262423]">
+                    {tool.desc}
+                  </p>
+                </div>
+                <div className="pt-6 border-t border-[#EDE8E1] mt-6">
+                  <Link
+                    href={tool.href}
+                    className="inline-flex items-center gap-2 font-mono text-xs font-bold tracking-[0.12em] text-[#0D0C0A] uppercase transition-colors group-hover:text-[#765421]"
+                  >
+                    <span>{tool.btnText}</span>
+                    <i className="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      <Rule />
+
+      {/* ════════════════════════════════════════════════════════════
           BÔNUS
       ════════════════════════════════════════════════════════════ */}
       <Section>

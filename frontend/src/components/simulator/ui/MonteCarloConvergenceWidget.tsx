@@ -34,6 +34,45 @@ export interface MonteCarloConvergenceWidgetProps {
 	onEquityCalculated?: (result: MonteCarloSimulationResult) => void;
 }
 
+interface MatchupPreset {
+	label: string;
+	hero: string;
+	villain: string;
+	board?: string;
+}
+
+const MATCHUP_PRESETS: MatchupPreset[] = [
+	{
+		label: 'Top 5% vs Top 15%',
+		hero: 'JJ+,AKs,AKo',
+		villain: '88+,AJs+,KQs,AQo+',
+	},
+	{
+		label: 'Flip: AKs vs QQ',
+		hero: 'AKs',
+		villain: 'QQ',
+	},
+	{
+		label: 'Overpair vs Flush Draw',
+		hero: 'AA',
+		villain: 'KhQh,QhJh,JhTh,Th9h',
+		board: '9h 8h 2c',
+	},
+	{
+		label: 'BvB Push / Fold',
+		hero: '22+,A2s+,KTs+,QTs+,JTs,ATo+,KTo+',
+		villain: '66+,A8s+,KJs+,AQo+',
+	},
+];
+
+const BOARD_PRESETS: Array<{ label: string; board: string }> = [
+	{ label: 'Limpar', board: '' },
+	{ label: 'Flop Seco (A-K-2)', board: 'Ah Kd 2s' },
+	{ label: 'Flop Wet (J-T-9)', board: 'Jh Ts 9c' },
+	{ label: 'Monotone (Flush Draw)', board: 'Kh 8h 2h' },
+	{ label: 'Turn Dinâmico (Q-J-7-2)', board: 'Qs Jh 7d 2s' },
+];
+
 export function MonteCarloConvergenceWidget({
 	heroRangeDefault = 'AA,KK,QQ,AKs',
 	villainRangeDefault = 'TT+,AJs+,KQs,AQo+',
@@ -78,7 +117,6 @@ export function MonteCarloConvergenceWidget({
 	}, [executeSimulation]);
 
 	const modeLabel = getSimulationModeLabel(result?.mode);
-
 	const mIps = result ? (result.throughputIps / 1000000).toFixed(2) : '0.00';
 
 	return (
@@ -96,6 +134,31 @@ export function MonteCarloConvergenceWidget({
 					<span className="px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-accent-emerald text-[0.55rem] font-mono font-bold uppercase tracking-wider">
 						{result?.concurrency || 4} Threads • {modeLabel}
 					</span>
+				</div>
+			</div>
+
+			{/* Presets Rápidos de Confrontos Teóricos */}
+			<div className="flex flex-col gap-2">
+				<span className="text-[0.55rem] font-black text-text-darker uppercase tracking-wider">
+					Confrontos Teóricos Canônicos:
+				</span>
+				<div className="flex flex-wrap gap-2">
+					{MATCHUP_PRESETS.map((preset) => (
+						<button
+							key={preset.label}
+							type="button"
+							onClick={() => {
+								setHeroRange(preset.hero);
+								setVillainRange(preset.villain);
+								if (preset.board !== undefined) {
+									setBoard(preset.board);
+								}
+							}}
+							className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[0.55rem] font-medium text-text-muted hover:text-white transition-all active:scale-95 cursor-pointer"
+						>
+							{preset.label}
+						</button>
+					))}
 				</div>
 			</div>
 
@@ -154,6 +217,27 @@ export function MonteCarloConvergenceWidget({
 						</button>
 					</div>
 				</div>
+			</div>
+
+			{/* Presets de Texturas de Bordo */}
+			<div className="flex flex-wrap items-center gap-2">
+				<span className="text-[0.55rem] font-black text-text-darker uppercase tracking-wider">
+					Textura de Bordo:
+				</span>
+				{BOARD_PRESETS.map((bp) => (
+					<button
+						key={bp.label}
+						type="button"
+						onClick={() => setBoard(bp.board)}
+						className={`px-2.5 py-1 rounded-lg text-[0.55rem] font-mono font-medium transition-all border ${
+							board === bp.board
+								? 'bg-accent-emerald-surface text-accent-emerald border-emerald-500/30'
+								: 'bg-white/5 border-white/5 text-text-muted hover:text-white hover:bg-white/10'
+						}`}
+					>
+						{bp.label}
+					</button>
+				))}
 			</div>
 
 			{/* Painel Combinatório de Dead Cards & Blockers */}

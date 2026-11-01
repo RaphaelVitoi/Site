@@ -24,6 +24,21 @@ import {
 import { useSotaSync } from './hooks/useSotaSync';
 import type { MultiwayRioRequest, SimulatorWorkerResponse } from './workers/insolvencyProtocol';
 
+interface DriftPreset {
+	label: string;
+	stack: number;
+	invested: number;
+	pot: number;
+	players: number;
+}
+
+const DRIFT_PRESETS: DriftPreset[] = [
+	{ label: 'Flop C-Bet (Leve)', stack: 40, invested: 6, pot: 12, players: 2 },
+	{ label: 'Turn Barrel (Forte)', stack: 35, invested: 16, pot: 26, players: 2 },
+	{ label: 'Multiway 4-Way (N²)', stack: 30, invested: 10, pot: 32, players: 4 },
+	{ label: 'River Jam (Commitment)', stack: 25, invested: 22, pot: 48, players: 2 },
+];
+
 export function DownwardDriftSimulator() {
 	const isMounted = useMounted();
 	const { physics, updatePhysics, isHydrated } = useSotaSync();
@@ -183,6 +198,28 @@ export function DownwardDriftSimulator() {
 							Tensão Ativa: {(activeTension * 100).toFixed(1)}%
 						</span>
 					</div>
+				</div>
+			</div>
+
+			{/* Presets Rápidos de Entrapment */}
+			<div className="flex flex-col gap-2 relative z-10">
+				<span className="text-[0.55rem] font-black text-text-muted uppercase tracking-wider">
+					Cenários Táticos de Pós-Flop:
+				</span>
+				<div className="flex flex-wrap gap-2">
+					{DRIFT_PRESETS.map((p) => (
+						<button
+							key={p.label}
+							type="button"
+							onClick={() => {
+								updatePhysics({ heroStack: p.stack, heroInvested: p.invested, pot: p.pot });
+								setActivePlayers(p.players);
+							}}
+							className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-[0.6rem] font-bold text-text-muted hover:text-white transition-all active:scale-95 cursor-pointer"
+						>
+							{p.label}
+						</button>
+					))}
 				</div>
 			</div>
 
@@ -350,6 +387,26 @@ export function DownwardDriftSimulator() {
 							/>
 						</LineChart>
 					</ResponsiveContainer>
+				</div>
+
+				{/* Legenda Analítica das Curvas */}
+				<div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-4 text-[0.6rem] font-mono">
+					<div className="flex items-center gap-2">
+						<span className="w-3 h-0.5 bg-accent-indigo rounded-full shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+						<span className="text-white font-bold">Tensão IP</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="w-3 h-0.5 bg-accent-danger rounded-full shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+						<span className="text-white font-bold">Tensão OOP</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="w-3 h-0.5 border-t border-dashed border-accent-amber" />
+						<span className="text-accent-amber font-bold">Utilidade Monetária</span>
+					</div>
+					<div className="flex items-center gap-2">
+						<span className="w-3 h-0.5 border-t border-dotted border-accent-sky" />
+						<span className="text-accent-sky font-bold">Teto do RP</span>
+					</div>
 				</div>
 			</div>
 		</div>

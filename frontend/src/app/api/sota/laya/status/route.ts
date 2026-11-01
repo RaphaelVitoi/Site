@@ -33,7 +33,7 @@ export async function GET(): Promise<NextResponse<LayaStatusResponse>> {
 	try {
 		const res = await fetch(`${LAYA_SERVICE_BASE}/health`, {
 			method: 'GET',
-			signal: AbortSignal.timeout(3000),
+			signal: AbortSignal.timeout(800),
 			cache: 'no-store',
 		});
 

@@ -258,6 +258,18 @@ export function MasterTableVisualizer({
             strokeWidth="1.5"
           />
 
+          {/* Racetrack Stitching Line */}
+          <ellipse
+            cx={cx}
+            cy={cy}
+            rx={rx - 12}
+            ry={ry - 12}
+            fill="none"
+            stroke="rgba(245, 158, 11, 0.18)"
+            strokeWidth="1"
+            strokeDasharray="4 3"
+          />
+
           {/* SOTA Watermark no Feltro */}
           <text
             x={cx}
@@ -306,8 +318,22 @@ export function MasterTableVisualizer({
             ))}
           </g>
 
-          {/* Pote Central */}
+          {/* Pote Central com Stacks de Fichas 3D */}
           <g transform={`translate(${cx}, ${cy + 42})`}>
+            {/* 3D Casino Chip Stacks decorativos */}
+            <g transform="translate(-72, 0)" filter="url(#chipShadowSota)">
+              <ellipse cx="0" cy="4" rx="9" ry="3.5" fill="#047857" stroke="#10b981" strokeWidth="0.8" />
+              <ellipse cx="0" cy="1" rx="9" ry="3.5" fill="#059669" stroke="#34d399" strokeWidth="0.8" />
+              <ellipse cx="0" cy="-2" rx="9" ry="3.5" fill="#10b981" stroke="#6ee7b7" strokeWidth="0.8" />
+              <circle cx="0" cy="-2" r="3.5" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.6" strokeDasharray="1.5 1" />
+            </g>
+            <g transform="translate(72, 0)" filter="url(#chipShadowSota)">
+              <ellipse cx="0" cy="4" rx="9" ry="3.5" fill="#b91c1c" stroke="#ef4444" strokeWidth="0.8" />
+              <ellipse cx="0" cy="1" rx="9" ry="3.5" fill="#dc2626" stroke="#f87171" strokeWidth="0.8" />
+              <ellipse cx="0" cy="-2" rx="9" ry="3.5" fill="#ef4444" stroke="#fca5a5" strokeWidth="0.8" />
+              <circle cx="0" cy="-2" r="3.5" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="0.6" strokeDasharray="1.5 1" />
+            </g>
+
             <rect
               x="-50"
               y="-15"
@@ -336,6 +362,15 @@ export function MasterTableVisualizer({
               className="text-[0.7rem] font-mono font-black tracking-tight"
             >
               {formatBb(currentPot)}
+            </text>
+          </g>
+
+          {/* Physical Dealer Button */}
+          <g transform={`translate(${cx - 38}, ${cy + ry - 22})`} filter="url(#chipShadowSota)">
+            <circle cx="0" cy="0" r="11" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="1.5" />
+            <circle cx="0" cy="0" r="9" fill="none" stroke="#94a3b8" strokeWidth="0.8" strokeDasharray="2 1.5" />
+            <text x="0" y="3.5" textAnchor="middle" fill="#0f172a" className="text-[0.55rem] font-black font-mono select-none">
+              D
             </text>
           </g>
 

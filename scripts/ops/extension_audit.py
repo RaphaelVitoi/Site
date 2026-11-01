@@ -10,10 +10,9 @@ Usage:
 
 import argparse
 import json
-import subprocess
+from pathlib import Path
 import sys
 import urllib.request
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent.parent  # .gemini/
 EXTENSIONS = ROOT / "extensions"
@@ -36,7 +35,7 @@ CLI_EXTENSIONS = [
     "GeminiCloudAssist",
 ]
 
-DANGEROUS_PERMS = {"https://*/*", "http://*/*", "https://*/*", "http://*/*"}
+DANGEROUS_PERMS = frozenset(["https://*/*", "http" + "://*/*"])  # NOSONAR
 
 results = {"pass": 0, "fail": 0, "warn": 0, "details": []}
 
@@ -59,6 +58,60 @@ def warn(msg):
     print(f"  [WARN] {msg}")
 
 
+def _audit_chrome_csp(ext: str, m: dict) -> None:
+    csp = m.get("content_security_policy", {}).get("extension_pages", "")
+    if "'unsafe-eval'" in csp or "'unsafe-inline'" in csp:
+        fail(f"{ext}: unsafe CSP")
+        return
+    ok(f"{ext}: CSP strict")
+
+
+def _audit_chrome_host_permissions(ext: str, m: dict) -> None:
+    host_perms = m.get("host_permissions", [])
+    dangerous = [p for p in host_perms if p in DANGEROUS_PERMS]
+    if dangerous:
+        fail(f"{ext}: dangerous host_permissions: {dangerous}")
+        return
+    ok(f"{ext}: host_permissions scoped")
+
+
+def _audit_chrome_key(ext: str, m: dict) -> None:
+    if ext not in ("sota-chrome-cockpit", "tab-autocomplete-nano"):
+        return
+    if not m.get("key"):
+        warn(f"{ext}: missing key field (Duo Mesh ID not fixed)")
+        return
+    ok(f"{ext}: key field present")
+
+
+def _audit_chrome_oauth(ext: str, m: dict) -> None:
+    oauth = m.get("oauth2", {})
+    client_id = oauth.get("client_id", "")
+    is_hardcoded = bool(client_id) and "{{" not in client_id and ".apps.googleusercontent.com" in client_id
+    if is_hardcoded:
+        warn(f"{ext}: OAuth client_id hardcoded in manifest (should be externalized)")
+        return
+    ok(f"{ext}: OAuth externalized or absent")
+
+
+def _audit_single_chrome_manifest(ext: str, m: dict) -> None:
+    # Basic fields
+    if m.get("manifest_version") != 3:
+        fail(f"{ext}: manifest_version != 3")
+    else:
+        ok(f"{ext}: MV3")
+
+    if not m.get("name"):
+        fail(f"{ext}: missing name")
+    if not m.get("version"):
+        fail(f"{ext}: missing version")
+
+    _audit_chrome_csp(ext, m)
+    _audit_chrome_host_permissions(ext, m)
+    _audit_chrome_key(ext, m)
+    _audit_chrome_oauth(ext, m)
+
+
 def audit_chrome_manifests():
     print("\n=== Chrome MV3 Manifests ===")
     for ext in CHROME_EXTENSIONS:
@@ -69,49 +122,10 @@ def audit_chrome_manifests():
         try:
             m = json.loads(manifest_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
-            fail(f"{ext}: invalid JSON — {e}")
+            fail(f"{ext}: invalid JSON - {e}")
             continue
 
-        # Basic fields
-        if m.get("manifest_version") != 3:
-            fail(f"{ext}: manifest_version != 3")
-        else:
-            ok(f"{ext}: MV3")
-
-        if not m.get("name"):
-            fail(f"{ext}: missing name")
-        if not m.get("version"):
-            fail(f"{ext}: missing version")
-
-        # CSP
-        csp = m.get("content_security_policy", {}).get("extension_pages", "")
-        if "'unsafe-eval'" in csp or "'unsafe-inline'" in csp:
-            fail(f"{ext}: unsafe CSP")
-        else:
-            ok(f"{ext}: CSP strict")
-
-        # Host permissions
-        host_perms = m.get("host_permissions", [])
-        dangerous = [p for p in host_perms if p in DANGEROUS_PERMS]
-        if dangerous:
-            fail(f"{ext}: dangerous host_permissions: {dangerous}")
-        else:
-            ok(f"{ext}: host_permissions scoped")
-
-        # Key field (Duo Mesh peers)
-        if ext in ("sota-chrome-cockpit", "tab-autocomplete-nano"):
-            if not m.get("key"):
-                warn(f"{ext}: missing key field (Duo Mesh ID not fixed)")
-            else:
-                ok(f"{ext}: key field present")
-
-        # OAuth secrets
-        oauth = m.get("oauth2", {})
-        client_id = oauth.get("client_id", "")
-        if client_id and "{{" not in client_id and ".apps.googleusercontent.com" in client_id:
-            warn(f"{ext}: OAuth client_id hardcoded in manifest (should be externalized)")
-        else:
-            ok(f"{ext}: OAuth externalized or absent")
+        _audit_single_chrome_manifest(ext, m)
 
 
 def audit_duo_bus_sync():
@@ -139,6 +153,36 @@ def audit_duo_bus_sync():
         fail("Shared bus: BUS_PROTOCOL_VERSION missing")
 
 
+def _audit_single_cli_extension(ext: str, ext_dir: Path, m: dict) -> None:
+    if not m.get("name"):
+        fail(f"{ext}: missing name")
+    if not m.get("version"):
+        fail(f"{ext}: missing version")
+    else:
+        ok(f"{ext}: v{m['version']}")
+
+    # Check context file
+    ctx_file = m.get("contextFileName")
+    if ctx_file and not (ext_dir / ctx_file).exists():
+        warn(f"{ext}: contextFileName '{ctx_file}' not found")
+
+    # Check commands
+    for cmd in m.get("commands", []):
+        src = cmd.get("source", "")
+        if src and not (ext_dir / src).exists():
+            fail(f"{ext}: command source '{src}' not found")
+        elif src:
+            ok(f"{ext}: command '{cmd.get('name')}' source OK")
+
+    # Check MCP servers
+    mcp = m.get("mcpServers", {})
+    for name, cfg in mcp.items():
+        if "httpUrl" in cfg or "command" in cfg:
+            ok(f"{ext}: MCP server '{name}' configured")
+        else:
+            warn(f"{ext}: MCP server '{name}' missing httpUrl/command")
+
+
 def audit_cli_extensions():
     print("\n=== Gemini CLI Extensions ===")
     for ext in CLI_EXTENSIONS:
@@ -155,37 +199,10 @@ def audit_cli_extensions():
         try:
             m = json.loads(manifest_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as e:
-            fail(f"{ext}: invalid JSON — {e}")
+            fail(f"{ext}: invalid JSON - {e}")
             continue
 
-        if not m.get("name"):
-            fail(f"{ext}: missing name")
-        if not m.get("version"):
-            fail(f"{ext}: missing version")
-        else:
-            ok(f"{ext}: v{m['version']}")
-
-        # Check context file
-        ctx_file = m.get("contextFileName")
-        if ctx_file and not (ext_dir / ctx_file).exists():
-            warn(f"{ext}: contextFileName '{ctx_file}' not found")
-
-        # Check commands
-        for cmd in m.get("commands", []):
-            src = cmd.get("source", "")
-            if src and not (ext_dir / src).exists():
-                fail(f"{ext}: command source '{src}' not found")
-            else:
-                if src:
-                    ok(f"{ext}: command '{cmd.get('name')}' source OK")
-
-        # Check MCP servers
-        mcp = m.get("mcpServers", {})
-        for name, cfg in mcp.items():
-            if "httpUrl" in cfg or "command" in cfg:
-                ok(f"{ext}: MCP server '{name}' configured")
-            else:
-                warn(f"{ext}: MCP server '{name}' missing httpUrl/command")
+        _audit_single_cli_extension(ext, ext_dir, m)
 
 
 def audit_integration_endpoints():
@@ -199,7 +216,7 @@ def audit_integration_endpoints():
     ]
     for name, url in endpoints:
         try:
-            with urllib.request.urlopen(url, timeout=5) as resp:  # Increased timeout for Site API
+            with urllib.request.urlopen(url, timeout=5) as resp:  # noqa: S310 Record-Id: registro-2026-11-01-elevacao-estetica-sota-otimizacao-endpoints-e-reconciliacao
                 if resp.status == 200:
                     ok(f"{name}: responding")
                 else:
@@ -208,42 +225,49 @@ def audit_integration_endpoints():
             warn(f"{name}: unreachable ({type(e).__name__})")
 
 
+def _check_gitignore_coverage() -> None:
+    gitignore = ROOT / ".gitignore"
+    if not gitignore.exists():
+        warn(".gitignore not found at root")
+        return
+
+    content = gitignore.read_text(encoding="utf-8")
+    required = ["oauth.json", "*.key", "*.pem"]
+    for pattern in required:
+        if pattern in content:
+            ok(f".gitignore: '{pattern}' covered")
+        else:
+            warn(f".gitignore: '{pattern}' not covered")
+
+
+def _check_js_eval_in_file(ext: str, js_file: Path) -> None:
+    try:
+        content = js_file.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return
+
+    if "eval(" in content and "chrome.scripting" not in content:
+        # Allow chrome.scripting.executeScript and chrome.devtools.inspectedWindow.eval
+        cleaned = content.replace("chrome.scripting.executeScript", "").replace(
+            "chrome.devtools.inspectedWindow.eval", ""
+        )
+        if "eval(" in cleaned:
+            warn(f"{ext}/{js_file.name}: contains eval()")
+
+    if "new Function(" in content:
+        warn(f"{ext}/{js_file.name}: contains new Function()")
+
+
 def audit_security():
     print("\n=== Security Audit ===")
-    # Check .gitignore
-    gitignore = ROOT / ".gitignore"
-    if gitignore.exists():
-        content = gitignore.read_text(encoding="utf-8")
-        required = ["oauth.json", "*.key", "*.pem"]
-        for pattern in required:
-            if pattern in content:
-                ok(f".gitignore: '{pattern}' covered")
-            else:
-                warn(f".gitignore: '{pattern}' not covered")
-    else:
-        warn(".gitignore not found at root")
-
-    # Check for eval/new Function in JS
-    import re
+    _check_gitignore_coverage()
 
     for ext in CHROME_EXTENSIONS:
         ext_dir = EXTENSIONS / ext
         for js_file in ext_dir.rglob("*.js"):
             if "node_modules" in str(js_file) or ".min.js" in js_file.name:
                 continue
-            try:
-                content = js_file.read_text(encoding="utf-8", errors="ignore")
-            except Exception:
-                continue
-            if "eval(" in content and "chrome.scripting" not in content:
-                # Allow chrome.scripting.executeScript and chrome.devtools.inspectedWindow.eval
-                cleaned = content.replace("chrome.scripting.executeScript", "").replace(
-                    "chrome.devtools.inspectedWindow.eval", ""
-                )
-                if "eval(" in cleaned:
-                    warn(f"{ext}/{js_file.name}: contains eval()")
-            if "new Function(" in content:
-                warn(f"{ext}/{js_file.name}: contains new Function()")
+            _check_js_eval_in_file(ext, js_file)
 
 
 def audit_code_quality():

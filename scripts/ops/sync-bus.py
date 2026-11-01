@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: N999
 """Sync shared SOTA Duo Bus into both Chrome extensions.
 
 Copies extensions/_shared/sota-bus/sota-bus.js into:
@@ -13,15 +14,16 @@ Usage:
 
 import argparse
 import filecmp
+from pathlib import Path
 import shutil
 import sys
-from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent.parent  # .gemini/ (parent of Site/)
-SHARED = ROOT / "extensions" / "_shared" / "sota-bus" / "sota-bus.js"
+SOTA_BUS_FILENAME = "sota-bus.js"
+SHARED = ROOT / "extensions" / "_shared" / "sota-bus" / SOTA_BUS_FILENAME
 TARGETS = [
-    ROOT / "extensions" / "sota-chrome-cockpit" / "sota-bus.js",
-    ROOT / "extensions" / "tab-autocomplete-nano" / "sota-bus.js",
+    ROOT / "extensions" / "sota-chrome-cockpit" / SOTA_BUS_FILENAME,
+    ROOT / "extensions" / "tab-autocomplete-nano" / SOTA_BUS_FILENAME,
 ]
 
 

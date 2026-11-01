@@ -1,21 +1,32 @@
 /**
  * IDENTITY: Widget do Corredor Estocástico e Âncoras Canônicas (SOTA v8.0 GOLD)
  * PATH: src/components/simulator/ui/ProspectRiskCorridorWidget.tsx
- * ROLE: Exibe elementos específicos (âncoras ativáveis) com critérios lógicos explícitos
- *       e a visualização da tendência central (μ) e bandas de desvio-padrão (±1σ, ±2σ).
+ * ROLE: Exibe elementos específicos (âncoras ativáveis) com critérios lógicos explícitos,
+ *       a visualização da tendência central (μ) e bandas de desvio-padrão (±1σ, ±2σ),
+ *       curva contínua de densidade gaussiana e modelagem de Prospect Theory (Kahneman-Tversky).
  *
  * @format
  */
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   CANONICAL_ANCHORS,
   calculateStochasticCorridor,
   type CanonicalAnchor,
   type StochasticCorridorInput,
 } from '@/lib/prospectCorridor';
+
+// Escala SVG para o corredor (-40% a +50%)
+const MIN_RANGE = -40;
+const MAX_RANGE = 50;
+const RANGE_SPAN = MAX_RANGE - MIN_RANGE;
+
+function toSvgX(val: number): number {
+  const clamped = Math.max(MIN_RANGE, Math.min(MAX_RANGE, val));
+  return ((clamped - MIN_RANGE) / RANGE_SPAN) * 100;
+}
 
 interface ProspectRiskCorridorWidgetProps {
   rawEquity: number;
@@ -42,6 +53,9 @@ export function ProspectRiskCorridorWidget({
   activeAnchorId,
   onSelectAnchor,
 }: Readonly<ProspectRiskCorridorWidgetProps>) {
+  const [viewMode, setViewMode] = useState<'corridor' | 'gaussian' | 'prospect_curve'>('corridor');
+  const [localLambda, setLocalLambda] = useState<number>(lossAversionLambda);
+
   const corridorInput: StochasticCorridorInput = useMemo(
     () => ({
       rawEquity,
@@ -50,7 +64,7 @@ export function ProspectRiskCorridorWidget({
       potOdds,
       spr,
       numPlayers,
-      lossAversionLambda,
+      lossAversionLambda: localLambda,
       isNearPayjump,
     }),
     [
@@ -60,7 +74,7 @@ export function ProspectRiskCorridorWidget({
       potOdds,
       spr,
       numPlayers,
-      lossAversionLambda,
+      localLambda,
       isNearPayjump,
     ],
   );
@@ -78,21 +92,55 @@ export function ProspectRiskCorridorWidget({
     );
   }, [activeAnchorId, corridor.matchedAnchorId]);
 
-  // Escala SVG para o corredor (-50% a +50%)
-  const minRange = -40;
-  const maxRange = 50;
-  const rangeSpan = maxRange - minRange;
-  const toSvgX = (val: number) => {
-    const clamped = Math.max(minRange, Math.min(maxRange, val));
-    return ((clamped - minRange) / rangeSpan) * 100;
-  };
-
   const xZero = toSvgX(0);
   const xMu = toSvgX(corridor.mu);
   const x1Lower = toSvgX(corridor.band1sLower);
   const x1Upper = toSvgX(corridor.band1sUpper);
   const x2Lower = toSvgX(corridor.band2sLower);
   const x2Upper = toSvgX(corridor.band2sUpper);
+
+  // Curva Gaussiana SVG (PDF: Probability Density Function)
+  const gaussianPoints = useMemo(() => {
+    const pts: { x: number; y: number }[] = [];
+    const mu = corridor.mu;
+    const sigma = Math.max(1.0, corridor.sigma);
+
+    for (let xVal = MIN_RANGE; xVal <= MAX_RANGE; xVal += 1.5) {
+      const z = (xVal - mu) / sigma;
+      const pdf = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * z * z);
+      // Normalização de altura para viewBox 100 x 50
+      const normY = 46 - pdf * sigma * 28;
+      pts.push({ x: toSvgX(xVal), y: Math.max(4, Math.min(48, normY)) });
+    }
+
+    const pathD = pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    return pathD;
+  }, [corridor.mu, corridor.sigma]);
+
+  // Curva de Prospecto Kahneman & Tversky v(x)
+  const prospectPoints = useMemo(() => {
+    const pts: { x: number; y: number }[] = [];
+    const alpha = 0.88;
+    const beta = 0.88;
+    const lambda = localLambda;
+
+    for (let xVal = -30; xVal <= 30; xVal += 1) {
+      let vx = 0;
+      if (xVal >= 0) {
+        vx = Math.pow(xVal, alpha);
+      } else {
+        vx = -lambda * Math.pow(Math.abs(xVal), beta);
+      }
+
+      // Mapear xVal de [-30, 30] para [5, 95] e vx para [45, 5]
+      const svgX = 50 + (xVal / 30) * 45;
+      const svgY = 25 - (vx / 45) * 20;
+      pts.push({ x: svgX, y: Math.max(4, Math.min(46, svgY)) });
+    }
+
+    const pathD = pts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    return pathD;
+  }, [localLambda]);
 
   const statusTheme = useMemo(() => {
     switch (corridor.decisionStatus) {
@@ -109,7 +157,7 @@ export function ProspectRiskCorridorWidget({
         return {
           badgeClass: 'text-accent-amber border-amber-500/30 bg-amber-500/10',
           dotClass: 'bg-accent-amber shadow-[0_0_8px_var(--accent-amber)] animate-pulse',
-          label: 'ZONA MARGINAL (SENSIÍVEL À VARIÂNCIA)',
+          label: 'ZONA MARGINAL (SENSÍVEL À VARIÂNCIA)',
           band1sFill: 'rgba(245, 158, 11, 0.25)',
           band2sFill: 'rgba(245, 158, 11, 0.10)',
           strokeColor: '#f59e0b',
@@ -254,13 +302,68 @@ export function ProspectRiskCorridorWidget({
               <div className="flex flex-col">
                 <span className="text-[0.5rem] font-bold text-text-darker uppercase">λ Aversão</span>
                 <span className="font-black text-accent-amber">
-                  {lossAversionLambda.toFixed(2)}
+                  {localLambda.toFixed(2)}
                 </span>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* SELETOR DE MODO DE VISUALIZAÇÃO GRÁFICA (ADITIVO SOTA) */}
+      <div className="mb-3 flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-black/60 border border-white/10">
+          <button
+            type="button"
+            onClick={() => setViewMode('corridor')}
+            className={`px-3 py-1 rounded-lg text-[0.6rem] font-mono font-bold uppercase transition-all ${
+              viewMode === 'corridor'
+                ? 'bg-accent-indigo text-white shadow-sm'
+                : 'text-text-dim hover:text-white'
+            }`}
+          >
+            Corredor (μ ± σ)
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('gaussian')}
+            className={`px-3 py-1 rounded-lg text-[0.6rem] font-mono font-bold uppercase transition-all ${
+              viewMode === 'gaussian'
+                ? 'bg-accent-indigo text-white shadow-sm'
+                : 'text-text-dim hover:text-white'
+            }`}
+          >
+            Densidade Gaussiana (PDF)
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('prospect_curve')}
+            className={`px-3 py-1 rounded-lg text-[0.6rem] font-mono font-bold uppercase transition-all ${
+              viewMode === 'prospect_curve'
+                ? 'bg-accent-indigo text-white shadow-sm'
+                : 'text-text-dim hover:text-white'
+            }`}
+          >
+            Curva Kahneman-Tversky v(x)
+          </button>
+        </div>
+
+        {/* AJUSTE DINÂMICO DE AVERSÃO À PERDA λ */}
+        <div className="flex items-center gap-2 text-[0.6rem] font-mono">
+          <span className="text-text-muted">Sensibilidade λ:</span>
+          <input
+            type="range"
+            min="1.0"
+            max="3.5"
+            step="0.05"
+            value={localLambda}
+            onChange={(e) => setLocalLambda(Number.parseFloat(e.target.value))}
+            className="w-20 accent-accent-amber h-1.5 bg-white/10 rounded-lg cursor-pointer"
+            aria-label="Ajustar coeficiente lambda de aversão à perda"
+          />
+          <span className="text-accent-amber font-bold">{localLambda.toFixed(2)}x</span>
+        </div>
+      </div>
 
       {/* VISUALIZAÇÃO DO CORREDOR ESTOCÁSTICO (SVG RESPONSIVO) */}
       <div className="rounded-3xl border border-white/5 bg-black/50 p-5 shadow-2xl">
@@ -272,85 +375,129 @@ export function ProspectRiskCorridorWidget({
           </span>
         </div>
 
-        <div className="relative h-20 w-full overflow-hidden rounded-2xl bg-slate-950/80 p-2">
-          <svg
-            className="h-full w-full"
-            viewBox="0 0 100 40"
-            preserveAspectRatio="none"
-            aria-label="Gráfico do Corredor Estocástico"
-          >
-            {/* Grade de fundo */}
-            <line x1="0" y1="20" x2="100" y2="20" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
-            
-            {/* Linha de Breakeven (Zero) */}
-            <line
-              x1={xZero}
-              y1="4"
-              x2={xZero}
-              y2="36"
-              stroke="rgba(255,255,255,0.25)"
-              strokeWidth="0.75"
-              strokeDasharray="1.5, 1.5"
-            />
+        <div className="relative h-24 w-full overflow-hidden rounded-2xl bg-slate-950/80 p-2">
+          {viewMode === 'corridor' && (
+            <svg
+              className="h-full w-full"
+              viewBox="0 0 100 40"
+              preserveAspectRatio="none"
+              aria-label="Gráfico do Corredor Estocástico"
+            >
+              {/* Grade de fundo */}
+              <line x1="0" y1="20" x2="100" y2="20" stroke="rgba(255,255,255,0.06)" strokeWidth="0.5" />
+              
+              {/* Linha de Breakeven (Zero) */}
+              <line
+                x1={xZero}
+                y1="4"
+                x2={xZero}
+                y2="36"
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth="0.75"
+                strokeDasharray="1.5, 1.5"
+              />
 
-            {/* Banda 2σ (Dispersão Total 95.4%) */}
-            <rect
-              x={Math.min(x2Lower, x2Upper)}
-              y="10"
-              width={Math.max(0.5, Math.abs(x2Upper - x2Lower))}
-              height="20"
-              fill={statusTheme.band2sFill}
-              rx="3"
-            />
+              {/* Banda 2σ (Dispersão Total 95.4%) */}
+              <rect
+                x={Math.min(x2Lower, x2Upper)}
+                y="10"
+                width={Math.max(0.5, Math.abs(x2Upper - x2Lower))}
+                height="20"
+                fill={statusTheme.band2sFill}
+                rx="3"
+              />
 
-            {/* Banda 1σ (Intervalo de Confiança 68.3%) */}
-            <rect
-              x={Math.min(x1Lower, x1Upper)}
-              y="13"
-              width={Math.max(0.5, Math.abs(x1Upper - x1Lower))}
-              height="14"
-              fill={statusTheme.band1sFill}
-              rx="2"
-            />
+              {/* Banda 1σ (Intervalo de Confiança 68.3%) */}
+              <rect
+                x={Math.min(x1Lower, x1Upper)}
+                y="13"
+                width={Math.max(0.5, Math.abs(x1Upper - x1Lower))}
+                height="14"
+                fill={statusTheme.band1sFill}
+                rx="2"
+              />
 
-            {/* Marcadores de extremos 2σ */}
-            <line
-              x1={x2Lower}
-              y1="8"
-              x2={x2Lower}
-              y2="32"
-              stroke={statusTheme.strokeColor}
-              strokeWidth="0.75"
-              opacity="0.6"
-            />
-            <line
-              x1={x2Upper}
-              y1="8"
-              x2={x2Upper}
-              y2="32"
-              stroke={statusTheme.strokeColor}
-              strokeWidth="0.75"
-              opacity="0.6"
-            />
+              {/* Marcadores de extremos 2σ */}
+              <line
+                x1={x2Lower}
+                y1="8"
+                x2={x2Lower}
+                y2="32"
+                stroke={statusTheme.strokeColor}
+                strokeWidth="0.75"
+                opacity="0.6"
+              />
+              <line
+                x1={x2Upper}
+                y1="8"
+                x2={x2Upper}
+                y2="32"
+                stroke={statusTheme.strokeColor}
+                strokeWidth="0.75"
+                opacity="0.6"
+              />
 
-            {/* Linha Central de Tendência (μ) */}
-            <line
-              x1={xMu}
-              y1="5"
-              x2={xMu}
-              y2="35"
-              stroke={statusTheme.strokeColor}
-              strokeWidth="1.5"
-            />
-            <circle
-              cx={xMu}
-              cy="20"
-              r="2.5"
-              fill="#ffffff"
-              stroke={statusTheme.strokeColor}
-              strokeWidth="1"
-            />
-          </svg>
+              {/* Linha Central de Tendência (μ) */}
+              <line
+                x1={xMu}
+                y1="5"
+                x2={xMu}
+                y2="35"
+                stroke={statusTheme.strokeColor}
+                strokeWidth="1.5"
+              />
+              <circle
+                cx={xMu}
+                cy="20"
+                r="2.5"
+                fill="#ffffff"
+                stroke={statusTheme.strokeColor}
+                strokeWidth="1"
+              />
+            </svg>
+          )}
+
+          {viewMode === 'gaussian' && (
+            <svg
+              className="h-full w-full"
+              viewBox="0 0 100 50"
+              preserveAspectRatio="none"
+              aria-label="Gráfico do Corredor Estocástico"
+            >
+              {/* Eixo horizontal */}
+              <line x1="0" y1="46" x2="100" y2="46" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+              {/* Linha Zero */}
+              <line x1={xZero} y1="4" x2={xZero} y2="46" stroke="#64748b" strokeWidth="0.6" strokeDasharray="1.5, 1.5" />
+              {/* Linha Central μ */}
+              <line x1={xMu} y1="4" x2={xMu} y2="46" stroke={statusTheme.strokeColor} strokeWidth="1" />
+              {/* Curva Gaussiana */}
+              <path d={gaussianPoints} fill="none" stroke={statusTheme.strokeColor} strokeWidth="1.5" />
+              {/* Ponto μ no topo */}
+              <circle cx={xMu} cy={12} r="2.5" fill="#ffffff" stroke={statusTheme.strokeColor} strokeWidth="1" />
+            </svg>
+          )}
+
+          {viewMode === 'prospect_curve' && (
+            <svg
+              className="h-full w-full"
+              viewBox="0 0 100 50"
+              preserveAspectRatio="none"
+              aria-label="Gráfico do Corredor Estocástico"
+            >
+              {/* Eixos cartesianos X e Y centrados em (50, 25) */}
+              <line x1="5" y1="25" x2="95" y2="25" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+              <line x1="50" y1="5" x2="50" y2="45" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+              {/* Curva Assimétrica de Kahneman-Tversky v(x) */}
+              <path d={prospectPoints} fill="none" stroke="#f59e0b" strokeWidth="1.8" />
+              {/* Labels explicativos */}
+              <text x="75" y="16" fill="#10b981" fontSize="3.5" fontFamily="var(--font-mono)">
+                Ganhos (Côncavo)
+              </text>
+              <text x="10" y="38" fill="#f43f5e" fontSize="3.5" fontFamily="var(--font-mono)">
+                Perdas (Convexo · -λ)
+              </text>
+            </svg>
+          )}
         </div>
 
         {/* RÉGUA DE LEGENDA DO CORREDOR */}
