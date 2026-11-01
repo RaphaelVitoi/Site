@@ -17,7 +17,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent.parent  # .gemini/
 EXTENSIONS = ROOT / "extensions"
-SITE = ROOT / "Site"
 
 CHROME_EXTENSIONS = [
     "sota-chrome-cockpit",
