@@ -131,6 +131,23 @@ def test_jules_client_approve_plan() -> None:
         assert result is True
 
 
+def test_jules_client_send_message() -> None:
+    """Valida o envio de mensagem para a sessao do Jules."""
+    mock_resp = MagicMock()
+    mock_resp.status = 200
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        result = client.send_message("sess-9948", "Seguir com a otimizacao.")
+        assert result is True
+
+        req = mock_urlopen.call_args[0][0]
+        assert req.full_url.endswith("/sessions/sess-9948:sendMessage")
+        corpo = json.loads(req.data.decode("utf-8"))
+        assert corpo == {"prompt": "Seguir com a otimizacao."}
+
+
 def test_jules_client_get_diff() -> None:
     """Valida a obtencao do diff unificado da sessao."""
     mock_resp_data = {

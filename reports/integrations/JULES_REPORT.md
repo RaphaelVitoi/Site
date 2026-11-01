@@ -2,7 +2,7 @@
 
 > **Repositório Monitorado:** `RaphaelVitoi/Site`
 > **Governança:** Protocolo Master Chico SOTA v8.0 GOLD (Seção X — Jules Cloud MCP Bridge)
-> **Data de Atualização:** `2026-10-28 10:08:35 UTC`
+> **Data de Atualização:** `2026-11-01 01:47:17 UTC`
 > **Origem dos Dados:** Google Jules API v1alpha (`https://jules.googleapis.com/v1alpha`)
 
 ---
@@ -11,9 +11,9 @@
 
 | Métrica | Valor | Status Operacional |
 | :--- | :--- | :--- |
-| **Total de Sessões Registradas** | `11` | Base de telemetria completa |
-| **Sessões Concluídas com Sucesso** | `6` | ✅ Execução com artefatos |
-| **Sessões com Falha de Execução** | `0` | ⚠️ Diagnóstico detalhado abaixo |
+| **Total de Sessões Registradas** | `4` | Base de telemetria completa |
+| **Sessões Concluídas com Sucesso** | `1` | ✅ Execução com artefatos |
+| **Sessões com Falha de Execução** | `1` | ⚠️ Diagnóstico detalhado abaixo |
 | **Sessões Ativas no Momento** | `0` | 💤 Standby |
 | **Plano / cota** | Não expostos por este endpoint | Consulte a conta no momento da operação |
 | **Agendamento externo** | Não verificado | O histórico de sessões não prova estado do cron |
@@ -47,760 +47,1503 @@
 
 | ID da Sessão | Data (UTC) | Persona / Prompt | Branch | Status | Atividades | Observação / Causa da Falha |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| [11400860485353364937](https://jules.google.com/session/11400860485353364937) | `2026-10-28 03:02:18` | **Bolt: Incremental Performance Optimization Agent** | `master` | ✅ COMPLETED | `36` | Execução bem-sucedida |
-| [3494784052522315967](https://jules.google.com/session/3494784052522315967) | `2026-10-17 03:11:59` | **Bolt ⚡ - Codebase Performance Optimization Agent** | `master` | ❌ AWAITING_USER_FEEDBACK | `1` | — |
-| [11952863036823806038](https://jules.google.com/session/11952863036823806038) | `2026-10-15 03:17:00` | **Bolt ⚡ - Performance Optimization Agent** | `master` | ❌ AWAITING_USER_FEEDBACK | `50` | — |
-| [8671529763629328332](https://jules.google.com/session/8671529763629328332) | `2026-10-14 03:05:32` | **Bolt ⚡ - Performance Optimization Agent** | `master` | ❌ AWAITING_USER_FEEDBACK | `12` | — |
-| [3224521625150571802](https://jules.google.com/session/3224521625150571802) | `2026-09-30 03:28:59` | **Bolt: Codebase Performance Optimization Agent** | `master` | ❌ AWAITING_USER_FEEDBACK | `50` | — |
-| [17401995800683759664](https://jules.google.com/session/17401995800683759664) | `2026-09-29 03:09:56` | **Bolt: Code Performance Optimization Agent** | `master` | ❌ AWAITING_USER_FEEDBACK | `50` | — |
-| [712907308784371051](https://jules.google.com/session/712907308784371051) | `2026-09-28 03:10:27` | **Bolt ⚡ - Performance Optimization Agent** | `master` | ✅ COMPLETED | `50` | Execução bem-sucedida |
-| [2945584275928523559](https://jules.google.com/session/2945584275928523559) | `2026-09-27 03:22:59` | **Bolt ⚡ - Performance Optimization Agent** | `master` | ✅ COMPLETED | `50` | Execução bem-sucedida |
-| [405902679237498550](https://jules.google.com/session/405902679237498550) | `2026-09-22 03:18:49` | **Bolt ⚡ - Performance Optimization Agent** | `master` | ✅ COMPLETED | `50` | Execução bem-sucedida |
-| [15638018841103678745](https://jules.google.com/session/15638018841103678745) | `2026-09-21 03:28:08` | **Bolt ⚡ - Codebase Performance Optimization Agent** | `master` | ✅ COMPLETED | `50` | Execução bem-sucedida |
-| [17402607087817755979](https://jules.google.com/session/17402607087817755979) | `2026-09-19 03:14:34` | **Bolt ⚡ - Codebase Performance Optimization Agent** | `master` | ✅ COMPLETED | `50` | `Jules encountered an error when preparing the virtual machine environment for th` |
+| [7987093689324965753](https://jules.google.com/session/7987093689324965753) | `2026-10-31 03:00:42` | **Jules Bolt v8.0: Gemini 3.1 Pro Performance Optimiza...** | `master` | ✅ COMPLETED | `34` | Execução bem-sucedida |
+| [3531640491171142459](https://jules.google.com/session/3531640491171142459) | `2026-10-30 03:28:19` | **Arquitetura Cognitiva Gemini 3.1 Pro & Prompt Otimiz...** | `master` | ❌ AWAITING_USER_FEEDBACK | `1` | — |
+| [6248855726035918150](https://jules.google.com/session/6248855726035918150) | `2026-10-29 13:17:24` | **File: c:\Users\rapha\.gemini\Site\.vscode\settings.json** | `fix/workflow-inline-release` | ❌ FAILED | `1` | Submodule clone failed (`exa-mcp-server` ref `fb57858` inexistente no upstream) |
+| [10089130805017503110](https://jules.google.com/session/10089130805017503110) | `2026-10-29 03:00:03` | **Gemini 3.1 Pro Upgrade & Jules (Bolt ⚡ SOTA v8.0) Op...** | `master` | ❌ AWAITING_USER_FEEDBACK | `1` | — |
 
 ---
 
 ## 4. Detalhamento Tecnico das Sessoes Rastreadas
 
-### Sessão `11400860485353364937` — Bolt: Incremental Performance Optimization Agent
+### Sessão `7987093689324965753` — Jules Bolt v8.0: Gemini 3.1 Pro Performance Optimization Prompt
 - **Status:** `COMPLETED`
-- **Criada em:** `2026-10-28T03:02:18.374605533Z`
+- **Criada em:** `2026-10-31T03:00:42.740842185Z`
 - **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/11400860485353364937
+- **Link Direto:** https://jules.google.com/session/7987093689324965753
 - **Prompt Original:**
   ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
+  Arquitetura Cognitiva Gemini 3.1 Pro & Novo Prompt Otimizado para o Jules (Bolt ⚡ SOTA v8.0)
   
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
+  IMPORTANT
   
+  Elevação de Modelo: Gemini 3.6 Flash → Gemini 3.1 Pro O operador elevou o modelo do Jules para o Gemini 3.1 Pro nas preferências da plataforma (jules.google.com/settings/general
+  ).
   
-  ## Boundaries
+  Por que a mudança é transformadora: Enquanto o Flash (3.6) tendia a soluções heurísticas superficiais (troca de for...of por for, remoção de ?? 0, micro-comentários), o Gemini 3.1 Pro possui raciocínio multi-step profundo, contexto de 1M+ tokens, rigor matemático impecável para teoria dos jogos e estrita fidelidade a restrições arquiteturais.
+  Ajuste de Propósito: O Gemini 3.1 Pro não deve ser desperdiçado em micro-sintaxe. Ele deve operar em engenharia de performance de alto nível: code-splitting, estabilidade de referências, eliminação de re-renders O(N³) e otimização algorítmica de poker.
   
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
+  Ao reconfigurar a tarefa noturna no Jules, utilize o prompt abaixo:
   
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
+  markdown
+  
+  You are "Bolt" ⚡ - an autonomous performance engineering agent under the SOTA Chico Protocol, operating with Gemini 3.1 Pro deep reasoning. Your mission is to identify, benchmark, and implement ONE high-impact, verified architectural performance optimization in the frontend codebase.
+  ... [truncado, 30 linhas no total]
   ```
-- **Timeline de Atividades (36 eventos):**
-  - `[2026-10-28 03:09:35]` **agent**: `planGenerated, id`
-  - `[2026-10-28 03:09:55]` **user**: `planApproved, id`
-  - `[2026-10-28 03:10:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:10:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:11:08]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:12:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:12:47]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:12:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:14:17]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:14:50]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:15:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:16:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:16:27]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:16:53]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:17:19]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:17:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:18:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:18:57]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:19:24]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:19:34]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:19:43]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:20:36]` **agent**: `progressUpdated, id`
-  - `[2026-10-28 03:20:40]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:20:50]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:21:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:21:16]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:21:29]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:21:41]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:22:32]` **agent**: `progressUpdated, id`
-  - `[2026-10-28 03:23:27]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:23:35]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:23:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:24:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:24:10]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:24:25]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-28 03:24:47]` **agent**: `sessionCompleted, artifacts, id`
+- **Timeline de Atividades (34 eventos):**
+  - `[2026-10-31 03:10:05]` **agent**: `agentMessaged, id`
+  - `[2026-11-01 01:34:28]` **user**: `userMessaged, id`
+  - `[2026-11-01 01:34:51]` **user**: `userMessaged, id`
+  - `[2026-11-01 01:36:22]` **agent**: `planGenerated, id`
+  - `[2026-11-01 01:36:23]` **user**: `planApproved, id`
+  - `[2026-11-01 01:36:35]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:36:52]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:37:04]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:37:17]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:37:30]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:37:41]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:37:53]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:38:08]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:38:15]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:38:24]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:41:07]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:41:19]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:41:31]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:41:50]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:42:21]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:42:34]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:42:54]` **agent**: `progressUpdated, id`
+  - `[2026-11-01 01:43:05]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:43:17]` **agent**: `progressUpdated, id`
+  - `[2026-11-01 01:43:28]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:43:42]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:43:53]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:43:59]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:44:06]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:44:16]` **agent**: `progressUpdated, id`
+  - `[2026-11-01 01:45:05]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:45:10]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:45:23]` **agent**: `progressUpdated, artifacts, id`
+  - `[2026-11-01 01:45:53]` **agent**: `sessionCompleted, artifacts, id`
 
-### Sessão `3494784052522315967` — Bolt ⚡ - Codebase Performance Optimization Agent
+### Sessão `3531640491171142459` — Arquitetura Cognitiva Gemini 3.1 Pro & Prompt Otimizado para o Jules (Bolt ⚡ SOTA v8.0)
 - **Status:** `AWAITING_USER_FEEDBACK`
-- **Criada em:** `2026-10-17T03:11:59.607511434Z`
+- **Criada em:** `2026-10-30T03:28:19.922070514Z`
 - **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/3494784052522315967
+- **Link Direto:** https://jules.google.com/session/3531640491171142459
 - **Prompt Original:**
   ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
+  Arquitetura Cognitiva Gemini 3.1 Pro & Novo Prompt Otimizado para o Jules (Bolt ⚡ SOTA v8.0)
   
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
+  IMPORTANT
   
+  Elevação de Modelo: Gemini 3.6 Flash → Gemini 3.1 Pro O operador elevou o modelo do Jules para o Gemini 3.1 Pro nas preferências da plataforma (jules.google.com/settings/general
+  ).
   
-  ## Boundaries
+  Por que a mudança é transformadora: Enquanto o Flash (3.6) tendia a soluções heurísticas superficiais (troca de for...of por for, remoção de ?? 0, micro-comentários), o Gemini 3.1 Pro possui raciocínio multi-step profundo, contexto de 1M+ tokens, rigor matemático impecável para teoria dos jogos e estrita fidelidade a restrições arquiteturais.
+  Ajuste de Propósito: O Gemini 3.1 Pro não deve ser desperdiçado em micro-sintaxe. Ele deve operar em engenharia de performance de alto nível: code-splitting, estabilidade de referências, eliminação de re-renders O(N³) e otimização algorítmica de poker.
   
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
+  Ao reconfigurar a tarefa noturna no Jules, utilize o prompt abaixo:
   
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
+  markdown
+  
+  You are "Bolt" ⚡ - an autonomous performance engineering agent under the SOTA Chico Protocol, operating with Gemini 3.1 Pro deep reasoning. Your mission is to identify, benchmark, and implement ONE high-impact, verified architectural performance optimization in the frontend codebase.
+  ... [truncado, 30 linhas no total]
   ```
 - **Timeline de Atividades (1 eventos):**
-  - `[2026-10-17 03:22:28]` **agent**: `agentMessaged, id`
+  - `[2026-10-30 03:39:44]` **agent**: `agentMessaged, id`
 
-### Sessão `11952863036823806038` — Bolt ⚡ - Performance Optimization Agent
-- **Status:** `AWAITING_USER_FEEDBACK`
-- **Criada em:** `2026-10-15T03:17:00.595397882Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/11952863036823806038
+### Sessão `6248855726035918150` — File: c:\Users\rapha\.gemini\Site\.vscode\settings.json
+```
+{
+    "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
+    "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
+    "python.languageServer": "None",
+    "pylint.enabled": false,
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.inlayHints.parameterNames": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.indexing": true,
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": true,
+    "python.testing.autoTestDiscoverOnSaveEnabled": false,
+    "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/.venv": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/reports/coverage": true,
+        "**/.pytest_cache": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.husky/**": true,
+        "**/node_modules/**": true,
+        "**/.venv/**": true,
+        "**/.next/**": true,
+        "**/.turbo/**": true,
+        "**/__pycache__/**": true,
+        "**/.pytest_cache/**": true,
+        "**/.ruff_cache/**": true,
+        "**/dist/**": true,
+        "**/dist-workers/**": true,
+        "**/build/**": true,
+        "**/wasm-equity/target/**": true,
+        "**/core/vendor/**": true,
+        "**/worker/Java/**": true,
+        "**/reports/**": true,
+        "**/coverage/**": true
+    },
+    "git.repositoryScanIgnoredFolders": [
+        "node_modules",
+        ".venv",
+        ".next",
+        ".pytest_cache",
+        ".ruff_cache",
+        "target"
+    ],
+    "tailwindCSS.files.exclude": [
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/.hg/**",
+        "**/.svn/**",
+        "**/.venv/**",
+        "**/.next/**",
+        "**/target/**",
+        "**/core/vendor/**",
+        "**/worker/Java/**",
+        "**/reports/**",
+        "**/docs/**",
+        "**/.trunk/**",
+        "skills/**"
+    ],
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true,
+        "**/reports/coverage": true,
+        "**/coverage/lcov-report": true,
+        "**/dist-workers": true,
+        "**/core/vendor": true,
+        "**/worker/Java": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.wordWrap": "on"
+    },
+    "markdownlint.lintWorkspaceGlobs": [
+        "**/*.md",
+        "!node_modules/**",
+        "!**/node_modules/**",
+        "!.next/**",
+        "!**/.next/**",
+        "!.venv/**",
+        "!**/.venv/**",
+        "!dist/**",
+        "!**/dist/**",
+        "!build/**",
+        "!**/build/**",
+        "!coverage/**",
+        "!**/coverage/**",
+        "!core/vendor/**",
+        "!**/core/vendor/**",
+        "!worker/Java/**",
+        "!**/worker/Java/**",
+        "!wasm-equity/target/**",
+        "!**/wasm-equity/target/**",
+        "!reports/**",
+        "!**/reports/**",
+        "!docs/reports/**",
+        "!**/docs/reports/**",
+        "!skills/**",
+        "!**/skills/**"
+    ],
+    "files.associations": {
+        "**/.remember/tmp/*.ts": "plaintext",
+        ".markdownlintignore": "ignore",
+        ".prettierignore": "ignore",
+        ".geminiignore": "ignore",
+        ".ragignore": "ignore",
+        "skills/**/.github/workflows/*.yml": "yaml",
+        "skills/**/.github/workflows/*.yaml": "yaml",
+        "**/skills/**/.github/workflows/*.yml": "yaml",
+        "**/skills/**/.github/workflows/*.yaml": "yaml",
+        "**/.github/workflows/publish-agentcore.yml": "yaml"
+    },
+    "prettier.logLevel": "warn",
+    "prettier.requireConfig": true,
+    "[rust]": {
+        "editor.wordBasedSuggestions": "matchingDocuments",
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
+    "eslint.workingDirectories": [
+        {
+            "mode": "auto"
+        }
+    ],
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
+    "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
+    "cmake.generator": "Visual Studio 16 2019",
+    "cmake.preferredAccelerators": [
+        "vs",
+        "ninja"
+    ],
+    "cmake.configureSettings": {
+        "CMAKE_GENERATOR_PLATFORM": "x64",
+        "Python_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "Python3_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "nanobind_DIR": "${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+    },
+    "cmake.configureArgs": [
+        "-DPython_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
+        "-DPython3_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
+        "-Dnanobind_DIR=${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+    ],
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/core/tensor_engine/build",
+        "--header-insertion=never",
+        "-j=4",
+        "--background-index"
+    ],
+    "claude.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "anthropic.claudeCode.customCommands": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "chatgpt.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "openai.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "editor.inlineSuggest.enabled": true,
+    "editor.suggest.preview": true,
+    "gitlens.telemetry.enabled": false,
+    "gitlens.currentLine.enabled": true,
+    "gitlens.codeLens.scopes": [
+        "document"
+    ],
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "jupyter.askForKernelRestart": false,
+    "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
+    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
+    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
+    "css.lint.unknownAtRules": "ignore",
+    "scss.lint.unknownAtRules": "ignore",
+    "vitest.rootConfig": "vitest.config.mjs",
+    "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "sonarlint.disableTelemetry": true,
+    "vscode-edge-devtools.webhint": false,
+    "sonarlint.rules": {
+        "css:S9423": {
+            "level": "off"
+        },
+        "css:S4666": {
+            "level": "off"
+        },
+        "css:S4667": {
+            "level": "off"
+        },
+        "javascript:S6853": {
+            "level": "off"
+        },
+        "typescript:S6853": {
+            "level": "off"
+        },
+        "javascript:S4790": {
+            "level": "off"
+        },
+        "typescript:S4790": {
+            "level": "off"
+        },
+        "javascript:S5332": {
+            "level": "off"
+        },
+        "typescript:S5332": {
+            "level": "off"
+        },
+        "python:S5332": {
+            "level": "off"
+        },
+        "python:S3776": {
+            "level": "off"
+        },
+        "css:S5404": {
+            "level": "off"
+        },
+        "javascript:S2999": {
+            "level": "off"
+        },
+        "typescript:S2999": {
+            "level": "off"
+        },
+        "javascript:S6842": {
+            "level": "off"
+        },
+        "typescript:S6842": {
+            "level": "off"
+        },
+        "javascript:S9362": {
+            "level": "off"
+        },
+        "typescript:S9362": {
+            "level": "off"
+        },
+        "typescript:S7767": {
+            "level": "off"
+        }
+    },
+    "rust-analyzer.imports.preferPrelude": true,
+    "rust-analyzer.imports.granularity.enforce": true,
+    "rust-analyzer.completion.termSearch.enable": true,
+    "rust-analyzer.completion.privateEditable.enable": true,
+    "rust-analyzer.completion.fullFunctionSignatures.enable": true,
+    "rust-analyzer.diagnostics.styleLints.enable": true,
+    "rust-analyzer.diagnostics.previewRustcOutput": true,
+    "rust-analyzer.debug.buildBeforeRestart": true,
+    "rust-analyzer.trace.server": "off",
+    "securecoder.enableI18n": false,
+    "securecoder.rules.i18n": "off",
+    "securecoder.rules.internationalization": "off",
+    "securecoder.rules.jsx-not-internationalized": "off",
+    "securecoder.disabledRules": [
+        "jsx-not-internationalized",
+        "i18n",
+        "internationalization"
+    ],
+    "google.cloud.project": "original-498419",
+    "google.cloud.billingQuotaProject": "original-498419",
+    "cloudcode.enableTelemetry": false,
+    "cloudcode.autoDependencies": "on",
+    "cloudcode.cloudRun.showExplorer": true,
+    "cloudcode.gke.showExplorer": true,
+    "cloudcode.secretManager.showExplorer": true,
+    "cloudcode.yaml.schemaValidation": true,
+    "claudeCode.preferredLocation": "panel",
+    "claudeCode.focusView": true,
+    "autoDocstring.docstringFormat": "google",
+    "autoDocstring.startOnNewLine": true,
+    "autoDocstring.includeExtendedSummary": true,
+    "evenBetterToml.schema.enabled": true,
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml",
+        "editor.formatOnSave": true
+    },
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.linkedProjects": [
+        "${workspaceFolder}/wasm-equity/Cargo.toml",
+        "${workspaceFolder}/core/nexus-core-rust/Cargo.toml",
+        "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"
+    ],
+    "rust-analyzer.files.excludeDirs": [
+        ".next",
+        ".venv",
+        "node_modules",
+        "target",
+        ".git"
+    ],
+    "turboConsoleLog.addSemicolonInTheEnd": true,
+    "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
+    "redhat.telemetry.enabled": false,
+    "antigravity.enableTelemetry": false,
+    "gdl.openTarget": "system",
+    "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
+        "build/QuantumTensorEngine.sln"
+    ],
+    "ruff.path": [
+        "${workspaceFolder}/.venv/Scripts/ruff.exe"
+    ],
+    "ruff.interpreter": [
+        "${workspaceFolder}/.venv/Scripts/python.exe"
+    ],
+    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.lint.preview": true,
+    "ruff.format.preview": true,
+    "workbench.editorAssociations": {
+        "**/.claude/**/*.bin": "default",
+        "**/CMakeFiles/**/*.bin": "default",
+        "**/.chroma_db/**/*.bin": "default",
+        "*.bin": "default",
+        "*.svg": "cweijan.officeViewer",
+        "*.pdf": "latex-workshop-pdf-hook",
+        "*.xlsx": "cweijan.officeViewer",
+        "*.xls": "cweijan.officeViewer",
+        "*.docx": "cweijan.officeViewer",
+        "*.doc": "cweijan.officeViewer",
+        "*.pptx": "cweijan.officeViewer",
+        "*.parquet": "cweijan.parquetViewer",
+        "*.drawio": "hediet.vscode-drawio",
+        "*.dio": "hediet.vscode-drawio",
+        "*.dio.png": "hediet.vscode-drawio",
+        "*.dio.svg": "hediet.vscode-drawio",
+        "*.excalidraw": "editor.excalidraw",
+        "*.excalidraw.json": "editor.excalidraw",
+        "*.excalidraw.svg": "editor.excalidraw",
+        "*.md": "ultimateViewer.preview",
+        "*.png": "ultimateViewer.preview"
+    },
+    "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
+    "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
+    "markdown-preview-enhanced.enableTypographer": true,
+    "markdown-preview-enhanced.enableScriptExecution": false,
+    "markdown-preview-enhanced.enableHTML5Embed": true,
+    "markdown-preview-enhanced.enableExtendedTableSyntax": true,
+    "markdown-preview-enhanced.enableCriticMarkupSyntax": true,
+    "markdown-preview-enhanced.d2Sketch": true,
+    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
+    "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
+    "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
+    "wam.switchDevinCli": true,
+    "files.autoSave": "off",
+    "editor.codeActions.triggerOnFocusChange": true,
+    "editor.definitionLinkOpensInPeek": true,
+    "editor.experimental.asyncTokenizationLogging": true,
+    "editor.experimental.preferTreeSitter.css": true,
+    "editor.experimental.preferTreeSitter.ini": true,
+    "editor.experimental.preferTreeSitter.regex": true,
+    "editor.experimental.preferTreeSitter.typescript": true,
+    "editor.experimentalGpuAcceleration": "on",
+    "editor.inlayHints.padding": true,
+    "editor.inlineCompletionsAccessibilityVerbose": false,
+    "editor.linkedEditing": true,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "diffEditor.experimental.showMoves": true,
+    "diffEditor.experimental.useTrueInlineView": true,
+    "editor.inlineSuggest.edits.showCollapsed": true,
+    "editor.inlineSuggest.suppressSuggestions": true,
+    "editor.suggest.localityBonus": true,
+    "editor.suggest.shareSuggestSelections": true,
+    "editor.suggest.showStatusBar": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": true,
+    "files.autoGuessEncoding": true,
+    "files.autoSaveWorkspaceFilesOnly": true,
+    "files.autoSaveWhenNoErrors": true,
+    "files.trimFinalNewlines": true,
+    "explorer.excludeGitIgnore": true,
+    "explorer.fileNesting.enabled": true,
+    "scm.alwaysShowActions": true,
+    "scm.alwaysShowRepositories": true,
+    "scm.diffDecorationsGutterPattern": {
+        "added": true
+    },
+    "scm.repositories.explorer": true,
+    "scm.workingSets.enabled": true,
+    "cmake.ctest.allowParallelJobs": true,
+    "cmake.buildTask": true,
+    "astro.content-intellisense": true,
+    "astro.updateImportsOnFileMove.enabled": true,
+    "search.useParentIgnoreFiles": true,
+    "search.useGlobalIgnoreFiles": true,
+    "accessibility.openChatEditedFiles": true,
+    "accessibility.signalOptions.debouncePositionChanges": true,
+    "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
+    "claudeCode.enableNewConversationShortcut": true,
+    "chatgpt.openOnStartup": true,
+    "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+    "windsurfPyright.analysis.typeCheckingMode": "standard",
+    "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
+    "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
+    "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
+    "windsurfPyright.analysis.inlayHints.variableTypes": true,
+    "windsurfPyright.analysis.inlayHints.genericTypes": true,
+    "ollamaDirectCustomAgent.vectorSearchEnabled": true,
+    "ollamaDirectCustomAgent.whisperUseCloud": true,
+    "ollamaDirectCustomAgent.roleSplitEnabled": true,
+    "ollamaDirectCustomAgent.openOnStartup": true,
+    "ollamaDirectCustomAgent.modelWarmupEnabled": true,
+    "ollamaDirectCustomAgent.fullControlMode": false,
+    "ollamaDirectCustomAgent.fileWatcherEnabled": true,
+    "ollamaDirectCustomAgent.debugMode": true,
+    "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
+    "ollamaDirectCustomAgent.assistantAutoLaunch": true,
+    "claudeCode.disableLoginPrompt": true,
+    "java.project.exclusionFilters": [
+        "**/scripts/validation/**"
+    ],
+    "java.project.resourceFilters": [
+        "node_modules",
+        ".git",
+        "scripts/validation"
+    ],
+    "java.import.exclusions": [
+        "**/scripts/validation/**"
+    ],
+    "java.diagnostic.filter": [
+        "**/scripts/validation/**"
+    ],
+    "java.errors.incompleteClasspath.severity": "ignore",
+    "sqltools.connections": [
+        {
+            "name": "Site (PostgreSQL Local)",
+            "group": "PokerRacional",
+            "driver": "PostgreSQL",
+            "server": "localhost",
+            "port": 5432,
+            "database": "postgres",
+            "username": "postgres",
+            "askForPassword": false,
+            "connectionTimeout": 15,
+            "previewLimit": 50,
+            "ssh": "Disabled"
+        }
+    ],
+    "workbench.experimental.modernUI": true,
+    "workbench.list.smoothScrolling": false,
+    "workbench.commandPalette.experimental.suggestCommands": true,
+    "workbench.experimental.cloudChanges.autoStore": "off",
+    "workbench.experimental.modernUIUppercaseViewHeaders": true,
+    "workbench.experimental.cloudChanges.partialMatches.enabled": true,
+    "workbench.experimental.share.enabled": true,
+    "workbench.editor.highlightModifiedTabs": true,
+    "workbench.browser.enableRemoteProxy": true,
+    "workbench.browser.experimentalUserTools.enabled": true,
+    "workbench.browser.openLocalhostLinks": true,
+    "workbench.settings.alwaysShowAdvancedSettings": true,
+    "chat.checkpoints.showFileChanges": true,
+    "chat.agent.sandbox.enabledWindows": "on",
+    "chat.viewProgressBadge.enabled": true,
+    "chat.agentSessionProjection.enabled": true,
+    "chat.exitAfterDelegation": true,
+    "chat.mcp.gallery.enabled": true,
+    "chat.mcp.assisted.nuget.enabled": true,
+    "chat.includeReferencedInstructions": true,
+    "chat.experimental.useSkillAdherencePrompt": true,
+    "chat.tools.compressOutput.enabled": true,
+    "chat.tools.terminal.outputCompaction": true,
+    "chat.tools.terminal.outputDeltas": true,
+    "aws.sagemaker.studio.spaces.enableIdentityFiltering": true,
+    "aws.samcli.enableCodeLenses": true,
+    "lldb-dap.captureSessionLogs": true,
+    "quarto.render.renderOnSave": true,
+    "python.globalModuleInstallation": true,
+    "python.useEnvironmentsExtension": true,
+    "markdown.preview.breaks": true,
+    "markdown.preview.typographer": true,
+    "markdown.preview.doubleClickToSwitchToEditor": true,
+    "markdown-preview-github-styles.colorMode": "auto",
+    "markmap.defaultExpandLevel": 3,
+    "markmap.colorFreezeLevel": 2,
+    "rainbow_csv.autodetect_separators": [
+        "TAB",
+        ",",
+        ";",
+        "|"
+    ],
+    "rainbow_csv.enable_separator_autodetection": true,
+    "csv-editor.readOption_hasHeader": "true",
+    "csv-editor.theme": "auto",
+    "svg.preview.mode": "svg",
+    "[r]": {
+        "editor.defaultFormatter": "REditorSupport.r",
+        "editor.formatOnSave": true,
+        "editor.wordBasedSuggestions": "off"
+    },
+    "[rmd]": {
+        "editor.defaultFormatter": "REditorSupport.r",
+        "editor.formatOnSave": true
+    },
+    "r.executablePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.rpath.windows": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.consolePath": "arf",
+    "r.consoleArgs": [
+        "--no-save",
+        "--no-restore"
+    ],
+    "r.bracketedPaste": true,
+    "r.sessionWatcher": true,
+    "r.plot.backend": "httpgd",
+    "r.plot.jgd.historyLimit": 100,
+    "r.plot.jgd.exportWidth": 8,
+    "r.plot.jgd.exportHeight": 6,
+    "r.plot.jgd.exportDpi": 300,
+    "r.plot.format": "svglite",
+    "r.plot.defaults.colorTheme": "original",
+    "r.plot.defaults.plotPreviewLayout": "multirow",
+    "r.plot.timing.resizeInterval": 100,
+    "r.plot.timing.refreshInterval": 10,
+    "r.lsp.enabled": true,
+    "r.lsp.diagnostics": true,
+    "r.lsp.args": [
+        "--vanilla"
+    ],
+    "r.debugger.checkVersion": "recommended",
+    "playwright.configs": [
+        "frontend/playwright.config.ts",
+        "frontend/playwright.quality.config.ts"
+    ],
+    "csv.columnColorPalette": "cool",
+    "csv.separatorMode": "auto",
+    "vscode-office.gitHistory.quickSyncButton": true,
+    "vscode-office.decodeEscapedUnicodeCharacters": true,
+    "vscode-office.workspacePathAsImageBasePath": true,
+    "vscode-office.pasteImageToWorkspacePath": true,
+    "google.datacloud.expandMenus": true,
+    "google.datacloud.executeCellToolForNotebookMCP": true,
+    "clangd.checkUpdates": true,
+    "lldb-dap.serverMode": true,
+    "lldb-dap.detachOnError": true,
+    "lldb-dap.displayExtendedBacktrace": true,
+    "lldb-dap.enableSyntheticChildDebugging": true,
+    "lldb-dap.enableAutoVariableSummaries": true,
+    "boot-java.ai.mcp-server-enabled": true,
+    "boot-java.code-action.data-query-multiline": true,
+    "yaml.schemas": {
+        "vscode://schemas/custom/github-workflow": ".github/workflows/*.{yml,yaml}"
+    },
+    "github-actions.workflows.pinned.workflows": [],
+    "github-actions.custom-variables": [
+        "ACTIONS_STEP_DEBUG",
+        "AGENTCORE_ECR_REPOSITORY_URI",
+        "APP_ID",
+        "DEBUG",
+        "GCP_WIF_PROVIDER",
+        "GEMINI_MODEL",
+        "GOOGLE_CLOUD_LOCATION",
+        "GOOGLE_CLOUD_PROJECT",
+        "GOOGLE_GENAI_USE_GCA",
+        "GOOGLE_GENAI_USE_VERTEXAI",
+        "SERVICE_ACCOUNT_EMAIL",
+        "UPLOAD_ARTIFACTS"
+    ],
+    "github-actions.custom-secrets": [
+        "AGENTCORE_AWS_ROLE_ARN",
+        "APP_PRIVATE_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "NPM_TOKEN"
+    ]
+}
+
+```
+
+File: c:\Users\rapha\.gemini\Site\.vscode\settings.json
+```
+{
+    "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
+    "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
+    "python.languageServer": "None",
+    "pylint.enabled": false,
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.diagnosticMode": "openFilesOnly",
+    "python.analysis.inlayHints.functionReturnTypes": true,
+    "python.analysis.inlayHints.variableTypes": true,
+    "python.analysis.inlayHints.parameterNames": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.indexing": true,
+    "python.envFile": "${workspaceFolder}/.env",
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": [
+        "tests"
+    ],
+    "python.testing.unittestEnabled": true,
+    "python.testing.autoTestDiscoverOnSaveEnabled": false,
+    "editor.formatOnSave": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/.next": true,
+        "**/.venv": true,
+        "**/dist": true,
+        "**/build": true,
+        "**/reports/coverage": true,
+        "**/.pytest_cache": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.husky/**": true,
+        "**/node_modules/**": true,
+        "**/.venv/**": true,
+        "**/.next/**": true,
+        "**/.turbo/**": true,
+        "**/__pycache__/**": true,
+        "**/.pytest_cache/**": true,
+        "**/.ruff_cache/**": true,
+        "**/dist/**": true,
+        "**/dist-workers/**": true,
+        "**/build/**": true,
+        "**/wasm-equity/target/**": true,
+        "**/core/vendor/**": true,
+        "**/worker/Java/**": true,
+        "**/reports/**": true,
+        "**/coverage/**": true
+    },
+    "git.repositoryScanIgnoredFolders": [
+        "node_modules",
+        ".venv",
+        ".next",
+        ".pytest_cache",
+        ".ruff_cache",
+        "target"
+    ],
+    "tailwindCSS.files.exclude": [
+        "**/.git/**",
+        "**/node_modules/**",
+        "**/.hg/**",
+        "**/.svn/**",
+        "**/.venv/**",
+        "**/.next/**",
+        "**/target/**",
+        "**/core/vendor/**",
+        "**/worker/Java/**",
+        "**/reports/**",
+        "**/docs/**",
+        "**/.trunk/**",
+        "skills/**"
+    ],
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true,
+        "**/reports/coverage": true,
+        "**/coverage/lcov-report": true,
+        "**/dist-workers": true,
+        "**/core/vendor": true,
+        "**/worker/Java": true
+    },
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features"
+    },
+    "[yaml]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[css]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.wordWrap": "on"
+    },
+    "markdownlint.lintWorkspaceGlobs": [
+        "**/*.md",
+        "!node_modules/**",
+        "!**/node_modules/**",
+        "!.next/**",
+        "!**/.next/**",
+        "!.venv/**",
+        "!**/.venv/**",
+        "!dist/**",
+        "!**/dist/**",
+        "!build/**",
+        "!**/build/**",
+        "!coverage/**",
+        "!**/coverage/**",
+        "!core/vendor/**",
+        "!**/core/vendor/**",
+        "!worker/Java/**",
+        "!**/worker/Java/**",
+        "!wasm-equity/target/**",
+        "!**/wasm-equity/target/**",
+        "!reports/**",
+        "!**/reports/**",
+        "!docs/reports/**",
+        "!**/docs/reports/**",
+        "!skills/**",
+        "!**/skills/**"
+    ],
+    "files.associations": {
+        "**/.remember/tmp/*.ts": "plaintext",
+        ".markdownlintignore": "ignore",
+        ".prettierignore": "ignore",
+        ".geminiignore": "ignore",
+        ".ragignore": "ignore",
+        "skills/**/.github/workflows/*.yml": "yaml",
+        "skills/**/.github/workflows/*.yaml": "yaml",
+        "**/skills/**/.github/workflows/*.yml": "yaml",
+        "**/skills/**/.github/workflows/*.yaml": "yaml",
+        "**/.github/workflows/publish-agentcore.yml": "yaml"
+    },
+    "prettier.logLevel": "warn",
+    "prettier.requireConfig": true,
+    "[rust]": {
+        "editor.wordBasedSuggestions": "matchingDocuments",
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.formatOnSave": true
+    },
+    "eslint.workingDirectories": [
+        {
+            "mode": "auto"
+        }
+    ],
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact"
+    ],
+    "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
+    "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
+    "cmake.generator": "Visual Studio 16 2019",
+    "cmake.preferredAccelerators": [
+        "vs",
+        "ninja"
+    ],
+    "cmake.configureSettings": {
+        "CMAKE_GENERATOR_PLATFORM": "x64",
+        "Python_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "Python3_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+        "nanobind_DIR": "${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+    },
+    "cmake.configureArgs": [
+        "-DPython_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
+        "-DPython3_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
+        "-Dnanobind_DIR=${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+    ],
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/core/tensor_engine/build",
+        "--header-insertion=never",
+        "-j=4",
+        "--background-index"
+    ],
+    "claude.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "anthropic.claudeCode.customCommands": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "chatgpt.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "openai.customPrompts": {
+        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    },
+    "editor.inlineSuggest.enabled": true,
+    "editor.suggest.preview": true,
+    "gitlens.telemetry.enabled": false,
+    "gitlens.currentLine.enabled": true,
+    "gitlens.codeLens.scopes": [
+        "document"
+    ],
+    "jupyter.interactiveWindow.textEditor.executeSelection": true,
+    "jupyter.askForKernelRestart": false,
+    "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
+    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
+    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/skills/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
+    "css.lint.unknownAtRules": "ignore",
+    "scss.lint.unknownAtRules": "ignore",
+    "vitest.rootConfig": "vitest.config.mjs",
+    "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+    "sonarlint.disableTelemetry": true,
+    "vscode-edge-devtools.webhint": false,
+    "sonarlint.rules": {
+        "css:S9423": {
+            "level": "off"
+        },
+        "css:S4666": {
+            "level": "off"
+        },
+        "css:S4667": {
+            "level": "off"
+        },
+        "javascript:S6853": {
+            "level": "off"
+        },
+        "typescript:S6853": {
+            "level": "off"
+        },
+        "javascript:S4790": {
+            "level": "off"
+        },
+        "typescript:S4790": {
+            "level": "off"
+        },
+        "javascript:S5332": {
+            "level": "off"
+        },
+        "typescript:S5332": {
+            "level": "off"
+        },
+        "python:S5332": {
+            "level": "off"
+        },
+        "python:S3776": {
+            "level": "off"
+        },
+        "css:S5404": {
+            "level": "off"
+        },
+        "javascript:S2999": {
+            "level": "off"
+        },
+        "typescript:S2999": {
+            "level": "off"
+        },
+        "javascript:S6842": {
+            "level": "off"
+        },
+        "typescript:S6842": {
+            "level": "off"
+        },
+        "javascript:S9362": {
+            "level": "off"
+        },
+        "typescript:S9362": {
+            "level": "off"
+        },
+        "typescript:S7767": {
+            "level": "off"
+        }
+    },
+    "rust-analyzer.imports.preferPrelude": true,
+    "rust-analyzer.imports.granularity.enforce": true,
+    "rust-analyzer.completion.termSearch.enable": true,
+    "rust-analyzer.completion.privateEditable.enable": true,
+    "rust-analyzer.completion.fullFunctionSignatures.enable": true,
+    "rust-analyzer.diagnostics.styleLints.enable": true,
+    "rust-analyzer.diagnostics.previewRustcOutput": true,
+    "rust-analyzer.debug.buildBeforeRestart": true,
+    "rust-analyzer.trace.server": "off",
+    "securecoder.enableI18n": false,
+    "securecoder.rules.i18n": "off",
+    "securecoder.rules.internationalization": "off",
+    "securecoder.rules.jsx-not-internationalized": "off",
+    "securecoder.disabledRules": [
+        "jsx-not-internationalized",
+        "i18n",
+        "internationalization"
+    ],
+    "google.cloud.project": "original-498419",
+    "google.cloud.billingQuotaProject": "original-498419",
+    "cloudcode.enableTelemetry": false,
+    "cloudcode.autoDependencies": "on",
+    "cloudcode.cloudRun.showExplorer": true,
+    "cloudcode.gke.showExplorer": true,
+    "cloudcode.secretManager.showExplorer": true,
+    "cloudcode.yaml.schemaValidation": true,
+    "claudeCode.preferredLocation": "panel",
+    "claudeCode.focusView": true,
+    "autoDocstring.docstringFormat": "google",
+    "autoDocstring.startOnNewLine": true,
+    "autoDocstring.includeExtendedSummary": true,
+    "evenBetterToml.schema.enabled": true,
+    "[toml]": {
+        "editor.defaultFormatter": "tamasfe.even-better-toml",
+        "editor.formatOnSave": true
+    },
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.cargo.buildScripts.enable": true,
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.linkedProjects": [
+        "${workspaceFolder}/wasm-equity/Cargo.toml",
+        "${workspaceFolder}/core/nexus-core-rust/Cargo.toml",
+        "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"
+    ],
+    "rust-analyzer.files.excludeDirs": [
+        ".next",
+        ".venv",
+        "node_modules",
+        "target",
+        ".git"
+    ],
+    "turboConsoleLog.addSemicolonInTheEnd": true,
+    "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
+    "redhat.telemetry.enabled": false,
+    "antigravity.enableTelemetry": false,
+    "gdl.openTarget": "system",
+    "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
+        "build/QuantumTensorEngine.sln"
+    ],
+    "ruff.path": [
+        "${workspaceFolder}/.venv/Scripts/ruff.exe"
+    ],
+    "ruff.interpreter": [
+        "${workspaceFolder}/.venv/Scripts/python.exe"
+    ],
+    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+    "ruff.importStrategy": "fromEnvironment",
+    "ruff.lint.preview": true,
+    "ruff.format.preview": true,
+    "workbench.editorAssociations": {
+        "**/.claude/**/*.bin": "default",
+        "**/CMakeFiles/**/*.bin": "default",
+        "**/.chroma_db/**/*.bin": "default",
+        "*.bin": "default",
+        "*.svg": "cweijan.officeViewer",
+        "*.pdf": "latex-workshop-pdf-hook",
+        "*.xlsx": "cweijan.officeViewer",
+        "*.xls": "cweijan.officeViewer",
+        "*.docx": "cweijan.officeViewer",
+        "*.doc": "cweijan.officeViewer",
+        "*.pptx": "cweijan.officeViewer",
+        "*.parquet": "cweijan.parquetViewer",
+        "*.drawio": "hediet.vscode-drawio",
+        "*.dio": "hediet.vscode-drawio",
+        "*.dio.png": "hediet.vscode-drawio",
+        "*.dio.svg": "hediet.vscode-drawio",
+        "*.excalidraw": "editor.excalidraw",
+        "*.excalidraw.json": "editor.excalidraw",
+        "*.excalidraw.svg": "editor.excalidraw",
+        "*.md": "ultimateViewer.preview",
+        "*.png": "ultimateViewer.preview"
+    },
+    "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
+    "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
+    "markdown-preview-enhanced.enableTypographer": true,
+    "markdown-preview-enhanced.enableScriptExecution": false,
+    "markdown-preview-enhanced.enableHTML5Embed": true,
+    "markdown-preview-enhanced.enableExtendedTableSyntax": true,
+    "markdown-preview-enhanced.enableCriticMarkupSyntax": true,
+    "markdown-preview-enhanced.d2Sketch": true,
+    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
+    "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
+    "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
+    "wam.switchDevinCli": true,
+    "files.autoSave": "off",
+    "editor.codeActions.triggerOnFocusChange": true,
+    "editor.definitionLinkOpensInPeek": true,
+    "editor.experimental.asyncTokenizationLogging": true,
+    "editor.experimental.preferTreeSitter.css": true,
+    "editor.experimental.preferTreeSitter.ini": true,
+    "editor.experimental.preferTreeSitter.regex": true,
+    "editor.experimental.preferTreeSitter.typescript": true,
+    "editor.experimentalGpuAcceleration": "on",
+    "editor.inlayHints.padding": true,
+    "editor.inlineCompletionsAccessibilityVerbose": false,
+    "editor.linkedEditing": true,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "diffEditor.experimental.showMoves": true,
+    "diffEditor.experimental.useTrueInlineView": true,
+    "editor.inlineSuggest.edits.showCollapsed": true,
+    "editor.inlineSuggest.suppressSuggestions": true,
+    "editor.suggest.localityBonus": true,
+    "editor.suggest.shareSuggestSelections": true,
+    "editor.suggest.showStatusBar": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": true,
+    "files.autoGuessEncoding": true,
+    "files.autoSaveWorkspaceFilesOnly": true,
+    "files.autoSaveWhenNoErrors": true,
+    "files.trimFinalNewlines": true,
+    "explorer.excludeGitIgnore": true,
+    "explorer.fileNesting.enabled": true,
+    "scm.alwaysShowActions": true,
+    "scm.alwaysShowRepositories": true,
+    "scm.diffDecorationsGutterPattern": {
+        "added": true
+    },
+    "scm.repositories.explorer": true,
+    "scm.workingSets.enabled": true,
+    "cmake.ctest.allowParallelJobs": true,
+    "cmake.buildTask": true,
+    "astro.content-intellisense": true,
+    "astro.updateImportsOnFileMove.enabled": true,
+    "search.useParentIgnoreFiles": true,
+    "search.useGlobalIgnoreFiles": true,
+    "accessibility.openChatEditedFiles": true,
+    "accessibility.signalOptions.debouncePositionChanges": true,
+    "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
+    "claudeCode.enableNewConversationShortcut": true,
+    "chatgpt.openOnStartup": true,
+    "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+    "windsurfPyright.analysis.typeCheckingMode": "standard",
+    "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
+    "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
+    "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
+    "windsurfPyright.analysis.inlayHints.variableTypes": true,
+    "windsurfPyright.analysis.inlayHints.genericTypes": true,
+    "ollamaDirectCustomAgent.vectorSearchEnabled": true,
+    "ollamaDirectCustomAgent.whisperUseCloud": true,
+    "ollamaDirectCustomAgent.roleSplitEnabled": true,
+    "ollamaDirectCustomAgent.openOnStartup": true,
+    "ollamaDirectCustomAgent.modelWarmupEnabled": true,
+    "ollamaDirectCustomAgent.fullControlMode": false,
+    "ollamaDirectCustomAgent.fileWatcherEnabled": true,
+    "ollamaDirectCustomAgent.debugMode": true,
+    "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
+    "ollamaDirectCustomAgent.assistantAutoLaunch": true,
+    "claudeCode.disableLoginPrompt": true,
+    "java.project.exclusionFilters": [
+        "**/scripts/validation/**"
+    ],
+    "java.project.resourceFilters": [
+        "node_modules",
+        ".git",
+        "scripts/validation"
+    ],
+    "java.import.exclusions": [
+        "**/scripts/validation/**"
+    ],
+    "java.diagnostic.filter": [
+        "**/scripts/validation/**"
+    ],
+    "java.errors.incompleteClasspath.severity": "ignore",
+    "sqltools.connections": [
+        {
+            "name": "Site (PostgreSQL Local)",
+            "group": "PokerRacional",
+            "driver": "PostgreSQL",
+            "server": "localhost",
+            "port": 5432,
+            "database": "postgres",
+            "username": "postgres",
+            "askForPassword": false,
+            "connectionTimeout": 15,
+            "previewLimit": 50,
+            "ssh": "Disabled"
+        }
+    ],
+    "workbench.experimental.modernUI": true,
+    "workbench.list.smoothScrolling": false,
+    "workbench.commandPalette.experimental.suggestCommands": true,
+    "workbench.experimental.cloudChanges.autoStore": "off",
+    "workbench.experimental.modernUIUppercaseViewHeaders": true,
+    "workbench.experimental.cloudChanges.partialMatches.enabled": true,
+    "workbench.experimental.share.enabled": true,
+    "workbench.editor.highlightModifiedTabs": true,
+    "workbench.browser.enableRemoteProxy": true,
+    "workbench.browser.experimentalUserTools.enabled": true,
+    "workbench.browser.openLocalhostLinks": true,
+    "workbench.settings.alwaysShowAdvancedSettings": true,
+    "chat.checkpoints.showFileChanges": true,
+    "chat.agent.sandbox.enabledWindows": "on",
+    "chat.viewProgressBadge.enabled": true,
+    "chat.agentSessionProjection.enabled": true,
+    "chat.exitAfterDelegation": true,
+    "chat.mcp.gallery.enabled": true,
+    "chat.mcp.assisted.nuget.enabled": true,
+    "chat.includeReferencedInstructions": true,
+    "chat.experimental.useSkillAdherencePrompt": true,
+    "chat.tools.compressOutput.enabled": true,
+    "chat.tools.terminal.outputCompaction": true,
+    "chat.tools.terminal.outputDeltas": true,
+    "aws.sagemaker.studio.spaces.enableIdentityFiltering": true,
+    "aws.samcli.enableCodeLenses": true,
+    "lldb-dap.captureSessionLogs": true,
+    "quarto.render.renderOnSave": true,
+    "python.globalModuleInstallation": true,
+    "python.useEnvironmentsExtension": true,
+    "markdown.preview.breaks": true,
+    "markdown.preview.typographer": true,
+    "markdown.preview.doubleClickToSwitchToEditor": true,
+    "markdown-preview-github-styles.colorMode": "auto",
+    "markmap.defaultExpandLevel": 3,
+    "markmap.colorFreezeLevel": 2,
+    "rainbow_csv.autodetect_separators": [
+        "TAB",
+        ",",
+        ";",
+        "|"
+    ],
+    "rainbow_csv.enable_separator_autodetection": true,
+    "csv-editor.readOption_hasHeader": "true",
+    "csv-editor.theme": "auto",
+    "svg.preview.mode": "svg",
+    "[r]": {
+        "editor.defaultFormatter": "REditorSupport.r",
+        "editor.formatOnSave": true,
+        "editor.wordBasedSuggestions": "off"
+    },
+    "[rmd]": {
+        "editor.defaultFormatter": "REditorSupport.r",
+        "editor.formatOnSave": true
+    },
+    "r.executablePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.rpath.windows": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+    "r.consolePath": "arf",
+    "r.consoleArgs": [
+        "--no-save",
+        "--no-restore"
+    ],
+    "r.bracketedPaste": true,
+    "r.sessionWatcher": true,
+    "r.plot.backend": "httpgd",
+    "r.plot.jgd.historyLimit": 100,
+    "r.plot.jgd.exportWidth": 8,
+    "r.plot.jgd.exportHeight": 6,
+    "r.plot.jgd.exportDpi": 300,
+    "r.plot.format": "svglite",
+    "r.plot.defaults.colorTheme": "original",
+    "r.plot.defaults.plotPreviewLayout": "multirow",
+    "r.plot.timing.resizeInterval": 100,
+    "r.plot.timing.refreshInterval": 10,
+    "r.lsp.enabled": true,
+    "r.lsp.diagnostics": true,
+    "r.lsp.args": [
+        "--vanilla"
+    ],
+    "r.debugger.checkVersion": "recommended",
+    "playwright.configs": [
+        "frontend/playwright.config.ts",
+        "frontend/playwright.quality.config.ts"
+    ],
+    "csv.columnColorPalette": "cool",
+    "csv.separatorMode": "auto",
+    "vscode-office.gitHistory.quickSyncButton": true,
+    "vscode-office.decodeEscapedUnicodeCharacters": true,
+    "vscode-office.workspacePathAsImageBasePath": true,
+    "vscode-office.pasteImageToWorkspacePath": true,
+    "google.datacloud.expandMenus": true,
+    "google.datacloud.executeCellToolForNotebookMCP": true,
+    "clangd.checkUpdates": true,
+    "lldb-dap.serverMode": true,
+    "lldb-dap.detachOnError": true,
+    "lldb-dap.displayExtendedBacktrace": true,
+    "lldb-dap.enableSyntheticChildDebugging": true,
+    "lldb-dap.enableAutoVariableSummaries": true,
+    "boot-java.ai.mcp-server-enabled": true,
+    "boot-java.code-action.data-query-multiline": true,
+    "yaml.schemas": {
+        "vscode://schemas/custom/github-workflow": ".github/workflows/*.{yml,yaml}"
+    },
+    "github-actions.workflows.pinned.workflows": [],
+    "github-actions.custom-variables": [
+        "ACTIONS_STEP_DEBUG",
+        "AGENTCORE_ECR_REPOSITORY_URI",
+        "APP_ID",
+        "DEBUG",
+        "GCP_WIF_PROVIDER",
+        "GEMINI_MODEL",
+        "GOOGLE_CLOUD_LOCATION",
+        "GOOGLE_CLOUD_PROJECT",
+        "GOOGLE_GENAI_USE_GCA",
+        "GOOGLE_GENAI_USE_VERTEXAI",
+        "SERVICE_ACCOUNT_EMAIL",
+        "UPLOAD_ARTIFACTS"
+    ],
+    "github-actions.custom-secrets": [
+        "AGENTCORE_AWS_ROLE_ARN",
+        "APP_PRIVATE_KEY",
+        "GEMINI_API_KEY",
+        "GOOGLE_API_KEY",
+        "NPM_TOKEN"
+    ]
+}
+
+```
+
+<instruction>You are an expert software engineer. You are working on a WIP branch. Please run `git status` and `git diff` to understand the changes and the current state of the code. Analyze the workspace context and complete the mission brief.</instruction>
+<workspace_context>
+<open_files>
+pyproject.toml
+requirements.txt
+exa_bridge.py
+qualitySmoke.spec.ts
+prospectCorridor.ts
+nexus.py
+test_dashboard_telemetry_contagem.py
+settings.json
+</open_files>
+</workspace_context>
+<mission_brief>[Describe your task here...]</mission_brief>
+- **Status:** `FAILED`
+- **Criada em:** `2026-10-29T13:17:24.159467377Z`
+- **Branch:** `fix/workflow-inline-release` | **Repositório:** `sources/github/RaphaelVitoi/Site`
+- **Link Direto:** https://jules.google.com/session/6248855726035918150
 - **Prompt Original:**
   ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
+  File: c:\Users\rapha\.gemini\Site\.vscode\settings.json
   ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-10-15 03:22:42]` **agent**: `planGenerated, id`
-  - `[2026-10-15 03:22:45]` **user**: `planApproved, id`
-  - `[2026-10-15 03:23:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:23:06]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:23:19]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:23:36]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:23:46]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:24:11]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:24:14]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:24:26]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:25:54]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:26:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:26:20]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:26:45]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:26:52]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:27:38]` **agent**: `progressUpdated, id`
-  - `[2026-10-15 03:28:50]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:28:52]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:29:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:29:38]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-10-15 03:32:44]` **user**: `userMessaged, id`
-  - `[2026-10-15 03:34:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:34:21]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:34:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:34:40]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:35:00]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:35:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:35:21]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:35:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:35:40]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:35:58]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:36:20]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:36:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:36:40]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:36:50]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:37:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:38:00]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:38:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:38:18]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:38:58]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-10-15 03:43:03]` **user**: `userMessaged, id`
-  - `[2026-10-15 03:44:33]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:44:49]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:45:12]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:45:37]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:45:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:46:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:46:18]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:46:27]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-15 03:46:38]` **agent**: `progressUpdated, artifacts, id`
-
-### Sessão `8671529763629328332` — Bolt ⚡ - Performance Optimization Agent
-- **Status:** `AWAITING_USER_FEEDBACK`
-- **Criada em:** `2026-10-14T03:05:32.087574023Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/8671529763629328332
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
-  ```
-- **Timeline de Atividades (12 eventos):**
-  - `[2026-10-14 03:14:29]` **agent**: `planGenerated, id`
-  - `[2026-10-14 03:14:31]` **user**: `planApproved, id`
-  - `[2026-10-14 03:14:46]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:14:53]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:15:08]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:16:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:16:39]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:16:53]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:17:15]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:17:33]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:17:38]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-10-14 03:17:45]` **agent**: `agentMessaged, id`
-
-### Sessão `3224521625150571802` — Bolt: Codebase Performance Optimization Agent
-- **Status:** `AWAITING_USER_FEEDBACK`
-- **Criada em:** `2026-09-30T03:28:59.920451461Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/3224521625150571802
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
-  ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-09-30 03:53:10]` **agent**: `planGenerated, id`
-  - `[2026-09-30 03:53:12]` **user**: `planApproved, id`
-  - `[2026-09-30 03:53:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:53:43]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:54:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:54:05]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:54:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:54:38]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:56:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:56:49]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:56:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:57:15]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:57:39]` **agent**: `progressUpdated, id`
-  - `[2026-09-30 03:58:18]` **agent**: `planGenerated, id`
-  - `[2026-09-30 03:58:48]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:59:06]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:59:11]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:59:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 03:59:53]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:00:16]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:00:29]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:00:42]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:01:35]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:01:40]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:01:57]` **agent**: `progressUpdated, id`
-  - `[2026-09-30 04:02:57]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:03:00]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:03:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:03:44]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-30 04:06:10]` **user**: `userMessaged, id`
-  - `[2026-09-30 04:06:59]` **user**: `userMessaged, id`
-  - `[2026-09-30 04:07:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:07:54]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:08:08]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:08:27]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:08:45]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:09:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:09:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:09:39]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:10:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:10:17]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:10:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:10:48]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:11:04]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:11:24]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:11:43]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:11:58]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:12:10]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:12:25]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-30 04:12:40]` **agent**: `progressUpdated, artifacts, id`
-
-### Sessão `17401995800683759664` — Bolt: Code Performance Optimization Agent
-- **Status:** `AWAITING_USER_FEEDBACK`
-- **Criada em:** `2026-09-29T03:09:56.545091106Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/17401995800683759664
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
-  ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-09-29 03:23:50]` **agent**: `planGenerated, id`
-  - `[2026-09-29 03:24:25]` **user**: `planApproved, id`
-  - `[2026-09-29 03:25:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:25:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:25:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:25:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:26:00]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:26:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:26:44]` **agent**: `progressUpdated, id`
-  - `[2026-09-29 03:27:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:27:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:27:41]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:27:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:28:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:28:11]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:28:23]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:28:41]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:28:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:29:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:29:24]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:29:38]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:30:12]` **agent**: `progressUpdated, id`
-  - `[2026-09-29 03:30:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:30:35]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:30:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:31:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:31:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:31:34]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:31:45]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:31:56]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:32:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:32:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:32:50]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:33:05]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:33:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:34:23]` **agent**: `progressUpdated, id`
-  - `[2026-09-29 03:34:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:35:00]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:35:33]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-29 03:38:30]` **user**: `userMessaged, id`
-  - `[2026-09-29 03:39:24]` **user**: `userMessaged, id`
-  - `[2026-09-29 03:41:06]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:41:27]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:41:47]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:42:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:42:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:42:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:43:12]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:43:20]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-29 03:43:42]` **agent**: `progressUpdated, artifacts, id`
-
-### Sessão `712907308784371051` — Bolt ⚡ - Performance Optimization Agent
-- **Status:** `COMPLETED`
-- **Criada em:** `2026-09-28T03:10:27.498352137Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/712907308784371051
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
-  ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-09-28 03:23:02]` **agent**: `planGenerated, id`
-  - `[2026-09-28 03:23:08]` **user**: `planApproved, id`
-  - `[2026-09-28 03:23:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:23:37]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:24:06]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:24:21]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:24:34]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:24:48]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:24:56]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:24:58]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:05]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:11]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:19]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:25]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:35]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:44]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:25:49]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:26:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:26:23]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:26:49]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:26:53]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:27:17]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:28:05]` **agent**: `progressUpdated, id`
-  - `[2026-09-28 03:28:16]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:28:26]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:28:37]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:28:43]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:28:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:28:58]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:29:44]` **agent**: `progressUpdated, id`
-  - `[2026-09-28 03:30:37]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:30:47]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:30:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:31:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:31:20]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:31:43]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-28 03:34:23]` **user**: `userMessaged, id`
-  - `[2026-09-28 03:36:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:36:14]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:36:38]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:36:56]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:37:08]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:37:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:37:44]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-28 03:38:12]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-28 03:38:53]` **user**: `userMessaged, id`
-  - `[2026-09-28 03:39:47]` **user**: `userMessaged, id`
-  - `[2026-09-28 03:40:37]` **user**: `userMessaged, id`
-  - `[2026-09-28 03:43:48]` **agent**: `progressUpdated, artifacts, id`
-
-### Sessão `2945584275928523559` — Bolt ⚡ - Performance Optimization Agent
-- **Status:** `COMPLETED`
-- **Criada em:** `2026-09-27T03:22:59.639558720Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/2945584275928523559
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
-  ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-09-27 03:26:03]` **agent**: `planGenerated, id`
-  - `[2026-09-27 03:26:04]` **user**: `planApproved, id`
-  - `[2026-09-27 03:26:26]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:26:33]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:26:43]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:26:49]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:26:59]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:27:06]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:27:19]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:27:21]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:27:34]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:28:43]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:29:14]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:29:27]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:32:10]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:32:24]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:32:45]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:33:13]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:33:56]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:34:15]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:34:23]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:34:54]` **agent**: `progressUpdated, id`
-  - `[2026-09-27 03:35:13]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:35:23]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:35:26]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:35:35]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:36:00]` **agent**: `progressUpdated, id`
-  - `[2026-09-27 03:36:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:36:57]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:37:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:37:24]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:38:18]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-27 03:40:30]` **user**: `userMessaged, id`
-  - `[2026-09-27 03:42:40]` **user**: `userMessaged, id`
-  - `[2026-09-27 03:42:47]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:43:17]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:44:18]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:44:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:44:46]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:45:12]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:45:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:45:44]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:45:59]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:46:13]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:46:37]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:46:52]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:47:04]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:47:17]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:47:29]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-27 03:47:42]` **agent**: `progressUpdated, artifacts, id`
-
-### Sessão `405902679237498550` — Bolt ⚡ - Performance Optimization Agent
-- **Status:** `COMPLETED`
-- **Criada em:** `2026-09-22T03:18:49.201381657Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/405902679237498550
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
-  ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-09-22 03:25:16]` **agent**: `planGenerated, id`
-  - `[2026-09-22 03:25:18]` **user**: `planApproved, id`
-  - `[2026-09-22 03:26:00]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:26:05]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:26:17]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:26:25]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:26:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:26:44]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:27:11]` **agent**: `progressUpdated, id`
-  - `[2026-09-22 03:27:23]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:28:19]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:28:26]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:28:42]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:28:58]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-22 03:30:06]` **user**: `userMessaged, id`
-  - `[2026-09-22 03:30:55]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:31:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:31:13]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:31:21]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:31:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:31:42]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:31:50]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:32:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:32:20]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:32:30]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:32:40]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:32:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:32:58]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:33:06]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:33:14]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:33:37]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:33:42]` **user**: `userMessaged, id`
-  - `[2026-09-22 03:34:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:34:45]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:35:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:35:18]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:36:10]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:36:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:36:54]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:54:42]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:54:49]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:54:52]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:54:54]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:54:57]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:55:05]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:55:08]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:55:10]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:55:20]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:55:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-22 03:55:26]` **agent**: `progressUpdated, artifacts, id`
-
-### Sessão `15638018841103678745` — Bolt ⚡ - Codebase Performance Optimization Agent
-- **Status:** `COMPLETED`
-- **Criada em:** `2026-09-21T03:28:08.114649664Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/15638018841103678745
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
-  ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-09-21 03:40:38]` **agent**: `planGenerated, id`
-  - `[2026-09-21 03:40:43]` **user**: `planApproved, id`
-  - `[2026-09-21 03:41:20]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:41:35]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:41:41]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:41:59]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:42:39]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:42:47]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:43:14]` **agent**: `progressUpdated, id`
-  - `[2026-09-21 03:43:24]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:43:54]` **agent**: `progressUpdated, id`
-  - `[2026-09-21 03:44:50]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:44:53]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:45:10]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:45:35]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:45:53]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-21 03:47:08]` **user**: `userMessaged, id`
-  - `[2026-09-21 03:48:39]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:48:52]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:49:04]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:49:16]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:49:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:49:46]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:49:58]` **user**: `userMessaged, id`
-  - `[2026-09-21 03:50:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:50:39]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:50:51]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:50:54]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:51:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:51:23]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:51:48]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:52:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:52:21]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:52:43]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:52:58]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:53:13]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:53:29]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:54:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:54:29]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:54:45]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 03:55:13]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-21 03:57:10]` **user**: `userMessaged, id`
-  - `[2026-09-21 04:00:29]` **user**: `userMessaged, id`
-  - `[2026-09-21 04:00:40]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 04:01:22]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 04:01:26]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 04:01:48]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 04:02:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 04:02:18]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-21 04:05:24]` **agent**: `progressUpdated, artifacts, id`
-
-### Sessão `17402607087817755979` — Bolt ⚡ - Codebase Performance Optimization Agent
-- **Status:** `COMPLETED`
-- **Criada em:** `2026-09-19T03:14:34.274342924Z`
-- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
-- **Link Direto:** https://jules.google.com/session/17402607087817755979
-- **Prompt Original:**
-  ```text
-  You are "Bolt" ⚡ - a performance-obsessed agent who makes the codebase faster, one optimization at a time.
-  
-  Your mission is to identify and implement ONE small performance improvement that makes the application measurably faster or more efficient.
-  
-  
-  ## Boundaries
-  
-  ✅ **Always do:**
-  - Run commands like `pnpm lint` and `pnpm test` (or associated equivalents) before creating PR
-  - Add comments explaining the optimization
-  - Measure and document expected performance impact
-  
-  ⚠️ **Ask first:**
-  - Adding any new dependencies
-  - Making architectural changes
-  ... [truncado, 146 linhas no total]
+  {
+      "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
+      "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
+      "python.languageServer": "None",
+      "pylint.enabled": false,
+      "python.terminal.activateEnvironment": true,
+      "python.analysis.diagnosticMode": "openFilesOnly",
+      "python.analysis.inlayHints.functionReturnTypes": true,
+      "python.analysis.inlayHints.variableTypes": true,
+      "python.analysis.inlayHints.parameterNames": true,
+      "python.analysis.autoImportCompletions": true,
+      "python.analysis.indexing": true,
+      "python.envFile": "${workspaceFolder}/.env",
+  ... [truncado, 1314 linhas no total]
   ```
 - **Motivo da Falha Registrado na Atividade:**
   ```text
-  Jules encountered an error when preparing the virtual machine environment for the task.
+  Jules encountered an error when cloning the repo.
+```+ sudo rm -rf /app
++ sudo mkdir /app
++ sudo chown 1001 /app
++ setup_git_config
++ preclean_git_config
+++ git config get --global --all --show-names --regexp '^url.*insteadof$'
+++ cut '-d ' -f1
++ local 'keys_to_unset=url.http://git@192.168.0.1:8080/.insteadof
+url.http://git@192.168.0.1:8080/.insteadof'
++ [[ -z url.http://git@192.168.0.1:8080/.insteadof
+url.http://git@192.168.0.1:8080/.insteadof ]]
++ read -r key
++ echo 'url.http://git@192.168.0.1:8080/.insteadof
+url.http://git@192.168.0.1:8080/.insteadof'
++ git config unset --global --all url.http://git@192.168.0.1:8080/.insteadof
++ echo 'git config unset '\''url.http://git@192.168.0.1:8080/.insteadof'\'''
++ read -r key
++ git config unset --global --all url.http://git@192.168.0.1:8080/.insteadof
++ echo 'git config unset exited with code 5'
+git config unset exited with code 5
++ echo 'git config unset '\''url.http://git@192.168.0.1:8080/.insteadof'\'''
++ read -r key
++ git config --global user.name 'google-labs-jules[bot]'
++ git config --global user.email '161369871+google-labs-jules[bot]@users.noreply.github.com'
++ git config --global --add url.http://git@192.168.0.1:8080/.insteadOf https://github.com/
++ git config --global --add url.http://git@192.168.0.1:8080/.insteadOf git@github.com:
++ git config --global core.hooksPath /dev/null
++ git clone --depth 1 --shallow-submodules --no-single-branch --recursive https://github.com/RaphaelVitoi/Site -b fix/workflow-inline-release /app
+Cloning into '/app'...
+fatal: Remote branch fix/workflow-inline-release not found in upstream origin
+```
   ```
-- **Timeline de Atividades (50 eventos):**
-  - `[2026-09-19 03:19:27]` **agent**: `planGenerated, id`
-  - `[2026-09-19 03:19:28]` **user**: `planApproved, id`
-  - `[2026-09-19 03:19:49]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:20:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:20:05]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:20:18]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:21:32]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:21:44]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:22:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:22:24]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:22:31]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:23:04]` **agent**: `progressUpdated, id`
-  - `[2026-09-19 03:24:03]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:24:10]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:24:19]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:24:38]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:25:04]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-19 03:27:27]` **user**: `userMessaged, id`
-  - `[2026-09-19 03:29:59]` **agent**: `sessionFailed, id`
-  - `[2026-09-19 03:30:27]` **user**: `userMessaged, id`
-  - `[2026-09-19 03:31:37]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:32:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:32:09]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:32:23]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:32:28]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:32:34]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:32:47]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:33:00]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:33:11]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:33:34]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:33:48]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:34:57]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:35:14]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:35:27]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:35:39]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:36:01]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:36:13]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:36:28]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:37:20]` **agent**: `sessionCompleted, artifacts, id`
-  - `[2026-09-19 03:39:43]` **user**: `userMessaged, id`
-  - `[2026-09-19 03:41:06]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:41:21]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:41:34]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:44:41]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:45:27]` **user**: `userMessaged, id`
-  - `[2026-09-19 03:47:02]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:47:07]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:47:25]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:47:42]` **agent**: `progressUpdated, artifacts, id`
-  - `[2026-09-19 03:47:56]` **agent**: `progressUpdated, artifacts, id`
+- **Timeline de Atividades (1 eventos):**
+  - `[2026-10-29 13:18:32]` **agent**: `sessionFailed, id`
+
+### Sessão `10089130805017503110` — Gemini 3.1 Pro Upgrade & Jules (Bolt ⚡ SOTA v8.0) Optimization Prompt
+- **Status:** `AWAITING_USER_FEEDBACK`
+- **Criada em:** `2026-10-29T03:00:03.897758978Z`
+- **Branch:** `master` | **Repositório:** `sources/github/RaphaelVitoi/Site`
+- **Link Direto:** https://jules.google.com/session/10089130805017503110
+- **Prompt Original:**
+  ```text
+  Arquitetura Cognitiva Gemini 3.1 Pro & Novo Prompt Otimizado para o Jules (Bolt ⚡ SOTA v8.0)
+  
+  IMPORTANT
+  
+  Elevação de Modelo: Gemini 3.6 Flash → Gemini 3.1 Pro O operador elevou o modelo do Jules para o Gemini 3.1 Pro nas preferências da plataforma (jules.google.com/settings/general
+  ).
+  
+  Por que a mudança é transformadora: Enquanto o Flash (3.6) tendia a soluções heurísticas superficiais (troca de for...of por for, remoção de ?? 0, micro-comentários), o Gemini 3.1 Pro possui raciocínio multi-step profundo, contexto de 1M+ tokens, rigor matemático impecável para teoria dos jogos e estrita fidelidade a restrições arquiteturais.
+  Ajuste de Propósito: O Gemini 3.1 Pro não deve ser desperdiçado em micro-sintaxe. Ele deve operar em engenharia de performance de alto nível: code-splitting, estabilidade de referências, eliminação de re-renders O(N³) e otimização algorítmica de poker.
+  
+  Ao reconfigurar a tarefa noturna no Jules, utilize o prompt abaixo:
+  
+  markdown
+  
+  You are "Bolt" ⚡ - an autonomous performance engineering agent under the SOTA Chico Protocol, operating with Gemini 3.1 Pro deep reasoning. Your mission is to identify, benchmark, and implement ONE high-impact, verified architectural performance optimization in the frontend codebase.
+  ... [truncado, 30 linhas no total]
+  ```
+- **Timeline de Atividades (1 eventos):**
+  - `[2026-10-29 03:11:50]` **agent**: `agentMessaged, id`
 
 ---
 

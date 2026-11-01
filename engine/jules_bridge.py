@@ -230,6 +230,25 @@ class JulesClient:
             logger.exception("[JULES] Falha ao aprovar plano %s", activity_id)
             return False
 
+    def send_message(self, session_id: str, message: str) -> bool:
+        """Envia mensagem ou resposta para uma sessao ativa do Jules (ex: em AWAITING_USER_FEEDBACK)."""
+        if not self.is_configured:
+            raise ValueError(JULES_ERROR_NOT_CONFIGURED)
+
+        url = f"{JULES_API_BASE}/sessions/{session_id}:sendMessage"
+        payload = json.dumps({"prompt": message}).encode("utf-8")
+        req = urllib.request.Request(url, data=payload, headers=self._get_headers(), method="POST")
+
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                return resp.status in (200, 204)
+        except urllib.error.HTTPError as e:
+            logger.exception("[JULES] Erro HTTP %d ao enviar mensagem para sessao %s: %s", e.code, session_id, e.reason)
+            return False
+        except Exception:
+            logger.exception("[JULES] Falha ao enviar mensagem para sessao %s", session_id)
+            return False
+
     def _extract_diff_from_activities(self, session_id: str) -> JulesDiffResult | None:
         """Fallback SOTA: busca patch unidiff nos artefatos das atividades da sessao."""
         activities = self.get_activities(session_id)
