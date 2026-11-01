@@ -2251,7 +2251,7 @@ wheels = [
 
 [[package]]
 name = "laya"
-version = "0.4.19"
+version = "0.4.20"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -2260,9 +2260,9 @@ dependencies = [
     { name = "torch" },
     { name = "transformers" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5f/ec/1cb489990a19e0a14f0d051efe72ced660c3e2ffb1dc945aeb0a787ce492/laya-0.4.19.tar.gz", hash = "sha256:362bc8ce89c5d32232cf0b51993afede6a7590e01c912c62f23d4792e957648b", size = 1390017, upload-time = "2026-10-31T07:46:24.159Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/51/4f/64fff4b00a1b25cd34283a462f668f2b4d695ead9deed06e8c6199be4695/laya-0.4.20.tar.gz", hash = "sha256:9c2138b06c813016167b66b9a94e1b01d03947c194f656b9b84bc03c9d236fee", size = 1396775, upload-time = "2026-11-01T04:46:49.124Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ab/5b/02ed9185eed59d514de5f111a23acf74d891f53f33f9e51cad20faa59eff/laya-0.4.19-py3-none-any.whl", hash = "sha256:885e0d2a48d4493834ac2ebc8542fa2b94a689d79c0f35dd788e61aa7088de19", size = 461640, upload-time = "2026-10-31T07:46:22.598Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/7d/248cfce4dd74f2fa361d874947ab6742a14b45c1690a413dccbeb984f2e1/laya-0.4.20-py3-none-any.whl", hash = "sha256:ee1f5c998d52e1a3f4da4499fabae087270ab4cbe97ec66c57dcfe369758ed24", size = 464124, upload-time = "2026-11-01T04:46:47.27Z" },
 ]
 
 [[package]]
@@ -3056,7 +3056,7 @@ requires-dist = [
     { name = "google-genai", specifier = ">=2.34.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "lancedb", specifier = ">=0.40.0,<1.0.0" },
-    { name = "laya", specifier = ">=0.4.19" },
+    { name = "laya", specifier = ">=0.4.20" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "mcp", specifier = ">=2.3.0" },
@@ -3085,7 +3085,7 @@ requires-dist = [
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.414" },
     { name = "pyspark", specifier = ">=4.3.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.2.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.4.1" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.4.1.post1" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=7.1.0" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.17.0" },
     { name = "pytest-watcher", marker = "extra == 'dev'", specifier = ">=0.6.3" },
@@ -3120,7 +3120,7 @@ dev = [
     { name = "pylint", specifier = ">=4.1.3" },
     { name = "pyright", specifier = ">=1.1.414" },
     { name = "pytest", specifier = ">=9.2.0" },
-    { name = "pytest-asyncio", specifier = ">=1.4.1" },
+    { name = "pytest-asyncio", specifier = ">=1.4.1.post1" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
     { name = "pytest-mock", specifier = ">=3.17.0" },
     { name = "pytest-watcher", specifier = ">=0.6.3" },
@@ -4609,15 +4609,15 @@ wheels = [
 
 [[package]]
 name = "pytest-asyncio"
-version = "1.4.1"
+version = "1.4.1.post1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/9a/887535e477847f5159377ab35303923644840b13c0ca03c0a467f84d4680/pytest_asyncio-1.4.1.tar.gz", hash = "sha256:e8266eb094e5ee9ffdb2068c9836f33e209ea77a970eb846933d416b5602669b", size = 145237, upload-time = "2026-10-25T21:05:37.135Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/73/7f/c60a4338420b33453d4f814ac0c930abd399f162b9bdd21af4b9e363037f/pytest_asyncio-1.4.1.post1.tar.gz", hash = "sha256:f582d9ea4a1c082195abe8bd29a1fe106aeb1cd435e3dad2d3bc2749935c36a2", size = 145360, upload-time = "2026-11-01T18:26:03.732Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/d7/cd9e2708afdbf059658adaf08bdb0792ca52489871051d6ce7d498b51277/pytest_asyncio-1.4.1-py3-none-any.whl", hash = "sha256:507afa78ec77c6661164ef1a2368bc7820383fd1a14b2a7f813de8b5a92949cc", size = 17061, upload-time = "2026-10-25T21:05:35.473Z" },
+    { url = "https://files.pythonhosted.org/packages/e3/de/adbc7578959cfab07e5e7c05cf6d54224a51e7667ea2c07458b6bc571e75/pytest_asyncio-1.4.1.post1-py3-none-any.whl", hash = "sha256:0755e488cc0a2b9bd2eab7292cc6390d4cbb8390f1020745647bae5a708e0165", size = 17140, upload-time = "2026-11-01T18:26:02.168Z" },
 ]
 
 [[package]]
