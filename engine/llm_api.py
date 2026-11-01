@@ -39,6 +39,7 @@ MAX_PROVIDER_FAILURES = 3
 PROVIDER_BLOCK_DURATION = 300  # 5 minutos de bloqueio em caso de queda de servidor
 CONTENT_TYPE_JSON = "application/json"
 MODEL_POOLSIDE_LAGUNA_FREE = "poolside/laguna-s-2.1:free"
+MODEL_WORKING_FREE_FALLBACK = "upstage/solar-mini4:free"
 MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
 MODEL_OPENROUTER_GEMINI_35_FLASH_LITE = "google/gemini-3.5-flash-lite"
 circuit_breaker_lock = asyncio.Lock()
@@ -649,13 +650,10 @@ def _resolve_nous_or_openrouter_free_target(
     model: str, model_l: str, has_nous: bool, has_openrouter: bool
 ) -> tuple[str, str] | None:
     if any(k in model_l for k in ("laguna", "poolside", "space-bunny", "space_bunny", "stealth")):
+        if "/" in model:
+            return "nous", model
         if has_nous:
-            target = (
-                "stealth/space-bunny-alpha"
-                if ("bunny" in model_l or "stealth" in model_l)
-                else MODEL_POOLSIDE_LAGUNA_FREE
-            )
-            return "nous", target
+            return "nous", MODEL_POOLSIDE_LAGUNA_FREE
         if has_openrouter:
             return "openrouter", MODEL_POOLSIDE_LAGUNA_FREE
     if "hermes" in model_l:
@@ -736,7 +734,7 @@ def _resolve_model_provider_and_target(
             return "openrouter", model
 
     if has_nous:
-        return "nous", MODEL_POOLSIDE_LAGUNA_FREE
+        return "nous", MODEL_WORKING_FREE_FALLBACK
     if has_openrouter:
         return "openrouter", model
     if gemini_keys:
@@ -1277,17 +1275,16 @@ def _build_models_to_try(
             candidates.append(model_name)
 
     if nous_keys:
-        candidates.extend(m for m in [MODEL_POOLSIDE_LAGUNA_FREE, "stealth/space-bunny-alpha"] if m not in candidates)
+        candidates.extend(m for m in [MODEL_WORKING_FREE_FALLBACK] if m not in candidates)
 
     if openrouter_keys:
         extras = (
-            ["anthropic/claude-opus-5.5", "anthropic/claude-sonnet-5.5", MODEL_POOLSIDE_LAGUNA_FREE]
+            ["anthropic/claude-opus-5.5", "anthropic/claude-sonnet-5.5", MODEL_WORKING_FREE_FALLBACK]
             if agent_type == "deep_thinking"
             else [
                 MODEL_OPENROUTER_GEMINI_35_FLASH_LITE,
                 "google/gemini-3.8-flash",
-                "poolside/laguna-xs-2.1:free",
-                MODEL_POOLSIDE_LAGUNA_FREE,
+                MODEL_WORKING_FREE_FALLBACK,
             ]
         )
         candidates.extend(m for m in extras if m not in candidates)

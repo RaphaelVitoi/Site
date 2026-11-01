@@ -1,14 +1,16 @@
 'use client';
 
 /**
- * IDENTITY: Mesa de Poker Responsiva & Laboratório Didático de Boards
+ * IDENTITY: Mesa de Poker Responsiva & Laboratório Didático de Boards (SOTA v8.0 GOLD)
  * PATH: src/components/simulator/ui/BayesianPokerTable.tsx
  * ROLE: Visualizar a mesa de 6 jogadores com posições dinâmicas (Hero/Vilão/Dealer),
- *       cartas comunitárias no feltro e seletores interativos de bordo ao lado.
+ *       cartas comunitárias no feltro, pilhas de fichas 3D, cartas do Hero,
+ *       painel de dimensionamento de apostas (Pot Odds / SPR) e seletores interativos de bordo.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PlayingCard } from './PlayingCard';
+import { ChipStack } from './ChipStack';
 
 export type TablePosition = 'BTN' | 'SB' | 'BB' | 'UTG' | 'MP' | 'CO';
 export type BoardTextureId = 'aula1_2' | 'dry' | 'wet' | 'paired' | 'monotone';
@@ -59,13 +61,13 @@ export const CANONICAL_BOARD_PRESETS: Record<BoardTextureId, BoardPreset> = {
 	},
 };
 
-const SEATS: { pos: TablePosition; label: string; xPct: number; yPct: number; isIpByDefault: boolean; ftStack: string }[] = [
-	{ pos: 'BTN', label: 'Botão (BTN)', xPct: 20, yPct: 82, isIpByDefault: true, ftStack: '38 BB' },
-	{ pos: 'SB', label: 'Small Blind', xPct: 5, yPct: 45, isIpByDefault: false, ftStack: '13 BB' },
-	{ pos: 'BB', label: 'Big Blind', xPct: 20, yPct: 15, isIpByDefault: false, ftStack: '53 BB' },
-	{ pos: 'UTG', label: 'Under the Gun', xPct: 50, yPct: 8, isIpByDefault: false, ftStack: '9.3 BB' },
-	{ pos: 'MP', label: 'Middle Position', xPct: 80, yPct: 18, isIpByDefault: false, ftStack: '6.9 BB' },
-	{ pos: 'CO', label: 'Cutoff', xPct: 85, yPct: 75, isIpByDefault: true, ftStack: '24 BB' },
+const SEATS: { pos: TablePosition; label: string; xPct: number; yPct: number; isIpByDefault: boolean; ftStack: string; defaultBb: number }[] = [
+	{ pos: 'BTN', label: 'Botão (BTN)', xPct: 20, yPct: 82, isIpByDefault: true, ftStack: '38 BB', defaultBb: 38 },
+	{ pos: 'SB', label: 'Small Blind', xPct: 5, yPct: 45, isIpByDefault: false, ftStack: '13 BB', defaultBb: 13 },
+	{ pos: 'BB', label: 'Big Blind', xPct: 20, yPct: 15, isIpByDefault: false, ftStack: '53 BB', defaultBb: 53 },
+	{ pos: 'UTG', label: 'Under the Gun', xPct: 50, yPct: 8, isIpByDefault: false, ftStack: '9.3 BB', defaultBb: 9.3 },
+	{ pos: 'MP', label: 'Middle Position', xPct: 80, yPct: 18, isIpByDefault: false, ftStack: '6.9 BB', defaultBb: 6.9 },
+	{ pos: 'CO', label: 'Cutoff', xPct: 85, yPct: 75, isIpByDefault: true, ftStack: '24 BB', defaultBb: 24 },
 ];
 
 export interface BayesianPokerTableProps {
@@ -77,6 +79,7 @@ export interface BayesianPokerTableProps {
 	onSelectVillainPosition?: (pos: TablePosition) => void;
 	onSelectHeroPosition?: (pos: TablePosition) => void;
 	currentPot?: number;
+	onPotChange?: (pot: number) => void;
 }
 
 export function BayesianPokerTable({
@@ -88,8 +91,21 @@ export function BayesianPokerTable({
 	onSelectVillainPosition,
 	onSelectHeroPosition,
 	currentPot = 15.0,
+	onPotChange,
 }: Readonly<BayesianPokerTableProps>) {
 	const activePreset = CANONICAL_BOARD_PRESETS[boardTexture] ?? CANONICAL_BOARD_PRESETS.dry;
+	const [simulatedBetPct, setSimulatedBetPct] = useState<number>(33);
+	const [showHeroCards, setShowHeroCards] = useState<boolean>(true);
+	const [heroHandIndex, setHeroHandIndex] = useState<number>(0);
+
+	const heroHoleHandOptions = useMemo(() => [
+		{ name: 'Ad Ks', cards: ['Ad', 'Ks'], label: 'Broadway Offsuit' },
+		{ name: 'As Ks', cards: ['As', 'Ks'], label: 'Top Broadway Suited' },
+		{ name: 'Qh Jh', cards: ['Qh', 'Jh'], label: 'Draw Conectado' },
+		{ name: 'Ts Tc', cards: ['Ts', 'Tc'], label: 'Par Médio' },
+	], []);
+
+	const currentHeroHand = heroHoleHandOptions[heroHandIndex % heroHoleHandOptions.length]!;
 
 	const streetLabel = useMemo(() => {
 		if (streetStep === 0) return 'Flop';
@@ -104,6 +120,32 @@ export function BayesianPokerTable({
 		const villainIdx = order.indexOf(villainPosition);
 		return heroIdx > villainIdx;
 	}, [heroPosition, villainPosition]);
+
+	// Cálculos de Bet Sizing, Pot Odds e Break-Even Fold Equity
+	const activePot = currentPot;
+	const simulatedBetAmount = useMemo(() => {
+		return (activePot * simulatedBetPct) / 100;
+	}, [activePot, simulatedBetPct]);
+
+	const potOddsPct = useMemo(() => {
+		const totalPotAfterBet = activePot + simulatedBetAmount;
+		if (totalPotAfterBet <= 0) return 0;
+		return (simulatedBetAmount / (totalPotAfterBet + simulatedBetAmount)) * 100;
+	}, [activePot, simulatedBetAmount]);
+
+	const requiredFoldEquityPct = useMemo(() => {
+		const total = activePot + simulatedBetAmount;
+		if (total <= 0) return 0;
+		return (simulatedBetAmount / total) * 100;
+	}, [activePot, simulatedBetAmount]);
+
+	const handleSizingClick = (pct: number) => {
+		setSimulatedBetPct(pct);
+		if (onPotChange && pct > 0) {
+			const addedBet = (activePot * pct) / 100;
+			onPotChange(Number((activePot + addedBet).toFixed(1)));
+		}
+	};
 
 	return (
 		<div className="flex flex-col gap-6 w-full">
@@ -124,41 +166,55 @@ export function BayesianPokerTable({
 					)}
 				</div>
 
-				<div className="flex items-center gap-2 text-[0.6rem] font-mono">
+				<div className="flex items-center gap-2 text-[0.6rem] font-mono flex-wrap">
 					<span className="px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
 						Hero: {heroPosition} ({isHeroInPosition ? 'IP · Vantagem' : 'OOP'})
 					</span>
 					<span className="px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold">
 						Vilão: {villainPosition} ({!isHeroInPosition ? 'IP' : 'OOP · Alvo PBS'})
 					</span>
+					<button
+						type="button"
+						onClick={() => setShowHeroCards((prev) => !prev)}
+						className="px-2 py-1 rounded-xl bg-white/5 hover:bg-white/10 text-text-dim hover:text-white border border-white/10 text-[0.55rem] font-bold uppercase transition-all"
+					>
+						<i className={`fa-solid ${showHeroCards ? 'fa-eye' : 'fa-eye-slash'} mr-1`} />
+						{showHeroCards ? 'Cartas Hero: On' : 'Ocultas'}
+					</button>
 				</div>
 			</div>
 
 			{/* CONTAINER PRINCIPAL: MESA RESPONSIVA + SELETOR DE BOARDS AO LADO */}
 			<div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
 				{/* COLUNA ESQUERDA (XL:COL-SPAN-8): MESA DE POKER EM FELTRO */}
-				<div className="xl:col-span-8 flex flex-col justify-center">
-					<div className="relative w-full aspect-video sm:aspect-18/9 rounded-4xl p-3 sm:p-5 bg-linear-to-b from-slate-900 to-black border border-white/10 shadow-3xl overflow-hidden flex items-center justify-center select-none">
+				<div className="xl:col-span-8 flex flex-col justify-center gap-3">
+					<div className="relative w-full aspect-video sm:aspect-18/9 rounded-4xl p-3 sm:p-5 bg-linear-to-b from-slate-900 via-slate-950 to-black border border-white/10 shadow-3xl overflow-hidden flex items-center justify-center select-none">
 						{/* Glow ambiente no feltro */}
-						<div className="absolute inset-0 bg-radial-[at_center_center] from-indigo-500/15 via-emerald-500/5 to-transparent pointer-events-none" />
+						<div className="absolute inset-0 bg-radial-[at_center_center] from-emerald-500/15 via-indigo-500/5 to-transparent pointer-events-none" />
 
-						{/* RAIL ACOLCHOADO EXTERNO */}
+						{/* RAIL ACOLCHOADO EXTERNO COM COSTURA DOURADA */}
 						<div className="relative w-full h-full rounded-5xl p-3 sm:p-4 bg-linear-to-br from-slate-800 via-slate-900 to-black border-2 border-slate-700/60 shadow-2xl flex items-center justify-center">
-							{/* Costura sutil do rail */}
-							<div className="absolute inset-1.5 rounded-[2.8rem] border border-dashed border-white/10 pointer-events-none" />
+							{/* Costura sutil do rail com brilho refinado */}
+							<div className="absolute inset-1.5 rounded-[2.8rem] border border-dashed border-amber-500/20 pointer-events-none" />
 
-							{/* FELTRO OVAL DA MESA */}
-							<div className="relative w-full h-full rounded-[2.5rem] bg-linear-to-b from-slate-950 via-[#06201b] to-black border border-emerald-500/20 shadow-inner flex flex-col items-center justify-center p-4 overflow-hidden">
+							{/* FELTRO OVAL DA MESA COM PROFUNDIDADE CASINO */}
+							<div className="relative w-full h-full rounded-[2.5rem] bg-linear-to-b from-[#081e18] via-[#041410] to-[#020b08] border border-emerald-500/30 shadow-[inset_0_0_60px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center p-4 overflow-hidden">
 								{/* Marca d'água no feltro */}
 								<div className="absolute top-4 text-center pointer-events-none">
-									<span className="text-[0.55rem] sm:text-[0.65rem] font-black tracking-[0.5em] uppercase text-emerald-500/15 font-mono">
-										POKER RACIONAL &middot; GTO CFR
+									<span className="text-[0.55rem] sm:text-[0.65rem] font-black tracking-[0.5em] uppercase text-emerald-400/15 font-mono">
+										POKER RACIONAL &middot; GTO CFR SOTA
 									</span>
 								</div>
 
-								{/* CARTAS COMUNITÁRIAS (BOARD) NO CENTRO DA MESA */}
+								{/* CARTAS COMUNITÁRIAS (BOARD) & PILHA DE FICHAS NO CENTRO DA MESA */}
 								<div className="relative z-10 flex flex-col items-center gap-2.5">
-									<div className="flex items-center gap-1.5 sm:gap-2 p-2 rounded-2xl bg-black/60 border border-white/10 backdrop-blur-md shadow-2xl">
+									{/* PILHAS DE FICHAS 3D (CHIP STACK) */}
+									<div className="flex items-center justify-center gap-2">
+										<ChipStack amountBb={activePot} showLabel={false} />
+									</div>
+
+									{/* BOARD COMMUNITY CARDS */}
+									<div className="flex items-center gap-1.5 sm:gap-2 p-2 rounded-2xl bg-black/75 border border-emerald-500/30 backdrop-blur-md shadow-2xl">
 										{activePreset.cards.map((card, idx) => {
 											// idx 0, 1, 2 = Flop; idx 3 = Turn; idx 4 = River
 											const isFlopCard = idx < 3;
@@ -193,12 +249,12 @@ export function BayesianPokerTable({
 										})}
 									</div>
 
-									{/* CHIP POT INDICATOR */}
-									<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/80 border border-emerald-500/30 text-[0.6rem] font-mono font-black text-white shadow-lg">
+									{/* CHIP POT INDICATOR (com fallback exato do texto testado) */}
+									<div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/85 border border-emerald-500/40 text-[0.6rem] font-mono font-black text-white shadow-xl">
 										<div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
 										<span className="text-text-muted">POTE:</span>
-										<span className="text-accent-emerald-light">
-											{boardTexture === 'aula1_2' ? currentPot.toFixed(2) : currentPot.toFixed(1)} BB
+										<span className="text-accent-emerald-light tabular-nums">
+											{boardTexture === 'aula1_2' ? activePot.toFixed(2) : activePot.toFixed(1)} BB
 										</span>
 									</div>
 								</div>
@@ -212,10 +268,10 @@ export function BayesianPokerTable({
 									let borderClass = 'border-white/10 bg-black/60 text-text-dim';
 									if (isHero) {
 										borderClass =
-											'border-emerald-400 bg-emerald-950/80 text-white ring-2 ring-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.5)]';
+											'border-emerald-400 bg-emerald-950/80 text-white ring-2 ring-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.5)]';
 									} else if (isVillain) {
 										borderClass =
-											'border-rose-400 bg-rose-950/80 text-white ring-2 ring-rose-400/50 shadow-[0_0_12px_rgba(244,63,94,0.5)]';
+											'border-rose-400 bg-rose-950/80 text-white ring-2 ring-rose-400/50 shadow-[0_0_15px_rgba(244,63,94,0.5)]';
 									}
 
 									return (
@@ -229,67 +285,143 @@ export function BayesianPokerTable({
 											}}
 											className="z-20 group"
 										>
-											<button
-												type="button"
-												onClick={() => {
-													// Alterna vilão ao clicar em um assento não-hero
-													if (!isHero && onSelectVillainPosition) {
-														onSelectVillainPosition(seat.pos);
-													} else if (isHero && onSelectHeroPosition) {
-														// Se clicou no hero, cicla para próxima posição
-														const nextMap: Record<TablePosition, TablePosition> = {
-															BTN: 'CO',
-															CO: 'MP',
-															MP: 'UTG',
-															UTG: 'BB',
-															BB: 'SB',
-															SB: 'BTN',
-														};
-														onSelectHeroPosition(nextMap[heroPosition]);
-													}
-												}}
-												className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-95 cursor-pointer ${borderClass}`}
-												title={`Clique para configurar posição (${seat.label})`}
-											>
-												{/* DEALER BUTTON CHIP */}
-												{isDealer && (
-													<span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-black font-mono text-[0.55rem] flex items-center justify-center shadow-md">
-														D
-													</span>
+											<div className="flex flex-col items-center gap-1">
+												<button
+													type="button"
+													onClick={() => {
+														// Alterna vilão ao clicar em um assento não-hero
+														if (!isHero && onSelectVillainPosition) {
+															onSelectVillainPosition(seat.pos);
+														} else if (isHero && onSelectHeroPosition) {
+															// Se clicou no hero, cicla para próxima posição
+															const nextMap: Record<TablePosition, TablePosition> = {
+																BTN: 'CO',
+																CO: 'MP',
+																MP: 'UTG',
+																UTG: 'BB',
+																BB: 'SB',
+																SB: 'BTN',
+															};
+															onSelectHeroPosition(nextMap[heroPosition]);
+														}
+													}}
+													className={`flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border backdrop-blur-md transition-all active:scale-95 cursor-pointer ${borderClass}`}
+													title={`Clique para configurar posição (${seat.label})`}
+												>
+													{/* DEALER BUTTON CHIP */}
+													{isDealer && (
+														<span className="w-4 h-4 rounded-full bg-amber-400 text-slate-950 font-black font-mono text-[0.55rem] flex items-center justify-center shadow-md border border-amber-300">
+															D
+														</span>
+													)}
+
+													<div className="flex flex-col items-start leading-tight">
+														<div className="flex items-center gap-1">
+															<span className="text-[0.55rem] sm:text-[0.65rem] font-black font-mono">
+																{seat.pos}
+															</span>
+															{isHero && (
+																<span className="text-[0.45rem] font-bold text-emerald-300 uppercase tracking-tight">
+																	(Hero)
+																</span>
+															)}
+															{isVillain && (
+																<span className="text-[0.45rem] font-bold text-rose-300 uppercase tracking-tight">
+																	(Vilão)
+																</span>
+															)}
+														</div>
+														<div className="flex items-center gap-1 text-[0.45rem] text-text-dim">
+															<span>{seat.isIpByDefault ? 'IP' : 'OOP'}</span>
+															{boardTexture === 'aula1_2' && seat.ftStack && (
+																<>
+																	<span>&middot;</span>
+																	<span className="font-mono text-white/90 font-bold">
+																		{seat.ftStack}
+																	</span>
+																</>
+															)}
+														</div>
+													</div>
+												</button>
+
+												{/* CARTAS DO HERO NA MESA (QUANDO HERO) */}
+												{isHero && showHeroCards && (
+													<button
+														type="button"
+														onClick={() => setHeroHandIndex((prev) => prev + 1)}
+														className="flex items-center gap-1 mt-0.5 cursor-pointer transition-transform hover:scale-105"
+														title="Alternar mão do Hero"
+													>
+														{currentHeroHand.cards.map((c) => (
+															<PlayingCard key={`hero-${c}`} card={c} size="xs" />
+														))}
+													</button>
 												)}
 
-												<div className="flex flex-col items-start leading-tight">
-													<div className="flex items-center gap-1">
-														<span className="text-[0.55rem] sm:text-[0.65rem] font-black font-mono">
-															{seat.pos}
-														</span>
-														{isHero && (
-															<span className="text-[0.45rem] font-bold text-emerald-300 uppercase tracking-tight">
-																(Hero)
-															</span>
-														)}
-														{isVillain && (
-															<span className="text-[0.45rem] font-bold text-rose-300 uppercase tracking-tight">
-																(Vilão)
-															</span>
-														)}
-													</div>
-													<div className="flex items-center gap-1 text-[0.45rem] text-text-dim">
-														<span>{seat.isIpByDefault ? 'IP' : 'OOP'}</span>
-														{boardTexture === 'aula1_2' && seat.ftStack && (
-															<>
-																<span>&middot;</span>
-																<span className="font-mono text-white/90 font-bold">
-																	{seat.ftStack}
-																</span>
-															</>
-														)}
-													</div>
-												</div>
-											</button>
+												{/* BADGE DE RANGE TÁTICO DO VILÃO */}
+												{isVillain && (
+													<span className="text-[0.45rem] font-mono text-rose-300 bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-500/30 whitespace-nowrap">
+														Defesa PBS
+													</span>
+												)}
+											</div>
 										</div>
 									);
 								})}
+							</div>
+						</div>
+					</div>
+
+					{/* ADITIVO: CONTROLE DE BET SIZING, POT ODDS & FOLD EQUITY REQUERIDA */}
+					<div className="bg-slate-950/80 border border-white/10 rounded-2xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl backdrop-blur-md">
+						<div className="flex items-center gap-2">
+							<div className="w-2 h-2 rounded-full bg-accent-indigo animate-pulse" />
+							<span className="text-[0.65rem] font-mono font-black text-white uppercase tracking-wider">
+								Sizing Tático:
+							</span>
+							<div className="flex items-center gap-1">
+								{[
+									{ label: '33%', pct: 33 },
+									{ label: '50%', pct: 50 },
+									{ label: '75%', pct: 75 },
+									{ label: '100%', pct: 100 },
+									{ label: 'All-in', pct: 150 },
+								].map((btn) => (
+									<button
+										key={`size-${btn.pct}`}
+										type="button"
+										onClick={() => handleSizingClick(btn.pct)}
+										className={`px-2 py-1 rounded-lg text-[0.6rem] font-mono font-bold uppercase transition-all ${
+											simulatedBetPct === btn.pct
+												? 'bg-accent-indigo text-white shadow-sm'
+												: 'bg-white/5 hover:bg-white/10 text-text-dim hover:text-white'
+										}`}
+									>
+										{btn.label}
+									</button>
+								))}
+							</div>
+						</div>
+
+						<div className="flex items-center gap-3 text-[0.6rem] font-mono">
+							<div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10">
+								<span className="text-text-dim">Aposta:</span>
+								<span className="text-accent-emerald-light font-black">
+									{simulatedBetAmount.toFixed(1)} BB
+								</span>
+							</div>
+							<div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10">
+								<span className="text-text-dim">Pot Odds:</span>
+								<span className="text-accent-indigo-light font-black">
+									{potOddsPct.toFixed(1)}%
+								</span>
+							</div>
+							<div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/5 border border-white/10">
+								<span className="text-text-dim">FE Req:</span>
+								<span className="text-accent-rose-light font-black">
+									{requiredFoldEquityPct.toFixed(1)}%
+								</span>
 							</div>
 						</div>
 					</div>

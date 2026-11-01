@@ -11,6 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CfrCanvas, type CfrCanvasRef } from '../ui/CfrCanvas';
+import { PlayingCard } from '../ui/PlayingCard';
 import { useLoopVisibility } from '../hooks/useLoopVisibility';
 import { calculateJandaGeometricSizing, calculateJandaMDF } from '@/lib/canonicalTheoryEngine';
 import {
@@ -38,6 +39,12 @@ const HAND_TYPE_LABELS = {
 	pair: 'Par',
 	suited: 'Suited',
 	offsuit: 'Offsuit',
+} as const;
+
+const HAND_TYPE_COMBOS = {
+	pair: '6 combos',
+	suited: '4 combos',
+	offsuit: '12 combos',
 } as const;
 
 interface CfrWorkerMessage {
@@ -69,6 +76,28 @@ export default function CfrRegretPanel({
 	const [stack, setStack] = useState<number>(initialStack);
 	const [equity, setEquity] = useState<number>(initialEquity);
 	const [hoveredHand, setHoveredHand] = useState<{ hand: string; value: number; type: 'pair' | 'suited' | 'offsuit' } | null>(null);
+	const [copiedRange, setCopiedRange] = useState<boolean>(false);
+
+	const hoveredCards = useMemo(() => {
+		if (!hoveredHand || hoveredHand.hand.length < 2) return [];
+		const r1 = hoveredHand.hand[0]!;
+		const r2 = hoveredHand.hand[1]!;
+		if (hoveredHand.type === 'pair') return [`${r1}s`, `${r1}h`];
+		if (hoveredHand.type === 'suited') return [`${r1}s`, `${r2}s`];
+		return [`${r1}s`, `${r2}h`];
+	}, [hoveredHand]);
+
+	const handleCopyRange = () => {
+		const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+		const pairs = ranks.map((r) => `${r}${r}`);
+		const broadways = ['AKs', 'AQs', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs'];
+		const rangeText = [...pairs, ...broadways].join(',');
+		if (typeof navigator !== 'undefined' && navigator.clipboard) {
+			void navigator.clipboard.writeText(rangeText);
+			setCopiedRange(true);
+			setTimeout(() => setCopiedRange(false), 2000);
+		}
+	};
 
 	const workerRef = useRef<Worker | null>(null);
 	const [painelRef, lacoAtivo] = useLoopVisibility();
@@ -567,14 +596,25 @@ export default function CfrRegretPanel({
 				{/* Coluna Direita: Matriz 13x13 Heatmap (5 colunas) */}
 				<div className="lg:col-span-6 xl:col-span-5 flex flex-col gap-4">
 					<div className="bg-slate-900/60 p-5 sm:p-6 rounded-2xl border border-white/10 shadow-lg flex flex-col gap-4">
-						<div className="flex justify-between items-center">
+						<div className="flex justify-between items-center flex-wrap gap-2">
 							<h4 className="text-xs font-black text-text-bright uppercase tracking-wider m-0 flex items-center gap-2">
 								<i className="fa-solid fa-table-cells text-accent-indigo-light" />
 								{' '}Matriz de Regret Matching 13x13
 							</h4>
-							<span className="text-[0.65rem] font-mono text-accent-emerald font-bold">
-								169 Spots de Mão
-							</span>
+							<div className="flex items-center gap-2">
+								<button
+									type="button"
+									onClick={handleCopyRange}
+									className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[0.6rem] font-mono font-bold text-accent-indigo-light uppercase transition-all"
+									title="Copiar notação de range em texto para solvers"
+								>
+									<i className="fa-solid fa-copy mr-1" />
+									{copiedRange ? 'Copiado!' : 'Copiar Range'}
+								</button>
+								<span className="text-[0.65rem] font-mono text-accent-emerald font-bold">
+									169 Spots
+								</span>
+							</div>
 						</div>
 
 						{/* Container do Canvas Heatmap */}
@@ -582,15 +622,29 @@ export default function CfrRegretPanel({
 							<CfrCanvas ref={cfrCanvasRef} nodes={13} onHoverHand={setHoveredHand} />
 						</div>
 
-						{/* Painel de Mão Inspecionada (Hover / Status) */}
-						<div className="bg-black/50 p-3 rounded-xl border border-white/5 flex items-center justify-between text-xs font-mono">
+						{/* Painel de Mão Inspecionada (Hover / Status) com Mini Cards e Combos */}
+						<div className="bg-black/60 p-3 rounded-xl border border-white/10 flex items-center justify-between text-xs font-mono">
 							{hoveredHand ? (
 								<>
-									<div className="flex items-center gap-2">
-										<span className="font-bold text-white text-sm">{hoveredHand.hand}</span>
-										<span className="text-text-dim text-[0.7rem]">
-											{HAND_TYPE_LABELS[hoveredHand.type]}
-										</span>
+									<div className="flex items-center gap-2.5">
+										{hoveredCards.length > 0 && (
+											<div className="flex items-center gap-1">
+												{hoveredCards.map((c) => (
+													<PlayingCard key={`mini-${c}`} card={c} size="xs" />
+												))}
+											</div>
+										)}
+										<div className="flex flex-col">
+											<div className="flex items-center gap-1.5">
+												<span className="font-bold text-white text-sm">{hoveredHand.hand}</span>
+												<span className="text-text-dim text-[0.65rem]">
+													{HAND_TYPE_LABELS[hoveredHand.type]}
+												</span>
+											</div>
+											<span className="text-[0.6rem] text-text-darker">
+												{HAND_TYPE_COMBOS[hoveredHand.type]}
+											</span>
+										</div>
 									</div>
 									<div className="flex items-center gap-3">
 										<span>Agressão: <strong className="text-accent-emerald">{(hoveredHand.value * 100).toFixed(1)}%</strong></span>
@@ -598,7 +652,7 @@ export default function CfrRegretPanel({
 									</div>
 								</>
 							) : (
-								<div className="text-text-dim text-center w-full italic text-[0.7rem]">
+								<div className="text-text-dim text-center w-full italic text-[0.7rem] py-1">
 									Passe o mouse sobre as células para inspecionar mãos específicas
 								</div>
 							)}

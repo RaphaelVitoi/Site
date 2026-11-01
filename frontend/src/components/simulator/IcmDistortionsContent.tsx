@@ -31,6 +31,13 @@ const RangeMatrixDynamic = dynamic(
 
 type ActiveViewTab = 'unificada' | 'bubble_factor' | 'nash_profiler' | 'range_matrix';
 
+const CANONICAL_DISTORTION_PRESETS = [
+	{ label: 'Pacto dos Líderes (CL vs 2nd)', ipRp: 13.5, oopRp: 31.8, name: 'BTN (Aggressive CL) vs CO (Second Stack)' },
+	{ label: 'Guerra de Blinds (SB CL vs BB)', ipRp: 12.0, oopRp: 45.0, name: 'SB (CL) vs BB (Defensor)' },
+	{ label: 'Pressão de Bolha Máxima', ipRp: 6.2, oopRp: 28.5, name: 'CO (Big) vs BTN (Mid Stack)' },
+	{ label: 'Colisão Micro vs Short', ipRp: 8.5, oopRp: 22.0, name: 'HJ (Short) vs MP (Micro Stack)' },
+];
+
 export function IcmDistortionsContent() {
 	const [activeTab, setActiveTab] = useState<ActiveViewTab>('unificada');
 	const [matchupSync, setMatchupSync] = useState<{
@@ -117,6 +124,33 @@ export function IcmDistortionsContent() {
 								</span>
 							</div>
 						</div>
+					</div>
+
+					{/* Presets Rápidos de Confrontos */}
+					<div className="mt-6 pt-5 border-t border-white/5 flex flex-wrap items-center gap-2">
+						<span className="text-[0.55rem] font-black text-text-dim uppercase tracking-wider">
+							Confrontos Canônicos:
+						</span>
+						{CANONICAL_DISTORTION_PRESETS.map((p) => (
+							<button
+								key={p.label}
+								type="button"
+								onClick={() =>
+									setMatchupSync({
+										ipRp: p.ipRp,
+										oopRp: p.oopRp,
+										label: p.name,
+									})
+								}
+								className={`px-3 py-1.5 rounded-xl text-[0.6rem] font-mono font-bold transition-all border cursor-pointer active:scale-95 ${
+									matchupSync.label === p.name
+										? 'bg-accent-indigo-surface text-white border-accent-indigo shadow-md'
+										: 'bg-white/5 border-white/5 text-text-muted hover:text-white hover:bg-white/10'
+								}`}
+							>
+								{p.label}
+							</button>
+						))}
 					</div>
 
 					{/* Barra de Abas / Modos de Visualização */}

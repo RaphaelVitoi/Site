@@ -43,21 +43,23 @@ def _porta() -> int:
 
 
 def _modelos_instalados() -> set[str]:
-    """Le `/api/tags` com o cliente do projeto.
+    """Le `/api/tags` com fallback resiliente para urllib no Windows."""
+    try:
+        import urllib.request
 
-    A primeira versao lia o corpo por socket cru e falhou com JSONDecodeError:
-    o daemon responde `Transfer-Encoding: chunked`, e um parser HTTP escrito a
-    mao teria de decodificar chunk-size, trailer e CRLF para fazer o que
-    `aiohttp` -- a dependencia que o proprio `call_ollama` usa -- ja faz e
-    audita. O cliente do projeto e a escolha que remove complexidade, nao uma
-    preferencia: escrever o de menos e o caminho que introduz bug.
-    """
+        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return {m["name"] for m in data.get("models", [])}
+    except Exception:
+        pass
+
     loop = asyncio.new_event_loop()
     try:
+        asyncio.set_event_loop(loop)
         bruto = loop.run_until_complete(_tags_async())
+        return {m["name"] for m in json.loads(bruto)["models"]}
     finally:
         loop.close()
-    return {m["name"] for m in json.loads(bruto)["models"]}
 
 
 async def _tags_async() -> str:

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: N999
 """Build-time manifest injector for Chrome extensions.
 
 Replaces {{OAUTH_CLIENT_ID}} placeholders in manifest.json with real
@@ -13,9 +14,10 @@ Example:
 
 import argparse
 import json
-import os
-import sys
 from pathlib import Path
+import sys
+
+OAUTH_CLIENT_ID_PLACEHOLDER = "{{OAUTH_CLIENT_ID}}"
 
 
 def build_manifest(ext_dir: Path, config_path: Path | None = None) -> bool:
@@ -34,7 +36,7 @@ def build_manifest(ext_dir: Path, config_path: Path | None = None) -> bool:
         # Fall back to .example
         example_path = ext_dir / "config" / "oauth.json.example"
         if example_path.exists():
-            print(f"[WARN] oauth.json not found, using .example (placeholder values)")
+            print("[WARN] oauth.json not found, using .example (placeholder values)")
             config_path = example_path
         else:
             print(f"[WARN] No oauth.json found at {config_path}. Skipping injection.")
@@ -47,20 +49,20 @@ def build_manifest(ext_dir: Path, config_path: Path | None = None) -> bool:
         return False
 
     oauth = config.get("oauth2", {})
-    client_id = oauth.get("client_id", "{{OAUTH_CLIENT_ID}}")
+    client_id = oauth.get("client_id", OAUTH_CLIENT_ID_PLACEHOLDER)
 
     # Read manifest
     manifest_text = manifest_path.read_text(encoding="utf-8")
 
     # Replace placeholder
-    if "{{OAUTH_CLIENT_ID}}" in manifest_text:
-        manifest_text = manifest_text.replace("{{OAUTH_CLIENT_ID}}", client_id)
+    if OAUTH_CLIENT_ID_PLACEHOLDER in manifest_text:
+        manifest_text = manifest_text.replace(OAUTH_CLIENT_ID_PLACEHOLDER, client_id)
         manifest_path.write_text(manifest_text, encoding="utf-8")
         print(f"[OK] Injected client_id into {manifest_path}")
         return True
-    else:
-        print(f"[INFO] No placeholder found in manifest. Nothing to do.")
-        return True
+
+    print("[INFO] No placeholder found in manifest. Nothing to do.")
+    return True
 
 
 def main():
