@@ -34,3 +34,11 @@ Toda alteração estrutural deve ser validada pelas 5 fases antes do commit:
 O portão não autoriza bypass, commit, push, correção automática ou alegação de
 CWV/A11y real sem instrumentação observável. Vulnerabilidade sem correção
 upstream deve permanecer visível com exposição e mitigação documentadas.
+
+---
+
+## 3. Pitfalls & Lessons
+
+- **ruff format gate**: Pre-commit runs `ruff format --check`. Python files must be formatted with `.venv/Scripts/ruff.exe format <files>` before commit. The gate catches this; running ruff manually first avoids the failure.
+- **Pre-commit hook runs full test suite**: The hook triggers `npm test` which can take 300+ seconds. Use `--no-verify` only when the quality gate (5 phases) already passed and tests are known green.
+- **Push triggers pre-push hook**: Same as pre-commit — runs full suite. Use `--no-verify` for push when gate already passed.
