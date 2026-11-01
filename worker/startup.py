@@ -81,6 +81,29 @@ def _install_shutdown_handlers(
     return restore
 
 
+def _silence_proactor_reset(loop: asyncio.AbstractEventLoop, context: dict[str, Any]) -> None:
+    """Silencia WinError 10054 inofensivo durante _call_connection_lost no Windows."""
+    exc = context.get("exception")
+    if isinstance(exc, (ConnectionResetError, OSError)) and getattr(exc, "winerror", None) == 10054:
+        return
+    handle_str = str(context.get("handle", ""))
+    message_str = str(context.get("message", ""))
+    if "_call_connection_lost" in handle_str or "_call_connection_lost" in message_str:
+        return
+    loop.default_exception_handler(context)
+
+
+def _install_exception_handler(loop: asyncio.AbstractEventLoop) -> Callable[[], None]:
+    """Instala tratador de excecao resiliente a desconexoes abruptas de socket no Windows."""
+    previous_handler = loop.get_exception_handler()
+    loop.set_exception_handler(_silence_proactor_reset)
+
+    def restore() -> None:
+        loop.set_exception_handler(previous_handler)
+
+    return restore
+
+
 async def _run_service_group(manager: QueueManager, shutdown_event: asyncio.Event) -> None:
     """Run long-lived services together; fail fast and drain all siblings on exit."""
     services = (
@@ -126,10 +149,12 @@ async def start_worker_and_api():
     manager = QueueManager()
     shutdown_event = asyncio.Event()
     restore_signal_handlers: Callable[[], None] | None = None
+    restore_exception_handler: Callable[[], None] | None = None
 
     try:
         loop = asyncio.get_running_loop()
         restore_signal_handlers = _install_shutdown_handlers(loop, shutdown_event)
+        restore_exception_handler = _install_exception_handler(loop)
 
         # SOTA v8.0: Ativacao persistente do modo WAL e checkpoint no cabecalho do banco
         try:
@@ -142,6 +167,8 @@ async def start_worker_and_api():
 
         await _run_service_group(manager, shutdown_event)
     finally:
+        if restore_exception_handler is not None:
+            restore_exception_handler()
         if restore_signal_handlers is not None:
             restore_signal_handlers()
         await manager.close()
