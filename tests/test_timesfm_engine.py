@@ -516,14 +516,11 @@ def test_timesfm_forecast_with_covariates():
     assert len(res.quantile_90) == 3
 
 
-import os
-
-
 def test_timesfm_25_neural_weights_loading_and_inference():
     """Valida carregamento real de pesos neurais pre-treinados do TimesFM 2.5 PyTorch."""
     if os.environ.get("PYTEST_XDIST_WORKER"):
         pytest.skip(
-            "Carregamento de pesos TimesFM 2.5 é instável sob pytest-xdist no Windows (access violation em torch). Executar isolado."
+            "Carregamento de pesos TimesFM 2.5 e instavel sob pytest-xdist no Windows (access violation em torch). Executar isolado."
         )
     engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
     try:
