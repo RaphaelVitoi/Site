@@ -150,3 +150,40 @@ def test_signal_handlers_use_and_restore_portable_fallback(monkeypatch) -> None:
 
     restore()
     assert handlers == previous
+
+
+def test_proactor_reset_exception_handler_silences_winerror_10054() -> None:
+    class DummyLoop:
+        def __init__(self) -> None:
+            self.handler = None
+            self.called_default = False
+
+        def get_exception_handler(self):
+            return self.handler
+
+        def set_exception_handler(self, handler) -> None:
+            self.handler = handler
+
+        def default_exception_handler(self, _context) -> None:
+            self.called_default = True
+
+    loop = DummyLoop()
+    restore = startup._install_exception_handler(cast(asyncio.AbstractEventLoop, loop))
+
+    # 1. WinError 10054 ConnectionResetError -> silenciado
+    err = ConnectionResetError(10054, "Reset")
+    err.winerror = 10054
+    assert loop.handler is not None
+    loop.handler(loop, {"exception": err})
+    assert not loop.called_default
+
+    # 2. _call_connection_lost callback noise -> silenciado
+    loop.handler(loop, {"message": "error in _call_connection_lost"})
+    assert not loop.called_default
+
+    # 3. Excecao normal -> repassada ao default handler
+    loop.handler(loop, {"exception": ValueError("erro real")})
+    assert loop.called_default
+
+    restore()
+    assert loop.handler is None
