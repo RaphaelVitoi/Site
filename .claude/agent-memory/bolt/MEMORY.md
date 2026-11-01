@@ -90,3 +90,7 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
   2. **Selagem de Referências e Prevenção de Leak em Hooks:** Auditoria de hooks como `useMonteCarloConvergence.ts` e `useQuantumEngine.ts` para garantir que objetos de configuração instáveis não vazem re-renderizações para componentes filhos.
   3. **Otimização de Estruturas de Range / Matrizes de Poker:** Otimização de lookups matriciais em `frontend/src/lib/poker/`.
   4. **Entrega por Refutação (§10.1):** O Gemini 3.1 Pro deve medir baseline antes de gerar qualquer diff. Se a melhoria projetada for inferior a 5% ou degradar legibilidade/manutenibilidade, a hipótese deve ser **refutada e arquivada** no resumo da sessão, encerrando com sucesso sem criar Pull Request.
+
+## 2026-11-01 - [Optimizing BigInt to Uint8Array extraction]
+**Learning:** Byte-by-byte shifting (`mask >> BigInt(8)`) using BigInt in V8 incurs significant overhead for 338-byte arrays. Operating within standard JS `Number` by casting 32-bit chunks (`Number(mask & 0xffffffffn)`) and using standard bitwise operators (`>> 8`, `>> 16`, `>> 24`) is 3-4x faster because it bypasses heap allocation for intermediate BigInts.
+**Action:** When extracting large BigInts into TypedArrays inside hot loops, chunk the operations into 32-bit blocks within standard `Number` space.
