@@ -1,6 +1,11 @@
 ---
 name: site-session-handoff
 description: "Use when closing or handing off a non-trivial session in the Site ecosystem; produce evidence-bounded official reports, preserve learning and user feedback, verify identity and memory records, and pass authorized pre-..."
+metadata:
+  hermes:
+    tags: ['session', 'handoff', 'site', 'transfer']
+    category: devops
+    related_skills: ['session-impact-evaluator']
 ---
 
 # Site Session Handoff & Calibration

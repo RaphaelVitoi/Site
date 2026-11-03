@@ -1,6 +1,11 @@
 ---
 name: strata-inference-engine
 description: "Runbook, governanca e integracao da engine Strata v0."
+metadata:
+  hermes:
+    tags: ['inference', 'strata', 'engine', 'llm']
+    category: mlops
+    related_skills: ['actual-setup', 'accelerate']
 ---
 
 # SKILL: Strata MoE 125B — Engine de Inferência & Orquestração Híbrida

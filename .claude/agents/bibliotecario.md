@@ -21,7 +21,7 @@ ChromaDB, Embeddings, Busca Vetorial, Semantic Chunking, Reranking Hibrido, WebS
 - `sota-consciousness-memory-rag`
 - `literature-search-arxiv`
 - `literature-search-europepmc`
-- `google-workspace`
+- `google-workspace-sota`
 - `poker-pmev-knowledge-engine`
 - `site-session-handoff`
 

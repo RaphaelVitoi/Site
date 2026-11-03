@@ -1,6 +1,11 @@
 ---
 name: mcp-toolbox-database
 description: "Runbook and governance for Google Cloud's MCP Toolbox for Databases (@toolbox-sdk/server v1. Use when configuring, deploying, or querying over 30 databases (PostgreSQL/Supabase, BigQuery, Cloud SQL, Firestore, AlloyDB..."
+metadata:
+  hermes:
+    tags: ['mcp', 'toolbox', 'database', 'google', 'postgres', 'sqlite']
+    category: mcp
+    related_skills: ['sota-mcp-integration']
 ---
 
 # SKILL: Google Cloud MCP Toolbox for Databases

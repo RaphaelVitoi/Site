@@ -1,6 +1,11 @@
 ---
 name: google-stitch-design
 description: "Runbook e governanca para o Google Cloud Stitch MCP (stitch."
+metadata:
+  hermes:
+    tags: ['google', 'stitch', 'design', 'ui']
+    category: creative
+    related_skills: ['page-agent']
 ---
 
 # SKILL: Google Cloud Stitch — UI Generativa & Design Systems SOTA

@@ -5,6 +5,10 @@ license: Apache-2.0
 metadata:
   version: v1.1.0
   publisher: raphavitoi
+  hermes:
+    tags: ['poker', 'pmev', 'knowledge', 'engine', 'game']
+    category: research
+    related_skills: ['pmev-game-theory-engine']
 ---
 
 # Poker & PMev Knowledge Engine (`poker-pmev-knowledge-engine`)

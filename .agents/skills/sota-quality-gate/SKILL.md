@@ -1,6 +1,11 @@
 ---
 name: sota-quality-gate
 description: Use antes de commit, release ou auditoria de qualidade do Site para executar e interpretar o portão de cinco fases, distinguindo métricas realmente medidas, referências estáticas e verificações indisponíveis.
+metadata:
+  hermes:
+    tags: ['quality-gate', 'sota', 'validation', 'gate']
+    category: devops
+    related_skills: ['nexus-sota-audit']
 ---
 
 # SKILL: SOTA Quality Gate & Invariant Assurance
