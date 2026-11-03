@@ -65,7 +65,7 @@ dependencies = [
     "anthropic>=2.4.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
-    "pypdf>=6.21.2,<7.0.0",  # 6.19.0: atualizado 2026-10-04 para sanar alertas 211-218 (GHSA-265f-4x97-w84f)
+    "pypdf>=6.21.4,<7.0.0",  # 6.21.4: atualizado 2026-11-03 para sanar alertas 330-336 (GHSA-5849-834g-hvw5, GHSA-cggf-277g-3q54, GHSA-mfr5-77xh-9j7h)
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
     "Pillow>=13.0.0",
@@ -199,7 +199,7 @@ dev = [
 constraint-dependencies = [
     "starlette>=1.9.0",
     "cryptography>=50.0.2",
-    "pyasn1>=0.6.4",
+    "pyasn1>=0.6.5",
     "setuptools>=84.2.1",
     "torch>=2.14.1",
     "transformers>=5.20.2",
