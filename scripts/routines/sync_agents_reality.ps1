@@ -65,7 +65,9 @@ foreach ($Agent in $AgentNames) {
     $SkillsList = if ($AgentProps.skills) { ($AgentProps.skills | ForEach-Object { "- ``$_``" }) -join "`n" } else { "- N/A" }
     $ScriptsList = if ($AgentProps.specialized_scripts) { ($AgentProps.specialized_scripts | ForEach-Object { "- ``$_``" }) -join "`n" } else { "- N/A" }
 
-    $Template = "# Identidade e Escopo: @$Agent`n`n**Cor Emblematica:** ``$Color`` | **Motor Base:** $MotorBase`n`n$($AgentProps.identidade)`n`n## Competencias`n`n$($AgentProps.competencias)`n`n## Skills Especializadas`n`n$SkillsList`n`n## Scripts & Ferramentas Integradas`n`n$ScriptsList`n`n## Sinergia`n`n$($AgentProps.sinergia)`n`n## Gatilho de Roteamento (routing_pattern)`n`n``$RoutingPattern```n"
+    $DocType = if ($Agent -eq 'auditor') { 'executive' } else { 'technical' }
+    $Frontmatter = "---`ntitle: `"Identidade e Escopo: @$Agent`"`ntype: $DocType`nstatus: active`nowner: site-governance`nupdated_at: 2026-10-30`n---`n`n"
+    $Template = "$Frontmatter# Identidade e Escopo: @$Agent`n`n**Cor Emblematica:** ``$Color`` | **Motor Base:** $MotorBase`n`n$($AgentProps.identidade)`n`n## Competencias`n`n$($AgentProps.competencias)`n`n## Skills Especializadas`n`n$SkillsList`n`n## Scripts & Ferramentas Integradas`n`n$ScriptsList`n`n## Sinergia`n`n$($AgentProps.sinergia)`n`n## Gatilho de Roteamento (routing_pattern)`n`n``$RoutingPattern```n"
     Write-TextSOTA -Path $AgentDocPath -Content $Template -Encoding $Utf8NoBom
     Write-Host "[ + ] Identidade sincronizada para @$Agent (Skills & Scripts integrados)" -ForegroundColor Green
 
