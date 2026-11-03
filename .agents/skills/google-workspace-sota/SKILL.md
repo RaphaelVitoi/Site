@@ -1,13 +1,17 @@
 ---
-name: google-workspace
+name: google-workspace-sota
 description: "Gold-standard integration and automation runbook for Google Workspace (Google Drive, Calendar, Gmail, Sheets) via MCP servers and Application Default Credentials (ADC). Use whenever searching files, reading/exporting ..."
 license: Apache-2.0
 metadata:
   version: v1.0.0
   publisher: raphavitoi
+  hermes:
+    tags: ['google', 'workspace', 'sota', 'drive', 'calendar', 'gmail', 'sheets']
+    category: productivity
+    related_skills: ['google-jules-cloud']
 ---
 
-# Google Workspace SOTA Master Skill (`google-workspace`)
+# Google Workspace SOTA Master Skill (`google-workspace-sota`)
 
 > **Padrão-Ouro de Integração, Automação e Orquestração do Ecossistema Google Workspace**  
 > Cobre Google Drive, Google Calendar, Gmail e Google Sheets sob governança Chico SOTA v8.0 GOLD.

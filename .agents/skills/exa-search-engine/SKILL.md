@@ -1,6 +1,11 @@
 ---
 name: exa-search-engine
 description: "Runbook, governanca e ponte de execucao para o Exa MCP (mcp."
+metadata:
+  hermes:
+    tags: ['exa', 'search', 'engine', 'web']
+    category: research
+    related_skills: ['arxiv', 'competitor-news-monitor']
 ---
 
 # SKILL: Exa MCP — Busca Semântica, Web Fetch & Exa Agent SOTA

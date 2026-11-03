@@ -1,6 +1,11 @@
 ---
 name: chrome-devtools-agent-sota
 description: "Official Google Chrome DevTools for Agents protocol and engineering runbook. Use when connecting agents to live Chrome instances over CDP (ports 9222/9223) or MCP (chrome-devtools-mcp), performing visual grounding via..."
+metadata:
+  hermes:
+    tags: ['chrome', 'devtools', 'agent', 'sota', 'browser']
+    category: web-development
+    related_skills: ['page-agent']
 ---
 
 # SKILL: Chrome DevTools para Agentes (Padrão Oficial Google)

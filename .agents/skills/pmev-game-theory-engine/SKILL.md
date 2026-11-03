@@ -1,6 +1,11 @@
 ---
 name: pmev-game-theory-engine
 description: "Use ao formular, implementar ou revisar os modelos matemáticos PMev do projeto em MTTs de Texas Hold'em, incluindo risco, stacks, inferência Bayesiana, simulações e contratos Python, Rust/WASM e TypeScript."
+metadata:
+  hermes:
+    tags: ['game-theory', 'pmev', 'engine', 'strategy']
+    category: research
+    related_skills: ['poker-pmev-knowledge-engine']
 ---
 
 # SKILL: PMev Game Theory & Mathematical Perspective Engine

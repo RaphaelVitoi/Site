@@ -1,6 +1,11 @@
 ---
 name: google-jules-cloud
 description: "Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules."
+metadata:
+  hermes:
+    tags: ['google', 'jules', 'cloud', 'ai']
+    category: devops
+    related_skills: ['google-workspace-sota']
 ---
 
 # SKILL: Google Jules Cloud — Orquestração Assíncrona & Engenharia em Nuvem

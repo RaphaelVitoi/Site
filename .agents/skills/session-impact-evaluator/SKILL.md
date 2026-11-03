@@ -1,6 +1,11 @@
 ---
 name: session-impact-evaluator
 description: "Avaliacao objetiva, factual e agnostica de impacto de sessao entre modelos Tier 1, 2 e 3."
+metadata:
+  hermes:
+    tags: ['session', 'impact', 'evaluator', 'analysis']
+    category: devops
+    related_skills: ['site-session-handoff']
 ---
 
 # SOTA Session Impact Evaluator (Agnóstico Tiers 1-2-3)

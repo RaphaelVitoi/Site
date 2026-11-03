@@ -97,7 +97,7 @@ def test_ponte_antigravity_descobre_a_fonte_versionada_sem_copia():
             {
                 "path": ".agents/skills",
                 "include_only": [
-                    "^(chrome-devtools-agent-sota|google-jules-cloud|google-stitch-design|google-workspace|mcp-toolbox-database|pmev-game-theory-engine|poker-pmev-knowledge-engine|session-impact-evaluator|site-session-handoff|sota-quality-gate|sota-server-lifecycle-warmup|strata-inference-engine|timesfm-forecasting)$"
+                    "^(chrome-devtools-agent-sota|exa-search-engine|google-jules-cloud|google-stitch-design|google-workspace-sota|mcp-toolbox-database|pmev-game-theory-engine|poker-pmev-knowledge-engine|session-impact-evaluator|site-session-handoff|sota-quality-gate|sota-server-lifecycle-warmup|strata-inference-engine|timesfm-forecasting)$"
                 ],
             }
         ]

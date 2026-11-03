@@ -1,6 +1,11 @@
 ---
 name: sota-server-lifecycle-warmup
 description: "Use para orquestrar a subida de servidores, compilação de produção (build Turbopack), higienização atômica de processos, recarga de variáveis (."
+metadata:
+  hermes:
+    tags: ['server', 'lifecycle', 'warmup', 'sota']
+    category: devops
+    related_skills: ['sota-quality-gate']
 ---
 
 # SKILL: SOTA Server Lifecycle, Build & Warmup Orchestrator
