@@ -56,13 +56,13 @@ dependencies = [
     # CLAUDE.md.
     "chromadb>=1.5.9",
     "lancedb>=0.40.0,<1.0.0",  # 0.38.0: atualizado 2026-09-20 para evitar PYSEC-2026-311/3813/3814/3815 do chromadb
-    "pyarrow>=26.0.0",
+    "pyarrow>=26.0.1",
     "onnxruntime>=1.31.1",
     "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
     "google-genai>=2.34.0",
-    "openai>=3.42.0",
-    "anthropic>=2.3.0",
+    "openai>=3.44.0",
+    "anthropic>=2.4.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
     "pypdf>=6.21.2,<7.0.0",  # 6.19.0: atualizado 2026-10-04 para sanar alertas 211-218 (GHSA-265f-4x97-w84f)
@@ -104,7 +104,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.4.20",
+    "laya>=0.4.22",
     "accelerate>=1.15.0",
     "timesfm[torch]==3.0.2",
     # ── AGENTIC AUTOMATION, COMPUTER USE & BIG DATA OLAP ──────────────────────
@@ -160,7 +160,7 @@ dev = [
     "types-aiofiles>=25.1.0.20260518",
     "types-psutil>=7.2.2.20260906",
     "types-defusedxml>=0.7.0.20260504",
-    "types-PyYAML>=6.0.12.20261030",
+    "types-PyYAML>=6.0.12.20261103",
 ]
 
 # ==============================================================================
