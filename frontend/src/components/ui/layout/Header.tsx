@@ -553,11 +553,8 @@ export const Header: React.FC = () => {
   return (
     <>
       {isContentPage && <ReadingProgressBar />}
-      <motion.header
+      <header
         id="site-header"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 right-0 left-0 z-50 transition-all duration-500 ${headerBgClass}`}
       >
         <div className="sota-container flex items-center justify-between gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
@@ -600,7 +597,7 @@ export const Header: React.FC = () => {
             </button>
           </div>
         </div>
-      </motion.header>
+      </header>
 
       <HeaderMobileDrawer isOpen={mobileOpen} isLightPage={isLightPage} onClose={closeMobile} />
     </>
