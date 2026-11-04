@@ -56,7 +56,9 @@ function Invoke-RouteWarmup {
         "/templo/laya",
         "/login",
         "/api/sota/laya/status",
-        "/api/auth/providers"
+        "/api/auth/providers",
+        "/api/auth/csrf",
+        "/api/auth/session"
     )
 
     Write-Host "`n[WARMUP] Aquecendo rotas criticas em $Base..." -ForegroundColor Yellow
@@ -171,7 +173,7 @@ if (-not $SkipBuild) {
 # -----------------------------------------------------------------------------
 Write-Host "`n[3/5] Higienizando processos em execucao na porta 3000..." -ForegroundColor Yellow
 $targetPort = ([System.Uri]$TargetUrl).Port
-$connections = Get-NetTCPConnection -LocalPort $targetPort -State Listen -ErrorAction SilentlyContinue
+$connections = Get-NetTCPConnection -LocalPort $targetPort -ErrorAction SilentlyContinue
 if ($connections) {
     $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique | Where-Object { $_ -gt 0 -and $_ -ne $PID }
     foreach ($procId in $pids) {
@@ -184,38 +186,26 @@ if ($connections) {
             }
         } catch {}
     }
-    Start-Sleep -Seconds 1
+    # Drenagem e liberacao do socket TCP
+    $drainSec = 0
+    while ($drainSec -lt 5) {
+        Start-Sleep -Seconds 1
+        $drainSec++
+        $remaining = Get-NetTCPConnection -LocalPort $targetPort -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -gt 0 }
+        if (-not $remaining) { break }
+    }
 }
 
 # -----------------------------------------------------------------------------
 # FASE 4: INICIALIZACAO LIMPA DO DEV SERVER
 # -----------------------------------------------------------------------------
-Write-Host "`n[4/5] Inicializando servidor de desenvolvimento (npm run dev)..." -ForegroundColor Yellow
-$frontendDir = Join-Path $Root "frontend"
-$logDir = Join-Path $Root "logs"
-$logPath = Join-Path $logDir "dev-frontend.log"
-$errPath = Join-Path $logDir "dev-frontend.err.log"
-
-$devJob = Start-Process -FilePath "cmd.exe" -ArgumentList "/c npm run dev" -WorkingDirectory $frontendDir -RedirectStandardOutput $logPath -RedirectStandardError $errPath -PassThru -WindowStyle Hidden
-
-# Aguardar porta 3000 abrir
-$timeoutSec = 30
-$elapsedSec = 0
-$portListening = $false
-while ($elapsedSec -lt $timeoutSec) {
-    Start-Sleep -Seconds 1
-    $elapsedSec++
-    $check = Get-NetTCPConnection -LocalPort $targetPort -State Listen -ErrorAction SilentlyContinue
-    if ($check) {
-        $portListening = $true
-        break
-    }
+Write-Host "`n[4/5] Inicializando servidor de desenvolvimento (ensure-dev-frontend.mjs)..." -ForegroundColor Yellow
+$frontendScript = Join-Path $Root "scripts\ops\ensure-dev-frontend.mjs"
+& node $frontendScript
+if ($LASTEXITCODE -ne 0) {
+    throw "Falha ao inicializar o servidor frontend em $TargetUrl."
 }
-
-if (-not $portListening) {
-    throw "Timeout de $timeoutSec segundos aguardando subida do servidor na porta $targetPort."
-}
-Write-Host "  [OK] Dev Server ouvindo ativamente em $TargetUrl (PID: $($devJob.Id))." -ForegroundColor Green
+Write-Host "  [OK] Dev Server ouvindo ativamente em $TargetUrl de forma persistente." -ForegroundColor Green
 
 # -----------------------------------------------------------------------------
 # FASE 5: AQUECIMENTO SOTA & VALIDACAO DE HIDRATACAO
