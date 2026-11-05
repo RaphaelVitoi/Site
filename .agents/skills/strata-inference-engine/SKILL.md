@@ -1,6 +1,6 @@
 ---
 name: strata-inference-engine
-description: "Runbook, governanca e integracao da engine Strata v0."
+description: "Runbook, governanca e integracao da engine Strata MoE 125B (v0.1.39): offload hibrido Vulkan/RAM/CPU, MTP speculative decoding e OpenAI Responses API (:8080)."
 metadata:
   hermes:
     tags: ['inference', 'strata', 'engine', 'llm']

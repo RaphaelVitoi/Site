@@ -1,6 +1,6 @@
 ---
 name: chrome-devtools-agent-sota
-description: "Official Google Chrome DevTools for Agents protocol and engineering runbook. Use when connecting agents to live Chrome instances over CDP (ports 9222/9223) or MCP (chrome-devtools-mcp), performing visual grounding via..."
+description: "Runbook oficial Chrome DevTools for Agents via CDP (:9222/:9223) e chrome-devtools-mcp: inspecao DOM/CSS, rede, console, snapshots e auditoria Core Web Vitals."
 metadata:
   hermes:
     tags: ['chrome', 'devtools', 'agent', 'sota', 'browser']

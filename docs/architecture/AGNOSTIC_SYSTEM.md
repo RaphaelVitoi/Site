@@ -1,12 +1,22 @@
 ---
-title: "SISTEMA AGNÓSTICO SOTA v7.0 GOLD"
-type: technical
+id: agnostic-system-sota-v8-gold
+tipo: especificacao
+escopo: Site -- Manifesto do Sistema Agnostico SOTA v8.0 GOLD
+autor: Gemini 3.8 Flash <noreply@google.com>
+criado_em: '2026-10-30T12:00:00-03:00'
+atualizado_em: '2026-11-05T11:00:00-03:00'
 status: active
 owner: site-governance
-updated_at: 2026-10-30
+classes:
+- interno
+- canonico
+- governanca
+verificado:
+  - Especificacao de interoperabilidade agnostica entre modelos e ferramentas no padrao SOTA v8.0 GOLD
+nao_verificado: "nenhuma (manifesto puramente declarativo e arquitetural)"
 ---
 
-# SISTEMA AGNÓSTICO SOTA v7.0 GOLD
+# SISTEMA AGNÓSTICO SOTA v8.0 GOLD
 
 Este manifesto formaliza a natureza universal e independente do ecossistema Site/Nexus.
 

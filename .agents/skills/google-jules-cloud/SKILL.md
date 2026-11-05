@@ -1,6 +1,6 @@
 ---
 name: google-jules-cloud
-description: "Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules."
+description: "Runbook, governanca e ponte de execucao para o Google Jules Cloud (jules.google.com): sessoes assincronas em VMs de nuvem, aprovacao de planos e diffs."
 metadata:
   hermes:
     tags: ['google', 'jules', 'cloud', 'ai']

@@ -1,6 +1,6 @@
 ---
 name: exa-search-engine
-description: "Runbook, governanca e ponte de execucao para o Exa MCP (mcp."
+description: "Runbook, governanca e ponte de execucao para o Exa MCP (mcp.exa.ai): busca neural semantica, web fetch e pesquisa autonoma multi-etapa via Exa Agent."
 metadata:
   hermes:
     tags: ['exa', 'search', 'engine', 'web']

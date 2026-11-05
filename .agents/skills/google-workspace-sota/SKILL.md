@@ -1,6 +1,6 @@
 ---
 name: google-workspace-sota
-description: "Gold-standard integration and automation runbook for Google Workspace (Google Drive, Calendar, Gmail, Sheets) via MCP servers and Application Default Credentials (ADC). Use whenever searching files, reading/exporting ..."
+description: "Runbook padrao-ouro para Google Workspace (Drive, Docs, Sheets, Slides, Calendar, Gmail) via servidores MCP e Application Default Credentials (ADC)."
 license: Apache-2.0
 metadata:
   version: v1.0.0

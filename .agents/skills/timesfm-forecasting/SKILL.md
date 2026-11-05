@@ -1,6 +1,6 @@
 ---
 name: timesfm-forecasting
-description: "Google Research TimesFM (Time Series Foundation Model) engineering and governance runbook. Use when executing time-series forecasting for bankroll projections, EV variance decay, RIO risk, or multivariate telemetry; m..."
+description: "Runbook Google Research TimesFM 2.5 (200M PyTorch): previsao zero-shot de series temporais para projecoes de bankroll, decaimento de variancia EV e risco RIO."
 metadata:
   hermes:
     tags: ['forecasting', 'timesfm', 'time-series', 'prediction']

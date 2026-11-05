@@ -1,6 +1,6 @@
 ---
 name: site-session-handoff
-description: "Use when closing or handing off a non-trivial session in the Site ecosystem; produce evidence-bounded official reports, preserve learning and user feedback, verify identity and memory records, and pass authorized pre-..."
+description: "Use ao encerrar ou transferir sessao nao-trivial no Site: produz relatorios baseados em evidencia, preserva memoria/feedback e valida pre-commit gates."
 metadata:
   hermes:
     tags: ['session', 'handoff', 'site', 'transfer']

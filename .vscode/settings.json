@@ -184,18 +184,20 @@
     ],
     "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
     "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
-    "cmake.generator": "Visual Studio 16 2019",
+    "cmake.generator": "Visual Studio 18 2026",
     "cmake.preferredAccelerators": [
         "vs",
         "ninja"
     ],
     "cmake.configureSettings": {
+        "CMAKE_GENERATOR_INSTANCE": "C:/Program Files/Microsoft Visual Studio/18/Insiders",
         "CMAKE_GENERATOR_PLATFORM": "x64",
         "Python_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
         "Python3_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
         "nanobind_DIR": "${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
     },
     "cmake.configureArgs": [
+        "-DCMAKE_GENERATOR_INSTANCE=C:/Program Files/Microsoft Visual Studio/18/Insiders",
         "-DPython_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
         "-DPython3_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
         "-Dnanobind_DIR=${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
@@ -607,6 +609,12 @@
     "r.lsp.args": [
         "--vanilla"
     ],
+    "r.lsp.env": {
+        "R_LIBS_USER": "C:/Users/rapha/R/win-library/4.6"
+    },
+    "terminal.integrated.env.windows": {
+        "R_LIBS_USER": "C:/Users/rapha/R/win-library/4.6"
+    },
     "r.debugger.checkVersion": "recommended",
     "playwright.configs": [
         "frontend/playwright.config.ts",
