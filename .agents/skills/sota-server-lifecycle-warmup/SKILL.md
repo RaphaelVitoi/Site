@@ -1,6 +1,6 @@
 ---
 name: sota-server-lifecycle-warmup
-description: "Use para orquestrar a subida de servidores, compilação de produção (build Turbopack), higienização atômica de processos, recarga de variáveis (."
+description: "Orquestra subida de servidores, build Turbopack, higienizacao atomica de processos, recarga de variaveis (.env) e pre-aquecimento (17042, 3000, 8933, 8931)."
 metadata:
   hermes:
     tags: ['server', 'lifecycle', 'warmup', 'sota']

@@ -19,11 +19,11 @@ dependencies = [
     "multidict>=7.2.1",
     "uvicorn[standard]>=0.54.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
-    "pydantic>=2.14.2",
+    "pydantic>=2.14.3",
     "pydantic-settings>=2.16.2",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
     # ── MOTOR MATEMATICO, GRAFOS & ANALYTICS ──────────────────────────
     "numpy>=2.5.4",
-    "pandas>=3.1.0",
+    "pandas>=3.1.1",
     "networkx>=3.7",
     "scikit-learn>=1.9.1",
     "scipy>=1.18.1",
@@ -61,8 +61,9 @@ dependencies = [
     "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
     "google-genai>=2.34.0",
-    "openai>=3.45.0",
-    "anthropic>=2.4.0",
+    "google-antigravity>=0.1.23",
+    "openai>=3.46.0",
+    "anthropic>=2.5.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
     "pypdf>=6.21.4,<7.0.0",  # 6.21.4: atualizado 2026-11-03 para sanar alertas 330-336 (GHSA-5849-834g-hvw5, GHSA-cggf-277g-3q54, GHSA-mfr5-77xh-9j7h)
@@ -104,7 +105,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.4.22",
+    "laya>=0.4.24",
     "accelerate>=1.15.0",
     "timesfm[torch]==3.0.2",
     # ── AGENTIC AUTOMATION, COMPUTER USE & BIG DATA OLAP ──────────────────────

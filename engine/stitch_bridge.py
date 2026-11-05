@@ -15,6 +15,11 @@ from typing import Any, Final
 import urllib.error
 import urllib.request
 
+try:
+    import winreg
+except ImportError:
+    winreg = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 STITCH_MCP_URL: Final[str] = "https://stitch.googleapis.com/mcp"
@@ -119,6 +124,25 @@ class StitchScreen(dict[str, Any]):
         return inst
 
 
+def _env_or_reg(name: str, default: str = "") -> str:
+    val = (os.getenv(name) or "").strip()
+    if val:
+        return val
+    if winreg is not None:
+        for root, subkey in (
+            (winreg.HKEY_CURRENT_USER, "Environment"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+        ):
+            try:
+                with winreg.OpenKey(root, subkey) as key:
+                    reg_val, _ = winreg.QueryValueEx(key, name)
+                    if reg_val and str(reg_val).strip():
+                        return str(reg_val).strip()
+            except OSError:
+                continue
+    return default
+
+
 class StitchClient:
     """Cliente JSON-RPC hermetico para o servidor MCP do Google Cloud Stitch."""
 
@@ -130,7 +154,9 @@ class StitchClient:
     ) -> None:
         if not base_url.startswith("https://"):
             raise ValueError("StitchClient exige base_url https: urlopen tambem abriria file: e esquemas custom.")
-        self._api_key = api_key or os.getenv("STITCH_API_KEY", "")
+        self._api_key = (
+            api_key if api_key is not None else (_env_or_reg("STITCH_API_KEY") or _env_or_reg("GOOGLE_STITCH_API_KEY"))
+        )
         self._base_url = base_url
         self._timeout = timeout
 

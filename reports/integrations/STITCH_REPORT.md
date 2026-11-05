@@ -2,7 +2,7 @@
 
 > **Repositório Monitorado:** `RaphaelVitoi/Site`
 > **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules
-> **Data de Atualização:** `2026-10-28 11:39:55 UTC`
+> **Data de Atualização:** `2026-11-05 12:11:31 UTC`
 > **Origem dos Dados:** Google Cloud Stitch MCP (`https://stitch.googleapis.com/mcp`)
 
 ---
@@ -41,8 +41,8 @@
 - **Última Atualização:** `2026-10-28T11:12:46.414017Z`
 - **Permissão / Papel:** `OWNER`
 - **Inventário de Telas (2):**
-  - `projects/18242753218562483944/screens/6fbe16eba4d84af4be932290191c26ad`: **Nexus PMev - Ping Test** (`DESKTOP`)
   - `projects/18242753218562483944/screens/3260535219730569926`: **DESIGN.md** (`DESKTOP`)
+  - `projects/18242753218562483944/screens/6fbe16eba4d84af4be932290191c26ad`: **Nexus PMev - Ping Test** (`DESKTOP`)
 - **Design Systems Integrados (1):**
   - 🎨 **Obsidian Analytics** (`assets/6f9c8c6e7114422393d45b0c4ca02808`)
     - Tipografia: `GEIST` / `JetBrains Mono` | Acento Primário: `#f2b72b`

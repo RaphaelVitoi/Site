@@ -15,6 +15,11 @@ from typing import Any, Final
 import urllib.error
 import urllib.request
 
+try:
+    import winreg
+except ImportError:
+    winreg = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 JULES_API_BASE: Final[str] = "https://jules.googleapis.com/v1alpha"
@@ -130,6 +135,25 @@ def _find_patch_in_artifacts(artifacts: list[Any]) -> str:
     return ""
 
 
+def _env_or_reg(name: str, default: str = "") -> str:
+    val = (os.getenv(name) or "").strip()
+    if val:
+        return val
+    if winreg is not None:
+        for root, subkey in (
+            (winreg.HKEY_CURRENT_USER, "Environment"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+        ):
+            try:
+                with winreg.OpenKey(root, subkey) as key:
+                    reg_val, _ = winreg.QueryValueEx(key, name)
+                    if reg_val and str(reg_val).strip():
+                        return str(reg_val).strip()
+            except OSError:
+                continue
+    return default
+
+
 class JulesClient:
     """Cliente HTTP/REST hermetico e seguro para comunicacao com a API do Google Jules."""
 
@@ -139,8 +163,12 @@ class JulesClient:
         project_id: str | None = None,
         timeout: float = 30.0,
     ) -> None:
-        self._api_key = api_key or os.getenv("JULES_API_KEY", "")
-        self._project_id = project_id or os.getenv("GOOGLE_CLOUD_PROJECT", "original-498419")
+        self._api_key = (
+            api_key if api_key is not None else (_env_or_reg("JULES_API_KEY") or _env_or_reg("GOOGLE_JULES_API_KEY"))
+        )
+        self._project_id = (
+            project_id if project_id is not None else _env_or_reg("GOOGLE_CLOUD_PROJECT", "original-498419")
+        )
         self._timeout = timeout
 
     @property

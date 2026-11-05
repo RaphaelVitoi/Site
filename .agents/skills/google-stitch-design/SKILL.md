@@ -1,6 +1,6 @@
 ---
 name: google-stitch-design
-description: "Runbook e governanca para o Google Cloud Stitch MCP (stitch."
+description: "Runbook e governanca para o Google Cloud Stitch MCP (stitch.withgoogle.com): UI generativa, prototipagem e Design System Obsidian Analytics."
 metadata:
   hermes:
     tags: ['google', 'stitch', 'design', 'ui']
