@@ -220,17 +220,29 @@ if ($failedRoutes.Count -gt 0) {
 
 # Execucao do Quality Smoke E2E Playwright
 Write-Host "`n[QA] Executando Quality Smoke E2E no ambiente aquecido..." -ForegroundColor Yellow
+$frontendDir = Join-Path $Root "frontend"
+$qaFailed = $false
 Push-Location $frontendDir
 try {
-    $pwOutput = & npx playwright test --config=playwright.quality.config.ts 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "  [OK] Playwright Quality Smoke: 8/8 testes verdes (0 violacoes axe WCAG 2.2)." -ForegroundColor Green
+    $pwOutput = & npx playwright test --config=playwright.quality.config.ts --reporter=line 2>&1 | ForEach-Object { "$_" }
+    $pwExit = $LASTEXITCODE
+    # Contagem real extraida da saida do runner (nunca um valor fixo).
+    $passed = ($pwOutput | Select-String -Pattern '^\s*(\d+) passed' | Select-Object -Last 1)
+    $failed = ($pwOutput | Select-String -Pattern '^\s*(\d+) failed' | Select-Object -Last 1)
+    $passedN = if ($passed) { $passed.Matches[0].Groups[1].Value } else { '0' }
+    $failedN = if ($failed) { $failed.Matches[0].Groups[1].Value } else { '0' }
+    if ($pwExit -eq 0 -and $passedN -ne '0') {
+        Write-Host "  [OK] Playwright Quality Smoke: $passedN passed, $failedN failed (axe WCAG 2.2 incluso)." -ForegroundColor Green
     } else {
-        Write-Warning "Playwright Smoke acusou pendencias:"
+        $qaFailed = $true
+        Write-Host "  [FAIL] Playwright Quality Smoke: exit=$pwExit, $passedN passed, $failedN failed." -ForegroundColor Red
         $pwOutput | Select-Object -Last 10 | ForEach-Object { Write-Host "    $_" -ForegroundColor Red }
     }
 } finally {
     Pop-Location
+}
+if ($qaFailed) {
+    throw "Quality Smoke E2E falhou; homeostase NAO atingida."
 }
 
 Write-Host "`n======================================================================" -ForegroundColor Cyan

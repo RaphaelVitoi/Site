@@ -8,7 +8,6 @@
     "rust-lang.rust-analyzer",
     "fill-labs.dependi",
     "tamasfe.even-better-toml",
-    "googlecloudtools.cloudcode",
     "googlecloudtools.datacloud",
     "anthropic.claude-code",
     "openai.chatgpt",

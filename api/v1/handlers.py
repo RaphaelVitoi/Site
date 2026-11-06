@@ -72,6 +72,13 @@ from core.schemas import RAGQuery, Task
 from database.lab_manager import LabPersistenceUnavailableError
 from engine.bayesian_range import calculate_pmev_call_threshold
 from engine.capability_registry import load_engine_capability_manifest
+from engine.chrysalis_bridge import (
+    CHRYSALIS_ERROR_STALE_REVISION,
+    ChrysalisClient,
+    EditPlan,
+    compute_revision,
+    validate_workspace_path,
+)
 from engine.game_theory_solvers import (
     ClaudicoActionTranslator,
     ContinualResolvingEngine,
@@ -1554,6 +1561,63 @@ async def handle_claudico_translate_action(request: web.Request) -> web.Response
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
         return _internal_error(e, "handle_claudico_translate_action", status="ERROR")
+
+
+async def handle_chrysalis_health(_request: web.Request) -> web.Response:
+    """Sonda o servico Chrysalis (loopback) e devolve saude + proveniencia."""
+    try:
+
+        def _probe() -> dict[str, Any]:
+            client = ChrysalisClient()
+            return client.get_health().to_dict()
+
+        health = await asyncio.to_thread(_probe)
+        return web.json_response({"status": "SUCCESS", "health": health})
+    except Exception as exc:
+        return _internal_error(exc, "handle_chrysalis_health", status="ERROR")
+
+
+async def handle_chrysalis_validate_plan(request: web.Request) -> web.Response:
+    """Valida plano de edicao com revisao otimista (sem mutar arquivo)."""
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    mode = str(body.get("mode", "accept"))
+    approved = body.get("approved") is True
+    mutation = mode != "plan"
+
+    def _validate() -> dict[str, Any]:
+        client = ChrysalisClient()
+        path = validate_workspace_path(str(body.get("workspace_path", "")))
+        content = str(body.get("content", ""))
+        new_content = str(body.get("new_content", ""))
+        expected = str(body.get("expected_revision") or compute_revision(content))
+        if expected != compute_revision(content):
+            raise RuntimeError(CHRYSALIS_ERROR_STALE_REVISION)
+        plan = EditPlan(
+            path=path,
+            new_content=new_content,
+            expected_revision=expected,
+            mode=mode,
+            approved=approved,
+        )
+        result = client.validate_edit(plan, current_revision=compute_revision(content), mutation=mutation)
+        return {"path": result.path, "revision": result.revision, "undo_id": result.undo_id}
+
+    try:
+        data = await asyncio.to_thread(_validate)
+        return web.json_response({"status": "SUCCESS", **data})
+    except PermissionError as exc:
+        return web.json_response({"status": "ERROR", "error": str(exc)}, status=403)
+    except RuntimeError as exc:
+        if "stale" in str(exc).lower() or "defasada" in str(exc).lower():
+            return web.json_response({"status": "ERROR", "error": str(exc)}, status=409)
+        return _internal_error(exc, "handle_chrysalis_validate_plan", status="ERROR")
+    except ValueError as exc:
+        return web.json_response({"status": "ERROR", "error": str(exc)}, status=400)
+    except Exception as exc:
+        return _internal_error(exc, "handle_chrysalis_validate_plan", status="ERROR")
 
 
 async def handle_engine_capabilities(_request: web.Request) -> web.Response:

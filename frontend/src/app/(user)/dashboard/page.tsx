@@ -2,6 +2,7 @@ import { SniperAdvisor } from '@/components/analytics/SniperAdvisor';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { NexusOperationsPanel } from '@/components/analytics/NexusOperationsPanel';
+import { ChrysalisLiveEnginePanel } from '@/components/analytics/ChrysalisLiveEnginePanel';
 import { NexusWarmupMeshPanel } from '@/components/analytics/NexusWarmupMeshPanel';
 import { buildNexusServerUrl } from '@/lib/api-contract';
 import { shouldQueryDashboardOrchestrator } from '@/lib/server/dashboard-orchestrator';
@@ -158,6 +159,7 @@ export default async function DashboardPage() {
 
 			<div className="sota-container -mt-12 relative z-10">
 				<NexusWarmupMeshPanel />
+				<ChrysalisLiveEnginePanel />
 				<NexusOperationsPanel />
 
 				{!telemetry.available || !predictive.available ? (
