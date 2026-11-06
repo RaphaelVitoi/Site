@@ -47,10 +47,11 @@ def _modelos_instalados() -> set[str]:
     try:
         import urllib.request
 
-        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=10) as resp:
+        # OLLAMA_URL e loopback http fixo (nao controlado por entrada externa).
+        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=10) as resp:  # noqa: S310
             data = json.loads(resp.read().decode("utf-8"))
             return {m["name"] for m in data.get("models", [])}
-    except Exception:
+    except Exception:  # noqa: S110 - fallback assincrono logo abaixo
         pass
 
     loop = asyncio.new_event_loop()

@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "governance": "Raphael Vitoi",
-  "updated_at": "2026-09-13",
+  "updated_at": "2026-11-05",
   "runtime_probe_required": true,
   "provenance_fields": [
     "engine_id",
@@ -339,6 +339,30 @@
         "/api/sota/laya/solve"
       ],
       "fallback_engine_id": "laya-s1-predict-fallback"
+    },
+    {
+      "engine_id": "chrysalis-live-engine-adapter",
+      "display_name": "Chrysalis Live Engine Adapter",
+      "family": "adapter",
+      "implementation_level": "adapter",
+      "runtime_availability": "code-available",
+      "runtimes": ["python", "typescript"],
+      "source_lineage": ["Chrysalis-Engine", "ProjectChrysalis", "Chico SOTA"],
+      "safe_label": "Adapter externo HTTP para Chrysalis Live Engine: revisao otimista, undo e modos Plan/Accept/Full com paridade Python/TypeScript",
+      "claims_allowed": ["revision-checked-edit", "undo-by-revision", "plan-accept-full-modes", "workspace-path-validation", "compaction-summary"],
+      "causal_parameters": ["workspace_path", "content", "new_content", "expected_revision", "mode", "approved"],
+      "reserved_parameters": [],
+      "units": ["revision-sha256", "http-status", "apps-count"],
+      "provenance_requirements": ["engine_id", "implementation_level", "assumptions", "limitations", "units"],
+      "assumptions": ["chrysalis-service-external-agpl", "http-only-boundary", "loopback-or-https-only"],
+      "limitations": ["not-a-chrysalis-engine-copy", "chat-endpoint-pending-live-probe", "offline-plan-validation-only"],
+      "consumer_paths": [
+        "engine/chrysalis_bridge.py",
+        "frontend/src/lib/chrysalis.ts",
+        "frontend/src/app/api/sota/chrysalis/route.ts"
+      ],
+      "api_routes": ["/api/sota/chrysalis"],
+      "fallback_engine_id": null
     }
   ]
 }
