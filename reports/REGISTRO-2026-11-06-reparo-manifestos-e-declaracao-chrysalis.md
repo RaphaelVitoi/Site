@@ -15,10 +15,10 @@ verificado:
 - cargo check --features wasm --target wasm32-unknown-unknown no nexus-core-rust (2026-11-06, getrandom 0.2.17 com feature js)
 - tests/test_governanca_skills.py 10 passed
 - npm audit high 0 apos revert do markdownlint-cli para 0.49.1
+- Suite completa do Site verde via pre-push hook (arvores 75105fce e 940453eb, 2026-11-06)
 - npm audit moderate 0 via overrides glob ^14.0.4 + deepmerge ^4.3.1 (2026-11-06; deepmerge restante com aceite formal em data/npm_cve_acceptances.json)
 nao_verificado:
-  - Suite completa do Site — hook executa; aqui rodou apenas o modulo de governanca de skills
-  - Repos de extensao (sota-chrome-cockpit, tab-autocomplete-nano) — auditados separadamente, fora deste commit
+  - Extensoes sota-chrome-cockpit/tab-autocomplete-nano: commits locais sem remoto (push impossivel); probe GPU corrigido em 94fc778/c448cdc
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
