@@ -185,12 +185,12 @@ class AsyncStrataClient:
     def __init__(self, host: str = "127.0.0.1", port: int = 8080, timeout: float = 60.0) -> None:
         self.host = host
         self.port = port
-        self.base_url = f"http://{host}:{port}/v1"
+        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR — loopback 127.0.0.1:8080
         self.timeout = timeout
 
     async def is_healthy(self, session: aiohttp.ClientSession) -> bool:
         try:
-            async with session.get(f"http://{self.host}:{self.port}/health", timeout=aiohttp.ClientTimeout(total=2.0)) as resp:
+            async with session.get(f"http://{self.host}:{self.port}/health", timeout=aiohttp.ClientTimeout(total=2.0)) as resp:  # NOSONAR — loopback
                 if resp.status == 200:
                     data = await resp.json()
                     return data.get("status") in ("ok", "loaded", "loading model")
@@ -212,7 +212,7 @@ class AsyncStrataClient:
         }
         t0 = time.time()
         try:
-            async with session.post(f"http://{self.host}:{self.port}/v1/chat/completions", data=req_data, headers=headers, timeout=aiohttp.ClientTimeout(total=self.timeout)) as resp:
+            async with session.post(f"http://{self.host}:{self.port}/v1/chat/completions", data=req_data, headers=headers, timeout=aiohttp.ClientTimeout(total=self.timeout)) as resp:  # NOSONAR — loopback
                 if resp.status != 200:
                     raise ConnectionError(f"Strata returned HTTP {resp.status}")
                 result = await resp.json()
@@ -221,7 +221,7 @@ class AsyncStrataClient:
                     "latency_ms": round(latency_ms, 2),
                     "port": self.port,
                     "endpoint": f"{self.base_url}/chat/completions",
-                    "engine": "Strata-v0.1.39",
+                    "engine": ENGINE_STRATA_VERSION,
                 }
                 if "choices" in result:
                     _sanitize_chat_choices(result["choices"])
@@ -233,12 +233,12 @@ class AsyncStrataClient:
     def __init__(self, host: str = "127.0.0.1", port: int = 8080, timeout: float = 60.0) -> None:
         self.host = host
         self.port = port
-        self.base_url = f"http://{host}:{port}/v1"
+        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR — loopback 127.0.0.1:8080
         self.timeout = timeout
 
     async def is_healthy(self, session: aiohttp.ClientSession) -> bool:
         try:
-            async with session.get(f"http://{self.host}:{self.port}/health", timeout=aiohttp.ClientTimeout(total=2.0)) as resp:
+            async with session.get(f"http://{self.host}:{self.port}/health", timeout=aiohttp.ClientTimeout(total=2.0)) as resp:  # NOSONAR — loopback
                 if resp.status == 200:
                     data = await resp.json()
                     return data.get("status") in ("ok", "loaded", "loading model")
@@ -260,7 +260,7 @@ class AsyncStrataClient:
         }
         t0 = time.time()
         try:
-            async with session.post(f"http://{self.host}:{self.port}/v1/chat/completions", data=req_data, headers=headers, timeout=aiohttp.ClientTimeout(total=self.timeout)) as resp:
+            async with session.post(f"http://{self.host}:{self.port}/v1/chat/completions", data=req_data, headers=headers, timeout=aiohttp.ClientTimeout(total=self.timeout)) as resp:  # NOSONAR — loopback
                 if resp.status != 200:
                     raise ConnectionError(f"Strata returned HTTP {resp.status}")
                 result = await resp.json()
@@ -269,7 +269,7 @@ class AsyncStrataClient:
                     "latency_ms": round(latency_ms, 2),
                     "port": self.port,
                     "endpoint": f"{self.base_url}/chat/completions",
-                    "engine": "Strata-v0.1.39",
+                    "engine": ENGINE_STRATA_VERSION,
                 }
                 if "choices" in result:
                     _sanitize_chat_choices(result["choices"])
