@@ -232,6 +232,7 @@
       "supabase-postgres-best-practices",
       "uv",
       "mcp-toolbox-database",
+      "chrysalis-live-editing",
       "site-session-handoff"
     ],
     "specialized_scripts": [

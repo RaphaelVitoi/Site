@@ -48,23 +48,23 @@
     "dev:all": "concurrently -n \"NEXT,RUFF,TEST\" -c \"cyan,yellow,green\" \"npm run dev\" \"npm run python:watch\" \"npm run python:test:watch\""
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^16.3.8",
+    "@next/bundle-analyzer": "^16.4.5",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "concurrently": "10.0.6",
     "jest": "30.5.2",
     "jest-environment-jsdom": "30.5.2",
-    "knip": "^6.35.1",
-    "lighthouse": "13.4.1",
+    "knip": "^6.44.1",
+    "lighthouse": "13.6.0",
     "markdownlint-cli": "^0.49.1",
-    "prettier": "3.9.6",
+    "prettier": "3.9.10",
     "prettier-plugin-tailwindcss": "0.8.1",
-    "rimraf": "6.1.3",
-    "turbo": "2.10.12",
-    "vitest": "^4.1.12"
+    "rimraf": "6.1.4",
+    "turbo": "2.11.10",
+    "vitest": "^5.1.0"
   },
   "overrides": {
-    "@vitest/mocker": "^4.1.12",
+    "@vitest/mocker": "^5.1.0",
     "postcss": "8.5.28",
     "dompurify": "^3.4.16",
     "@hono/node-server": "^1.19.15",
@@ -127,9 +127,9 @@
     ]
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.109",
+    "@ai-sdk/google": "^4.0.112",
     "@prisma/adapter-libsql": "7.10.1",
     "@prisma/client": "7.10.1",
-    "ai": "^7.0.159"
+    "ai": "^7.0.163"
   }
 }

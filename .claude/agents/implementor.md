@@ -26,6 +26,7 @@ Dominio absoluto em Next.js, React, Python e PowerShell SOTA. Engenharia de Soft
 - `supabase-postgres-best-practices`
 - `uv`
 - `mcp-toolbox-database`
+- `chrysalis-live-editing`
 - `site-session-handoff`
 
 ## Scripts & Ferramentas Integradas
