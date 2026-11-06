@@ -18,7 +18,7 @@ verificado:
 - Suite completa do Site verde via pre-push hook (arvores 75105fce e 940453eb, 2026-11-06)
 - npm audit moderate 0 via overrides glob ^14.0.4 + deepmerge ^4.3.1 (2026-11-06; deepmerge restante com aceite formal em data/npm_cve_acceptances.json)
 nao_verificado:
-  - Extensoes sota-chrome-cockpit/tab-autocomplete-nano: commits locais sem remoto (push impossivel); probe GPU corrigido em 94fc778/c448cdc
+  - "Extensoes sota-chrome-cockpit/tab-autocomplete-nano: commits locais sem remoto (push impossivel); probe GPU corrigido em 94fc778/c448cdc"
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
