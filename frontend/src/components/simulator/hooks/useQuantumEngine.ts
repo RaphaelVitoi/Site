@@ -574,8 +574,8 @@ export function useQuantumEngine({
 
   // SOTA FIX: Interceptador adaptativo. Protege o primeiro frame do React forçando o
   // contrato antigo do solver síncrono no novo formato estrito IP/OOP antes da resposta do Worker.
-  const formatSyncSolverResult = (
-    result: IcmDistortionResult,
+  const formatSyncSolverResult = useCallback(
+    (result: IcmDistortionResult,
     freqs: ChipEvFreqs,
     ipRp: number,
     oopRp: number,
@@ -605,7 +605,8 @@ export function useQuantumEngine({
         raise: formatMetric(result.oop?.raise?.center ?? freqs.oop_raise ?? 0),
       },
     };
-  };
+  }, []);
+
 
   // Distorção calculada só aqui. Até 2026-09-17 um worker refazia o mesmo solveIcmDistortion com os mesmos argumentos
   // 150 ms depois, e cada mudança renderizava duas vezes; o solver custa cerca de 10 µs por street (SIM-04).
@@ -644,6 +645,7 @@ export function useQuantumEngine({
       topologicAggression,
       postFlopPots,
       activePlayers,
+      formatSyncSolverResult,
     ],
   );
 
