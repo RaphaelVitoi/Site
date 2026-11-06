@@ -12,12 +12,12 @@ verificado:
 - Resolucao Python via uv pip compile (tenacity 9.1.4, google-genai 3.0.0, python-dateutil 4.0.0)
 - Resolucao JS via npm install --dry-run apos alinhamento de overrides
 - cargo check em wasm-equity e nexus-core-rust (default e --features python)
+- cargo check --features wasm --target wasm32-unknown-unknown no nexus-core-rust (2026-11-06, getrandom 0.2.17 com feature js)
 - tests/test_governanca_skills.py 10 passed
 - npm audit high 0 apos revert do markdownlint-cli para 0.49.1
+- npm audit moderate 0 via overrides glob ^14.0.4 + deepmerge ^4.3.1 (2026-11-06; deepmerge restante com aceite formal em data/npm_cve_acceptances.json)
 nao_verificado:
-  - Build wasm do nexus-core-rust (feature wasm/getrandom js) — requer target wasm, nao executado
   - Suite completa do Site — hook executa; aqui rodou apenas o modulo de governanca de skills
-  - 17 vulnerabilidades moderadas + 1 baixa do ecossistema jest 30 — correcao exige downgrade major, fora de escopo
   - Repos de extensao (sota-chrome-cockpit, tab-autocomplete-nano) — auditados separadamente, fora deste commit
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
