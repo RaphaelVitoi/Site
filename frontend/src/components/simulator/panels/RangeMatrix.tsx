@@ -286,7 +286,7 @@ export default function RangeMatrix({
 			{/* ═══ GRADE 13x13 COMPLETA, ANCORADA E 100% ESTÁVEL ═══ */}
 			<div className="simulator-matrix w-full bg-slate-950/80 p-2.5 sm:p-3.5 rounded-3xl border border-white/8 shadow-2xl backdrop-blur-3xl overflow-hidden select-none">
 				<div className="w-full grid grid-cols-13 gap-0.5 sm:gap-1">
-					{RANKS.map((r1, i) => (
+					{useMemo(() => RANKS.map((r1, i) => (
 						<React.Fragment key={`row-${r1}`}>
 							{RANKS.map((r2, j) => {
 								const isPair = i === j;
@@ -369,7 +369,7 @@ export default function RangeMatrix({
 								);
 							})}
 						</React.Fragment>
-					))}
+					)), [shoveProfile, activeRp, displayMode, selectedHand, hoveredHand, getCellColorAndBorder])}
 				</div>
 			</div>
 
