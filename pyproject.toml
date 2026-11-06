@@ -60,7 +60,7 @@ dependencies = [
     "onnxruntime>=1.31.1",
     "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
-    "google-genai>=2.34.0",
+    "google-genai>=3.0.0",
     "google-antigravity>=0.1.23",
     "openai>=3.46.0",
     "anthropic>=2.6.0",
@@ -235,7 +235,7 @@ constraint-dependencies = [
     # `override-dependencies`: um piso que falha a resolucao e o comportamento
     # certo quando a combinacao nao existe.
     "pyjwt>=2.14.0",
-    "oauthlib>=4.0.0",
+    "oauthlib>=4.0.1",
     # ── PISOS ADICIONAIS DE SEGURANCA (REMEDIACAO DEPENDABOT 2026-10-24) ───
     "filelock>=4.2.1",
     "brotli>=1.2.1",

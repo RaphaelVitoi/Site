@@ -1,12 +1,12 @@
 ---
-title: "Instrucoes de hospedeiro para GitHub Copilot"
-type: rule
-status: active
-owner: site-governance
-updated_at: 2026-10-30
+name: "Instrucoes de hospedeiro para GitHub Copilot"
+description: "Adapta o contexto do projeto Site para GitHub Copilot sem duplicar governanca."
+applyTo: "**"
 ---
 
 # Instrucoes de hospedeiro para GitHub Copilot
+
+<!-- type: rule | status: active | owner: site-governance | updated_at: 2026-10-30 -->
 
 Este arquivo adapta o contexto para o Copilot; nao duplica governanca ou
 politicas de engenharia.
