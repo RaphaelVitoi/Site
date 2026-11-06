@@ -1,4 +1,3 @@
-'use client';
 
 /**
  * IDENTITY: Simulador Mestre ICM SOTA v7.0 GOLD
@@ -7,19 +6,14 @@
  * DESIGN: Zero overhead — o MasterSimulator já contém toda a navegação interna.
  */
 
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ErrorBoundary } from '@/components/analytics/ErrorBoundary';
 import { ROUTES } from '@/constants/routes';
-
-const MasterSimulatorDynamic = dynamic(
-	() => import('@/components/simulator/MasterSimulator'),
-	{ ssr: false }
-);
+import MasterSimulatorLoader from './MasterSimulatorLoader';
 
 export default function MotorPage() {
 	return (
-		<div className="simulator-immersive min-h-screen bg-bg-base pt-3 text-text-bright overflow-x-hidden font-body">
+		<div className="simulator-immersive min-h-screen bg-bg-base pt-3 text-text-bright overflow-x-hidden font-body" style={{ contain: 'layout paint' }}>
 			{/* Barra compacta de navegação entre laboratórios */}
 			<div className="bg-slate-950/60 border-b border-white/5 backdrop-blur-xl">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3">
@@ -60,7 +54,7 @@ export default function MotorPage() {
 
 			{/* O Simulador Mestre ICM Unificado (full-width) */}
 			<ErrorBoundary>
-				<MasterSimulatorDynamic />
+				<MasterSimulatorLoader />
 			</ErrorBoundary>
 		</div>
 	);

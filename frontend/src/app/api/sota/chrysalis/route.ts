@@ -73,7 +73,8 @@ export async function GET(): Promise<NextResponse<ChrysalisHealthResponse>> {
 			cache: 'no-store',
 		});
 
-		if (res.ok) {
+		// Servidor no ar mesmo sem autenticação (401 esperado no primeiro acesso).
+		if (res.ok || res.status === 401 || res.status === 403) {
 			const data = await res.json().catch(() => ({}));
 			const raw = data as { apps?: unknown; items?: unknown };
 			let apps: unknown[] = [];

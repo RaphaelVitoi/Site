@@ -16,7 +16,9 @@ import { useSotaSync } from './hooks/useSotaSync';
 import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from './SotaContext';
 import { GuideToolbar } from './ui/GuideToolbar';
 import { NashDistortionViz } from './ui/NashDistortionViz';
-import SimulatorNavigation from './ui/SimulatorNavigation';
+const SimulatorNavigation = dynamic(() => import('./ui/SimulatorNavigation'), {
+  ssr: false,
+});
 import { useMasterCalculations } from './hooks/useMasterCalculations';
 import { useMasterSpotLogic } from './hooks/useMasterSpotLogic';
 import { useMasterHandlers } from './hooks/useMasterHandlers';

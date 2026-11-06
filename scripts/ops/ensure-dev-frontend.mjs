@@ -93,7 +93,7 @@ export async function ensureFrontend({ root, base = 'http://localhost:3000', tim
   if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) {
     throw new Error('Frontend configurado indisponivel; inicializacao automatica limitada ao loopback HTTP.');
   }
-  const logs = path.join(root, 'logs');
+  const logs = path.join(root, '..', 'site-dev-logs');
   await mkdir(logs, { recursive: true });
   const lockPath = path.join(logs, `dev-frontend-${url.port || '3000'}.lock`);
   const deadline = Date.now() + timeoutMs;
