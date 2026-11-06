@@ -10,7 +10,7 @@ export function alloc_range_buffer(size: number): number;
 /**
  * Interface FFI para Monte Carlo de Equidade
  */
-export function calculate_equity_monte_carlo_binary(hero_mask: Uint8Array, villain_mask: Uint8Array, board: string, iterations: number, seed: number, kappa: number): number;
+export function calculate_equity_monte_carlo_binary(hero_mask: Uint8Array | number[], villain_mask: Uint8Array | number[], board: string, iterations: number, seed: number, kappa: number): number;
 
 /**
  * SOTA: FFI Zero-Copy Pointer Input Multiway
@@ -43,18 +43,18 @@ export function solve_icm_distortion_v2(ip_rp: number, oop_rp: number, topologic
 /**
  * SOTA: FFI Zero-Copy O(1) para Distorção Quântica
  */
-export function solve_icm_distortion_zerocopy(payload: Float64Array): Float64Array;
+export function solve_icm_distortion_zerocopy(payload: Float64Array | number[]): Float64Array;
 
 /**
  * Interface FFI para Matriz de Insolvência
  */
-export function solve_insolvency_matrix_binary(villain_mask: Uint8Array, board: string, rp_factor: number, hero_invested: number, current_pot: number, active_players: number, iterations: number, seed: number, kappa: number): Array<unknown>;
+export function solve_insolvency_matrix_binary(villain_mask: Uint8Array | number[], board: string, rp_factor: number, hero_invested: number, current_pot: number, active_players: number, iterations: number, seed: number, kappa: number): Array<unknown>;
 
 /**
  * ABI WASM do adaptador heuristico multiway. Posicoes: BTN=0, CO=1, MP=2,
  * UTG=3, SB=4, BB=5. Streets: preflop=0, flop=1, turn=2, river=3.
  */
-export function solve_pluribus_multiway_adapter_wasm(pot: number, num_players: number, active_stacks: Float64Array, lambda_factor: number, nominal_equity: number, hero_position: number, street: number, depth_streets: number, iterations: number): Float64Array;
+export function solve_pluribus_multiway_adapter_wasm(pot: number, num_players: number, active_stacks: Float64Array | number[], lambda_factor: number, nominal_equity: number, hero_position: number, street: number, depth_streets: number, iterations: number): Float64Array;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
@@ -72,6 +72,7 @@ export interface InitOutput {
     readonly solve_pluribus_multiway_adapter_wasm: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;

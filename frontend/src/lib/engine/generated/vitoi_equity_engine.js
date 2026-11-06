@@ -13,8 +13,8 @@ export function alloc_range_buffer(size) {
 
 /**
  * Interface FFI para Monte Carlo de Equidade
- * @param {Uint8Array} hero_mask
- * @param {Uint8Array} villain_mask
+ * @param {Uint8Array | number[]} hero_mask
+ * @param {Uint8Array | number[]} villain_mask
  * @param {string} board
  * @param {number} iterations
  * @param {number} seed
@@ -22,13 +22,24 @@ export function alloc_range_buffer(size) {
  * @returns {number}
  */
 export function calculate_equity_monte_carlo_binary(hero_mask, villain_mask, board, iterations, seed, kappa) {
-    const ptr0 = passArray8ToWasm0(hero_mask, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passArray8ToWasm0(villain_mask, wasm.__wbindgen_malloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ptr2 = passStringToWasm0(board, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len2 = WASM_VECTOR_LEN;
-    const ret = wasm.calculate_equity_monte_carlo_binary(ptr0, len0, ptr1, len1, ptr2, len2, iterations, seed, kappa);
+    const val4 = +iterations;
+    const val5 = +seed;
+    const val6 = +kappa;
+    let ptr0, len0, ptr1, len1, ptr2, len2;
+    try {
+        ptr0 = passArray8ToWasm0(hero_mask, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = passArray8ToWasm0(villain_mask, wasm.__wbindgen_malloc);
+        len1 = WASM_VECTOR_LEN;
+        ptr2 = passStringToWasm0(board, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        len2 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr2) { wasm.__wbindgen_free(ptr2, len2 * 1, 1); }
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 1, 1); }
+        throw e;
+    }
+    const ret = wasm.calculate_equity_monte_carlo_binary(ptr0, len0, ptr1, len1, ptr2, len2, val4, val5, val6);
     return ret;
 }
 
@@ -116,7 +127,7 @@ export function solve_icm_distortion_v2(ip_rp, oop_rp, topologic_aggression, act
 
 /**
  * SOTA: FFI Zero-Copy O(1) para Distorção Quântica
- * @param {Float64Array} payload
+ * @param {Float64Array | number[]} payload
  * @returns {Float64Array}
  */
 export function solve_icm_distortion_zerocopy(payload) {
@@ -128,7 +139,7 @@ export function solve_icm_distortion_zerocopy(payload) {
 
 /**
  * Interface FFI para Matriz de Insolvência
- * @param {Uint8Array} villain_mask
+ * @param {Uint8Array | number[]} villain_mask
  * @param {string} board
  * @param {number} rp_factor
  * @param {number} hero_invested
@@ -140,11 +151,25 @@ export function solve_icm_distortion_zerocopy(payload) {
  * @returns {Array<unknown>}
  */
 export function solve_insolvency_matrix_binary(villain_mask, board, rp_factor, hero_invested, current_pot, active_players, iterations, seed, kappa) {
-    const ptr0 = passArray8ToWasm0(villain_mask, wasm.__wbindgen_malloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passStringToWasm0(board, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.solve_insolvency_matrix_binary(ptr0, len0, ptr1, len1, rp_factor, hero_invested, current_pot, active_players, iterations, seed, kappa);
+    const val3 = +rp_factor;
+    const val4 = +hero_invested;
+    const val5 = +current_pot;
+    const val6 = +active_players;
+    const val7 = +iterations;
+    const val8 = +seed;
+    const val9 = +kappa;
+    let ptr0, len0, ptr1, len1;
+    try {
+        ptr0 = passArray8ToWasm0(villain_mask, wasm.__wbindgen_malloc);
+        len0 = WASM_VECTOR_LEN;
+        ptr1 = passStringToWasm0(board, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        len1 = WASM_VECTOR_LEN;
+    } catch (e) {
+        if (ptr1) { wasm.__wbindgen_free(ptr1, len1 * 1, 1); }
+        if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 1, 1); }
+        throw e;
+    }
+    const ret = wasm.solve_insolvency_matrix_binary(ptr0, len0, ptr1, len1, val3, val4, val5, val6, val7, val8, val9);
     return ret;
 }
 
@@ -153,7 +178,7 @@ export function solve_insolvency_matrix_binary(villain_mask, board, rp_factor, h
  * UTG=3, SB=4, BB=5. Streets: preflop=0, flop=1, turn=2, river=3.
  * @param {number} pot
  * @param {number} num_players
- * @param {Float64Array} active_stacks
+ * @param {Float64Array | number[]} active_stacks
  * @param {number} lambda_factor
  * @param {number} nominal_equity
  * @param {number} hero_position
@@ -163,9 +188,17 @@ export function solve_insolvency_matrix_binary(villain_mask, board, rp_factor, h
  * @returns {Float64Array}
  */
 export function solve_pluribus_multiway_adapter_wasm(pot, num_players, active_stacks, lambda_factor, nominal_equity, hero_position, street, depth_streets, iterations) {
+    const val2 = +pot;
+    const val3 = +num_players;
+    const val4 = +lambda_factor;
+    const val5 = +nominal_equity;
+    const val6 = +hero_position;
+    const val7 = +street;
+    const val8 = +depth_streets;
+    const val9 = +iterations;
     const ptr0 = passArrayF64ToWasm0(active_stacks, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.solve_pluribus_multiway_adapter_wasm(pot, num_players, ptr0, len0, lambda_factor, nominal_equity, hero_position, street, depth_streets, iterations);
+    const ret = wasm.solve_pluribus_multiway_adapter_wasm(val2, val3, ptr0, len0, val4, val5, val6, val7, val8, val9);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -174,51 +207,51 @@ export function solve_pluribus_multiway_adapter_wasm(pot, num_players, active_st
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
-        __wbg___wbindgen_debug_string_4687d8d8c2017d52: function(arg0, arg1) {
+        __wbg___wbindgen_debug_string_f249a2a76caa9a55: function(arg0, arg1) {
             const ret = debugString(arg1);
             const ptr1 = passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 1, len1, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, ptr1, true);
         },
-        __wbg___wbindgen_number_get_2e0e7dee9f701a71: function(arg0, arg1) {
+        __wbg___wbindgen_number_get_934b640d0889af78: function(arg0, arg1) {
             const obj = arg1;
             const ret = typeof(obj) === 'number' ? obj : undefined;
-            getDataViewMemory0().setFloat64(arg0 + 8 * 1, isLikeNone(ret) ? 0 : ret, true);
-            getDataViewMemory0().setInt32(arg0 + 4 * 0, !isLikeNone(ret), true);
+            getDataViewMemory0().setFloat64((arg0 >>> 0) + 8 * 1, isLikeNone(ret) ? 0 : ret, true);
+            getDataViewMemory0().setInt32((arg0 >>> 0) + 4 * 0, !isLikeNone(ret), true);
         },
-        __wbg___wbindgen_throw_41e9ee4f547fc59a: function(arg0, arg1) {
+        __wbg___wbindgen_throw_4c88d8bf264fd984: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
         },
-        __wbg_get_31af05bd4842a84f: function() { return handleError(function (arg0, arg1) {
+        __wbg_get_2080c49015e35254: function() { return handleError(function (arg0, arg1) {
             const ret = Reflect.get(arg0, arg1);
             return ret;
         }, arguments); },
-        __wbg_new_617a8cdb8bb1130e: function() {
-            const ret = new Object();
-            return ret;
-        },
-        __wbg_new_ee2291f50781bf1d: function() {
+        __wbg_new_37eb45aaf5eeb820: function() {
             const ret = new Array();
             return ret;
         },
-        __wbg_new_from_slice_f545fd22ddc142b8: function(arg0, arg1) {
+        __wbg_new_cd4348290afae586: function() {
+            const ret = new Object();
+            return ret;
+        },
+        __wbg_new_from_slice_aaf85a9746711968: function(arg0, arg1) {
             const ret = new Float64Array(getArrayF64FromWasm0(arg0, arg1));
             return ret;
         },
-        __wbg_new_with_length_3827645dc5adb679: function(arg0) {
+        __wbg_new_with_length_07edd8a7019b8c30: function(arg0) {
             const ret = new Float64Array(arg0 >>> 0);
             return ret;
         },
-        __wbg_push_2baf45db356cf468: function(arg0, arg1) {
+        __wbg_push_c9f4893fc209f768: function(arg0, arg1) {
             const ret = arg0.push(arg1);
             return ret;
         },
-        __wbg_set_145a351398b48c65: function() { return handleError(function (arg0, arg1, arg2) {
+        __wbg_set_2793479888329cb6: function() { return handleError(function (arg0, arg1, arg2) {
             const ret = Reflect.set(arg0, arg1, arg2);
             return ret;
         }, arguments); },
-        __wbg_set_index_897c678888c01797: function(arg0, arg1, arg2) {
+        __wbg_set_index_6cd0e62dcffd1d2f: function(arg0, arg1, arg2) {
             arg0[arg1 >>> 0] = arg2;
         },
         __wbindgen_generic_0000000000000001: function(arg0) {
@@ -233,12 +266,11 @@ function __wbg_get_imports() {
         },
         __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
-            const offset = table.grow(4);
             table.set(0, undefined);
-            table.set(offset + 0, undefined);
-            table.set(offset + 1, null);
-            table.set(offset + 2, true);
-            table.set(offset + 3, false);
+            table.set(1024, undefined);
+            table.set(1025, null);
+            table.set(1026, true);
+            table.set(1027, false);
         },
     };
     return {
@@ -254,68 +286,61 @@ function addToExternrefTable0(obj) {
 }
 
 function debugString(val) {
-    // primitive types
-    const type = typeof val;
-    if (type == 'number' || type == 'boolean' || val == null) {
-        return  `${val}`;
-    }
-    if (type == 'string') {
-        return `"${val}"`;
-    }
-    if (type == 'symbol') {
-        const description = val.description;
-        if (description == null) {
-            return 'Symbol';
-        } else {
-            return `Symbol(${description})`;
+    switch (typeof val) {
+        // primitive types
+        case 'number':
+        case 'boolean':
+        case 'undefined':
+        return `${val}`;
+        case 'string':
+        return JSON.stringify(val);
+        case 'bigint':
+        return `${val}n`;
+        case 'symbol':
+        return val.description !== undefined
+            ? `Symbol(${val.description})`
+            : 'Symbol';
+        case 'function':
+        return typeof val.name === 'string' && val.name !== ''
+            ? `Function(${val.name})`
+            : 'Function';
+        case 'object': {
+            if (val === null) {
+                return 'null';
+            }
+            // objects
+            if (Array.isArray(val)) {
+                return '[' + Array.from(val, debugString).join(', ') + ']';
+            }
+            // errors
+            if (val instanceof Error) {
+                return `${val.name}: ${val.message}\n${val.stack}`;
+            }
+
+            const toStringOutput = toString.call(val);
+            // Test for built-in
+            const className = /\[object ([^\]]+)\]/.exec(toStringOutput)?.[1];
+
+            // Failed to match the standard '[object ClassName]'
+            if (className === undefined) {
+                return toStringOutput;
+            }
+            if (className === 'Object') {
+                // we're a user defined class or Object
+                // JSON.stringify avoids problems with cycles, and is generally much
+                // easier than looping through ownProperties of `val`.
+                try {
+                    return 'Object(' + JSON.stringify(val) + ')';
+                } catch (_) {
+                    return 'Object';
+                }
+            }
+            // TODO we could test for more things here, like `Set`s and `Map`s.
+            return className;
         }
+        // Per MDN: 'This list of values is exhaustive.'
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof#description
     }
-    if (type == 'function') {
-        const name = val.name;
-        if (typeof name == 'string' && name.length > 0) {
-            return `Function(${name})`;
-        } else {
-            return 'Function';
-        }
-    }
-    // objects
-    if (Array.isArray(val)) {
-        const length = val.length;
-        let debug = '[';
-        if (length > 0) {
-            debug += debugString(val[0]);
-        }
-        for(let i = 1; i < length; i++) {
-            debug += ', ' + debugString(val[i]);
-        }
-        debug += ']';
-        return debug;
-    }
-    // Test for built-in
-    const builtInMatches = /\[object ([^\]]+)\]/.exec(toString.call(val));
-    let className;
-    if (builtInMatches && builtInMatches.length > 1) {
-        className = builtInMatches[1];
-    } else {
-        // Failed to match the standard '[object ClassName]'
-        return toString.call(val);
-    }
-    if (className == 'Object') {
-        // we're a user defined class or Object
-        // JSON.stringify avoids problems with cycles, and is generally much
-        // easier than looping through ownProperties of `val`.
-        try {
-            return 'Object(' + JSON.stringify(val) + ')';
-        } catch (_) {
-            return 'Object';
-        }
-    }
-    // errors
-    if (val instanceof Error) {
-        return `${val.name}: ${val.message}\n${val.stack}`;
-    }
-    // TODO we could test for more things here, like `Set`s and `Map`s.
-    return className;
 }
 
 function getArrayF64FromWasm0(ptr, len) {
@@ -340,7 +365,8 @@ function getFloat64ArrayMemory0() {
 }
 
 function getStringFromWasm0(ptr, len) {
-    return decodeText(ptr >>> 0, len);
+    ptr = ptr >>> 0;
+    return decodeText(getUint8ArrayMemory0().subarray(ptr, ptr + len));
 }
 
 let cachedUint8ArrayMemory0 = null;
@@ -421,18 +447,18 @@ function takeFromExternrefTable0(idx) {
     return value;
 }
 
-let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
 cachedTextDecoder.decode();
 const MAX_SAFARI_DECODE_BYTES = 2146435072;
 let numBytesDecoded = 0;
-function decodeText(ptr, len) {
-    numBytesDecoded += len;
+function decodeText(bytes) {
+    numBytesDecoded += bytes.length;
     if (numBytesDecoded >= MAX_SAFARI_DECODE_BYTES) {
-        cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+        cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true });
         cachedTextDecoder.decode();
-        numBytesDecoded = len;
+        numBytesDecoded = bytes.length;
     }
-    return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len));
+    return cachedTextDecoder.decode(bytes);
 }
 
 const cachedTextEncoder = new TextEncoder();
@@ -521,9 +547,17 @@ function initSync(module) {
     return __wbg_finalize_init(instance, module);
 }
 
+let __wbg_init_promise;
 async function __wbg_init(module_or_path) {
     if (wasm !== undefined) return wasm;
+    if (__wbg_init_promise === undefined) {
+        __wbg_init_promise = __wbg_init_once(module_or_path);
+        __wbg_init_promise.catch(() => { __wbg_init_promise = undefined; });
+    }
+    return __wbg_init_promise;
+}
 
+async function __wbg_init_once(module_or_path) {
 
     if (module_or_path !== undefined) {
         if (Object.getPrototypeOf(module_or_path) === Object.prototype) {
