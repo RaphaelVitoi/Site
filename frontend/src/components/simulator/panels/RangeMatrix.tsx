@@ -78,7 +78,7 @@ export default function RangeMatrix({
 		return evaluateHandDetail(activeInspectorHand, shoveProfile, activeRp);
 	}, [activeInspectorHand, shoveProfile, activeRp]);
 
-	const getCellColorAndBorder = (detail: HandEquityDetail, mode: CellDisplayMode = displayMode) => {
+	const getCellColorAndBorder = React.useCallback((detail: HandEquityDetail, mode: CellDisplayMode = displayMode) => {
 		if (mode === 'FE_REQ') {
 			const feReq = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
 			if (feReq === 0) {
@@ -104,7 +104,7 @@ export default function RangeMatrix({
 			default:
 				return 'bg-slate-950/80 text-text-dim border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
 		}
-	};
+	}, [displayMode]);
 
 	const getVerdictBadge = (verdict: HandVerdict) => {
 		switch (verdict) {
