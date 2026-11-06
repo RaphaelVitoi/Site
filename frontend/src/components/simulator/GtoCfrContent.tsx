@@ -7,10 +7,12 @@
  */
 
 import { Suspense, useState } from 'react';
-import CfrRegretPanel from '@/components/simulator/panels/CfrRegretPanel';
-import PluribusMultiwayPanel from '@/components/simulator/panels/PluribusMultiwayPanel';
-import BayesianBeliefPanel from '@/components/simulator/panels/BayesianBeliefPanel';
-import PredictiveProfilePanel from '@/components/simulator/panels/PredictiveProfilePanel';
+import dynamic from 'next/dynamic';
+
+const CfrRegretPanel = dynamic(() => import('@/components/simulator/panels/CfrRegretPanel'), { ssr: false });
+const PluribusMultiwayPanel = dynamic(() => import('@/components/simulator/panels/PluribusMultiwayPanel'), { ssr: false });
+const BayesianBeliefPanel = dynamic(() => import('@/components/simulator/panels/BayesianBeliefPanel'), { ssr: false });
+const PredictiveProfilePanel = dynamic(() => import('@/components/simulator/panels/PredictiveProfilePanel'), { ssr: false });
 
 export interface GtoCfrContentProps {
 	initialPot?: number | undefined;
