@@ -98,3 +98,7 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
   2. **Selagem de Referências e Prevenção de Leak em Hooks:** Auditoria de hooks como `useMonteCarloConvergence.ts` e `useQuantumEngine.ts` para garantir que objetos de configuração instáveis não vazem re-renderizações para componentes filhos.
   3. **Otimização de Estruturas de Range / Matrizes de Poker:** Otimização de lookups matriciais em `frontend/src/lib/poker/`.
   4. **Entrega por Refutação (§10.1):** O Gemini 3.1 Pro deve medir baseline antes de gerar qualquer diff. Se a melhoria projetada for inferior a 5% ou degradar legibilidade/manutenibilidade, a hipótese deve ser **refutada e arquivada** no resumo da sessão, encerrando com sucesso sem criar Pull Request.
+## 2026-11-06 - Otimização de matriz O(N²) por memoização (RangeMatrix)
+
+**Learning:** Ao refatorar blocos JSX complexos para evitar re-renderizações por dependência trivial, preste atenção dobrada a callbacks auxiliares. A memoização da grade de mãos de poker (`RANKS.map` dentro de `useMemo` no componente `RangeMatrix`) eliminou 169 cálculos on-the-fly (`evaluateHandDetail`) para cada alteração de hover, mas dependia do método `getCellColorAndBorder`.
+**Action:** Métodos auxiliares devem ser agrupados com `useCallback` e alimentados como dependência no array do `useMemo` principal se seus escopos se cruzarem para respeitar regras estritas do linter (eslint react-hooks/exhaustive-deps) e garantir a estabilidade do hook em Next.js.

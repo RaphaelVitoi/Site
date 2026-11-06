@@ -78,7 +78,7 @@ export default function RangeMatrix({
 		return evaluateHandDetail(activeInspectorHand, shoveProfile, activeRp);
 	}, [activeInspectorHand, shoveProfile, activeRp]);
 
-	const getCellColorAndBorder = (detail: HandEquityDetail, mode: CellDisplayMode = displayMode) => {
+	const getCellColorAndBorder = React.useCallback((detail: HandEquityDetail, mode: CellDisplayMode = displayMode) => {
 		if (mode === 'FE_REQ') {
 			const feReq = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
 			if (feReq === 0) {
@@ -104,7 +104,7 @@ export default function RangeMatrix({
 			default:
 				return 'bg-slate-950/80 text-text-dim border-white/5 hover:bg-rose-950/60 hover:text-rose-300 hover:border-rose-500/40';
 		}
-	};
+	}, [displayMode]);
 
 	const getVerdictBadge = (verdict: HandVerdict) => {
 		switch (verdict) {
@@ -286,7 +286,7 @@ export default function RangeMatrix({
 			{/* ═══ GRADE 13x13 COMPLETA, ANCORADA E 100% ESTÁVEL ═══ */}
 			<div className="simulator-matrix w-full bg-slate-950/80 p-2.5 sm:p-3.5 rounded-3xl border border-white/8 shadow-2xl backdrop-blur-3xl overflow-hidden select-none">
 				<div className="w-full grid grid-cols-13 gap-0.5 sm:gap-1">
-					{RANKS.map((r1, i) => (
+					{useMemo(() => RANKS.map((r1, i) => (
 						<React.Fragment key={`row-${r1}`}>
 							{RANKS.map((r2, j) => {
 								const isPair = i === j;
@@ -369,7 +369,7 @@ export default function RangeMatrix({
 								);
 							})}
 						</React.Fragment>
-					))}
+					)), [shoveProfile, activeRp, displayMode, selectedHand, hoveredHand, getCellColorAndBorder])}
 				</div>
 			</div>
 
