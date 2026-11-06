@@ -47,11 +47,11 @@ def _modelos_instalados() -> set[str]:
     try:
         import urllib.request
 
-        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=10) as resp:
+        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=10) as resp:  # noqa: S310
             data = json.loads(resp.read().decode("utf-8"))
             return {m["name"] for m in data.get("models", [])}
     except Exception:
-        pass
+        print("Failed to load ollama models")
 
     loop = asyncio.new_event_loop()
     try:
