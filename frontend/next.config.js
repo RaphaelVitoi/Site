@@ -30,6 +30,9 @@ const nextConfig = {
     root: path.resolve(__dirname, '..'),
   },
   agentRules: false,
+  experimental: {
+    mcpServer: false,
+  },
   async headers() {
     return [
       {

@@ -1,7 +1,7 @@
 'use client';
 
 import { type PhysicsSnapshot } from '@/lib/schemas';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useDebouncedLocalStorage } from './useDebouncedLocalStorage';
 
 // ============================================================================
@@ -70,12 +70,15 @@ export function SotaGlobalSyncProvider({ children }: { readonly children: React.
 	);
 	const [physics, setPhysics] = useState<SotaPhysicsState>(defaultPhysics);
 	const [isHydrated, setIsHydrated] = useState(false);
+	const lastPersistedRef = useRef<string>(JSON.stringify(defaultPhysics));
 
 	// Hidratação: só depois que o hook terminou de ler o localStorage. Hidratar antes disso copiava
 	// o padrão e, na sequência, o efeito de persistência gravava o padrão por cima do salvo (FE-02).
 	useEffect(() => {
 		if (isHydrated || !isStorageLoaded) return;
-		setPhysics({ ...defaultPhysics, ...storedPhysics });
+		const next = { ...defaultPhysics, ...storedPhysics };
+		setPhysics(next);
+		lastPersistedRef.current = JSON.stringify(next);
 		setIsHydrated(true);
 	}, [storedPhysics, isStorageLoaded, isHydrated]);
 
@@ -97,7 +100,11 @@ export function SotaGlobalSyncProvider({ children }: { readonly children: React.
 	// Removemos a mutação de I/O de dentro do 'setPhysics', garantindo que o State Updater seja Puro.
 	// Impede que o React Strict Mode ou o Concurrent Mode disparem escritas redundantes durante Stress Tests.
 	useEffect(() => {
-		if (isHydrated) setStoredPhysics(physics);
+		if (!isHydrated) return;
+		const serialized = JSON.stringify(physics);
+		if (serialized === lastPersistedRef.current) return;
+		lastPersistedRef.current = serialized;
+		setStoredPhysics(physics);
 	}, [physics, isHydrated, setStoredPhysics]);
 
 	const contextValue = React.useMemo(

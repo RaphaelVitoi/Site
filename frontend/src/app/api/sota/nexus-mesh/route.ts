@@ -55,7 +55,7 @@ async function pingEndpoint(
     } else {
       data = await response.text().catch(() => null);
     }
-    return { ok: response.ok || response.status === 404 || response.status === 403, status: response.status, latencyMs: Math.round(elapsed), data };
+    return { ok: response.status < 500, status: response.status, latencyMs: Math.round(elapsed), data };
   } catch {
     const elapsed = performance.now() - t0;
     return { ok: false, status: 0, latencyMs: Math.round(elapsed), data: null };
@@ -196,7 +196,14 @@ export async function GET() {
     ? 'Python Aiohttp server respondendo ao /ping com sucesso'
     : 'Servidor Python 17042 inativo ou em modo headless';
 
-  // 6. Motor Analitico DuckDB & Percepcao
+  // 6. Chrysalis Live Engine (8788)
+  const chrysalis = await pingEndpoint('http://127.0.0.1:8788/', 1000);
+  const chrysalisStatus: 'ACTIVE' | 'OFFLINE' = chrysalis.ok ? 'ACTIVE' : 'OFFLINE';
+  const chrysalisDetails = chrysalis.ok
+    ? 'Chrysalis Live Engine operacional (servico externo AGPL)'
+    : 'Chrysalis Live Engine indisponivel em 8788';
+
+  // 7. Motor Analitico DuckDB & Percepcao
   const perceptionNode: EcosystemNode = {
     id: 'perception-som',
     name: 'SOTA Multimodal & SoM Engine',
@@ -234,7 +241,7 @@ export async function GET() {
       role: 'Inferencia neural de alta velocidade (Gemini 3.5/3.8 Flash + Vercel Gateway)',
       port: 'Cloud / Edge',
       protocol: 'AI SDK 7.0 / REST',
-      status: process.env['GEMINI_API_KEY'] ? 'ACTIVE' : 'STANDBY',
+      status: (backendStatus === 'ACTIVE' || ollama.status === 'ACTIVE') ? 'ACTIVE' : 'STANDBY',
       latencyMs: 140,
       details: 'Roteador agentico ativo com Gemini 3.5/3.8 Flash e failover deterministico',
       category: 'llm',
@@ -290,6 +297,18 @@ export async function GET() {
       latencyMs: playwrightMcp.latencyMs,
       details: playwrightDetails,
       category: 'mcp',
+      actionAvailable: false,
+    },
+    {
+      id: 'chrysalis-live-engine',
+      name: 'Chrysalis Live Engine (Adapter)',
+      role: 'Servico externo AGPL de frontend adaptativo e edicao live',
+      port: 8788,
+      protocol: 'HTTP REST',
+      status: chrysalisStatus,
+      latencyMs: chrysalis.latencyMs,
+      details: chrysalisDetails,
+      category: 'backend',
       actionAvailable: false,
     },
     perceptionNode,
