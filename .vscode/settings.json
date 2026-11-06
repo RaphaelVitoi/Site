@@ -423,7 +423,8 @@
         "*.excalidraw.json": "editor.excalidraw",
         "*.excalidraw.svg": "editor.excalidraw",
         "*.md": "ultimateViewer.preview",
-        "*.png": "ultimateViewer.preview"
+        "*.png": "ultimateViewer.preview",
+        "*.csv": "ultimateViewer.preview"
     },
     "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
     "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
