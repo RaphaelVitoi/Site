@@ -2283,7 +2283,7 @@ wheels = [
 
 [[package]]
 name = "laya"
-version = "0.4.26"
+version = "0.4.27"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -2293,9 +2293,9 @@ dependencies = [
     { name = "transformers" },
     { name = "vegaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1c/3f/04ab58b5d15f5c5f2d62bd3f1aa626f4272c36edbcd057d057d5dcd7714a/laya-0.4.26.tar.gz", hash = "sha256:56bb4e72e2e2b55cce1d3de879f1feff2f6a2799eb8c04d3e9141ef50e58786a", size = 1449340, upload-time = "2026-11-05T20:51:04.309Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cb/34/e1a057f5d69625364a9180b6e513b6a49587d947ad3cd8b32059257adb9f/laya-0.4.27.tar.gz", hash = "sha256:813a2471dbfd5742723e02080c670d29a49f6bf18bd5efd89faf1842d8a63faa", size = 1459719, upload-time = "2026-11-06T16:44:18.34Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fe/06/cdbb35d6073fde2bda4fa9ad865914385ea099ac01ad489149cd33d205d6/laya-0.4.26-py3-none-any.whl", hash = "sha256:0c3bf5416187b6fdf74706c80b95a9b8e90ce90f39e1f4be818ed936aa31e4bf", size = 493264, upload-time = "2026-11-05T20:51:02.522Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/e6/00228eb4dd10ab71492a4ecef6e04f94eb442fc59284789a108c7a070a22/laya-0.4.27-py3-none-any.whl", hash = "sha256:68851194dd461c16534c8223bc6530dbcec35ade4e9c6dfc8aefb330de7094f7", size = 495896, upload-time = "2026-11-06T16:44:16.169Z" },
 ]
 
 [[package]]
@@ -3091,7 +3091,7 @@ requires-dist = [
     { name = "google-genai", specifier = ">=3.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "lancedb", specifier = ">=0.41.0,<1.0.0" },
-    { name = "laya", specifier = ">=0.4.26" },
+    { name = "laya", specifier = ">=0.4.27" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.11.2" },
     { name = "mcp", specifier = ">=2.3.0" },
@@ -3139,7 +3139,7 @@ requires-dist = [
     { name = "tenacity", specifier = ">=9.1.4,<9.2.0" },
     { name = "timesfm", extras = ["torch"], specifier = "==3.0.2" },
     { name = "tqdm", specifier = ">=4.70.1,<5.0.0" },
-    { name = "typer", specifier = ">=0.27.3" },
+    { name = "typer", specifier = ">=0.28.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
     { name = "watchdog", specifier = ">=7.1.0,<8.0.0" },
     { name = "watchfiles", specifier = ">=1.3.0,<2.0.0" },
