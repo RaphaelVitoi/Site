@@ -8,7 +8,6 @@ Utiliza especulacao de tokens via modelo draft (Flash 2) para acelerar a geracao
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from llm.local_engine_client import LocalEngineClient
 
@@ -17,6 +16,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SPLASH_HOST = "127.0.0.1"
 DEFAULT_SPLASH_PORT = 8081
 ENGINE_SPLASH_VERSION = "Splash-Metal-v1.3.2"
+
 
 class SplashServerOfflineError(Exception):
     """SOTA GOLD: Exception raised when Splash server is unreachable."""
@@ -28,6 +28,7 @@ class SplashServerOfflineError(Exception):
             f"Please ensure the Splash engine is running via LM Studio Bionic or the local server."
         )
         super().__init__(self.message)
+
 
 class LocalSplashClient(LocalEngineClient):
     """Cliente HTTP sincrono para a engine Splash."""

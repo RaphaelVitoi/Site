@@ -320,6 +320,7 @@ class StrataStrategy(LLMProviderStrategy):
         )
         return content, usage
 
+
 class SplashStrategy(LLMProviderStrategy):
     """Strategy implementation for local Splash engine (port 8081)."""
 
