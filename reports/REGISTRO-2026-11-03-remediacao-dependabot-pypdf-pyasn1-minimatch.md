@@ -22,6 +22,7 @@ caminhos:
 - reports/REGISTRO-2026-11-03-remediacao-dependabot-pypdf-pyasn1-minimatch.md
 - uv.lock
 config_medida:
+  congelada_em: '2026-11-03'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: 3.14.7

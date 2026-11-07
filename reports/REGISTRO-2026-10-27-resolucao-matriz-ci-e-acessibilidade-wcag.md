@@ -15,6 +15,7 @@ caminhos:
   - tests/test_arbitrator.py
   - reports/REGISTRO-2026-10-27-resolucao-matriz-ci-e-acessibilidade-wcag.md
 config_medida:
+  congelada_em: '2026-10-27'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'

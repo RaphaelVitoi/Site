@@ -1002,6 +1002,44 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     return erros, avisos
 
 
+def _resumir_nao_vigentes(nao_vigentes: list[str]) -> None:
+    print(
+        f"\n   AVISOS ({len(nao_vigentes)}) em registros historicos nao vigentes "
+        "(ancoras passadas atingidas; nao bloqueiam o commit):"
+    )
+    por_motivo: dict[str, int] = {}
+    for a in nao_vigentes:
+        m = re.search(r"\(([^)]+)\)", a)
+        chave = m.group(1) if m else "outros"
+        por_motivo[chave] = por_motivo.get(chave, 0) + 1
+    for motivo, total in sorted(por_motivo.items(), key=lambda x: -x[1]):
+        print(f"      - [{total}] {motivo}")
+
+
+def _imprimir_avisos(avisos: list[str]) -> None:
+    if not avisos:
+        return
+    nao_vigentes = [a for a in avisos if "Nao bloqueia: registro nao vigente" in a]
+    for a in avisos:
+        if a not in nao_vigentes:
+            print(f"   AVISO: {a}")
+
+    if not nao_vigentes:
+        return
+    if len(nao_vigentes) > 5:
+        _resumir_nao_vigentes(nao_vigentes)
+        return
+    for a in nao_vigentes:
+        print(f"   AVISO: {a}")
+
+
+def _imprimir_erros(erros: list[str]) -> None:
+    print(f"\nERROS ({len(erros)}) - commit BLOQUEADO:")
+    for e in erros:
+        print(f"   {e}")
+    print("\nNao contorne. A governanca proibe bypass: investigue o achado.\n")
+
+
 def main() -> int:
     if not arquivos_em_stage():
         # MEDIDO EM 2026-09-12, logo depois de a SS9.2 entrar em vigor. A lista de
@@ -1020,14 +1058,10 @@ def main() -> int:
     print("[PORTAO DE REGISTRO] M.O. 13.F -- documento inteiro, e referencia viva (2-B frente 5)")
     print("=" * 70)
 
-    for a in avisos:
-        print(f"   AVISO: {a}")
+    _imprimir_avisos(avisos)
 
     if erros:
-        print(f"\nERROS ({len(erros)}) - commit BLOQUEADO:")
-        for e in erros:
-            print(f"   {e}")
-        print("\nNao contorne. A governanca proibe bypass: investigue o achado.\n")
+        _imprimir_erros(erros)
         return 1
 
     print(f"\nAPROVADO. Registros e origens integros em {len(arquivos_em_stage())} arquivo(s) em stage.")

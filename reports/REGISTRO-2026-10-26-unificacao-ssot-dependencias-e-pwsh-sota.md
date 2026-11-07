@@ -15,6 +15,7 @@ caminhos:
   - requirements.txt
   - uv.lock
 config_medida:
+  congelada_em: '2026-10-26'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'

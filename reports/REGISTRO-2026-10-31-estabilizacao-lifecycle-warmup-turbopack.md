@@ -16,6 +16,7 @@ caminhos:
   - scripts/ops/Invoke-SotaServerLifecycle.ps1
   - uv.lock
 config_medida:
+  congelada_em: '2026-10-31'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'

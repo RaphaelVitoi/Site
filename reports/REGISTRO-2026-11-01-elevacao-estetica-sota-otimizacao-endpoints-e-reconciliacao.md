@@ -31,6 +31,7 @@ caminhos:
   - tests/test_llm_ollama_integracao_real.py
   - reports/REGISTRO-2026-11-01-elevacao-estetica-sota-otimizacao-endpoints-e-reconciliacao.md
 config_medida:
+  congelada_em: '2026-11-01'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'

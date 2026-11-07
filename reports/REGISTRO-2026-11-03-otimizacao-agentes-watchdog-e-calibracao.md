@@ -24,6 +24,7 @@ caminhos:
 - scripts/routines/sync_agents_reality.ps1
 - uv.lock
 config_medida:
+  congelada_em: '2026-11-03'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: 3.14.7
