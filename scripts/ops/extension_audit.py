@@ -87,7 +87,7 @@ def _audit_chrome_key(ext: str, m: dict) -> None:
 def _audit_chrome_oauth(ext: str, m: dict) -> None:
     oauth = m.get("oauth2", {})
     client_id = oauth.get("client_id", "")
-    is_hardcoded = bool(client_id) and "{{" not in client_id and ".apps.googleusercontent.com" in client_id
+    is_hardcoded = bool(client_id) and "{{" not in client_id and client_id.endswith(".apps.googleusercontent.com")
     if is_hardcoded:
         warn(f"{ext}: OAuth client_id hardcoded in manifest (should be externalized)")
         return

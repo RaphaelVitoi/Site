@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 from datetime import UTC, datetime, timedelta
 import hashlib
+import hmac
 import logging
 import os
 import threading
@@ -318,8 +319,12 @@ async def _register_route_failure(route_key: str):
             ROUTE_BLOCKLIST[route_key] = datetime.now(UTC) + cooldown
 
 
+_HMAC_BUDGET_SALT: bytes = b"sota_budget_pool_salt"
+
+
 def _key_fingerprint(provider: str, key: str) -> str:
-    digest = hashlib.sha256(f"{provider}:{key}".encode()).hexdigest()
+    msg = f"{provider}:{key}".encode()
+    digest = hmac.new(_HMAC_BUDGET_SALT, msg, hashlib.sha256).hexdigest()
     return digest[:24]
 
 

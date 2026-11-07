@@ -1123,11 +1123,17 @@ _DASHBOARD_SHORTCUTS: tuple[_Atalho, ...] = (
     _Atalho("i", _GRP_OPERACOES, "ops chat-gemma", "Chat Gemma interativo", ("ops", "chat-gemma")),
     _Atalho("5", _GRP_AGENTES, "agent handoff", "Sessao Web (Clipboard)", ("agent", "handoff")),
     _Atalho(
-        "6", _GRP_AGENTES, "agent route", "Testar Roteamento",
+        "6",
+        _GRP_AGENTES,
+        "agent route",
+        "Testar Roteamento",
         ("agent", "route", "Teste de roteamento do dashboard"),
     ),
     _Atalho(
-        "d", _GRP_AGENTES, "agent dream-optimize", "Fase de Sonho (TimesFM 3.0)",
+        "d",
+        _GRP_AGENTES,
+        "agent dream-optimize",
+        "Fase de Sonho (TimesFM 3.0)",
         ("agent", "dream-optimize", "--model", "3.0", "--research"),
     ),
     _Atalho("k", _GRP_AGENTES, "calib-forecast", "Calibracao & TimesFM", ("agent", "calibration-forecast")),
@@ -1266,7 +1272,9 @@ def _execute_shortcut(key: str) -> int | None:
         return None
 
     console.clear()
-    console.print(f"[bold #ff79c6]=== EXECUTANDO ATALHO SOTA: {escape('[' + key.upper() + ']')} nexus {atalho.comando} ===[/]")
+    console.print(
+        f"[bold #ff79c6]=== EXECUTANDO ATALHO SOTA: {escape('[' + key.upper() + ']')} nexus {atalho.comando} ===[/]"
+    )
     if atalho.destrutivo:
         resposta = console.input("[bold #ff5555]Acao DESTRUTIVA e irreversivel. Digite SIM para confirmar: [/]")
         if resposta.strip().upper() != "SIM":

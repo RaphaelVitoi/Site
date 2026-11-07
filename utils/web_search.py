@@ -10,6 +10,7 @@ import os
 import re
 import time
 from typing import Literal
+from urllib.parse import urlparse
 
 import httpx
 
@@ -177,7 +178,10 @@ def _parse_ddg_html(html: str, max_results: int) -> list[SearchResult]:
         url = url.strip()
         if url.startswith("//"):
             url = "https:" + url
-        if not url.startswith("http") or "duckduckgo.com" in url:
+        if not url.startswith("http"):
+            continue
+        domain = (urlparse(url).netloc or "").lower()
+        if domain == "duckduckgo.com" or domain.endswith(".duckduckgo.com"):
             continue
         results.append(
             SearchResult(

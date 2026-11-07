@@ -21,6 +21,8 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "opencv-python-headless"
         update-types: ["version-update:semver-major"]
+      - dependency-name: "tenacity"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
   # Frontend & monorepo dependencies (npm / package.json workspaces)
   - package-ecosystem: "npm"

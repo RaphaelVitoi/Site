@@ -18,6 +18,7 @@ import asyncio
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 import hashlib
+import hmac
 import logging
 import os
 import sys
@@ -29,9 +30,12 @@ DEFAULT_COOLDOWN_429 = timedelta(seconds=45)
 DEFAULT_COOLDOWN_SERVER_ERROR = timedelta(seconds=15)
 
 
+_HMAC_SALT: bytes = b"sota_gemini_pool_salt"
+
+
 def _key_sha8(key: str) -> str:
     """Calcula fingerprint truncado de 8 caracteres do token para telemetria sem vazamento."""
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:8]
+    return hmac.new(_HMAC_SALT, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
 
 
 class GeminiWorkload(StrEnum):

@@ -115,7 +115,7 @@ def run_diagnostic(api_key):
     print(
         "--- DIAGNOSTICO DE REDE SOTA ---\n"
         "Alvo: generativelanguage.googleapis.com\n"
-        f"Chave: {api_key[:8]}...\n"
+        f"Chave: [CONFIGURADA - {len(api_key)} chars]\n"
         "---------------------------------"
     )
     try:

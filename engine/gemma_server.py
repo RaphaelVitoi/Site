@@ -699,8 +699,8 @@ async def _stream_openai_compat(
                 if parsed:
                     yield parsed
     except Exception as e:  # noqa: BLE001
-        logger.warning("[%s] Excecao: %s", label, e)
-        yield f"\n[ERRO CLOUD - {label}]: {e}\n"
+        logger.warning("[%s] Excecao: %s", label, e, exc_info=True)
+        yield f"\n[ERRO CLOUD - {label}]: Falha de comunicacao com o provedor cloud.\n"
 
 
 def _parse_ollama_chunk(line_str: str) -> tuple[str, bool]:
@@ -1017,10 +1017,10 @@ async def _stream_local(
                 yielded_any = True
                 yield chunk
     except Exception as e:
-        logger.warning("[ROTEAMENTO LOCAL] Erro ao consultar Ollama nativo para %s: %s", target_model, e)
+        logger.warning("[ROTEAMENTO LOCAL] Erro ao consultar Ollama nativo para %s: %s", target_model, e, exc_info=True)
         if not yielded_any:
             raise
-        yield f"\n[ERRO LOCAL - STREAM ABORTADO]: {e}\n"
+        yield "\n[ERRO LOCAL - STREAM ABORTADO]: Falha de inferencia local no motor Ollama.\n"
 
 
 async def _stream_gemini(
