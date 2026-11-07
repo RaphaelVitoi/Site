@@ -98,3 +98,6 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
   2. **Selagem de Referências e Prevenção de Leak em Hooks:** Auditoria de hooks como `useMonteCarloConvergence.ts` e `useQuantumEngine.ts` para garantir que objetos de configuração instáveis não vazem re-renderizações para componentes filhos.
   3. **Otimização de Estruturas de Range / Matrizes de Poker:** Otimização de lookups matriciais em `frontend/src/lib/poker/`.
   4. **Entrega por Refutação (§10.1):** O Gemini 3.1 Pro deve medir baseline antes de gerar qualquer diff. Se a melhoria projetada for inferior a 5% ou degradar legibilidade/manutenibilidade, a hipótese deve ser **refutada e arquivada** no resumo da sessão, encerrando com sucesso sem criar Pull Request.
+## 2024-05-18 - [Reference sealing custom hooks]
+**Learning:** Returning unmemoized literal objects from custom hooks like `useQuantumEngine` causes widespread downstream re-renders and potential O(N³) GC thrashing when the returned properties are used as dependencies in children components, as they break referential equality.
+**Action:** Always wrap complex return objects from central custom hooks in `useMemo` with explicit dependency arrays to ensure reference stability across renders.
