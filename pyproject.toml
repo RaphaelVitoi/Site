@@ -15,7 +15,7 @@ dependencies = [
     "aiofiles>=25.1.0",
     "aiohttp>=3.14.5",
     "aiosqlite>=0.22.1",
-    "fastapi>=0.162.0",
+    "fastapi>=0.162.1",
     "multidict>=7.2.1",
     "uvicorn[standard]>=0.54.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
@@ -76,7 +76,7 @@ dependencies = [
     # e nao levanta o teto. Zero imports no codigo - so figurava aqui.
     "opencv-python-headless>=5.0.0.93,<6.0.0",
     # ── UTILITARIOS ───────────────────────────────────────────────────
-    "regex>=2026.9.29",
+    "regex>=2026.11.7",
     "requests>=2.34.2,<3.0.0",
     "PyYAML>=6.0.3,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",
@@ -158,7 +158,7 @@ dev = [
     "cmake>=4.4.4",
     "ninja>=1.13.2",
     "locust>=2.47.0",
-    "types-aiofiles>=25.1.0.20260518",
+    "types-aiofiles>=25.1.0.20261107",
     "types-psutil>=7.2.2.20260906",
     "types-defusedxml>=0.7.0.20260504",
     "types-PyYAML>=6.0.12.20261103",
