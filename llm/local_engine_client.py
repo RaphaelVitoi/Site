@@ -13,12 +13,11 @@ import re
 import time
 from typing import Any
 
-import aiohttp
-
 logger = logging.getLogger(__name__)
 
 CONTENT_TYPE_JSON = "application/json"
 AUTH_BEARER_LOCAL = "Bearer local"
+
 
 def sanitize_think_tags(text: str) -> str:
     """Remove tags de raciocinio <think>...</think> emitidas pelo modelo local."""
@@ -27,6 +26,7 @@ def sanitize_think_tags(text: str) -> str:
     cleaned = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
     return cleaned.strip()
 
+
 def _sanitize_chat_choices(choices: list[dict[str, Any]]) -> None:
     for choice in choices:
         msg = choice.get("message")
@@ -34,6 +34,7 @@ def _sanitize_chat_choices(choices: list[dict[str, Any]]) -> None:
             raw_content = msg.get("content")
             if raw_content:
                 msg["content"] = sanitize_think_tags(raw_content)
+
 
 def _build_chat_payload(
     messages: list[dict[str, str]],
@@ -56,6 +57,7 @@ def _build_chat_payload(
     if response_format:
         payload["response_format"] = response_format
     return payload
+
 
 class LocalEngineClient:
     """Base client for local LLM engines."""

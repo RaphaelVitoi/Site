@@ -7,6 +7,7 @@ from __future__ import annotations
 
 # pylint: disable=redefined-outer-name,protected-access
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -50,7 +51,7 @@ def test_lancedb_backend_upsert_and_hybrid_search(temp_lance_dir: Path):
 
 
 def test_memory_rag_complexity_detection():
-    rag = MemoryRAG.__new__(MemoryRAG)
+    rag: Any = MemoryRAG.__new__(MemoryRAG)
 
     assert rag._is_high_complexity_query("Como calcular o Teorema de Vitoi na PMev?") is True
     assert rag._is_high_complexity_query("Explique a autopoiese do simplex e invariantes de risco.") is True
@@ -64,7 +65,7 @@ def test_memory_rag_complexity_detection():
 def test_non_latin_query_uses_federated_retrieval_when_laya_detects_script(monkeypatch):
     from llm import laya_bridge
 
-    rag = MemoryRAG.__new__(MemoryRAG)
+    rag: Any = MemoryRAG.__new__(MemoryRAG)
     rag.lance_backend = object()
     monkeypatch.setattr(
         laya_bridge,
@@ -104,7 +105,7 @@ async def test_chroma_empty_fails_over_to_lance():
         async def search(self, _question, n_results):
             return [{"doc": "resultado Lance", "agent": "test", "source": "fixture", "score": 1.0}]
 
-    rag = MemoryRAG.__new__(MemoryRAG)
+    rag: Any = MemoryRAG.__new__(MemoryRAG)
     rag.collection = EmptyCollection()
     rag.lance_backend = LanceFallback()
     rag.emb_fn = lambda _texts: [[0.1] * 384]
@@ -126,7 +127,7 @@ async def test_lance_failure_fails_over_to_chroma():
                 "distances": [[0.1]],
             }
 
-    rag = MemoryRAG.__new__(MemoryRAG)
+    rag: Any = MemoryRAG.__new__(MemoryRAG)
     rag.collection = ChromaCollection()
     rag.lance_backend = object()
     rag.query_lancedb = lambda *_args, **_kwargs: None
@@ -162,7 +163,7 @@ async def test_sync_lance_to_chroma_upserts_vectors_in_batches():
         def count(self):
             return len(self.rows)
 
-    rag = MemoryRAG.__new__(MemoryRAG)
+    rag: Any = MemoryRAG.__new__(MemoryRAG)
     rag.lance_backend = type("Lance", (), {"table": LanceTable()})()
     rag.collection = ChromaCollection()
 
@@ -192,7 +193,7 @@ async def test_storage_health_records_local_snapshot_without_forecasting_early(m
             return LanceRows()
 
     monkeypatch.setattr(memory_rag, "RAG_HEALTH_DB_PATH", tmp_path / "health.sqlite3")
-    rag = MemoryRAG.__new__(MemoryRAG)
+    rag: Any = MemoryRAG.__new__(MemoryRAG)
     rag.collection = ChromaCollection()
     rag.lance_backend = type("Lance", (), {"table": LanceTable()})()
 

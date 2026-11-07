@@ -1,7 +1,6 @@
 # CodeRabbit Configuration — Protocolo Chico SOTA v8.0 GOLD
 # Documentação: https://docs.coderabbit.ai/guides/configure-coderabbit
 
-version: "2"
 language: "pt-BR"
 early_access: false
 

@@ -610,9 +610,9 @@
     "r.lsp.args": [
         "--vanilla"
     ],
-    "r.lsp.env": {
-        "R_LIBS_USER": "C:/Users/rapha/R/win-library/4.6"
-    },
+    "r.libPaths": [
+        "C:/Users/rapha/R/win-library/4.6"
+    ],
     "terminal.integrated.env.windows": {
         "R_LIBS_USER": "C:/Users/rapha/R/win-library/4.6"
     },
@@ -638,7 +638,15 @@
     "boot-java.ai.mcp-server-enabled": true,
     "boot-java.code-action.data-query-multiline": true,
     "yaml.schemas": {
-        "vscode://schemas/custom/github-workflow": ".github/workflows/*.{yml,yaml}"
+        "vscode://schemas/custom/github-workflow": ".github/workflows/*.{yml,yaml}",
+        "https://www.schemastore.org/semgrep.json": [
+            ".semgrep.yml",
+            ".semgrep.yaml",
+            "**/.semgrep/**/*.yml",
+            "**/.semgrep/**/*.yaml",
+            "!**/.semgrep/guardian.yml",
+            "!**/.semgrep/guardian.yml.lock"
+        ]
     },
     "github-actions.workflows.pinned.workflows": [],
     "github-actions.custom-variables": [

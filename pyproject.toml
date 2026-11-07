@@ -141,6 +141,13 @@ dev = [
     "pytest-xdist>=3.8.0",
     "pip-audit>=2.10.1",
     "pytest-watcher>=0.6.3",
+    "cmake>=4.4.4",
+    "ninja>=1.13.2",
+    "locust>=2.47.0",
+    "types-aiofiles>=25.1.0.20261107",
+    "types-psutil>=7.2.2.20260906",
+    "types-defusedxml>=0.7.0.20260504",
+    "types-PyYAML>=6.0.12.20261103",
 ]
 
 [dependency-groups]
@@ -328,7 +335,6 @@ exclude = [
     ".agents",
 ]
 extend-exclude = [
-    "skills", "plugins", ".agents",
     # Fundidos do .ruff.toml (unificacao 2026-09-16). `exclude` acima substitui a lista
     # padrao do ruff, entao build/dist/caches precisam ser declarados aqui.
     ".ruff_cache", ".venv-wsl", "dist", "build", "*.log", "temp", ".cerebro", ".chroma_db",

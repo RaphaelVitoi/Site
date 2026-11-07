@@ -11,7 +11,6 @@ Conecta-se ao no local da engine Strata (porta padrao 8080):
 
 from __future__ import annotations
 
-import http.client
 import json
 import logging
 import time
@@ -19,13 +18,30 @@ from typing import Any
 
 import aiohttp
 
-from llm.local_engine_client import LocalEngineClient, CONTENT_TYPE_JSON, AUTH_BEARER_LOCAL, sanitize_think_tags, _sanitize_chat_choices
+from llm.local_engine_client import (
+    AUTH_BEARER_LOCAL,
+    CONTENT_TYPE_JSON,
+    LocalEngineClient,
+    _sanitize_chat_choices,
+    sanitize_think_tags,
+)
+
+__all__ = [
+    "DEFAULT_STRATA_HOST",
+    "DEFAULT_STRATA_PORT",
+    "ENGINE_STRATA_VERSION",
+    "AsyncStrataClient",
+    "LocalStrataClient",
+    "StrataServerOfflineError",
+    "sanitize_think_tags",
+]
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_STRATA_HOST = "127.0.0.1"
 DEFAULT_STRATA_PORT = 8080
 ENGINE_STRATA_VERSION = "Strata-v0.1.39"
+
 
 class StrataServerOfflineError(Exception):
     """SOTA GOLD: Exception raised when Strata server is unreachable."""
@@ -38,6 +54,7 @@ class StrataServerOfflineError(Exception):
             f"Start it using the Strata startup script or check the Strata engine installation."
         )
         super().__init__(self.message)
+
 
 class LocalStrataClient(LocalEngineClient):
     """Cliente HTTP sincrono para operacao e controle da engine Strata."""
@@ -181,6 +198,7 @@ class LocalStrataClient(LocalEngineClient):
     def get_engine_version(self) -> str:
         return ENGINE_STRATA_VERSION
 
+
 class AsyncStrataClient:
     def __init__(self, host: str = "127.0.0.1", port: int = 8080, timeout: float = 60.0) -> None:
         self.host = host
@@ -189,8 +207,9 @@ class AsyncStrataClient:
         self.timeout = timeout
 
     async def is_healthy(self, session: aiohttp.ClientSession) -> bool:
+        health_url = f"http://{self.host}:{self.port}/health"  # NOSONAR — loopback 127.0.0.1
         try:
-            async with session.get(f"http://{self.host}:{self.port}/health", timeout=aiohttp.ClientTimeout(total=2.0)) as resp:  # NOSONAR — loopback
+            async with session.get(health_url, timeout=aiohttp.ClientTimeout(total=2.0)) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     return data.get("status") in ("ok", "loaded", "loading model")
@@ -198,7 +217,13 @@ class AsyncStrataClient:
         except Exception:
             return False
 
-    async def chat_completion(self, session: aiohttp.ClientSession, messages: list[dict[str, str]], temperature: float = 0.2, max_tokens: int = 1024) -> dict[str, Any]:
+    async def chat_completion(
+        self,
+        session: aiohttp.ClientSession,
+        messages: list[dict[str, str]],
+        temperature: float = 0.2,
+        max_tokens: int = 1024,
+    ) -> dict[str, Any]:
         payload = {
             "messages": messages,
             "temperature": temperature,
@@ -211,56 +236,14 @@ class AsyncStrataClient:
             "Authorization": AUTH_BEARER_LOCAL,
         }
         t0 = time.time()
+        chat_url = f"{self.base_url}/chat/completions"
         try:
-            async with session.post(f"http://{self.host}:{self.port}/v1/chat/completions", data=req_data, headers=headers, timeout=aiohttp.ClientTimeout(total=self.timeout)) as resp:  # NOSONAR — loopback
-                if resp.status != 200:
-                    raise ConnectionError(f"Strata returned HTTP {resp.status}")
-                result = await resp.json()
-                latency_ms = (time.time() - t0) * 1000.0
-                result["_sota_telemetry"] = {
-                    "latency_ms": round(latency_ms, 2),
-                    "port": self.port,
-                    "endpoint": f"{self.base_url}/chat/completions",
-                    "engine": ENGINE_STRATA_VERSION,
-                }
-                if "choices" in result:
-                    _sanitize_chat_choices(result["choices"])
-                return result
-        except Exception as e:
-            raise ConnectionError(f"Strata offline on port {self.port}") from e
-
-class AsyncStrataClient:
-    def __init__(self, host: str = "127.0.0.1", port: int = 8080, timeout: float = 60.0) -> None:
-        self.host = host
-        self.port = port
-        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR — loopback 127.0.0.1:8080
-        self.timeout = timeout
-
-    async def is_healthy(self, session: aiohttp.ClientSession) -> bool:
-        try:
-            async with session.get(f"http://{self.host}:{self.port}/health", timeout=aiohttp.ClientTimeout(total=2.0)) as resp:  # NOSONAR — loopback
-                if resp.status == 200:
-                    data = await resp.json()
-                    return data.get("status") in ("ok", "loaded", "loading model")
-                return False
-        except Exception:
-            return False
-
-    async def chat_completion(self, session: aiohttp.ClientSession, messages: list[dict[str, str]], temperature: float = 0.2, max_tokens: int = 1024) -> dict[str, Any]:
-        payload = {
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-            "stream": False,
-        }
-        req_data = json.dumps(payload).encode("utf-8")
-        headers = {
-            "Content-Type": CONTENT_TYPE_JSON,
-            "Authorization": AUTH_BEARER_LOCAL,
-        }
-        t0 = time.time()
-        try:
-            async with session.post(f"http://{self.host}:{self.port}/v1/chat/completions", data=req_data, headers=headers, timeout=aiohttp.ClientTimeout(total=self.timeout)) as resp:  # NOSONAR — loopback
+            async with session.post(
+                chat_url,
+                data=req_data,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+            ) as resp:
                 if resp.status != 200:
                     raise ConnectionError(f"Strata returned HTTP {resp.status}")
                 result = await resp.json()
