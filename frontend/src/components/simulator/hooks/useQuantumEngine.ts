@@ -721,7 +721,6 @@ export function useQuantumEngine({
       quantumPerspectiva,
       insolvencyMatrixData,
       isCalculatingInsolvency,
-      multiwayTensorRef,
       isCalculatingMultiway,
       nashResults,
       dispatchInsolvencyMatrix,
