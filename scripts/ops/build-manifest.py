@@ -2,8 +2,9 @@
 # ruff: noqa: N999
 """Build-time manifest injector for Chrome extensions.
 
-Replaces {{OAUTH_CLIENT_ID}} placeholders in manifest.json with real
-credentials from config/oauth.json (gitignored).
+Replaces {{OAUTH_CLIENT_ID}} placeholders in manifest.json with public
+OAuth client identifiers from config/oauth.json (gitignored). Note: OAuth
+client_id is a public application identifier, not a secret credential.
 
 Usage:
     python scripts/build-manifest.py <extension-dir> [--config <path>]
@@ -48,17 +49,17 @@ def build_manifest(ext_dir: Path, config_path: Path | None = None) -> bool:
         print(f"[ERROR] Failed to read config: {e}")
         return False
 
-    oauth = config.get("oauth2", {})
-    client_id = oauth.get("client_id", OAUTH_CLIENT_ID_PLACEHOLDER)
+    oauth_meta = config.get("oauth2", {})
+    public_client_id = oauth_meta.get("client_id", OAUTH_CLIENT_ID_PLACEHOLDER)
 
     # Read manifest
     manifest_text = manifest_path.read_text(encoding="utf-8")
 
     # Replace placeholder
     if OAUTH_CLIENT_ID_PLACEHOLDER in manifest_text:
-        manifest_text = manifest_text.replace(OAUTH_CLIENT_ID_PLACEHOLDER, client_id)
+        manifest_text = manifest_text.replace(OAUTH_CLIENT_ID_PLACEHOLDER, public_client_id)
         manifest_path.write_text(manifest_text, encoding="utf-8")
-        print(f"[OK] Injected client_id into {manifest_path}")
+        print(f"[OK] Injected public client_id into {manifest_path}")
         return True
 
     print("[INFO] No placeholder found in manifest. Nothing to do.")

@@ -156,8 +156,8 @@ class CDPBrowserBridge:
                 content = await loop.run_in_executor(None, self._sync_fetch, req, timeout_sec)
                 title_match = re.search(r"<title>(.*?)</title>", content, re.IGNORECASE | re.DOTALL)
                 title = title_match.group(1).strip() if title_match else url
-                clean_text = re.sub(r"<script.*?</script>", "", content, flags=re.DOTALL | re.IGNORECASE)
-                clean_text = re.sub(r"<style.*?</style>", "", clean_text, flags=re.DOTALL | re.IGNORECASE)
+                clean_text = re.sub(r"<script[^>]*>.*?</script\s*>", "", content, flags=re.DOTALL | re.IGNORECASE)
+                clean_text = re.sub(r"<style[^>]*>.*?</style\s*>", "", clean_text, flags=re.DOTALL | re.IGNORECASE)
                 clean_text = re.sub(r"<[^>]+>", " ", clean_text)
                 clean_text = re.sub(r"\s+", " ", clean_text).strip()
                 return {"title": title, "content": clean_text[:4000], "url": url}

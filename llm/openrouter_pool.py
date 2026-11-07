@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime, timedelta
 import hashlib
+import hmac
 import logging
 import os
 import re
@@ -32,9 +33,12 @@ DEFAULT_COOLDOWN_429 = timedelta(minutes=5)
 DEFAULT_COOLDOWN_SERVER_ERROR = timedelta(minutes=2)
 
 
+_HMAC_SALT: bytes = b"sota_openrouter_pool_salt"
+
+
 def _key_sha8(key: str) -> str:
     """Calcula fingerprint truncado de 8 caracteres do token para telemetria sem vazamento."""
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:8]
+    return hmac.new(_HMAC_SALT, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
 
 
 class KeyHealth(NamedTuple):

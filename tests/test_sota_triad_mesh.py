@@ -39,7 +39,7 @@ class TestSotaTriadMesh(unittest.TestCase):
         assert req.topic == topic
         assert req.require_latex
         assert "CFR+" in req.query_string
-        assert "arxiv.org" in req.domain_filters
+        assert any(filter_domain == "arxiv.org" for filter_domain in req.domain_filters)
 
     def test_exa_knowledge_bridge_extracts_latex_and_citations(self) -> None:
         sample_text = (

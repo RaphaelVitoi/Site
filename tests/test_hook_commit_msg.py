@@ -279,9 +279,9 @@ def test_nenhuma_identidade_canonica_usa_e_mail_de_humano():
     dados = json.loads(CATALOGO.read_text(encoding="utf-8"))
     for item in dados["canonicas"]:
         email = item["email"]
-        assert email.startswith("noreply@") or "users.noreply.github.com" in email, (
-            f"{item['nome']} usa um e-mail que pode resolver para perfil humano: {email}"
-        )
+        assert email.startswith("noreply@") or email.endswith(
+            ("@users.noreply.github.com", ".users.noreply.github.com")
+        ), f"{item['nome']} usa um e-mail que pode resolver para perfil humano: {email}"
 
 
 @pytest.mark.parametrize("nome", sorted(_nomes_canonicos()))

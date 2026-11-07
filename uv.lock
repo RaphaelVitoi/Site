@@ -2283,9 +2283,10 @@ wheels = [
 
 [[package]]
 name = "laya"
-version = "0.4.27"
+version = "0.4.28"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "cryptography" },
     { name = "huggingface-hub" },
     { name = "numpy" },
     { name = "safetensors" },
@@ -2293,9 +2294,9 @@ dependencies = [
     { name = "transformers" },
     { name = "vegaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cb/34/e1a057f5d69625364a9180b6e513b6a49587d947ad3cd8b32059257adb9f/laya-0.4.27.tar.gz", hash = "sha256:813a2471dbfd5742723e02080c670d29a49f6bf18bd5efd89faf1842d8a63faa", size = 1459719, upload-time = "2026-11-06T16:44:18.34Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/31/4bf3dad35dcf8d9caa73e429e0467f0d7e59b0382784edf811031505040e/laya-0.4.28.tar.gz", hash = "sha256:44bac8aecfa851aca3e6acf2083779caad24ea3e35619d66b19f3967414ef51e", size = 1466362, upload-time = "2026-11-07T14:58:37.544Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ed/e6/00228eb4dd10ab71492a4ecef6e04f94eb442fc59284789a108c7a070a22/laya-0.4.27-py3-none-any.whl", hash = "sha256:68851194dd461c16534c8223bc6530dbcec35ade4e9c6dfc8aefb330de7094f7", size = 495896, upload-time = "2026-11-06T16:44:16.169Z" },
+    { url = "https://files.pythonhosted.org/packages/00/aa/9ab3efc67ecf8080cf202b1a6847b2244685f06d0d0ad722b2b75cbad5cb/laya-0.4.28-py3-none-any.whl", hash = "sha256:ad54941b65da960e6893f72e2d96d894bf03a9d33e1305dbfb97b57d54d0b3e6", size = 500039, upload-time = "2026-11-07T14:58:35.613Z" },
 ]
 
 [[package]]
@@ -3099,7 +3100,7 @@ requires-dist = [
     { name = "google-genai", specifier = ">=3.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "lancedb", specifier = ">=0.41.0,<1.0.0" },
-    { name = "laya", specifier = ">=0.4.27" },
+    { name = "laya", specifier = ">=0.4.28" },
     { name = "locust", marker = "extra == 'dev'", specifier = ">=2.47.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.11.2" },

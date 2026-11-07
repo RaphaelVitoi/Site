@@ -14,6 +14,16 @@ const CAPTION_REGEX = /<div\s+class="b_caption"[^>]*>[\s\S]*?<p[^>]*>([\s\S]*?)<
 const LINECLAMP_REGEX = /<p\s+class="b_lineclamp[^"]*"[^>]*>([\s\S]*?)<\/p>/i;
 const HTML_TAG_REGEX = /<[^<>]+>/g;
 
+function sanitizeHtmlTags(input: string): string {
+	let sanitized = input;
+	let prev = '';
+	while (sanitized !== prev) {
+		prev = sanitized;
+		sanitized = sanitized.replace(HTML_TAG_REGEX, '');
+	}
+	return sanitized.replace(/[<>]/g, '').trim();
+}
+
 // Link vem de HTML de terceiros e termina como href no cliente. Sem esta
 // validacao, um `javascript:` ou `data:` vindo do HTML chegaria a um atributo
 // href; `rel="noopener noreferrer"` nao protege contra isso. Retornamos apenas
@@ -38,8 +48,8 @@ function parseBingResults(html: string): SearchResultItem[] {
 		if (titleMatch?.[1] && titleMatch?.[2]) {
 			const link = linkSeguro(titleMatch[1]);
 			if (!link) continue;
-			const rawTitle = titleMatch[2].replace(HTML_TAG_REGEX, '').trim();
-			const rawSnippet = snippetMatch?.[1]?.replace(HTML_TAG_REGEX, '').trim() ?? '';
+			const rawTitle = sanitizeHtmlTags(titleMatch[2]);
+			const rawSnippet = snippetMatch?.[1] ? sanitizeHtmlTags(snippetMatch[1]) : '';
 
 			if (rawTitle && rawSnippet) {
 				items.push({
