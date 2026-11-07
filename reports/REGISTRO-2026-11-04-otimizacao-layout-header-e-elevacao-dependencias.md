@@ -21,6 +21,7 @@ caminhos:
 - reports/REGISTRO-2026-11-04-otimizacao-layout-header-e-elevacao-dependencias.md
 - uv.lock
 config_medida:
+  congelada_em: '2026-11-04'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: 3.14.7

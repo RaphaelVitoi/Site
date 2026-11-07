@@ -16,6 +16,7 @@ caminhos:
   - reports/REGISTRO-2026-10-27-evolucao-project-context-e-reconciliacao-sota.md
   - uv.lock
 config_medida:
+  congelada_em: '2026-10-27'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'

@@ -13,6 +13,7 @@ caminhos:
   - package-lock.json
   - reports/REGISTRO-2026-10-27-harmonizacao-dependencias-katex-e-ci.md
 config_medida:
+  congelada_em: '2026-10-27'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'
