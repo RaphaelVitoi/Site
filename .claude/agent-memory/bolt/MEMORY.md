@@ -106,3 +106,7 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
 ## 2025-03-08 - [SOTA FIX: CI quality gate failure due to orphaned submodule]
 **Learning:** The GitHub CI check `.github/workflows/sota-ci.yml` contains a rigid requirement that `declared_paths` in `.gitmodules` must strictly match the `gitlink_paths` (the submodules actually checked into git tree). If a submodule folder is deleted without removing it from `.gitmodules`, the check `test "$declared_paths" = "$gitlink_paths"` will fail, breaking the CI pipeline.
 **Action:** Removed the leftover `skills/superpowers` entry from `.gitmodules` so that the declared paths match the actual `160000` gitlink tree objects, successfully fixing the CI pipeline.
+
+## 2025-03-08 - [SOTA FIX: CI quality gate failure due to SC2086 ShellCheck]
+**Learning:** `actionlint` strictly enforces `shellcheck` rules. Our `chrome-extensions-ci.yml` had unquoted variable expansions for `$name` and `$ext` in a bash block resulting in multiple SC2086 errors causing the CI to fail.
+**Action:** Quoted the bash variable references (e.g. `"$ext"`, `"/tmp/$name-manifest.json"`) within `.github/workflows/chrome-extensions-ci.yml` successfully passing the strict actionlint verifications.

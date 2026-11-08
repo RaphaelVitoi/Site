@@ -85,8 +85,8 @@ jobs:
 
       - name: Package extensions
         run: |
-          for ext in extensions/sota-chrome-cockpit extensions/tab-autocomplete-nano extensions/promptive-sentry-1.1.20 extensions/superpower-for-gemini-1.7.9.1; do
-            name=$(basename $ext)
+          for ext in extensions/sota-chrome-cockpit extensions/tab-autocomplete-nano extensions/promptive-sentry-1.1.20 extensions/superpower-for-gemini-1.7.9.1 ; do
+            name=$(basename "$ext")
             # Remove key field for Web Store (per Chrome docs)
             python3 -c "
               import json
@@ -94,10 +94,10 @@ jobs:
               m.pop('key', None)
               json.dump(m, open('/tmp/$name-manifest.json', 'w'), indent=2)
             "
-            mkdir -p /tmp/dist/$name
-            cp -r $ext/* /tmp/dist/$name/
-            cp /tmp/$name-manifest.json /tmp/dist/$name/manifest.json
-            cd /tmp/dist && zip -r $name.zip $name && cd -
+            mkdir -p "/tmp/dist/$name"
+            cp -r "$ext/"* "/tmp/dist/$name/"
+            cp "/tmp/$name-manifest.json" "/tmp/dist/$name/manifest.json"
+            cd /tmp/dist && zip -r "$name.zip" "$name" && cd -
             echo "Packaged: $name.zip"
           done
 
