@@ -5,7 +5,9 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Chat GPT-6 Astra <noreply@openai.com>
 criado_em: '2026-09-10'
+commit: f8dcebcc
 config_medida:
+  congelada_em: '2026-09-10'
   baseline_head: 4715d51067a7239e746d4c3c842f1759e49dfeca
   branch: master
   raiz: C:/Users/rapha/.gemini/Site

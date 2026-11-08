@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "antigravity@gemini-3.8-flash"
 criado_em: 2026-09-08T20:55:00-03:00
 atualizado_em: 2026-09-08T20:55:00-03:00
+commit: b10cff3a
 classes: [interno, medido, governanca, roteamento, adaptacao, saneamento]
 caminhos:
   - engine/llm_api.py
@@ -19,6 +20,7 @@ caminhos:
   - tests/test_model_registry.py
   - tests/test_adapters_gemini_http.py
 config_medida:
+  congelada_em: '2026-09-08'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

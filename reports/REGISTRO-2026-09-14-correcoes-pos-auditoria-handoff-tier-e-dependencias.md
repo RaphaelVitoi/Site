@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-14T20:40:00-03:00'
 atualizado_em: '2026-09-14T20:40:00-03:00'
+commit: 6e2fc5e3
 classes: [interno, medido, governanca, dependencias]
 session_id: 2e4e2bd0-7571-49e4-bd33-1a04752a1609
 conductor_model: claude-opus-5

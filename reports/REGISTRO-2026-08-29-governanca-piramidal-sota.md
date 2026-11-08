@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: chico@v8-gold
 criado_em: 2026-08-29T18:33-03:00
 atualizado_em: 2026-08-30T20:15-03:00
+commit: 11e79eb1
 classes: [interno, medido]
 caminhos:
   - CLAUDE.md
@@ -16,6 +17,7 @@ caminhos:
   - core/subagents_mesh.py
   - tests/test_sota_web_browse.py
 config_medida:
+  congelada_em: '2026-08-29'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   data: 2026-08-29
