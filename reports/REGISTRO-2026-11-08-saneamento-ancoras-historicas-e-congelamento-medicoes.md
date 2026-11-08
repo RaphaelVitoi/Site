@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-11-08T11:20:00-03:00'
 atualizado_em: '2026-11-08T11:20:00-03:00'
-commit: HEAD
+commit: 6bd70288
 classes:
   - interno
   - medido
@@ -20,6 +20,7 @@ verificado:
 nao_verificado:
   - 'Execucao de testes em plataformas legadas Linux / Python 3.14.6'
 config_medida:
+  congelada_em: '2026-11-08'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   data_das_medicoes: '2026-11-08'
@@ -106,7 +107,7 @@ revisoes_de_ancora:
   - registro: registro-2026-08-29-governanca-piramidal-sota
     caminhos:
       - engine/sota_web_browse.py
-    parecer: 'Reconciliacao em 2026-11-08: ancoragem com commit 11e79eb1 e congelamento de medicao legada mantendo hierarquia piramidal.'
+    parecer: 'Reconciliacao em 2026-11-08: ancoragem com commit 669bf007 e congelamento de medicao legada mantendo hierarquia piramidal.'
   - registro: registro-2026-11-03-lifecycle-warmup-ensure-dev-frontend
     caminhos:
       - scripts/ops/ensure-dev-frontend.mjs
