@@ -76,7 +76,7 @@ dependencies = [
     # e nao levanta o teto. Zero imports no codigo - so figurava aqui.
     "opencv-python-headless>=5.0.0.93,<6.0.0",
     # ── UTILITARIOS ───────────────────────────────────────────────────
-    "regex>=2026.11.7",
+    "regex>=2026.11.8",
     "requests>=2.34.2,<3.0.0",
     "PyYAML>=6.0.3,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",
@@ -105,7 +105,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.4.29",
+    "laya>=0.4.30",
     "accelerate>=1.15.0",
     "timesfm[torch]==3.0.2",
     # ── AGENTIC AUTOMATION, COMPUTER USE & BIG DATA OLAP ──────────────────────
