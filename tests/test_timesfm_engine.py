@@ -56,7 +56,7 @@ def test_timesfm_engine_initialization_commercial_blocked():
             mode=ExecutionMode.COMMERCIAL_PRODUCTION,
             preferred_model_key="timesfm-3.0-330m",
         )
-    assert "VIOLA\u00c7\u00c3O DE LICEN\u00c7A" in str(exc_info.value)
+    assert "VIOLACAO DE LICENCA" in str(exc_info.value)
     assert "TimesFM Non-Commercial License v1.0" in str(exc_info.value)
 
 
@@ -302,7 +302,7 @@ async def test_timesfm_api_handler_governance_block_403():
 
     data = json.loads(resp.text)
     assert data["status"] == "FORBIDDEN"
-    assert "VIOLA\u00c7\u00c3O DE LICEN\u00c7A" in data["error"]
+    assert "VIOLACAO DE LICENCA" in data["error"]
 
 
 @pytest.mark.asyncio
@@ -321,7 +321,7 @@ async def test_timesfm_3_research_mode_is_not_served_by_product_api():
 
     assert response.status == 403
     assert response.text is not None
-    assert "n\u00e3o comerciais" in json.loads(response.text)["error"]
+    assert "nao comerciais" in json.loads(response.text)["error"]
 
 
 @pytest.mark.asyncio

@@ -1786,7 +1786,7 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
             return web.json_response(
                 {
                     "status": "FORBIDDEN",
-                    "error": "Pesos TimesFM n\u00e3o comerciais n\u00e3o podem ser servidos pela API do produto.",
+                    "error": "Pesos TimesFM nao comerciais nao podem ser servidos pela API do produto.",
                     "license_tier": engine.metadata.license_tier.value,
                 },
                 status=403,
