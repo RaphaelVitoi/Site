@@ -159,6 +159,20 @@ function resolveCdpNode(cdp9222: PingResult, cdp9223: PingResult): CdpResolution
   };
 }
 
+function resolveChrysalisPort(chrysalisBase: string): number | string {
+  try {
+    const chrysalisUrl = new URL(chrysalisBase);
+    if (chrysalisUrl.port) {
+      return Number.parseInt(chrysalisUrl.port, 10);
+    }
+    if (chrysalisUrl.protocol === 'https:') return 443;
+    if (chrysalisUrl.protocol === 'http:') return 80;
+  } catch {
+    return 8788;
+  }
+  return 8788;
+}
+
 export async function GET() {
   const tStart = performance.now();
 
@@ -199,19 +213,7 @@ export async function GET() {
 
   // 6. Chrysalis Live Engine (8788)
   const chrysalisBase = process.env['CHRYSALIS_SERVICE_URL'] || 'http://127.0.0.1:8788';
-  let chrysalisPort: number | string = 8788;
-  try {
-    const chrysalisUrl = new URL(chrysalisBase);
-    if (chrysalisUrl.port) {
-      chrysalisPort = parseInt(chrysalisUrl.port, 10);
-    } else if (chrysalisUrl.protocol === 'https:') {
-      chrysalisPort = 443;
-    } else if (chrysalisUrl.protocol === 'http:') {
-      chrysalisPort = 80;
-    }
-  } catch {
-    chrysalisPort = 8788;
-  }
+  const chrysalisPort = resolveChrysalisPort(chrysalisBase);
   const cleanChrysalisBase = chrysalisBase.replace(/\/$/, '');
   const chrysalis = await pingEndpoint(`${cleanChrysalisBase}/v1/apps`, 1000);
   const isChrysalisOperational = chrysalis.ok || chrysalis.status === 401 || chrysalis.status === 403;
@@ -359,10 +361,7 @@ export async function GET() {
   });
 }
 
-async function handleWarmupOllama(modelName?: string, keepAliveDuration?: string) {
-  const model = modelName || 'qwen-code-surgical:latest';
-  const keepAlive = keepAliveDuration || '1h';
-
+async function handleWarmupOllama(model = 'qwen-code-surgical:latest', keepAlive = '1h') {
   const t0 = performance.now();
   const response = await fetch('http://127.0.0.1:11434/api/generate', {
     method: 'POST',
@@ -409,13 +408,7 @@ async function handleInspectCdp() {
   let inspectedPort = 9222;
   let activeList = list9222;
 
-  if (isSuccessfulList(list9222)) {
-    inspectedPort = 9222;
-    activeList = list9222;
-  } else if (isSuccessfulList(list9223)) {
-    inspectedPort = 9223;
-    activeList = list9223;
-  } else if (list9223.ok) {
+  if (!isSuccessfulList(list9222) && (isSuccessfulList(list9223) || list9223.ok)) {
     inspectedPort = 9223;
     activeList = list9223;
   }

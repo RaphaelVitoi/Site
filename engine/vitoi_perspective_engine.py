@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 import math
 from pathlib import Path
@@ -397,18 +397,19 @@ except ImportError:
     NUMBA_AVAILABLE = False
     _numba = None
 
+_numba_fast_perspective_batch: Callable[..., object] | None = None
 if NUMBA_AVAILABLE and _numba is not None and NUMPY_AVAILABLE and np is not None:
 
     @_numba.njit(fastmath=True, cache=True)
-    def _numba_fast_perspective_batch(equity_arr, pot_arr, noise_factor):
+    def _compiled_numba_fast_perspective_batch(equity_arr, pot_arr, noise_factor):
         n = len(equity_arr)
-        out = np.empty(n, dtype=np.float32)
-        factor = np.float32(1.0 - noise_factor)
+        out = np.empty(n, dtype=np.float32)  # pyright: ignore[reportOptionalMemberAccess]
+        factor = np.float32(1.0 - noise_factor)  # pyright: ignore[reportOptionalMemberAccess]
         for i in range(n):
             out[i] = equity_arr[i] * pot_arr[i] * factor
         return out
-else:
-    _numba_fast_perspective_batch = None
+
+    _numba_fast_perspective_batch = _compiled_numba_fast_perspective_batch
 
 
 try:
@@ -418,6 +419,74 @@ try:
 except ImportError:
     sp = None
     SYMPY_AVAILABLE = False
+
+
+def _pure_python_perspective(
+    equity: float | Sequence[float],
+    pot: float | Sequence[float],
+    human_noise_factor: float,
+) -> float | list[float]:
+    """Calculo analitico de perspectiva em Python puro para fallback deterministico."""
+    scale = 1.0 - human_noise_factor
+    if isinstance(equity, (int, float)):
+        if isinstance(pot, (int, float)):
+            return (equity * pot) * scale
+        return [(equity * float(p)) * scale for p in pot]
+    if isinstance(pot, (int, float)):
+        return [(float(e) * pot) * scale for e in equity]
+
+    return [(float(e) * float(p)) * scale for e, p in zip(equity, pot, strict=False)]
+
+
+def _try_tensor_perspective(
+    equity: float | Sequence[float],
+    pot: float | Sequence[float],
+    human_noise_factor: float,
+) -> object | None:
+    if not (TENSOR_ENGINE_AVAILABLE and QUANTUM_TENSOR_ENGINE is not None and NUMPY_AVAILABLE and np is not None):
+        return None
+    try:
+        simd_fn = getattr(QUANTUM_TENSOR_ENGINE, "calculate_perspective_simd", None)
+        if simd_fn is not None:
+            eq_arr = np.ascontiguousarray(equity, dtype=np.float32)
+            pot_arr = np.ascontiguousarray(pot, dtype=np.float32)
+            return simd_fn(eq_arr, pot_arr, human_noise_factor)
+    except Exception:
+        pass
+    return None
+
+
+def _try_numba_perspective(
+    equity: float | Sequence[float],
+    pot: float | Sequence[float],
+    human_noise_factor: float,
+) -> object | None:
+    if not (callable(_numba_fast_perspective_batch) and NUMPY_AVAILABLE and np is not None):
+        return None
+    try:
+        eq_arr = np.ascontiguousarray(equity, dtype=np.float32)
+        pot_arr = np.ascontiguousarray(pot, dtype=np.float32)
+        if len(eq_arr) == len(pot_arr):
+            return _numba_fast_perspective_batch(eq_arr, pot_arr, human_noise_factor)
+    except Exception:
+        pass
+    return None
+
+
+def _try_numpy_perspective(
+    equity: float | Sequence[float],
+    pot: float | Sequence[float],
+    human_noise_factor: float,
+) -> object | None:
+    if not (NUMPY_AVAILABLE and np is not None):
+        return None
+    try:
+        eq_arr = np.asarray(equity, dtype=np.float32)
+        pot_arr = np.asarray(pot, dtype=np.float32)
+        return (eq_arr * pot_arr) * (1.0 - human_noise_factor)
+    except Exception:
+        pass
+    return None
 
 
 class VitoiPerspectiveEngine:
@@ -1094,43 +1163,19 @@ class VitoiPerspectiveEngine:
         Executa calculo vetorizado de Perspectiva via Kernel C++ SIMD (AVX2)
         com fallback transparente para NumPy/Python puro.
         """
-        if TENSOR_ENGINE_AVAILABLE and QUANTUM_TENSOR_ENGINE is not None and NUMPY_AVAILABLE and np is not None:
-            try:
-                eq_arr = np.ascontiguousarray(equity, dtype=np.float32)
-                pot_arr = np.ascontiguousarray(pot, dtype=np.float32)
-                simd_fn = getattr(QUANTUM_TENSOR_ENGINE, "calculate_perspective_simd", None)
-                if simd_fn is not None:
-                    return simd_fn(eq_arr, pot_arr, human_noise_factor)
-            except Exception:
-                pass
+        tensor_res = _try_tensor_perspective(equity, pot, human_noise_factor)
+        if tensor_res is not None:
+            return tensor_res
 
-        # Aceleracao JIT Numba de alta performance para CPU
-        if _numba_fast_perspective_batch is not None and NUMPY_AVAILABLE and np is not None:
-            try:
-                eq_arr = np.ascontiguousarray(equity, dtype=np.float32)
-                pot_arr = np.ascontiguousarray(pot, dtype=np.float32)
-                if len(eq_arr) == len(pot_arr):
-                    return _numba_fast_perspective_batch(eq_arr, pot_arr, human_noise_factor)
-            except Exception:
-                pass
+        numba_res = _try_numba_perspective(equity, pot, human_noise_factor)
+        if numba_res is not None:
+            return numba_res
 
-        # Fallback analitico deterministico
-        if NUMPY_AVAILABLE and np is not None:
-            try:
-                eq_arr = np.asarray(equity, dtype=np.float32)
-                pot_arr = np.asarray(pot, dtype=np.float32)
-                return (eq_arr * pot_arr) * (1.0 - human_noise_factor)
-            except Exception:
-                pass
+        numpy_res = _try_numpy_perspective(equity, pot, human_noise_factor)
+        if numpy_res is not None:
+            return numpy_res
 
-        if isinstance(equity, (int, float)):
-            if isinstance(pot, (int, float)):
-                return (equity * pot) * (1.0 - human_noise_factor)
-            return [(equity * float(p)) * (1.0 - human_noise_factor) for p in pot]
-        if isinstance(pot, (int, float)):
-            return [(float(e) * pot) * (1.0 - human_noise_factor) for e in equity]
-
-        return [(float(e) * float(p)) * (1.0 - human_noise_factor) for e, p in zip(equity, pot, strict=False)]
+        return _pure_python_perspective(equity, pot, human_noise_factor)
 
     @staticmethod
     def derive_symbolic_pmev_sensitivities() -> dict[str, object]:

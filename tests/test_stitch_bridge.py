@@ -469,7 +469,9 @@ def test_stitch_generate_screen_with_auto_enhance() -> None:
             prompt="Dashboard PMev",
             auto_enhance=True,
         )
-        assert res.get("screen", {}).get("id") == "sc_auto"
+        screen = res.get("screen")
+        assert isinstance(screen, dict)
+        assert screen.get("id") == "sc_auto"
         args = _args_enviados(m)
         assert "Obsidian Analytics" in args["prompt"]
         assert "Dashboard PMev" in args["prompt"]
@@ -478,6 +480,7 @@ def test_stitch_generate_screen_with_auto_enhance() -> None:
 def test_stitch_agent_cli_offline_enhance(capsys: pytest.CaptureFixture[str]) -> None:
     """Valida subcomando enhance offline do run_stitch_agent.py."""
     import argparse
+
     from scripts.ops.run_stitch_agent import cmd_enhance
 
     args = argparse.Namespace(prompt="Criar tela de Nash", platform="Mobile", no_ds=False, json=True)

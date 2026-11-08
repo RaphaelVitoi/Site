@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 from datetime import UTC, datetime
 import logging
+from typing import Any
 
 from core.config import PATH_AUDIT_LOGS
 from core.schemas import Task
@@ -13,6 +14,8 @@ from utils.notifications import send_toast as agnostic_send_toast
 from utils.text import enforce_pure_ascii
 
 logger = logging.getLogger(__name__)
+
+_prom: Any = None
 
 try:
     import prometheus_client as _prom
@@ -35,6 +38,7 @@ try:
         ["position", "action"],
     )
 except ImportError:
+    _prom = None
     PROMETHEUS_AVAILABLE = False
     TASK_EXECUTION_COUNTER = None
     TASK_DURATION_HISTOGRAM = None

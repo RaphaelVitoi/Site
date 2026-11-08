@@ -204,6 +204,38 @@ class SolverProvenance(BaseModel):
         return self.build is not None and self.e_nash is not None and self.e_nash_unit is not None
 
 
+def _build_node_records(
+    node_id: str,
+    node: SolverNode,
+    pmev_res: PerspectivaResult | None,
+) -> list[dict[str, Any]]:
+    """Gera registros normalizados de um no para ingestao colunar Polars."""
+    base: dict[str, Any] = {
+        "node_id": node_id,
+        "player": node.player,
+        "street": node.street,
+        "pot": float(node.pot),
+        "range_equity": float(node.range_equity) if node.range_equity is not None else None,
+        "pmev": float(pmev_res.pmev) if pmev_res else None,
+        "dynamic_ev_fold": float(pmev_res.dynamic_ev_fold) if pmev_res else None,
+        "bubble_factor": float(pmev_res.bubble_factor) if pmev_res else None,
+        "optimal_action": pmev_res.optimal_action if pmev_res else None,
+    }
+    actions = node.actions if node.actions else list(node.strategy.keys())
+    if not actions:
+        return [{**base, "action": "TERMINAL", "strategy_freq": 1.0, "ev": 0.0}]
+
+    return [
+        {
+            **base,
+            "action": act,
+            "strategy_freq": float(node.strategy.get(act, 0.0)),
+            "ev": float(node.ev.get(act, 0.0)),
+        }
+        for act in actions
+    ]
+
+
 class NormalizedGameTree(BaseModel):
     """Arvore de jogo normalizada universal."""
 
@@ -230,43 +262,7 @@ class NormalizedGameTree(BaseModel):
 
         records: list[dict[str, Any]] = []
         for node_id, node in self.nodes.items():
-            pmev_res = self.pmev_converted_nodes.get(node_id)
-            actions = node.actions if node.actions else list(node.strategy.keys())
-            if not actions:
-                records.append(
-                    {
-                        "node_id": node_id,
-                        "player": node.player,
-                        "street": node.street,
-                        "pot": float(node.pot),
-                        "action": "TERMINAL",
-                        "strategy_freq": 1.0,
-                        "ev": 0.0,
-                        "range_equity": float(node.range_equity) if node.range_equity is not None else None,
-                        "pmev": float(pmev_res.pmev) if pmev_res else None,
-                        "dynamic_ev_fold": float(pmev_res.dynamic_ev_fold) if pmev_res else None,
-                        "bubble_factor": float(pmev_res.bubble_factor) if pmev_res else None,
-                        "optimal_action": pmev_res.optimal_action if pmev_res else None,
-                    }
-                )
-            else:
-                for act in actions:
-                    records.append(
-                        {
-                            "node_id": node_id,
-                            "player": node.player,
-                            "street": node.street,
-                            "pot": float(node.pot),
-                            "action": act,
-                            "strategy_freq": float(node.strategy.get(act, 0.0)),
-                            "ev": float(node.ev.get(act, 0.0)),
-                            "range_equity": float(node.range_equity) if node.range_equity is not None else None,
-                            "pmev": float(pmev_res.pmev) if pmev_res else None,
-                            "dynamic_ev_fold": float(pmev_res.dynamic_ev_fold) if pmev_res else None,
-                            "bubble_factor": float(pmev_res.bubble_factor) if pmev_res else None,
-                            "optimal_action": pmev_res.optimal_action if pmev_res else None,
-                        }
-                    )
+            records.extend(_build_node_records(node_id, node, self.pmev_converted_nodes.get(node_id)))
         return pl.DataFrame(records)
 
 

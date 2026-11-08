@@ -31,6 +31,8 @@ except ImportError:
     sp = None
     SYMPY_AVAILABLE = False
 
+SYMPY_MISSING_ERROR: Final[str] = "sympy nao esta instalado. Instale com 'uv sync --extra pmev'."
+
 
 def _require_positive(name: str, value: float) -> float:
     """Rejeita grandezas impossiveis em vez de fabricar epsilon silencioso."""
@@ -140,13 +142,14 @@ class ChenClairvoyanceSolver:
         $$s^*(P, B) = \frac{P}{P + B}$$
         """
         if not SYMPY_AVAILABLE or sp is None:
-            raise ImportError("sympy nao esta instalado. Instale com 'uv sync --extra pmev'.")
+            raise ImportError(SYMPY_MISSING_ERROR)
 
         pot_sym = sp.Symbol("P", positive=True, real=True)
         bet_sym = sp.Symbol("B", positive=True, real=True)
-        alpha_expr = bet_sym / (pot_sym + bet_sym)
-        defense_expr = pot_sym / (pot_sym + bet_sym)
-        bluff_ratio_expr = bet_sym / pot_sym
+        sum_pb = sp.Add(pot_sym, bet_sym)
+        alpha_expr = sp.Mul(bet_sym, sp.Pow(sum_pb, sp.Integer(-1)))
+        defense_expr = sp.Mul(pot_sym, sp.Pow(sum_pb, sp.Integer(-1)))
+        bluff_ratio_expr = sp.Mul(bet_sym, sp.Pow(pot_sym, sp.Integer(-1)))
 
         return SymbolicClairvoyanceSolution(
             alpha=alpha_expr,
@@ -356,14 +359,17 @@ class JandaMDFCalculator:
         $$\text{MDF}_{\text{multiway}}(P, B, k) = 1 - \left(\frac{B}{P + B}\right)^{1/k}$$
         """
         if not SYMPY_AVAILABLE or sp is None:
-            raise ImportError("sympy nao esta instalado. Instale com 'uv sync --extra pmev'.")
+            raise ImportError(SYMPY_MISSING_ERROR)
 
         pot_sym = sp.Symbol("P", positive=True, real=True)
         bet_sym = sp.Symbol("B", positive=True, real=True)
-        alpha_expr = bet_sym / (pot_sym + bet_sym)
-        mdf_expr = pot_sym / (pot_sym + bet_sym)
-        k = max(1, int(num_defenders))
-        mw_mdf_expr = mdf_expr if k == 1 else 1 - (alpha_expr ** (sp.Rational(1, k)))
+        sum_pb = sp.Add(pot_sym, bet_sym)
+        alpha_expr = sp.Mul(bet_sym, sp.Pow(sum_pb, sp.Integer(-1)))
+        mdf_expr = sp.Mul(pot_sym, sp.Pow(sum_pb, sp.Integer(-1)))
+        k = max(1, num_defenders)
+        mw_mdf_expr = (
+            mdf_expr if k == 1 else sp.Add(sp.Integer(1), sp.Mul(sp.Integer(-1), sp.Pow(alpha_expr, sp.Rational(1, k))))
+        )
 
         return SymbolicMDFSolution(
             alpha=alpha_expr,
@@ -475,13 +481,13 @@ class JandaGeometricBetSizing:
         $$(1 + 2r)^n = \frac{P + 2S}{P} \implies r(P, S) = \frac{1}{2} \left[ \left(1 + \frac{2S}{P}\right)^{1/n} - 1 \right]$$
         """
         if not SYMPY_AVAILABLE or sp is None:
-            raise ImportError("sympy nao esta instalado. Instale com 'uv sync --extra pmev'.")
+            raise ImportError(SYMPY_MISSING_ERROR)
 
         pot_sym = sp.Symbol("P", positive=True, real=True)
         stack_sym = sp.Symbol("S", positive=True, real=True)
-        n = max(1, int(num_streets))
-        growth = 1 + (2 * stack_sym / pot_sym)
-        r_expr = sp.Rational(1, 2) * ((growth ** (sp.Rational(1, n))) - 1)
+        n = max(1, num_streets)
+        growth = sp.Add(sp.Integer(1), sp.Mul(sp.Integer(2), stack_sym, sp.Pow(pot_sym, sp.Integer(-1))))
+        r_expr = sp.Mul(sp.Rational(1, 2), sp.Add(sp.Pow(growth, sp.Rational(1, n)), sp.Integer(-1)))
 
         return SymbolicGeometricSizingSolution(
             pot_fraction_expr=r_expr,
