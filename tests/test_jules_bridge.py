@@ -338,7 +338,7 @@ def test_jules_client_get_session_outputs_pr_url() -> None:
 
 
 def test_jules_client_get_source_and_activity() -> None:
-    """Valida consultas atômicas de fontes e atividades."""
+    """Valida consultas atomicas de fontes e atividades."""
     mock_source = {"name": "sources/github/RaphaelVitoi/Site", "id": "github/RaphaelVitoi/Site"}
     mock_act = {"name": "sessions/s1/activities/a1", "originator": "agent"}
 

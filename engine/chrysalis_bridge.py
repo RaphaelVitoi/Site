@@ -12,7 +12,7 @@ revisao otimista, undo, modos Plan/Accept/Full, inspecao de skills,
 compactacao, helpers read-only) foi reimplementada clean-room em Python
 nativo, com a mesma semantica e sem reutilizar expressao AGPL.
 
-Convenção: urllib.request, dataclass hibrida (dataclass + dict) e
+Convencao: urllib.request, dataclass hibrida (dataclass + dict) e
 credencial apenas por ambiente/HKCU, no mesmo padrao de
 ``engine/jules_bridge.py`` e ``engine/exa_bridge.py``.
 """
@@ -118,7 +118,7 @@ class ChrysalisApp(dict[str, Any]):
 
 @dataclass
 class ChrysalisHealth:
-    """Saude do servico externo, com proveniencia §4 declarada."""
+    """Saude do servico externo, com proveniencia S4 declarada."""
 
     status: str  # ONLINE | OFFLINE
     apps_count: int = 0
@@ -182,7 +182,7 @@ def compute_revision(content: str) -> str:
 
 
 def validate_workspace_path(path: str) -> str:
-    """Valida e normaliza caminho do workspace; rejeita impossivel (§8.2).
+    """Valida e normaliza caminho do workspace; rejeita impossivel (S8.2).
 
     Regras upstream: nomes de dispositivo Windows, dois-pontos e
     ponto final / espaco a direita sao recusados; ``..`` nao sai do
@@ -239,7 +239,7 @@ def build_compaction_summary(
 
 
 def _env_or_reg(name: str, default: str = "") -> str:
-    """Ambiente os.environ, com fallback HKCU/HKLM (doutrina §3.1)."""
+    """Ambiente os.environ, com fallback HKCU/HKLM (doutrina S3.1)."""
     val = (os.getenv(name) or "").strip()
     if val:
         return val
@@ -319,7 +319,7 @@ class ChrysalisClient:
             raise RuntimeError(f"Erro do servico Chrysalis ({e.code}) em {method} {path}: {err_msg}") from e
 
     def list_apps(self) -> list[ChrysalisApp]:
-        """``GET /v1/apps`` — endpoint documentado no README upstream."""
+        """``GET /v1/apps`` -- endpoint documentado no README upstream."""
         data = self.api_request("GET", "/v1/apps")
         raw_apps = data.get("apps", data)
         if isinstance(raw_apps, list):
