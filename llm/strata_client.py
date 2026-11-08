@@ -203,11 +203,11 @@ class AsyncStrataClient:
     def __init__(self, host: str = "127.0.0.1", port: int = 8080, timeout: float = 60.0) -> None:
         self.host = host
         self.port = port
-        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR — loopback 127.0.0.1:8080
+        self.base_url = f"http://{host}:{port}/v1"  # NOSONAR - loopback 127.0.0.1:8080
         self.timeout = timeout
 
     async def is_healthy(self, session: aiohttp.ClientSession) -> bool:
-        health_url = f"http://{self.host}:{self.port}/health"  # NOSONAR — loopback 127.0.0.1
+        health_url = f"http://{self.host}:{self.port}/health"  # NOSONAR - loopback 127.0.0.1
         try:
             async with session.get(health_url, timeout=aiohttp.ClientTimeout(total=2.0)) as resp:
                 if resp.status == 200:
