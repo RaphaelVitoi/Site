@@ -1238,7 +1238,7 @@ wheels = [
 
 [[package]]
 name = "fastapi"
-version = "0.162.1"
+version = "0.162.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-doc" },
@@ -1248,9 +1248,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "typing-inspection" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/fb/3e954cd19540d69f9547e2577afe73b2eadad2ee47b691376a5b9345c50a/fastapi-0.162.1.tar.gz", hash = "sha256:b18411785f55d05baa296fcfa2901f26728483190e7d8eb8f8e6aa47ed94b030", size = 529173, upload-time = "2026-11-07T11:56:03.769Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/53/f6fed628a0c3d6a284125a93f9145b02ecc2c394735a878b5ad9938c8e17/fastapi-0.162.2.tar.gz", hash = "sha256:9ebd2a69b579141315b2447d8e3f518e6fd909abd6c01cac5cc6b06d5c8841f4", size = 530366, upload-time = "2026-11-07T15:41:39.838Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/06/83c13e92ae48a2cb0e8adfa939a93f5c7165e64f5bff916a3fbf5c59f7fb/fastapi-0.162.1-py3-none-any.whl", hash = "sha256:8107bbfbde522cbd3edcfb32e4923f1786fc52d901ff60a9f724f142df24a648", size = 150728, upload-time = "2026-11-07T11:56:02.09Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/fb/0dc0f819163bc6b7f9e6802d7d0b1ac180fbbe4e75dbd10655c6a4d77796/fastapi-0.162.2-py3-none-any.whl", hash = "sha256:d0584f9662317e01140df94c64f4bed1d8b059fe35496e30c9c92f70e6e5ff15", size = 151671, upload-time = "2026-11-07T15:41:38.509Z" },
 ]
 
 [[package]]
@@ -2283,7 +2283,7 @@ wheels = [
 
 [[package]]
 name = "laya"
-version = "0.4.28"
+version = "0.4.29"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -2294,9 +2294,9 @@ dependencies = [
     { name = "transformers" },
     { name = "vegaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/31/4bf3dad35dcf8d9caa73e429e0467f0d7e59b0382784edf811031505040e/laya-0.4.28.tar.gz", hash = "sha256:44bac8aecfa851aca3e6acf2083779caad24ea3e35619d66b19f3967414ef51e", size = 1466362, upload-time = "2026-11-07T14:58:37.544Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/b6/7a8f9d665831c42ad7d5bb6dbf319b0baae5b2e9ceec314e958b2fd74160/laya-0.4.29.tar.gz", hash = "sha256:59f707a1aecb56cd3ace46abe7e75a50c3b496962582ecc470d170bb91c8cd97", size = 1469980, upload-time = "2026-11-08T07:59:22.186Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/00/aa/9ab3efc67ecf8080cf202b1a6847b2244685f06d0d0ad722b2b75cbad5cb/laya-0.4.28-py3-none-any.whl", hash = "sha256:ad54941b65da960e6893f72e2d96d894bf03a9d33e1305dbfb97b57d54d0b3e6", size = 500039, upload-time = "2026-11-07T14:58:35.613Z" },
+    { url = "https://files.pythonhosted.org/packages/e6/f8/b7c3e122fcc6024a0034d98797ad307ee6c27f838f5fc85e7a62e96a113b/laya-0.4.29-py3-none-any.whl", hash = "sha256:a2ffb8c0e5efcf06bdd6267ddae4f4f645e28f0ba91580ade4fab1bf47bf4f4a", size = 502174, upload-time = "2026-11-08T07:59:20.277Z" },
 ]
 
 [[package]]

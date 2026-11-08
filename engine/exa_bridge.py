@@ -12,9 +12,15 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Any, Final
 import urllib.error
 import urllib.request
+
+try:
+    import winreg
+except ImportError:
+    winreg = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -177,7 +183,7 @@ class ExaAgentRun(dict[str, Any]):
 
     run_id: str
     status: str
-    output: str | None = None
+    output: Any = None
     sources: list[dict[str, Any]] | None = None
     cost_dollars: float | None = None
     duration_seconds: int | None = None
@@ -187,13 +193,36 @@ class ExaAgentRun(dict[str, Any]):
             self[f] = getattr(self, f)
         self["runId"] = self.run_id
 
+    @property
+    def structured_output(self) -> dict[str, Any] | None:
+        if isinstance(self.output, dict):
+            structured = self.output.get("structured")
+            return structured if isinstance(structured, dict) else None
+        return None
+
+    @property
+    def text_output(self) -> str | None:
+        if isinstance(self.output, dict):
+            text = self.output.get("text")
+            return str(text) if text is not None else None
+        if isinstance(self.output, str):
+            return self.output
+        return None
+
+    @property
+    def grounding(self) -> list[Any] | None:
+        if isinstance(self.output, dict):
+            gr = self.output.get("grounding")
+            return gr if isinstance(gr, list) else None
+        return None
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ExaAgentRun:
         """Instancia ExaAgentRun de forma defensiva."""
         inst = cls(
             run_id=str(data.get("runId", data.get("id", ""))),
             status=str(data.get("status", "unknown")),
-            output=data.get("output") if isinstance(data.get("output"), str) else None,
+            output=data.get("output"),
             sources=data.get("sources") if isinstance(data.get("sources"), list) else None,
             cost_dollars=float(data["costDollars"]) if "costDollars" in data else None,
             duration_seconds=int(data["durationSeconds"]) if "durationSeconds" in data else None,
@@ -224,6 +253,25 @@ def _parse_raw_json_fallback(text: str) -> dict[str, Any] | None:
         return None
 
 
+def _env_or_reg(name: str, default: str = "") -> str:
+    val = (os.getenv(name) or "").strip()
+    if val:
+        return val
+    if winreg is not None:
+        for root, subkey in (
+            (winreg.HKEY_CURRENT_USER, "Environment"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+        ):
+            try:
+                with winreg.OpenKey(root, subkey) as key:
+                    reg_val, _ = winreg.QueryValueEx(key, name)
+                    if reg_val and str(reg_val).strip():
+                        return str(reg_val).strip()
+            except OSError:
+                continue
+    return default
+
+
 class ExaClient:
     """Cliente JSON-RPC hermetico para o servidor MCP do Exa (https://mcp.exa.ai/mcp)."""
 
@@ -235,7 +283,7 @@ class ExaClient:
     ) -> None:
         if not base_url.startswith("https://"):
             raise ValueError("ExaClient exige base_url https: urlopen tambem abriria file: e esquemas custom.")
-        self._api_key = api_key or os.getenv("EXA_API_KEY", "")
+        self._api_key = api_key if api_key is not None else _env_or_reg("EXA_API_KEY", "")
         self._base_url = base_url
         self._timeout = timeout
 
@@ -398,6 +446,10 @@ class ExaClient:
         system_prompt: str | None = None,
         output_schema: dict[str, Any] | None = None,
         max_cost_dollars: float | None = None,
+        input_data: list[dict[str, Any]] | None = None,
+        exclusions: list[dict[str, Any]] | None = None,
+        previous_run_id: str | None = None,
+        data_sources: list[dict[str, Any]] | None = None,
     ) -> ExaAgentRun:
         """Dispara uma pesquisa autonoma multi-etapa via Exa Agent (agent_run)."""
         args: dict[str, object] = {
@@ -410,6 +462,18 @@ class ExaClient:
             args["outputSchema"] = output_schema
         if max_cost_dollars is not None:
             args["budget"] = {"maxCostDollars": max_cost_dollars}
+        if input_data:
+            inp = args.setdefault("input", {})
+            if isinstance(inp, dict):
+                inp["data"] = input_data
+        if exclusions:
+            inp = args.setdefault("input", {})
+            if isinstance(inp, dict):
+                inp["exclusion"] = exclusions
+        if previous_run_id:
+            args["previousRunId"] = previous_run_id
+        if data_sources:
+            args["dataSources"] = data_sources
 
         res = self._call_tool("agent_run", args)
         return ExaAgentRun.from_dict(res)
@@ -418,6 +482,21 @@ class ExaClient:
         """Verifica o status ou continua a espera de uma execucao de Exa Agent."""
         res = self._call_tool("agent_run", {"runId": run_id})
         return ExaAgentRun.from_dict(res)
+
+    def poll_agent_run(
+        self,
+        run_id: str,
+        poll_interval: float = 4.0,
+        max_timeout: float = 300.0,
+    ) -> ExaAgentRun:
+        """Sonda continuamente o run ate atingir status terminal (completed, failed, cancelled)."""
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < max_timeout:
+            run = self.get_agent_run(run_id)
+            if run.status in {"completed", "failed", "cancelled"}:
+                return run
+            time.sleep(poll_interval)
+        return self.get_agent_run(run_id)
 
     def ping(self) -> bool:
         """Verifica conectividade rapida executando busca minima de probe."""

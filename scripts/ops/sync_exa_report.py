@@ -64,25 +64,25 @@ def fetch_all_exa_telemetry() -> dict[str, Any]:
             "name": "web_search_exa",
             "title": "Web Search",
             "description": "Busca semantica em linguagem natural na web com retorno de conteudo limpo.",
-            "status": "HABILITADO",
+            "status": "HABILITADO" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
         },
         {
             "name": "web_search_advanced_exa",
             "title": "Advanced Web Search",
             "description": "Busca avancada com filtros por dominio, categorias (people, news, pdf), datas e sumarios.",
-            "status": "HABILITADO (opt-in via tools parameter)",
+            "status": "HABILITADO (opt-in via tools parameter)" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
         },
         {
             "name": "web_fetch_exa",
             "title": "Fetch Web Pages",
             "description": "Extracao de texto completo em markdown purificado a partir de URLs conhecidas.",
-            "status": "HABILITADO",
+            "status": "HABILITADO" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
         },
         {
             "name": "agent_run",
             "title": "Exa Agent",
             "description": "Pesquisa profunda autonoma em multiplas etapas com suporte a budget, esforco e output schema.",
-            "status": "HABILITADO (via API Key / OAuth)",
+            "status": "HABILITADO (via API Key / OAuth)" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
         },
     ]
 
@@ -90,10 +90,10 @@ def fetch_all_exa_telemetry() -> dict[str, Any]:
         "configured": configured,
         "status": status,
         "latency_ms": round(latency_ms, 2),
-        "team_name": TEAM_NAME,
-        "team_id": TEAM_ID,
-        "rate_limit_qps": SEARCH_RATE_LIMIT_QPS,
-        "active_key_name": "exa1",
+        "team_name": TEAM_NAME if configured else "Nao autenticado",
+        "team_id": TEAM_ID if configured else "N/A",
+        "rate_limit_qps": SEARCH_RATE_LIMIT_QPS if configured else 0,
+        "active_key_name": "exa1" if configured else "NENHUMA (ausente)",
         "probe_results": probe_results,
         "tools": tools_catalog,
     }
@@ -103,13 +103,27 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     """Formata os dados do Exa no padrao SOTA Markdown."""
     now_utc = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     status = data.get("status", "N/A")
+    configured = bool(data.get("configured", False))
     latency = data.get("latency_ms", 0.0)
     team_name = data.get("team_name", "N/A")
     team_id = data.get("team_id", "N/A")
-    qps = data.get("rate_limit_qps", 10)
-    key_name = data.get("active_key_name", "exa1")
+    qps = data.get("rate_limit_qps", 0)
+    key_name = data.get("active_key_name", "NENHUMA (ausente)")
     tools = data.get("tools", [])
     probes = data.get("probe_results", [])
+
+    if configured and status == "CONECTADO E OPERACIONAL":
+        op_status = "[OK] Operacional"
+    elif not configured:
+        op_status = "[WARN] Desconectado (EXA_API_KEY ausente)"
+    else:
+        op_status = f"[ERRO] Falha de Conexao ({status})"
+
+    key_desc = (
+        "Configurada em `HKCU:\\Environment\\EXA_API_KEY`"
+        if configured
+        else "Ausente em `HKCU:\\Environment\\EXA_API_KEY`"
+    )
 
     lines: list[str] = [
         "# Exa MCP - Relatorio de Governanca, Busca Semantica & Pesquisa Autonoma",
@@ -125,11 +139,11 @@ def format_markdown_report(data: dict[str, Any]) -> str:
         "",
         "| Dimensao | Valor | Status Operacional |",
         "| :--- | :--- | :--- |",
-        f"| **Status de Conexao** | `{status}` | {'[OK] Operacional' if 'CONECTADO' in status else '[WARN] Verificar'} |",
-        f"| **Equipe / Team** | `{team_name}` (`{team_id}`) | Workspace Pessoal Autenticado |",
-        f"| **Taxa Limite (Rate Limit)** | `{qps} QPS` | Capacidade nominal para buscas concorrentes |",
-        f"| **Chave Ativa em Producao** | `{key_name}` | Configurada em `HKCU:\\Environment\\EXA_API_KEY` |",
-        f"| **Latencia de Probe Medida** | `{latency} ms` | Ingestao e ranking semantico em tempo real |",
+        f"| **Status de Conexao** | `{status}` | {op_status} |",
+        f"| **Equipe / Team** | `{team_name}` (`{team_id}`) | {'Workspace Pessoal Autenticado' if configured else 'Requer autenticacao'} |",
+        f"| **Taxa Limite (Rate Limit)** | `{qps} QPS` | {'Capacidade nominal para buscas concorrentes' if configured else 'Inativo'} |",
+        f"| **Chave Ativa em Producao** | `{key_name}` | {key_desc} |",
+        f"| **Latencia de Probe Medida** | `{latency} ms` | {'Ingestao e ranking semantico em tempo real' if configured else 'Probe suspenso (sem chave)'} |",
         "| **Transporte MCP** | HTTP SSE (`text/event-stream` / JSON-RPC 2.0) | Header `Accept: application/json, text/event-stream` |",
         "",
         "---",
@@ -143,6 +157,10 @@ def format_markdown_report(data: dict[str, Any]) -> str:
     for t in tools:
         lines.append(f"| `{t['name']}` | **{t['title']}** | {t['description']} | `{t['status']}` |")
 
+    probe_query = (
+        "`Raphael Vitoi Poker Racional PMev`" if configured else "*Probe suspenso (EXA_API_KEY ausente no ambiente)*"
+    )
+
     lines.extend(
         [
             "",
@@ -150,7 +168,7 @@ def format_markdown_report(data: dict[str, Any]) -> str:
             "",
             "## 3. Validacao Empirica & Telemetria de Probe",
             "",
-            "- **Consulta de Teste Executada:** `Raphael Vitoi Poker Racional PMev`",
+            f"- **Consulta de Teste Executada:** {probe_query}",
             f"- **Tempo de Resposta:** `{latency} ms`",
             f"- **Resultados Retornados:** `{len(probes)}`",
             "",

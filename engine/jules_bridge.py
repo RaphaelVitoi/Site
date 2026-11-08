@@ -52,32 +52,10 @@ class JulesSessionRequest:
     branch: str = "main"
     auto_approve_plan: bool = False
     title: str = ""
+    automation_mode: str | None = None
 
     def to_payload(self) -> dict[str, object]:
-        """Converte para o payload da API v1alpha do Jules.
-
-        DOIS CAMPOS ESTAVAM ERRADOS ATE 2026-09-04, e o segundo era perigoso.
-        Medido contra a documentacao oficial e confirmado por sessao criada com
-        sucesso via POST direto:
-
-            enviado antes            campo real da API
-            -----------------------  --------------------------------
-            githubRepoContext.branch githubRepoContext.startingBranch
-            autoApprovePlan          requirePlanApproval
-
-        `branch` fazia a sessao rodar no branch DEFAULT do repositorio, nao no
-        pedido -- o valor era descartado por nao existir no contrato.
-
-        `autoApprovePlan` INVERTIA UMA GARANTIA. A documentacao e literal: "If
-        true, plans require explicit approval before execution. If not set, plans
-        are auto-approved." Como o campo nao era reconhecido, ele sumia, e o
-        default da API e AUTO-APROVAR. Ou seja, `auto_approve_plan=False`
-        produzia o oposto do que promete: o plano rodava sem revisao humana, sem
-        aviso nenhum.
-
-        A negacao abaixo e o ponto exato da correcao -- os dois campos existem e
-        significam coisas contrarias.
-        """
+        """Converte para o payload da API v1alpha do Jules."""
         payload: dict[str, object] = {
             "sourceContext": {
                 "source": self.source,
@@ -92,6 +70,8 @@ class JulesSessionRequest:
         # produziria sessao sem nome legivel na interface.
         if self.title:
             payload["title"] = self.title
+        if self.automation_mode:
+            payload["automationMode"] = self.automation_mode
         return payload
 
 
@@ -105,6 +85,7 @@ class JulesSessionStatus:
     update_time: str
     pr_url: str | None = None
     activities: list[dict[str, object]] | None = None
+    title: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,13 +177,23 @@ class JulesClient:
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
+                pr_url = data.get("githubPullRequestUrl")
+                if not pr_url:
+                    outputs = data.get("outputs")
+                    if isinstance(outputs, list) and outputs:
+                        first_out = outputs[0]
+                        if isinstance(first_out, dict):
+                            pr_obj = first_out.get("pullRequest")
+                            if isinstance(pr_obj, dict):
+                                pr_url = pr_obj.get("url")
                 return JulesSessionStatus(
                     session_id=data.get("name", "").split("/")[-1] or data.get("sessionId", "unknown"),
                     state=data.get("state", "STATE_UNSPECIFIED"),
                     create_time=data.get("createTime", ""),
                     update_time=data.get("updateTime", ""),
-                    pr_url=data.get("githubPullRequestUrl"),
+                    pr_url=pr_url,
                     activities=data.get("activities", []),
+                    title=str(data.get("title", "")),
                 )
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
@@ -217,19 +208,30 @@ class JulesClient:
         if not self.is_configured:
             raise ValueError(JULES_ERROR_NOT_CONFIGURED)
 
-        url = f"{JULES_API_BASE}/sessions/{session_id}"
+        clean_id = session_id.split("/")[-1]
+        url = f"{JULES_API_BASE}/sessions/{clean_id}"
         req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
 
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
+                pr_url = data.get("githubPullRequestUrl")
+                if not pr_url:
+                    outputs = data.get("outputs")
+                    if isinstance(outputs, list) and outputs:
+                        first_out = outputs[0]
+                        if isinstance(first_out, dict):
+                            pr_obj = first_out.get("pullRequest")
+                            if isinstance(pr_obj, dict):
+                                pr_url = pr_obj.get("url")
                 return JulesSessionStatus(
-                    session_id=session_id,
+                    session_id=clean_id,
                     state=data.get("state", "STATE_UNSPECIFIED"),
                     create_time=data.get("createTime", ""),
                     update_time=data.get("updateTime", ""),
-                    pr_url=data.get("githubPullRequestUrl"),
+                    pr_url=pr_url,
                     activities=data.get("activities", []) if include_activities else [],
+                    title=str(data.get("title", "")),
                 )
         except urllib.error.HTTPError as e:
             err_msg = e.read().decode("utf-8", errors="replace")
@@ -239,23 +241,29 @@ class JulesClient:
             logger.exception("[JULES] Falha ao consultar sessao %s", session_id)
             raise
 
-    def approve_plan(self, session_id: str, activity_id: str, action: str = "APPROVE") -> bool:
-        """Aprova ou rejeita uma atividade de planejamento do Jules."""
+    def approve_plan(self, session_id: str, activity_id: str | None = None, action: str = "APPROVE") -> bool:
+        """Aprova ou rejeita uma atividade ou plano de sessao do Jules."""
         if not self.is_configured:
             raise ValueError(JULES_ERROR_NOT_CONFIGURED)
 
-        url = f"{JULES_API_BASE}/sessions/{session_id}/activities/{activity_id}:action"
-        payload = json.dumps({"action": action}).encode("utf-8")
+        clean_id = session_id.split("/")[-1]
+        if activity_id:
+            url = f"{JULES_API_BASE}/sessions/{clean_id}/activities/{activity_id}:action"
+            payload = json.dumps({"action": action}).encode("utf-8")
+        else:
+            url = f"{JULES_API_BASE}/sessions/{clean_id}:approvePlan"
+            payload = b"{}"
+
         req = urllib.request.Request(url, data=payload, headers=self._get_headers(), method="POST")
 
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                 return resp.status in (200, 204)
         except urllib.error.HTTPError as e:
-            logger.exception("[JULES] Erro HTTP %d ao aprovar plano %s: %s", e.code, activity_id, e.reason)
+            logger.exception("[JULES] Erro HTTP %d ao aprovar plano na sessao %s: %s", e.code, clean_id, e.reason)
             return False
         except Exception:
-            logger.exception("[JULES] Falha ao aprovar plano %s", activity_id)
+            logger.exception("[JULES] Falha ao aprovar plano na sessao %s", clean_id)
             return False
 
     def send_message(self, session_id: str, message: str) -> bool:
@@ -382,3 +390,34 @@ class JulesClient:
         except Exception as e:
             logger.warning("[JULES] get_activities para %s retornou excecao: %s", session_id, e)
             return []
+
+    def get_source(self, source_name: str) -> dict[str, object]:
+        """Consulta informacoes detalhadas de uma fonte (e.g. sources/github/RaphaelVitoi/Site)."""
+        if not self.is_configured:
+            return {"name": source_name}
+        clean_name = source_name if source_name.startswith("sources/") else f"sources/{source_name}"
+        url = f"{JULES_API_BASE}/{clean_name}"
+        req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data if isinstance(data, dict) else {"name": clean_name}
+        except Exception as e:
+            logger.warning("[JULES] get_source retornou excecao para %s: %s", clean_name, e)
+            return {"name": clean_name}
+
+    def get_activity(self, session_id: str, activity_id: str) -> dict[str, object]:
+        """Consulta uma atividade especifica de uma sessao."""
+        if not self.is_configured:
+            return {}
+        clean_sid = session_id.split("/")[-1]
+        clean_aid = activity_id.split("/")[-1]
+        url = f"{JULES_API_BASE}/sessions/{clean_sid}/activities/{clean_aid}"
+        req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
+        try:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data if isinstance(data, dict) else {}
+        except Exception as e:
+            logger.warning("[JULES] get_activity retornou excecao para %s/%s: %s", clean_sid, clean_aid, e)
+            return {}

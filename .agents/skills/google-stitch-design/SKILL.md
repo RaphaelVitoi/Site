@@ -15,6 +15,7 @@ metadata:
 > **Módulo Canônico:** [`engine/stitch_bridge.py`](../../../engine/stitch_bridge.py)  
 > **Relatório Dinâmico:** [`STITCH_REPORT.md`](../../../reports/integrations/STITCH_REPORT.md)  
 > **Sincronizador Oficial:** [`scripts/ops/sync_stitch_report.py`](../../../scripts/ops/sync_stitch_report.py)  
+> **CLI Operacional:** [`scripts/ops/run_stitch_agent.py`](../../../scripts/ops/run_stitch_agent.py)  
 > **Projeto Vinculado:** `projects/18242753218562483944` (*Nexus PMev & Poker Racional UI*)  
 > **Design System Ativo:** `Obsidian Analytics` (`assets/6f9c8c6e7114422393d45b0c4ca02808`)  
 
@@ -102,20 +103,62 @@ flowchart LR
 
 ---
 
-## 5. Playbook de Invocação Rápida via Python Bridge
+## 5. Suíte Canônica das 16 Stitch Design Skills (`google-labs-code/stitch-skills`)
+
+A integração nativa conta com 16 skills distribuídas em três plugins (`stitch-design`, `stitch-build`, `stitch-utilities`):
+
+1. `enhance-prompt` — Expande ideias vagas em especificações estruturadas de UI com plataforma, hierarquia e design system.
+2. `stitch-generate-design` — Geração de telas completas a partir de prompts aprimorados.
+3. `stitch-code-to-design` — Roundtrip de componentes locais para telas Stitch com extração de assets.
+4. `stitch-extract-design-md` — Extração reversa de tokens em `DESIGN.md` a partir de código React/CSS.
+5. `stitch-extract-static-html` — Captura de HTML autocontido com CSS inline para renderização precisa.
+6. `stitch-manage-design-system` — Criação, atualização e aplicação de design systems via MCP.
+7. `stitch-react-components` — Conversão de telas em componentes modulares React 19 / Tailwind 4.
+8. `stitch-react-native` — Conversão de telas em código nativo mobile via StyleSheet.
+9. `stitch-upload-to-stitch` — Upload de ativos, mockups e documentos de design.
+10. `design-md` — Síntese analítica de especificações de design system Obsidian.
+11. `site-md` — Constituição arquitetural de projetos de site (`SITE.md`).
+12. `stitch-loop` — Loop iterativo autônomo de construção de sites com passagem de bastão.
+13. `taste-design` — Enforçamento de padrões visuais anti-genéricos e dark glassmorphism.
+14. `react-vite-dashboard` — Dashboards reativos com TanStack Query e tokens de design.
+15. `remotion` — Produção automatizada de vídeos walkthrough com Remotion.
+16. `shadcn-ui` — Integração de componentes estilizados com shadcn/ui.
+
+---
+
+## 6. Playbook Operacional via CLI e Python Bridge
+
+### Invocação via CLI Oficial (`scripts/ops/run_stitch_agent.py`)
+
+```bash
+# 1. Aprimorar prompt offline:
+python scripts/ops/run_stitch_agent.py enhance "Painel de Nash com radar de equidade"
+
+# 2. Gerar nova tela com prompt auto-aprimorado e modelo Balanced:
+python scripts/ops/run_stitch_agent.py generate "Painel de Nash com radar de equidade" --enhance --model-tier BALANCED --sync
+
+# 3. Gerar 3 variantes com modelo Speed (Gemini 3.5 Flash-Lite):
+python scripts/ops/run_stitch_agent.py variants "Maior densidade tabular" --screens 3260535219730569926 --count 3 --model-tier SPEED
+
+# 4. Listar telas do projeto ativo:
+python scripts/ops/run_stitch_agent.py list --project 18242753218562483944
+```
+
+### Invocação Programática via Python Bridge
 
 ```python
 from engine.stitch_bridge import StitchClient
 
 client = StitchClient()
 
-# 1. Gerar nova tela com modelo Balanced (Gemini 3.8 Flash) e Obsidian Analytics:
+# 1. Gerar nova tela com modelo Balanced (Gemini 3.8 Flash), Obsidian Analytics e prompt aprimorado:
 screen = client.generate_screen_from_text(
     project_id="18242753218562483944",
     prompt="Painel de Comparacao de Nash com radar poligonal glassmorphism e realce dourado",
     model_tier="BALANCED",
     device_type="DESKTOP",
     design_system="assets/6f9c8c6e7114422393d45b0c4ca02808",
+    auto_enhance=True,
 )
 
 # 2. Gerar variantes exploratórias com modelo Speed (Gemini 3.5 Flash-Lite):
@@ -139,7 +182,7 @@ for sc in screens:
 
 ---
 
-## 6. Retorno de Investimento Diário (ROI Quantitativo & Qualitativo)
+## 7. Retorno de Investimento Diário (ROI Quantitativo & Qualitativo)
 
 1. **Ideação visual acelerada:** A geração e síntese de variantes elimina horas de wireframing manual com total aderência ao dark glassmorphism.
 2. **Consistência de tokens:** O vínculo com `Obsidian Analytics` garante conformidade estrita com cores, fontes `Geist`/`JetBrains Mono` e bordas iluminadas.

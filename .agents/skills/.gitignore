@@ -10,5 +10,24 @@ lookml-pop-guidelines/
 supabase/
 supabase-postgres-best-practices/
 skills-lock.json
+
+# Stitch Design Skills (google-labs-code/stitch-skills)
+design-md/
+enhance-prompt/
+react-vite-dashboard/
+remotion/
+shadcn-ui/
+site-md/
+stitch-code-to-design/
+stitch-extract-design-md/
+stitch-extract-static-html/
+stitch-generate-design/
+stitch-loop/
+stitch-manage-design-system/
+stitch-react-components/
+stitch-react-native/
+stitch-upload-to-stitch/
+taste-design/
+
 # Inventario pessoal de discos da skill de conhecimento: nunca versionar.
 poker-pmev-knowledge-engine/local/

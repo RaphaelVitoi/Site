@@ -77,7 +77,24 @@ def test_exa_agent_run_dataclass() -> None:
     assert run.status == "completed"
     assert run.cost_dollars == 0.05
     assert run["runId"] == "agent_run_999"
+    assert run.text_output == "Pesquisa concluida com sucesso."
+    assert run.structured_output is None
     assert isinstance(run, dict)
+
+    run_structured = ExaAgentRun.from_dict(
+        {
+            "id": "agent_run_1000",
+            "status": "completed",
+            "output": {
+                "text": "Answer text",
+                "structured": {"companies": [{"name": "Acme"}]},
+                "grounding": [{"url": "https://example.com"}],
+            },
+        }
+    )
+    assert run_structured.text_output == "Answer text"
+    assert run_structured.structured_output == {"companies": [{"name": "Acme"}]}
+    assert run_structured.grounding == [{"url": "https://example.com"}]
 
 
 def test_exa_client_unconfigured() -> None:
@@ -280,3 +297,57 @@ def test_exa_client_ping() -> None:
     with patch("urllib.request.urlopen", return_value=mock_resp):
         client = ExaClient(api_key="fake-key")
         assert client.ping() is True
+
+
+def test_exa_agent_run_advanced_features_and_poll() -> None:
+    """Valida argumentos avancados (input, exclusion, previousRunId, dataSources) e polling."""
+    mock_payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+            "structuredContent": {
+                "id": "agent_run_advanced",
+                "status": "completed",
+                "output": {
+                    "text": "Done",
+                    "structured": {"result": True},
+                },
+                "costDollars": 0.10,
+            }
+        },
+    }
+    sse_body = b"data: " + json.dumps(mock_payload).encode("utf-8") + b"\n\n"
+
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = sse_body
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = ExaClient(api_key="fake-key")
+        run = client.run_agent(
+            query="Enriquecer empresas",
+            effort="high",
+            system_prompt="Analise estrita",
+            output_schema={"type": "object"},
+            max_cost_dollars=5.0,
+            input_data=[{"company": "RedBarn"}],
+            exclusions=[{"company": "Google"}],
+            previous_run_id="agent_run_old",
+            data_sources=[{"provider": "similarweb"}],
+        )
+        assert run.run_id == "agent_run_advanced"
+        assert run.status == "completed"
+        assert run.structured_output == {"result": True}
+
+        args = _args_enviados(m)
+        assert args["effort"] == "high"
+        assert args["systemPrompt"] == "Analise estrita"
+        assert args["outputSchema"] == {"type": "object"}
+        assert args["budget"] == {"maxCostDollars": 5.0}
+        assert args["input"] == {"data": [{"company": "RedBarn"}], "exclusion": [{"company": "Google"}]}
+        assert args["previousRunId"] == "agent_run_old"
+        assert args["dataSources"] == [{"provider": "similarweb"}]
+
+        # Test polling
+        polled = client.poll_agent_run("agent_run_advanced", poll_interval=0.01, max_timeout=1.0)
+        assert polled.status == "completed"

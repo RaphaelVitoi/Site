@@ -269,3 +269,90 @@ def test_jules_client_list_sessions_and_activities() -> None:
         activities = client.get_activities("sess-1")
         assert len(activities) == 1
         assert activities[0]["originator"] == "SYSTEM"
+
+
+def test_jules_client_approve_plan_canonical_endpoint() -> None:
+    """Valida a aprovacao via endpoint REST canonico (sessions/{id}:approvePlan)."""
+    mock_resp = MagicMock()
+    mock_resp.status = 200
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        res = client.approve_plan("sess-123")
+        assert res is True
+        sent_req = mock_urlopen.call_args[0][0]
+        assert "sessions/sess-123:approvePlan" in sent_req.full_url
+
+
+def test_jules_client_create_session_with_automation_mode() -> None:
+    """Valida criacao de sessao enviando automationMode."""
+    mock_resp_data = {
+        "name": "sessions/sess-auto",
+        "state": "QUEUED",
+        "createTime": "2026-11-08T12:00:00Z",
+        "updateTime": "2026-11-08T12:00:00Z",
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as mock_urlopen:
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        req = JulesSessionRequest(
+            source="sources/github/RaphaelVitoi/Site",
+            prompt="Auto PR Test",
+            automation_mode="AUTO_CREATE_PR",
+        )
+        status = client.create_session(req)
+        assert status.session_id == "sess-auto"
+        sent_req = mock_urlopen.call_args[0][0]
+        sent_data = json.loads(sent_req.data.decode("utf-8"))
+        assert sent_data["automationMode"] == "AUTO_CREATE_PR"
+
+
+def test_jules_client_get_session_outputs_pr_url() -> None:
+    """Valida extracao da URL do Pull Request a partir de outputs."""
+    mock_resp_data = {
+        "sessionId": "sess-outputs",
+        "state": "COMPLETED",
+        "createTime": "2026-11-08T12:00:00Z",
+        "updateTime": "2026-11-08T12:10:00Z",
+        "outputs": [
+            {
+                "pullRequest": {
+                    "url": "https://github.com/RaphaelVitoi/Site/pull/99",
+                    "title": "PR Title",
+                }
+            }
+        ],
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp):
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        status = client.get_session_status("sess-outputs")
+        assert status.pr_url == "https://github.com/RaphaelVitoi/Site/pull/99"
+
+
+def test_jules_client_get_source_and_activity() -> None:
+    """Valida consultas atômicas de fontes e atividades."""
+    mock_source = {"name": "sources/github/RaphaelVitoi/Site", "id": "github/RaphaelVitoi/Site"}
+    mock_act = {"name": "sessions/s1/activities/a1", "originator": "agent"}
+
+    mock_resp = MagicMock()
+    mock_resp.read.side_effect = [
+        json.dumps(mock_source).encode("utf-8"),
+        json.dumps(mock_act).encode("utf-8"),
+    ]
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp):
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        src = client.get_source("github/RaphaelVitoi/Site")
+        assert src["name"] == "sources/github/RaphaelVitoi/Site"
+
+        act = client.get_activity("s1", "a1")
+        assert act["originator"] == "agent"
