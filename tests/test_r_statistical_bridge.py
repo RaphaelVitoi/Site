@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 from engine.r_statistical_bridge import RStatisticalBridge, resolve_rscript_path
 
 

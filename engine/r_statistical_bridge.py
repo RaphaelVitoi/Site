@@ -8,14 +8,14 @@ Rscript with jsonlite.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 import logging
 import math
 import os
-import shutil
-import subprocess
-from dataclasses import dataclass
 from pathlib import Path
+import shutil
+import subprocess  # noqa: S404  # Record-Id: registro-2026-11-08-otimizacao-backend-sonarlint-pyright-e-headings
 from typing import Any, Final
 
 logger = logging.getLogger("nexus.engine.r_bridge")
