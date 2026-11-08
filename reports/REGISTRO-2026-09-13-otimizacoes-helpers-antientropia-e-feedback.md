@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-09-13T20:34:00-03:00'
 atualizado_em: '2026-09-13T20:34:00-03:00'
+commit: e67e91da
 classes: [interno, medido, otimizacao, seguranca, calibracao]
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site

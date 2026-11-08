@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Codex GPT-5.6 Sol <noreply@openai.com>"
 criado_em: 2026-09-13T11:25:00-03:00
 atualizado_em: 2026-09-13T11:25:00-03:00
+commit: 57a8f555
 classes: [interno, handoff, medido, pmev, engines, wasm, python, feedback, continuidade]
 caminhos:
   - data/engine_capabilities.json
@@ -36,6 +37,7 @@ caminhos:
   - wasm-equity/lib.rs
 supersede: null
 config_medida:
+  congelada_em: \'2026-09-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   head_inicial: 2e82c075234d601429c0c2fba9c9b59caafffd36

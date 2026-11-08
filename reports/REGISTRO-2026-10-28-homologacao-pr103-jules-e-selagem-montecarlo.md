@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-10-28T07:10:00-03:00'
 atualizado_em: '2026-10-28T07:10:00-03:00'
-commit: HEAD
+commit: f596ccfc
 classes: [interno, medido, governanca, registro, performance, jules, montecarlo, sota]
 caminhos:
   - .claude/agent-memory/bolt/MEMORY.md
@@ -19,6 +19,7 @@ config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'
+  congelada_em: \'2026-10-28'
   so: Windows
   session_id: 6b0e0528-09da-41d5-9ab7-0efedf57a913
   session_started_at: '2026-10-28T06:50:07-03:00'

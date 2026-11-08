@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: gemini-3.8-flash
 criado_em: 2026-09-04T19:15:00-03:00
 atualizado_em: 2026-09-09T11:30:00-03:00
+commit: c097e094
 classes: [interno, medido, governanca, otimizacao]
 caminhos:
   - frontend/src/components/simulator/MasterSimulator.tsx
@@ -20,6 +21,7 @@ caminhos:
   - engine/timesfm_engine.py
   - scripts/ops/autopoietic_daily_cycle.py
 config_medida:
+  congelada_em: \'2026-09-04'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

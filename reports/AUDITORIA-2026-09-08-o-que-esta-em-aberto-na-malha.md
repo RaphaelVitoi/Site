@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-08T22:05:00-03:00
 atualizado_em: 2026-09-08T22:25:00-03:00
+commit: d1eeb852
 classes: [interno, medido, auditoria, seguranca, processo]
 caminhos:
   - requirements.txt
@@ -14,6 +15,7 @@ caminhos:
   - memory_rag.py
 supersede: null
 config_medida:
+  congelada_em: \'2026-09-08'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

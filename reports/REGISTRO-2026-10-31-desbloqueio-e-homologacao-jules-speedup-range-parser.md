@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash [Tier 1]
 criado_em: 2026-10-31
-commit: HEAD
+commit: 3829d5e6
 classes: [interno, medido, frontend, backend, jules, automacao]
 caminhos:
   - engine/jules_bridge.py
@@ -41,6 +41,7 @@ config_medida:
   branch: master
   commit: HEAD
   python: 3.14.7
+  congelada_em: \'2026-10-31'
   node: 24.21.0
 verificado:
   - "Desbloqueio e conclusao com sucesso da sessao 7987093689324965753 do Google Jules Cloud"

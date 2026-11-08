@@ -5,6 +5,7 @@ tipo: plano
 escopo: Site
 autor: "Codex [Tier 1.B]"
 criado_em: 2026-09-01T01:45-03:00
+commit: 8b13ff56
 classes: [interno]
 caminhos:
   - requirements.txt

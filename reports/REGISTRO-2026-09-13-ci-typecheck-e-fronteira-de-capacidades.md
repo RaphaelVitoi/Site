@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Codex GPT-5.6 Sol <noreply@openai.com>"
 criado_em: 2026-09-13T09:52:00-03:00
 atualizado_em: 2026-09-13T10:39:24-03:00
+commit: 2e82c075
 classes: [interno, medido, pmev, engines, ci, autenticacao, capacidades]
 caminhos:
   - api/v1/middleware.py
@@ -16,6 +17,7 @@ caminhos:
   - uv.lock
 supersede: null
 config_medida:
+  congelada_em: \'2026-09-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   head: 5329d1bb923ebc945214ef63965059f577e37248

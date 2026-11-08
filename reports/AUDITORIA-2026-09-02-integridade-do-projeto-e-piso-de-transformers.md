@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: 2026-09-02T02:10-03:00
 atualizado_em: 2026-09-02T02:10-03:00
+commit: 61bc5fcf
 commit_inicio_auditoria: e323487755f130012fa2f56bfe215f46bd35a4f3
 classes: [interno, medido]
 caminhos:
@@ -13,6 +14,7 @@ caminhos:
   - uv.lock
   - docs/MCP_ECOSYSTEM_TOPOLOGY_2026.md
 config_medida:
+  congelada_em: \'2026-09-02'
   raiz: /home/user/Site
   branch: master
   so: Linux

@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: 2026-09-04T21:40:00-03:00
 atualizado_em: 2026-09-04T21:40:00-03:00
+commit: 96ac0bc6
 classes: [interno, medido, pmev, seguranca, infraestrutura]
 caminhos:
   - engine/solver_importers/hrc_evidence.py
@@ -17,6 +18,7 @@ caminhos:
   - data/agents_manifest.json
   - JULES_REPORT.md
 config_medida:
+  congelada_em: \'2026-09-04'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
 revisoes_de_ancora:
