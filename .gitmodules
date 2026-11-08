@@ -26,10 +26,6 @@
 	path = skills/gemini-supermemory
 	url = https://github.com/RaphaelVitoi/gemini-supermemory.git
 	ignore = dirty
-[submodule "skills/superpowers"]
-	path = skills/superpowers
-	url = https://github.com/RaphaelVitoi/superpowers.git
-	ignore = dirty
 [submodule "skills/token-efficiency"]
 	path = skills/token-efficiency
 	url = https://github.com/RaphaelVitoi/token-efficiency.git
