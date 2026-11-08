@@ -25,6 +25,63 @@ EXA_REPORT_FILE: Final[Path] = BASE_DIR / "reports" / "integrations" / "EXA_REPO
 TEAM_ID: Final[str] = "cmsxf2xch006ejw04uvohyrb8"
 TEAM_NAME: Final[str] = "Raphael Vitoi's Personal"
 SEARCH_RATE_LIMIT_QPS: Final[int] = 10
+STATUS_INDISPONIVEL: Final[str] = "INDISPONIVEL (EXA_API_KEY ausente)"
+
+
+def _run_exa_probe(client: ExaClient) -> tuple[str, float, list[dict[str, Any]]]:
+    """Executa busca probe no Exa para aferir latencia e conectividade."""
+    t0 = time.perf_counter()
+    try:
+        resp = client.search(
+            query="Raphael Vitoi Poker Racional PMev",
+            num_results=2,
+            objective="Verificar indexacao e latencia da Triade",
+        )
+        latency_ms = (time.perf_counter() - t0) * 1000
+        results = [
+            {
+                "title": r.title or "Sem titulo",
+                "url": r.url,
+                "published_date": r.published_date or "N/A",
+                "text_preview": r.text[:200].replace("\n", " ").strip() if r.text else "N/A",
+            }
+            for r in resp.results
+        ]
+        return "CONECTADO E OPERACIONAL", latency_ms, results
+    except Exception as e:
+        logger.warning("[EXA] Erro ao executar probe: %s", e)
+        return f"ERRO ({e})", 0.0, []
+
+
+def _build_tools_catalog(configured: bool) -> list[dict[str, Any]]:
+    """Monta o catalogo de ferramentas MCP do Exa com base na presenca da credencial."""
+    unavail = STATUS_INDISPONIVEL
+    return [
+        {
+            "name": "web_search_exa",
+            "title": "Web Search",
+            "description": "Busca semantica em linguagem natural na web com retorno de conteudo limpo.",
+            "status": "HABILITADO" if configured else unavail,
+        },
+        {
+            "name": "web_search_advanced_exa",
+            "title": "Advanced Web Search",
+            "description": "Busca avancada com filtros por dominio, categorias (people, news, pdf), datas e sumarios.",
+            "status": "HABILITADO (opt-in via tools parameter)" if configured else unavail,
+        },
+        {
+            "name": "web_fetch_exa",
+            "title": "Fetch Web Pages",
+            "description": "Extracao de texto completo em markdown purificado a partir de URLs conhecidas.",
+            "status": "HABILITADO" if configured else unavail,
+        },
+        {
+            "name": "agent_run",
+            "title": "Exa Agent",
+            "description": "Pesquisa profunda autonoma em multiplas etapas com suporte a budget, esforco e output schema.",
+            "status": "HABILITADO (via API Key / OAuth)" if configured else unavail,
+        },
+    ]
 
 
 def fetch_all_exa_telemetry() -> dict[str, Any]:
@@ -37,54 +94,7 @@ def fetch_all_exa_telemetry() -> dict[str, Any]:
     status = "DESCONECTADO"
 
     if configured:
-        t0 = time.perf_counter()
-        try:
-            resp = client.search(
-                query="Raphael Vitoi Poker Racional PMev",
-                num_results=2,
-                objective="Verificar indexacao e latencia da Triade",
-            )
-            latency_ms = (time.perf_counter() - t0) * 1000
-            status = "CONECTADO E OPERACIONAL"
-            for r in resp.results:
-                probe_results.append(
-                    {
-                        "title": r.title or "Sem titulo",
-                        "url": r.url,
-                        "published_date": r.published_date or "N/A",
-                        "text_preview": r.text[:200].replace("\n", " ").strip() if r.text else "N/A",
-                    }
-                )
-        except Exception as e:
-            logger.warning("[EXA] Erro ao executar probe: %s", e)
-            status = f"ERRO ({e})"
-
-    tools_catalog = [
-        {
-            "name": "web_search_exa",
-            "title": "Web Search",
-            "description": "Busca semantica em linguagem natural na web com retorno de conteudo limpo.",
-            "status": "HABILITADO" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
-        },
-        {
-            "name": "web_search_advanced_exa",
-            "title": "Advanced Web Search",
-            "description": "Busca avancada com filtros por dominio, categorias (people, news, pdf), datas e sumarios.",
-            "status": "HABILITADO (opt-in via tools parameter)" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
-        },
-        {
-            "name": "web_fetch_exa",
-            "title": "Fetch Web Pages",
-            "description": "Extracao de texto completo em markdown purificado a partir de URLs conhecidas.",
-            "status": "HABILITADO" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
-        },
-        {
-            "name": "agent_run",
-            "title": "Exa Agent",
-            "description": "Pesquisa profunda autonoma em multiplas etapas com suporte a budget, esforco e output schema.",
-            "status": "HABILITADO (via API Key / OAuth)" if configured else "INDISPONIVEL (EXA_API_KEY ausente)",
-        },
-    ]
+        status, latency_ms, probe_results = _run_exa_probe(client)
 
     return {
         "configured": configured,
@@ -95,7 +105,7 @@ def fetch_all_exa_telemetry() -> dict[str, Any]:
         "rate_limit_qps": SEARCH_RATE_LIMIT_QPS if configured else 0,
         "active_key_name": "exa1" if configured else "NENHUMA (ausente)",
         "probe_results": probe_results,
-        "tools": tools_catalog,
+        "tools": _build_tools_catalog(configured),
     }
 
 
