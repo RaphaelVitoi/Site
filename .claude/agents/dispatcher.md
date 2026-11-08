@@ -19,6 +19,7 @@ Quebra de problemas massivos (Grafo Aciclico Direcionado), mapeamento de depende
 ## Skills Especializadas
 
 - `sota-tactical-orchestrator-nanostack`
+- `chrysalis-live-editing`
 - `enforcing-resource-attribution`
 - `google-jules-cloud`
 - `site-session-handoff`

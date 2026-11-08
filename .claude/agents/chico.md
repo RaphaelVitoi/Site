@@ -19,6 +19,7 @@ God Mode 2.0, Roteamento Hibrido SOTA, Arbitragem Absoluta, Execucao Implacavel,
 ## Skills Especializadas
 
 - `sota-tactical-orchestrator-nanostack`
+- `chrysalis-live-editing`
 - `sota-quality-gate`
 - `sota-server-lifecycle-warmup`
 - `agy-customizations`

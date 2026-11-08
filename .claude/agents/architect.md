@@ -19,6 +19,7 @@ System Design SOTA, Topologia de Componentes, Engenharia de Requisitos, Visao de
 ## Skills Especializadas
 
 - `sota-tactical-orchestrator-nanostack`
+- `chrysalis-live-editing`
 - `gcp-cloud-data-orchestration-master`
 - `gcp-bigquery-lakehouse-master`
 - `flutter-apply-architecture-best-practices`

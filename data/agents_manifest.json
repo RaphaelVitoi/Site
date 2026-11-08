@@ -39,6 +39,7 @@
     "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
+      "chrysalis-live-editing",
       "sota-quality-gate",
       "sota-server-lifecycle-warmup",
       "agy-customizations",
@@ -72,6 +73,7 @@
     "primary_model": "claude-sonnet-5",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
+      "chrysalis-live-editing",
       "gcp-cloud-data-orchestration-master",
       "gcp-bigquery-lakehouse-master",
       "flutter-apply-architecture-best-practices",
@@ -98,6 +100,7 @@
     "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
+      "chrysalis-live-editing",
       "enforcing-resource-attribution",
       "site-session-handoff"
     ],
@@ -121,6 +124,7 @@
     "primary_model": "qwen2.5-coder:1.5b",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
+      "chrysalis-live-editing",
       "enforcing-resource-attribution",
       "google-jules-cloud",
       "site-session-handoff"
@@ -175,6 +179,7 @@
     "primary_model": "gemini-3.5-flash-lite",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
+      "chrysalis-live-editing",
       "neuropsychology-high-performance",
       "site-session-handoff"
     ],
@@ -353,6 +358,7 @@
     "primary_model": "qwen2.5-coder:0.5b",
     "skills": [
       "sota-tactical-orchestrator-nanostack",
+      "chrysalis-live-editing",
       "gcp-cloud-data-orchestration-master",
       "site-session-handoff"
     ],

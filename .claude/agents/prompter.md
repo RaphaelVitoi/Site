@@ -19,6 +19,7 @@ Engenharia de prompts SOTA, In-context learning, Few-shot de alta densidade, Red
 ## Skills Especializadas
 
 - `sota-tactical-orchestrator-nanostack`
+- `chrysalis-live-editing`
 - `neuropsychology-high-performance`
 - `site-session-handoff`
 

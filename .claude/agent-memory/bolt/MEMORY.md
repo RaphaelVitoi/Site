@@ -98,6 +98,3 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
   2. **Selagem de Referências e Prevenção de Leak em Hooks:** Auditoria de hooks como `useMonteCarloConvergence.ts` e `useQuantumEngine.ts` para garantir que objetos de configuração instáveis não vazem re-renderizações para componentes filhos.
   3. **Otimização de Estruturas de Range / Matrizes de Poker:** Otimização de lookups matriciais em `frontend/src/lib/poker/`.
   4. **Entrega por Refutação (§10.1):** O Gemini 3.1 Pro deve medir baseline antes de gerar qualquer diff. Se a melhoria projetada for inferior a 5% ou degradar legibilidade/manutenibilidade, a hipótese deve ser **refutada e arquivada** no resumo da sessão, encerrando com sucesso sem criar Pull Request.
-## 2026-11-05 - [Reference Sealing in useQuantumEngine]
-**Learning:** The use of `JSON.stringify` on the `streetFreqs` object within `useQuantumEngine.ts` is not a performance bottleneck to be optimized. Instead, it is an intentional and architecturally sealed reference stabilization mechanism. Attempting to replace it with shallow checks triggers a massive O(N³) downstream GC Thrashing regression in over 26 hooked components.
-**Action:** Never attempt to remove or optimize the `JSON.stringify` serialization acting as a reference seal in `useQuantumEngine.ts`. Consider it protected by Target Lock.

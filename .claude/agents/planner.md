@@ -19,6 +19,7 @@ Engenharia de Requisitos, detalhamento de PRD/SPEC, criacao de milestones, divis
 ## Skills Especializadas
 
 - `sota-tactical-orchestrator-nanostack`
+- `chrysalis-live-editing`
 - `enforcing-resource-attribution`
 - `site-session-handoff`
 
