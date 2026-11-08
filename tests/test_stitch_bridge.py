@@ -434,3 +434,58 @@ def test_stitch_client_apply_design_system_and_create_from_design_md() -> None:
         args_apply = _args_enviados(m)
         assert args_apply["projectId"] == "10"
         assert args_apply["assetId"] == "ds123"
+
+
+def test_stitch_enhance_prompt() -> None:
+    """Valida o pipeline de aprimoramento de prompts visuais."""
+    raw = "Monte um scanner de equidade para poker"
+    enhanced = StitchClient.enhance_prompt(raw, platform="Web desktop", include_obsidian_design_system=True)
+
+    assert "Monte um scanner de equidade para poker" in enhanced
+    assert "Web desktop" in enhanced
+    assert "Dark Obsidian Glassmorphism" in enhanced
+    assert "DESIGN SYSTEM (REQUIRED - Obsidian Analytics):" in enhanced
+    assert "Geist Sans" in enhanced
+    assert "JetBrains Mono" in enhanced
+    assert "#030610" in enhanced
+    assert "#f2b72b" in enhanced
+
+
+def test_stitch_generate_screen_with_auto_enhance() -> None:
+    """Valida geracao com flag auto_enhance ativada."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"screen": {"id": "sc_auto"}}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        res = client.generate_screen_from_text(
+            project_id="projects/123",
+            prompt="Dashboard PMev",
+            auto_enhance=True,
+        )
+        assert res.get("screen", {}).get("id") == "sc_auto"
+        args = _args_enviados(m)
+        assert "Obsidian Analytics" in args["prompt"]
+        assert "Dashboard PMev" in args["prompt"]
+
+
+def test_stitch_agent_cli_offline_enhance(capsys: pytest.CaptureFixture[str]) -> None:
+    """Valida subcomando enhance offline do run_stitch_agent.py."""
+    import argparse
+    from scripts.ops.run_stitch_agent import cmd_enhance
+
+    args = argparse.Namespace(prompt="Criar tela de Nash", platform="Mobile", no_ds=False, json=True)
+    code = cmd_enhance(args)
+    assert code == 0
+
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    assert data["original"] == "Criar tela de Nash"
+    assert "Mobile" in data["enhanced"]
+    assert "Obsidian Analytics" in data["enhanced"]

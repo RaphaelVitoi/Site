@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 STITCH_MCP_URL: Final[str] = "https://stitch.googleapis.com/mcp"
 STITCH_ERROR_NOT_CONFIGURED: Final[str] = "StitchClient nao configurado: STITCH_API_KEY ausente."
 STITCH_PROJECTS_PREFIX: Final[str] = "projects/"
+DEFAULT_STITCH_PROJECT_ID: Final[str] = "18242753218562483944"
+DEFAULT_OBSIDIAN_DESIGN_SYSTEM: Final[str] = "assets/6f9c8c6e7114422393d45b0c4ca02808"
 
 MODEL_TIER_MAPPING: Final[dict[str, str]] = {
     "BALANCED": "GEMINI_3_8_FLASH",
@@ -297,6 +299,43 @@ class StitchClient:
             raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
         return self._call_tool("download_file", {"name": file_resource_name})
 
+    @staticmethod
+    def enhance_prompt(
+        raw_prompt: str,
+        platform: str = "Web desktop",
+        include_obsidian_design_system: bool = True,
+    ) -> str:
+        """Aprimora um prompt bruto seguindo o pipeline oficial do Stitch (enhance-prompt skill).
+
+        Adiciona especificacao de plataforma, estrutura em secoes logicas numeradas,
+        terminologia UI/UX avancada e bloco mandatario de Design System (Obsidian Analytics).
+        """
+        prompt_trimmed = raw_prompt.strip()
+        lines: list[str] = [
+            f"**Platform:** {platform}",
+            "**Theme:** Dark Obsidian Glassmorphism with 1px border glow and 20px backdrop blur",
+            "",
+            "**Page Structure:**",
+            "1. **Header/Navbar:** Navigation bar with project branding, status pills, and action controls",
+            f"2. **Primary View:** {prompt_trimmed}",
+            "3. **Analytical Surface:** Tabular data, interactive metric cards, or charts with high contrast",
+            "4. **Footer/Action Bar:** Status indicator, keyboard shortcuts, and primary call-to-action button",
+            "",
+        ]
+        if include_obsidian_design_system:
+            lines.extend(
+                [
+                    "**DESIGN SYSTEM (REQUIRED - Obsidian Analytics):**",
+                    "- Background: Canvas Deep (#030610) with Space Base (#0F1729) layered card panels",
+                    "- Borders: 1px subtle glow (rgba(242, 183, 43, 0.15)) and backdrop-filter: blur(20px)",
+                    "- Accent Primary: Gold (#f2b72b) for key metrics and active CTA buttons",
+                    "- Semantic Colors: Emerald (#54dea2) for positive values/EV, Rose (#EE445E) for risk/leaks, Math Indigo (#6467F2) for equations/Nash",
+                    "- Typography: Geist Sans for headings/navigation, JetBrains Mono for numerical data, EV calculations, and tags",
+                    "- Density: High information density, WCAG AAA contrast, zero generic placeholders",
+                ]
+            )
+        return "\n".join(lines)
+
     def generate_screen_from_text(
         self,
         project_id: str,
@@ -304,6 +343,7 @@ class StitchClient:
         model_tier: str | None = None,
         device_type: str = "DESKTOP",
         design_system: str | None = None,
+        auto_enhance: bool = False,
     ) -> dict[str, object]:
         """Dispara a geracao de uma nova tela no Stitch.
 
@@ -313,9 +353,10 @@ class StitchClient:
         Se omitido, o modelo padrao e resolvido pelo proprio servidor Stitch.
         """
         clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
+        final_prompt = self.enhance_prompt(prompt) if auto_enhance else prompt
         args: dict[str, object] = {
             "projectId": clean_id,
-            "prompt": prompt,
+            "prompt": final_prompt,
             "deviceType": device_type,
         }
         if model_tier:

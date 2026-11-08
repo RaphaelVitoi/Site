@@ -115,7 +115,8 @@ async def http_metrics_middleware(
     if registry is None:
         return await handler(request)
 
-    method = request.method.upper() if hasattr(request, "method") else "UNKNOWN"
+    raw_method = getattr(request, "method", None)
+    method = raw_method.upper() if isinstance(raw_method, str) else "UNKNOWN"
     started_at = time.perf_counter()
 
     try:

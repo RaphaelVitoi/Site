@@ -101,13 +101,35 @@ pages = client.fetch(
     max_characters=4000,
 )
 
-# 4. Disparo de pesquisa profunda via Exa Agent:
+# 4. Disparo de pesquisa profunda via Exa Agent (com schema estruturado e polling):
 run = client.run_agent(
-    query="Mapear a evolucao do conceito de Risk Premium no poker moderno entre 2020 e 2026",
-    effort="low",
+    query="Mapear empresas e pesquisadores focados em IA para Teoria dos Jogos e Poker",
+    effort="medium",
+    output_schema={
+        "type": "object",
+        "properties": {
+            "entities": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string"},
+                        "focus_area": {"type": "string"},
+                        "url": {"type": "string", "format": "uri"},
+                    },
+                    "required": ["name", "focus_area"],
+                },
+            }
+        },
+        "required": ["entities"],
+    },
     max_cost_dollars=1.0,
 )
-print(f"Exa Agent Run ID: {run.run_id} | Status: {run.status}")
+print(f"Exa Agent Run ID: {run.run_id} | Status Inicial: {run.status}")
+
+# Aguardar conclusao e inspecionar saida estruturada
+completed_run = client.poll_agent_run(run.run_id, poll_interval=4.0)
+print("Resultado Estruturado:", completed_run.structured_output)
 
 # 5. Sincronizar relatório dinâmico:
 # python scripts/ops/sync_exa_report.py --write
