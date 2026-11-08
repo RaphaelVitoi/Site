@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-07-preludio"
 criado_em: 2026-09-07T19:05:00-03:00
 atualizado_em: 2026-09-09T11:30:00-03:00
+commit: f0a9ac2d
 classes: [interno, medido, verificacao-independente, icm, procedencia]
 caminhos:
   - engine/timesfm_engine.py
@@ -16,6 +17,7 @@ caminhos:
   - database/lab_manager.py
   - wasm-equity/lib.rs
 config_medida:
+  congelada_em: '2026-09-07'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

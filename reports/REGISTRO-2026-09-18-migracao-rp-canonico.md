@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: antigravity@gemini-3.8-flash-high
 criado_em: '2026-09-18T16:40:00-03:00'
 atualizado_em: '2026-09-18T16:40:00-03:00'
+commit: 7d2157e6
 classes: [interno, medido, matematico, backend, frontend]
 caminhos:
   - reports/REGISTRO-2026-09-18-migracao-rp-canonico.md
