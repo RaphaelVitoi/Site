@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-11-08T08:16:00-03:00'
 atualizado_em: '2026-11-08T08:16:00-03:00'
-commit: HEAD
+commit: 9db358aa
 verificado:
   - 'Elevacao e paridade estrita de fastapi (0.162.2) e laya (0.4.29) em pyproject.toml, requirements.txt e uv.lock'
   - 'Resolucao de diagnostico Pyright em api/v1/http_metrics.py com narrowing estrito de MethodType'

@@ -10,16 +10,17 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-from pathlib import Path
 import sys
 import time
-from typing import Any
+from typing import Final
 
 from engine.jules_bridge import (
     JULES_DEFAULT_SOURCE,
     JulesClient,
     JulesSessionRequest,
 )
+
+HELP_SESSION_ID: Final[str] = "ID da sessao"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("JulesAgentCLI")
@@ -73,10 +74,10 @@ def cmd_list(args: argparse.Namespace, client: JulesClient) -> int:
         print(f"\n[JULES SESSOES] {len(sessions)} sessao(oes) encontrada(s):")
         for s in sessions:
             name = str(s.get("name", ""))
-            sid = name.split("/")[-1] if "/" in name else s.get("id", "N/A")
-            state = s.get("state", "UNKNOWN")
-            title = s.get("title", "Sem titulo")
-            created = s.get("createTime", "")[:19].replace("T", " ")
+            sid = name.split("/")[-1] if "/" in name else str(s.get("id", "N/A"))
+            state = str(s.get("state", "UNKNOWN"))
+            title = str(s.get("title", "Sem titulo"))
+            created = str(s.get("createTime", ""))[:19].replace("T", " ")
             print(f"  - ID: {sid} | Estado: {state} | Criado: {created}")
             print(f"    Titulo: {title}")
     return 0
@@ -116,10 +117,12 @@ def cmd_activities(args: argparse.Namespace, client: JulesClient) -> int:
     else:
         print(f"\n[JULES ATIVIDADES] {len(acts)} evento(s) para a sessao {args.session_id}:")
         for act in acts:
-            aid = act.get("name", "").split("/")[-1] or act.get("id", "N/A")
-            orig = act.get("originator", "unknown")
-            ctime = act.get("createTime", "")[:19].replace("T", " ")
-            keys = [k for k in act.keys() if k not in {"name", "id", "createTime", "originator"}]
+            raw_name = str(act.get("name", ""))
+            raw_id = str(act.get("id", "N/A"))
+            aid = raw_name.split("/")[-1] if "/" in raw_name else (raw_name or raw_id)
+            orig = str(act.get("originator", "unknown"))
+            ctime = str(act.get("createTime", ""))[:19].replace("T", " ")
+            keys = [k for k in act if k not in {"name", "id", "createTime", "originator"}]
             print(f"  - [{ctime}] {orig} | ID: {aid} | Tipos: {', '.join(keys)}")
     return 0
 
@@ -235,25 +238,25 @@ def main() -> int:
 
     # Subcomando: get
     p_get = subparsers.add_parser("get", parents=[common], help="Consulta detalhes de uma sessao")
-    p_get.add_argument("session_id", type=str, help="ID da sessao")
+    p_get.add_argument("session_id", type=str, help=HELP_SESSION_ID)
 
     # Subcomando: activities
     p_act = subparsers.add_parser("activities", parents=[common], help="Lista atividades de uma sessao")
-    p_act.add_argument("session_id", type=str, help="ID da sessao")
+    p_act.add_argument("session_id", type=str, help=HELP_SESSION_ID)
 
     # Subcomando: approve
     p_app = subparsers.add_parser("approve", parents=[common], help="Aprova plano de uma sessao (:approvePlan)")
-    p_app.add_argument("session_id", type=str, help="ID da sessao")
+    p_app.add_argument("session_id", type=str, help=HELP_SESSION_ID)
     p_app.add_argument("--activity", type=str, default=None, help="ID da atividade especifica (opcional)")
 
     # Subcomando: send
     p_send = subparsers.add_parser("send", parents=[common], help="Envia mensagem para uma sessao (:sendMessage)")
-    p_send.add_argument("session_id", type=str, help="ID da sessao")
+    p_send.add_argument("session_id", type=str, help=HELP_SESSION_ID)
     p_send.add_argument("message", type=str, help="Mensagem/instrucao a enviar")
 
     # Subcomando: diff
     p_diff = subparsers.add_parser("diff", parents=[common], help="Coleta diff/patch da sessao")
-    p_diff.add_argument("session_id", type=str, help="ID da sessao")
+    p_diff.add_argument("session_id", type=str, help=HELP_SESSION_ID)
 
     # Subcomando: sources
     p_src = subparsers.add_parser("sources", parents=[common], help="Lista fontes conectadas")
@@ -268,19 +271,19 @@ def main() -> int:
 
     if args.command == "create":
         return cmd_create(args, client)
-    elif args.command == "list":
+    if args.command == "list":
         return cmd_list(args, client)
-    elif args.command == "get":
+    if args.command == "get":
         return cmd_get(args, client)
-    elif args.command == "activities":
+    if args.command == "activities":
         return cmd_activities(args, client)
-    elif args.command == "approve":
+    if args.command == "approve":
         return cmd_approve(args, client)
-    elif args.command == "send":
+    if args.command == "send":
         return cmd_send(args, client)
-    elif args.command == "diff":
+    if args.command == "diff":
         return cmd_diff(args, client)
-    elif args.command == "sources":
+    if args.command == "sources":
         return cmd_sources(args, client)
 
     return 0

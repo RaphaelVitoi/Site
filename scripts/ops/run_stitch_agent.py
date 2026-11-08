@@ -10,16 +10,19 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-from pathlib import Path
 import sys
 import time
-from typing import Any
+from typing import Final
 
 from engine.stitch_bridge import (
     DEFAULT_OBSIDIAN_DESIGN_SYSTEM,
     DEFAULT_STITCH_PROJECT_ID,
     StitchClient,
 )
+
+HELP_PROJECT_ID: Final[str] = "ID do projeto Stitch"
+HELP_MODEL_TIER: Final[str] = "Tier de modelo"
+HELP_DEVICE_TYPE: Final[str] = "Tipo de tela"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("StitchAgentCLI")
@@ -106,28 +109,36 @@ def cmd_variants(args: argparse.Namespace, client: StitchClient) -> int:
     return 0
 
 
+def _list_screens(project_id: str, client: StitchClient, as_json: bool) -> None:
+    screens = client.list_screens(project_id)
+    if as_json:
+        print(json.dumps({"screens": [dict(s) for s in screens]}, indent=2, ensure_ascii=False))
+        return
+    print(f"\n[STITCH TELAS] {len(screens)} tela(s) encontradas no projeto {project_id}:")
+    for sc in screens:
+        print(f"  - ID: {sc.id} | Titulo: {sc.title} | Dispositivo: {sc.device_type}")
+        if sc.screenshot_url:
+            print(f"    Screenshot: {sc.screenshot_url}")
+        if sc.html_url:
+            print(f"    HTML: {sc.html_url}")
+
+
+def _list_projects(client: StitchClient, as_json: bool) -> None:
+    projects = client.list_projects()
+    if as_json:
+        print(json.dumps({"projects": [dict(p) for p in projects]}, indent=2, ensure_ascii=False))
+        return
+    print(f"\n[STITCH PROJETOS] {len(projects)} projeto(s) encontrados:")
+    for p in projects:
+        print(f"  - ID: {p.project_id} | Titulo: {p.title} | Visibilidade: {p.visibility}")
+
+
 def cmd_list(args: argparse.Namespace, client: StitchClient) -> int:
     """Lista projetos ou telas de um projeto."""
     if args.project:
-        screens = client.list_screens(args.project)
-        if args.json:
-            print(json.dumps({"screens": [dict(s) for s in screens]}, indent=2, ensure_ascii=False))
-        else:
-            print(f"\n[STITCH TELAS] {len(screens)} tela(s) encontradas no projeto {args.project}:")
-            for sc in screens:
-                print(f"  - ID: {sc.id} | Titulo: {sc.title} | Dispositivo: {sc.device_type}")
-                if sc.screenshot_url:
-                    print(f"    Screenshot: {sc.screenshot_url}")
-                if sc.html_url:
-                    print(f"    HTML: {sc.html_url}")
+        _list_screens(args.project, client, bool(args.json))
     else:
-        projects = client.list_projects()
-        if args.json:
-            print(json.dumps({"projects": [dict(p) for p in projects]}, indent=2, ensure_ascii=False))
-        else:
-            print(f"\n[STITCH PROJETOS] {len(projects)} projeto(s) encontrados:")
-            for p in projects:
-                print(f"  - ID: {p.project_id} | Titulo: {p.title} | Visibilidade: {p.visibility}")
+        _list_projects(client, bool(args.json))
     return 0
 
 
@@ -151,7 +162,7 @@ def cmd_enhance(args: argparse.Namespace) -> int:
 def _trigger_sync() -> None:
     """Aciona o sincronizador oficial do Stitch para manter STITCH_REPORT.md fidedigno."""
     try:
-        from scripts.ops.sync_stitch_report import fetch_all_stitch_data, format_markdown_report, STITCH_REPORT_FILE
+        from scripts.ops.sync_stitch_report import STITCH_REPORT_FILE, fetch_all_stitch_data, format_markdown_report
 
         data = fetch_all_stitch_data()
         report_md = format_markdown_report(data)
@@ -175,12 +186,14 @@ def main() -> int:
     # Subcomando: generate
     p_gen = subparsers.add_parser("generate", parents=[common], help="Gera nova tela a partir de prompt")
     p_gen.add_argument("prompt", type=str, help="Descricao ou prompt conceitual da tela")
-    p_gen.add_argument("--project", type=str, default=DEFAULT_STITCH_PROJECT_ID, help="ID do projeto Stitch")
+    p_gen.add_argument("--project", type=str, default=DEFAULT_STITCH_PROJECT_ID, help=HELP_PROJECT_ID)
     p_gen.add_argument("--enhance", action="store_true", help="Aplica pipeline enhance-prompt antes de enviar")
     p_gen.add_argument(
-        "--model-tier", type=str, default="BALANCED", choices=["BALANCED", "SPEED"], help="Tier de modelo"
+        "--model-tier", type=str, default="BALANCED", choices=["BALANCED", "SPEED"], help=HELP_MODEL_TIER
     )
-    p_gen.add_argument("--device-type", type=str, default="DESKTOP", choices=["DESKTOP", "MOBILE"], help="Tipo de tela")
+    p_gen.add_argument(
+        "--device-type", type=str, default="DESKTOP", choices=["DESKTOP", "MOBILE"], help=HELP_DEVICE_TYPE
+    )
     p_gen.add_argument(
         "--design-system", type=str, default=DEFAULT_OBSIDIAN_DESIGN_SYSTEM, help="Asset de Design System"
     )
@@ -189,25 +202,27 @@ def main() -> int:
     p_edit = subparsers.add_parser("edit", parents=[common], help="Edita tela(s) existente(s)")
     p_edit.add_argument("prompt", type=str, help="Instrucao de modificacao/edicao")
     p_edit.add_argument("--screens", nargs="+", required=True, help="IDs das telas a editar")
-    p_edit.add_argument("--project", type=str, default=DEFAULT_STITCH_PROJECT_ID, help="ID do projeto Stitch")
+    p_edit.add_argument("--project", type=str, default=DEFAULT_STITCH_PROJECT_ID, help=HELP_PROJECT_ID)
     p_edit.add_argument(
-        "--model-tier", type=str, default="BALANCED", choices=["BALANCED", "SPEED"], help="Tier de modelo"
+        "--model-tier", type=str, default="BALANCED", choices=["BALANCED", "SPEED"], help=HELP_MODEL_TIER
     )
     p_edit.add_argument(
-        "--device-type", type=str, default="DESKTOP", choices=["DESKTOP", "MOBILE"], help="Tipo de tela"
+        "--device-type", type=str, default="DESKTOP", choices=["DESKTOP", "MOBILE"], help=HELP_DEVICE_TYPE
     )
 
     # Subcomando: variants
     p_var = subparsers.add_parser("variants", parents=[common], help="Gera variantes visuais de tela(s)")
     p_var.add_argument("prompt", type=str, help="Instrucao de exploracao de variantes")
     p_var.add_argument("--screens", nargs="+", required=True, help="IDs das telas base")
-    p_var.add_argument("--project", type=str, default=DEFAULT_STITCH_PROJECT_ID, help="ID do projeto Stitch")
+    p_var.add_argument("--project", type=str, default=DEFAULT_STITCH_PROJECT_ID, help=HELP_PROJECT_ID)
     p_var.add_argument("--count", type=int, default=3, help="Quantidade de variantes (1 a 5)")
     p_var.add_argument(
         "--creative-range", type=str, default="EXPLORE", choices=["REFINE", "EXPLORE"], help="Grau de variacao"
     )
-    p_var.add_argument("--model-tier", type=str, default="SPEED", choices=["BALANCED", "SPEED"], help="Tier de modelo")
-    p_var.add_argument("--device-type", type=str, default="DESKTOP", choices=["DESKTOP", "MOBILE"], help="Tipo de tela")
+    p_var.add_argument("--model-tier", type=str, default="SPEED", choices=["BALANCED", "SPEED"], help=HELP_MODEL_TIER)
+    p_var.add_argument(
+        "--device-type", type=str, default="DESKTOP", choices=["DESKTOP", "MOBILE"], help=HELP_DEVICE_TYPE
+    )
 
     # Subcomando: list
     p_list = subparsers.add_parser("list", parents=[common], help="Lista projetos ou telas de um projeto")
@@ -233,11 +248,11 @@ def main() -> int:
 
     if args.command == "generate":
         return cmd_generate(args, client)
-    elif args.command == "edit":
+    if args.command == "edit":
         return cmd_edit(args, client)
-    elif args.command == "variants":
+    if args.command == "variants":
         return cmd_variants(args, client)
-    elif args.command == "list":
+    if args.command == "list":
         return cmd_list(args, client)
 
     return 0
