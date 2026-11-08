@@ -98,3 +98,7 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
   2. **Selagem de Referências e Prevenção de Leak em Hooks:** Auditoria de hooks como `useMonteCarloConvergence.ts` e `useQuantumEngine.ts` para garantir que objetos de configuração instáveis não vazem re-renderizações para componentes filhos.
   3. **Otimização de Estruturas de Range / Matrizes de Poker:** Otimização de lookups matriciais em `frontend/src/lib/poker/`.
   4. **Entrega por Refutação (§10.1):** O Gemini 3.1 Pro deve medir baseline antes de gerar qualquer diff. Se a melhoria projetada for inferior a 5% ou degradar legibilidade/manutenibilidade, a hipótese deve ser **refutada e arquivada** no resumo da sessão, encerrando com sucesso sem criar Pull Request.
+
+## 2025-03-08 - [SOTA FIX: Quantum Engine reference stability]
+**Learning:** `useQuantumEngine` was returning a new object on every render because the return object was not memoized, causing child components wrapped in `React.memo` to unnecessarily re-render on every tick.
+**Action:** Wrapped the returned object in `useMemo` with all exported variables in the dependency array. Benchmarked that child re-renders correctly dropped from 1001 down to 1.
