@@ -55,7 +55,8 @@ async function pingEndpoint(
     } else {
       data = await response.text().catch(() => null);
     }
-    return { ok: response.status < 500, status: response.status, latencyMs: Math.round(elapsed), data };
+    const isSuccess = response.status >= 200 && response.status < 300;
+    return { ok: isSuccess, status: response.status, latencyMs: Math.round(elapsed), data };
   } catch {
     const elapsed = performance.now() - t0;
     return { ok: false, status: 0, latencyMs: Math.round(elapsed), data: null };
@@ -197,11 +198,27 @@ export async function GET() {
     : 'Servidor Python 17042 inativo ou em modo headless';
 
   // 6. Chrysalis Live Engine (8788)
-  const chrysalis = await pingEndpoint('http://127.0.0.1:8788/', 1000);
-  const chrysalisStatus: 'ACTIVE' | 'OFFLINE' = chrysalis.ok ? 'ACTIVE' : 'OFFLINE';
-  const chrysalisDetails = chrysalis.ok
+  const chrysalisBase = process.env['CHRYSALIS_SERVICE_URL'] || 'http://127.0.0.1:8788';
+  const chrysalis = await pingEndpoint(`${chrysalisBase.replace(/\/+$/, '')}/v1/apps`, 1000);
+  const isChrysalisOperational = chrysalis.ok || chrysalis.status === 401 || chrysalis.status === 403;
+  const chrysalisStatus: 'ACTIVE' | 'OFFLINE' = isChrysalisOperational ? 'ACTIVE' : 'OFFLINE';
+  const chrysalisDetails = isChrysalisOperational
     ? 'Chrysalis Live Engine operacional (servico externo AGPL)'
-    : 'Chrysalis Live Engine indisponivel em 8788';
+    : `Chrysalis Live Engine indisponivel em ${chrysalisBase}`;
+
+  // 7. Roteamento AI Mesh (Cloud vs Local)
+  const hasCloudRoute = Boolean(
+    process.env['GEMINI_API_KEY'] ||
+    process.env['GOOGLE_GENERATIVE_AI_API_KEY'] ||
+    process.env['GOOGLE_API_KEY']
+  );
+  const hasLocalRoute = backendStatus === 'ACTIVE' || ollama.status === 'ACTIVE';
+  const aiMeshStatus: 'ACTIVE' | 'STANDBY' = (hasCloudRoute || hasLocalRoute) ? 'ACTIVE' : 'STANDBY';
+  const aiMeshDetails = hasCloudRoute
+    ? 'Roteador agentico ativo com Gemini 3.5/3.8 Flash e failover deterministico'
+    : (hasLocalRoute
+      ? 'Roteador agentico operando via rota local (Ollama/Backend)'
+      : 'Roteador agentico em standby (configure GEMINI_API_KEY ou ative motor local)');
 
   // 7. Motor Analitico DuckDB & Percepcao
   const perceptionNode: EcosystemNode = {
@@ -241,9 +258,9 @@ export async function GET() {
       role: 'Inferencia neural de alta velocidade (Gemini 3.5/3.8 Flash + Vercel Gateway)',
       port: 'Cloud / Edge',
       protocol: 'AI SDK 7.0 / REST',
-      status: (backendStatus === 'ACTIVE' || ollama.status === 'ACTIVE') ? 'ACTIVE' : 'STANDBY',
+      status: aiMeshStatus,
       latencyMs: 140,
-      details: 'Roteador agentico ativo com Gemini 3.5/3.8 Flash e failover deterministico',
+      details: aiMeshDetails,
       category: 'llm',
       actionAvailable: true,
       actionLabel: 'Testar Roteamento de Inferencia',
@@ -383,7 +400,10 @@ export async function POST(request: Request) {
         pingEndpoint('http://127.0.0.1:9223/json/list', 1200),
       ]);
 
-      const activeList = list9222.ok ? list9222 : list9223;
+      const isSuccessfulList = (p: PingResult) => p.ok && Array.isArray(p.data);
+      const activeList = isSuccessfulList(list9223)
+        ? list9223
+        : (isSuccessfulList(list9222) ? list9222 : (list9223.ok ? list9223 : list9222));
       const pages = Array.isArray(activeList.data) ? activeList.data : [];
 
       return NextResponse.json({
