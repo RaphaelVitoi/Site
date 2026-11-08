@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-pmev"
 criado_em: 2026-09-08T10:40:00-03:00
 atualizado_em: 2026-09-08T10:40:00-03:00
+commit: 436c482c
 classes: [interno, medido, correcao, pmev, icm]
 caminhos:
   - frontend/src/lib/perspectiva.ts
@@ -82,6 +83,7 @@ revisoes_de_ancora:
     1.0, fingerprint d85125e6a5528d32. A certificacao nao foi perdida nem herdada:
     foi refeita, e as 5 fases do portao voltaram a 0 erros e 0 warnings.
 config_medida:
+  congelada_em: '2026-09-08'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

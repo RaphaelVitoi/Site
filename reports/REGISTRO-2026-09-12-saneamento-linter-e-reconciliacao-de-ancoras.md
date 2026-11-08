@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Gemini 3.8 Flash <noreply@google.com>"
 criado_em: 2026-09-12T23:15:00-03:00
 atualizado_em: 2026-09-12T23:15:00-03:00
+commit: 2f248556
 classes: [interno, medido, saneamento, linters, pre-commit]
 caminhos:
   - .vscode/settings.json
@@ -18,6 +19,7 @@ caminhos:
   - scripts/validation/hrc-native-read.mjs
 supersede: null
 config_medida:
+  congelada_em: '2026-09-12'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

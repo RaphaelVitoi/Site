@@ -5,6 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-09-23T22:45:00-03:00'
+commit: 256f696c
 classes: [interno, medido, governanca, pendencias, laya, queue]
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site

@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: 2026-09-03T01:56:31-03:00
 atualizado_em: 2026-09-03T01:56:31-03:00
+commit: 4d89a192
 classes: [interno, medido, pmev, contrato]
 caminhos:
   - core/perspective_schemas.py

@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Codex GPT-5.6 Sol <noreply@openai.com>"
 criado_em: 2026-09-13T08:17:27-03:00
 atualizado_em: 2026-09-13T08:17:27-03:00
+commit: 5329d1bb
 classes: [interno, medido, pmev, teoria-dos-jogos, engines, proveniencia, paridade]
 caminhos:
   - api/v1/handlers.py
@@ -42,6 +43,7 @@ caminhos:
   - tests/test_timesfm_engine.py
 supersede: null
 config_medida:
+  congelada_em: '2026-09-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   head: 72670ac61039947fb2611327a64200d303f607c6

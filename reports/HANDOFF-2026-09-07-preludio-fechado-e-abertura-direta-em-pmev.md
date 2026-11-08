@@ -6,10 +6,12 @@ ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-07-preludio"
 criado_em: 2026-09-07T19:20:00-03:00
 atualizado_em: 2026-09-09T11:32:00-03:00
+commit: f0a9ac2d
 classes: [interno, medido, handoff, governanca]
 caminhos:
   - reports/VALIDACAO-2026-09-07-findings-do-astra-contra-o-codigo.md
 config_medida:
+  congelada_em: '2026-09-07'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows
