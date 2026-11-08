@@ -71,7 +71,7 @@ async function startFrontend({ root, base, deadline, logs, lock, lockPath }) {
     while (Date.now() < deadline) {
       if (spawnError) throw spawnError;
       if (child.exitCode !== null) {
-        throw new Error(`Frontend encerrou (${child.exitCode}); consulte logs/dev-frontend.err.log.`);
+        throw new Error(`Frontend encerrou (${child.exitCode}); consulte ${path.join(logs, 'dev-frontend.err.log')}.`);
       }
       if (await isFrontendReady(base)) {
         ready = true;
@@ -79,7 +79,7 @@ async function startFrontend({ root, base, deadline, logs, lock, lockPath }) {
       }
       await delay(500);
     }
-    throw new Error('Frontend nao respondeu dentro do prazo; consulte logs/dev-frontend.err.log.');
+    throw new Error(`Frontend nao respondeu dentro do prazo; consulte ${path.join(logs, 'dev-frontend.err.log')}.`);
   } finally {
     if (child && !ready) child.kill();
     await lock.close();
@@ -87,13 +87,18 @@ async function startFrontend({ root, base, deadline, logs, lock, lockPath }) {
   }
 }
 
-export async function ensureFrontend({ root, base = 'http://localhost:3000', timeoutMs = 60000 }) {
+export async function ensureFrontend({
+  root,
+  base = 'http://localhost:3000',
+  timeoutMs = 60000,
+  logsDir = process.env.SITE_DEV_LOGS_DIR,
+}) {
   if (await isFrontendReady(base)) return 'reused';
   const url = new URL(base);
   if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) {
     throw new Error('Frontend configurado indisponivel; inicializacao automatica limitada ao loopback HTTP.');
   }
-  const logs = path.join(root, '..', 'site-dev-logs');
+  const logs = logsDir ? path.resolve(logsDir) : path.join(root, '..', 'site-dev-logs');
   await mkdir(logs, { recursive: true });
   const lockPath = path.join(logs, `dev-frontend-${url.port || '3000'}.lock`);
   const deadline = Date.now() + timeoutMs;

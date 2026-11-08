@@ -180,8 +180,12 @@ def _parse_ddg_html(html: str, max_results: int) -> list[SearchResult]:
             url = "https:" + url
         if not url.startswith("http"):
             continue
-        domain = (urlparse(url).netloc or "").lower()
-        if domain == "duckduckgo.com" or domain.endswith(".duckduckgo.com"):
+        try:
+            parsed = urlparse(url)
+        except ValueError:
+            continue
+        hostname = (parsed.hostname or "").lower().rstrip(".")
+        if hostname == "duckduckgo.com" or hostname.endswith(".duckduckgo.com"):
             continue
         results.append(
             SearchResult(
