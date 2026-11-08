@@ -154,7 +154,7 @@ dev = [
 pmev = [
     "sympy>=1.13.3",
     "numba>=0.61.0",
-    "polars>=1.20.0",
+    "polars>=2.1.0",
 ]
 
 # Dependencias extras para observabilidade, exportacao OTLP e telemetria da malha Nexus
@@ -173,7 +173,7 @@ vision = [
 all = [
     "sympy>=1.13.3",
     "numba>=0.61.0",
-    "polars>=1.20.0",
+    "polars>=2.1.0",
     "opentelemetry-sdk>=1.30.0",
     "opentelemetry-exporter-otlp>=1.30.0",
     "prometheus-client>=0.21.0",

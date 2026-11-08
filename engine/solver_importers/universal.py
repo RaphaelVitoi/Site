@@ -147,3 +147,8 @@ class UniversalSolverImporter:
                 optimal_action=opt_act,
                 metadata={"source_solver": tree.solver_type, "original_node_id": nid},
             )
+
+    @staticmethod
+    def export_tree_to_polars(tree: NormalizedGameTree) -> Any:
+        """Exporta os nos e metricas da NormalizedGameTree para Polars DataFrame colunar."""
+        return tree.to_polars()

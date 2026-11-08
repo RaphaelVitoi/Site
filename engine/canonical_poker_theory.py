@@ -23,6 +23,14 @@ from dataclasses import dataclass
 import math
 from typing import Final
 
+try:
+    import sympy as sp
+
+    SYMPY_AVAILABLE = True
+except ImportError:
+    sp = None
+    SYMPY_AVAILABLE = False
+
 
 def _require_positive(name: str, value: float) -> float:
     """Rejeita grandezas impossiveis em vez de fabricar epsilon silencioso."""
@@ -46,6 +54,17 @@ def _require_probability(name: str, value: float) -> float:
 # ==============================================================================
 # 1. CHEN & ANKENMAN: THE MATHEMATICS OF POKER (2006)
 # ==============================================================================
+
+
+@dataclass(frozen=True, slots=True)
+class SymbolicClairvoyanceSolution:
+    """Solucao simbolica fechada do Clairvoyance Game via algebra computacional (SymPy)."""
+
+    alpha: object
+    defense_frequency: object
+    bluff_ratio: object
+    pot_symbol: object
+    bet_symbol: object
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +128,32 @@ class ChenClairvoyanceSolver:
             bluff_cutoff=round(bluff_cutoff, 6),
             game_value_player_x=round(game_value, 6),
             bluff_to_value_ratio=round(alpha, 6),
+        )
+
+    @staticmethod
+    def solve_symbolic() -> SymbolicClairvoyanceSolution:
+        r"""Deriva a solucao simbolica fechada do Clairvoyance Game via SymPy.
+
+        Pot odds simbolicas:
+        $$\alpha(P, B) = \frac{B}{P + B}$$
+        Defesa indiferente:
+        $$s^*(P, B) = \frac{P}{P + B}$$
+        """
+        if not SYMPY_AVAILABLE or sp is None:
+            raise ImportError("sympy nao esta instalado. Instale com 'uv sync --extra pmev'.")
+
+        pot_sym = sp.Symbol("P", positive=True, real=True)
+        bet_sym = sp.Symbol("B", positive=True, real=True)
+        alpha_expr = bet_sym / (pot_sym + bet_sym)
+        defense_expr = pot_sym / (pot_sym + bet_sym)
+        bluff_ratio_expr = bet_sym / pot_sym
+
+        return SymbolicClairvoyanceSolution(
+            alpha=alpha_expr,
+            defense_frequency=defense_expr,
+            bluff_ratio=bluff_ratio_expr,
+            pot_symbol=pot_sym,
+            bet_symbol=bet_sym,
         )
 
 
@@ -242,6 +287,17 @@ class ChenIndifferenceCalculator:
 
 
 @dataclass(frozen=True, slots=True)
+class SymbolicMDFSolution:
+    """Solucao simbolica de Minimum Defense Frequency via SymPy."""
+
+    alpha: object
+    mdf: object
+    multiway_mdf_expr: object
+    pot_symbol: object
+    bet_symbol: object
+
+
+@dataclass(frozen=True, slots=True)
 class JandaMDFResult:
     """Resultado do calculo de Minimum Defense Frequency (Janda, Parte 1 e 12)."""
 
@@ -291,6 +347,41 @@ class JandaMDFCalculator:
             num_defenders=k,
             individual_mdf=round(ind_mdf, 6),
         )
+
+    @staticmethod
+    def solve_symbolic(num_defenders: int = 1) -> SymbolicMDFSolution:
+        r"""Deriva a equacao analitica simbolica de MDF via SymPy.
+
+        $$\text{MDF}(P, B) = \frac{P}{P + B}$$
+        $$\text{MDF}_{\text{multiway}}(P, B, k) = 1 - \left(\frac{B}{P + B}\right)^{1/k}$$
+        """
+        if not SYMPY_AVAILABLE or sp is None:
+            raise ImportError("sympy nao esta instalado. Instale com 'uv sync --extra pmev'.")
+
+        pot_sym = sp.Symbol("P", positive=True, real=True)
+        bet_sym = sp.Symbol("B", positive=True, real=True)
+        alpha_expr = bet_sym / (pot_sym + bet_sym)
+        mdf_expr = pot_sym / (pot_sym + bet_sym)
+        k = max(1, int(num_defenders))
+        mw_mdf_expr = mdf_expr if k == 1 else 1 - (alpha_expr ** (sp.Rational(1, k)))
+
+        return SymbolicMDFSolution(
+            alpha=alpha_expr,
+            mdf=mdf_expr,
+            multiway_mdf_expr=mw_mdf_expr,
+            pot_symbol=pot_sym,
+            bet_symbol=bet_sym,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SymbolicGeometricSizingSolution:
+    """Solucao simbolica para o dimensionamento geometrico de Janda via SymPy."""
+
+    pot_fraction_expr: object
+    pot_symbol: object
+    stack_symbol: object
+    streets: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -375,6 +466,28 @@ class JandaGeometricBetSizing:
             constant_pot_fraction=round(r, 6),
             pot_fraction_percentage=round(r * 100.0, 2),
             steps=steps,
+        )
+
+    @classmethod
+    def solve_symbolic(cls, num_streets: int = 3) -> SymbolicGeometricSizingSolution:
+        r"""Deriva a fracao de dimensionamento geometrico de Janda simbolicamente via SymPy.
+
+        $$(1 + 2r)^n = \frac{P + 2S}{P} \implies r(P, S) = \frac{1}{2} \left[ \left(1 + \frac{2S}{P}\right)^{1/n} - 1 \right]$$
+        """
+        if not SYMPY_AVAILABLE or sp is None:
+            raise ImportError("sympy nao esta instalado. Instale com 'uv sync --extra pmev'.")
+
+        pot_sym = sp.Symbol("P", positive=True, real=True)
+        stack_sym = sp.Symbol("S", positive=True, real=True)
+        n = max(1, int(num_streets))
+        growth = 1 + (2 * stack_sym / pot_sym)
+        r_expr = sp.Rational(1, 2) * ((growth ** (sp.Rational(1, n))) - 1)
+
+        return SymbolicGeometricSizingSolution(
+            pot_fraction_expr=r_expr,
+            pot_symbol=pot_sym,
+            stack_symbol=stack_sym,
+            streets=n,
         )
 
 

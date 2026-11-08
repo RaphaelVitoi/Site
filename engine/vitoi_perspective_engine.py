@@ -389,6 +389,36 @@ except ImportError:
         QUANTUM_TENSOR_ENGINE = None
         TENSOR_ENGINE_AVAILABLE = False
 
+try:
+    import numba as _numba
+
+    NUMBA_AVAILABLE = True
+except ImportError:
+    NUMBA_AVAILABLE = False
+    _numba = None
+
+if NUMBA_AVAILABLE and _numba is not None and NUMPY_AVAILABLE and np is not None:
+
+    @_numba.njit(fastmath=True, cache=True)
+    def _numba_fast_perspective_batch(equity_arr, pot_arr, noise_factor):
+        n = len(equity_arr)
+        out = np.empty(n, dtype=np.float32)
+        factor = np.float32(1.0 - noise_factor)
+        for i in range(n):
+            out[i] = equity_arr[i] * pot_arr[i] * factor
+        return out
+else:
+    _numba_fast_perspective_batch = None
+
+
+try:
+    import sympy as sp
+
+    SYMPY_AVAILABLE = True
+except ImportError:
+    sp = None
+    SYMPY_AVAILABLE = False
+
 
 class VitoiPerspectiveEngine:
     """
@@ -1074,6 +1104,16 @@ class VitoiPerspectiveEngine:
             except Exception:
                 pass
 
+        # Aceleracao JIT Numba de alta performance para CPU
+        if _numba_fast_perspective_batch is not None and NUMPY_AVAILABLE and np is not None:
+            try:
+                eq_arr = np.ascontiguousarray(equity, dtype=np.float32)
+                pot_arr = np.ascontiguousarray(pot, dtype=np.float32)
+                if len(eq_arr) == len(pot_arr):
+                    return _numba_fast_perspective_batch(eq_arr, pot_arr, human_noise_factor)
+            except Exception:
+                pass
+
         # Fallback analitico deterministico
         if NUMPY_AVAILABLE and np is not None:
             try:
@@ -1091,3 +1131,31 @@ class VitoiPerspectiveEngine:
             return [(float(e) * pot) * (1.0 - human_noise_factor) for e in equity]
 
         return [(float(e) * float(p)) * (1.0 - human_noise_factor) for e, p in zip(equity, pot, strict=False)]
+
+    @staticmethod
+    def derive_symbolic_pmev_sensitivities() -> dict[str, object]:
+        r"""Deriva simbolicamente via SymPy as sensibilidades analiticas de PMev (Vitoi 3.2):
+
+        $$\text{PMev} = \frac{E \cdot R \cdot \text{Pot}}{\text{BF}} - \Lambda + \text{EV}_{\text{fold}}$$
+        Sensibilidade marginal de realizacao: $\frac{\partial \text{PMev}}{\partial R}$
+        Sensibilidade a barreira de ruina (Bubble Factor): $\frac{\partial \text{PMev}}{\partial \text{BF}}$
+        Sensibilidade ao passivo estrutural: $\frac{\partial \text{PMev}}{\partial \Lambda}$
+        """
+        if not SYMPY_AVAILABLE or sp is None:
+            raise ImportError("sympy nao esta instalado. Instale com 'uv sync --extra pmev'.")
+
+        eq_sym, r_sym, pot_sym = sp.symbols("E R Pot", positive=True, real=True)
+        lambda_sym, bf_sym = sp.symbols("Lambda BF", positive=True, real=True)
+        ev_fold_sym = sp.Symbol("EV_fold", real=True)
+
+        pmev_expr = ((eq_sym * r_sym * pot_sym) / bf_sym) - lambda_sym + ev_fold_sym
+        d_pmev_dr = sp.diff(pmev_expr, r_sym)
+        d_pmev_dbf = sp.diff(pmev_expr, bf_sym)
+        d_pmev_dlambda = sp.diff(pmev_expr, lambda_sym)
+
+        return {
+            "pmev_expr": pmev_expr,
+            "d_pmev_dR": d_pmev_dr,
+            "d_pmev_dBF": d_pmev_dbf,
+            "d_pmev_dLambda": d_pmev_dlambda,
+        }
