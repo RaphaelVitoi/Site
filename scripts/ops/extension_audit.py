@@ -90,7 +90,7 @@ def _audit_chrome_oauth(ext: str, m: dict) -> None:
         fail(f"{ext}: oauth2 must be an object")
         return
     client_id = oauth.get("client_id", "")
-    if client_id and not isinstance(client_id, str):
+    if not isinstance(client_id, str):
         fail(f"{ext}: oauth2.client_id must be a string")
         return
     is_hardcoded = bool(client_id) and "{{" not in client_id and client_id.endswith(".apps.googleusercontent.com")

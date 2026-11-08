@@ -98,9 +98,11 @@ export async function ensureFrontend({
   if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) {
     throw new Error('Frontend configurado indisponivel; inicializacao automatica limitada ao loopback HTTP.');
   }
-  const logs = logsDir ? path.resolve(logsDir) : path.join(root, '..', 'site-dev-logs');
+  const sharedLockDir = path.join(root, '..', 'site-dev-logs');
+  await mkdir(sharedLockDir, { recursive: true });
+  const lockPath = path.join(sharedLockDir, `dev-frontend-${url.port || '3000'}.lock`);
+  const logs = logsDir ? path.resolve(logsDir) : sharedLockDir;
   await mkdir(logs, { recursive: true });
-  const lockPath = path.join(logs, `dev-frontend-${url.port || '3000'}.lock`);
   const deadline = Date.now() + timeoutMs;
   const lock = await acquireLock(lockPath, deadline, base);
   if (lock === 'reused') return 'reused';

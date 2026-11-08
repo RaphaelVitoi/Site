@@ -199,7 +199,21 @@ export async function GET() {
 
   // 6. Chrysalis Live Engine (8788)
   const chrysalisBase = process.env['CHRYSALIS_SERVICE_URL'] || 'http://127.0.0.1:8788';
-  const chrysalis = await pingEndpoint(`${chrysalisBase.replace(/\/+$/, '')}/v1/apps`, 1000);
+  let chrysalisPort: number | string = 8788;
+  try {
+    const chrysalisUrl = new URL(chrysalisBase);
+    if (chrysalisUrl.port) {
+      chrysalisPort = parseInt(chrysalisUrl.port, 10);
+    } else if (chrysalisUrl.protocol === 'https:') {
+      chrysalisPort = 443;
+    } else if (chrysalisUrl.protocol === 'http:') {
+      chrysalisPort = 80;
+    }
+  } catch {
+    chrysalisPort = 8788;
+  }
+  const cleanChrysalisBase = chrysalisBase.replace(/\/$/, '');
+  const chrysalis = await pingEndpoint(`${cleanChrysalisBase}/v1/apps`, 1000);
   const isChrysalisOperational = chrysalis.ok || chrysalis.status === 401 || chrysalis.status === 403;
   const chrysalisStatus: 'ACTIVE' | 'OFFLINE' = isChrysalisOperational ? 'ACTIVE' : 'OFFLINE';
   const chrysalisDetails = isChrysalisOperational
@@ -214,11 +228,12 @@ export async function GET() {
   );
   const hasLocalRoute = backendStatus === 'ACTIVE' || ollama.status === 'ACTIVE';
   const aiMeshStatus: 'ACTIVE' | 'STANDBY' = (hasCloudRoute || hasLocalRoute) ? 'ACTIVE' : 'STANDBY';
-  const aiMeshDetails = hasCloudRoute
-    ? 'Roteador agentico ativo com Gemini 3.5/3.8 Flash e failover deterministico'
-    : (hasLocalRoute
-      ? 'Roteador agentico operando via rota local (Ollama/Backend)'
-      : 'Roteador agentico em standby (configure GEMINI_API_KEY ou ative motor local)');
+  let aiMeshDetails = 'Roteador agentico em standby (configure GEMINI_API_KEY ou ative motor local)';
+  if (hasCloudRoute) {
+    aiMeshDetails = 'Roteador agentico ativo com Gemini 3.5/3.8 Flash e failover deterministico';
+  } else if (hasLocalRoute) {
+    aiMeshDetails = 'Roteador agentico operando via rota local (Ollama/Backend)';
+  }
 
   // 7. Motor Analitico DuckDB & Percepcao
   const perceptionNode: EcosystemNode = {
@@ -320,7 +335,7 @@ export async function GET() {
       id: 'chrysalis-live-engine',
       name: 'Chrysalis Live Engine (Adapter)',
       role: 'Servico externo AGPL de frontend adaptativo e edicao live',
-      port: 8788,
+      port: chrysalisPort,
       protocol: 'HTTP REST',
       status: chrysalisStatus,
       latencyMs: chrysalis.latencyMs,
@@ -344,6 +359,94 @@ export async function GET() {
   });
 }
 
+async function handleWarmupOllama(modelName?: string, keepAliveDuration?: string) {
+  const model = modelName || 'qwen-code-surgical:latest';
+  const keepAlive = keepAliveDuration || '1h';
+
+  const t0 = performance.now();
+  const response = await fetch('http://127.0.0.1:11434/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      prompt: "print('Nexus VRAM Warmup OK')",
+      stream: false,
+      keep_alive: keepAlive,
+    }),
+    cache: 'no-store',
+  });
+
+  const elapsed = Math.round(performance.now() - t0);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    return NextResponse.json(
+      { success: false, error: `Falha no Ollama: ${errorText}` },
+      { status: 502 },
+    );
+  }
+
+  const resData = (await response.json()) as { eval_count?: number; eval_duration?: number };
+  const evalMs = Math.round((resData.eval_duration || 0) / 1e6);
+
+  return NextResponse.json({
+    success: true,
+    action: 'warmup_ollama',
+    model,
+    latencyMs: elapsed,
+    evalMs,
+    message: `Modelo ${model} carregado com sucesso na GPU VRAM (keep-alive: ${keepAlive}).`,
+  });
+}
+
+async function handleInspectCdp() {
+  const [list9222, list9223] = await Promise.all([
+    pingEndpoint('http://127.0.0.1:9222/json/list', 1200),
+    pingEndpoint('http://127.0.0.1:9223/json/list', 1200),
+  ]);
+
+  const isSuccessfulList = (p: PingResult) => p.ok && Array.isArray(p.data);
+  let inspectedPort = 9222;
+  let activeList = list9222;
+
+  if (isSuccessfulList(list9222)) {
+    inspectedPort = 9222;
+    activeList = list9222;
+  } else if (isSuccessfulList(list9223)) {
+    inspectedPort = 9223;
+    activeList = list9223;
+  } else if (list9223.ok) {
+    inspectedPort = 9223;
+    activeList = list9223;
+  }
+
+  const pages = Array.isArray(activeList.data) ? activeList.data : [];
+
+  return NextResponse.json({
+    success: true,
+    action: 'inspect_cdp',
+    port: inspectedPort,
+    pagesCount: pages.length,
+    pages: pages.slice(0, 5).map((p: unknown) => {
+      const page = p as { title?: string; url?: string; type?: string };
+      return { title: page.title || 'Sem Titulo', url: page.url || '', type: page.type || 'page' };
+    }),
+  });
+}
+
+function handleBenchmarkPerception() {
+  return NextResponse.json({
+    success: true,
+    action: 'benchmark_perception',
+    resolution: [3440, 1440],
+    captureLatencyMs: 30.42,
+    somOverlayLatencyMs: 11.63,
+    totalDispatchLatencyMs: 101.89,
+    elementsAnnotated: 6,
+    status: 'Padrão Ouro 60 FPS (Sub-12ms SoM Grounding)',
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as {
@@ -355,79 +458,15 @@ export async function POST(request: Request) {
     const action = body.action || '';
 
     if (action === 'warmup_ollama') {
-      const model = body.model || 'qwen-code-surgical:latest';
-      const keepAlive = body.keepAlive || '1h';
-
-      const t0 = performance.now();
-      const response = await fetch('http://127.0.0.1:11434/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model,
-          prompt: "print('Nexus VRAM Warmup OK')",
-          stream: false,
-          keep_alive: keepAlive,
-        }),
-        cache: 'no-store',
-      });
-
-      const elapsed = Math.round(performance.now() - t0);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        return NextResponse.json(
-          { success: false, error: `Falha no Ollama: ${errorText}` },
-          { status: 502 },
-        );
-      }
-
-      const resData = (await response.json()) as { eval_count?: number; eval_duration?: number };
-      const evalMs = Math.round((resData.eval_duration || 0) / 1e6);
-
-      return NextResponse.json({
-        success: true,
-        action: 'warmup_ollama',
-        model,
-        latencyMs: elapsed,
-        evalMs,
-        message: `Modelo ${model} carregado com sucesso na GPU VRAM (keep-alive: ${keepAlive}).`,
-      });
+      return await handleWarmupOllama(body.model, body.keepAlive);
     }
 
     if (action === 'inspect_cdp') {
-      const [list9222, list9223] = await Promise.all([
-        pingEndpoint('http://127.0.0.1:9222/json/list', 1200),
-        pingEndpoint('http://127.0.0.1:9223/json/list', 1200),
-      ]);
-
-      const isSuccessfulList = (p: PingResult) => p.ok && Array.isArray(p.data);
-      const activeList = isSuccessfulList(list9223)
-        ? list9223
-        : (isSuccessfulList(list9222) ? list9222 : (list9223.ok ? list9223 : list9222));
-      const pages = Array.isArray(activeList.data) ? activeList.data : [];
-
-      return NextResponse.json({
-        success: true,
-        action: 'inspect_cdp',
-        pagesCount: pages.length,
-        pages: pages.slice(0, 5).map((p: unknown) => {
-          const page = p as { title?: string; url?: string; type?: string };
-          return { title: page.title || 'Sem Titulo', url: page.url || '', type: page.type || 'page' };
-        }),
-      });
+      return await handleInspectCdp();
     }
 
     if (action === 'benchmark_perception') {
-      return NextResponse.json({
-        success: true,
-        action: 'benchmark_perception',
-        resolution: [3440, 1440],
-        captureLatencyMs: 30.42,
-        somOverlayLatencyMs: 11.63,
-        totalDispatchLatencyMs: 101.89,
-        elementsAnnotated: 6,
-        status: 'Padrão Ouro 60 FPS (Sub-12ms SoM Grounding)',
-      });
+      return handleBenchmarkPerception();
     }
 
     return NextResponse.json({ error: 'Acao desconhecida' }, { status: 400 });
