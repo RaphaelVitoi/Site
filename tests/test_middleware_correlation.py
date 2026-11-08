@@ -1,5 +1,6 @@
 """Request-scoped correlation IDs for API responses and logs."""
 
+import logging
 import re
 
 from aiohttp import web
@@ -66,7 +67,7 @@ async def test_generated_ids_are_unique_per_request() -> None:
 
 
 @pytest.mark.asyncio
-async def test_unhandled_server_error_keeps_correlation_header() -> None:
+async def test_unhandled_server_error_keeps_correlation_header(caplog: pytest.LogCaptureFixture) -> None:
     app = _new_app()
 
     async def fail(_request: web.Request) -> web.Response:
@@ -74,8 +75,10 @@ async def test_unhandled_server_error_keeps_correlation_header() -> None:
 
     app.router.add_get("/error", fail)
 
-    async with TestClient(TestServer(app)) as client:
-        response = await client.get("/error")
+    # Suprime traceback esperado no aiohttp.server durante teste de HTTP 500
+    with caplog.at_level(logging.CRITICAL, logger="aiohttp.server"):
+        async with TestClient(TestServer(app)) as client:
+            response = await client.get("/error")
 
     assert response.status == 500
     assert re.fullmatch(r"[a-f0-9]{16}", response.headers[CORRELATION_HEADER])

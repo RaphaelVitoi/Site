@@ -494,7 +494,7 @@ def test_complexidade_vence_alcance_quando_os_dois_sinais_chegam():
     assert d.origem is Origem.ESCALADO
 
 
-def test_rotear_e_decidir_nunca_divergem():
+def test_rotear_e_decidir_nunca_divergem() -> None:
     """`rotear` e vista com perda de `decidir`, nao uma segunda implementacao.
 
     Duas logicas de decisao paralelas divergiriam em silencio. Este teste e o
@@ -503,9 +503,15 @@ def test_rotear_e_decidir_nunca_divergem():
     # So agentes: desde 2026-08-28 a politica nao atribui modelo a subagente, e
     # os dois caminhos levantam juntos -- coberto por
     # test_a_politica_nao_atribui_modelo_a_subagente.
-    for alvo in AGENTES:
-        for escalado in (False, True):
-            assert rotear(alvo, escalado=escalado) == decidir(alvo, escalado=escalado).modelo, alvo
+    logger = logging.getLogger("llm.routing_policy")
+    old_level = logger.level
+    logger.setLevel(logging.ERROR)
+    try:
+        for alvo in AGENTES:
+            for escalado in (False, True):
+                assert rotear(alvo, escalado=escalado) == decidir(alvo, escalado=escalado).modelo, alvo
+    finally:
+        logger.setLevel(old_level)
 
 
 def test_rotear_preserva_o_contrato_de_str_para_core_config():
