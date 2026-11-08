@@ -102,3 +102,7 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
 ## 2025-03-08 - [SOTA FIX: Quantum Engine reference stability]
 **Learning:** `useQuantumEngine` was returning a new object on every render because the return object was not memoized, causing child components wrapped in `React.memo` to unnecessarily re-render on every tick.
 **Action:** Wrapped the returned object in `useMemo` with all exported variables in the dependency array. Benchmarked that child re-renders correctly dropped from 1001 down to 1.
+
+## 2025-03-08 - [SOTA FIX: CI quality gate failure due to orphaned submodule]
+**Learning:** The GitHub CI check `.github/workflows/sota-ci.yml` contains a rigid requirement that `declared_paths` in `.gitmodules` must strictly match the `gitlink_paths` (the submodules actually checked into git tree). If a submodule folder is deleted without removing it from `.gitmodules`, the check `test "$declared_paths" = "$gitlink_paths"` will fail, breaking the CI pipeline.
+**Action:** Removed the leftover `skills/superpowers` entry from `.gitmodules` so that the declared paths match the actual `160000` gitlink tree objects, successfully fixing the CI pipeline.
