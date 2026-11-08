@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-11-03T19:15:00-03:00'
 atualizado_em: '2026-11-03T19:49:00-03:00'
-commit: HEAD
+commit: 6a9bcae2
 classes:
 - interno
 - medido
@@ -41,6 +41,7 @@ config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: 3.14.7
+  congelada_em: \'2026-11-03'
   so: Windows
   condutor: Gemini 3.8 Flash <noreply@google.com>
   modelo: gemini-3.8-flash

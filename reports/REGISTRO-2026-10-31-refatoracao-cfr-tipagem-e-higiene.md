@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash [Tier 1]
 criado_em: 2026-10-31
-commit: HEAD
+commit: de4de77d
 classes: [interno, medido, frontend, backend, qualidade]
 caminhos:
   - .vscode/settings.json
@@ -109,6 +109,7 @@ config_medida:
   branch: master
   commit: HEAD
   python: 3.14.7
+  congelada_em: \'2026-10-31'
   node: 24.21.0
 verificado:
   - "Refatoracao de CfrRegretPanel.tsx isolando status de convergencia em memoizacao limpa"

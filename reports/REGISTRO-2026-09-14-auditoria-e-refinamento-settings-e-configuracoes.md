@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: gemini@antigravity
 criado_em: '2026-09-14T18:55:00-03:00'
 atualizado_em: '2026-09-14T19:30:00-03:00'
+commit: a3c1e401
 classes: [interno, medido, configuracao, seguranca, otimizacao]
 session_id: b7605e06-9a11-4513-85e4-ce11bdd6a89d
 conductor_model: gemini-3.8-flash

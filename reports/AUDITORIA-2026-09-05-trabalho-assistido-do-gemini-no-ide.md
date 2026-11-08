@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-05-fechamento-do-ciclo"
 criado_em: 2026-09-05T00:00:00-03:00
 atualizado_em: 2026-09-09T12:15:00-03:00
+commit: 3a7a25b7
 classes: [interno, medido, auditoria-assistida]
 caminhos:
   - api/v1/server.py
@@ -24,6 +25,7 @@ caminhos:
   - frontend/src/components/ui/layout/globals.css
   - scripts/ops/New-AgentCalibrationDailyEvidence.ps1
 config_medida:
+  congelada_em: \'2026-09-05'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

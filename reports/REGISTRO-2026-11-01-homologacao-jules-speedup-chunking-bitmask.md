@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash [Tier 1]
 criado_em: 2026-11-01
-commit: HEAD
+commit: 77e0ef9d
 classes: [interno, medido, frontend, jules, automacao]
 caminhos:
   - frontend/src/components/simulator/workers/rangeParser.ts
@@ -32,6 +32,7 @@ config_medida:
   branch: master
   commit: HEAD
   python: 3.14.7
+  congelada_em: \'2026-11-01'
   node: 24.21.0
 verificado:
   - "Otimizacao de 32-bit chunking para extracao de bitmask BigInt em maskToBytes (rangeParser.ts)"

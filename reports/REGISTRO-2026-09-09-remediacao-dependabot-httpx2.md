@@ -6,12 +6,14 @@ ecossistema: nexus-sota
 autor: "Codex GPT-5 [Tier 1.B]"
 criado_em: 2026-09-09T12:05:00-03:00
 atualizado_em: 2026-09-09T12:05:00-03:00
+commit: 4d208de6
 classes: [interno, medido, seguranca, dependencias, correcao]
 caminhos:
   - pyproject.toml
   - uv.lock
   - scripts/ops/Set-ClaudePluginProfile.ps1
 config_medida:
+  congelada_em: \'2026-09-09'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows
