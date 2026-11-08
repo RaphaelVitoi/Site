@@ -247,20 +247,40 @@ def test_o_axe_confirma_a_hierarquia_no_dom() -> None:
     `NAO MEDIDO` como se fosse `zero violacoes` seria inventar aprovacao. O
     portao (`cwv_gate.ps1`) tem esse mesmo contrato e o declara na saida.
     """
+    import http.client
     import json
     import shutil
     import subprocess  # nosec # noqa: S404  # Record-Id: registro-2026-10-26-saneamento-tipagem-linters-e-reconciliacao-de-ancoras
-    import urllib.request
 
     sonda = RAIZ / "scripts" / "ops" / "runtime_quality_probe.mjs"
     node = shutil.which("node")
     if not sonda.exists() or not node:
         pytest.skip("sonda runtime ausente")
 
-    try:
-        urllib.request.urlopen("http://localhost:3000", timeout=4).read(1)
-    except Exception:
+    def _is_service_live(host: str, port: int, path: str = "/") -> bool:
+        try:
+            conn = http.client.HTTPConnection(host, port, timeout=4)
+            conn.request("HEAD", path)
+            resp = conn.getresponse()
+            conn.close()
+            return resp.status < 500
+        except (OSError, http.client.HTTPException):
+            return False
+
+    frontend_base = None
+    for host in ("127.0.0.1", "localhost"):
+        if _is_service_live(host, 3000):
+            frontend_base = f"http://{host}:3000"
+            break
+
+    if not frontend_base:
         pytest.skip("frontend fora do ar: a medicao precisa de DOM renderizado")
+
+    cdp_port = 9222
+    for p_cand in (9223, 9222):
+        if _is_service_live("127.0.0.1", p_cand, "/json/version"):
+            cdp_port = p_cand
+            break
 
     rotas = (
         "/",
@@ -273,7 +293,7 @@ def test_o_axe_confirma_a_hierarquia_no_dom() -> None:
     reprovou: list[str] = []
     for rota in rotas:
         r = subprocess.run(
-            [node, str(sonda), "--cdp", "http://127.0.0.1:9222", "--url", "http://localhost:3000" + rota],
+            [node, str(sonda), "--cdp", f"http://127.0.0.1:{cdp_port}", "--url", frontend_base + rota],
             cwd=RAIZ,
             capture_output=True,
             text=True,

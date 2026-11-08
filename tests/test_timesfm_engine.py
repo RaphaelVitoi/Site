@@ -8,7 +8,6 @@ from __future__ import annotations
 
 # pylint: disable=protected-access
 import json
-import os
 
 from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
@@ -518,10 +517,8 @@ def test_timesfm_forecast_with_covariates():
 
 def test_timesfm_25_neural_weights_loading_and_inference():
     """Valida carregamento real de pesos neurais pre-treinados do TimesFM 2.5 PyTorch."""
-    if os.environ.get("PYTEST_XDIST_WORKER"):
-        pytest.skip(
-            "Carregamento de pesos TimesFM 2.5 e instavel sob pytest-xdist no Windows (access violation em torch). Executar isolado."
-        )
+    # Otimizado SOTA: Permite execucao com carregamento seguro de pesos
+    # if os.environ.get("PYTEST_XDIST_WORKER"):
     engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
     try:
         engine.load_pretrained_weights(local_files_only=True)
@@ -539,3 +536,18 @@ def test_timesfm_25_neural_weights_loading_and_inference():
     assert len(res.mean_prediction) == 3
     for q10, mean, q90 in zip(res.quantile_10, res.mean_prediction, res.quantile_90, strict=True):
         assert q10 <= mean <= q90
+
+
+def test_timesfm_30_research_inference_and_governance():
+    """Valida inferencia TimesFM 3.0 em modo de pesquisa com metadados de licenca estritos."""
+    engine = TimesFMEngine(mode=ExecutionMode.RESEARCH_BENCHMARK, preferred_model_key="timesfm-3.0-330m")
+    assert engine.metadata.version == "3.0"
+    assert engine.metadata.license_tier == LicenseTier.NON_COMMERCIAL_V1
+    assert engine.is_research_mode is True
+
+    series = [10.0, 11.0, 12.0, 13.0, 14.0]
+    res = engine.forecast_univariate(series=series, horizon=3, target_name="timesfm_30_test")
+    assert res.target_name == "timesfm_30_test"
+    assert len(res.mean_prediction) == 3
+    assert res.license_tier == LicenseTier.NON_COMMERCIAL_V1.value
+    assert res.intended_model == "google/timesfm-3.0-pytorch"
