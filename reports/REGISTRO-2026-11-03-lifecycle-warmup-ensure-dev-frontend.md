@@ -20,6 +20,7 @@ caminhos:
 - scripts/ops/ensure-dev-frontend.mjs
 - reports/REGISTRO-2026-11-03-lifecycle-warmup-ensure-dev-frontend.md
 config_medida:
+  congelada_em: '2026-11-03'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: 3.14.7

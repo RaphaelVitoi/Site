@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-18T10:30:00-03:00'
 atualizado_em: '2026-09-18T10:30:00-03:00'
+commit: 7e83a5b4
 classes: [interno, medido, governanca, dependencias]
 caminhos:
   - reports/REGISTRO-2026-09-18-decisoes-delegadas-sobre-as-pendencias.md
@@ -19,6 +20,7 @@ caminhos:
 referencias_nao_resolviveis:
   - tests/test_dream_rsi_experimental.py
 config_medida:
+  congelada_em: '2026-09-18'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   commit_base: f1dba0da

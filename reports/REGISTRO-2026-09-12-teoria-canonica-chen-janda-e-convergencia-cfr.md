@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: "Antigravity SOTA v8.0 Gold -- sessao 605d3774-d2f3-4277-8f43-f686af721631"
 criado_em: 2026-09-12T16:15:00-03:00
 atualizado_em: 2026-09-12T16:15:00-03:00
+commit: 1a5dd0dd
 classes: [interno, medido, teoria-dos-jogos, chen-ankenman, janda, cfr, a-star]
 caminhos:
   - api/v1/handlers.py
@@ -27,6 +28,7 @@ caminhos:
   - tests/test_timesfm_engine.py
 supersede: null
 config_medida:
+  congelada_em: '2026-09-12'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

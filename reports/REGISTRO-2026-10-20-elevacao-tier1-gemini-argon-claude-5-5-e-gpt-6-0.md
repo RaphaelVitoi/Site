@@ -6,6 +6,7 @@ ecossistema: nexus-sota
 autor: ChatGPT Luna 6.0
 criado_em: '2026-10-20T11:19:00-03:00'
 atualizado_em: '2026-10-20T12:01:00-03:00'
+commit: 39bc69c0
 classes: [interno, governanca, registro, llm, roteamento, validacao]
 caminhos:
   - .husky/pre-commit
