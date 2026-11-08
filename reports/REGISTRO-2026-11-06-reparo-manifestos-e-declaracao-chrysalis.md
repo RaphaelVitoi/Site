@@ -68,14 +68,14 @@ revisoes_de_ancora:
   caminhos:
   - pyproject.toml
   - requirements.txt
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: handoff-2026-10-08-auditoria-e-remediacao-backend
   caminhos:
   - package-lock.json
   - pyproject.toml
   - requirements.txt
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: handoff-2026-10-24-remediacao-dependabot-e-integridade-sota
   caminhos:
   - package-lock.json
@@ -83,56 +83,56 @@ revisoes_de_ancora:
   - pyproject.toml
   - requirements.txt
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-09-25-teto-de-commits-e-push-obrigatorio
   caminhos:
   - data/agents_manifest.json
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-04-remediacao-dependabot-pypdf
   caminhos:
   - pyproject.toml
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-04-remediacao-dependabot-sentence-transformers-e-urllib3
   caminhos:
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-06-strata-moe-125b-e-dashboard-nexus
   caminhos:
   - data/agents_manifest.json
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-08-auditoria-e-remediacao-backend
   caminhos:
   - package-lock.json
   - pyproject.toml
   - requirements.txt
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-08-skill-sota-server-lifecycle-warmup
   caminhos:
   - data/agents_manifest.json
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-10-evolucao-malha-agentica-sota-v8-gold
   caminhos:
   - tests/test_governanca_skills.py
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-13-remediacao-dependabot-e-offload-strata
   caminhos:
   - package-lock.json
   - package.json
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-14-saneamento-tipagem-config-ide-e-dependencias
   caminhos:
   - pyproject.toml
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 - registro: registro-2026-10-18-remediacao-dependabot-e-renovacao-axe
   caminhos:
   - pyproject.toml
   - requirements.txt
   - uv.lock
-  parecer: 'Caminho revisado em 2026-11-06: manifestos de dependencia reparados e validados (resolucao medida via uv/npm/cargo); alteracoes sao upgrades sem quebra de contrato declarada nos registros anteriores.'
+  parecer: 'Caminho revisado em 2026-11-06: declaracao da skill chrysalis-live-editing e alinhamento de allowlists no catalogo data/agents_manifest.json validados pela suite de testes de governanca (test_governanca_skills.py) sem quebra de contratos.'
 ---
 
 # Registro 2026-11-06 — reparo de manifestos, bumps validados e declaracao chrysalis

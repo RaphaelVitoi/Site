@@ -18,10 +18,11 @@ verificado:
 nao_verificado:
   - "Tempo de conclusao final assincrona das sessoes IN_PROGRESS no cluster Google Cloud"
 config_medida:
+  congelada_em: '2026-11-07'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   data_das_medicoes: 2026-11-07
-  toolchain: uv 0.13.6 + ruff 0.15.5 + pyright 1.1.408 + pytest 9.2.0 + git 2.53.0
+  toolchain: uv >=0.13.6 + ruff >=0.17.4 + pyright >=1.1.414 + pytest 9.2.0 + git 2.53.0
   python: 3.14.9
   so: Windows
 classes:
@@ -142,7 +143,7 @@ revisoes_de_ancora:
 
 ## Contexto e Deliberacao
 Por solicitacao do Tier 0, foi realizada a auditoria e saneamento de pendencias em aberto no ecossistema:
-1. **Google Jules Cloud**: Todas as 6 sessoes em estado de espera (`AWAITING_USER_FEEDBACK`) foram inspecionadas. A sessao `6564531630400042373` teve sua hipotese de remocao de `JSON.stringify` refutada e rejeitada com base na memoria canonica do Bolt (`.claude/agent-memory/bolt/MEMORY.md`). As demais sessoes que aguardavam feedback tiveram seus encerramentos e homologacoes confirmados via API v1alpha (`JulesClient.send_message`), atualizando `reports/integrations/JULES_REPORT.md`.
+1. **Google Jules Cloud**: Todas as 6 sessoes em estado de espera (`AWAITING_USER_FEEDBACK`) foram inspecionadas. A sessao `6564531630400042373` teve sua hipotese de remocao de `JSON.stringify` refutada e rejeitada com base na memoria canonica do Bolt (`.claude/agent-memory/bolt/MEMORY.md`). As sessoes retornadas pela API foram acompanhadas e o relatorio `reports/integrations/JULES_REPORT.md` foi atualizado com o retrato das sessoes retornadas pela API v1alpha, mantendo-se o acompanhamento das sessoes com pendencias.
 2. **Schema CodeRabbit (`.coderabbit.yaml`)**: Remocao cirurgica da propriedade `version: "2"`, nao suportada pelo schema canonico do CodeRabbit, resolvendo o diagnostico YAML 513.
 3. **Semgrep Schema (`frontend/.semgrep/guardian.yml`)**: Adicionado cabecalho `# yaml-language-server: $schema=none` e exclusao de padrao em `.vscode/settings.json`.
 4. **Linters e Tipagem (`llm/` e `tests/`)**:

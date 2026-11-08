@@ -258,8 +258,8 @@ verificado:
   - 'Adicao de permissions: contents: read em chrome-extensions-ci.yml e elevacao das actions (PR #109)'
   - 'Elevacao e alinhamento de 12 dependencias npm frontend (PR #121) e sincronizacao no monorepo'
   - 'Regra de ignore para tenacity em .github/dependabot.yml protegendo google-genai 3.0.0 e fechamento do PR #115'
-  - 'Mascaramento de telemetria de chaves via HMAC-SHA256 em llm/ e sanitizacao de stack traces em streams'
-  - 'Remocao de risco de backtracking super-linear de regexes em engine/sota_web_browse.py (S8786)'
+  - 'Mascaramento de telemetria de chaves via HMAC-SHA256 em llm/ (uso de segredo externo dinamico mantido como pendencia para producao) e sanitizacao de stack traces em streams'
+  - 'Ajuste de regex de script em engine/sota_web_browse.py (mitigacao de custo superlinear registrada como pendencia de parser estruturado)'
   - 'Elevacao de laya>=0.4.28 no pyproject.toml e uv.lock com 52 testes aprovados'
   - 'Bateria inteira da suite Python (2092+ testes) verde registrada e Quality Gate CWV aprovado nas 5 fases'
 nao_verificado:
@@ -290,10 +290,10 @@ Auditoria holistica executada sobre todos os repositorios (`RaphaelVitoi/Site` e
 - GitHub Code Scanning (16 Alertas Resolvidos):
   - Alertas #13 e #14 (`actions/missing-workflow-permissions`): Adicionado bloco top-level `permissions: contents: read` em `.github/workflows/chrome-extensions-ci.yml`.
   - Alertas #1 e #2 (`js/incomplete-multi-character-sanitization`): Implementada sanitizacao iterativa contra tags aninhadas em `frontend/src/app/api/v1/search/route.ts`.
-  - Alerta #3 (`py/bad-tag-filter`): Regex de `<script>` ajustada para suportar espacos e atributos no fechamento de tag em `engine/sota_web_browse.py`.
+  - Alerta #3 (`py/bad-tag-filter`): Regex de `<script>` ajustada com lookahead e fechamento flexivel em `engine/sota_web_browse.py` (mitigacao de custo superlinear sob analise/pendente).
   - Alerta #4 (`py/clear-text-logging-sensitive-data`): Mascarada exibicao de chave em `scripts/utils/network_diagnostic.py` (tamanho informado sem exibir prefixo).
   - Alertas #5 e #6 (`py/stack-trace-exposure`): Substituida emissao de mensagem bruta de excecao nos geradores de stream de `engine/gemma_server.py` por mensagens genericas e logging com `exc_info=True`.
-  - Alertas #7, #8 e #9 (`py/weak-sensitive-data-hashing`): Substituido hashing simples SHA-256 de identificadores de chave por HMAC-SHA256 com sal secreto em `llm/gemini_pool.py`, `llm/openrouter_pool.py` e `llm/budget.py`.
+  - Alertas #7, #8 e #9 (`py/weak-sensitive-data-hashing`): Substituido hashing simples SHA-256 por HMAC-SHA256 com constantes em `llm/gemini_pool.py`, `llm/openrouter_pool.py` e `llm/budget.py`; por serem valores fixos no codigo e nao segredo externo, permitem testar candidatos, registrando-se a limitacao e mantendo a remediacao completa pendente de segredo externo injetado.
   - Alertas #10, #11, #12 e #17 (`py/incomplete-url-substring-sanitization`):
     - `tests/test_hook_commit_msg.py`: Validacao de dominio estrita com `endswith`.
     - `tests/test_sota_triad_mesh.py`: Igualdade exata de dominio de filtro.

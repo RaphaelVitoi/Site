@@ -11,7 +11,7 @@
 
 | Métrica | Valor | Status Operacional |
 | :--- | :--- | :--- |
-| **Total de Sessões Registradas** | `7` | Base de telemetria completa |
+| **Total de Sessões Registradas** | `7` | Retrato das sessões retornadas nesta sincronização (exclui sessões arquivadas 3531640491171142459 e 10089130805017503110) |
 | **Sessões Concluídas com Sucesso** | `6` | ✅ Execução com artefatos |
 | **Sessões com Falha de Execução** | `0` | ⚠️ Diagnóstico detalhado abaixo |
 | **Sessões Ativas no Momento** | `1` | 💤 Standby |

@@ -150,6 +150,36 @@ dev = [
     "types-PyYAML>=6.0.12.20261103",
 ]
 
+# Dependencias extras para Teoria dos Jogos avancada, derivacao simbolica e analise de MTTs (PMev)
+pmev = [
+    "sympy>=1.13.3",
+    "numba>=0.61.0",
+    "polars>=1.20.0",
+]
+
+# Dependencias extras para observabilidade, exportacao OTLP e telemetria da malha Nexus
+monitoring = [
+    "opentelemetry-sdk>=1.30.0",
+    "opentelemetry-exporter-otlp>=1.30.0",
+    "prometheus-client>=0.21.0",
+]
+
+# Dependencias extras para visao computacional multimodal e OCR lazy
+vision = [
+    "torchvision>=0.20.0",
+]
+
+# Suite completa de extensoes opcionais
+all = [
+    "sympy>=1.13.3",
+    "numba>=0.61.0",
+    "polars>=1.20.0",
+    "opentelemetry-sdk>=1.30.0",
+    "opentelemetry-exporter-otlp>=1.30.0",
+    "prometheus-client>=0.21.0",
+    "torchvision>=0.20.0",
+]
+
 [dependency-groups]
 dev = [
     "ruff>=0.17.4",
