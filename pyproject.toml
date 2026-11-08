@@ -66,7 +66,7 @@ dependencies = [
     "anthropic>=2.6.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
-    "pypdf>=6.21.4,<7.0.0",  # 6.21.4: atualizado 2026-11-03 para sanar alertas 330-336 (GHSA-5849-834g-hvw5, GHSA-cggf-277g-3q54, GHSA-mfr5-77xh-9j7h)
+    "pypdf>=7.0.0,<8.0.0",  # 7.0.0: atualizado 2026-11-08 major release SOTA sem alertas abertos
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
     "Pillow>=13.0.0",
@@ -166,7 +166,7 @@ monitoring = [
 
 # Dependencias extras para visao computacional multimodal e OCR lazy
 vision = [
-    "torchvision>=0.20.0",
+    "torchvision>=0.29.2",
 ]
 
 # Suite completa de extensoes opcionais
@@ -177,7 +177,7 @@ all = [
     "opentelemetry-sdk>=1.30.0",
     "opentelemetry-exporter-otlp>=1.30.0",
     "prometheus-client>=0.21.0",
-    "torchvision>=0.20.0",
+    "torchvision>=0.29.2",
 ]
 
 [dependency-groups]
