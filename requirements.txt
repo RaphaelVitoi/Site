@@ -52,7 +52,7 @@ accelerate>=1.15.0
 timesfm[torch]==3.0.2
 
 # ── INGESTAO DE DOCUMENTOS ───────────────────────────────────────────────────
-pypdf>=6.21.4,<7.0.0
+pypdf>=7.0.0,<8.0.0
 python-docx>=1.2.0,<2.0.0
 openpyxl>=3.1.5,<4.0.0
 Pillow>=13.0.0
