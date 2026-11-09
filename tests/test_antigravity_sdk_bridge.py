@@ -258,6 +258,40 @@ def test_nexus_cli_antigravity_status_json() -> None:
     assert "localharness_exists" in parsed["sdk"]
 
 
+def test_discover_custom_subagents_filters_non_subagent_md(tmp_path: Path) -> None:
+    """Garante que discover_custom_subagents ignora README.md ou arquivos sem frontmatter valido."""
+    import llm.antigravity_sdk_bridge as bridge_mod
+
+    (tmp_path / "README.md").write_text("# Documentacao\n", encoding="utf-8")
+    (tmp_path / "valido.md").write_text(
+        "---\nname: valido\ndescription: Agente valido\nkind: local\n---\nInstrucoes\n",
+        encoding="utf-8",
+    )
+    assert bridge_mod.discover_custom_subagents(agents_dirs=(tmp_path,)) == ["valido"]
+
+
+def test_discover_enabled_builtin_subagents_dynamic(tmp_path: Path) -> None:
+    """Garante que discover_enabled_builtin_subagents le agents.overrides dinamicamente."""
+    import llm.antigravity_sdk_bridge as bridge_mod
+
+    fake_settings = tmp_path / "settings.json"
+    fake_settings.write_text(
+        json.dumps(
+            {
+                "agents": {
+                    "overrides": {
+                        "browser_agent": {"enabled": False},
+                        "codebase_investigator": {"enabled": True},
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert bridge_mod.discover_enabled_builtin_subagents(fake_settings) == ["codebase_investigator"]
+    assert bridge_mod.discover_enabled_builtin_subagents(tmp_path / "ausente.json") == []
+
+
 def test_nexus_cli_antigravity_skills() -> None:
     """Verifica execucao do comando nexus antigravity skills."""
     runner = CliRunner()

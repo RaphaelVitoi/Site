@@ -56,6 +56,7 @@ logger = logging.getLogger("antigravity_sdk_bridge")
 
 HOME = Path.home()
 NUCLEO_PATH = RAIZ_DIR / "nucleo" / "nucleo_compartilhado.json"
+GEMINI_CLI_SETTINGS = RAIZ_DIR / "settings.json"
 AGY_CLI_SETTINGS = RAIZ_DIR / "antigravity-cli" / "settings.json"
 AGY_DEFAULT_BIN = Path(os.environ.get("LOCALAPPDATA", str(HOME / "AppData/Local"))) / "agy" / "bin" / "agy.exe"
 REF_RE = re.compile(r"\$\{([A-Z0-9_]+)\}")
@@ -115,16 +116,47 @@ def candidate_skill_roots() -> list[Path]:
     return candidates
 
 
-def discover_custom_subagents() -> list[str]:
+def _has_valid_subagent_frontmatter(md_file: Path) -> bool:
+    """Verifica se o arquivo Markdown possui frontmatter YAML valido de subagente (name e description)."""
+    try:
+        text = md_file.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    match = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n", text, re.S)
+    if not match:
+        return False
+    frontmatter = match.group(1)
+    has_name = bool(re.search(r"(?m)^name\s*:\s*\S+", frontmatter))
+    has_desc = bool(re.search(r"(?m)^description\s*:\s*\S+", frontmatter))
+    return has_name and has_desc
+
+
+def discover_custom_subagents(agents_dirs: tuple[Path, ...] | None = None) -> list[str]:
     """Descobre definicoes de subagentes customizados (.md) em ~/.gemini/agents e Site/.gemini/agents."""
     subagents: list[str] = []
-    for agents_dir in (RAIZ_DIR / "agents", SITE_DIR / ".gemini" / "agents"):
+    search_dirs = agents_dirs if agents_dirs is not None else (RAIZ_DIR / "agents", SITE_DIR / ".gemini" / "agents")
+    for agents_dir in search_dirs:
         if not agents_dir.is_dir():
             continue
         for md_file in sorted(agents_dir.glob("*.md")):
-            if md_file.is_file() and md_file.stem not in subagents:
+            if md_file.is_file() and _has_valid_subagent_frontmatter(md_file) and md_file.stem not in subagents:
                 subagents.append(md_file.stem)
     return subagents
+
+
+def discover_enabled_builtin_subagents(settings_path: Path | None = None) -> list[str]:
+    """Le ~/.gemini/settings.json (agents.overrides) e retorna os subagentes nativos habilitados."""
+    target = settings_path if settings_path is not None else GEMINI_CLI_SETTINGS
+    if not target.is_file():
+        return []
+    try:
+        data = json.loads(target.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    overrides = data.get("agents", {}).get("overrides", {})
+    if not isinstance(overrides, dict):
+        return []
+    return [name for name, cfg in overrides.items() if isinstance(cfg, dict) and cfg.get("enabled") is True]
 
 
 def discover_skill_directories() -> list[str]:
@@ -508,6 +540,7 @@ class AntigravityAgentBridge:
             len([c for c in Path(d).iterdir() if c.is_dir() and (c / "SKILL.md").is_file()]) for d in skills
         )
         custom_subagents = discover_custom_subagents()
+        builtin_enabled = discover_enabled_builtin_subagents()
 
         return {
             "sdk": {
@@ -531,7 +564,7 @@ class AntigravityAgentBridge:
             "subagents": {
                 "custom_count": len(custom_subagents),
                 "custom_names": custom_subagents,
-                "builtin_enabled": ["browser_agent", "codebase_investigator", "generalist", "cli_help"],
+                "builtin_enabled": builtin_enabled,
             },
             "mcp": {
                 "shared_gateway": get_shared_gateway_base(),
