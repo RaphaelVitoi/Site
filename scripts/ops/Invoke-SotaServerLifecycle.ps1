@@ -112,6 +112,19 @@ if ($WarmupOnly) {
         Write-Error "Warmup detectou $fails falha(s) em rotas ativas."
     }
     Write-Host "`n[SUCESSO] Aquecimento concluido com 100% de sucesso nas rotas testadas." -ForegroundColor Green
+
+    # Aquecimento assincrono de modelos locais Ollama via Antigravity SDK Bridge
+    $ollamaUrl = "http://127.0.0.1:11434/api/tags"
+    try {
+        $null = Invoke-RestMethod -Uri $ollamaUrl -Method Get -TimeoutSec 1 -ErrorAction SilentlyContinue
+        $pyVenv = Join-Path $Root ".venv\Scripts\python.exe"
+        $bridgeScript = Join-Path $Root "scripts\ops\antigravity_sdk_bridge.py"
+        if ((Test-Path -LiteralPath $pyVenv) -and (Test-Path -LiteralPath $bridgeScript)) {
+            Write-Host "[WARMUP] Aquecendo modelo local qwen-code-surgical no daemon Ollama (:11434)..." -ForegroundColor Cyan
+            Start-Process -FilePath $pyVenv -ArgumentList @($bridgeScript, "--warmup-local", "qwen-code-surgical") -WindowStyle Hidden -ErrorAction SilentlyContinue
+        }
+    } catch {}
+
     exit 0
 }
 

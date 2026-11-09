@@ -298,3 +298,77 @@ def test_nexus_cli_antigravity_skills() -> None:
     result = runner.invoke(app, ["antigravity", "skills"])
     assert result.exit_code == 0
     assert "ANTIGRAVITY SDK: SKILLS DESCOBERTAS" in result.stdout
+
+
+def test_resolve_local_model_tag() -> None:
+    """Verifica resolucao deterministica de aliases locais para tags Ollama."""
+    from llm.antigravity_sdk_bridge import LOCAL_OPTIMIZED_MODELS, resolve_local_model_tag
+
+    assert resolve_local_model_tag("qwen-code-surgical") == "qwen-code-surgical:latest"
+    assert resolve_local_model_tag("qwen_code_surgical") == "qwen-code-surgical:latest"
+    assert resolve_local_model_tag("qwen-pmev-math") == "qwen-pmev-math:latest"
+    assert resolve_local_model_tag("gemma4-e4b") == "gemma4:e4b"
+    assert resolve_local_model_tag("gemma4-12b") == "gemma4:12b"
+    assert resolve_local_model_tag("") == LOCAL_OPTIMIZED_MODELS["qwen-code-surgical"]
+    assert resolve_local_model_tag("custom-unknown:latest") == "custom-unknown:latest"
+
+
+def test_build_local_ollama_config() -> None:
+    """Verifica construcao de configuracao especializada para Ollama com alias local."""
+    bridge = AntigravityAgentBridge()
+    cfg = bridge.build_local_ollama_config(model="qwen-pmev-math")
+    assert isinstance(cfg, LocalOpenAIAgentConfig)
+    assert cfg.model == "qwen-pmev-math:latest"
+    assert cfg.base_url == "http://127.0.0.1:11434/v1"
+
+
+def test_audit_ecosystem_includes_local_models() -> None:
+    """Garante presenca da secao local_models com status do daemon Ollama no diagnostico."""
+    audit = AntigravityAgentBridge.audit_ecosystem()
+    assert "local_models" in audit
+    local = audit["local_models"]
+    assert "ollama_online" in local
+    assert "catalog" in local
+    assert "qwen-code-surgical" in local["catalog"]
+    assert local["catalog"]["qwen-code-surgical"]["tag"] == "qwen-code-surgical:latest"
+
+
+def test_nexus_cli_antigravity_local_models() -> None:
+    """Verifica execucao do comando nexus antigravity local-models."""
+    runner = CliRunner()
+    result = runner.invoke(app, ["antigravity", "local-models"])
+    assert result.exit_code == 0
+    assert "MODELOS LOCAIS OTIMIZADOS" in result.stdout
+    assert "qwen-code-surgical" in result.stdout
+
+
+def test_nexus_cli_antigravity_local_models_json() -> None:
+    """Verifica execucao do comando nexus antigravity local-models --json."""
+    runner = CliRunner()
+    result = runner.invoke(app, ["antigravity", "local-models", "--json"])
+    assert result.exit_code == 0
+    parsed = json.loads(result.stdout)
+    assert "installed_models" in parsed
+    assert "active_in_memory" in parsed
+
+
+def test_nexus_cli_antigravity_warmup_mock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Verifica execucao do comando nexus antigravity warmup com resultado de sucesso."""
+    import llm.antigravity_sdk_bridge as bridge_mod
+
+    monkeypatch.setattr(
+        bridge_mod,
+        "warmup_local_model",
+        lambda model, keep_alive="1h", timeout_seconds=60.0: {
+            "success": True,
+            "model": "qwen-code-surgical:latest",
+            "keep_alive": keep_alive,
+            "elapsed_seconds": 0.05,
+            "done": True,
+            "error": None,
+        },
+    )
+    runner = CliRunner()
+    result = runner.invoke(app, ["antigravity", "warmup", "qwen-code-surgical"])
+    assert result.exit_code == 0
+    assert "carregado em 0.05s" in result.stdout

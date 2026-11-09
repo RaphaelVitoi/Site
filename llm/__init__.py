@@ -5,19 +5,27 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .antigravity_sdk_bridge import (  # pyrefly: ignore[missing-import]
+        LOCAL_OPTIMIZED_MODELS,
         AntigravityAgentBridge,
         AntigravityRunResult,
         default_bridge,
         discover_skill_directories,
+        fetch_ollama_runtime_status,
         load_mcp_servers_from_nucleo,
+        resolve_local_model_tag,
+        warmup_local_model,
     )
 
 __all__ = [
+    "LOCAL_OPTIMIZED_MODELS",
     "AntigravityAgentBridge",
     "AntigravityRunResult",
     "default_bridge",
     "discover_skill_directories",
+    "fetch_ollama_runtime_status",
     "load_mcp_servers_from_nucleo",
+    "resolve_local_model_tag",
+    "warmup_local_model",
 ]
 
 

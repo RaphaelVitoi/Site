@@ -4654,6 +4654,16 @@ def antigravity_status(
     cli_status = f"[bold green]{cli_version_escaped}[/]" if cli_info["binary"] else status_ausente
     table_sdk.add_row("Antigravity CLI (agy)", cli_status, escape(str(cli_info["binary"])))
 
+    local_info = report.get("local_models", {})
+    ollama_st = "[bold green]ONLINE (:11434)[/]" if local_info.get("ollama_online") else status_ausente
+    table_sdk.add_row(
+        "Daemon Ollama",
+        ollama_st,
+        escape(
+            f"{local_info.get('installed_count', 0)} instalados, {local_info.get('active_in_memory_count', 0)} ativos"
+        ),
+    )
+
     console.print(table_sdk)
 
     table_auth = Table(title="Credenciais HKCU/HKLM & Ambiente", box=box.ROUNDED)
@@ -4700,18 +4710,86 @@ def antigravity_skills() -> None:
     console.print()
 
 
+@antigravity_app.command("local-models")
+def antigravity_local_models(
+    as_json: bool = typer.Option(False, "--json", "-j", help=HELP_JSON_OUTPUT),
+) -> None:
+    """Audita os modelos locais otimizados no daemon Ollama (:11434)."""
+    from llm import LOCAL_OPTIMIZED_MODELS, fetch_ollama_runtime_status
+
+    status = fetch_ollama_runtime_status()
+    if as_json:
+        print(json.dumps(status, indent=2, ensure_ascii=False))
+        return
+
+    console.print("\n[bold cyan]=== [ANTIGRAVITY: MODELOS LOCAIS OTIMIZADOS (OLLAMA)] ===[/]\n")
+
+    st_str = "[bold green]ONLINE[/]" if status["online"] else "[bold red]OFFLINE[/]"
+    console.print(f"Daemon Ollama: {st_str} ({status['base_url']})\n")
+
+    table = Table(title="Catalogo SOTA Otimizado", box=box.ROUNDED)
+    table.add_column("Alias", style=STYLE_WHITE)
+    table.add_column("Tag Ollama", style="cyan")
+    table.add_column("Instalado", style=STYLE_BOLD_GREEN)
+    table.add_column("Em Memoria (RAM/VRAM)", style="gold1")
+
+    installed_tags = {str(m.get("name", "")) for m in status.get("installed_models", [])}
+    active_map = {str(m.get("name", "")): m for m in status.get("active_in_memory", [])}
+
+    for alias, tag in LOCAL_OPTIMIZED_MODELS.items():
+        is_inst = "[bold green]SIM[/]" if tag in installed_tags else "[bold red]NAO[/]"
+        if tag in active_map:
+            act_info = active_map[tag]
+            mb = act_info.get("size_mb", 0)
+            vram_mb = act_info.get("size_vram_mb", 0)
+            in_mem = f"[bold green]ATIVO ({mb:.0f}MB / VRAM {vram_mb:.0f}MB)[/]"
+        else:
+            in_mem = "[dim]INATIVO[/]"
+        table.add_row(escape(alias), escape(tag), is_inst, in_mem)
+
+    console.print(table)
+    console.print()
+
+
+@antigravity_app.command("warmup")
+def antigravity_warmup(
+    model: str = typer.Argument("qwen-code-surgical", help="Alias ou tag do modelo local para aquecer"),
+    keep_alive: str = typer.Option("1h", "--keep-alive", "-k", help="Duracao do keep_alive (ex: 1h, 24h)"),
+    timeout: float = typer.Option(60.0, "--timeout", "-t", help="Timeout maximo em segundos"),
+) -> None:
+    """Pre-carrega modelo local na memoria RAM/VRAM com keep_alive para resposta sub-segundo."""
+    from llm import warmup_local_model
+
+    console.print(f"\n[bold cyan]Aquecendo modelo local [gold1]{model}[/] no daemon Ollama...[/]")
+    res = warmup_local_model(model=model, keep_alive=keep_alive, timeout_seconds=timeout)
+    if res.get("success"):
+        console.print(
+            f"[bold green]OK![/] Modelo [cyan]{res['model']}[/] carregado em {res['elapsed_seconds']}s (keep_alive: {res['keep_alive']})\n"
+        )
+    else:
+        console.print(f"[bold red]FALHA:[/] {res.get('error')} ({res.get('elapsed_seconds')}s)\n")
+        raise typer.Exit(code=1)
+
+
 @antigravity_app.command("run")
 def antigravity_run(
     prompt: str = typer.Argument(..., help="Prompt para execucao no Antigravity Agent"),
     model: str = typer.Option("gemini-3.8-flash", "--model", "-m", help="Modelo Gemini ou endpoint local"),
+    local: str | None = typer.Option(
+        None, "--local", "-l", help="Alias ou tag de modelo local Ollama (ex: qwen-code-surgical, qwen-pmev-math)"
+    ),
     stream: bool = typer.Option(True, "--stream/--no-stream", help="Stream em tempo real dos tokens"),
     allow_cmd: bool = typer.Option(False, "--allow-cmd", help="Permitir execucao de run_command sem confirmacao"),
 ) -> None:
     """Executa um prompt completo via Google Antigravity SDK com streaming em tempo real."""
     from llm import default_bridge
 
-    console.print(f"\n[bold cyan]=== [ANTIGRAVITY SDK RUNNER: {model}] ===[/]\n")
-    cfg = default_bridge.build_hosted_config(model=model, allow_run_command=allow_cmd)
+    target_model = local or model
+    console.print(f"\n[bold cyan]=== [ANTIGRAVITY SDK RUNNER: {target_model}] ===[/]\n")
+    if local:
+        cfg = default_bridge.build_local_ollama_config(model=local, allow_run_command=allow_cmd)
+    else:
+        cfg = default_bridge.build_hosted_config(model=model, allow_run_command=allow_cmd)
 
     if stream:
 
