@@ -18,7 +18,7 @@ updated_at: 2026-10-30
 
 *Atualizado em: 2026-10-01 09:45:33*
 
-8 Cores / 16 Threads | 16MB L3 Cache | 32GB RAM | BIOS F14.
+8 Cores / 16 Threads | 16MB L3 Cache | ~34GB RAM | BIOS F14.
 
 ---
 

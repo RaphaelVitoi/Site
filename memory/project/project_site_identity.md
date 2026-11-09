@@ -7,7 +7,7 @@ type: project
 
 # project site identity
 
-- **Este repo** (%OneDrive%\Documentos\Site) = **Poker Racional** (site educacional de poker)
+- **Este repo** (C:\Users\rapha\.gemini\Site) = **Poker Racional** (site educacional de poker)
 - **trueICM.com** = projeto separado, ja online, NAO e este repo
 
 **Why:** Raphael corrigiu quando assumi que este site era o trueICM.com. Sao projetos distintos.
