@@ -68,6 +68,10 @@
     ".claude/agent-memory/**",
     "**/.claude/agent-memory/**",
     ".claude/.ARQUIVE/**",
-    "**/.claude/.ARQUIVE/**"
+    "**/.claude/.ARQUIVE/**",
+    ".remember/**",
+    "**/.remember/**",
+    ".agents/skills_archive/**",
+    "**/.agents/skills_archive/**"
   ]
 }

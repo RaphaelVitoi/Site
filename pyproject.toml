@@ -63,7 +63,7 @@ dependencies = [
     "google-genai>=3.0.0",
     "google-antigravity>=0.1.23",
     "openai>=3.48.0",
-    "anthropic>=2.6.0",
+    "anthropic>=2.7.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
     "pypdf>=7.0.0,<8.0.0",  # 7.0.0: atualizado 2026-11-08 major release SOTA sem alertas abertos
@@ -92,7 +92,7 @@ dependencies = [
     # ── INFRA & MONITORAMENTO ─────────────────────────────────────────
     "psutil>=7.2.2,<8.0.0",
     "loguru>=0.7.3",
-    "typer>=0.28.0",
+    "typer>=0.29.0",
     "edge-tts>=7.3.1",
     "mcp>=2.3.0",
     "nanobind>=3.1.0",
@@ -112,7 +112,7 @@ dependencies = [
     "duckdb>=2.0.0",
     "pyautogui>=0.9.54",
     "mss>=10.2.0",
-    "playwright>=1.64.1",
+    "playwright>=1.65.0",
     "pyspark>=4.3.0",
 ]
 

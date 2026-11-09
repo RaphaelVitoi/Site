@@ -46,3 +46,7 @@ skills/
 **/.claude/.ARQUIVE/**
 skills_archive/
 **/skills_archive/**
+.remember/
+**/.remember/**
+.agents/skills_archive/
+**/.agents/skills_archive/**
