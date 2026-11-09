@@ -39,6 +39,7 @@ caminhos:
   - scripts/setup/Setup-NexusProfile.ps1
   - tests/fixtures/nexus_profile_template.ps1
   - tests/test_antigravity_sdk_bridge.py
+  - tests/test_quality_gate_contract.py
   - reports/REGISTRO-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp.md
 revisoes_de_ancora:
   - registro: auditoria-2026-08-31-protocolos-handoff-git-clippy-e-relatorios
@@ -322,5 +323,5 @@ Harmonizacao integral da suite Google Antigravity no ecossistema multiprojeto so
 
 ## 3. Validacao e Portao
 - Testes: testes hermeticos em tests/test_antigravity_sdk_bridge.py cobrindo a ponte com isolamento via monkeypatch e tmp_path, validacao de porta (1..65535) e reutilizacao de payload (zero erros, zero warnings).
-- Qualidade estatica: Ruff (--preview), Pyrefly, Pyright e Pylint (10.00/10) aprovados em llm/__init__.py, llm/antigravity_sdk_bridge.py e tests/test_antigravity_sdk_bridge.py; .Rprofile higienizado com path.expand e guarda de reentrada.
+- Qualidade estatica: Ruff (--preview), Pyrefly, Pyright e Pylint (10.00/10) aprovados em llm/__init__.py, llm/antigravity_sdk_bridge.py e tests/test_antigravity_sdk_bridge.py; .Rprofile higienizado com path.expand e guarda de reentrada; paralelismo (-n 6 --dist=loadscope -o log_cli=false) aplicado na Fase 8 de quality_gate em scripts/cli/nexus.py coberto por tests/test_quality_gate_contract.py.
 - Portao de integridade: record_gate.py reconciliado em todas as ancoras afetadas.
