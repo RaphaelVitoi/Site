@@ -14,3 +14,11 @@ def test_sota_full_runs_frontend_tests_before_python_suite() -> None:
 
     assert "npm run test" in gate
     assert gate.index("npm run test") < gate.index("npm run python:test")
+
+
+def test_nexus_quality_gate_runs_pytest_parallel_without_log_cli_flood() -> None:
+    nexus_source = (REPOSITORY_ROOT / "scripts" / "cli" / "nexus.py").read_text(encoding="utf-8")
+
+    assert '"Python tests (Pytest + SOTA Guard)"' in nexus_source
+    assert '"--dist=loadscope"' in nexus_source
+    assert '"log_cli=false"' in nexus_source
