@@ -30,6 +30,15 @@ updated_at: 2026-11-09
 
 *(append-only; entradas mais recentes no topo)*
 
+- id: task-2026-11-09-003
+  agente: "@implementor"
+  tarefa: "Idempotencia de socket e protecao WinError 10048 em homologar_laya_gpu.py --serve"
+  status: completed
+  iniciado_em: "2026-11-09T12:30:00-03:00"
+  concluido_em: "2026-11-09T12:37:00-03:00"
+  evidencia: "reports/REGISTRO-2026-11-09-idempotencia-socket-laya-gpu-serve.md"
+  observacoes: "Pre-verificacao de socket ativo e /health antes do carregamento de tensores mmBERT 322M"
+
 - id: task-2026-11-09-002
   agente: "@implementor"
   tarefa: "Remediacao de telemetria Cockpit e homeostase 100% (Shared MCP, Playwright, Chrysalis, Laya 322M)"
@@ -58,5 +67,5 @@ updated_at: 2026-11-09
 ## 4. Metricas de Qualidade (snapshot)
 
 - Ultima atualizacao: 2026-11-09
-- Entradas registradas: 2
-- Entradas verificadas: 2
+- Entradas registradas: 3
+- Entradas verificadas: 3
