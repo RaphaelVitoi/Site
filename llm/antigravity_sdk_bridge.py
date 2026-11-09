@@ -76,6 +76,9 @@ AGY_DEFAULT_BIN = Path(os.environ.get("LOCALAPPDATA", str(HOME / "AppData/Local"
 REF_RE = re.compile(r"\$\{([A-Z0-9_]+)\}")
 
 # Catalogo canonico de modelos locais otimizados servidos no daemon Ollama (:11434)
+ANTIGRAVITY_BRIDGE_USER_AGENT: Final[str] = "Antigravity-Bridge/1.0"
+
+
 LOCAL_OPTIMIZED_MODELS: Final[dict[str, str]] = {
     "qwen-code-surgical": "qwen-code-surgical:latest",
     "qwen-pmev-math": "qwen-pmev-math:latest",
@@ -121,7 +124,7 @@ def fetch_ollama_runtime_status(base_url: str = "http://127.0.0.1:11434") -> dic
 
     # 1. Tags (modelos instalados no disco)
     try:
-        req = urllib.request.Request(f"{base_url}/api/tags", headers={"User-Agent": "Antigravity-Bridge/1.0"})  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+        req = urllib.request.Request(f"{base_url}/api/tags", headers={"User-Agent": ANTIGRAVITY_BRIDGE_USER_AGENT})  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
         with urllib.request.urlopen(req, timeout=3.0) as resp:  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
             data = json.loads(resp.read().decode("utf-8"))
             status["installed_models"] = [
@@ -134,7 +137,7 @@ def fetch_ollama_runtime_status(base_url: str = "http://127.0.0.1:11434") -> dic
                 if isinstance(m, dict) and "name" in m
             ]
             status["online"] = True
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
+    except OSError as e:
         status["error"] = f"Falha de conexao com Ollama ({e})"
         return status
     except Exception as e:
@@ -143,7 +146,7 @@ def fetch_ollama_runtime_status(base_url: str = "http://127.0.0.1:11434") -> dic
 
     # 2. PS (modelos ativos atualmente em VRAM/RAM)
     try:
-        req_ps = urllib.request.Request(f"{base_url}/api/ps", headers={"User-Agent": "Antigravity-Bridge/1.0"})  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+        req_ps = urllib.request.Request(f"{base_url}/api/ps", headers={"User-Agent": ANTIGRAVITY_BRIDGE_USER_AGENT})  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
         with urllib.request.urlopen(req_ps, timeout=3.0) as resp_ps:  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
             ps_data = json.loads(resp_ps.read().decode("utf-8"))
             status["active_in_memory"] = [
@@ -184,7 +187,7 @@ def warmup_local_model(
     req = urllib.request.Request(  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
         f"{base_url}/api/generate",
         data=payload,
-        headers={"Content-Type": "application/json", "User-Agent": "Antigravity-Bridge/1.0"},
+        headers={"Content-Type": "application/json", "User-Agent": ANTIGRAVITY_BRIDGE_USER_AGENT},
         method="POST",
     )
     t0 = time.perf_counter()
@@ -200,7 +203,7 @@ def warmup_local_model(
                 "done": data.get("done", True),
                 "error": None,
             }
-    except (urllib.error.URLError, TimeoutError, OSError) as e:
+    except OSError as e:
         elapsed = time.perf_counter() - t0
         return {
             "success": False,
