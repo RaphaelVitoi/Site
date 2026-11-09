@@ -112,3 +112,20 @@ def test_a_contagem_de_testes_nao_voltou_para_a_governanca():
         if re.search(r"\b\d{3,4}\s*/\s*\d{3,4}\b", linha) and "395" not in linha
     ]
     assert not ofensores, f"contagem literal de testes voltou ao CLAUDE.md: {ofensores}"
+
+
+def test_hermes_md_continua_slot_enxuto_e_integro():
+    """Guarda o slot .hermes.md contra crescimento indevido e corrupcao por search-replace."""
+    hermes_md = RAIZ / ".hermes.md"
+    assert hermes_md.is_file(), ".hermes.md sumiu da raiz do projeto Site"
+    texto = _ler(hermes_md)
+    tamanho = len(texto.encode("utf-8"))
+    teto_hermes = 8000
+    assert tamanho <= teto_hermes, (
+        f".hermes.md cresceu para {tamanho} B (teto {teto_hermes}). "
+        "Ele e slot de contexto e indice para CLAUDE.md; conteudo vai no canonico."
+    )
+    assert "CLAUDE.md" in texto, ".hermes.md perdeu o ponteiro para CLAUDE.md"
+    assert "../memoria/HERMES.md" in texto, ".hermes.md perdeu o ponteiro para ../memoria/HERMES.md"
+    for corrupcao in ("PENDENTE harness", "PENDENTE modelo", "PENDENTE commit", "PENDENTE coment", "duasleteiras"):
+        assert corrupcao not in texto, f"corrupcao textual reintroduzida em .hermes.md: {corrupcao!r}"
