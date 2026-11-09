@@ -42,7 +42,7 @@ sentence-transformers>=6.2.0
 google-genai>=3.0.0
 google-antigravity>=0.1.23
 openai>=3.46.0
-anthropic>=2.6.0
+anthropic>=2.7.0
 httpx>=0.28.1
 mcp>=2.3.0
 laya>=0.4.30
@@ -67,7 +67,7 @@ nanobind>=3.1.0
 pyperclip>=1.11.0
 pyautogui>=0.9.54
 mss>=10.2.0
-playwright>=1.64.1
+playwright>=1.65.0
 
 # ── UTILITARIOS ──────────────────────────────────────────────────────────────
 regex>=2026.11.9
@@ -87,4 +87,4 @@ cloudpathlib>=0.26.0,<1.0.0
 # ── INFRA & MONITORAMENTO ────────────────────────────────────────────────────
 psutil>=7.2.2,<8.0.0
 loguru>=0.7.3
-typer>=0.28.0
+typer>=0.29.0

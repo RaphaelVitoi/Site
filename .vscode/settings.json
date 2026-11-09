@@ -152,6 +152,8 @@
         "!**/skills/**"
     ],
     "files.associations": {
+        "**/.venv/**": "plaintext",
+        "**/*.dist-info/METADATA": "plaintext",
         "**/.remember/tmp/*.ts": "plaintext",
         ".markdownlintignore": "ignore",
         ".prettierignore": "ignore",
