@@ -191,16 +191,20 @@ export async function GET() {
   const cdp = resolveCdpNode(cdp9222, cdp9223);
 
   // 3. Shared MCP Gateway (8933)
-  const mcpGateway = await pingEndpoint('http://127.0.0.1:8933/', 1000);
-  const mcpStatus: 'ACTIVE' | 'OFFLINE' = mcpGateway.ok ? 'ACTIVE' : 'OFFLINE';
-  const mcpDetails = mcpGateway.ok
-    ? 'mcp-proxy uvicorn centralizado em HTTP SSE operacional'
+  const mcpGateway = await pingEndpoint('http://127.0.0.1:8933/status', 1000);
+  const mcpData = mcpGateway.data as { server_instances?: Record<string, string> } | null;
+  const configuredServers = mcpData?.server_instances ? Object.keys(mcpData.server_instances).length : 0;
+  const isMcpOperational = mcpGateway.ok || mcpGateway.status === 200;
+  const mcpStatus: 'ACTIVE' | 'OFFLINE' = isMcpOperational ? 'ACTIVE' : 'OFFLINE';
+  const mcpDetails = isMcpOperational
+    ? `mcp-proxy operacional (${configuredServers} servidores MCP unificados em HTTP SSE)`
     : 'Servidor indisponivel (inicie via scripts/ops/Repair-SharedMcpGateway.ps1)';
 
   // 4. Shared Playwright MCP (8931)
   const playwrightMcp = await pingEndpoint('http://127.0.0.1:8931/', 1000);
-  const playwrightStatus: 'ACTIVE' | 'OFFLINE' = playwrightMcp.ok ? 'ACTIVE' : 'OFFLINE';
-  const playwrightDetails = playwrightMcp.ok
+  const isPlaywrightOperational = playwrightMcp.ok || playwrightMcp.status === 200 || playwrightMcp.status === 400;
+  const playwrightStatus: 'ACTIVE' | 'OFFLINE' = isPlaywrightOperational ? 'ACTIVE' : 'OFFLINE';
+  const playwrightDetails = isPlaywrightOperational
     ? 'playwright-mcp ativo para automacao headless e E2E'
     : 'Servico em standby ou tarefa agendada inativa';
 
