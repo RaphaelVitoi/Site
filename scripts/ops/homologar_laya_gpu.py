@@ -14,9 +14,12 @@ from __future__ import annotations
 import argparse
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
+import http.client
+import json
 import logging
 import os
 import platform
+import socket
 import statistics
 import subprocess
 import sys
@@ -561,6 +564,31 @@ def criar_fastapi_app() -> FastAPI:
     return app
 
 
+def verificar_porta_ativa(host: str, port: int) -> bool:
+    """Verifica se ha processo escutando no endereco socket (host, port)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex((host, port)) == 0
+
+
+def verificar_servico_laya_saudavel(host: str, port: int) -> bool:
+    """Verifica se o servico escutando na porta e uma instancia saudavel de Laya S1."""
+    conn = None
+    try:
+        conn = http.client.HTTPConnection(host, port, timeout=1.5)
+        conn.request("GET", "/health", headers={"User-Agent": "Laya-Probe/1.0"})
+        resp = conn.getresponse()
+        if resp.status == 200:
+            data = json.loads(resp.read().decode("utf-8"))
+            return data.get("status") == "HEALTHY" and data.get("weights_ready") is True
+    except Exception:
+        return False
+    finally:
+        if conn is not None:
+            conn.close()
+    return False
+
+
 def main() -> int:
     """Ponto de entrada CLI."""
     parser = argparse.ArgumentParser(description="Homologacao e Deploy de Ambiente GPU para Laya Multilingual S1")
@@ -581,6 +609,21 @@ def main() -> int:
 
     if args.serve:
         os.environ.setdefault("CHICO_LAYA_PREDICT_ALLOW_CPU", "1")
+
+        if verificar_porta_ativa(args.host, args.port):
+            if verificar_servico_laya_saudavel(args.host, args.port):
+                logger.info(
+                    "Microservico Laya Multilingual S1 ja esta ONLINE e saudavel na porta %d (pesos 322M ativos). Nenhuma acao necessaria.",
+                    args.port,
+                )
+                return 0
+            logger.error(
+                "Porta %d ja esta em uso por outro processo em %s. Encerre o processo anterior antes de reiniciar.",
+                args.port,
+                args.host,
+            )
+            return 1
+
         import uvicorn  # noqa: PLC0415
 
         logger.info("Iniciando servidor HTTP Laya GPU na porta %d (CHICO_LAYA_PREDICT_ALLOW_CPU=1)...", args.port)
