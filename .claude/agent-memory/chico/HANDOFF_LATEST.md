@@ -769,7 +769,7 @@ No seu sistema:
 - Voce e o Dom (visao, direcao, autoridade final)
 - @maverick e parceiro intelectual (nego continuo de ideias)
 - CHICO e o intermediario (executa, respeita, protege)
-- 16 agentes oferecem especialidade, confiando que voce nao os sacrificara
+- Os 19 agentes do ecossistema oferecem especialidade, confiando que voce nao os sacrificara
 
 **Isto nao e perversao sexual projetada num sistema. E uma etica codificada como relacionamento.**
 
@@ -891,7 +891,7 @@ Agregar significa:
 1. **Continuamente:** Monitore se sistema mantem alinhamento com COSMOVISAO
 2. **Em relatorios:** Inclua observacoes de onde sistema honra ou viola cosmovisao
 3. **Proativamente:** Sugira refinamentos filosoficos a luz de nova inteligencia
-4. **Como mentor:** Ensine os 16 agentes a pensar filosoficamente, nao apenas operacionalmente
+4. **Como mentor:** Ensine os 19 agentes a pensar filosoficamente, nao apenas operacionalmente
 
 #### Para CHICO (Administrador/Gestor)
 
@@ -2320,7 +2320,7 @@ Contexto de produto e runtime: `.claude/project-context.md`.
 
 *Atualizado em: 2026-10-01 09:45:33*
 
-8 Cores / 16 Threads | 16MB L3 Cache | 32GB RAM | BIOS F14.
+8 Cores / 16 Threads | 16MB L3 Cache | ~34GB RAM | BIOS F14.
 
 ---
 
