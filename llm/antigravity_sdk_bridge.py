@@ -7,9 +7,11 @@ Harmoniza o SDK oficial (google-antigravity 0.1.23+) com:
 1. Google AI Studio (Hosted Gemini 3.8 Flash via GEMINI_API_KEY)
 2. Gemini Enterprise Platform / Vertex AI (ADC & Express Mode)
 3. On-Device Local Models (LiteRTAgentConfig - Gemma 4 / LocalOpenAIAgentConfig)
-4. Gateway MCP Compartilhado (:8933 / :8931 e nucleo_compartilhado.json)
-5. Suite de Skills (.agents/skills, antigravity/builtin/skills, plugins)
-6. Antigravity IDE & Antigravity CLI (agy 1.5.2+)
+4. Modelos Locais Otimizados Ollama (:11434 - Qwen Code Surgical, PMev Math, Poetics, Gemma 4)
+5. Gateway MCP Compartilhado (:8933 / :8931 e nucleo_compartilhado.json)
+6. Suite de Skills (.agents/skills, antigravity/builtin/skills, plugins)
+7. Subagentes Customizados Declarativos (~/.gemini/agents/*.md)
+8. Antigravity IDE & Antigravity CLI (agy 1.5.2+)
 """
 
 from __future__ import annotations
@@ -27,7 +29,10 @@ import re
 import shutil
 import subprocess  # noqa: S404  # Record-Id: registro-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp
 import sys
-from typing import Any
+import time
+from typing import Any, Final
+import urllib.error
+import urllib.request
 
 from dotenv import load_dotenv
 import google.antigravity
@@ -43,11 +48,20 @@ from google.antigravity import (
     types,
 )
 
-# Carrega arquivos de ambiente com precedencia estrita
-SITE_DIR = Path(__file__).resolve().parent.parent
-RAIZ_DIR = SITE_DIR.parent
+# Resolve RAIZ_DIR (~/.gemini) e SITE_DIR (~/.gemini/Site) independentemente de onde o modulo reside
+_THIS_DIR = Path(__file__).resolve().parent
+if _THIS_DIR.name == "ops" and _THIS_DIR.parent.name == "scripts":
+    if _THIS_DIR.parent.parent.name == "Site":
+        SITE_DIR = _THIS_DIR.parent.parent
+        RAIZ_DIR = SITE_DIR.parent
+    else:
+        RAIZ_DIR = _THIS_DIR.parent.parent
+        SITE_DIR = RAIZ_DIR / "Site"
+else:
+    SITE_DIR = _THIS_DIR.parent
+    RAIZ_DIR = SITE_DIR.parent
 
-# Carga de arquivos de ambiente
+# Carga de arquivos de ambiente com precedencia estrita
 load_dotenv(SITE_DIR / ".env.local")
 load_dotenv(SITE_DIR / ".env")
 load_dotenv(RAIZ_DIR / ".env")
@@ -60,6 +74,142 @@ GEMINI_CLI_SETTINGS = RAIZ_DIR / "settings.json"
 AGY_CLI_SETTINGS = RAIZ_DIR / "antigravity-cli" / "settings.json"
 AGY_DEFAULT_BIN = Path(os.environ.get("LOCALAPPDATA", str(HOME / "AppData/Local"))) / "agy" / "bin" / "agy.exe"
 REF_RE = re.compile(r"\$\{([A-Z0-9_]+)\}")
+
+# Catalogo canonico de modelos locais otimizados servidos no daemon Ollama (:11434)
+LOCAL_OPTIMIZED_MODELS: Final[dict[str, str]] = {
+    "qwen-code-surgical": "qwen-code-surgical:latest",
+    "qwen-pmev-math": "qwen-pmev-math:latest",
+    "qwen-poetics": "qwen-poetics:latest",
+    "gemma4-e4b": "gemma4:e4b",
+    "gemma4-12b": "gemma4:12b",
+    "gemma4-e2b": "gemma4:e2b",
+    "gemma4": "gemma4:latest",
+    "qwen-coder-7b": "qwen2.5-coder:7b-instruct-q5_K_M",
+    "qwen-coder-1.5b": "qwen2.5-coder:1.5b",
+    "qwen-coder-0.5b": "qwen2.5-coder:0.5b",
+}
+
+
+def resolve_local_model_tag(alias_or_tag: str) -> str:
+    """Resolve alias simplificado para a tag exata no daemon Ollama."""
+    cleaned = (alias_or_tag or "").strip()
+    if not cleaned:
+        return LOCAL_OPTIMIZED_MODELS["qwen-code-surgical"]
+    if cleaned in LOCAL_OPTIMIZED_MODELS:
+        return LOCAL_OPTIMIZED_MODELS[cleaned]
+    normalized = cleaned.replace("_", "-").lower()
+    if normalized in LOCAL_OPTIMIZED_MODELS:
+        return LOCAL_OPTIMIZED_MODELS[normalized]
+    for tag in LOCAL_OPTIMIZED_MODELS.values():
+        if cleaned.lower() == tag.lower():
+            return tag
+    return cleaned
+
+
+def fetch_ollama_runtime_status(base_url: str = "http://127.0.0.1:11434") -> dict[str, Any]:
+    """Consulta o daemon Ollama via /api/tags e /api/ps para auditar modelos instalados e em memoria."""
+    status: dict[str, Any] = {
+        "online": False,
+        "base_url": base_url,
+        "installed_models": [],
+        "active_in_memory": [],
+        "error": None,
+    }
+    if not base_url.startswith(("http://", "https://")):
+        status["error"] = f"Esquema de URL invalido para Ollama: {base_url}"
+        return status
+
+    # 1. Tags (modelos instalados no disco)
+    try:
+        req = urllib.request.Request(f"{base_url}/api/tags", headers={"User-Agent": "Antigravity-Bridge/1.0"})  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+        with urllib.request.urlopen(req, timeout=3.0) as resp:  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+            data = json.loads(resp.read().decode("utf-8"))
+            status["installed_models"] = [
+                {
+                    "name": m.get("name"),
+                    "size_gb": round(m.get("size", 0) / (1024**3), 2),
+                    "modified_at": m.get("modified_at"),
+                }
+                for m in data.get("models", [])
+                if isinstance(m, dict) and "name" in m
+            ]
+            status["online"] = True
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        status["error"] = f"Falha de conexao com Ollama ({e})"
+        return status
+    except Exception as e:
+        status["error"] = f"Erro ao processar /api/tags: {e}"
+        return status
+
+    # 2. PS (modelos ativos atualmente em VRAM/RAM)
+    try:
+        req_ps = urllib.request.Request(f"{base_url}/api/ps", headers={"User-Agent": "Antigravity-Bridge/1.0"})  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+        with urllib.request.urlopen(req_ps, timeout=3.0) as resp_ps:  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+            ps_data = json.loads(resp_ps.read().decode("utf-8"))
+            status["active_in_memory"] = [
+                {
+                    "name": m.get("name"),
+                    "size_mb": round(m.get("size", 0) / (1024**2), 1),
+                    "size_vram_mb": round(m.get("size_vram", 0) / (1024**2), 1),
+                    "expires_at": m.get("expires_at"),
+                }
+                for m in ps_data.get("models", [])
+                if isinstance(m, dict) and "name" in m
+            ]
+    except Exception as e:
+        logger.debug(f"Aviso ao consultar /api/ps: {e}")
+
+    return status
+
+
+def warmup_local_model(
+    model: str = "qwen-code-surgical",
+    base_url: str = "http://127.0.0.1:11434",
+    keep_alive: str = "1h",
+    timeout_seconds: float = 60.0,
+) -> dict[str, Any]:
+    """Pre-carrega o modelo local na RAM/VRAM do Ollama com keep_alive para eliminar latencia no primeiro token."""
+    tag = resolve_local_model_tag(model)
+    if not base_url.startswith(("http://", "https://")):
+        return {
+            "success": False,
+            "model": tag,
+            "keep_alive": keep_alive,
+            "elapsed_seconds": 0.0,
+            "done": False,
+            "error": f"Esquema de URL invalido para Ollama: {base_url}",
+        }
+
+    payload = json.dumps({"model": tag, "prompt": "", "keep_alive": keep_alive}).encode("utf-8")
+    req = urllib.request.Request(  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+        f"{base_url}/api/generate",
+        data=payload,
+        headers={"Content-Type": "application/json", "User-Agent": "Antigravity-Bridge/1.0"},
+        method="POST",
+    )
+    t0 = time.perf_counter()
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:  # noqa: S310  # Record-Id: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+            data = json.loads(resp.read().decode("utf-8"))
+            elapsed = time.perf_counter() - t0
+            return {
+                "success": True,
+                "model": tag,
+                "keep_alive": keep_alive,
+                "elapsed_seconds": round(elapsed, 2),
+                "done": data.get("done", True),
+                "error": None,
+            }
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        elapsed = time.perf_counter() - t0
+        return {
+            "success": False,
+            "model": tag,
+            "keep_alive": keep_alive,
+            "elapsed_seconds": round(elapsed, 2),
+            "done": False,
+            "error": str(e),
+        }
 
 
 def resolve_env_or_registry(name: str, default: str = "") -> str:
@@ -165,7 +315,6 @@ def discover_skill_directories() -> list[str]:
     for parent in candidate_skill_roots():
         if not parent.is_dir():
             continue
-        # Verifica se o diretorio possui pastas com SKILL.md
         has_skills = any((child / "SKILL.md").is_file() for child in parent.iterdir() if child.is_dir())
         if has_skills and str(parent) not in valid_paths:
             valid_paths.append(str(parent))
@@ -283,13 +432,13 @@ def get_default_safety_policies(allow_run_command: bool = False) -> list[policy.
         return [policy.allow_all()]
     return [
         policy.deny("run_command", reason="Comandos shell requerem confirmacao explicita"),
-        policy.allow("*"),
+        policy.allow_all(),
     ]
 
 
 @dataclass
 class AntigravityRunResult:
-    """Resultado estruturado da execucao de um agente Antigravity."""
+    """Resultado tipado da execucao de um agente Antigravity SDK."""
 
     text: str
     thoughts: list[str] = field(default_factory=list)
@@ -433,6 +582,22 @@ class AntigravityAgentBridge:
         )
         return cfg.lightweight() if lightweight else cfg
 
+    def build_local_ollama_config(
+        self,
+        model: str = "qwen-code-surgical",
+        base_url: str = "http://127.0.0.1:11434/v1",
+        lightweight: bool = True,
+        allow_run_command: bool = False,
+    ) -> LocalOpenAIAgentConfig:
+        """Cria configuracao especializada para o daemon Ollama com resolucao de alias local."""
+        tag = resolve_local_model_tag(model)
+        return self.build_local_openai_config(
+            model=tag,
+            base_url=base_url,
+            lightweight=lightweight,
+            allow_run_command=allow_run_command,
+        )
+
     async def run_prompt(
         self,
         prompt: str,
@@ -443,6 +608,7 @@ class AntigravityAgentBridge:
         async with Agent(config=active_config) as agent:
             response = await agent.chat(prompt)
             full_text = await response.text()
+
             thoughts: list[str] = []
             with contextlib.suppress(Exception):
                 raw_thoughts = getattr(response, "thoughts", None)
@@ -512,7 +678,6 @@ class AntigravityAgentBridge:
         skills = discover_skill_directories()
         mcp_servers = load_mcp_servers_from_nucleo()
 
-        # Verifica presenca do binario localharness.exe
         sdk_version = getattr(google.antigravity, "__version__", None)
         if not sdk_version:
             try:
@@ -541,6 +706,19 @@ class AntigravityAgentBridge:
         )
         custom_subagents = discover_custom_subagents()
         builtin_enabled = discover_enabled_builtin_subagents()
+
+        # Auditoria de Modelos Locais Otimizados no Ollama
+        ollama_status = fetch_ollama_runtime_status()
+        installed_names = [str(m.get("name", "")) for m in ollama_status["installed_models"]]
+        active_names = [str(m.get("name", "")) for m in ollama_status["active_in_memory"]]
+        catalog_coverage = {
+            alias: {
+                "tag": tag,
+                "installed": tag in installed_names,
+                "active_in_memory": tag in active_names,
+            }
+            for alias, tag in LOCAL_OPTIMIZED_MODELS.items()
+        }
 
         return {
             "sdk": {
@@ -571,6 +749,15 @@ class AntigravityAgentBridge:
                 "bridged_servers_count": len(mcp_servers),
                 "servers": [s.name for s in mcp_servers],
             },
+            "local_models": {
+                "ollama_online": ollama_status["online"],
+                "base_url": ollama_status["base_url"],
+                "installed_count": len(ollama_status["installed_models"]),
+                "active_in_memory_count": len(ollama_status["active_in_memory"]),
+                "active_models": ollama_status["active_in_memory"],
+                "catalog": catalog_coverage,
+                "error": ollama_status["error"],
+            },
             "auth": key_status,
         }
 
@@ -586,19 +773,37 @@ if __name__ == "__main__":
     parser.add_argument("--audit", action="store_true", help="Auditoria completa do ecossistema")
     parser.add_argument("--prompt", type=str, help="Executa prompt de teste via SDK")
     parser.add_argument("--stream", action="store_true", help="Stream tokens em tempo real")
+    parser.add_argument("--local", type=str, help="Executa prompt utilizando modelo local Ollama (alias ou tag)")
+    parser.add_argument("--warmup-local", type=str, help="Pre-aquece modelo local Ollama na RAM/VRAM")
+    parser.add_argument("--list-local", action="store_true", help="Lista status dos modelos locais no daemon Ollama")
 
     args = parser.parse_args()
 
-    if args.audit or (not args.prompt and not args.stream):
+    if args.list_local:
+        status = fetch_ollama_runtime_status()
+        print(json.dumps(status, indent=2, ensure_ascii=False))
+        sys.exit(0)
+
+    if args.warmup_local:
+        warmup_res = warmup_local_model(args.warmup_local)
+        print(json.dumps(warmup_res, indent=2, ensure_ascii=False))
+        sys.exit(0 if warmup_res.get("success") else 1)
+
+    if args.audit or (not args.prompt and not args.stream and not args.local):
         report = AntigravityAgentBridge.audit_ecosystem()
         print(json.dumps(report, indent=2, ensure_ascii=False))
         sys.exit(0)
 
     if args.prompt:
+        if args.local:
+            cfg = default_bridge.build_local_ollama_config(model=args.local)
+        else:
+            cfg = default_bridge.build_hosted_config()
+
         if args.stream:
 
             async def _stream() -> None:
-                async for token in default_bridge.stream_prompt(args.prompt):
+                async for token in default_bridge.stream_prompt(args.prompt, config=cfg):
                     print(token, end="", flush=True)
                 print()
 
@@ -606,7 +811,7 @@ if __name__ == "__main__":
         else:
 
             async def _run() -> None:
-                res = await default_bridge.run_prompt(args.prompt)
+                res = await default_bridge.run_prompt(args.prompt, config=cfg)
                 print(res.text)
 
             asyncio.run(_run())
