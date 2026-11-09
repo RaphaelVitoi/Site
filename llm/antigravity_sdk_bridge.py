@@ -31,7 +31,6 @@ import subprocess  # noqa: S404  # Record-Id: registro-2026-11-08-integracao-sot
 import sys
 import time
 from typing import Any, Final
-import urllib.error
 import urllib.request
 
 from dotenv import load_dotenv

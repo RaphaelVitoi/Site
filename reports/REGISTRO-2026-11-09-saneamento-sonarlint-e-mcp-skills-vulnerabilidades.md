@@ -35,11 +35,16 @@ referencias_nao_resolviveis:
   - scripts/ops/antigravity_sdk_bridge.py
 caminhos:
   - llm/antigravity_sdk_bridge.py
+  - reports/REGISTRO-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp.md
   - reports/REGISTRO-2026-11-09-saneamento-sonarlint-e-mcp-skills-vulnerabilidades.md
   - skills/exa-mcp-server
   - skills/gemini-cli-jules
   - skills/gemini-cli-security
 revisoes_de_ancora:
+  - registro: registro-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp
+    caminhos:
+      - llm/antigravity_sdk_bridge.py
+    parecer: 'Reconciliacao em 2026-11-09: remocao de import nao utilizado urllib.error, definicao da constante ANTIGRAVITY_BRIDGE_USER_AGENT e unificacao sob OSError.'
   - registro: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
     caminhos:
       - llm/antigravity_sdk_bridge.py
