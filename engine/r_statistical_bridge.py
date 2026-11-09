@@ -88,6 +88,10 @@ class RStatisticalBridge:
 
         wrapper = f"""
 suppressPackageStartupMessages({{
+  sota_lib <- "C:/Users/rapha/R/win-library/4.6"
+  if (dir.exists(sota_lib) && !(sota_lib %in% .libPaths())) {{
+    .libPaths(c(sota_lib, .libPaths()))
+  }}
   if (!requireNamespace("jsonlite", quietly = TRUE)) {{
     user_lib <- Sys.getenv("R_LIBS_USER")
     if (dir.exists(user_lib)) .libPaths(c(user_lib, .libPaths()))
@@ -103,6 +107,11 @@ cat("___SOTA_R_OUTPUT_START___")
 cat(jsonlite::toJSON(result, auto_unbox = TRUE, digits = 8))
 cat("___SOTA_R_OUTPUT_END___")
 """
+        env = os.environ.copy()
+        sota_lib_path = Path("C:/Users/rapha/R/win-library/4.6")
+        if sota_lib_path.is_dir() and not env.get("R_LIBS_USER"):
+            env["R_LIBS_USER"] = sota_lib_path.as_posix()
+
         cmd = [str(self._rscript_path), "--vanilla", "-"]
         proc = subprocess.run(
             cmd,
@@ -111,7 +120,7 @@ cat("___SOTA_R_OUTPUT_END___")
             text=True,
             timeout=timeout_seconds,
             check=False,
-            env=os.environ.copy(),
+            env=env,
         )
 
         if proc.returncode != 0:
