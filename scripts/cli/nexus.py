@@ -4602,6 +4602,126 @@ def timesfm_ev_gap_cmd(
 
 
 # ==========================================
+# SUBCOMANDO: ANTIGRAVITY SDK & CLI MESH SOTA
+# ==========================================
+
+antigravity_app = typer.Typer(
+    help="Google Antigravity SDK & CLI Mesh (Harness, Streaming, Skills & MCP)",
+    no_args_is_help=True,
+)
+app.add_typer(antigravity_app, name="antigravity")
+
+
+@antigravity_app.command("status")
+def antigravity_status(
+    as_json: bool = typer.Option(False, "--json", "-j", help=HELP_JSON_OUTPUT),
+) -> None:
+    """Diagnostico completo do Google Antigravity SDK, localharness.exe, CLI agy e MCP."""
+    from llm.antigravity_sdk_bridge import AntigravityAgentBridge
+
+    report = AntigravityAgentBridge.audit_ecosystem()
+    if as_json:
+        print(json.dumps(report, indent=2, ensure_ascii=False))
+        return
+
+    console.print("\n[bold cyan]=== [GOOGLE ANTIGRAVITY SDK & ECOSYSTEM: SOTA STATUS] ===[/]\n")
+
+    table_sdk = Table(title="Google Antigravity SDK & Runtime", box=box.ROUNDED)
+    table_sdk.add_column("Componente", style="bold white")
+    table_sdk.add_column("Status / Versao", style="bold green")
+    table_sdk.add_column("Detalhe", style="dim")
+
+    status_ausente = "[bold red]AUSENTE[/]"
+    status_presente = "[bold green]PRESENTE[/]"
+
+    sdk_info = report["sdk"]
+    table_sdk.add_row("Pacote PyPI", sdk_info["package"], f"v{sdk_info['version']}")
+    bin_status = status_presente if sdk_info["localharness_exists"] else status_ausente
+    bin_size = f"{sdk_info['localharness_size_bytes'] / (1024 * 1024):.1f} MB"
+    table_sdk.add_row("Runtime localharness.exe", bin_status, bin_size)
+
+    cli_info = report["cli"]
+    cli_status = f"[bold green]{cli_info['version']}[/]" if cli_info["binary"] else status_ausente
+    table_sdk.add_row("Antigravity CLI (agy)", cli_status, str(cli_info["binary"]))
+
+    console.print(table_sdk)
+
+    table_auth = Table(title="Credenciais HKCU/HKLM & Ambiente", box=box.ROUNDED)
+    table_auth.add_column("Chave", style="bold white")
+    table_auth.add_column("Status", style="bold green")
+    for k, v in report["auth"].items():
+        st = "[bold green]RESOLVIDA[/]" if v else status_ausente
+        table_auth.add_row(k, st)
+    console.print(table_auth)
+
+    skills_cnt = report["skills"]["discovered_directories_count"]
+    total_skills = report["skills"].get("total_skills_count", 0)
+    mcp_cnt = report["mcp"]["bridged_servers_count"]
+    console.print(
+        f"\n[bold gold1]Skills Descobertas:[/] [bold green]{skills_cnt} diretorios ({total_skills} skills)[/] | "
+        f"[bold gold1]MCP Servers Integrados:[/] [bold green]{mcp_cnt} servidores[/] "
+        f"(Gateway: [cyan]{report['mcp']['shared_gateway']}[/])\n"
+    )
+
+
+@antigravity_app.command("skills")
+def antigravity_skills() -> None:
+    """Lista todos os diretorios e modulos de skills descobertos pelo Antigravity SDK."""
+    from llm.antigravity_sdk_bridge import discover_skill_directories
+
+    dirs = discover_skill_directories()
+    console.print(f"\n[bold cyan]=== [ANTIGRAVITY SDK: SKILLS DESCOBERTAS ({len(dirs)})] ===[/]\n")
+
+    table = Table(box=box.ROUNDED)
+    table.add_column("#", style="dim", justify="right")
+    table.add_column("Diretorio Parent", style="bold white")
+    table.add_column("Skills Detectadas", style="bold green")
+
+    for idx, d_path in enumerate(dirs, 1):
+        p = Path(d_path)
+        skill_names = sorted(c.name for c in p.iterdir() if c.is_dir() and (c / "SKILL.md").is_file())
+        table.add_row(
+            str(idx),
+            str(p),
+            ", ".join(skill_names),
+        )
+
+    console.print(table)
+    console.print()
+
+
+@antigravity_app.command("run")
+def antigravity_run(
+    prompt: str = typer.Argument(..., help="Prompt para execucao no Antigravity Agent"),
+    model: str = typer.Option("gemini-3.8-flash", "--model", "-m", help="Modelo Gemini ou endpoint local"),
+    stream: bool = typer.Option(True, "--stream/--no-stream", help="Stream em tempo real dos tokens"),
+    allow_cmd: bool = typer.Option(False, "--allow-cmd", help="Permitir execucao de run_command sem confirmacao"),
+) -> None:
+    """Executa um prompt completo via Google Antigravity SDK com streaming em tempo real."""
+    from llm.antigravity_sdk_bridge import default_bridge
+
+    console.print(f"\n[bold cyan]=== [ANTIGRAVITY SDK RUNNER: {model}] ===[/]\n")
+    cfg = default_bridge.build_hosted_config(model=model, allow_run_command=allow_cmd)
+
+    if stream:
+
+        async def _stream():
+            async for token in default_bridge.stream_prompt(prompt, config=cfg):
+                console.print(token, end="")
+            console.print("\n")
+
+        asyncio.run(_stream())
+    else:
+
+        async def _run():
+            res = await default_bridge.run_prompt(prompt, config=cfg)
+            console.print(res.text)
+            console.print()
+
+        asyncio.run(_run())
+
+
+# ==========================================
 # ENTRYPOINT TYPER
 # ==========================================
 
