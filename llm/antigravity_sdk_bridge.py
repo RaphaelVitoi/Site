@@ -105,6 +105,7 @@ def candidate_skill_roots() -> list[Path]:
     candidates: list[Path] = [
         SITE_DIR / ".agents" / "skills",
         RAIZ_DIR / "antigravity" / "builtin" / "skills",
+        RAIZ_DIR / "tools" / "mcp-runtime" / "node_modules" / "chrome-devtools-mcp" / "skills",
     ]
     plugins_dir = RAIZ_DIR / "config" / "plugins"
     if plugins_dir.is_dir():
@@ -112,6 +113,18 @@ def candidate_skill_roots() -> list[Path]:
             if skill_dir.is_dir():
                 candidates.append(skill_dir)
     return candidates
+
+
+def discover_custom_subagents() -> list[str]:
+    """Descobre definicoes de subagentes customizados (.md) em ~/.gemini/agents e Site/.gemini/agents."""
+    subagents: list[str] = []
+    for agents_dir in (RAIZ_DIR / "agents", SITE_DIR / ".gemini" / "agents"):
+        if not agents_dir.is_dir():
+            continue
+        for md_file in sorted(agents_dir.glob("*.md")):
+            if md_file.is_file() and md_file.stem not in subagents:
+                subagents.append(md_file.stem)
+    return subagents
 
 
 def discover_skill_directories() -> list[str]:
@@ -494,6 +507,7 @@ class AntigravityAgentBridge:
         total_skills = sum(
             len([c for c in Path(d).iterdir() if c.is_dir() and (c / "SKILL.md").is_file()]) for d in skills
         )
+        custom_subagents = discover_custom_subagents()
 
         return {
             "sdk": {
@@ -513,6 +527,11 @@ class AntigravityAgentBridge:
                 "discovered_directories_count": len(skills),
                 "total_skills_count": total_skills,
                 "paths": skills,
+            },
+            "subagents": {
+                "custom_count": len(custom_subagents),
+                "custom_names": custom_subagents,
+                "builtin_enabled": ["browser_agent", "codebase_investigator", "generalist", "cli_help"],
             },
             "mcp": {
                 "shared_gateway": get_shared_gateway_base(),

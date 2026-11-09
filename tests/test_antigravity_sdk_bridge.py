@@ -214,6 +214,7 @@ def test_audit_ecosystem_structure() -> None:
     assert "sdk" in audit
     assert "cli" in audit
     assert "skills" in audit
+    assert "subagents" in audit
     assert "mcp" in audit
     assert "auth" in audit
 
@@ -222,6 +223,8 @@ def test_audit_ecosystem_structure() -> None:
     assert bool(audit["sdk"]["version"].strip())
     assert isinstance(audit["sdk"]["localharness_exists"], bool)
     assert isinstance(audit["skills"]["discovered_directories_count"], int)
+    assert isinstance(audit["subagents"]["custom_count"], int)
+    assert "browser_agent" in audit["subagents"]["builtin_enabled"]
     assert isinstance(audit["mcp"]["shared_gateway"], str)
     assert audit["mcp"]["shared_gateway"].startswith("http://")
     assert isinstance(audit["mcp"]["bridged_servers_count"], int)

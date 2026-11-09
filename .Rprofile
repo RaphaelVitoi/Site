@@ -1,5 +1,9 @@
-# SOTA R Profile Configuration — Protocolo Chico
+# SOTA R Profile Configuration -- Protocolo Chico
 local({
+  sota_lib <- "C:/Users/rapha/R/win-library/4.6"
+  if (dir.exists(sota_lib) && !(sota_lib %in% .libPaths())) {
+    .libPaths(c(sota_lib, .libPaths()))
+  }
   home_dir <- path.expand("~")
   home_profile <- file.path(home_dir, ".Rprofile")
   env_profile <- Sys.getenv("R_PROFILE_USER")
@@ -24,5 +28,10 @@ local({
   }
   r <- getOption("repos")
   r["CRAN"] <- "https://cloud.r-project.org"
-  options(repos = r)
+  options(
+    repos = r,
+    vsc.plot.backend = "httpgd",
+    vsc.use_httpgd = TRUE,
+    vsc.helpPanel = "Beside"
+  )
 })
