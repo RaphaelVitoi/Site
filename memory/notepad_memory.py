@@ -179,7 +179,7 @@ def test_notepad():
     mem.write_block(
         key="HARDWARE_TOPOLOGY",
         title="Topologia do Core i9-9900K & Z370M",
-        content="8 Cores / 16 Threads | 16MB L3 Cache | 32GB RAM | BIOS F14.",
+        content="8 Cores / 16 Threads | 16MB L3 Cache | ~34GB RAM | BIOS F14.",
         tags=["hardware", "topology"],
     )
 
