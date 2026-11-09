@@ -1,9 +1,10 @@
 """LLM -- Camada de inferencia, pools de chaves e roteamento cognitivo."""
 
+import importlib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .antigravity_sdk_bridge import (
+    from .antigravity_sdk_bridge import (  # pyrefly: ignore[missing-import]
         AntigravityAgentBridge,
         AntigravityRunResult,
         default_bridge,
@@ -23,7 +24,6 @@ __all__ = [
 def __getattr__(name: str) -> Any:
     """Carregamento sob demanda para evitar importacao eager do SDK."""
     if name in __all__:
-        from . import antigravity_sdk_bridge
-
-        return getattr(antigravity_sdk_bridge, name)
+        module = importlib.import_module(".antigravity_sdk_bridge", __name__)
+        return getattr(module, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

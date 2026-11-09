@@ -1,12 +1,7 @@
 """Testes unitarios e de isolamento para o Antigravity SDK Bridge (Protocolo Chico SOTA v8.0 GOLD)."""
 
-from collections.abc import Generator
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
-from typer.testing import CliRunner
 
 from google.antigravity import (
     AgentBehavior,
@@ -14,17 +9,17 @@ from google.antigravity import (
     LocalAgentConfig,
     LocalOpenAIAgentConfig,
     policy,
-    types,
 )
+import pytest
+from typer.testing import CliRunner
+
 from llm.antigravity_sdk_bridge import (
     AntigravityAgentBridge,
-    default_bridge,
     discover_skill_directories,
     find_agy_cli,
     get_default_safety_policies,
     get_shared_gateway_base,
     load_mcp_servers_from_nucleo,
-    resolve_env_or_registry,
 )
 from scripts.cli.nexus import app
 
@@ -66,7 +61,7 @@ def test_discover_skill_directories_synthetic(tmp_path: Path, monkeypatch: pytes
 
 
 def test_get_shared_gateway_base(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Verifica derivacao dinamica da URL base do gateway MCP."""
+    """Verifica derivacao dinamica da URL base do gateway MCP e fallbacks de estrutura."""
     fake_nucleo = tmp_path / "nucleo.json"
     fake_nucleo.write_text(
         json.dumps({"mcp": {"gateway": {"host": "10.0.0.1", "port": 9000}}}),
@@ -79,6 +74,24 @@ def test_get_shared_gateway_base(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
     gw = get_shared_gateway_base()
     assert gw == "http://10.0.0.1:9000/servers"
+
+    assert get_shared_gateway_base({"mcp": {"gateway": {"host": "127.0.0.1", "port": " 9100 "}}}) == (
+        "http://127.0.0.1:9100/servers"
+    )
+    assert get_shared_gateway_base({"mcp": {"gateway": {"host": "", "port": ""}}}) == "http://127.0.0.1:8933/servers"
+    assert get_shared_gateway_base({"mcp": {"gateway": {"host": "127.0.0.1", "port": "abc"}}}) == (
+        "http://127.0.0.1:8933/servers"
+    )
+    assert get_shared_gateway_base({"mcp": {"gateway": {"host": "127.0.0.1", "port": 0}}}) == (
+        "http://127.0.0.1:8933/servers"
+    )
+    assert get_shared_gateway_base({"mcp": {"gateway": {"host": "127.0.0.1", "port": 70000}}}) == (
+        "http://127.0.0.1:8933/servers"
+    )
+    assert get_shared_gateway_base({"mcp": {"gateway": {"host": "127.0.0.1", "port": True}}}) == (
+        "http://127.0.0.1:8933/servers"
+    )
+    assert get_shared_gateway_base({"mcp": {"gateway": "invalido"}}) == "http://127.0.0.1:8933/servers"
 
 
 def test_load_mcp_servers_from_nucleo_synthetic(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -128,6 +141,7 @@ def test_build_hosted_config() -> None:
     cfg = bridge.build_hosted_config(model="gemini-3.8-flash", allow_run_command=False)
 
     assert isinstance(cfg, LocalAgentConfig)
+    assert cfg.models is not None
     assert cfg.models[0].name == "gemini-3.8-flash"
     assert cfg.capabilities.agent_behavior == AgentBehavior.AUTONOMOUS
     assert cfg.skills_paths is not None
@@ -204,8 +218,12 @@ def test_audit_ecosystem_structure() -> None:
     assert "auth" in audit
 
     assert audit["sdk"]["package"] == "google-antigravity"
+    assert isinstance(audit["sdk"]["version"], str)
+    assert bool(audit["sdk"]["version"].strip())
     assert isinstance(audit["sdk"]["localharness_exists"], bool)
     assert isinstance(audit["skills"]["discovered_directories_count"], int)
+    assert isinstance(audit["mcp"]["shared_gateway"], str)
+    assert audit["mcp"]["shared_gateway"].startswith("http://")
     assert isinstance(audit["mcp"]["bridged_servers_count"], int)
     assert "GEMINI_API_KEY" in audit["auth"]
 

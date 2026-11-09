@@ -16,28 +16,21 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import AsyncIterator, Callable
+import contextlib
 from dataclasses import dataclass, field
+from importlib.metadata import version as pkg_version
 import json
 import logging
 import os
 from pathlib import Path
 import re
 import shutil
-import subprocess
+import subprocess  # noqa: S404  # Record-Id: registro-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp
 import sys
 from typing import Any
 
 from dotenv import load_dotenv
-
-# Carrega arquivos de ambiente com precedencia estrita
-SITE_DIR = Path(__file__).resolve().parent.parent
-RAIZ_DIR = SITE_DIR.parent
-
-# Carga de arquivos de ambiente
-load_dotenv(SITE_DIR / ".env.local")
-load_dotenv(SITE_DIR / ".env")
-load_dotenv(RAIZ_DIR / ".env")
-
+import google.antigravity
 from google.antigravity import (
     Agent,
     AgentBehavior,
@@ -49,6 +42,15 @@ from google.antigravity import (
     policy,
     types,
 )
+
+# Carrega arquivos de ambiente com precedencia estrita
+SITE_DIR = Path(__file__).resolve().parent.parent
+RAIZ_DIR = SITE_DIR.parent
+
+# Carga de arquivos de ambiente
+load_dotenv(SITE_DIR / ".env.local")
+load_dotenv(SITE_DIR / ".env")
+load_dotenv(RAIZ_DIR / ".env")
 
 logger = logging.getLogger("antigravity_sdk_bridge")
 
@@ -65,7 +67,7 @@ def resolve_env_or_registry(name: str, default: str = "") -> str:
     if val:
         return val
     try:
-        import winreg
+        import winreg  # noqa: PLC0415
 
         for root, subkey in (
             (winreg.HKEY_CURRENT_USER, "Environment"),
@@ -126,18 +128,42 @@ def discover_skill_directories() -> list[str]:
     return valid_paths
 
 
-def get_shared_gateway_base() -> str:
-    """Deriva a URL base do gateway MCP a partir de nucleo_compartilhado.json."""
-    if not NUCLEO_PATH.is_file():
-        return "http://127.0.0.1:8933/servers"  # NOSONAR: IPC em loopback local
+def _parse_valid_port(raw_port: Any, default: int = 8933) -> int:
+    """Valida e converte a porta do gateway para inteiro no intervalo 1..65535."""
+    if isinstance(raw_port, bool) or raw_port is None:
+        return default
     try:
-        raw = json.loads(NUCLEO_PATH.read_text(encoding="utf-8-sig"))
-        gateway = raw.get("mcp", {}).get("gateway", {})
-        host = gateway.get("host", "127.0.0.1")
-        port = gateway.get("port", 8933)
-        return f"http://{host}:{port}/servers"  # NOSONAR: IPC em loopback local
-    except Exception:
-        return "http://127.0.0.1:8933/servers"  # NOSONAR: IPC em loopback local
+        port = int(str(raw_port).strip())
+    except (TypeError, ValueError):
+        return default
+    return port if 1 <= port <= 65535 else default
+
+
+def get_shared_gateway_base(raw: dict[str, Any] | None = None) -> str:
+    """Deriva a URL base do gateway MCP a partir de nucleo_compartilhado.json."""
+    default_url = "http://127.0.0.1:8933/servers"  # NOSONAR
+    if raw is None:
+        if not NUCLEO_PATH.is_file():
+            return default_url
+        try:
+            raw = json.loads(NUCLEO_PATH.read_text(encoding="utf-8-sig"))
+        except Exception as exc:
+            logger.warning(f"Falha ao ler gateway MCP em {NUCLEO_PATH}: {exc}")
+            return default_url
+
+    if not isinstance(raw, dict):
+        return default_url
+    mcp_cfg = raw.get("mcp")
+    if not isinstance(mcp_cfg, dict):
+        return default_url
+    gateway = mcp_cfg.get("gateway")
+    if not isinstance(gateway, dict):
+        return default_url
+
+    raw_host = gateway.get("host")
+    host = str(raw_host).strip() if raw_host is not None and str(raw_host).strip() else "127.0.0.1"
+    port = _parse_valid_port(gateway.get("port"), default=8933)
+    return f"http://{host}:{port}/servers"  # NOSONAR
 
 
 def _build_single_mcp_server(
@@ -167,30 +193,40 @@ def _build_single_mcp_server(
     return None
 
 
-def load_mcp_servers_from_nucleo(
-    only_names: set[str] | None = None,
-) -> list[types.McpStreamableHttpServer | types.McpStdioServer]:
-    """Converte os servidores MCP compartilhados do nucleo em objetos tipados do Antigravity SDK."""
+def _read_nucleo_raw() -> dict[str, Any] | None:
+    """Carrega o dicionario JSON do nucleo compartilhado."""
     if not NUCLEO_PATH.is_file():
         logger.warning(f"Nucleo compartilhado nao encontrado em {NUCLEO_PATH}")
-        return []
-
+        return None
     try:
-        raw = json.loads(NUCLEO_PATH.read_text(encoding="utf-8-sig"))
+        loaded = json.loads(NUCLEO_PATH.read_text(encoding="utf-8-sig"))
+        return loaded if isinstance(loaded, dict) else None
     except Exception:
         logger.exception("Erro ao carregar nucleo_compartilhado.json")
+        return None
+
+
+def load_mcp_servers_from_nucleo(
+    only_names: set[str] | None = None,
+    raw: dict[str, Any] | None = None,
+) -> list[types.McpStreamableHttpServer | types.McpStdioServer]:
+    """Converte os servidores MCP compartilhados do nucleo em objetos tipados do Antigravity SDK."""
+    active_raw = raw if raw is not None else _read_nucleo_raw()
+    if not isinstance(active_raw, dict):
         return []
 
-    gateway_base = get_shared_gateway_base()
+    mcp_cfg = active_raw.get("mcp")
+    compartilhados = mcp_cfg.get("compartilhados") if isinstance(mcp_cfg, dict) else None
+    if not isinstance(compartilhados, dict):
+        return []
 
-    compartilhados: dict[str, dict[str, Any]] = raw.get("mcp", {}).get("compartilhados", {})
+    gateway_base = get_shared_gateway_base(active_raw)
     servers: list[types.McpStreamableHttpServer | types.McpStdioServer] = []
 
     for name, cfg in compartilhados.items():
         if only_names is not None and name not in only_names:
             continue
-        srv = _build_single_mcp_server(name, cfg, gateway_base)
-        if srv is not None:
+        if isinstance(cfg, dict) and (srv := _build_single_mcp_server(name, cfg, gateway_base)) is not None:
             servers.append(srv)
 
     return servers
@@ -363,7 +399,7 @@ class AntigravityAgentBridge:
             response = await agent.chat(prompt)
             full_text = await response.text()
             thoughts: list[str] = []
-            try:
+            with contextlib.suppress(Exception):
                 raw_thoughts = getattr(response, "thoughts", None)
                 if raw_thoughts is not None:
                     if hasattr(raw_thoughts, "__aiter__"):
@@ -372,20 +408,14 @@ class AntigravityAgentBridge:
                     elif isinstance(raw_thoughts, (list, tuple, set)):
                         for t in raw_thoughts:
                             thoughts.append(str(t))
-            except Exception:
-                pass
 
             stop_reason = None
-            try:
+            with contextlib.suppress(Exception):
                 stop_reason = str(response.stop_reason) if response.stop_reason else None
-            except Exception:
-                pass
 
             usage = None
-            try:
+            with contextlib.suppress(Exception):
                 usage = response.usage_metadata
-            except Exception:
-                pass
 
             return AntigravityRunResult(
                 text=full_text,
@@ -400,15 +430,19 @@ class AntigravityAgentBridge:
         prompt: str,
         config: LocalAgentConfig | LiteRTAgentConfig | LocalOpenAIAgentConfig | None = None,
     ) -> AsyncIterator[str]:
-        """Transmite tokens do modelo em tempo real sem latencia adicional."""
+        """Transmite tokens do modelo em tempo real com fechamento deterministico do contexto."""
         active_config = config or self.build_hosted_config()
-        async with Agent(config=active_config) as agent:
+        stack = contextlib.AsyncExitStack()
+        try:
+            agent = await stack.enter_async_context(Agent(config=active_config))
             response = await agent.chat(prompt)
             async for chunk in response:
                 if isinstance(chunk, str):
                     yield chunk
                 elif hasattr(chunk, "text") and chunk.text:
                     yield chunk.text
+        finally:
+            await stack.aclose()
 
     @staticmethod
     def audit_ecosystem() -> dict[str, Any]:
@@ -434,14 +468,10 @@ class AntigravityAgentBridge:
         mcp_servers = load_mcp_servers_from_nucleo()
 
         # Verifica presenca do binario localharness.exe
-        import google.antigravity
-
         sdk_version = getattr(google.antigravity, "__version__", None)
         if not sdk_version:
             try:
-                from importlib.metadata import version
-
-                sdk_version = version("google-antigravity")
+                sdk_version = pkg_version("google-antigravity")
             except Exception:
                 sdk_version = "unknown"
 
@@ -515,7 +545,7 @@ if __name__ == "__main__":
     if args.prompt:
         if args.stream:
 
-            async def _stream():
+            async def _stream() -> None:
                 async for token in default_bridge.stream_prompt(args.prompt):
                     print(token, end="", flush=True)
                 print()
@@ -523,7 +553,7 @@ if __name__ == "__main__":
             asyncio.run(_stream())
         else:
 
-            async def _run():
+            async def _run() -> None:
                 res = await default_bridge.run_prompt(args.prompt)
                 print(res.text)
 
