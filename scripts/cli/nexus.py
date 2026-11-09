@@ -4617,7 +4617,7 @@ def antigravity_status(
     as_json: bool = typer.Option(False, "--json", "-j", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Diagnostico completo do Google Antigravity SDK, localharness.exe, CLI agy e MCP."""
-    from llm.antigravity_sdk_bridge import AntigravityAgentBridge
+    from llm import AntigravityAgentBridge
 
     report = AntigravityAgentBridge.audit_ecosystem()
     if as_json:
@@ -4627,31 +4627,36 @@ def antigravity_status(
     console.print("\n[bold cyan]=== [GOOGLE ANTIGRAVITY SDK & ECOSYSTEM: SOTA STATUS] ===[/]\n")
 
     table_sdk = Table(title="Google Antigravity SDK & Runtime", box=box.ROUNDED)
-    table_sdk.add_column("Componente", style="bold white")
-    table_sdk.add_column("Status / Versao", style="bold green")
+    table_sdk.add_column("Componente", style=STYLE_WHITE)
+    table_sdk.add_column("Status / Versao", style=STYLE_BOLD_GREEN)
     table_sdk.add_column("Detalhe", style="dim")
 
     status_ausente = "[bold red]AUSENTE[/]"
     status_presente = "[bold green]PRESENTE[/]"
 
     sdk_info = report["sdk"]
-    table_sdk.add_row("Pacote PyPI", sdk_info["package"], f"v{sdk_info['version']}")
+    table_sdk.add_row(
+        "Pacote PyPI",
+        escape(str(sdk_info["package"])),
+        escape(f"v{sdk_info['version']}"),
+    )
     bin_status = status_presente if sdk_info["localharness_exists"] else status_ausente
     bin_size = f"{sdk_info['localharness_size_bytes'] / (1024 * 1024):.1f} MB"
-    table_sdk.add_row("Runtime localharness.exe", bin_status, bin_size)
+    table_sdk.add_row("Runtime localharness.exe", bin_status, escape(bin_size))
 
     cli_info = report["cli"]
-    cli_status = f"[bold green]{cli_info['version']}[/]" if cli_info["binary"] else status_ausente
-    table_sdk.add_row("Antigravity CLI (agy)", cli_status, str(cli_info["binary"]))
+    cli_version_escaped = escape(str(cli_info["version"]))
+    cli_status = f"[bold green]{cli_version_escaped}[/]" if cli_info["binary"] else status_ausente
+    table_sdk.add_row("Antigravity CLI (agy)", cli_status, escape(str(cli_info["binary"])))
 
     console.print(table_sdk)
 
     table_auth = Table(title="Credenciais HKCU/HKLM & Ambiente", box=box.ROUNDED)
-    table_auth.add_column("Chave", style="bold white")
-    table_auth.add_column("Status", style="bold green")
+    table_auth.add_column("Chave", style=STYLE_WHITE)
+    table_auth.add_column("Status", style=STYLE_BOLD_GREEN)
     for k, v in report["auth"].items():
         st = "[bold green]RESOLVIDA[/]" if v else status_ausente
-        table_auth.add_row(k, st)
+        table_auth.add_row(escape(k), st)
     console.print(table_auth)
 
     skills_cnt = report["skills"]["discovered_directories_count"]
@@ -4667,23 +4672,23 @@ def antigravity_status(
 @antigravity_app.command("skills")
 def antigravity_skills() -> None:
     """Lista todos os diretorios e modulos de skills descobertos pelo Antigravity SDK."""
-    from llm.antigravity_sdk_bridge import discover_skill_directories
+    from llm import discover_skill_directories
 
     dirs = discover_skill_directories()
     console.print(f"\n[bold cyan]=== [ANTIGRAVITY SDK: SKILLS DESCOBERTAS ({len(dirs)})] ===[/]\n")
 
     table = Table(box=box.ROUNDED)
     table.add_column("#", style="dim", justify="right")
-    table.add_column("Diretorio Parent", style="bold white")
-    table.add_column("Skills Detectadas", style="bold green")
+    table.add_column("Diretorio Parent", style=STYLE_WHITE)
+    table.add_column("Skills Detectadas", style=STYLE_BOLD_GREEN)
 
     for idx, d_path in enumerate(dirs, 1):
         p = Path(d_path)
         skill_names = sorted(c.name for c in p.iterdir() if c.is_dir() and (c / "SKILL.md").is_file())
         table.add_row(
             str(idx),
-            str(p),
-            ", ".join(skill_names),
+            escape(str(p)),
+            escape(", ".join(skill_names)),
         )
 
     console.print(table)
@@ -4698,7 +4703,7 @@ def antigravity_run(
     allow_cmd: bool = typer.Option(False, "--allow-cmd", help="Permitir execucao de run_command sem confirmacao"),
 ) -> None:
     """Executa um prompt completo via Google Antigravity SDK com streaming em tempo real."""
-    from llm.antigravity_sdk_bridge import default_bridge
+    from llm import default_bridge
 
     console.print(f"\n[bold cyan]=== [ANTIGRAVITY SDK RUNNER: {model}] ===[/]\n")
     cfg = default_bridge.build_hosted_config(model=model, allow_run_command=allow_cmd)
@@ -4707,7 +4712,7 @@ def antigravity_run(
 
         async def _stream():
             async for token in default_bridge.stream_prompt(prompt, config=cfg):
-                console.print(token, end="")
+                console.print(token, end="", markup=False, highlight=False)
             console.print("\n")
 
         asyncio.run(_stream())
@@ -4715,7 +4720,7 @@ def antigravity_run(
 
         async def _run():
             res = await default_bridge.run_prompt(prompt, config=cfg)
-            console.print(res.text)
+            console.print(res.text, markup=False, highlight=False)
             console.print()
 
         asyncio.run(_run())
