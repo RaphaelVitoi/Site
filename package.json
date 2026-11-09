@@ -133,6 +133,6 @@
     "@ai-sdk/google": "^4.0.114",
     "@prisma/adapter-libsql": "7.10.1",
     "@prisma/client": "7.10.1",
-    "ai": "^7.0.165"
+    "ai": "^7.0.166"
   }
 }
