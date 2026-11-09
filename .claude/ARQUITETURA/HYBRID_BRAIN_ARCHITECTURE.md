@@ -1,14 +1,24 @@
 ---
 title: "ARQUITETURA DO CEREBRO HIBRIDO (IDE Assistant  Background Executor)"
 type: technical
-status: active
+status: legacy (pointer)
 owner: site-governance
-updated_at: 2026-10-30
+updated_at: 2026-11-09
 ---
 
 # ARQUITETURA DO CEREBRO HIBRIDO (IDE Assistant  Background Executor)
 
-> **Status:** Ativo e Integrado (Workflow v8.0 GOLD - Quartetos Dinamicos & Economia Generalizada)
+> **Status (2026-11-09): LEGADO / PONTEIRO.** Este arquivo descreve a dinâmica
+> de operação IDE↔terminal da era VS Code. A superfície canônica atual é
+> **Antigravity IDE** (ver `CLAUDE.md` §0 — Tier 1) e o catálogo de modelos
+> vigente é o de `llm/model_registry.py` + `CLAUDE.md` §0 (retirados:
+> gemini-3.6/3.7/3.5-flash, gemini-3.1-flash-lite, claude-haiku-4-5,
+> Claude Fable 5/5.1, ChatGPT 5.6 aliases). Modelos citados aqui
+> (Gemini 1.5/2.5 Pro, Claude Pro genérico, Gemini 3.1 Pro) não são rotas
+> vigentes. Manter apenas como referência histórica; não usar como fonte de
+> decisão. Fontes canônicas: `CLAUDE.md` §0/§3, `project-context.md` §5/§6,
+> `llm/routing_policy.py`, `llm/model_registry.py`.
+
 > **Última revisão:** 2026-09-01 · Protocolo Chico SOTA v8.0 GOLD
 > **Objetivo (Economia Generalizada x Estado da Arte):** Maximizar a capacidade cognitiva usando assinaturas premium na IDE (custo marginal zero). A API local opera exclusivamente no Free Tier (Gemini/Google). "Economia" aqui transcende o financeiro: significa otimizacao de latencia, gestao cirurgica de contexto (evitando rate-limits) e zero desperdicio de energia computacional e humana.
 

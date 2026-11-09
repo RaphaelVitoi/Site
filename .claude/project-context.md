@@ -3,7 +3,7 @@ title: "Contexto Canônico do Projeto Site — Poker Racional (SOTA v8.0 GOLD)"
 type: index
 status: active
 owner: site-governance
-updated_at: 2026-10-30
+updated_at: 2026-11-09
 ---
 
 # Contexto Canônico do Projeto Site — Poker Racional (SOTA v8.0 GOLD)
@@ -159,7 +159,7 @@ Conforme o [Plano Padrão-Ouro de Capacidades (docs/architecture/ENGINE_CAPABILI
 ## 8. Mandatos Soberanos e Invariantes Operacionais
 
 - **Soberania Visual:** Interface web de altíssimo padrão estético, tipografia contemporânea, espaçamento áureo e ausência de layouts genéricos.
-- **Zero-Any / Zero-Debt:** Tipagem estrita PEP 585/604 em Python 3.12+ (runtime medido: 3.14.7 em uv); TypeScript sem concessões a tipos opacos ou `any`.
+- **Zero-Any / Zero-Debt:** Tipagem estrita PEP 585/604 em Python 3.12+ (runtime medido: 3.14.9 em uv); TypeScript sem concessões a tipos opacos ou `any`.
 - **Blindagem ASCII:** Backend, logs e pipelines de persistência em ASCII puro; UTF-8 restrito estritamente a textos de apresentação da interface do usuário.
 - **Target Lock & Limited Scope:** Imutabilidade estrita de assinaturas, contratos e código alheio ao escopo explícito da tarefa em execução.
 - **Lei de Concorrência e Exclusão Mútua (Zero-Interference Concurrency):**
