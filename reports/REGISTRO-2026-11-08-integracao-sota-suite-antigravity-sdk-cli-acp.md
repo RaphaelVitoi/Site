@@ -321,5 +321,6 @@ Harmonizacao integral da suite Google Antigravity no ecossistema multiprojeto so
 5. Bateria de testes automatizados hermeticos com testes aprovados cobrindo resolucao, isolamento, integracao com o nucleo e ecossistema; metodos como run_prompt, stream_prompt, ramo http e o subcomando nexus antigravity run possuem escopo de execucao ponta-a-ponta/mock estendido.
 
 ## 3. Validacao e Portao
-- Testes: testes hermeticos em tests/test_antigravity_sdk_bridge.py cobrindo a ponte com isolamento via monkeypatch e tmp_path (zero erros, zero warnings).
+- Testes: testes hermeticos em tests/test_antigravity_sdk_bridge.py cobrindo a ponte com isolamento via monkeypatch e tmp_path, validacao de porta (1..65535) e reutilizacao de payload (zero erros, zero warnings).
+- Qualidade estatica: Ruff (--preview), Pyrefly, Pyright e Pylint (10.00/10) aprovados em llm/__init__.py, llm/antigravity_sdk_bridge.py e tests/test_antigravity_sdk_bridge.py; .Rprofile higienizado com path.expand e guarda de reentrada.
 - Portao de integridade: record_gate.py reconciliado em todas as ancoras afetadas.
