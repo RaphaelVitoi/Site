@@ -318,8 +318,8 @@ Harmonizacao integral da suite Google Antigravity no ecossistema multiprojeto so
 2. Implementacao da ponte canonica em llm/antigravity_sdk_bridge.py com multi-backend (Google AI Studio, Vertex AI, LiteRT Gemma 4 e Local OpenAI).
 3. Integracao ao orquestrador CLI nexus (subcomandos nexus antigravity status, skills e run).
 4. Configuracao da integracao ACP para editores externos (Zed, Eclipse, Antigravity IDE e VS Code).
-5. Bateria de testes automatizados com 12 testes aprovados e cobertura total da ponte.
+5. Bateria de testes automatizados hermeticos com testes aprovados cobrindo resolucao, isolamento, integracao com o nucleo e ecossistema; metodos como run_prompt, stream_prompt, ramo http e o subcomando nexus antigravity run possuem escopo de execucao ponta-a-ponta/mock estendido.
 
 ## 3. Validacao e Portao
-- Testes: 12 passed em tests/test_antigravity_sdk_bridge.py (zero erros, zero warnings).
+- Testes: testes hermeticos em tests/test_antigravity_sdk_bridge.py cobrindo a ponte com isolamento via monkeypatch e tmp_path (zero erros, zero warnings).
 - Portao de integridade: record_gate.py reconciliado em todas as ancoras afetadas.

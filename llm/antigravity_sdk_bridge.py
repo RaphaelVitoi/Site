@@ -15,7 +15,7 @@ Harmoniza o SDK oficial (google-antigravity 0.1.23+) com:
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Sequence
+from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 import json
 import logging
@@ -25,7 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
-from typing import Any, Callable
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -98,21 +98,24 @@ def find_agy_cli() -> Path | None:
     return None
 
 
-def discover_skill_directories() -> list[str]:
-    """Descobre os diretorios canonicamente indexados contendo skills (SKILL.md)."""
-    candidate_parents: list[Path] = [
+def candidate_skill_roots() -> list[Path]:
+    """Retorna os caminhos candidatos onde diretorios de skills residem."""
+    candidates: list[Path] = [
         SITE_DIR / ".agents" / "skills",
         RAIZ_DIR / "antigravity" / "builtin" / "skills",
     ]
-
     plugins_dir = RAIZ_DIR / "config" / "plugins"
     if plugins_dir.is_dir():
         for skill_dir in plugins_dir.glob("*/skills"):
             if skill_dir.is_dir():
-                candidate_parents.append(skill_dir)
+                candidates.append(skill_dir)
+    return candidates
 
+
+def discover_skill_directories() -> list[str]:
+    """Descobre os diretorios canonicamente indexados contendo skills (SKILL.md)."""
     valid_paths: list[str] = []
-    for parent in candidate_parents:
+    for parent in candidate_skill_roots():
         if not parent.is_dir():
             continue
         # Verifica se o diretorio possui pastas com SKILL.md
@@ -121,6 +124,20 @@ def discover_skill_directories() -> list[str]:
             valid_paths.append(str(parent))
 
     return valid_paths
+
+
+def get_shared_gateway_base() -> str:
+    """Deriva a URL base do gateway MCP a partir de nucleo_compartilhado.json."""
+    if not NUCLEO_PATH.is_file():
+        return "http://127.0.0.1:8933/servers"  # NOSONAR: IPC em loopback local
+    try:
+        raw = json.loads(NUCLEO_PATH.read_text(encoding="utf-8-sig"))
+        gateway = raw.get("mcp", {}).get("gateway", {})
+        host = gateway.get("host", "127.0.0.1")
+        port = gateway.get("port", 8933)
+        return f"http://{host}:{port}/servers"  # NOSONAR: IPC em loopback local
+    except Exception:
+        return "http://127.0.0.1:8933/servers"  # NOSONAR: IPC em loopback local
 
 
 def _build_single_mcp_server(
@@ -164,10 +181,7 @@ def load_mcp_servers_from_nucleo(
         logger.exception("Erro ao carregar nucleo_compartilhado.json")
         return []
 
-    gateway = raw.get("mcp", {}).get("gateway", {})
-    gateway_host = gateway.get("host", "127.0.0.1")
-    gateway_port = gateway.get("port", 8933)
-    gateway_base = f"http://{gateway_host}:{gateway_port}/servers"
+    gateway_base = get_shared_gateway_base()
 
     compartilhados: dict[str, dict[str, Any]] = raw.get("mcp", {}).get("compartilhados", {})
     servers: list[types.McpStreamableHttpServer | types.McpStdioServer] = []
@@ -271,7 +285,15 @@ class AntigravityAgentBridge:
                 capabilities=CapabilitiesConfig(agent_behavior=behavior),
             )
 
-        resolved_project = project or resolve_env_or_registry("GOOGLE_CLOUD_PROJECT", "original-498419")
+        resolved_project = (
+            project
+            or resolve_env_or_registry("GOOGLE_CLOUD_PROJECT")
+            or resolve_env_or_registry("GOOGLE_GENAI_PROJECT")
+        )
+        if not resolved_project:
+            raise ValueError(
+                "Para Standard Mode (Vertex AI), e necessario definir 'project' ou a variavel de ambiente GOOGLE_CLOUD_PROJECT."
+            )
         return LocalAgentConfig(
             model=model or self.default_model,
             vertex=True,
@@ -395,8 +417,16 @@ class AntigravityAgentBridge:
         cli_version = "missing"
         if agy_bin:
             try:
-                proc = subprocess.run([str(agy_bin), "--version"], capture_output=True, text=True, check=False)
+                proc = subprocess.run(
+                    [str(agy_bin), "--version"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=5,
+                )
                 cli_version = proc.stdout.strip() or proc.stderr.strip()
+            except subprocess.TimeoutExpired:
+                cli_version = "error: timeout ao obter versao"
             except Exception as e:
                 cli_version = f"error: {e}"
 
@@ -405,6 +435,15 @@ class AntigravityAgentBridge:
 
         # Verifica presenca do binario localharness.exe
         import google.antigravity
+
+        sdk_version = getattr(google.antigravity, "__version__", None)
+        if not sdk_version:
+            try:
+                from importlib.metadata import version
+
+                sdk_version = version("google-antigravity")
+            except Exception:
+                sdk_version = "unknown"
 
         pkg_root = Path(google.antigravity.__file__).parent
         localharness_exe = pkg_root / "bin" / "localharness.exe"
@@ -429,7 +468,7 @@ class AntigravityAgentBridge:
         return {
             "sdk": {
                 "package": "google-antigravity",
-                "version": getattr(google.antigravity, "__version__", "0.1.23"),
+                "version": sdk_version,
                 "localharness_binary": str(localharness_exe),
                 "localharness_exists": localharness_exe.is_file(),
                 "localharness_size_bytes": localharness_exe.stat().st_size if localharness_exe.is_file() else 0,
@@ -446,7 +485,7 @@ class AntigravityAgentBridge:
                 "paths": skills,
             },
             "mcp": {
-                "shared_gateway": "http://127.0.0.1:8933/servers",
+                "shared_gateway": get_shared_gateway_base(),
                 "bridged_servers_count": len(mcp_servers),
                 "servers": [s.name for s in mcp_servers],
             },

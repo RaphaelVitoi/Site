@@ -588,7 +588,6 @@
     },
     "r.executablePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
     "r.rpath.windows": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
-    "r.consolePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\x64\\Rterm.exe",
     "r.consoleArgs": [
         "--no-save",
         "--no-restore"
@@ -673,7 +672,7 @@
     "git.detectSubmodulesLimit": 25,
     "acp.agents": {
         "Antigravity": {
-            "command": "C:\\Users\\rapha\\AppData\\Local\\agy\\bin\\agy.exe",
+            "command": "agy",
             "args": [
                 "acp",
                 "--disable-telemetry"
