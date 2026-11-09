@@ -76,7 +76,7 @@ dependencies = [
     # e nao levanta o teto. Zero imports no codigo - so figurava aqui.
     "opencv-python-headless>=5.0.0.93,<6.0.0",
     # ── UTILITARIOS ───────────────────────────────────────────────────
-    "regex>=2026.11.8",
+    "regex>=2026.11.9",
     "requests>=2.34.2,<3.0.0",
     "PyYAML>=6.0.3,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",
