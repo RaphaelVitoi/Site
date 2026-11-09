@@ -28,6 +28,9 @@ config_medida:
   toolchain: pytest + uv + ruff + record_gate.py
   python: 3.14.9
   so: Windows
+referencias_nao_resolviveis:
+  - scripts/ops/antigravity_sdk_bridge.py
+  - tests/test_antigravity_bridge_root.py
 caminhos:
   - llm/__init__.py
   - llm/antigravity_sdk_bridge.py

@@ -12,6 +12,7 @@ Protocolo Chico SOTA v8.0 GOLD -- Tipagem Estrita PEP 585/604 & Zero-Any.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import math
 
 import pytest
@@ -138,7 +139,7 @@ def test_numba_vectorized_perspective_execution() -> None:
     equities = [0.45, 0.55, 0.70]
     pots = [10.0, 20.0, 50.0]
     res = VitoiPerspectiveEngine.calculate_perspective_vectorized(equities, pots, human_noise_factor=0.05)
-    assert res is not None
+    assert isinstance(res, Iterable)
 
     factor = 0.95
     expected = [round(e * p * factor, 4) for e, p in zip(equities, pots, strict=True)]
