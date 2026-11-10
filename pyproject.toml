@@ -15,7 +15,7 @@ dependencies = [
     "aiofiles>=25.1.0",
     "aiohttp>=3.14.5",
     "aiosqlite>=0.22.1",
-    "fastapi>=0.162.2",
+    "fastapi>=0.162.4",
     "multidict>=7.2.1",
     "uvicorn[standard]>=0.54.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
@@ -63,7 +63,7 @@ dependencies = [
     "google-genai>=3.0.0",
     "google-antigravity>=0.1.23",
     "openai>=3.49.0",
-    "anthropic>=2.7.0",
+    "anthropic>=2.8.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
     "pypdf>=7.0.0,<8.0.0",  # 7.0.0: atualizado 2026-11-08 major release SOTA sem alertas abertos
@@ -105,7 +105,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.4.30",
+    "laya>=0.4.31",
     "accelerate>=1.15.0",
     "timesfm[torch]==3.0.2",
     # ── AGENTIC AUTOMATION, COMPUTER USE & BIG DATA OLAP ──────────────────────
