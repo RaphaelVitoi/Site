@@ -3,7 +3,7 @@ id: registro-2026-11-11-egm-sota-gold-engine
 tipo: registro
 escopo: Entrega da engine Elephant-Goldfish Model adaptada (EGM-SOTA) — specs verificadas por reviewers stateless antes de implementação
 alvo: docs/designs/egm-sota-gold.md + ~/.agents/egm/ + ~/.agents/skills/egm-*/ + nucleo/egm_reviewers.json
-status: entregue-parcial — Fases 0-5 verdes, Fase 6 em curso
+status: entregue — auditoria final, benchmarks e pendencias operacionais fechadas
 autor: Devin (SWE-2 Flash) [Tier 2]
 criado_em: '2026-11-11'
 verificado:
@@ -12,10 +12,13 @@ verificado:
   - 7 skills egm-* descobertas pelo harness (available_skills)
   - nucleo/egm_reviewers.json valido, consumido por egm-review-loop
   - dogfood real via run_subagent(subagent_explore) revisou a spec-mae -- 1 Blocker + 5 Majors + 4 Nits; todos resolvidos; re-review delta verde
+  - markdownlint zero issues no escopo EGM (.agents/.markdownlint.json dedicado)
+  - sota_orchestrator.py -- pylint 10.00/10, ruff limpo, pyright 0 erros (6 Optional reais corrigidos)
+  - verify_engine.py (egm/tools/) -- 20/20 checks estruturais verdes; relatorio em reports/benchmarks/
+  - drift-report semanal operacional -- task SOTA_EgmDriftReport_Weekly (seg 09:00) -> enqueue_egm_drift_report.py -> tasks.db idempotente por semana ISO
 nao_verificado:
   - 'Discovery dos skills em harnesses nao-Devin (Claude/Codex/agy leem ~/.agents/skills por convencao, nao testado)'
-  - 'record_gate aceitando spec tipo spec (frontmatter adicionado, gate nao executado)'
-  - 'Enforcement convencional da regra >150 linhas (sem hook)'
+  - 'Enforcement convencional da regra >150 linhas (sem hook; aguarda ratificacao Tier 0)'
 config_medida:
   congelada_em: '2026-11-11'
   raiz: C:/Users/rapha/.gemini
@@ -81,8 +84,13 @@ Até ratificação, a regra vale como convenção via skills EGM.
 ## Pendências
 
 1. Ratificação da emenda Target Lock (Tier 0).
-2. Criar task semanal de drift-report na fila SQLite para specs
-   `status: ativa` (spec-mãe §9.3).
+2. ~~Criar task semanal de drift-report~~ — **entregue 2026-11-11**:
+   `SOTA_EgmDriftReport_Weekly` registrada (segundas 09:00) executa
+   `scripts/ops/enqueue_egm_drift_report.py`, que insere task
+   `EGM-DRIFT-<ANO>-W<SEM>` `pending` em `Site/queue/tasks.db`
+   (idempotente; testado com LastTaskResult=0).
 3. Testar discovery dos skills em Claude/Codex/agy quando disponíveis.
 4. `~/.agents` ganhou `.git` próprio (commit `48e2900`) + espelho
    `projetos/agents/` na raiz via subtree — sem remote ainda.
+5. Revogar manualmente o PAT do GitHub exposto em `.git/config` de
+   extensões (auditoria anterior; não pode ser automatizado).
