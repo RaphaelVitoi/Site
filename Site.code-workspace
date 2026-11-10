@@ -83,7 +83,7 @@
     "eslint.workingDirectories": [
       {
         "directory": "frontend",
-        "changeProcessCWD": true,
+        "!cwd": false,
       },
     ],
     "tailwindCSS.experimental.classRegex": [
