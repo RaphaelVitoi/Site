@@ -16,9 +16,12 @@ verificado:
   - sota_orchestrator.py -- pylint 10.00/10, ruff limpo, pyright 0 erros (6 Optional reais corrigidos)
   - verify_engine.py (egm/tools/) -- 20/20 checks estruturais verdes; relatorio em reports/benchmarks/
   - drift-report semanal operacional -- task SOTA_EgmDriftReport_Weekly (seg 09:00) -> enqueue_egm_drift_report.py -> tasks.db idempotente por semana ISO
+  - emenda Target Lock RATIFICADA e promulgada em ~/.gemini/CLAUDE.md §4 (2026-11-10)
+  - discovery cross-harness implementado via junctions egm-* em .claude/.codex/antigravity skills (7/7 legiveis)
+  - weekly-maintenance.ps1 agendada como SOTA_WeeklyMaintenance (dom 06:00, dry-run verde)
+  - primeiro drift-report real executado -- reports/reviews/drift_egm-sota-gold_20261110.md (10 conformes, 3 spec-desatualizada corrigidas na spec)
 nao_verificado:
-  - 'Discovery dos skills em harnesses nao-Devin (Claude/Codex/agy leem ~/.agents/skills por convencao, nao testado)'
-  - 'Enforcement convencional da regra >150 linhas (sem hook; aguarda ratificacao Tier 0)'
+  - 'Listagem available_skills dentro de Claude/Codex/agy (junctions legiveis; harness nao testado)'
 config_medida:
   congelada_em: '2026-11-11'
   raiz: C:/Users/rapha/.gemini
@@ -83,14 +86,21 @@ Até ratificação, a regra vale como convenção via skills EGM.
 
 ## Pendências
 
-1. Ratificação da emenda Target Lock (Tier 0).
+1. ~~Ratificação da emenda Target Lock~~ — **ratificada 2026-11-10**:
+   bullet em `~/.gemini/CLAUDE.md` §4; spec §9.1 atualizada.
 2. ~~Criar task semanal de drift-report~~ — **entregue 2026-11-11**:
    `SOTA_EgmDriftReport_Weekly` registrada (segundas 09:00) executa
    `scripts/ops/enqueue_egm_drift_report.py`, que insere task
    `EGM-DRIFT-<ANO>-W<SEM>` `pending` em `Site/queue/tasks.db`
-   (idempotente; testado com LastTaskResult=0).
-3. Testar discovery dos skills em Claude/Codex/agy quando disponíveis.
-4. `~/.agents` ganhou `.git` próprio (commit `48e2900`) + espelho
-   `projetos/agents/` na raiz via subtree — sem remote ainda.
+   (idempotente; testado com LastTaskResult=0). Primeira execução real
+   do fluxo já produziu `drift_egm-sota-gold_20261110.md`.
+3. ~~Testar discovery dos skills~~ — **mitigado 2026-11-10**: junctions
+   `egm-*` criadas em `.claude/skills`, `.codex/skills` e
+   `antigravity/skills` (fonte única `~/.agents/skills`, sem duplicação).
+   Pendente apenas a confirmação da listagem interna de cada harness.
+4. `~/.agents` ganhou `.git` próprio (commits `48e2900`, `5f7fe13`) +
+   espelho `projetos/agents/` na raiz via subtree — sem remote ainda.
 5. Revogar manualmente o PAT do GitHub exposto em `.git/config` de
    extensões (auditoria anterior; não pode ser automatizado).
+6. `SOTA_WeeklyMaintenance` registrada (domingos 06:00) cobrindo o
+   `weekly-maintenance.ps1` que existia sem agendamento — dry-run verde.
