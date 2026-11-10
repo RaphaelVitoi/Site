@@ -62,7 +62,7 @@ dependencies = [
     # ── CLIENTES LLM ──────────────────────────────────────────────────
     "google-genai>=3.0.0",
     "google-antigravity>=0.1.23",
-    "openai>=3.48.0",
+    "openai>=3.49.0",
     "anthropic>=2.7.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
