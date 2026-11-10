@@ -125,7 +125,14 @@ export default function RangeMatrix({
 				const r2 = RANKS[j]!;
 				const isPair = i === j;
 				const isSuited = j > i;
-				const hand = isPair ? `${r1}${r2}` : isSuited ? `${r1}${r2}s` : `${r2}${r1}o`;
+				let hand: string;
+				if (isPair) {
+					hand = `${r1}${r2}`;
+				} else if (isSuited) {
+					hand = `${r1}${r2}s`;
+				} else {
+					hand = `${r2}${r1}o`;
+				}
 
 				const detail = evaluateHandDetail(hand, shoveProfile, activeRp);
 				const cellStyle = getCellColorAndBorder(detail, displayMode);
