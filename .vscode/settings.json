@@ -1,7 +1,7 @@
 {
     "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
-    "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
-    "python.languageServer": "None",
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.languageServer": "Default",
     "pylint.enabled": false,
     "python.terminal.activateEnvironment": true,
     "python.analysis.diagnosticMode": "openFilesOnly",
@@ -681,5 +681,8 @@
             ]
         }
     },
-    "antigravity.binary.path": "C:\\Users\\rapha\\AppData\\Local\\agy\\bin\\agy.exe"
+    "antigravity.binary.path": "C:\\Users\\rapha\\AppData\\Local\\agy\\bin\\agy.exe",
+    "python.terminal.useEnvFile": true,
+    "chat.useClaudeHooks": true,
+    "python.analysis.diagnosticsSource": "Pylance"
 }

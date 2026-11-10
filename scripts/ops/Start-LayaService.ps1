@@ -112,8 +112,9 @@ if (-not $task) {
 Start-ScheduledTask -TaskName $TaskName
 Write-Host "[LAYA S1] Tarefa agendada disparada ('$TaskName'). Aguardando aquecimento do checkpoint (mmBERT 322M)..." -ForegroundColor Gray
 
-# Aguarda ate 60s pelo warmup (cold load do mmBERT-base 322M em CPU leva ~30s)
-$deadline = (Get-Date).AddSeconds(60)
+# Aguarda ate 150s pelo warmup (cold load do mmBERT-base 322M em CPU mede ~97s;
+# em CPU-only o checkpoint nao cabe em cache quente no boot)
+$deadline = (Get-Date).AddSeconds(150)
 $ready = $false
 while ((Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 2

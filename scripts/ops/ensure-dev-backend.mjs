@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { spawn } from 'node:child_process';
+import { connect } from 'node:net';
 import { mkdir, open, readFile, unlink, access } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
@@ -29,6 +30,21 @@ async function acquireLock(lockPath, deadline, base) {
     }
   }
   return null;
+}
+
+function canConnectTcp(host, port, timeoutMs = 1500) {
+  return new Promise((resolve) => {
+    const socket = connect({ host, port, timeout: timeoutMs });
+    socket.once('connect', () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.once('timeout', () => {
+      socket.destroy();
+      resolve(false);
+    });
+    socket.once('error', () => resolve(false));
+  });
 }
 
 async function handleExistingLock(lockPath) {
@@ -89,6 +105,21 @@ export async function ensureBackend({ root, base, python, timeoutMs = 60000 }) {
     throw new Error('Backend configurado indisponivel; inicializacao automatica limitada ao loopback HTTP.');
   }
   await access(python);
+  // Se a porta ja aceita TCP mas /ping nao responde a tempo, o backend esta
+  // vivo e apenas lento/sobrecarregado: spawnar outra instancia geraria
+  // duplicata zumbi (medido em 2026-11-10, dois main.py em :17042).
+  const port = Number(url.port || 80);
+  const host = url.hostname.replaceAll('[', '').replaceAll(']', '');
+  if (await canConnectTcp(host, port)) {
+    const busyDeadline = Date.now() + timeoutMs;
+    while (Date.now() < busyDeadline) {
+      if (await isNexusReady(base)) return 'reused';
+      await delay(500);
+    }
+    throw new Error(
+      `Backend escutando em ${host}:${port} mas /ping nao respondeu; instancia existente possivelmente travada.`,
+    );
+  }
   const logs = path.join(root, 'logs');
   await mkdir(logs, { recursive: true });
   const lockPath = path.join(logs, `dev-backend-${url.port || '80'}.lock`);
