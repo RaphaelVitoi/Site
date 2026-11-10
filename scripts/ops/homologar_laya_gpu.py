@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
+from functools import lru_cache
 import http.client
 import json
 import logging
@@ -78,8 +79,15 @@ class BenchmarkMetric:
     vram_used_mb: float
 
 
+@lru_cache(maxsize=1)
 def obter_perfil_hardware() -> HardwareProfile:
-    """Inspeciona o ambiente local e coleta metricas de hardware e drivers."""
+    """Inspeciona o ambiente local e coleta metricas de hardware e drivers.
+
+    Cacheado: o perfil e imutavel durante a vida do processo. Sem cache, cada
+    GET /health disparava import torch + torch.cuda.* + um subprocesso
+    powershell.exe (fallback de GPU no Windows), gerando churn de CPU e
+    latencia imprevisivel sob polling do watchdog.
+    """
     import torch  # noqa: PLC0415
 
     cuda_avail = torch.cuda.is_available()
