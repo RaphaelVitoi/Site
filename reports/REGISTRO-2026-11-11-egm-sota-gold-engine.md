@@ -33,6 +33,11 @@ caminhos:
 referencias_nao_resolviveis:
   - upstream clone efemero /tmp/egm (contagens de linhas na spec sao historicas)
   - ~/.agents/egm/ e ~/.agents/skills/ (fora deste repo; espelho em projetos/agents/ na raiz)
+  # Os tres abaixo moram na raiz multiprojeto (~/.gemini), que e outro
+  # repositorio: resolvem aqui so por vizinhanca e morreriam num clone de CI.
+  - nucleo/egm_reviewers.json
+  - reports/reviews/2026-11-11-egm-sota-gold-dogfood.md
+  - scripts/ops/enqueue_egm_drift_report.py
 revisoes_de_ancora: []
 ---
 

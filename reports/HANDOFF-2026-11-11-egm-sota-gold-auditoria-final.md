@@ -43,6 +43,9 @@ caminhos:
   - ../memoria/HERMES.md
 referencias_nao_resolviveis:
   - ../.agents/ (fora deste repo; espelho em projetos/agents/ na raiz)
+  # Moram na raiz multiprojeto (~/.gemini), outro repositorio: resolvem aqui
+  # so por vizinhanca e morreriam num clone de CI.
+  - scripts/ops/enqueue_egm_drift_report.py
 revisoes_de_ancora: []
 ---
 
