@@ -30,12 +30,12 @@
     "@prisma/adapter-libsql": "7.10.1",
     "@prisma/client": "7.10.1",
     "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.118.0",
+    "@supabase/supabase-js": "2.119.0",
     "@tailwindcss/postcss": "4.3.4",
     "fflate": "0.8.3",
-    "framer-motion": "14.9.0",
+    "framer-motion": "14.9.1",
     "katex": "^0.19.1",
-    "mermaid": "12.2.0",
+    "mermaid": "12.3.0",
     "next": "^16.4.4",
     "next-auth": "5.0.0-beta.32",
     "react": "19.3.1",
@@ -52,7 +52,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/typography": "0.5.20",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
@@ -64,7 +64,7 @@
     "autoprefixer": "10.6.2",
     "axe-core": "4.14.0",
     "eslint": "10.14.0",
-    "eslint-config-next": "16.4.4",
+    "eslint-config-next": "16.4.5",
     "eslint-config-prettier": "10.1.8",
     "jest": "30.5.2",
     "jest-environment-jsdom": "30.5.2",
@@ -106,8 +106,8 @@
     "postcss-selector-parser": "^6.1.5"
   },
   "optionalDependencies": {
-    "@next/swc-linux-x64-gnu": "16.4.4",
-    "@next/swc-win32-x64-msvc": "16.4.4",
+    "@next/swc-linux-x64-gnu": "16.4.5",
+    "@next/swc-win32-x64-msvc": "16.4.5",
     "lightningcss-linux-x64-gnu": "1.33.0",
     "lightningcss-win32-x64-msvc": "1.33.0"
   }
