@@ -38,6 +38,7 @@ from monitoring.telemetry import (
 @pytest.mark.unit
 def test_polars_game_tree_conversion() -> None:
     """Verifica a conversao de NormalizedGameTree para Polars DataFrame colunar."""
+    pytest.importorskip("polars", reason="extra pmev nao instalado neste runtime")
     tree = NormalizedGameTree(
         solver_type="deep_solver",
         source_format="json",

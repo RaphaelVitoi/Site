@@ -14,6 +14,7 @@ import pytest
 from typer.testing import CliRunner
 
 from llm.antigravity_sdk_bridge import (
+    GEMINI_CLI_SETTINGS,
     AntigravityAgentBridge,
     discover_skill_directories,
     find_agy_cli,
@@ -208,6 +209,14 @@ def test_build_local_openai_config() -> None:
     assert cfg.base_url == "http://127.0.0.1:8080/v1"
 
 
+_ECOSSISTEMA_GEMINI = GEMINI_CLI_SETTINGS.is_file()
+_requer_ecossistema_gemini = pytest.mark.skipif(
+    not _ECOSSISTEMA_GEMINI,
+    reason="ecossistema ~/.gemini/settings.json ausente neste runtime",
+)
+
+
+@_requer_ecossistema_gemini
 def test_audit_ecosystem_structure() -> None:
     """Verifica o payload completo gerado pelo auditor do ecossistema."""
     audit = AntigravityAgentBridge.audit_ecosystem()
@@ -240,6 +249,7 @@ def test_find_agy_cli_when_installed() -> None:
     assert cli_path.name.lower().startswith("agy")
 
 
+@_requer_ecossistema_gemini
 def test_nexus_cli_antigravity_status() -> None:
     """Verifica execucao do comando nexus antigravity status."""
     runner = CliRunner()
@@ -248,6 +258,7 @@ def test_nexus_cli_antigravity_status() -> None:
     assert "GOOGLE ANTIGRAVITY SDK & ECOSYSTEM" in result.stdout
 
 
+@_requer_ecossistema_gemini
 def test_nexus_cli_antigravity_status_json() -> None:
     """Verifica execucao do comando nexus antigravity status --json."""
     runner = CliRunner()

@@ -2,9 +2,15 @@
 
 from __future__ import annotations
 
+import pytest
+
 from engine.r_statistical_bridge import RStatisticalBridge, resolve_rscript_path
 
+_RSCRIPT_PRESENTE = resolve_rscript_path() is not None
+_requer_rscript = pytest.mark.skipif(not _RSCRIPT_PRESENTE, reason="Rscript nao instalado neste runtime")
 
+
+@_requer_rscript
 def test_rscript_path_resolution():
     path = resolve_rscript_path()
     assert path is not None
@@ -12,6 +18,7 @@ def test_rscript_path_resolution():
     assert "Rscript" in path.name
 
 
+@_requer_rscript
 def test_tail_risk_computation():
     bridge = RStatisticalBridge()
     assert bridge.is_available
@@ -27,6 +34,7 @@ def test_tail_risk_computation():
     assert isinstance(result.kurtosis, float)
 
 
+@_requer_rscript
 def test_bayesian_mda_frequency():
     bridge = RStatisticalBridge()
     assert bridge.is_available
