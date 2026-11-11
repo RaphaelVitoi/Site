@@ -181,6 +181,9 @@ all = [
 ]
 
 [dependency-groups]
+# NOTA: os grupos abaixo espelham propositalmente [project.optional-dependencies]
+# (dev/all) -- PEP 735 (uv sync) e extras pip sao canais de instalacao distintos.
+# As duas listas DEVEM permanecer identicas; "deduplicar" quebra um dos lados.
 dev = [
     "ruff>=0.17.4",
     "pylint>=4.1.3",
