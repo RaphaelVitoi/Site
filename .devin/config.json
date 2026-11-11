@@ -1,0 +1,75 @@
+{
+  // Devin project config — Site (Nexus Orchestrator SOTA)
+  // Pre-approves routine read-only/dev commands; denies irreversible or
+  // secret-touching actions. Deny always wins over allow.
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Exec(git status)",
+      "Exec(git diff)",
+      "Exec(git log)",
+      "Exec(git show)",
+      "Exec(git blame)",
+      "Exec(git branch)",
+      "Exec(git rev-parse)",
+      "Exec(git ls-files)",
+      "Exec(git remote -v)",
+      "Exec(git fetch)",
+      "Exec(npm run)",
+      "Exec(npm test)",
+      "Exec(npm ls)",
+      "Exec(npm audit)",
+      "Exec(npm exec)",
+      "Exec(uv run)",
+      "Exec(uv sync)",
+      "Exec(uv pip list)",
+      "Exec(pytest)",
+      "Exec(python -m pytest)",
+      "Exec(ruff)",
+      "Exec(python -m ruff)",
+      "Exec(ruff check)",
+      "Exec(ruff format)",
+      "Exec(node)",
+      "Exec(npx tsc)",
+      "Exec(npx eslint)",
+      "Exec(npx prettier)",
+      "Exec(fd)",
+      "Exec(ls)",
+      "Exec(cat)",
+      "Exec(head)",
+      "Exec(tail)",
+      "Exec(wc)",
+      "Exec(which)",
+      "Exec(echo)"
+    ],
+    "deny": [
+      "Exec(git push --force)",
+      "Exec(git push -f)",
+      "Exec(git push --force-with-lease)",
+      "Exec(git reset --hard)",
+      "Exec(git clean -f)",
+      "Exec(git checkout -- .)",
+      "Exec(sudo)",
+      "Exec(rm -rf /)",
+      "Exec(rm -rf ~)",
+      "Exec(npm publish)",
+      "Exec(uv pip install --system)",
+      "Read(.env)",
+      "Read(.env.local)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Write(.env)",
+      "Write(.env.local)",
+      "Write(**/.env)",
+      "Write(**/.env.local)",
+      "Write(**/credentials.toml)",
+      "Write(.git/config)"
+    ]
+  },
+  "read_config_from": {
+    "agents_standard": true,
+    "cursor": true,
+    "windsurf": true,
+    "claude": true
+  }
+}

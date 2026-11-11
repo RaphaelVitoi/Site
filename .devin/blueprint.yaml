@@ -53,9 +53,12 @@ knowledge:
   - name: test
     contents: |
       Python:  uv run --no-sync python -m pytest -n auto tests/
+      Focado (loop de dev — use SEMPRE este, nunca a suíte inteira):
+               uv run --no-sync python -m pytest tests/<arq>.py -q --tb=short -k "<nome>"
       Frontend unit: npm run test --workspace frontend   # jest
       Frontend e2e/qualidade: npm run test:quality --workspace frontend  # playwright (chromium)
-      Suíte completa: npm run sota:full
+      Suíte completa: npm run sota:full   # SOMENTE no checkpoint final pré-commit
+      Skill /focused-verify encapsula a cadeia estático→focado.
 
   - name: typecheck
     contents: |
