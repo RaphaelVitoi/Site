@@ -1,0 +1,86 @@
+# ==============================================================================
+# Devin Environment Blueprint — RaphaelVitoi/Site (Nexus Orchestrator SOTA)
+# Git-backed blueprint: .devin/blueprint.yaml
+# Paridade com .github/workflows/sota-ci.yml (Python 3.12/3.13, Node 22/24).
+#
+# Escopo deliberado:
+#   - initialize: runtimes e ferramentas de build (uma vez por snapshot).
+#   - maintenance: dependências incrementais (uv.lock + package-lock.json).
+#   - knowledge: comandos de lint/test/startup espelhando package.json e CI.
+#   - Rust/wasm-pack NÃO entra no initialize: os artefatos WASM gerados já estão
+#     commitados em frontend/src/lib/engine/generated/ e frontend/public/wasm/.
+#     Só é preciso se regenerar via `npm run wasm:build` (exige wasm-pack 0.15.0
+#     + toolchain Rust 1.97.1 wasm32-unknown-unknown, ver rust-toolchain.toml).
+# ==============================================================================
+
+initialize:
+  - name: Install Python 3.12
+    uses: github.com/actions/setup-python@v5
+    with:
+      python-version: '3.12'
+
+  - name: Install Node.js 22
+    uses: github.com/actions/setup-node@v4
+    with:
+      node-version: '22'
+
+  - name: Install uv
+    uses: github.com/astral-sh/setup-uv@v5
+    with:
+      version: 'latest'
+      enable-cache: true
+
+maintenance:
+  - name: Sync Python dependencies (paridade com CI)
+    run: |
+      uv sync --frozen --extra dev
+
+  - name: Install Node dependencies (postinstall roda prisma generate)
+    run: |
+      npm ci
+
+  - name: Install Playwright chromium (necessário para test:quality)
+    run: |
+      npm exec --workspace frontend -- playwright install chromium
+
+knowledge:
+  - name: lint
+    contents: |
+      Python:  uv run --no-sync ruff check . && uv run --no-sync ruff format --check .
+      Node:    npm run lint            # eslint no workspace frontend
+      Tudo:    npm run check:fast      # python:lint + python:typecheck + lint + typecheck
+
+  - name: test
+    contents: |
+      Python:  uv run --no-sync python -m pytest -n auto tests/
+      Frontend unit: npm run test --workspace frontend   # jest
+      Frontend e2e/qualidade: npm run test:quality --workspace frontend  # playwright (chromium)
+      Suíte completa: npm run sota:full
+
+  - name: typecheck
+    contents: |
+      Python:  uv run --no-sync ruff check .   # python:typecheck do package.json aponta para ruff
+      Node:    npm run typecheck              # tsc --build no workspace frontend
+
+  - name: startup
+    contents: |
+      Frontend dev: npm run dev               # next dev -p 3000 (predev garante backend)
+      Backend API: uv run python main.py      # aiohttp via api/v1/server.py (NÃO é FastAPI/uvicorn)
+      CLI Nexus:    uv run nexus --help       # entrypoint project.scripts -> scripts.cli.nexus
+
+  - name: audit
+    contents: |
+      npm run python:audit    # pip-audit com ignores PYSEC do chromadb documentados
+      npm audit               # fase 3 do cwv_gate.ps1
+      npm run deps:check      # uv pip check
+
+  - name: wasm
+    contents: |
+      Os bundles WASM estão commitados; NÃO rode npm run wasm:build no snapshot.
+      Se precisar regenerar: requer Rust 1.97.1 (rust-toolchain.toml) + wasm-pack 0.15.0.
+
+  - name: env-secrets
+    contents: |
+      Testes são herméticos; chaves LLM (OPENAI/ANTHROPIC/GOOGLE) só são
+      necessárias para fluxos live. Modelo local de referência em _env.example.ps1.
+      Nunca commitar segredos; usar Devin Secrets ($VAR) se necessário.
