@@ -92,7 +92,7 @@ dependencies = [
     # ── INFRA & MONITORAMENTO ─────────────────────────────────────────
     "psutil>=7.2.2,<8.0.0",
     "loguru>=0.7.3",
-    "typer>=0.29.0",
+    "typer>=0.29.1",
     "edge-tts>=7.3.1",
     "mcp>=2.3.0",
     "nanobind>=3.1.0",
@@ -145,9 +145,9 @@ dev = [
     "ninja>=1.13.2",
     "locust>=2.47.0",
     "types-aiofiles>=25.1.0.20261107",
-    "types-psutil>=7.2.2.20260906",
+    "types-psutil>=7.2.2.20261111",
     "types-defusedxml>=0.7.0.20260504",
-    "types-PyYAML>=6.0.12.20261103",
+    "types-PyYAML>=6.0.12.20261111",
 ]
 
 # Dependencias extras para Teoria dos Jogos avancada, derivacao simbolica e analise de MTTs (PMev)
@@ -199,9 +199,9 @@ dev = [
     "ninja>=1.13.2",
     "locust>=2.47.0",
     "types-aiofiles>=25.1.0.20261107",
-    "types-psutil>=7.2.2.20260906",
+    "types-psutil>=7.2.2.20261111",
     "types-defusedxml>=0.7.0.20260504",
-    "types-PyYAML>=6.0.12.20261103",
+    "types-PyYAML>=6.0.12.20261111",
 ]
 
 # ==============================================================================
