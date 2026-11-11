@@ -196,7 +196,7 @@ def test_run_chat_loop_hot_swap_troca_de_modelo():
 
 def test_chico_persona_contem_diretiva_de_formatacao_para_terminal():
     """Garante que a persona Chico possui a diretiva 6 explicita para terminal puro sem LaTeX cru."""
-    persona = ri.CHICO_PERSONA.format(ollama_tag="gemma4:31b-cloud", theme="Poker")
+    persona = ri.CHICO_PERSONA.format(ollama_tag="gemma4:12b", theme="Poker")
     assert "FORMATACAO PARA TERMINAL CLI" in persona
     assert "LaTeX" in persona
     assert "EV, cEV, ICM-EV" in persona

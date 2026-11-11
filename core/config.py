@@ -234,7 +234,7 @@ def _reload_system_config() -> bool:
                 DEEP_THINKING_MODELS = tuple(
                     MODEL_ROUTING.get(
                         "deep_thinking",
-                        (MODEL_GEMINI_FLASH, "gemma4:31b-cloud", "poolside/laguna-s-2.1:free"),
+                        (MODEL_GEMINI_FLASH, "gemma4:12b", "poolside/laguna-s-2.1:free"),
                     )
                 )
                 FAST_OPERATIONS_MODELS = tuple(

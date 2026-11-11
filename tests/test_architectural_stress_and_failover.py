@@ -129,7 +129,7 @@ def test_sota_cache_lru_eviction_under_stress(memory_cache: SOTACache):
         ("gemini-3.8-flash", "gemini"),
         ("gemini-3.5-flash-lite", "gemini"),
         ("gemma4:e4b", "local"),
-        ("gemma4:31b-cloud", "local"),
+        ("gemma4:12b", "local"),
         ("qwen2.5-coder:7b-instruct-q5_K_M", "local"),
         ("qwen2.5-coder:1.5b", "local"),
         ("qwen2.5-coder:0.5b", "local"),

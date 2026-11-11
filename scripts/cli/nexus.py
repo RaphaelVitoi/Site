@@ -2616,7 +2616,7 @@ def run_maintenance():
     console.print(f"\n[bold green][SUCESSO] As {total_executaveis} etapas executaveis da manutencao concluiram.[/]")
 
 
-HELP_MODEL_CHOICES = "Modelo: 31b, 31b_cloud, 12b, 4b, 8b, llama3_8b, qwen, laguna"
+HELP_MODEL_CHOICES = "Modelo: 12b, 12b_qat, e4b, e2b, 4b, qwen, laguna"
 
 
 @ops_app.command("strata")
@@ -2741,7 +2741,7 @@ def _ensure_active_model(model: str, wait_proxy: bool = False) -> None:
 @ops_app.command("chat-model")
 @ops_app.command("chat-local")
 def chat_gemma(
-    model: str | None = typer.Option(None, "--model", "-m", help="Modelo ou alias (ex: 12b, 12b_qat, qwen, 31b_cloud)"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Modelo ou alias (ex: 12b, 12b_qat, qwen, e4b)"),
     proxy: bool = typer.Option(False, "--proxy", help="Forcar uso do proxy de inferencia (porta 17043)"),
 ):
     """Ingressar em um Chat Agentico com um dos modelos instalados."""

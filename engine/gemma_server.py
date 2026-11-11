@@ -191,11 +191,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SOTA: Constantes de modelo para expurgo de literais duplicados (S1192)
-_MODEL_31B_CLOUD = "gemma4:31b-cloud"
+# SOTA: Os modelos Ollama ':cloud' foram descontinuados em 2026-11-10 (Tier 0);
+# o default agora e o flagship local medido no manifesto (gemma4:12b).
+_MODEL_LOCAL_PADRAO = "gemma4:12b"
 
-# SOTA: Apontado para a instancia de 31B Cloud ativa no seu terminal
-MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", _MODEL_31B_CLOUD)
+# SOTA: Apontado para o modelo local ativo; SOTA_LOCAL_MODEL sobrescreve.
+MODEL_ID = os.environ.get("SOTA_LOCAL_MODEL", _MODEL_LOCAL_PADRAO)
 _SSE_PREFIX = "data: "
 _SSE_DONE = "[DONE]"
 _JSON_CONTENT = "application/json"
@@ -302,7 +303,6 @@ CLOUD_MODEL_MAP = {
     "laguna": "poolside/laguna-s-2.1:free",
     "laguna_xs": "poolside/laguna-xs-2.1:free",
     "qwen": "qwen/qwen-2.5-coder-32b-instruct",
-    "gpt_oss": "gpt-oss:120b-cloud",
 }
 
 # Fallback embutido. A fonte de verdade e data/ollama_models.json, carregado

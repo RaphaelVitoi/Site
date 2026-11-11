@@ -59,8 +59,6 @@ OLLAMA_MODEL_MAP: dict[str, str] = {
     "qwen_poetics": "qwen-poetics:latest",
     "qwen_coder_1_5b": "qwen2.5-coder:1.5b",
     "qwen_coder_0_5b": "qwen2.5-coder:0.5b",
-    "31b": "gemma4:31b-cloud",
-    "31b_cloud": "gemma4:31b-cloud",
 }
 APPLICATION_JSON = "application/json"
 OPEN_SOURCE_MODEL_PATTERN = r"open-source [^,]+,"

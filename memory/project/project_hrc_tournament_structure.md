@@ -1,6 +1,8 @@
 ---
 name: Estrutura do torneio HRC de referencia
-description: Dados do torneio usado como ancora empirica (Aula 1.2, 93 nodes HRC). 126 jogadores, 378k chips, 23 pagos, TOTAL_POOL=1234.80
+description:
+  Dados do torneio usado como ancora empirica (Aula 1.2, 93 nodes HRC). 126
+  jogadores, 378k chips, 23 pagos, TOTAL_POOL=1234.80
 type: project
 ---
 
@@ -14,17 +16,17 @@ type: project
 
 ## Estrutura de Premios Completa
 
-| Pos | Premio | Pos | Premio |
-|-----|--------|-----|--------|
-| 1 | 237.34 | 10 | 26.39 |
-| 2 | 170.96 | 11 | 26.39 |
-| 3 | 135.17 | 12 | 26.39 |
-| 4 | 109.99 | 13 | 26.39 |
-| 5 | 90.28 | 14-23 | 16.76 |
-| 6 | 73.95 | | |
-| 7 | 59.92 | | |
-| 8 | 47.56 | | |
-| 9 | 36.47 | | |
+| Pos | Premio | Pos   | Premio |
+| --- | ------ | ----- | ------ |
+| 1   | 237.34 | 10    | 26.39  |
+| 2   | 170.96 | 11    | 26.39  |
+| 3   | 135.17 | 12    | 26.39  |
+| 4   | 109.99 | 13    | 26.39  |
+| 5   | 90.28  | 14-23 | 16.76  |
+| 6   | 73.95  |       |        |
+| 7   | 59.92  |       |        |
+| 8   | 47.56  |       |        |
+| 9   | 36.47  |       |        |
 
 ### Premios da FT (usados nos cenarios)
 
@@ -35,7 +37,11 @@ type: project
 
 ### Classificacao da Estrutura
 
-- 1st / TOTAL_POOL = 237.34 / 1234.80 = 19.2% → **FLAT** (<=18% seria flat puro, mas 19.2% e borderline HIBRIDA)
+- 1st / TOTAL_POOL = 237.34 / 1234.80 = 19.2% → **HÍBRIDA (limítrofe, inclinando
+  a flat)** — 19.2% cai na faixa 18–25% do framework em
+  `project_classificacao_estruturas_premios.md`
 
-**Why:** Esta e a unica ancora empirica do motor (93 nodes HRC vs GTO Wizard). Todos os cenarios foram calibrados contra esta estrutura.
-**How to apply:** Ao criar novos cenarios ou validar o motor, usar esta estrutura como referencia. Ao calibrar prizes, usar o subconjunto correto para N jogadores restantes na FT.
+**Why:** Esta e a unica ancora empirica do motor (93 nodes HRC vs GTO Wizard).
+Todos os cenarios foram calibrados contra esta estrutura. **How to apply:** Ao
+criar novos cenarios ou validar o motor, usar esta estrutura como referencia. Ao
+calibrar prizes, usar o subconjunto correto para N jogadores restantes na FT.

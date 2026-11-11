@@ -6,10 +6,10 @@
   com os pesos puxados e inicia o proxy de inferencia.
 #>
 param (
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [string]$Model = "qwen_coder_7b_q5",
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [switch]$Force
 )
 
@@ -27,7 +27,8 @@ if (Test-Path $ManifestoModelos) {
         $Manifest = Get-Content $ManifestoModelos -Raw -Encoding UTF8 | ConvertFrom-Json
         foreach ($entrada in $Manifest.models) { $OllamaTags[$entrada.alias] = $entrada.tag }
         Write-Output "[SOTA INIT] Manifesto de modelos carregado ($($OllamaTags.Count) aliases)."
-    } catch {
+    }
+    catch {
         Write-Warning "[SOTA INIT] Manifesto ilegivel; usando fallback embutido. $($_.Exception.Message)"
     }
 }
@@ -39,8 +40,6 @@ if ($OllamaTags.Count -eq 0) {
         "e4b"       = "gemma4:e4b"
         "e2b"       = "gemma4:e2b"
         "4b"        = "gemma4:latest"
-        "31b_cloud" = "gemma4:31b-cloud"
-        "31b"       = "gemma4:31b"
         "qwen"      = "qwen2.5-coder:7b-instruct-q5_K_M"
         "qwen_1_5b" = "qwen2.5-coder:1.5b"
         "laguna"    = "poolside/laguna-s-2.1:free"
@@ -51,7 +50,8 @@ $ModelTag = $OllamaTags[$Model]
 if (-not $ModelTag) {
     if ($OllamaTags.Values -contains $Model) {
         $ModelTag = $Model
-    } else {
+    }
+    else {
         Write-Error "[SOTA INIT] Alias ou tag '$Model' nao existe no manifesto. Aliases: $(($OllamaTags.Keys | Sort-Object) -join ', ')"
         exit 1
     }
@@ -81,10 +81,12 @@ try {
 "@
             Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue
             [MemoryOptimizer]::SetProcessWorkingSetSize($handle, -1, -1) | Out-Null
-        } catch {}
+        }
+        catch {}
     }
     Write-Output "[SOTA RAM] Limpeza de RAM executada com sucesso."
-} catch {
+}
+catch {
     Write-Output "[SOTA RAM] Aviso: Otimizacao detalhada de RAM indisponivel (privilegios ou .NET)."
 }
 
@@ -116,7 +118,8 @@ try {
         $tcpConnection.EndConnect($connection)
         $OllamaPortOpen = $true
     }
-} catch {}
+}
+catch {}
 
 if (-not $OllamaPortOpen) {
     Write-Output "[SOTA OLLAMA] Ollama offline. Iniciando processo Ollama App..."
@@ -149,9 +152,11 @@ if (-not $OllamaPortOpen) {
                     $OllamaPortOpen = $true
                     break
                 }
-            } catch {}
+            }
+            catch {}
         }
-    } else {
+    }
+    else {
         Write-Warning "[SOTA OLLAMA] Executavel do Ollama nao encontrado nos caminhos padrao do Windows."
     }
 }
@@ -159,7 +164,8 @@ if (-not $OllamaPortOpen) {
 if (-not $OllamaPortOpen) {
     Write-Error "[SOTA OLLAMA] Erro Critico: Nao foi possivel conectar ao Ollama na porta 11434. Verifique a instalacao."
     exit 1
-} else {
+}
+else {
     Write-Output "[SOTA OLLAMA] Conexao com Ollama estabelecida com sucesso."
 }
 
@@ -172,7 +178,8 @@ $ModelDownloaded = $false
 try {
     $tags = Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -TimeoutSec 20
     $ModelDownloaded = @($tags.models | Where-Object { $_.name -eq $ModelTag }).Count -gt 0
-} catch {
+}
+catch {
     # Fallback: primeira coluna de 'ollama list', comparada por igualdade.
     $ModelDownloaded = @(& ollama list |
         Select-Object -Skip 1 |
@@ -183,7 +190,8 @@ try {
 if (-not $ModelDownloaded) {
     Write-Output "[SOTA WEIGHTS] Modelo $ModelTag ausente. Efetuando pull automatico dos pesos do Ollama..."
     & ollama pull $ModelTag
-} else {
+}
+else {
     Write-Output "[SOTA WEIGHTS] Pesos do modelo $ModelTag localizados com sucesso."
 }
 
@@ -198,11 +206,13 @@ $VenvPython = $VenvPythonRelative
 
 if (Test-Path $VenvPythonRelative) {
     $VenvPython = [System.IO.Path]::GetFullPath($VenvPythonRelative)
-} else {
+}
+else {
     $LocalVenv = Join-Path $WorkingDirectory ".venv\Scripts\python.exe"
     if (Test-Path $LocalVenv) {
         $VenvPython = [System.IO.Path]::GetFullPath($LocalVenv)
-    } else {
+    }
+    else {
         $VenvPython = "python"
     }
 }
@@ -224,14 +234,15 @@ Start-Job -ArgumentList $AffinityMask, $PID -ScriptBlock {
     # afinidade e prioridade de TODO processo 'python' da maquina, incluindo os
     # que nada tinham a ver com o proxy.
     $ProxyProcs = Get-CimInstance Win32_Process -Filter "Name='python.exe'" |
-        Where-Object { $_.ParentProcessId -eq $ParentPid } |
-        ForEach-Object { Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }
+    Where-Object { $_.ParentProcessId -eq $ParentPid } |
+    ForEach-Object { Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue }
 
     foreach ($p in $ProxyProcs) {
         try {
             $p.ProcessorAffinity = $Mask
             $p.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::High
-        } catch {}
+        }
+        catch {}
     }
 
     $OllamaProcs = Get-Process -Name "ollama_llama_server", "ollama" -ErrorAction SilentlyContinue
@@ -239,7 +250,8 @@ Start-Job -ArgumentList $AffinityMask, $PID -ScriptBlock {
         try {
             $o.ProcessorAffinity = $Mask
             $o.PriorityClass = [System.Diagnostics.ProcessPriorityClass]::AboveNormal
-        } catch {}
+        }
+        catch {}
     }
 } | Out-Null
 

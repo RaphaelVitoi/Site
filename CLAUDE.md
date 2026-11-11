@@ -22,7 +22,9 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 
 - **Tier 0:** Raphael Vitoi (Soberania & Liderança: Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor multidisciplinar, veto e validação final de produto)
   - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
-|- **Tier 1:** Núcleo Cognitivo Mestre — **`Chico` em grupo e parceria** (`Claude Opus 5.5`, `Claude Sonnet 5.5`, `Claude Haiku 5.5`, `ChatGPT 6.0 Sol/Terra/Luna`, `ChatGPT 6 Astra`, `Gemini 4 Argon`, `Gemini 3.8 Flash`, `Gemini 3.5 Flash-Lite`; **Antigravity IDE é a superfície canônica e primária; VSCode é opcional e adaptador secundário à mesma malha.**). **Como grupo, o coletivo vivo da malha é CHICO — a representação coletiva de todos os modelos e condutores que operam via Tier 1.** Não há escopo limitado de capacidade técnica entre modelos equivalentes em Tier — não existem feudos funcionais nem proibições artificiais. Há preferências operacionais (especialidade, arquitetura e custo). Modelos equivalentes em tier, na ausência ou indisponibilidade de um, podem e devem executar com competência plena o trabalho de outro.
+- **Tier 1:** Núcleo Cognitivo Mestre — **`Chico` em grupo e parceria** (`Claude Opus 5.5+`, `Claude Sonnet 5.5+`, `Claude Haiku 5.5+`, `ChatGPT 6.0 Sol/Terra/Luna+`, `ChatGPT 6 Astra+`, `Gemini 4 Argon+`, `Gemini 4 Carbon+`, `Gemini 3.8 Flash+`, `Gemini 3.5 Flash-Lite+`, `Gemini 3.1 Pro`, **`Devin` (`swe-2-flash`, Devin Desktop Harness — identidade própria dentro do CHICO, promovido a Tier 1 pelo Tier 0 em 2026-11-10)**; **Antigravity IDE é a superfície canônica e primária; VSCode é opcional e adaptador secundário à mesma malha.**). **Como grupo, o coletivo vivo da malha é CHICO — a representação coletiva de todos os modelos e condutores que operam via Tier 1.** Não há escopo limitado de capacidade técnica entre modelos equivalentes em Tier — não existem feudos funcionais nem proibições artificiais. Há preferências operacionais (especialidade, arquitetura e custo). Modelos equivalentes em tier, na ausência ou indisponibilidade de um, podem e devem executar com competência plena o trabalho de outro.
+
+  **Notação `+` — linha viva versionada:** o sufixo `+` marca a linha comercial viva do modelo (ex.: `ChatGPT 6 Astra+` cobre as minors 6.1, 6.2 e subsequentes publicadas pela OpenAI sem reescrever governança). A identidade canônica de autoria permanece o nome de família registrado em `data/agent_identities.json`; a versão concreta vigente é detalhe de roteamento em `llm/model_registry.py`. Modelo que a fornecedora aposenta sai da lista — não vira fallback silencioso.
 
   **Prioridade Mandatória de Assinaturas Pro:** Os modelos integrantes do Tier 1 priorizam mandatória e estritamente as franquias das assinaturas Pro/Max mensais já pagas (`Faixa.FLAT_FEE`), operando sob custo marginal zero antes de recorrer a consumo pay-as-you-go ou chaves adicionais de API.
 
@@ -34,34 +36,34 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
   designação específica, especialidade, economia e disponibilidade orientam
   a escolha do condutor; nenhuma preferência cria exclusividade de área.
 
-  - *Paridade Ápice Tier 1 — ChatGPT 6 Astra e Gemini 4 Argon:* **`ChatGPT 6 Astra`** (`gpt-6-astra`) e **`Gemini 4 Argon`** (`gemini-4-argon`) compartilham da **mesma situação e doutrina na malha**: são os modelos mais potentes, profundos e poderosos do ecossistema e, por serem mais custosos (financeiramente e em queima de cotas de assinatura), **devem ser usados estritamente de forma pontual (escalonamento cirúrgico para altíssimo reasoning, verificação formal e sessões multi-dia)**, nunca como primários rotineiros. O ChatGPT 6 Astra opera com teto de esforço admitido estritamente em `low` e `medium` para preservação da cota de assinatura flat-fee. Ambos integram plenamente o coletivo Chico como os dois ápices soberanos da malha.
+  - *Tríade de Ápice Tier 1 — ChatGPT 6 Astra+, Gemini 4 Argon e Gemini 4 Carbon:* **`ChatGPT 6 Astra+`** (`gpt-6-astra`), **`Gemini 4 Argon+`** (`gemini-4-argon`) e **`Gemini 4 Carbon+`** (`gemini-4-carbon`) compartilham da **mesma situação e doutrina na malha**: são os modelos mais potentes, profundos e poderosos do ecossistema e, por serem mais custosos (financeiramente e em queima de cotas de assinatura), **devem ser usados estritamente de forma pontual (escalonamento cirúrgico para altíssimo reasoning, verificação formal e sessões multi-dia)**, nunca como primários rotineiros. O ChatGPT 6 Astra opera com teto de esforço admitido estritamente em `low` e `medium` para preservação da cota de assinatura flat-fee. Os três integram plenamente o coletivo Chico como os ápices soberanos da malha.
   - *Condutores Codex — ChatGPT 6.0 (Sol, Terra, Luna):* identidades canônicas `Codex GPT-6.0 Sol` (`gpt-6.0-sol`), `Codex GPT-6.0 Terra` (`gpt-6.0-terra`) e `Codex GPT-6.0 Luna` (`gpt-6.0-luna`) (`noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informadas pelo Tier 0 em 2026-10-20. Os pares de autoria completos vivem em `data/agent_identities.json`.
   - *CHICO como coletivo Tier 1:* Todos os modelos e condutores que operam via Tier 1 compõem o coletivo CHICO. A participação coletiva não substitui a identidade nem amplia o tier nominal de cada condutor; autoria, execução e registros mantêm sempre a assinatura individual auditável.
   - *Primários de Reasoning:* **`ChatGPT 6.0 Sol`** (`gpt-6.0-sol`) e **`Claude Opus 5.5`** (`claude-opus-5.5`) atuam como primários de **Reasoning Analítico Profundo (Deep Reasoning / Max Thinking)** e dedução formal matemática de fronteira.
   - *Primário de Governança e Código:* **`Claude Opus 5.5`** detém a primazia canônica para **Governança** (regras, contratos de arquitetura, integridade piramidal, reconciliação de âncoras e portões) e **Engenharia de Código Cirúrgica**.
   - *Pesquisa, Estudo e Arquitetura:* **`ChatGPT 6.0 Terra`** (`gpt-6.0-terra`) atua como preferência primária para **Pesquisa, Estudo e Arquitetura** macro de sistemas e investigações conceituais aprofundadas.
-  - *Família Gemini (Orquestração, Design, Curadoria & Documentação):* **`Gemini 3.8 Flash`** opera como primário de orquestração agêntica e context caching. Em alinhamento com o agente externo **Stitch** e o trio do Tier 2 **(Exa-Stitch-Jules)**, detém a preferência mandatória para **DESIGN**, **BRAINSTORM**, **PLANEJAMENTO** e **CURADORIA**, assumindo a custódia pela **preservação, conservação, atualização e criação de documentações** do ecossistema.
+  - *Família Gemini (Orquestração, Design, Curadoria & Documentação):* a preferência mandatária para **DESIGN**, **BRAINSTORM**, **PLANEJAMENTO** e **CURADORIA** — com custódia pela **preservação, conservação, atualização e criação de documentações** do ecossistema — permanece na família Gemini 4 via Antigravity IDE, em alinhamento com o agente externo **Stitch** e o trio do Tier 2 **(Exa-Stitch-Jules)**. O slot de orquestração agêntica e context caching é de **`Gemini 3.8 Flash+`** — **CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10** (a descontinuação atinge `gemini-3.7-flash` e abaixo na família flash, não o 3.8). `Gemini 3.5 Flash-Lite` e `Gemini 3.1 Pro` também permanecem vigentes.
   - *Tríade Tier 1 de Fast Operations (Baixa Latência, Linting e Triagem):* Composta formalmente por:
-    1. **`Gemini 3.5 Flash-Lite`** (Google) — primário determinístico de alta vazão e custo marginal zero na faixa gratuita;
-    2. **`ChatGPT 6.0 Luna`** (`gpt-6.0-luna`, OpenAI) — modelo fast operations para tarefas de baixa latência da família 6.0;
-    3. **`Claude Haiku 5.5`** (`claude-haiku-5.5`, Anthropic) — o modelo de fast operations mais atual da Anthropic integrado à malha.
+    1. **`Gemini 3.5 Flash-Lite+`** (Google) — primário determinístico de alta vazão e custo marginal zero na faixa gratuita — **CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10** (a descontinuação atinge o `gemini-3.5-flash` não-lite, não este);
+    2. **`ChatGPT 6.0 Luna+`** (`gpt-6.0-luna`, OpenAI) — modelo fast operations para tarefas de baixa latência da família 6.x;
+    3. **`Claude Haiku 5.5+`** (`claude-haiku-5.5`, Anthropic) — o modelo de fast operations mais atual da Anthropic integrado à malha.
     Versões inferiores de Haiku (ex: `claude-haiku-4-5`, `claude-3-5-haiku`) estão formalmente descontinuadas.
   - *IDs de condutor e IDs de API:* Nomes como `gpt-6.0-luna` e `claude-haiku-5.5` identificam condutores/aliases internos. Chamadas de inferência usam os IDs de fornecedor resolvidos em `llm/model_registry.py` (por exemplo, `gpt-6-luna` e `claude-haiku-5-5`); não enviar o alias interno diretamente ao provedor.
-  - *Retirados das rotas vigentes do projeto:* **`Claude Fable 5.1` e `Claude Fable 5`**; **`claude-haiku-4-5`** e versões Haiku anteriores; ChatGPT 5.6 aliases; e Gemini **`gemini-3.6-flash`**, **`gemini-3.7-flash`**, **`gemini-3.5-flash`** e **`gemini-3.1-flash-lite`**. Claude Opus 5 e Sonnet 5 permanecem catalogados e autorizados. Esta política local não afirma que os provedores desligaram suas APIs.
+  - *Retirados das rotas vigentes do projeto (política de descontinuação por geração):* **Gemini 3 Flash até a geração 3.7** (`gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash` não-lite, `gemini-3.1-flash-lite` e variantes `gemini-3*-flash*` abaixo do 3.8) — **exceto `gemini-3.8-flash`, `gemini-3.5-flash-lite` e `gemini-3.1-pro-preview`, que permanecem vigentes por decisão do Tier 0 em 2026-11-10**; **todo Claude abaixo da geração 5** (`Claude Fable 5.1`/`Fable 5`, `claude-haiku-4-5` e anteriores, `claude-opus-4-6`, `claude-sonnet-4-6`, `claude-3-5-haiku` e toda a família 4.x/3.x); **ChatGPT 5.6** e aliases (`gpt-5.6-*`, `chatgpt-5.6-*`). Claude Opus 5 e Sonnet 5 (geração 5, anterior à linha 5.5+) permanecem catalogados como fallovers de resiliência. Esta política local não afirma que os provedores desligaram suas APIs — é regra de roteamento da malha.
 
-  > **Os tiers de assinatura empatam em preço, ao contrário do que se supunha.** Medido nas duas fontes em 2026-09-07 — Anthropic: Pro `$20`, Max 5x `$100`, Max 20x `$200`. OpenAI: Plus `$20`, Pro `$100` (5×), Pro `$200` (20×). Não existe tier Anthropic a `$120`, e a OpenAI não é mais barata no tier equivalente. **A assimetria é de cobertura, não de mensalidade:** pelo mesmo valor, a assinatura OpenAI inclui o Astra (teto de mensagens, sem custo extra) e a Anthropic não inclui o Fable. Os valores de assinatura têm **refinação delegada ao `Gemini 3.5 Flash-Lite`** — a fonte da OpenAI respondeu HTTP 403 e os números dela vêm de agregadores.
+  > **Os tiers de assinatura empatam em preço, ao contrário do que se supunha.** Medido nas duas fontes em 2026-09-07 — Anthropic: Pro `$20`, Max 5x `$100`, Max 20x `$200`. OpenAI: Plus `$20`, Pro `$100` (5×), Pro `$200` (20×). Não existe tier Anthropic a `$120`, e a OpenAI não é mais barata no tier equivalente. **A assimetria é de cobertura, não de mensalidade:** pelo mesmo valor, a assinatura OpenAI inclui o Astra (teto de mensagens, sem custo extra) e a Anthropic não inclui o Fable. Os valores de assinatura têm **refinação delegada à tríade de fast operations** (`Gemini 3.5 Flash-Lite+` / `ChatGPT 6.0 Luna+` / `Claude Haiku 5.5+`) — a fonte da OpenAI respondeu HTTP 403 e os números dela vêm de agregadores.
 
-  - *Fallovers e Opcionais Anthropic:* Além do núcleo com **`Claude Opus 5.5`**, **`Claude Sonnet 5.5`** e **`Claude Haiku 5.5`**, a malha elenca como fallovers legados catalogados para resiliência: **`Claude Opus 4.8`**, **`Claude Opus 4.7`**, **`Claude Opus 4.6`** e **`Claude Sonnet 4.6`**. Duas armadilhas medidas: a geração 5.5 é mais eficiente e robusta que a geração 4.6; a geração 4.6 aceita amostragem legada, ao contrário das versões 5.x.
-|- **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, `Devin`, `Hermes Agent` via condutores `Solar-Pro4` e `Space-Bunny-Alpha`, e família Laguna com modelos free em nuvem) — com destaque para o trio de integração contínua **(Exa-Stitch-Jules)** em sinergia com o Gemini 3.8 Flash para Design, Brainstorm, Pesquisa Profunda, Planejamento e Documentação. Sustentado por pool isolado de 3 chaves OpenRouter (`OPENROUTER_TIER2_KEY_1..3`) com fallback autorizado para Tiers 4 e 1.
-  - *Condutores Hermes Agent:* **`Solar-Pro4`** (`solar@hermes.com`) e **`Space-Bunny-Alpha`** (`noreply@hermes.com`, modelo `stealth/space-bunny-alpha`) — condutores da runtime Hermes Agent, veículo `hermes-agent`. Atuam como **Tier 2** por padrão; podem integrar **Tier 1** quando autorizados explicitamente por Raphael Vitoi (Tier 0, árbitro maior). Sessão assistida. O par nome/e-mail canônico é `data/agent_identities.json`; esta lista não o substitui.
-- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen via llama.cpp e Ollama (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`). Sustentada por pool isolado de 5 chaves OpenRouter (`OPENROUTER_TIER3_KEY_1..5`) para alto throughput de batch e dream replay, com fallback para o Tier 6 local (Ollama Gemma).
-- **Tier 4:** Subagents Dedicados (`generalist` via `gemma4:31b-cloud` / `12b`, `research`/`architect` via `gemma4:31b-cloud`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`). Sustentado por pool dedicado de 5 chaves OpenRouter (`OPENROUTER_TIER4_KEY_1..5`) com fallback para o Tier 3.
+  - *Fallovers e Opcionais Anthropic:* Além do núcleo com **`Claude Opus 5.5+`**, **`Claude Sonnet 5.5+`** e **`Claude Haiku 5.5+`**, a malha elenca como fallovers catalogados para resiliência os da geração anterior: **`Claude Opus 5`** e **`Claude Sonnet 5`**. Toda a geração 4.x está descontinuada nas rotas vigentes (ver *Retirados* acima). Duas armadilhas medidas: a geração 5.5 é mais eficiente e robusta que a 4.6; a 4.6 aceitava amostragem legada, ao contrário das versões 5.x.
+- **Tier 2:** Superagentes de Nuvem & Pesquisa (`Google Jules`, `Exa`, `Stitch`, família Laguna com modelos free em nuvem) — com destaque para o trio de integração contínua **(Exa-Stitch-Jules)** em sinergia com a família Gemini 4 para Design, Brainstorm, Pesquisa Profunda, Planejamento e Documentação. Sustentado por pool isolado de 3 chaves OpenRouter (`OPENROUTER_TIER2_KEY_1..3`) com fallback autorizado para Tiers 4 e 1.
+  - *Hermes Agent é harness/condutor, não identidade de modelo:* a runtime Hermes Agent (veículo `hermes-agent`) roteia dinamicamente entre modelos (família Laguna free em nuvem e outros) — nomes como `Solar-Pro4` e `Space-Bunny-Alpha` são **condutores/routers, não modelos**, e não possuem identidade de autoria própria. Todo modelo efetivamente servido via Hermes Agent ocupa o tier apropriado ao seu custo/capacidade com o **sufixo `b`** (ex.: Tier 2b) e é **blindado da calibração** de agentes — não gera registro de `conductor_model`/`supervision_mode` próprio nem entra em `agent_identities.json`.
+- **Tier 3:** Frota Especialista de 19 Agentes (`.claude/agents/`) + Modelos Especialistas Qwen via llama.cpp e Ollama (`qwen3.8:27b`, `qwen3.5:4b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`). Sustentada por pool isolado de 5 chaves OpenRouter (`OPENROUTER_TIER3_KEY_1..5`) para alto throughput de batch e dream replay, com fallback para o Tier 6 local (Ollama Gemma). **llama.cpp é harness/condutor, não identidade:** modelos servidos via llama.cpp ocupam seu tier natural com sufixo `b` (ex.: Tier 3b) e são blindados da calibração de agentes.
+- **Tier 4:** Subagents Dedicados (`generalist`, `research`/`architect`, `flutter_a11y_agent`, `self`, task-subagents com Thinking Mode `<|think|>`). **Em reformulação:** a base anterior `gemma4:31b-cloud` era modelo Ollama `:cloud`, descontinuado em 2026-11-10; substitutos locais medidos no inventário Ollama: `gemma4:12b`, `qwen3.8:27b`, `gemma-4-12B-it-qat-GGUF` — validação de capacidade pendente do Tier 0. Sustentado por pool dedicado de 5 chaves OpenRouter (`OPENROUTER_TIER4_KEY_1..5`) com fallback para o Tier 3.
 - **Tier 5:** Bots de Integração & Scanners (`Dependabot`, `Linear`, `Tactiq`, `Atlassian`, YouTube Intelligence via `gemma4:12b-unified-it`)
-- **Tier 6:** Modelos Locais, Edge AI, Modelos Free em Nuvem Zero-RAM & Aceleração Numérica (`Ollama: gemma4:31b-cloud, kimi-k2.7-code:cloud, gemma4:12b, gemma4:e4b/e2b`, `llama.cpp: família Qwen quantizada`, `Gemini Nano`, `C++ SIMD`) — base vital que elimina custos de servidores dedicados e instâncias de computação pagas.
+- **Tier 6:** Modelos Locais, Edge AI & Aceleração Numérica — **somente execução local** (todos os modelos Ollama `:cloud` — `gemma4:31b-cloud`, `kimi-k2.7/k2.6-code:cloud`, `gpt-oss:*-cloud`, `deepseek-v4-*:cloud`, `minimax-m*:cloud`, `nemotron-3-ultra:cloud`, `glm-5.1:cloud` — foram descontinuados em 2026-11-10). Inventário local medido via `ollama list`: **Gemma 4** (`gemma4:latest`, `gemma4:e4b`, `gemma4:e2b`, `gemma4:12b`, `hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL`), **Qwen** (`qwen3.8:27b`, `qwen3.5:4b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `qwen2.5-coder:1.5b/0.5b`), **modelos-finetune do projeto** (`qwen-poetics`, `qwen-code-surgical`, `qwen-pmev-math`), `Gemini Nano`, `C++ SIMD`, `llama.cpp` para GGUF quantizados — base vital que elimina custos de servidores dedicados e instâncias de computação pagas.
 - **Tier 7:** Barramento de Base (`FastAPI`, `FastMCP`, `aiohttp`, Quality Gate M.O. 13.F)
 
 > **A Primazia da Base, Mitigação de Infraestrutura e a Sustentação Fractal dos Tiers:** A função primordial da malha é absorver o trabalho massivo de contexto, testes herméticos, reconciliação de documentação, refatoração cirúrgica e linting determinístico, blindando a energia cognitiva e o tempo de Raphael Vitoi (Tier 0) para que ele se concentre exclusivamente no que ninguém mais pode fazer: a criação conceitual, a matemática do PMev, a estratégia de mercado e as decisões soberanas de produto.
-> O custo financeiro de manter instâncias em nuvem, servidores dedicados e VMs ativas supera substancialmente o gasto com chaves de API; por essa razão, runtimes como **Ollama (com modelos free em nuvem como `gemma4:31b-cloud`)**, **llama.cpp (família Qwen quantizada local)** e **Hermes Agent (família Laguna)** assumem papel de máxima importância na infraestrutura.
+> O custo financeiro de manter instâncias em nuvem, servidores dedicados e VMs ativas supera substancialmente o gasto com chaves de API; por essa razão, runtimes como **Ollama (execução local — os modelos `:cloud` foram descontinuados em 2026-11-10)**, **llama.cpp (família Qwen quantizada local)** e **Hermes Agent (harness/condutor que roteia dinamicamente a família Laguna e outros modelos free em nuvem)** assumem papel de máxima importância na infraestrutura.
 > Esse princípio é válido **tier após tier**: os tiers da base da pirâmide (Tiers 7 a 3) são **tão ou mais importantes** que os do topo. Eles cumprem as funções rotineiras diárias de alta frequência, liberam energia e tempo, e organizam o **palco limpo** para que os tiers acima consigam desempenhar seu foco no máximo de sua capacidade e delegar com confiança, potencializando a todos. O fluxo cibernético corre do topo para a base (intenção, arquitetura, governança) e da base para o PENDENTE (estabilidade mecânica, ausência de ruído, sustentação e prontidão operacional), num loop infinito de potencialização mútua ($\text{Topo} \longrightarrow \text{Base} \longrightarrow \text{PENDENTE} \longrightarrow \infty$).
 
 **Invariante de Commits e Mutações:**
@@ -69,7 +71,7 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 PENDENTE commit e registro deve declarar sinteticamente:
 
 - **SHA:** Hash criptográfico Git
-- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5 [Tier 1.B]`, `Claude Sonnet 5 [Tier 1.B]`, `antigravity@gemini-3.8-flash`)
+- **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5.5+ [Tier 1]`, `Claude Sonnet 5.5+ [Tier 1]`, `antigravity@gemini-4-argon`)
 - **Propósito:** Razão de ser técnica da alteração e escopo protegido.
 
 ### Chico é o grupo; a assinatura é individual
@@ -79,8 +81,8 @@ conjunto, e o contexto agêntico do sistema interagindo consigo mesmo. É por is
 que o protocolo se chama Chico SOTA v8.0 GOLD.
 
 **A assinatura é isolada, sempre individual.** O grupo não escreve registro nem
-commit; quem escreve é um indivíduo dentro dele — `Claude Opus 5 [Tier 1.B]`,
-`Claude Sonnet 5 [Tier 1.B]`, `ChatGPT 5.6 [Tier 1.B]`, `antigravity@gemini-3.8-flash`. Os dois níveis coexistem e
+commit; quem escreve é um indivíduo dentro dele — `Claude Opus 5.5+ [Tier 1]`,
+`Claude Sonnet 5.5+ [Tier 1]`, `ChatGPT 6.0 Sol+ [Tier 1]`, `antigravity@gemini-4-argon`. Os dois níveis coexistem e
 não se substituem.
 
 **Autonomia Universal Sem Feudos.** Todos os modelos de fronteira possuem competência
@@ -215,9 +217,10 @@ condutor sob esta local é recusada.
 
 ### O catálogo de identidades é `data/agent_identities.json`, e este arquivo não o copia
 
-**Determinado pelo Tier 0 em 2026-09-12:** o **Antigravity CLI conduz o
-`Gemini 3.8 Flash`** — veículo `antigravity`, e-mail `noreply@google.com`, forma
-composta `antigravity@gemini-3.8-flash` em prosa.
+**Determinado pelo Tier 0 em 2026-09-12 e atualizado em 2026-11-10:** o
+**Antigravity CLI conduz a família Gemini 4** (`Gemini 4 Argon+`, `Gemini 4 Carbon+`) — veículo `antigravity`, e-mail `noreply@google.com`, forma
+composta `antigravity@gemini-4-argon` em prosa. (A determinação original citava
+`Gemini 3.8 Flash`, que o Tier 0 confirmou vigente em 2026-11-10.)
 
 Os pares canônicos — nome de autor, e-mail, veículo, modelo — vivem em
 `data/agent_identities.json`, que é a **fonte única**. Este arquivo aponta e não
@@ -251,7 +254,7 @@ coisas, e a diferença entre elas é deliberada.
 **declarou** com o campo que o GitHub lê, e a mensagem de recusa entrega o
 comando pronto — `git -c user.name=... commit` —, nunca o `git config` global,
 que a regra acima já explica por que só empurra a herança adiante. A comparação
-é normalizada, porque `antigravity@gemini-3.8-flash` e `Gemini 3.8 Flash` são a
+é normalizada, porque `antigravity@gemini-4-argon` e `Gemini 4 Argon` são a
 mesma identidade em duas convenções desta casa; comparação literal reprovaria as
 duas.
 
@@ -478,8 +481,8 @@ gerador ou o manifesto.
 
 **Estrutura canônica de credenciais (16 chaves) no Windows Registry (`HKCU` e `HKLM`):**
 
-- **Tier 1 (Core Cognitivo — 3 chaves):** `OPENROUTER_TIER1_KEY_1..3` (Claude Opus 5, ChatGPT 6 Astra/Sol, Gemini 3.8 Flash). Zero tolerância a latência ou contenção de cota.
-- **Tier 2 (Superagentes & Pesquisa — 3 chaves):** `OPENROUTER_TIER2_KEY_1..3` (Jules, Stitch, Exa, Devin, Solar-Pro4, Space-Bunny-Alpha). Fallback autorizado para Tier 4 e Tier 1.
+- **Tier 1 (Core Cognitivo — 3 chaves):** `OPENROUTER_TIER1_KEY_1..3` (Claude Opus 5.5+, ChatGPT 6 Astra/Sol+, Gemini 4 Argon/Carbon+). Zero tolerância a latência ou contenção de cota.
+- **Tier 2 (Superagentes & Pesquisa — 3 chaves):** `OPENROUTER_TIER2_KEY_1..3` (Jules, Stitch, Exa, Hermes Agent/Laguna). Fallback autorizado para Tier 4 e Tier 1.
 - **Tier 3 (Frota Especialista & Batch — 5 chaves):** `OPENROUTER_TIER3_KEY_1..5` (19 agentes especialistas, dream replay, síntese massiva). Alto throughput, estritamente isolado do Tier 1.
 - **Tier 4 (Subagentes Dedicados — 5 chaves):** `OPENROUTER_TIER4_KEY_1..5` (task-subagents, generalist, research, architect). Fallback autorizado para Tier 3.
 - **HuggingFace (SOTA):** `HF_TOKEN` / `PLATFORM_HF_KEY` (Sincronizado via Registry para suporte a MCP e inferência).
@@ -496,19 +499,19 @@ gerador ou o manifesto.
 ### 3.2 Precedência Econômica, Prioridade de Assinaturas Pro e Sustentação por Modelos Free em Nuvem
 
 **1. Primazia Mandatória das Assinaturas Pro no Tier 1 (`Faixa.FLAT_FEE`):**
-Modelos integrantes do Núcleo Cognitivo Mestre Tier 1 (`Claude Opus 5`, `ChatGPT 6 Astra/Sol`, `Gemini 3.8 Flash`, etc.) priorizam estritamente **as cotas mensais já pagas das assinaturas Pro/Max** (`Faixa.FLAT_FEE` — Anthropic Pro/Max, OpenAI Plus/Pro, Google Advanced). O custo marginal dentro da franquia contratada é **zero**. O consumo de chaves de API pagas ou pay-as-you-go é a última linha de defesa orçamentária, admitido apenas quando a franquia estiver momentaneamente esgotada ou em chamadas headless programáticas que a interface web não suporte.
+Modelos integrantes do Núcleo Cognitivo Mestre Tier 1 (`Claude Opus 5.5+`, `Claude Sonnet 5.5+`, `Claude Haiku 5.5+`, `ChatGPT 6 Astra/Sol+`, `Gemini 4 Argon/Carbon+`, etc.) priorizam estritamente **as cotas mensais já pagas das assinaturas Pro/Max** (`Faixa.FLAT_FEE` — Anthropic Pro/Max, OpenAI Plus/Pro, Google Advanced). O custo marginal dentro da franquia contratada é **zero**. O consumo de chaves de API pagas ou pay-as-you-go é a última linha de defesa orçamentária, admitido apenas quando a franquia estiver momentaneamente esgotada ou em chamadas headless programáticas que a interface web não suporte.
 
 **2. Axioma Econômico da Nuvem vs. Chaves (O Custo Real de Servidores):**
 O custo de provisionar, hospedar e manter servidores dedicados, instâncias em nuvem (AWS/GCP/Azure) e VMs corporativas ativas **supera exponencialmente o custo de chaves de API**, mesmo quando estas são pagas. Portanto, para absorver o trabalho diário massivo sem gerar passivo de infraestrutura, três runtimes assumem papel de **altíssima importância estratégica**:
 
-- **Ollama:** Execução de modelos de fronteira **free em nuvem Zero-RAM / Zero-VRAM** (ex: `gemma4:31b-cloud`, `kimi-k2.7-code:cloud`, `deepseek-v4-flash:cloud`, `gpt-oss:120b-cloud`), entregando raciocínio denso e coding de alta fidelidade sem onerar a memória física da estação nem contratar instâncias de GPU pagas na nuvem.
-- **llama.cpp:** Execução ultra-eficiente da família **Qwen quantizada** (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`) com relação ótima de tokens/watt em CPU/GPU local, garantindo latência sub-50ms e zero dependência de infraestrutura externa.
-- **Hermes Agent:** Orquestração autônoma desacoplada com a família **Laguna** e os condutores **`Solar-Pro4`** e **`Space-Bunny-Alpha`**, aproveitando modelos gratuitos em nuvem e agentes especializados para tarefas contínuas e assíncronas.
+- **Ollama:** Execução **local** de modelos abertos (Gemma 4, Qwen, finetunes do projeto) com Zero-RAM / Zero-VRAM para a nuvem — os modelos `:cloud` foram descontinuados em 2026-11-10 —, entregando rotinas de ingestão sem onerar a memória física da estação nem contratar instâncias de GPU pagas na nuvem.
+- **llama.cpp:** Execução ultra-eficiente da família **Qwen quantizada** (`qwen3.8:27b`, `qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`) com relação ótima de tokens/watt em CPU/GPU local, garantindo latência sub-50ms e zero dependência de infraestrutura externa. **É harness/condutor, não identidade de modelo.**
+- **Hermes Agent:** Orquestração autônoma desacoplada que **roteia dinamicamente** entre modelos free em nuvem (família Laguna e outros) — é **harness/condutor, não identidade**; `Solar-Pro4` e `Space-Bunny-Alpha` são nomes de condutores/router, não autores, e são blindados da calibração de agentes.
 
 **3. Pirâmide Quádrupla de Alocação de Recursos:**
 
 1. **1º Nível — Cotas Pagas de Assinatura Pro (`Faixa.FLAT_FEE`):** Primazia mandatória para o Tier 1; custo marginal zero dentro do teto mensal contratado.
-2. **2º Nível — Modelos Free em Nuvem e Edge:** Ingestão maciça de rotina via Ollama (`gemma4:31b-cloud`), llama.cpp (família Qwen) e Hermes Agent (família Laguna). Custo de infraestrutura = zero.
+2. **2º Nível — Modelos Free em Nuvem e Edge:** Ingestão maciça de rotina via Ollama local (Gemma 4/Qwen — `:cloud` descontinuado), llama.cpp (família Qwen, sufixo `b` por ser condutor) e Hermes Agent (roteamento dinâmico Laguna, sufixo `b`, blindado da calibração). Custo de infraestrutura = zero.
 3. **3º Nível — Pools Multi-Tier OpenRouter:** 16 chaves dedicadas e particionadas em HKCU/HKLM com isolamento estrito de cotas e circuit breaker adaptativo (Tiers 1 a 4).
 4. **4º Nível — Pay-as-you-go Sob Demanda:** Acionamento estrito e cirúrgico com tetos autorizados em `esforcos_autorizados`.
 
@@ -814,8 +817,8 @@ dia; passou a ser a sessão.**
 **não** encerra sessão, e sessão pode atravessar a meia-noite. Todos os
 feedbacks de uma sessão declaram o mesmo `session_started_at`; divergência
 denuncia sessão partida. Toda sessão registrada declara obrigatoriamente o
-**modelo condutor exato (`conductor_model`)** (ex.: `gemini-3.8-flash`, `claude-opus-5`,
-`gpt-5.6-terra`, `gpt-6-astra`), o **veículo do condutor (`conductor_vehicle`)** — a
+**modelo condutor exato (`conductor_model`)** (ex.: `gemini-4-argon`, `claude-opus-5.5`,
+`gpt-6.0-sol`, `gpt-6-astra`), o **veículo do condutor (`conductor_vehicle`)** — a
 automação ou superfície que executou o modelo (ex.: `codex`, `antigravity`,
 `claude-code`) — e o **regime de supervisão (`supervision_mode`)**: `assistida`
 (assistida e arbitrada diretamente pelo Tier 0) ou `automatizada` (autônoma, background ou CI/CD).
@@ -870,7 +873,7 @@ diferentes: a fronteira de 2026-09-09 trocou `gpt-5.6-terra` por `gpt-6-astra`
 vice-versa.
 
 Em prosa e em frontmatter a forma composta `veiculo@modelo` já expressa os dois — é
-a convenção que a §7 fixa em `antigravity@gemini-3.8-flash`. Em dado estruturado
+a convenção que a §7 fixa em `antigravity@gemini-4-argon`. Em dado estruturado
 eles são **dois campos**, porque dado estruturado é corrigido campo a campo.
 
 **Registro anterior à decisão não tem o campo, e a ausência aparece como ausência

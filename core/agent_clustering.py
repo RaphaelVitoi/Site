@@ -19,7 +19,7 @@ class ClusterType(enum.StrEnum):
 MODEL_GEMINI_38_FLASH = "gemini-3.8-flash"
 MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
 MODEL_QWEN_25_7B_Q5 = "qwen2.5-coder:7b-instruct-q5_K_M"
-MODEL_GEMMA_31B_CLOUD = "gemma4:31b-cloud"
+MODEL_GEMMA_4_12B = "gemma4:12b"
 MODEL_CHATGPT_60_SOL = "chatgpt-6.0-sol"
 MODEL_CLAUDE_OPUS_55 = "claude-opus-5.5"
 MODEL_CLAUDE_SONNET_55 = "claude-sonnet-5.5"
@@ -53,7 +53,7 @@ class AgentClusteringMesh:
                     MODEL_CLAUDE_OPUS_55,
                     MODEL_CHATGPT_60_SOL,
                     MODEL_GEMINI_38_FLASH,
-                    MODEL_GEMMA_31B_CLOUD,
+                    MODEL_GEMMA_4_12B,
                 ],
                 cpu_affinity_cores=[4, 5, 6, 7, 12, 13, 14, 15],  # Cores de alta performance
                 max_concurrency=4,
@@ -69,7 +69,7 @@ class AgentClusteringMesh:
                     MODEL_GEMINI_38_FLASH,
                     MODEL_GEMINI_35_FLASH_LITE,
                     MODEL_QWEN_25_7B_Q5,
-                    MODEL_GEMMA_31B_CLOUD,
+                    MODEL_GEMMA_4_12B,
                 ],
                 cpu_affinity_cores=[2, 3, 4, 5, 10, 11, 12, 13],
                 max_concurrency=8,

@@ -231,7 +231,7 @@ def _audit_roteamento(suspeitas: dict) -> tuple[dict[str, Any], list[str], dict[
         "total_subagentes_cobertos": cob["subagentes"],
         "mapa_agentes_resolvidos": len(AGENT_MODEL_MAP),
         "roi_trigger_flash_ok": test_roi_flash["modelo_escolhido"] == MODEL_GEMINI_35_FLASH_LITE,
-        "roi_trigger_pro_ok": test_roi_pro["modelo_escolhido"] == "chatgpt-5.6-sol",
+        "roi_trigger_pro_ok": test_roi_pro["modelo_escolhido"] == "chatgpt-6.0-sol",
         "ttl_rota_dias": TTL_ROTA_DIAS,
         "rotas_suspeitas": {c.value: motivo for c, motivo in suspeitas.items()},
     }
@@ -326,7 +326,7 @@ def _build_markdown_report(
 
 - **Total de Agentes Cobertos:** {cob["agentes"]} agentes / {cob["subagentes"]} tiers de subagente
 - **Mapa Concreto Ativo:** {len(AGENT_MODEL_MAP)} agentes operando sem fallbacks orfaos
-- **Validacao de Gatilho de ROI (Chat GPT 5.6-Sol vs. 3.8 Flash):** Aprovado e calibrado
+- **Validacao de Gatilho de ROI (ChatGPT 6 Sol vs. Gemini 3.8 Flash):** Aprovado e calibrado
 - **Ancoras de Rota:** {len(ROTAS) - len(suspeitas)} de {len(ROTAS)} dentro do TTL de {TTL_ROTA_DIAS} dias{" -- **" + str(len(suspeitas)) + " exigem reconsulta ao fornecedor**" if suspeitas else ""}
 - **Status dos Manuais de Modus Operandi:** {manuais_ok} de {total_manuais} sincronizados com a Arquitetura de 4 Camadas
 
@@ -372,7 +372,7 @@ def run_monthly_audit() -> dict[str, Any]:
     camadas = {
         "camada_1_triagem": [MODEL_GEMINI_35_FLASH_LITE],
         "camada_2_agente_principal": ["gemini-3.8-flash", MODEL_GEMINI_35_FLASH_LITE],
-        "camada_3_raciocinio_profundo": ["chatgpt-5.6-sol"],
+        "camada_3_raciocinio_profundo": ["chatgpt-6.0-sol"],
     }
 
     status_camadas, alertas_camadas = _audit_camadas(camadas)

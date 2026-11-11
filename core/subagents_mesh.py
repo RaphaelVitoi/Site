@@ -134,7 +134,7 @@ def resolve_subagent_tier(value: Any) -> SubagentTier | None:
 
 MODEL_QWEN_CODE_SURGICAL = "qwen-code-surgical:latest"
 MODEL_QWEN_7B_INSTRUCT = "qwen2.5-coder:7b-instruct-q5_K_M"
-MODEL_GEMMA4_31B_CLOUD = "gemma4:31b-cloud"
+MODEL_GEMMA4_E4B = "gemma4:e4b"
 
 SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.APPSEC: MODEL_QWEN_CODE_SURGICAL,
@@ -144,12 +144,12 @@ SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.NANO_ROUTER: "qwen2.5-coder:0.5b",
     SubagentTier.STREAMING_FIM: "qwen2.5-coder:1.5b",
     SubagentTier.UI: MODEL_QWEN_7B_INSTRUCT,
-    SubagentTier.RESEARCH: MODEL_GEMMA4_31B_CLOUD,
+    SubagentTier.RESEARCH: MODEL_GEMMA4_E4B,
     SubagentTier.VALIDADOR: "qwen-pmev-math:latest",
     SubagentTier.IMPLEMENTOR: "qwen2.5-coder:7b",
     SubagentTier.CURATOR: MODEL_QWEN_7B_INSTRUCT,
-    SubagentTier.ARCHITECT: MODEL_GEMMA4_31B_CLOUD,
-    SubagentTier.GENERALIST: MODEL_GEMMA4_31B_CLOUD,
+    SubagentTier.ARCHITECT: MODEL_GEMMA4_E4B,
+    SubagentTier.GENERALIST: MODEL_GEMMA4_E4B,
     SubagentTier.SELF: MODEL_QWEN_CODE_SURGICAL,
     SubagentTier.FLUTTER_A11Y: MODEL_QWEN_CODE_SURGICAL,
 }

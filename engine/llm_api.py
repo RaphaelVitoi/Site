@@ -350,7 +350,7 @@ async def call_gemma_local(
     try:
         return await call_ollama(session, model, system_prompt, user_prompt, response_format=response_format)
     except Exception as e:
-        # Se e4b (9.6GB) falhar (ex: VRAM/RAM insuficiente), tenta e2b ou 31b-cloud
+        # Se e4b (9.6GB) falhar (ex: VRAM/RAM insuficiente), tenta e2b ou 12b local
         if "e4b" in model.lower():
             logger.warning("[OLLAMA FALLBACK] Modelo %s falhou (%s). Recorrendo a gemma4:e2b...", model, e)
             try:
@@ -359,7 +359,7 @@ async def call_gemma_local(
                 )
             except Exception:
                 return await call_ollama(
-                    session, "gemma4:31b-cloud", system_prompt, user_prompt, response_format=response_format
+                    session, "gemma4:12b", system_prompt, user_prompt, response_format=response_format
                 )
         raise
 
@@ -626,9 +626,12 @@ def _generate_fallback_response(agent_name: str, models_to_try: list[str]) -> st
 
 
 def _resolve_cloud_zero_ram_target(model: str, model_l: str) -> tuple[str, str] | None:
+    # Os modelos Ollama ':cloud' foram descontinuados em 2026-11-10 (Tier 0).
+    # O resolvedor nao reescreve mais nomes para variantes ':cloud': a requisicao
+    # passa literal e a ausencia do modelo local falha de forma honesta, em vez
+    # de rotear silenciosamente para uma familia descontinuada.
     if "gpt-oss" in model_l or "gpt:oss" in model_l:
-        target = "gpt-oss:120b-cloud" if "120b" in model_l else "gpt-oss:20b-cloud"
-        return "ollama", target
+        return "ollama", model
     if ":cloud" in model_l or any(model_l.startswith(p) for p in ("glm-", "kimi-", "minimax-", "nemotron-")):
         return "ollama", model
     return None
@@ -642,7 +645,7 @@ def _resolve_local_or_ollama_target(model: str, model_l: str) -> tuple[str, str]
     if "qwen" in model_l and not model_l.startswith("openrouter/"):
         return ("local_llama", model) if "1.5b" in model_l else ("ollama", model)
     if "gemma" in model_l:
-        return ("ollama", "gemma4:31b-cloud") if "31b" in model_l else ("local_gemma", model)
+        return ("ollama", "gemma4:12b") if "31b" in model_l else ("local_gemma", model)
     return _resolve_cloud_zero_ram_target(model, model_l)
 
 
@@ -670,12 +673,12 @@ def _resolve_openai_target(model: str, model_l: str, has_nous: bool, has_openrou
         if "astra" in model_l or "6" in model_l:
             return "nous", "openai/gpt-6-astra-fast"
         if "sol" in model_l or "5.6" in model_l:
-            return "nous", "openai/gpt-5.5"
+            return "nous", "openai/gpt-6-sol"
     if has_openrouter:
         if "sol" in model_l or "5.6" in model_l:
-            return "openrouter", "openai/gpt-4o"
+            return "openrouter", "openai/gpt-6-sol"
         if "astra" in model_l or "6" in model_l:
-            return "openrouter", "openai/o1-preview"
+            return "openrouter", "openai/gpt-6-astra"
         return "openrouter", f"openai/{model}"
     return None
 

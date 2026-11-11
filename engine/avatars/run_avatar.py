@@ -219,7 +219,7 @@ def query_llama_server(
     url = "http://127.0.0.1:11434/api/generate"
 
     payload = {
-        "model": persona_config.get("ollama_model", "gemma4:31b-cloud"),
+        "model": persona_config.get("ollama_model", "gemma4:12b"),
         "prompt": user_prompt,
         "system": system_prompt,
         "stream": stream,

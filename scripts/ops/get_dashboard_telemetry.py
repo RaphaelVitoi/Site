@@ -1,6 +1,6 @@
 """
 SOTA v8.0 GOLD: Nexus Dashboard Telemetry Engine.
-Coleta e formata metricas de tarefas, modelos (Qwen 7B, Gemma 4B, Gemma 31B Cloud),
+Coleta e formata metricas de tarefas e modelos locais (Qwen 7B, Gemma 4B, Gemma 12B),
 previsao de task, RUNNING & ETA e status das ultimas 5 tarefas.
 """
 
@@ -28,7 +28,7 @@ def is_port_open(port: int, host: str = "127.0.0.1") -> bool:
 
 
 def get_model_status() -> dict:
-    """Verifica presenca e disponibilidade dos modelos locais e cloud."""
+    """Verifica presenca e disponibilidade dos modelos locais."""
     models_manifest = {}
     if OLLAMA_MODELS_PATH.exists():
         try:
@@ -45,10 +45,6 @@ def get_model_status() -> dict:
         ollama_dir / "qwen2.5-coder" / "7b-instruct-q5_K_M"
     ).exists()
     gemma_4b_installed = (ollama_dir / "gemma4" / "e4b").exists()
-    gemma_31b_cloud_installed = (ollama_dir / "gemma4" / "31b-cloud").exists() or (
-        ollama_dir / "gemma4" / "31b"
-    ).exists()
-
     return {
         "qwen_7b": {
             "name": "Qwen 2.5 7B Coder",
@@ -63,13 +59,6 @@ def get_model_status() -> dict:
             "tier": "local",
             "installed": gemma_4b_installed,
             "status": "READY (Local)" if gemma_4b_installed else "PENDING_PULL",
-        },
-        "gemma4_31b_cloud": {
-            "name": "Gemma 4 31B Cloud",
-            "tag": "gemma4:31b-cloud",
-            "tier": "cloud",
-            "installed": gemma_31b_cloud_installed,
-            "status": "ACCESSIBLE (Cloud / Local Sync)" if gemma_31b_cloud_installed else "CONFIGURED",
         },
         "strata_moe_125b": {
             "name": "Strata MoE 125B Coder",
