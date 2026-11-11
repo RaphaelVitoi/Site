@@ -218,7 +218,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "da familia no trabalho agêntico. Fallback solido em GPT-6.0 Terra "
             "e escalonamento para Gemini 4 Argon."
         ),
-        ancorado_em="2026-11-10",
+        ancorado_em="2026-11-11",
         modelos_citados=(GEMINI_3_8_FLASH, GPT_6_0_TERRA, GEMINI_4_ARGON),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
@@ -236,7 +236,7 @@ ROTAS: dict[ClasseTarefa, Rota] = {
             "350 tok/s. Fallback em GPT-6.0 Luna e escalonamento para Claude "
             "Haiku 5.5, formando a triade Tier 1 de fast operations."
         ),
-        ancorado_em="2026-11-10",
+        ancorado_em="2026-11-12",
         modelos_citados=(GEMINI_3_5_FLASH_LITE, GPT_6_0_LUNA, CLAUDE_HAIKU_55),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(
