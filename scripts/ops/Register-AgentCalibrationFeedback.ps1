@@ -28,7 +28,7 @@ param(
     # declarar o MESMO valor aqui.
     [string]$SessionStartedAt = '',
 
-    # Modelo exato que conduziu a sessao (ex.: gemini-3.8-flash, claude-opus-5, chatgpt-5.6).
+    # Modelo exato que conduziu a sessao (ex.: gemini-3.8-flash, claude-opus-5.5, gpt-6.0-sol).
     [string]$ConductorModel = '',
 
     # Veiculo do condutor -- a automacao ou superficie que executou o modelo.
@@ -91,9 +91,9 @@ $ErrorActionPreference = 'Stop'
 
 . (Join-Path $PSScriptRoot 'AgentCalibrationProvenance.ps1')
 $provenance = Get-AgentCalibrationProvenance -Record ([pscustomobject]@{
-    session_id = $SessionId; scope = $Scope; conductor_model = $ConductorModel
-    conductor_vehicle = $ConductorVehicle; supervision_mode = $SupervisionMode
-})
+        session_id = $SessionId; scope = $Scope; conductor_model = $ConductorModel
+        conductor_vehicle = $ConductorVehicle; supervision_mode = $SupervisionMode
+    })
 if (-not $provenance.eligible) {
     throw "Feedback de handoff inelegivel: $($provenance.reasons -join ', '). Nenhum registro foi gravado."
 }
@@ -150,8 +150,8 @@ try {
 
     if (-not (Test-Path -LiteralPath $ledgerPath)) {
         $genesis = New-HashChainedRecord -Sequence 0 -RecordType 'genesis' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ('0' * 64) -Fields ([ordered]@{
-            policy = 'append-only hash chain; verify before use; Git anchoring requires explicit authorization'
-        })
+                policy = 'append-only hash chain; verify before use; Git anchoring requires explicit authorization'
+            })
         [System.IO.File]::WriteAllText($ledgerPath, (($genesis | ConvertTo-Json -Compress -Depth 8) + [Environment]::NewLine), $utf8NoBom)
     }
 

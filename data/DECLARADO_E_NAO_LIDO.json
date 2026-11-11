@@ -136,6 +136,20 @@
       "nome": "DO_PS1_FILE",
       "onde": "locustfile.py",
       "veredito": "a investigar -- arquivo de carga, fora do caminho de producao"
+    },
+    {
+      "nome": "GEMINI_4_CARBON",
+      "onde": "llm/routing_policy.py",
+      "veredito": "catalogado no trio de apice Tier 1; nenhum escalonamento o cita ainda -- entrada em rota e decisao do Tier 0",
+      "medido": [
+        "Adicionado em 2026-11-10 junto com o Gemini 4 Carbon no registro de",
+        "identidades (agent_identities.json, tier 1, veiculo antigravity). O",
+        "irmao GEMINI_4_ARGON ja e lido em escalona_para e modelos_citados;",
+        "CARBON ainda nao tem rota que o cite. A doutrina do apice e uso",
+        "pontual por escalonamento -- nao e primario de nenhuma classe.",
+        "Registrar a constante agora mantem o par Argon/Carbon simetrico no",
+        "catalogo; a ligacao efetiva fica pendente de decisao do Tier 0."
+      ]
     }
   ],
   "fora_de_escopo": {

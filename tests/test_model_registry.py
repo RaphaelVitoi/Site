@@ -203,7 +203,9 @@ def test_gemini_36_flash_limite_de_saida_e_preco():
 
 
 def test_gemini_37_nao_autorizado_e_38_flash_verificado():
-    """3.7 permanece catalogado como retirado; 3.8 e a rota vigente."""
+    """3.7 permanece catalogado como retirado; 3.8 e a rota vigente —
+    o Tier 0 confirmou em 2026-11-10 que a descontinuacao atinge 3.7-flash
+    e abaixo na familia flash, NAO o 3.8 nem o 3.5-flash-lite/3.1-pro."""
     g37 = get("gemini-3.7-flash")
     g38 = get("gemini-3.8-flash")
     assert g37.verification == VerificationStatus.VERIFICADO
@@ -211,6 +213,8 @@ def test_gemini_37_nao_autorizado_e_38_flash_verificado():
     assert g38.verification == VerificationStatus.VERIFICADO
     assert g38.autorizado is True
     assert g38.max_output_tokens == 65_536
+    assert get("gemini-3.5-flash-lite").autorizado is True
+    assert get("gemini-3.1-pro-preview").autorizado is True
 
 
 def test_gemini_38_flash_nao_aceita_minimal():

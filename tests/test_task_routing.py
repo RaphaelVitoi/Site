@@ -28,7 +28,7 @@ MOCK_AGENTS_MANIFEST = {
     "validador": {"routing_pattern": "matematic|icm", "primary_model": "qwen2.5-coder:7b-instruct-q5_K_M"},
     "implementor": {"routing_pattern": "codar|implement", "primary_model": "qwen2.5-coder:7b-instruct-q5_K_M"},
     "verifier": {"routing_pattern": "test|bug", "primary_model": "qwen2.5-coder:7b-instruct-q5_K_M"},
-    "curator": {"routing_pattern": "estetic|ux", "primary_model": "gpt-oss:120b-cloud"},
+    "curator": {"routing_pattern": "estetic|ux", "primary_model": "gemma4:12b"},
     "chico": {"routing_pattern": "sintese|orquestra", "primary_model": "gemini-3.5-flash-lite"},
     "sequenciador": {"routing_pattern": "sequenci|fila", "primary_model": "gemini-3.5-flash-lite"},
     "organizador": {"routing_pattern": "organiz|documenta", "primary_model": "gemini-3.5-flash-lite"},

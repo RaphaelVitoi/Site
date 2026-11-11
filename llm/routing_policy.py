@@ -25,9 +25,9 @@ valor versionado (SS3): aponte para o enum, que e a fonte.
    Todos os modelos de fronteira podem cumprir todas as funcoes (Axioma de Capacidade
    Universal sem feudos). A distribuicao reflete preferencia estrategica por arquitetura,
    especialidade nativa e preco:
-   - Gemini (3.8 Flash & duo 3.5 Flash-Lite / 3.6 Flash): Orquestracao do fluxo agentico e Fast Operations;
+   - Gemini (3.8 Flash & 3.5 Flash-Lite para orquestracao/fast operations; 3.1 Pro vigente; 4 Argon/Carbon no apice): Orquestracao do fluxo agentico e Fast Operations;
    - Claude 5 (Sonnet 5 / Opus 5): Engenharia de codigo cirurgica e modelagem matematica / PMev;
-   - ChatGPT 5.6 (Terra / Sol): Raciocinio profundo, seguranca / AppSec, arquitetura macro e alta complexidade.
+   - ChatGPT 6.0 (Terra / Sol / Luna) e 6 Astra: Raciocinio profundo, seguranca / AppSec, arquitetura macro e alta complexidade.
 
 ## Conflito conhecido entre a tabela e o manifesto
 
@@ -75,8 +75,8 @@ MODELOS_LOCAIS: frozenset[str] = _carregar_modelos_locais()
 GPT_6_0_SOL = "gpt-6.0-sol"
 GPT_6_0_TERRA = "gpt-6.0-terra"
 GPT_6_0_LUNA = "gpt-6.0-luna"
-GPT_5_6_SOL = "gpt-5.6-sol"  # retrocompatibilidade
 GEMINI_4_ARGON = "gemini-4-argon"
+GEMINI_4_CARBON = "gemini-4-carbon"
 GEMINI_3_8_FLASH = "gemini-3.8-flash"
 GEMINI_3_5_FLASH_LITE = "gemini-3.5-flash-lite"
 CLAUDE_OPUS_55 = "claude-opus-5.5"
@@ -211,10 +211,14 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         escalona_para=GEMINI_4_ARGON,
         justificativa=(
             "Revisao de primeira passagem e auditoria. Gemini 3.8 Flash assume a classe "
-            "apos a descontinuacao formal do 3.6 Flash em 2026-10-20. "
-            "Fallback solido em GPT-6.0 Terra e escalonamento para Gemini 4 Argon."
+            "— CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10, junto com 3.5 Flash-Lite "
+            "e 3.1 Pro; descontinuados sao 3.7-flash e abaixo na familia flash. "
+            "Extraordinario orquestrador e agente: permanece em funcoes elevadas "
+            "sob logica de ROI — nao e a geracao mais nova, mas e a mais capaz "
+            "da familia no trabalho agêntico. Fallback solido em GPT-6.0 Terra "
+            "e escalonamento para Gemini 4 Argon."
         ),
-        ancorado_em="2026-10-20",
+        ancorado_em="2026-11-10",
         modelos_citados=(GEMINI_3_8_FLASH, GPT_6_0_TERRA, GEMINI_4_ARGON),
     ),
     ClasseTarefa.OPERACIONAL: Rota(
@@ -223,12 +227,16 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.GRATUITA,
         escalona_para=CLAUDE_HAIKU_55,
         justificativa=(
-            "Faixa gratuita com latencia minima. Gemini 3.5 Flash-Lite permanece "
-            "como o motor de triagem deterministica (<300ms) e linting. "
-            "Fallback em GPT-6.0 Luna e escalonamento para Claude Haiku 5.5, "
-            "formando a triade Tier 1 de fast operations."
+            "Custo marginal minimo dentro da cota promocional — o modelo e PAGO "
+            "e barato (standard $0.30/$2.50 por 1M), NAO gratuito. Gemini 3.5 "
+            "Flash-Lite e o modelo customizado para tarefas de altissimo volume "
+            "de baixa latencia: triagem deterministica (<300ms), linting, "
+            "parsing, extracao estruturada e rotinas de alta frequencia — "
+            "benchmarks publicos: SWE-Bench Pro 54.2%, Terminal-Bench 54.0%, "
+            "350 tok/s. Fallback em GPT-6.0 Luna e escalonamento para Claude "
+            "Haiku 5.5, formando a triade Tier 1 de fast operations."
         ),
-        ancorado_em="2026-10-20",
+        ancorado_em="2026-11-10",
         modelos_citados=(GEMINI_3_5_FLASH_LITE, GPT_6_0_LUNA, CLAUDE_HAIKU_55),
     ),
     ClasseTarefa.RACIOCINIO_PROFUNDO: Rota(

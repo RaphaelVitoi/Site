@@ -24,7 +24,7 @@ from llm.model_registry import (
 )
 
 # Parametros que NAO podem chegar a um modelo de raciocinio da geracao atual.
-# Anthropic (geracao 5), OpenAI (GPT-5.6) e Google (Gemini 3) retornam 400.
+# Anthropic (geracao 5), OpenAI (GPT-6) e Google (Gemini 4) retornam 400.
 SAMPLING_LEGADO: frozenset[str] = frozenset({"temperature", "top_p", "top_k", "presence_penalty", "frequency_penalty"})
 
 # MIME type para payloads JSON estritos
@@ -123,10 +123,11 @@ class AnthropicAdapter:
         """O alias esta no registro E e Anthropic.
 
         Existe porque nem toda chamada Anthropic do projeto vai para a geracao 5:
-        `cli/commands.py` valida chave de API com `claude-3-haiku-20240307`, que
-        e geracao 3, nao esta no registro e ACEITA amostragem legada. Sanear
-        aquele ping como se fosse Opus 5 removeria `temperature` de um modelo que
-        o aceita, e o caminho legado deixaria de funcionar sem que nada acusasse.
+        modelos legados fora do registro (geracoes <5, descontinuadas para rota
+        vigente mas ainda enderecaveis por nome) ACEITAM amostragem legada.
+        Sanear esses caminhos como se fossem Opus 5 removeria `temperature` de
+        um modelo que o aceita, e o caminho legado deixaria de funcionar sem
+        que nada acusasse.
 
         A pergunta certa nunca foi "o codigo manda temperature?", e sim "manda
         para um modelo que a rejeita?".
@@ -238,7 +239,7 @@ class AnthropicAdapter:
 
 
 class OpenAIAdapter:
-    """Monta requisicoes para a familia GPT-5.6.
+    """Monta requisicoes para a familia GPT-6.
 
     O estudo acertou o diagnostico  parametros de amostragem legados provocam
     400 em modelos de raciocinio  mas errou a escala de esforco: usa `"ultra"`,

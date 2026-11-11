@@ -73,12 +73,6 @@ AVATARS = [
         "gemma4:e4b",
         "RAG ChromaDB, Memoria Vetorial e Baixa Latencia",
     ),
-    (
-        "gemma4_31b_cloud",
-        "GEMMA 31B CLOUD (Raciocinio Remoto)",
-        "gemma4:31b-cloud",
-        "Inferencia Remota sem Custo de Disco Local",
-    ),
 ]
 
 PERSONA_MAP = {str(i + 1): av[0] for i, av in enumerate(AVATARS)}

@@ -2,7 +2,7 @@ import { streamText } from 'ai';
 import { google } from '@ai-sdk/google';
 
 const result = streamText({
-  model: google('gemini-3.5-flash'),
+  model: google('gemini-3.8-flash'),
   prompt: 'Invent a new holiday and describe its traditions.',
 });
 

@@ -158,7 +158,7 @@
       "memory_rag.py",
       "scripts/ops/Ensure-OllamaModels.ps1"
     ],
-    "fallback_model": "gemma4:31b-cloud",
+    "fallback_model": "gemma4:12b",
     "tier": "Tier 3: Multimodal Research & Ingestion (Pipeline)",
     "memory_affinity": "VRAM_HOT & LANCEDB_ZERO_COPY"
   },
@@ -280,7 +280,7 @@
     "routing_pattern": "estetic|ux|ui|texto|copy|seo|trafego|keyword|tom|voz|narrativa|experiencia|design|arte|didatica",
     "model_preference": "deep_thinking",
     "color": "light_coral",
-    "primary_model": "gemma4:31b-cloud",
+    "primary_model": "gemma4:12b",
     "skills": [
       "neuropsychology-high-performance",
       "windows-visual-tuning",
@@ -490,7 +490,7 @@
       "engine/llama_cpp/start_vulkan_daemon.ps1",
       "engine/gemma_server.py"
     ],
-    "fallback_model": "gemma4:31b-cloud",
+    "fallback_model": "gemma4:12b",
     "tier": "Tier 3: Unified Multimodal Oracle (Pipeline)",
     "memory_affinity": "VRAM_HOT & MULTIMODAL_PROJECTOR"
   }

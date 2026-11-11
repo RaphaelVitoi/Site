@@ -474,7 +474,7 @@ def _check_gemini_availability() -> bool:
 
 def _check_openai_key_availability(model: str) -> bool:
     """Check OpenAI API key is configured for GPT models."""
-    if "gpt-6" in model.lower() or "gpt-5.6" in model.lower():
+    if "gpt-6" in model.lower():
         api_key = os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
         if not api_key or api_key.strip() == "":
             logger.warning(

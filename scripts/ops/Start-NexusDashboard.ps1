@@ -38,7 +38,8 @@ $VenvPython = Join-Path $ProjectRoot '.venv\Scripts\python.exe'
 $PythonExe = $null
 if (Test-Path -LiteralPath $VenvPython) {
     $PythonExe = $VenvPython
-} else {
+}
+else {
     $found = Get-Command python -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($found) { $PythonExe = $found.Source }
 }
@@ -97,7 +98,8 @@ function Get-Telemetry {
             return @{ Data = $null; Error = "telemetria saiu com codigo ${code}: $first" }
         }
         return @{ Data = ($text | ConvertFrom-Json); Error = $null }
-    } catch {
+    }
+    catch {
         return @{ Data = $null; Error = $_.Exception.Message }
     }
 }
@@ -131,7 +133,7 @@ function Build-Frame {
     Add-Line (S '' 'Gray')
     Add-Line (S '  [1] ACESSIBILIDADE DE MODELOS & MOTOR LOCAL/CLOUD' 'Yellow')
     if ($Data.models) {
-        foreach ($key in 'qwen_7b', 'gemma4_4b', 'gemma4_31b_cloud', 'strata_moe_125b') {
+        foreach ($key in 'qwen_7b', 'gemma4_4b', 'strata_moe_125b') {
             $m = $Data.models.$key
             if (-not $m) { continue }
             $color = 'Yellow'
@@ -139,7 +141,8 @@ function Build-Frame {
             if ("$($m.status)" -match 'READY|ACCESSIBLE|ONLINE') { $color = 'Green' }
             Add-Line (S ('    * ' + (Fit $m.name 24)) 'White'), (S (Fit $m.tag 24) 'DarkGray'), (S "[$($m.status)]" $color)
         }
-    } else {
+    }
+    else {
         Add-Line (S '    * Modelos: telemetria sem dados de modelos.' 'DarkGray')
     }
 
@@ -150,9 +153,10 @@ function Build-Frame {
         foreach ($r in @($Data.running_now)) {
             $descW = [Math]::Max(10, $Width - 62)
             Add-Line (S '    [RUNNING] ' 'Yellow'), (S (Fit $r.agent 12) 'Cyan'), (S ' ' 'Gray'), (S (Fit $r.description $descW) 'White'),
-                (S (" {0,6}s | ETA ~{1}s ({2}%)" -f $r.elapsed_sec, $r.eta_remaining_sec, $r.progress_pct) 'Green')
+            (S (" {0,6}s | ETA ~{1}s ({2}%)" -f $r.elapsed_sec, $r.eta_remaining_sec, $r.progress_pct) 'Green')
         }
-    } else {
+    }
+    else {
         Add-Line (S '    * Nenhuma tarefa em execucao (standby, pronto para despacho).' 'DarkGray')
     }
 
@@ -165,18 +169,19 @@ function Build-Frame {
     Add-Line (S '  [3] RASTREIO DAS ULTIMAS 5 TAREFAS' 'Yellow')
     Add-Line (S $border 'DarkGray')
     Add-Line (S '    | ' 'DarkGray'), (S (Fit 'ID / Descricao' $descCol) 'DarkGray'), (S ' | ' 'DarkGray'), (S (Fit 'Agente' $agW) 'DarkGray'),
-        (S ' | ' 'DarkGray'), (S (Fit 'Status da Operacao' $stW) 'DarkGray'), (S ' |' 'DarkGray')
+    (S ' | ' 'DarkGray'), (S (Fit 'Status da Operacao' $stW) 'DarkGray'), (S ' |' 'DarkGray')
     Add-Line (S $border 'DarkGray')
     if ($Data.last_5_tasks -and @($Data.last_5_tasks).Count -gt 0) {
         foreach ($t in @($Data.last_5_tasks)) {
             $info = $StatusMap["$($t.status_code)"]
             if (-not $info) { $info = @("$($t.status_code)".ToUpper(), 'White', "$($t.status_label)") }
             Add-Line (S '    | ' 'DarkGray'), (S (Fit $t.description $descCol) 'White'), (S ' | ' 'DarkGray'), (S (Fit $t.agent $agW) 'Cyan'),
-                (S ' | ' 'DarkGray'), (S (Fit ("[{0}] {1}" -f $info[0], $info[2]) $stW) $info[1]), (S ' |' 'DarkGray')
+            (S ' | ' 'DarkGray'), (S (Fit ("[{0}] {1}" -f $info[0], $info[2]) $stW) $info[1]), (S ' |' 'DarkGray')
         }
-    } else {
+    }
+    else {
         Add-Line (S '    | ' 'DarkGray'), (S (Fit 'Sem historico registrado na base' $descCol) 'DarkGray'), (S ' | ' 'DarkGray'),
-            (S (Fit '--' $agW) 'DarkGray'), (S ' | ' 'DarkGray'), (S (Fit '[NENHUM]' $stW) 'DarkGray'), (S ' |' 'DarkGray')
+        (S (Fit '--' $agW) 'DarkGray'), (S ' | ' 'DarkGray'), (S (Fit '[NENHUM]' $stW) 'DarkGray'), (S ' |' 'DarkGray')
     }
     Add-Line (S $border 'DarkGray')
 
@@ -187,9 +192,10 @@ function Build-Frame {
         foreach ($f in @($Data.forecast_tasks)) {
             $descW = [Math]::Max(10, $Width - 82)
             Add-Line (S '    * [PREVISTA] ' 'DarkCyan'), (S (Fit $f.agent 12) 'Cyan'), (S ' ' 'Gray'), (S (Fit $f.description $descW) 'White'),
-                (S " (prio: $($f.priority) | $($f.estimated_start))" 'DarkGray')
+            (S " (prio: $($f.priority) | $($f.estimated_start))" 'DarkGray')
         }
-    } else {
+    }
+    else {
         Add-Line (S '    * Fila vazia.' 'DarkGray')
     }
 
@@ -199,7 +205,7 @@ function Build-Frame {
     $c = $Data.counts
     if ($c) {
         Add-Line (S '    Tarefas: ' 'White'), (S "total $($c.total)" 'Gray'), (S " | pendentes $($c.pending)" 'Yellow'),
-            (S " | rodando $($c.running)" 'Cyan'), (S " | concluidas $($c.completed)" 'Green'), (S " | falhas $($c.failed)" 'Red')
+        (S " | rodando $($c.running)" 'Cyan'), (S " | concluidas $($c.completed)" 'Green'), (S " | falhas $($c.failed)" 'Red')
         if ($c.PSObject.Properties.Name -contains 'db_error') {
             Add-Line (S "    [!] Erro de banco: $($c.db_error)" 'Red')
         }
@@ -261,7 +267,8 @@ function Wait-OrKey {
                 if ($k.Key -eq 'Q' -or $k.Key -eq 'Escape') { return 'quit' }
                 if ($k.Key -eq 'R') { return 'refresh' }
             }
-        } catch {
+        }
+        catch {
             # entrada redirecionada: sem teclado, so espera o ciclo
             Start-Sleep -Seconds $Seconds
             return 'tick'
@@ -294,7 +301,8 @@ try {
         }
         if ((Wait-OrKey -Seconds $RefreshSeconds) -eq 'quit') { break }
     }
-} finally {
+}
+finally {
     try { [Console]::CursorVisible = $true } catch { }
     Write-Host ''
 }

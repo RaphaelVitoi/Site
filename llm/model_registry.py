@@ -348,6 +348,12 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         # adaptador recusar parametro valido.
         reject_legacy_sampling=False,
         verification=VerificationStatus.VERIFICADO,
+        autorizado=False,
+        motivo_nao_autorizado=(
+            "Descontinuado das rotas vigentes pelo Tier 0 em 2026-11-10: "
+            "politica de descontinuacao por geracao — todo Claude abaixo da "
+            "geracao 5 esta retirado. Mantido no catalogo como referencia."
+        ),
         notas=(
             "Verificado em 2026-09-07 (skill claude-api + claude.com/pricing). "
             "Disponivel, porem FORA do Tier 1 por decisao do Tier 0: o nucleo "
@@ -370,6 +376,12 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         requires_streaming_above=16_000,
         reject_legacy_sampling=False,
         verification=VerificationStatus.VERIFICADO,
+        autorizado=False,
+        motivo_nao_autorizado=(
+            "Descontinuado das rotas vigentes pelo Tier 0 em 2026-11-10: "
+            "politica de descontinuacao por geracao — todo Claude abaixo da "
+            "geracao 5 esta retirado. Mantido no catalogo como referencia."
+        ),
         notas=(
             "Verificado em 2026-09-07. $3/$15 -- ESTE e o modelo que custa "
             "$3/$15, e nao o Sonnet 5, que custa $2/$10. Foi exatamente essa "
@@ -468,12 +480,47 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
-        price_per_1m_in=1.25,
-        price_per_1m_out=5.00,
+        price_per_1m_in=2.00,
+        price_per_1m_out=12.00,
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
-        notas="Gemini 3.1 Pro: Raciocinio multimodal analitico profundo e verificacao estruturada.",
+        notas=(
+            "Gemini 3.1 Pro: modelo de reasoning frontier da linha 3 — "
+            "especialista em POUQUISSIMAS funcoes muito densas, nunca trabalho "
+            "rotineiro. Benchmarks de referencia (card do fabricante, "
+            "fevereiro/2026): HLE 44.4% sem ferramentas (51.4% com "
+            "search+code), GPQA Diamond 94.3%, ARC-AGI-2 77.1%, Terminal-Bench "
+            "2.0 68.5%, SWE-Bench Verified 80.6%, tau2-Bench Telecom 99.3%, "
+            "MCP Atlas 69.2%, MMMU-Pro 80.5%. Artificial Analysis o coloca "
+            "entre os lideres em HLE, GPQA-Diamond, SciCode e Terminal-Bench "
+            "Hard a menos da metade do custo dos frontier peers. Preco "
+            "$2/$12 por 1M (ate 200k de contexto). Head de "
+            "deep_thinking/general_purpose em system_config.json — topo do "
+            "caminho de inferencia densa, nao por ser o mais novo, mas por "
+            "rendimento por dollar medido. CONFIRMADO VIGENTE pelo Tier 0 "
+            "em 2026-11-10: a descontinuacao atinge a linha Gemini 3 Flash "
+            "(nao-lite), NAO o 3.1 Pro."
+        ),
+    ),
+    "gemini-4-carbon": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-4-carbon",
+        cota_por_assinatura=True,
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
+        notas=(
+            "Google Gemini 4 Carbon: integrante do trio de apice Tier 1 "
+            "(ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+), mesma doutrina "
+            "de uso pontual — escalonamento cirurgico de altissimo reasoning, "
+            "verificacao formal e sessoes multi-dia, nunca primario rotineiro. "
+            "Lancado e registrado pelo Tier 0 em 2026-11-10."
+        ),
     ),
     "gemini-3.8-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
@@ -489,6 +536,13 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         notas=(
             "Modelo de fronteira da geracao Gemini 3.8 lancado em Setembro/2026. "
             "Motor primario do sistema (90.8% Terminal-Bench, 95.3% GPQA Diamond). "
+            "CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10: a descontinuacao atinge "
+            "gemini-3.7-flash e abaixo na familia flash (nao flash-lite); o 3.8 "
+            "permanece Tier 1. Papel confirmado pelo Tier 0 em 2026-11-10: "
+            "extraordinario orquestrador e agente — permanece em funcoes "
+            "elevadas da malha sob logica de ROI (geracao avancada nao e "
+            "sinonimo de funcao mais alta; o encaixe e por desempenho "
+            "medido, nao por novidade). "
             "Preco promocional ($0.75/$3.75) vigente ate 31/12/2026; a partir de "
             "01/01/2027 a tabela passa a $1.50/$7.50. Suporta thinking_level em "
             "low, medium e high, alem de thinking_budget. Variante "
@@ -549,15 +603,26 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
-        price_per_1m_in=0.15,
-        price_per_1m_out=0.60,
+        price_per_1m_in=0.30,
+        price_per_1m_out=2.50,
         thinking_level="low",
         thought_signature_mode="stateless",
         verification=VerificationStatus.VERIFICADO,
         notas=(
             "Camada 1: Triagem, parsing rapido e borda de baixa latencia (>200 tok/s). "
             "Suporta thinking_level em 'minimal' (para extracao JSON ultrarrapida), "
-            "'medium' e 'high' (para subagentes de codigo/shell)."
+            "'medium' e 'high' (para subagentes de codigo/shell). "
+            "CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10: e o modelo fast operations "
+            "primario da malha; NAO e gratuito — e o modelo PAGO mais barato da "
+            "familia (standard $0.30/$2.50 por 1M; flex/batch $0.15/$1.25), "
+            "customizado para tarefas de altissimo volume, baixa latencia, "
+            "triagem, linting e rotinas frequentes. Benchmarks publicos "
+            "(card do fabricante, jul/2026): SWE-Bench Pro 54.2% — acima do "
+            "Gemini 3 Flash e perto do GPT-5.4 mini —, Terminal-Bench 2.1 "
+            "54.0%, OSWorld-Verified 74.0%, MLE-Bench 39.2%, GPQA Diamond "
+            "83.8%, ~350 tok/s de saida. A descontinuacao atinge o "
+            "gemini-3.5-flash (nao-lite) e os 3.6/3.7-flash, NAO este nem "
+            "o 3.8-flash."
         ),
     ),
     # - OPENAI - Geracao 6.0 (Atualizada 2026-10-20)

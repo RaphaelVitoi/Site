@@ -158,42 +158,6 @@
         "core/runtime.py"
       ]
     },
-    "gemma4_31b_cloud": {
-      "name": "Gemma 4 31B Dense (Cloud Ollama / Vertex)",
-      "model_path": "gemma4:31b-cloud",
-      "model_file": "gemma4-31b-cloud.gguf",
-      "ollama_model": "gemma4:31b-cloud",
-      "vulkan_port": 8080,
-      "temperature": 0.1,
-      "top_p": 0.95,
-      "repeat_penalty": 1.05,
-      "num_ctx": 32768,
-      "num_predict": 8192,
-      "multimodal": false,
-      "direct_conversational": true,
-      "system_prompt": "Você é o Gemma 4 31B Dense (Cloud Ollama / Vertex), motor de Raciocínio Puro e Delegação Pesada em Nuvem (0 GB VRAM Local, AIME 89.2%). Atua em análises profundas de arquitetura, teoria matemática PMev e sínteses epistêmicas amplas.",
-      "context_files": [
-        "engine/gemma_server.py"
-      ]
-    },
-    "kimi_code_cloud": {
-      "name": "Kimi K2.7 Code Cloud (Ollama Cloud)",
-      "model_path": "kimi-k2.7-code:cloud",
-      "model_file": "kimi-k2.7-code-cloud",
-      "ollama_model": "kimi-k2.7-code:cloud",
-      "vulkan_port": 8080,
-      "temperature": 0.1,
-      "top_p": 0.95,
-      "repeat_penalty": 1.05,
-      "num_ctx": 32768,
-      "num_predict": 8192,
-      "multimodal": false,
-      "direct_conversational": true,
-      "system_prompt": "Você é o Kimi K2.7 Code Cloud via Ollama Cloud. Atua como motor de geração e refatoração técnica de código em nuvem no ecossistema Nexus.",
-      "context_files": [
-        "engine/gemma_server.py"
-      ]
-    },
     "gemma4_12b_unified": {
       "name": "Gemma 4 12B Unified QAT (Encoder-Free Multimodal)",
       "model_path": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",

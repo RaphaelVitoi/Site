@@ -705,7 +705,7 @@ async def _test_api_key(session, provider, key, provider_id, semaphore):
 
                 await call_anthropic(
                     session,
-                    "claude-3-haiku-20240307",
+                    "claude-haiku-5.5",
                     "ping",
                     "ping",
                     key,

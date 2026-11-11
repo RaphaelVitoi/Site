@@ -5,7 +5,7 @@ import urllib.request
 def main() -> None:
     url = "http://127.0.0.1:11434/api/generate"
     prompt = "<start_of_turn>user\nVoce e o Historian. Diga 'Ola do Historian'.<end_of_turn>\n<start_of_turn>model\n"
-    payload = {"model": "gemma4:31b-cloud", "prompt": prompt, "stream": True, "options": {"temperature": 0.0}}
+    payload = {"model": "gemma4:12b", "prompt": prompt, "stream": True, "options": {"temperature": 0.0}}
 
     req = urllib.request.Request(
         url,

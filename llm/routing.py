@@ -72,7 +72,6 @@ PREFIX_GEMINI_38 = "gemini-3.8"
 MODELOS_TIER1 = (
     "claude-opus-5+",
     "claude-sonnet-5+",
-    "gpt-5.6+",
     "gpt-6+",
     "fable",
 )
@@ -133,8 +132,6 @@ def _e_recurso_escasso(m: str) -> bool:
 COTA_DE_DISPONIBILIDADE: dict[str, float] = {
     "gemini-3.5-flash-lite": 0.8,  # rapido, mas o mais disputado da frota
     "gemini-3.8-flash": 0.55,  # peso conservador; sem medicao comparavel nesta janela
-    "gemma4:31b-cloud": 0.9,  # quota de cloud generosa
-    "gpt-oss:120b-cloud": 0.8,  # quota de cloud generosa
     "glm": 0.85,  # quota de cloud generosa
     "qwen2.5-coder": 1.0,  # local: sem cota
     "ai9stars": 1.0,  # local llama.cpp

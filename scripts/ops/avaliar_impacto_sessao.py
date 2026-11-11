@@ -283,9 +283,9 @@ def medir_eficiencia_economica_e_infraestrutura() -> dict[str, object]:
         "modelos_cloud_zero_ram_count": cloud_models_count,
         "modelos_locais_quantizados_count": local_models_count,
         "runtimes_mitigacao_infraestrutura": [
-            "Ollama (Zero-RAM cloud models: gemma4:31b-cloud, kimi-k2.7-code:cloud, deepseek)",
-            "llama.cpp (Familia Qwen quantizada local de alta taxa tokens/watt)",
-            "Hermes Agent (Familia Laguna e condutor Solar-Pro4 com modelos free em nuvem)",
+            "Ollama (somente execucao local; modelos ':cloud' descontinuados em 2026-11-10)",
+            "llama.cpp (Familia Qwen quantizada local de alta taxa tokens/watt; harness/condutor, nao identidade)",
+            "Hermes Agent (harness/condutor router; modelos servidos ocupam tier natural + sufixo 'b', blindados da calibracao)",
         ],
         "mitigacao_custo_servidores": "Eliminacao de VMs e servidores pagos via inferencia free em nuvem e edge",
     }
@@ -416,7 +416,7 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
         print(
             f"\u2022 Eficiencia Economica & Infra:  Cotas Pro Tier 1 prioritarias (FLAT_FEE) | {econ.get('modelos_cloud_zero_ram_count', 0)} cloud Zero-RAM / {econ.get('modelos_locais_quantizados_count', 0)} locais"
         )
-        print("                                 Runtimes: Ollama cloud + llama.cpp Qwen + Hermes Agent")
+        print("                                 Runtimes: Ollama local + llama.cpp Qwen + Hermes Agent")
     print("=" * 65 + "\n")
 
 

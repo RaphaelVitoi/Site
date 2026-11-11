@@ -36,12 +36,17 @@ from llm.routing import (
 RAIZ = Path(__file__).resolve().parent.parent
 MANIFESTO = RAIZ / "data" / "agents_manifest.json"
 
+# Frota de execucao vigente (2026-11-10): somente locais medidos no manifesto
+# Ollama + APIs ativas. Os modelos ':cloud' (gemma4:31b-cloud,
+# gpt-oss:120b-cloud, glm-5.1:cloud) foram descontinuados pelo Tier 0.
 FROTA = [
-    "gemma4:31b-cloud",
-    "gpt-oss:120b-cloud",
+    "gemma4:12b",
+    "gemma4:e4b",
     "qwen2.5-coder:7b-instruct-q5_K_M",
+    "qwen-pmev-math:latest",
     "gemini-3.8-flash",
     "gemini-3.5-flash-lite",
+    "qwen2.5-coder:1.5b",
 ]
 
 
@@ -86,13 +91,12 @@ def test_modelos_tier1_reconhecidos_e_bloqueados_em_tarefas_comuns() -> None:
         "claude-opus-5.5",
         "claude-sonnet-5",
         "claude-sonnet-5.5",
-        "gpt-5.6-sol",
-        "gpt-5.6-terra",
-        "gpt-5.6-luna",
         "gpt-6-astra",
         "gpt-6-sol",
         "gpt-6.1",
-        "claude-fable-5.1",
+        "gpt-6.0-sol",
+        "gpt-6.0-terra",
+        "gpt-6.0-luna",
     ]
 
     for mod in modelos_tier1_amostra:
@@ -121,20 +125,30 @@ def test_codigo_vai_para_o_coder_quantizado_local() -> None:
     assert _primeiro(FROTA, DOMINIO_CODIGO) == "qwen2.5-coder:7b-instruct-q5_K_M"
 
 
-def test_curadoria_vai_para_modelo_grande() -> None:
-    """Curadoria e unificar, nao classificar. O `3.5-flash-lite` fica de fora."""
+def test_curadoria_vai_para_o_especialista_de_raciocinio() -> None:
+    """Curadoria e unificar, nao classificar. O `3.5-flash-lite` fica de fora.
+
+    Com a saida do 31b/120b cloud, o especialista de curadoria na frota vigente
+    e o `gemini-3.8-flash` (degrau -3 em `_score_curadoria`).
+    """
     escolhido = _primeiro(FROTA, DOMINIO_CURADORIA)
-    assert escolhido in {"gpt-oss:120b-cloud", "gemma4:31b-cloud"}
+    assert escolhido == "gemini-3.8-flash"
     assert _especialidade("gemini-3.5-flash-lite", DOMINIO_CURADORIA) == 1
 
 
-def test_inteligencia_vai_para_o_gemma_grande() -> None:
-    """Fundacao e plano pedem o binario que segura o plano inteiro."""
-    assert _primeiro(FROTA, DOMINIO_INTELIGENCIA) == "gemma4:31b-cloud"
+def test_inteligencia_vai_para_o_especialista_de_raciocinio() -> None:
+    """Fundacao e plano pedem o modelo que segura o plano inteiro."""
+    assert _primeiro(FROTA, DOMINIO_INTELIGENCIA) == "gemini-3.8-flash"
 
 
-def test_matematica_vai_para_o_31b() -> None:
-    assert _primeiro(FROTA, DOMINIO_MATH) == "gemma4:31b-cloud"
+def test_matematica_sem_31b_local_cai_no_eixo_economico() -> None:
+    """O especialista de MATH era o 31b; sem ele na frota, nenhum modelo local
+    declara degrau de matematica e a decisao volta ao eixo economico.
+
+    Registrado como comportamento medido, nao como defeito: a nomeacao de um
+    especialista local de MATH e decisao pendente do Tier 0.
+    """
+    assert _primeiro(FROTA, DOMINIO_MATH) == "gemini-3.5-flash-lite"
 
 
 def test_raciocinio_prefere_o_3_8() -> None:
@@ -294,14 +308,14 @@ def test_roteamento_hermes_e_laguna_free() -> None:
     assert _especialidade("poolside/laguna-s-2.1:free", DOMINIO_RAZONIO) == -3
 
 
-def test_roteamento_glm_cloud_e_local_llamacpp() -> None:
-    """Valida que GLM Cloud protege curadoria e modelos llama.cpp operam custo zero."""
+def test_roteamento_glm_e_local_llamacpp() -> None:
+    """Valida que a familia GLM e recurso escasso preservado e llama.cpp custa zero."""
     from llm.routing import _custo_relativo, _e_recurso_escasso
 
-    # GLM Cloud e recurso escasso (preservado em triagem/codigo, ativo em curadoria/inteligencia)
-    assert _e_recurso_escasso("glm-5.1:cloud") is True
+    # GLM e recurso escasso (preservado em triagem/codigo, ativo em curadoria/inteligencia)
+    assert _e_recurso_escasso("glm-5.1") is True
     assert _especialidade("glm:oss 120b", DOMINIO_CURADORIA) == -6
-    assert _especialidade("glm-5.1:cloud", DOMINIO_INTELIGENCIA) == -5
+    assert _especialidade("glm-5.1", DOMINIO_INTELIGENCIA) == -5
 
     # llama.cpp local (8081, 8082, 8083) opera custo zero
     assert _custo_relativo("ai9stars_g9v3-3b", "ai9stars_g9v3-3b") == 0.0

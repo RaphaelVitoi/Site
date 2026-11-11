@@ -22,9 +22,9 @@ def _montar(model: str, system_prompt: str, user_prompt: str, kwargs: dict) -> t
     - **Geracao 4.6** (`claude-opus-4-6`, `claude-sonnet-4-6`): disponiveis e
       fora do Tier 1. Diferenca que importa: eles ACEITAM amostragem legada,
       entao `reject_legacy_sampling=False` neles nao e descuido.
-    - **Legado** (`claude-3-haiku-20240307`, usado pelo ping de chave em
-      `cli/commands.py`): caminho preservado, `temperature` incluida. Geracao 3
-      aceita amostragem, e sanea-la quebraria a validacao de chave.
+    - **Legado** (geracoes <5, ex.: `claude-3-haiku-20240307`): caminho
+      preservado para chamadas diretas por nome, `temperature` incluida.
+      Geracao antiga aceita amostragem, e sanea-la quebraria essas chamadas.
 
     A regra que isto corrige nao era "nao mandar temperature", era "nao mandar
     temperature para quem a rejeita com 400".
