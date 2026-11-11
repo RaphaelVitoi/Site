@@ -60,7 +60,7 @@
     "prettier": "3.10.0",
     "prettier-plugin-tailwindcss": "0.8.1",
     "rimraf": "6.1.4",
-    "turbo": "2.11.10",
+    "turbo": "2.11.11",
     "vitest": "^5.1.0"
   },
   "overrides": {
@@ -130,9 +130,9 @@
     ]
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.117",
+    "@ai-sdk/google": "^4.0.118",
     "@prisma/adapter-libsql": "7.10.1",
     "@prisma/client": "7.10.1",
-    "ai": "^7.0.169"
+    "ai": "^7.0.170"
   }
 }
