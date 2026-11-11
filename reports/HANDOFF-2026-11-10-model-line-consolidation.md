@@ -12,737 +12,1432 @@ escopo: site
 autor: "Devin (swe-2-flash) [Tier 1]"
 criado_em: 2026-11-10
 revisoes_de_ancora:
-- registro: auditoria-2026-08-30-coderabbit-resolucao-e-integridade
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-08-31-protocolos-handoff-git-clippy-e-relatorios
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-01-integridade-pos-fusao
-  caminhos:
-  - engine/cognitive.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
-  caminhos:
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-02-curadoria-mcp-e-processos-residuais
-  caminhos:
-  - data/system_config.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-03-disco-extensao-e-roteador-de-modelo
-  caminhos:
-  - engine/gemma_server.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
-  caminhos:
-  - CLAUDE.md
-  - data/agents_manifest.json
-  - data/ollama_models.json
-  - data/routing_map.json
-  - data/system_config.json
-  - engine/gemma_server.py
-  - llm/model_registry.py
-  - llm/routing_policy.py
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-07-preludio-jules-astra-e-correcao-da-delegacao
-  caminhos:
-  - llm/model_registry.py
-  - tests/test_model_registry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-12-o-ci-vermelho-que-nenhum-portao-local-media
-  caminhos:
-  - CLAUDE.md
-  - llm/model_registry.py
-  - scripts/ops/AgentCalibrationProvenance.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
-  caminhos:
-  - CLAUDE.md
-  - scripts/ops/AgentCalibrationProvenance.ps1
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-22-paridade-config-identidade
-  caminhos:
-  - CLAUDE.md
-  - data/agent_identities.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-09-24-mcp-gateway-compartilhado-e-persistencia
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-10-08-integralidade-backend
-  caminhos:
-  - engine/llm_api.py
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: auditoria-2026-11-09-governanca-contexto-memoria-routing-cosmovisao
-  caminhos:
-  - .claude/project-context.md
-  - memory/notepad_active.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: checkpoint-2026-06-14-infrastructure-hardening
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: frente-3-2026-08-29-guard-tri-camada
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: frente-4-2026-08-28-autoridade-de-roteamento
-  caminhos:
-  - core/config.py
-  - core/subagents_mesh.py
-  - llm/routing.py
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-29-auditoria-integridade-repositorio
-  caminhos:
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-29-diagnostico-de-memoria
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
-  caminhos:
-  - CLAUDE.md
-  - core/subagents_mesh.py
-  - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-29-guard-corrigido-e-heranca
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
-  caminhos:
-  - data/DECLARADO_E_NAO_LIDO.json
-  - data/system_config.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-29-roteamento-memoria-e-guard
-  caminhos:
-  - data/DECLARADO_E_NAO_LIDO.json
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
-  caminhos:
-  - CLAUDE.md
-  - data/agents_manifest.json
-  - llm/routing_policy.py
-  - tests/test_architectural_stress_and_failover.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-30-resolucao-coderabbit-linters-e-malha-sota
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  - core/config.py
-  - core/subagents_mesh.py
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-08-30-status-malha-agentica-e-routing
-  caminhos:
-  - core/config.py
-  - core/subagents_mesh.py
-  - data/agents_manifest.json
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-01-prioridade-pmev-continuacao
-  caminhos:
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-02-curadoria-mcp-quarentena-e-roteamento-lazy
-  caminhos:
-  - data/system_config.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-02-integridade-portao-no-teto-e-fila-para-o-sucessor
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-03-guarda-de-governanca-camada-anthropic-e-cobertura-cve
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-03-procedencia-de-solve-e-portao-de-reprodutibilidade
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-03-sessao-outlier-infraestrutura
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-04-google-workspace-skill-e-curadoria-de-midia
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-04-pmev-credenciais-e-submodulos
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-04-refinamento-sota-radar-telemetria-e-mcps-google
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
-  caminhos:
-  - CLAUDE.md
-  - scripts/ops/AgentCalibrationProvenance.ps1
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-14-pagina-icm-contra-a-mesa-real
-  caminhos:
-  - engine/gemma_server.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-22-integracao-system1-llm-dashboard
-  caminhos:
-  - CLAUDE.md
-  - data/agent_identities.json
-  - engine/gemma_server.py
-  - engine/llm_api.py
-  - llm/anthropic.py
-  - scripts/ops/AgentCalibrationProvenance.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-22-paridade-config-identidade
-  caminhos:
-  - CLAUDE.md
-  - data/agent_identities.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-23-auditoria-frontend-backend-e-laya
-  caminhos:
-  - engine/gemma_server.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-25-governanca-pools-openrouter-e-impacto
-  caminhos:
-  - .agents/skills/session-impact-evaluator/SKILL.md
-  - .agents/skills/site-session-handoff/SKILL.md
-  - CLAUDE.md
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-29-contraste-acessibilidade-e-identidade-de-condutor
-  caminhos:
-  - CLAUDE.md
-  - data/agent_identities.json
-  - scripts/ops/AgentCalibrationProvenance.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-09-30-expurgo-de-modelos-obsoletos-harmonizacao-qwen-e-calibracao
-  caminhos:
-  - core/config.py
-  - data/routing_map.json
-  - data/system_config.json
-  - docs/reports/HOLOGRAPHIC_ROUTING_MATRIX.md
-  - engine/gemma_server.py
-  - engine/llm_api.py
-  - llm/routing.py
-  - scripts/cli/nexus.py
-  - scripts/start_model.ps1
-  - tests/test_llm_layer_sota.py
-  - tests/test_roteamento_especialidade.py
-  - tests/test_task_routing.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-10-05-fechamento-do-ciclo-medicoes-cwv-e-cacheabilidade
-  caminhos:
-  - engine/llm_api.py
-  - tests/test_llm_layer_sota.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-10-08-auditoria-e-remediacao-backend
-  caminhos:
-  - engine/llm_api.py
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: handoff-2026-10-20-harmonizacao-tier1-gemini-38
-  caminhos:
-  - CLAUDE.md
-  - llm/adapters.py
-  - llm/model_registry.py
-  - llm/routing.py
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: plano-laya-integracao-s1s2-pmev-2026-09-20
-  caminhos:
-  - engine/cognitive.py
-  - llm/model_registry.py
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-08-29-a-fila-que-roda
-  caminhos:
-  - data/DECLARADO_E_NAO_LIDO.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-08-29-governanca-piramidal-sota
-  caminhos:
-  - CLAUDE.md
-  - core/subagents_mesh.py
-  - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-08-29-os-indices-postos-de-lado
-  caminhos:
-  - data/system_config.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-08-29-sota-triad-mesh-integracao
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-08-29-tres-orfaos
-  caminhos:
-  - data/DECLARADO_E_NAO_LIDO.json
-  - engine/gemma_server.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-01-cache-por-mtime-e-fusao-do-project-context
-  caminhos:
-  - .claude/project-context.md
-  - engine/cognitive.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-01-identidade-de-agente-na-arvore-canonica
-  caminhos:
-  - engine/cognitive.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-02-adapters-ligado-ao-caminho-real-anthropic
-  caminhos:
-  - engine/llm_api.py
-  - llm/adapters.py
-  - llm/anthropic.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-02-portao-de-calibracao-por-sessao
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  - CLAUDE.md
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-03-triade-fronteira-chico-e-concorrencia
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-04-credenciais-submodulos-e-adaptador-hrc
-  caminhos:
-  - data/agents_manifest.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-05-regua-para-agente-autonomo-de-nuvem
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-05-saneamento-nexus-ollama-e-auto-diagnostico
-  caminhos:
-  - data/ollama_models.json
-  - scripts/cli/nexus.py
-  - scripts/llm_inference/run_inference.py
-  - scripts/start_model.ps1
-  - tests/test_run_inference_contrato.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-07-delegacao-gemini-flash-lite-cinco-itens
-  caminhos:
-  - llm/model_registry.py
-  - tests/test_model_registry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-07-integracao-gpt6-astra-e-retirada-do-fable
-  caminhos:
-  - CLAUDE.md
-  - llm/adapters.py
-  - llm/anthropic.py
-  - llm/model_registry.py
-  - llm/routing_policy.py
-  - tests/test_model_registry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-07-procedencia-do-timesfm-e-json-do-cli
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-07-promocao-do-duo-gemini-na-faixa-gratuita
-  caminhos:
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-08-adaptacao-gemini-flash-e-saneamento-amostragem
-  caminhos:
-  - engine/llm_api.py
-  - llm/adapters.py
-  - llm/model_registry.py
-  - tests/test_model_registry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-08-arbitragem-soberana-sobre-a-lei-de-concorrencia
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-08-publicacao-assistida-do-saneamento-de-terminal
-  caminhos:
-  - scripts/llm_inference/run_inference.py
-  - tests/test_run_inference_contrato.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-08-ruff-format-e-o-ci-vermelho
-  caminhos:
-  - llm/adapters.py
-  - llm/model_registry.py
-  - scripts/cli/nexus.py
-  - scripts/llm_inference/run_inference.py
-  - tests/test_run_inference_contrato.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-09-saneamento-medicao-datada-identificacao-agentes
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-12-a-identidade-do-antigravity-e-o-catalogo-que-faltava
-  caminhos:
-  - data/agent_identities.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-12-preludio-o-instrumento-que-sabia-abrir-e-nao-fechar
-  caminhos:
-  - CLAUDE.md
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-14-correcoes-pos-auditoria-handoff-tier-e-dependencias
-  caminhos:
-  - CLAUDE.md
-  - data/agent_identities.json
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-14-harmonizacao-canonicos-astra-luna-gemini-anthropic
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  - CLAUDE.md
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-14-saneamento-linters-pmev-e-engines
-  caminhos:
-  - scripts/llm_inference/run_inference.py
-  - scripts/ops/get_dashboard_telemetry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-18-dashboard-notificacoes-e-recomendacoes-acionaveis
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-18-dream-rsi-ligado-aula12-localizada-e-bounty-a-iniciar
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-18-saneamento-token-budget-e-harmonizacao-timesfm30
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-19-refatoracao-sonar-python-e-icm
-  caminhos:
-  - llm/model_registry.py
-  - llm/routing_policy.py
-  - scripts/cli/nexus.py
-  - scripts/llm_inference/run_inference.py
-  - scripts/ops/get_dashboard_telemetry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-19-warning-sem-backtracking
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-22-skill-handoff-e-calibracao
-  caminhos:
-  - .agents/skills/site-session-handoff/SKILL.md
-  - CLAUDE.md
-  - data/agents_manifest.json
-  - scripts/ops/Register-AgentCalibrationFeedback.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-23-evolucao-pendencias-laya-e-tarefas
-  caminhos:
-  - engine/gemma_server.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-24-blindagem-ascii-e-harmonizacao-scripts
-  caminhos:
-  - engine/gemma_server.py
-  - llm/adapters.py
-  - llm/routing_policy.py
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-24-correcao-markup-rich-e-wrappers-cli
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-24-harmonizacao-arquitetura-hibrida-vulkan-pytorch
-  caminhos:
-  - .claude/project-context.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-24-mcp-gateway-compartilhado-e-persistencia
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-24-refino-vram-atalhos-ceo-dashboard
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-24-retificacao-hardware-gpu-amd-vulkan
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-25-precedencia-economica-assinaturas-pro-e-nuvem-free
-  caminhos:
-  - .agents/skills/session-impact-evaluator/SKILL.md
-  - .agents/skills/site-session-handoff/SKILL.md
-  - CLAUDE.md
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-25-skill-avaliacao-impacto-sessao
-  caminhos:
-  - .agents/skills/session-impact-evaluator/SKILL.md
-  - .agents/skills/site-session-handoff/SKILL.md
-  - CLAUDE.md
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-25-soberania-commit-push-e-staging-perpetuo
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-25-teto-de-commits-e-push-obrigatorio
-  caminhos:
-  - CLAUDE.md
-  - data/agents_manifest.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-09-30-expurgo-de-modelos-obsoletos-e-reconciliacao-de-ancoras
-  caminhos:
-  - core/config.py
-  - data/routing_map.json
-  - data/system_config.json
-  - docs/reports/HOLOGRAPHIC_ROUTING_MATRIX.md
-  - engine/gemma_server.py
-  - engine/llm_api.py
-  - llm/routing.py
-  - scripts/cli/nexus.py
-  - scripts/start_model.ps1
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-01-harmonizacao-malha-subagentes
-  caminhos:
-  - core/agent_clustering.py
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-01-integracao-cloud-ollama-hermes-nous-e-chaves-registro
-  caminhos:
-  - engine/llm_api.py
-  - tests/test_llm_layer_sota.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-01-resiliencia-servidores-locais-e-triagem
-  caminhos:
-  - engine/gemma_server.py
-  - engine/llm_api.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-04-http-metrics-correlation-e-worker-shutdown
-  caminhos:
-  - engine/llm_api.py
-  - tests/test_llm_layer_sota.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-05-regua-de-tier-efetivo-no-catalogo-de-identidade
-  caminhos:
-  - data/agent_identities.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-05-resolucao-de-modelo-ollama-e-schema-json
-  caminhos:
-  - engine/gemma_server.py
-  - engine/llm_api.py
-  - tests/test_llm_layer_sota.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-06-strata-moe-125b-e-dashboard-nexus
-  caminhos:
-  - data/agents_manifest.json
-  - engine/llm_api.py
-  - scripts/cli/nexus.py
-  - scripts/ops/Start-NexusDashboard.ps1
-  - scripts/ops/get_dashboard_telemetry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-08-auditoria-e-remediacao-backend
-  caminhos:
-  - engine/llm_api.py
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-08-skill-sota-server-lifecycle-warmup
-  caminhos:
-  - data/agents_manifest.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-09-auditoria-governanca-e-remediacao-sota-v8-gold
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-10-evolucao-malha-agentica-sota-v8-gold
-  caminhos:
-  - core/subagents_mesh.py
-  - llm/providers.py
-  - llm/routing.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-13-saneamento-diagnosticos-ide-e-compatibilidade
-  caminhos:
-  - engine/gemma_server.py
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-14-saneamento-tipagem-config-ide-e-dependencias
-  caminhos:
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-18-harmonizacao-malha-agentica-e-sota-engine
-  caminhos:
-  - core/subagents_mesh.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-18-resolucao-sonarqube-e-saneamento-global
-  caminhos:
-  - .claude/project-context.md
-  - core/subagents_mesh.py
-  - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
-  - scripts/ops/get_dashboard_telemetry.py
-  - scripts/routines/audit_monthly_modus_operandi_and_routing.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-19-evolucao-telemetria-mcp-s1-e-benchmark-regime
-  caminhos:
-  - .agents/skills/session-impact-evaluator/SKILL.md
-  - scripts/ops/avaliar_impacto_sessao.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-19-saneamento-linters-markdown-e-conformidade-tipagem
-  caminhos:
-  - engine/gemma_server.py
-  - memory/notepad_active.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-19-saneamento-sonarqube-timesfm-e-a11y
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-19-verificacao-neural-timesfm-e-evolucao-ecossistema
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-20-harmonizacao-tier1-e-gemini-38
-  caminhos:
-  - CLAUDE.md
-  - cli/commands.py
-  - core/agent_clustering.py
-  - data/agent_identities.json
-  - data/agents_manifest.json
-  - data/routing_map.json
-  - data/system_config.json
-  - docs/ARQUITETURA_PADRAO_OURO_SOTA_2026.md
-  - engine/llm_api.py
-  - llm/adapters.py
-  - llm/model_registry.py
-  - llm/routing.py
-  - llm/routing_policy.py
-  - scripts/routines/audit_monthly_modus_operandi_and_routing.py
-  - tests/test_architectural_stress_and_failover.py
-  - tests/test_llm_layer_sota.py
-  - tests/test_model_registry.py
-  - tests/test_roteamento_especialidade.py
-  - tests/test_task_routing.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-20-saneamento-quality-gate-ascii-e-reconciliacao-de-ancoras
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-24-auditoria-geral-saneamento-e-reconciliacao
-  caminhos:
-  - llm/routing.py
-  - llm/routing_policy.py
-  - tests/test_model_registry.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-27-evolucao-project-context-e-reconciliacao-sota
-  caminhos:
-  - .claude/project-context.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-27-remediacao-dependabot-submodulo-e-integracao-sota
-  caminhos:
-  - engine/llm_api.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-27-resolucao-matriz-ci-e-acessibilidade-wcag
-  caminhos:
-  - engine/gemma_server.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-10-28-saneamento-reconciliacao-e-elevacao-dependencias-triade-montecarlo
-  caminhos:
-  - data/agents_manifest.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-01-integracao-ai-mesh-sdk-e-otimizacao-jules
-  caminhos:
-  - frontend/src/lib/ai/mesh-router.ts
-  - index.ts
-  - stream.ts
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-03-sincronizacao-e-correcao-frontmatter-skills-sota
-  caminhos:
-  - .agents/skills/session-impact-evaluator/SKILL.md
-  - .agents/skills/site-session-handoff/SKILL.md
-  - data/agents_manifest.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-05-saneamento-customizations-e-elevacao-dependencias
-  caminhos:
-  - .agents/skills/site-session-handoff/SKILL.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-06-reparo-manifestos-e-declaracao-chrysalis
-  caminhos:
-  - data/agents_manifest.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-07-auditoria-integral-dependabot-github-e-code-scanning
-  caminhos:
-  - engine/gemma_server.py
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-07-auditoria-jules-cloud-saneamento-linters-e-pyproject
-  caminhos:
-  - llm/providers.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
-  caminhos:
-  - scripts/cli/nexus.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-09-saneamento-governanca-memoria-e-contexto-auditado
-  caminhos:
-  - .claude/project-context.md
-  - memory/notepad_active.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: registro-2026-11-10-identidade-devin-swe-2-flash
-  caminhos:
-  - data/agent_identities.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
-  caminhos:
-  - CLAUDE.md
-  - core/subagents_mesh.py
-  - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
-  caminhos:
-  - CLAUDE.md
-  - core/subagents_mesh.py
-  - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
-  - llm/routing_policy.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: relatorio-fusao-cerebro-claude-quality-gate-2026-09-01
-  caminhos:
-  - data/agents_manifest.json
-  - data/system_config.json
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: relatorio-handoff-20260830-teoria-dos-jogos-pmev-sota-v8-gold
-  caminhos:
-  - .claude/agent-memory/chico/HANDOFF_LATEST.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: taxonomia-canonica-de-documentacao-e-relatorios
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: validacao-2026-08-28-arquitetura-de-memoria
-  caminhos:
-  - engine/cognitive.py
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: validacao-2026-09-12-a-grade-que-nao-cabia-e-o-aviso-que-virou-bloqueio
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
-- registro: validacao-2026-09-12-a-identidade-de-autoria-deixa-de-ser-prosa
-  caminhos:
-  - CLAUDE.md
-  parecer: 'Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as mudancas nos caminhos ancorados sao a remocao de modelos descontinuados das rotas ativas, reposicionamento por benchmark/preco e fechamento operacional; o conteudo historico do registro permanece valido como registro datado.'
+  - registro: auditoria-2026-08-30-coderabbit-resolucao-e-integridade
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-08-31-protocolos-handoff-git-clippy-e-relatorios
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-01-integridade-pos-fusao
+    caminhos:
+      - engine/cognitive.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-01-retrospectiva-prioridade-sessao
+    caminhos:
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-02-curadoria-mcp-e-processos-residuais
+    caminhos:
+      - data/system_config.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-03-disco-extensao-e-roteador-de-modelo
+    caminhos:
+      - engine/gemma_server.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-03-trabalho-do-gemini-3-8-flash
+    caminhos:
+      - CLAUDE.md
+      - data/agents_manifest.json
+      - data/ollama_models.json
+      - data/routing_map.json
+      - data/system_config.json
+      - engine/gemma_server.py
+      - llm/model_registry.py
+      - llm/routing_policy.py
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-07-preludio-jules-astra-e-correcao-da-delegacao
+    caminhos:
+      - llm/model_registry.py
+      - tests/test_model_registry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-12-o-ci-vermelho-que-nenhum-portao-local-media
+    caminhos:
+      - CLAUDE.md
+      - llm/model_registry.py
+      - scripts/ops/AgentCalibrationProvenance.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-12-proveniencia-executavel-do-feedback
+    caminhos:
+      - CLAUDE.md
+      - scripts/ops/AgentCalibrationProvenance.ps1
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-22-paridade-config-identidade
+    caminhos:
+      - CLAUDE.md
+      - data/agent_identities.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-09-24-mcp-gateway-compartilhado-e-persistencia
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-10-08-integralidade-backend
+    caminhos:
+      - engine/llm_api.py
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: auditoria-2026-11-09-governanca-contexto-memoria-routing-cosmovisao
+    caminhos:
+      - .claude/project-context.md
+      - memory/notepad_active.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: checkpoint-2026-06-14-infrastructure-hardening
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: frente-3-2026-08-29-guard-tri-camada
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: frente-4-2026-08-28-autoridade-de-roteamento
+    caminhos:
+      - core/config.py
+      - core/subagents_mesh.py
+      - llm/routing.py
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-29-auditoria-integridade-repositorio
+    caminhos:
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-29-diagnostico-de-memoria
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-29-governanca-8tiers-vulnerabilidades-subagents
+    caminhos:
+      - CLAUDE.md
+      - core/subagents_mesh.py
+      - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-29-guard-corrigido-e-heranca
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-29-quatro-pendencias-e-o-que-elas-eram
+    caminhos:
+      - data/DECLARADO_E_NAO_LIDO.json
+      - data/system_config.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-29-roteamento-memoria-e-guard
+    caminhos:
+      - data/DECLARADO_E_NAO_LIDO.json
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-30-auditoria-malha-agentica-e-trava-de-lfs
+    caminhos:
+      - CLAUDE.md
+      - data/agents_manifest.json
+      - llm/routing_policy.py
+      - tests/test_architectural_stress_and_failover.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-30-resolucao-coderabbit-linters-e-malha-sota
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+      - core/config.py
+      - core/subagents_mesh.py
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-08-30-status-malha-agentica-e-routing
+    caminhos:
+      - core/config.py
+      - core/subagents_mesh.py
+      - data/agents_manifest.json
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-01-prioridade-pmev-continuacao
+    caminhos:
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-02-curadoria-mcp-quarentena-e-roteamento-lazy
+    caminhos:
+      - data/system_config.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-02-integridade-portao-no-teto-e-fila-para-o-sucessor
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-03-guarda-de-governanca-camada-anthropic-e-cobertura-cve
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-03-procedencia-de-solve-e-portao-de-reprodutibilidade
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-03-sessao-outlier-infraestrutura
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-04-google-workspace-skill-e-curadoria-de-midia
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-04-pmev-credenciais-e-submodulos
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-04-refinamento-sota-radar-telemetria-e-mcps-google
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-12-reconciliacao-calibracao-e-proveniencia
+    caminhos:
+      - CLAUDE.md
+      - scripts/ops/AgentCalibrationProvenance.ps1
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-14-pagina-icm-contra-a-mesa-real
+    caminhos:
+      - engine/gemma_server.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-22-integracao-system1-llm-dashboard
+    caminhos:
+      - CLAUDE.md
+      - data/agent_identities.json
+      - engine/gemma_server.py
+      - engine/llm_api.py
+      - llm/anthropic.py
+      - scripts/ops/AgentCalibrationProvenance.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-22-paridade-config-identidade
+    caminhos:
+      - CLAUDE.md
+      - data/agent_identities.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-23-auditoria-frontend-backend-e-laya
+    caminhos:
+      - engine/gemma_server.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-25-governanca-pools-openrouter-e-impacto
+    caminhos:
+      - .agents/skills/session-impact-evaluator/SKILL.md
+      - .agents/skills/site-session-handoff/SKILL.md
+      - CLAUDE.md
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-29-contraste-acessibilidade-e-identidade-de-condutor
+    caminhos:
+      - CLAUDE.md
+      - data/agent_identities.json
+      - scripts/ops/AgentCalibrationProvenance.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-09-30-expurgo-de-modelos-obsoletos-harmonizacao-qwen-e-calibracao
+    caminhos:
+      - core/config.py
+      - data/routing_map.json
+      - data/system_config.json
+      - docs/reports/HOLOGRAPHIC_ROUTING_MATRIX.md
+      - engine/gemma_server.py
+      - engine/llm_api.py
+      - llm/routing.py
+      - scripts/cli/nexus.py
+      - scripts/start_model.ps1
+      - tests/test_llm_layer_sota.py
+      - tests/test_roteamento_especialidade.py
+      - tests/test_task_routing.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-10-05-fechamento-do-ciclo-medicoes-cwv-e-cacheabilidade
+    caminhos:
+      - engine/llm_api.py
+      - tests/test_llm_layer_sota.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-10-08-auditoria-e-remediacao-backend
+    caminhos:
+      - engine/llm_api.py
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: handoff-2026-10-20-harmonizacao-tier1-gemini-38
+    caminhos:
+      - CLAUDE.md
+      - llm/adapters.py
+      - llm/model_registry.py
+      - llm/routing.py
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: plano-laya-integracao-s1s2-pmev-2026-09-20
+    caminhos:
+      - engine/cognitive.py
+      - llm/model_registry.py
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-08-29-a-fila-que-roda
+    caminhos:
+      - data/DECLARADO_E_NAO_LIDO.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-08-29-governanca-piramidal-sota
+    caminhos:
+      - CLAUDE.md
+      - core/subagents_mesh.py
+      - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-08-29-os-indices-postos-de-lado
+    caminhos:
+      - data/system_config.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-08-29-sota-triad-mesh-integracao
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-08-29-tres-orfaos
+    caminhos:
+      - data/DECLARADO_E_NAO_LIDO.json
+      - engine/gemma_server.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-01-cache-por-mtime-e-fusao-do-project-context
+    caminhos:
+      - .claude/project-context.md
+      - engine/cognitive.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-01-identidade-de-agente-na-arvore-canonica
+    caminhos:
+      - engine/cognitive.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-02-adapters-ligado-ao-caminho-real-anthropic
+    caminhos:
+      - engine/llm_api.py
+      - llm/adapters.py
+      - llm/anthropic.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-02-correcao-de-escala-e-timestamp-no-ledger
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-02-portao-de-calibracao-por-sessao
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+      - CLAUDE.md
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-03-triade-fronteira-chico-e-concorrencia
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-04-credenciais-submodulos-e-adaptador-hrc
+    caminhos:
+      - data/agents_manifest.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-05-regua-para-agente-autonomo-de-nuvem
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-05-saneamento-nexus-ollama-e-auto-diagnostico
+    caminhos:
+      - data/ollama_models.json
+      - scripts/cli/nexus.py
+      - scripts/llm_inference/run_inference.py
+      - scripts/start_model.ps1
+      - tests/test_run_inference_contrato.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-07-delegacao-gemini-flash-lite-cinco-itens
+    caminhos:
+      - llm/model_registry.py
+      - tests/test_model_registry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-07-integracao-gpt6-astra-e-retirada-do-fable
+    caminhos:
+      - CLAUDE.md
+      - llm/adapters.py
+      - llm/anthropic.py
+      - llm/model_registry.py
+      - llm/routing_policy.py
+      - tests/test_model_registry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-07-procedencia-do-timesfm-e-json-do-cli
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-07-promocao-do-duo-gemini-na-faixa-gratuita
+    caminhos:
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-08-adaptacao-gemini-flash-e-saneamento-amostragem
+    caminhos:
+      - engine/llm_api.py
+      - llm/adapters.py
+      - llm/model_registry.py
+      - tests/test_model_registry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-08-arbitragem-soberana-sobre-a-lei-de-concorrencia
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-08-publicacao-assistida-do-saneamento-de-terminal
+    caminhos:
+      - scripts/llm_inference/run_inference.py
+      - tests/test_run_inference_contrato.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-08-ruff-format-e-o-ci-vermelho
+    caminhos:
+      - llm/adapters.py
+      - llm/model_registry.py
+      - scripts/cli/nexus.py
+      - scripts/llm_inference/run_inference.py
+      - tests/test_run_inference_contrato.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-09-saneamento-medicao-datada-identificacao-agentes
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-12-a-identidade-do-antigravity-e-o-catalogo-que-faltava
+    caminhos:
+      - data/agent_identities.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-12-preludio-o-instrumento-que-sabia-abrir-e-nao-fechar
+    caminhos:
+      - CLAUDE.md
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-14-correcoes-pos-auditoria-handoff-tier-e-dependencias
+    caminhos:
+      - CLAUDE.md
+      - data/agent_identities.json
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-14-harmonizacao-canonicos-astra-luna-gemini-anthropic
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+      - CLAUDE.md
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-14-saneamento-linters-pmev-e-engines
+    caminhos:
+      - scripts/llm_inference/run_inference.py
+      - scripts/ops/get_dashboard_telemetry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-18-dashboard-notificacoes-e-recomendacoes-acionaveis
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-18-dream-rsi-ligado-aula12-localizada-e-bounty-a-iniciar
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-18-saneamento-token-budget-e-harmonizacao-timesfm30
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-19-refatoracao-sonar-python-e-icm
+    caminhos:
+      - llm/model_registry.py
+      - llm/routing_policy.py
+      - scripts/cli/nexus.py
+      - scripts/llm_inference/run_inference.py
+      - scripts/ops/get_dashboard_telemetry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-19-warning-sem-backtracking
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-22-skill-handoff-e-calibracao
+    caminhos:
+      - .agents/skills/site-session-handoff/SKILL.md
+      - CLAUDE.md
+      - data/agents_manifest.json
+      - scripts/ops/Register-AgentCalibrationFeedback.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-23-evolucao-pendencias-laya-e-tarefas
+    caminhos:
+      - engine/gemma_server.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-24-blindagem-ascii-e-harmonizacao-scripts
+    caminhos:
+      - engine/gemma_server.py
+      - llm/adapters.py
+      - llm/routing_policy.py
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-24-correcao-markup-rich-e-wrappers-cli
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-24-harmonizacao-arquitetura-hibrida-vulkan-pytorch
+    caminhos:
+      - .claude/project-context.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-24-mcp-gateway-compartilhado-e-persistencia
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-24-refino-vram-atalhos-ceo-dashboard
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-24-retificacao-hardware-gpu-amd-vulkan
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-25-precedencia-economica-assinaturas-pro-e-nuvem-free
+    caminhos:
+      - .agents/skills/session-impact-evaluator/SKILL.md
+      - .agents/skills/site-session-handoff/SKILL.md
+      - CLAUDE.md
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-25-skill-avaliacao-impacto-sessao
+    caminhos:
+      - .agents/skills/session-impact-evaluator/SKILL.md
+      - .agents/skills/site-session-handoff/SKILL.md
+      - CLAUDE.md
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-25-soberania-commit-push-e-staging-perpetuo
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-25-teto-de-commits-e-push-obrigatorio
+    caminhos:
+      - CLAUDE.md
+      - data/agents_manifest.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-09-30-expurgo-de-modelos-obsoletos-e-reconciliacao-de-ancoras
+    caminhos:
+      - core/config.py
+      - data/routing_map.json
+      - data/system_config.json
+      - docs/reports/HOLOGRAPHIC_ROUTING_MATRIX.md
+      - engine/gemma_server.py
+      - engine/llm_api.py
+      - llm/routing.py
+      - scripts/cli/nexus.py
+      - scripts/start_model.ps1
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-01-harmonizacao-malha-subagentes
+    caminhos:
+      - core/agent_clustering.py
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-01-integracao-cloud-ollama-hermes-nous-e-chaves-registro
+    caminhos:
+      - engine/llm_api.py
+      - tests/test_llm_layer_sota.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-01-resiliencia-servidores-locais-e-triagem
+    caminhos:
+      - engine/gemma_server.py
+      - engine/llm_api.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-04-http-metrics-correlation-e-worker-shutdown
+    caminhos:
+      - engine/llm_api.py
+      - tests/test_llm_layer_sota.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-05-regua-de-tier-efetivo-no-catalogo-de-identidade
+    caminhos:
+      - data/agent_identities.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-05-resolucao-de-modelo-ollama-e-schema-json
+    caminhos:
+      - engine/gemma_server.py
+      - engine/llm_api.py
+      - tests/test_llm_layer_sota.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-06-strata-moe-125b-e-dashboard-nexus
+    caminhos:
+      - data/agents_manifest.json
+      - engine/llm_api.py
+      - scripts/cli/nexus.py
+      - scripts/ops/Start-NexusDashboard.ps1
+      - scripts/ops/get_dashboard_telemetry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-08-auditoria-e-remediacao-backend
+    caminhos:
+      - engine/llm_api.py
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-08-skill-sota-server-lifecycle-warmup
+    caminhos:
+      - data/agents_manifest.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-09-auditoria-governanca-e-remediacao-sota-v8-gold
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-10-evolucao-malha-agentica-sota-v8-gold
+    caminhos:
+      - core/subagents_mesh.py
+      - llm/providers.py
+      - llm/routing.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-13-saneamento-diagnosticos-ide-e-compatibilidade
+    caminhos:
+      - engine/gemma_server.py
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-14-saneamento-tipagem-config-ide-e-dependencias
+    caminhos:
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-18-harmonizacao-malha-agentica-e-sota-engine
+    caminhos:
+      - core/subagents_mesh.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-18-resolucao-sonarqube-e-saneamento-global
+    caminhos:
+      - .claude/project-context.md
+      - core/subagents_mesh.py
+      - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
+      - scripts/ops/get_dashboard_telemetry.py
+      - scripts/routines/audit_monthly_modus_operandi_and_routing.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-19-evolucao-telemetria-mcp-s1-e-benchmark-regime
+    caminhos:
+      - .agents/skills/session-impact-evaluator/SKILL.md
+      - scripts/ops/avaliar_impacto_sessao.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-19-saneamento-linters-markdown-e-conformidade-tipagem
+    caminhos:
+      - engine/gemma_server.py
+      - memory/notepad_active.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-19-saneamento-sonarqube-timesfm-e-a11y
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-19-verificacao-neural-timesfm-e-evolucao-ecossistema
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-20-harmonizacao-tier1-e-gemini-38
+    caminhos:
+      - CLAUDE.md
+      - cli/commands.py
+      - core/agent_clustering.py
+      - data/agent_identities.json
+      - data/agents_manifest.json
+      - data/routing_map.json
+      - data/system_config.json
+      - docs/ARQUITETURA_PADRAO_OURO_SOTA_2026.md
+      - engine/llm_api.py
+      - llm/adapters.py
+      - llm/model_registry.py
+      - llm/routing.py
+      - llm/routing_policy.py
+      - scripts/routines/audit_monthly_modus_operandi_and_routing.py
+      - tests/test_architectural_stress_and_failover.py
+      - tests/test_llm_layer_sota.py
+      - tests/test_model_registry.py
+      - tests/test_roteamento_especialidade.py
+      - tests/test_task_routing.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-20-saneamento-quality-gate-ascii-e-reconciliacao-de-ancoras
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-24-auditoria-geral-saneamento-e-reconciliacao
+    caminhos:
+      - llm/routing.py
+      - llm/routing_policy.py
+      - tests/test_model_registry.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-27-evolucao-project-context-e-reconciliacao-sota
+    caminhos:
+      - .claude/project-context.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-27-remediacao-dependabot-submodulo-e-integracao-sota
+    caminhos:
+      - engine/llm_api.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-27-resolucao-matriz-ci-e-acessibilidade-wcag
+    caminhos:
+      - engine/gemma_server.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-10-28-saneamento-reconciliacao-e-elevacao-dependencias-triade-montecarlo
+    caminhos:
+      - data/agents_manifest.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-01-integracao-ai-mesh-sdk-e-otimizacao-jules
+    caminhos:
+      - frontend/src/lib/ai/mesh-router.ts
+      - index.ts
+      - stream.ts
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-03-sincronizacao-e-correcao-frontmatter-skills-sota
+    caminhos:
+      - .agents/skills/session-impact-evaluator/SKILL.md
+      - .agents/skills/site-session-handoff/SKILL.md
+      - data/agents_manifest.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-05-saneamento-customizations-e-elevacao-dependencias
+    caminhos:
+      - .agents/skills/site-session-handoff/SKILL.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-06-reparo-manifestos-e-declaracao-chrysalis
+    caminhos:
+      - data/agents_manifest.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-07-auditoria-integral-dependabot-github-e-code-scanning
+    caminhos:
+      - engine/gemma_server.py
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-07-auditoria-jules-cloud-saneamento-linters-e-pyproject
+    caminhos:
+      - llm/providers.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
+    caminhos:
+      - scripts/cli/nexus.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-09-saneamento-governanca-memoria-e-contexto-auditado
+    caminhos:
+      - .claude/project-context.md
+      - memory/notepad_active.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: registro-2026-11-10-identidade-devin-swe-2-flash
+    caminhos:
+      - data/agent_identities.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: relatorio-2026-06-16-auditoria-e-harmonizacao-v8-gold
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: relatorio-2026-08-29-analise-integral-ecossistema-sota-v8-gold
+    caminhos:
+      - CLAUDE.md
+      - core/subagents_mesh.py
+      - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: relatorio-2026-08-29-impacto-quantitativo-qualitativo-sota-v8-gold
+    caminhos:
+      - CLAUDE.md
+      - core/subagents_mesh.py
+      - docs/GOVERNANCA_PIRAMIDAL_SOTA.md
+      - llm/routing_policy.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: relatorio-fusao-cerebro-claude-quality-gate-2026-09-01
+    caminhos:
+      - data/agents_manifest.json
+      - data/system_config.json
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: relatorio-handoff-20260830-teoria-dos-jogos-pmev-sota-v8-gold
+    caminhos:
+      - .claude/agent-memory/chico/HANDOFF_LATEST.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: validacao-2026-08-28-arquitetura-de-memoria
+    caminhos:
+      - engine/cognitive.py
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: validacao-2026-09-12-a-grade-que-nao-cabia-e-o-aviso-que-virou-bloqueio
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
+  - registro: validacao-2026-09-12-a-identidade-de-autoria-deixa-de-ser-prosa
+    caminhos:
+      - CLAUDE.md
+    parecer:
+      "Revisado em 2026-11-10 no commit de consolidacao da linha de modelos: as
+      mudancas nos caminhos ancorados sao a remocao de modelos descontinuados
+      das rotas ativas, reposicionamento por benchmark/preco e fechamento
+      operacional; o conteudo historico do registro permanece valido como
+      registro datado."
 pendencias:
   - id: pend-2026-11-10-key-pools-api
     o_que:
@@ -750,6 +1445,13 @@ pendencias:
       HKCU/HKLM ANTHROPIC/OPENAI/GOOGLE) -- rotas de nuvem falham ate la
     dono: Tier 0
     prazo: 2026-11-24
+  - id: pend-2026-11-10-ci-remoto
+    o_que:
+      Verificar o resultado do pipeline de CI remoto (GitHub Actions) dos pushes
+      fbfa04a9 (Site) e 1150dce (raiz-multiprojeto) -- gates locais verdes nao
+      sao CI; conferir status do run e tratar falhas se houver
+    dono: proximo condutor
+    prazo: 2026-11-11
 verificado:
   - "ollama list sem nenhuma tag :cloud (15 modelos locais restantes)"
   - "gemma_server UP em 127.0.0.1:17043/health com gemma4:12b via Ollama GGUF"
@@ -865,8 +1567,11 @@ assina.
 
 1. **Tier 0 repovoa pools de chaves API** (ver §4; pendência
    `pend-2026-11-10-key-pools-api`).
-2. Rerun da suite completa para confirmar 0 falhas reais antes do push.
-3. `reports/agent-calibration/daily/2026-11-10.json` — artefato diário gerado
+2. Rerun da suite completa para confirmar 0 falhas reais antes do push —
+   **cumprido**: suite verde (0 erros) e push `fbfa04a9` sincronizado.
+3. Verificar CI remoto dos pushes `fbfa04a9`/`1150dce` — pendência
+   `pend-2026-11-10-ci-remoto` (gates locais não são CI).
+4. `reports/agent-calibration/daily/2026-11-10.json` — artefato diário gerado
    pelo pipeline de calibração; incluído no commit por completude do ledger.
 
 ## 8. Avaliação factual de impacto (session-impact-evaluator)
