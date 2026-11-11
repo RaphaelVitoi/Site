@@ -335,6 +335,8 @@ filterwarnings = [
     "ignore:.*_UnionGenericAlias.*:DeprecationWarning",
     "ignore:.*Using `httpx` with `starlette.testclient`.*:DeprecationWarning",
     "ignore::DeprecationWarning:starlette.*",
+    "ignore:invalid escape sequence.*:SyntaxWarning:google\\.genai\\..*",
+    "ignore:unclosed database.*:ResourceWarning",
 ]
 
 
