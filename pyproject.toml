@@ -58,9 +58,9 @@ dependencies = [
     "lancedb>=0.41.0,<1.0.0",  # 0.38.0: atualizado 2026-09-20 para evitar PYSEC-2026-311/3813/3814/3815 do chromadb
     "pyarrow>=26.0.1",
     "onnxruntime>=1.31.1",
-    "sentence-transformers>=6.2.0",  # 6.1.0: atualizado 2026-10-04 para sanar GHSA-jhr6-gm9c-rqjv
+    "sentence-transformers>=6.3.0",  # 6.3.0: latest PyPI 2026-11-11; 6.1.0 ja sanou GHSA-jhr6-gm9c-rqjv
     # ── CLIENTES LLM ──────────────────────────────────────────────────
-    "google-genai>=3.1.0",
+    "google-genai>=3.2.0",
     "google-antigravity>=0.1.23",
     "openai>=3.49.0",
     "anthropic>=2.8.0",

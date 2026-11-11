@@ -36,10 +36,10 @@ chromadb>=1.5.9
 lancedb>=0.41.0,<1.0.0
 pyarrow>=26.0.1
 onnxruntime>=1.31.1
-sentence-transformers>=6.2.0
+sentence-transformers>=6.3.0
 
 # ── CLIENTES LLM, AGENTES & MCP ──────────────────────────────────────────────
-google-genai>=3.1.0
+google-genai>=3.2.0
 google-antigravity>=0.1.23
 openai>=3.49.0
 anthropic>=2.8.0
