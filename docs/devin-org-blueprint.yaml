@@ -1,0 +1,47 @@
+# ==============================================================================
+# Organization blueprint — org "Raphael Vitoi" (malha multiprojeto)
+# Colar em: app.devin.ai > Settings > Environment > Blueprints > Organization
+# Camada compartilhada entre todos os repos da org: só runtimes e ferramentas
+# globais. Dependências de projeto ficam no blueprint de cada repositório
+# (ex.: RaphaelVitoi/Site -> .devin/blueprint.yaml).
+#
+# Escopo deliberado:
+#   - Rust/wasm-pack FORA: só o Site usa, e os bundles WASM já são commitados.
+#     Se outro repo precisar, promover para cá depois (regra da doc: começar
+#     específico e subir o que se repetir).
+#   - maintenance propositalmente trivial: org não instala deps de projeto.
+# ==============================================================================
+
+initialize: |
+  # Python 3.12 (requires-python >=3.12 em todos os projetos da malha)
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  uv python install 3.12
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+  # Node.js 22 LTS (engines: ^22.13.0 || >=24.0.0 no Site)
+  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+
+  # Ferramentas globais de qualidade
+  npm install -g npm@10 prettier markdownlint-cli
+
+maintenance: |
+  # Mantém runtimes frescos a cada build; deps de projeto NÃO entram aqui.
+  uv self update || true
+  uv python install 3.12 || true
+
+knowledge:
+  - name: org-conventions
+    contents: |
+      Cada repo é clonado em ~/repos/<repo> dentro do snapshot.
+      Convenções de governança vivem nos CLAUDE.md/AGENTS.md de cada repo —
+      leia-os antes de alterar código.
+      Python: sempre via `uv run` (nunca pip global). Node: npm workspaces.
+      Testes devem ser herméticos; segredos via Devin Secrets ($VAR), nunca
+      commitados.
+
+  - name: org-runtimes
+    contents: |
+      python3 --version   # 3.12 via uv
+      node --version      # 22 LTS
+      uv --version        # gerenciador canônico Python da malha
