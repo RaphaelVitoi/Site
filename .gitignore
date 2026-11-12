@@ -258,3 +258,6 @@ frontend/src/projects/subagents/
 
 # Skills arquivadas de extensoes
 .agents/skills_archive/
+
+# Symlinks de skills gerados por `npx skills add` (ponteiros locais p/ Claude Code)
+frontend/.claude/
