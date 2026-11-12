@@ -39,7 +39,7 @@ def ollama_api_key() -> str:
     try:
         from llm.budget import ALL_ENV_VARS  # noqa: PLC0415
 
-        return str(ALL_ENV_VARS.get("OLLAMA_API_KEY", "")).strip()
+        return ALL_ENV_VARS.get("OLLAMA_API_KEY", "").strip()
     except Exception:  # noqa: BLE001
         return os.environ.get("OLLAMA_API_KEY", "").strip()
 
