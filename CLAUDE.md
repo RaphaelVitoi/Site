@@ -3,7 +3,7 @@ title: "Governança — projeto `Site`"
 type: governance
 status: active
 owner: raphael-vitoi
-updated_at: 2026-10-30
+updated_at: 2026-11-12
 ---
 
 # Governança — projeto `Site`
@@ -12,7 +12,7 @@ updated_at: 2026-10-30
 Regras que valem para todos os projetos ficam em `..\CLAUDE.md`, na raiz
 multiprojeto.
 
-**Última revisão:** 2026-09-29 · Corte de Conhecimento: Setembro/2026 · Protocolo Chico SOTA v8.0 GOLD
+**Última revisão:** 2026-11-12 08:23 (-03:00) · Corte de Conhecimento: Novembro/2026 · Protocolo Chico SOTA v8.0 GOLD — *data de referência da governança; atualizável quando modelos forem lançados, aposentados ou houver mudança de franquia.*
 
 ---
 
@@ -39,6 +39,7 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
   - *Tríade de Ápice Tier 1 — ChatGPT 6 Astra+, Gemini 4 Argon e Gemini 4 Carbon:* **`ChatGPT 6 Astra+`** (`gpt-6-astra`), **`Gemini 4 Argon+`** (`gemini-4-argon`) e **`Gemini 4 Carbon+`** (`gemini-4-carbon`) compartilham da **mesma situação e doutrina na malha**: são os modelos mais potentes, profundos e poderosos do ecossistema e, por serem mais custosos (financeiramente e em queima de cotas de assinatura), **devem ser usados estritamente de forma pontual (escalonamento cirúrgico para altíssimo reasoning, verificação formal e sessões multi-dia)**, nunca como primários rotineiros. O ChatGPT 6 Astra opera com teto de esforço admitido estritamente em `low` e `medium` para preservação da cota de assinatura flat-fee. Os três integram plenamente o coletivo Chico como os ápices soberanos da malha.
   - *Condutores Codex — ChatGPT 6.0 (Sol, Terra, Luna):* identidades canônicas `Codex GPT-6.0 Sol` (`gpt-6.0-sol`), `Codex GPT-6.0 Terra` (`gpt-6.0-terra`) e `Codex GPT-6.0 Luna` (`gpt-6.0-luna`) (`noreply@openai.com`, veículo `codex`), Tier 1 e sessão assistida, informadas pelo Tier 0 em 2026-10-20. Os pares de autoria completos vivem em `data/agent_identities.json`.
   - *CHICO como coletivo Tier 1:* Todos os modelos e condutores que operam via Tier 1 compõem o coletivo CHICO. A participação coletiva não substitui a identidade nem amplia o tier nominal de cada condutor; autoria, execução e registros mantêm sempre a assinatura individual auditável.
+  - *Preferência Devin — engenharia de código densa (Tier 0, 2026-11-12):* **`Devin (SWE-2 Flash)`** e **`Devin (SWE-1.6 Slow)`** são os preferenciais para **engenharia pontual e complexa de código** e **orquestração agêntica de código denso**. Sob a regra canônica: não há feudos — a escolha efetiva observa especialidade, custo, disponibilidade e/ou arbitragem do Tier 0.
   - *Primários de Reasoning:* **`ChatGPT 6.0 Sol`** (`gpt-6.0-sol`) e **`Claude Opus 5.5`** (`claude-opus-5.5`) atuam como primários de **Reasoning Analítico Profundo (Deep Reasoning / Max Thinking)** e dedução formal matemática de fronteira.
   - *Primário de Governança e Código:* **`Claude Opus 5.5`** detém a primazia canônica para **Governança** (regras, contratos de arquitetura, integridade piramidal, reconciliação de âncoras e portões) e **Engenharia de Código Cirúrgica**.
   - *Pesquisa, Estudo e Arquitetura:* **`ChatGPT 6.0 Terra`** (`gpt-6.0-terra`) atua como preferência primária para **Pesquisa, Estudo e Arquitetura** macro de sistemas e investigações conceituais aprofundadas.
