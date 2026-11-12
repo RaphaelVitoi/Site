@@ -22,22 +22,51 @@
       "family": "pmev",
       "implementation_level": "heuristic",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "typescript"],
-      "source_lineage": ["PMev", "Vitoi"],
+      "runtimes": [
+        "python",
+        "typescript"
+      ],
+      "source_lineage": [
+        "PMev",
+        "Vitoi"
+      ],
       "safe_label": "Hipótese operacional PMev de passivo estrutural multiway",
-      "claims_allowed": ["deterministic-hypothesis-evaluation", "baseline-comparison"],
-      "causal_parameters": ["pot", "num_players", "lambda_factor"],
+      "claims_allowed": [
+        "deterministic-hypothesis-evaluation",
+        "baseline-comparison"
+      ],
+      "causal_parameters": [
+        "pot",
+        "num_players",
+        "lambda_factor"
+      ],
       "reserved_parameters": [],
-      "units": ["big-blinds-or-chips", "probability"],
-      "provenance_requirements": ["engine_id", "implementation_level", "assumptions", "units"],
-      "assumptions": ["quadratic-opponent-growth", "scalar-liability-baseline"],
-      "limitations": ["authorial-hypothesis-not-empirically-calibrated", "does-not-model-field-transition-alone"],
+      "units": [
+        "big-blinds-or-chips",
+        "probability"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "assumptions",
+        "units"
+      ],
+      "assumptions": [
+        "quadratic-opponent-growth",
+        "scalar-liability-baseline"
+      ],
+      "limitations": [
+        "authorial-hypothesis-not-empirically-calibrated",
+        "does-not-model-field-transition-alone"
+      ],
       "consumer_paths": [
         "engine/vitoi_perspective_engine.py",
         "engine/game_theory_solvers.py",
         "frontend/src/lib/pluribusMultiwayEngine.ts"
       ],
-      "api_routes": ["/api/v1/game-theory/pluribus/solve"],
+      "api_routes": [
+        "/api/v1/game-theory/pluribus/solve"
+      ],
       "fallback_engine_id": null
     },
     {
@@ -46,16 +75,52 @@
       "family": "cfr",
       "implementation_level": "primitive",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "typescript", "web-worker"],
-      "source_lineage": ["CFR+", "Libratus"],
+      "runtimes": [
+        "python",
+        "typescript",
+        "web-worker"
+      ],
+      "source_lineage": [
+        "CFR+",
+        "Libratus"
+      ],
       "safe_label": "Primitiva iterativa de regret matching CFR+",
-      "claims_allowed": ["regret-update", "average-strategy", "visual-regret-field"],
-      "causal_parameters": ["action_utilities", "node_ev", "iterations", "kappa", "equity"],
-      "reserved_parameters": ["information_sets", "reach_probabilities", "recursive_game_tree"],
-      "units": ["utility", "probability", "iterations"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "limitations"],
-      "assumptions": ["fixed-action-set", "non-negative-cumulative-regret"],
-      "limitations": ["not-a-complete-extensive-form-cfr-solver", "no-counterfactual-reach-traversal"],
+      "claims_allowed": [
+        "regret-update",
+        "average-strategy",
+        "visual-regret-field"
+      ],
+      "causal_parameters": [
+        "action_utilities",
+        "node_ev",
+        "iterations",
+        "kappa",
+        "equity"
+      ],
+      "reserved_parameters": [
+        "information_sets",
+        "reach_probabilities",
+        "recursive_game_tree"
+      ],
+      "units": [
+        "utility",
+        "probability",
+        "iterations"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "limitations"
+      ],
+      "assumptions": [
+        "fixed-action-set",
+        "non-negative-cumulative-regret"
+      ],
+      "limitations": [
+        "not-a-complete-extensive-form-cfr-solver",
+        "no-counterfactual-reach-traversal"
+      ],
       "consumer_paths": [
         "engine/game_theory_solvers.py",
         "frontend/src/lib/pluribusMultiwayEngine.ts",
@@ -70,10 +135,22 @@
       "family": "adapter",
       "implementation_level": "heuristic",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "typescript", "wasm"],
-      "source_lineage": ["Pluribus", "CFR+", "PMev"],
+      "runtimes": [
+        "python",
+        "typescript",
+        "wasm"
+      ],
+      "source_lineage": [
+        "Pluribus",
+        "CFR+",
+        "PMev"
+      ],
       "safe_label": "Adaptador multiway PMev inspirado em Pluribus",
-      "claims_allowed": ["depth-limited-interface", "heuristic-action-preference", "pmev-liability-integration"],
+      "claims_allowed": [
+        "depth-limited-interface",
+        "heuristic-action-preference",
+        "pmev-liability-integration"
+      ],
       "causal_parameters": [
         "pot",
         "num_players",
@@ -85,8 +162,18 @@
         "depth_streets"
       ],
       "reserved_parameters": [],
-      "units": ["big-blinds-or-chips", "probability", "iterations"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "assumptions", "limitations"],
+      "units": [
+        "big-blinds-or-chips",
+        "probability",
+        "iterations"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "assumptions",
+        "limitations"
+      ],
       "assumptions": [
         "fixed-action-utilities-per-iteration",
         "scalar-pmev-structural-liability",
@@ -105,7 +192,9 @@
         "frontend/src/lib/pluribusWasmAdapter.ts",
         "wasm-equity/lib.rs"
       ],
-      "api_routes": ["/api/v1/game-theory/pluribus/solve"],
+      "api_routes": [
+        "/api/v1/game-theory/pluribus/solve"
+      ],
       "fallback_engine_id": "pmev-multiway-structural-v0"
     },
     {
@@ -114,18 +203,55 @@
       "family": "adapter",
       "implementation_level": "heuristic",
       "runtime_availability": "code-available",
-      "runtimes": ["python"],
-      "source_lineage": ["DeepStack"],
+      "runtimes": [
+        "python"
+      ],
+      "source_lineage": [
+        "DeepStack"
+      ],
       "safe_label": "Heurística de continual resolving inspirada em DeepStack",
-      "claims_allowed": ["gadget-bound-evaluation", "range-action-allocation"],
-      "causal_parameters": ["street", "pot", "ranges_ip", "ranges_oop", "opponent_cfvs", "iterations"],
-      "reserved_parameters": ["trained-value-network", "recursive-decomposition"],
-      "units": ["big-blinds", "probability", "utility", "iterations"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "limitations"],
-      "assumptions": ["fixed-action-abstraction", "deterministic-damping"],
-      "limitations": ["not-the-full-deepstack-system", "no-trained-value-network"],
-      "consumer_paths": ["api/v1/handlers.py"],
-      "api_routes": ["/api/v1/game-theory/deepstack/resolve"],
+      "claims_allowed": [
+        "gadget-bound-evaluation",
+        "range-action-allocation"
+      ],
+      "causal_parameters": [
+        "street",
+        "pot",
+        "ranges_ip",
+        "ranges_oop",
+        "opponent_cfvs",
+        "iterations"
+      ],
+      "reserved_parameters": [
+        "trained-value-network",
+        "recursive-decomposition"
+      ],
+      "units": [
+        "big-blinds",
+        "probability",
+        "utility",
+        "iterations"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "limitations"
+      ],
+      "assumptions": [
+        "fixed-action-abstraction",
+        "deterministic-damping"
+      ],
+      "limitations": [
+        "not-the-full-deepstack-system",
+        "no-trained-value-network"
+      ],
+      "consumer_paths": [
+        "api/v1/handlers.py"
+      ],
+      "api_routes": [
+        "/api/v1/game-theory/deepstack/resolve"
+      ],
       "fallback_engine_id": null
     },
     {
@@ -134,18 +260,53 @@
       "family": "adapter",
       "implementation_level": "adapter",
       "runtime_availability": "code-available",
-      "runtimes": ["python"],
-      "source_lineage": ["ReBeL"],
+      "runtimes": [
+        "python"
+      ],
+      "source_lineage": [
+        "ReBeL"
+      ],
       "safe_label": "Representação PBS e entropia inspirada em ReBeL",
-      "claims_allowed": ["public-belief-state-representation", "range-entropy-evaluation"],
-      "causal_parameters": ["board", "pot", "hero_range", "villain_range"],
-      "reserved_parameters": ["self-play-rl", "search-policy", "value-network"],
-      "units": ["big-blinds", "probability", "entropy"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "limitations"],
-      "assumptions": ["normalized-input-ranges"],
-      "limitations": ["not-the-full-rebel-system", "no-self-play-reinforcement-learning", "no-search"],
-      "consumer_paths": ["api/v1/handlers.py"],
-      "api_routes": ["/api/v1/game-theory/rebel/pbs/evaluate"],
+      "claims_allowed": [
+        "public-belief-state-representation",
+        "range-entropy-evaluation"
+      ],
+      "causal_parameters": [
+        "board",
+        "pot",
+        "hero_range",
+        "villain_range"
+      ],
+      "reserved_parameters": [
+        "self-play-rl",
+        "search-policy",
+        "value-network"
+      ],
+      "units": [
+        "big-blinds",
+        "probability",
+        "entropy"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "limitations"
+      ],
+      "assumptions": [
+        "normalized-input-ranges"
+      ],
+      "limitations": [
+        "not-the-full-rebel-system",
+        "no-self-play-reinforcement-learning",
+        "no-search"
+      ],
+      "consumer_paths": [
+        "api/v1/handlers.py"
+      ],
+      "api_routes": [
+        "/api/v1/game-theory/rebel/pbs/evaluate"
+      ],
       "fallback_engine_id": null
     },
     {
@@ -154,18 +315,45 @@
       "family": "adapter",
       "implementation_level": "adapter",
       "runtime_availability": "code-available",
-      "runtimes": ["python"],
-      "source_lineage": ["Claudico"],
+      "runtimes": [
+        "python"
+      ],
+      "source_lineage": [
+        "Claudico"
+      ],
       "safe_label": "Tradutor pseudo-harmônico de ações off-tree",
-      "claims_allowed": ["off-tree-action-translation", "probability-preserving-mapping"],
-      "causal_parameters": ["actual_bet", "allowed_bets", "pot_size"],
+      "claims_allowed": [
+        "off-tree-action-translation",
+        "probability-preserving-mapping"
+      ],
+      "causal_parameters": [
+        "actual_bet",
+        "allowed_bets",
+        "pot_size"
+      ],
       "reserved_parameters": [],
-      "units": ["big-blinds-or-chips", "probability"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used"],
-      "assumptions": ["ordered-positive-bet-abstraction"],
-      "limitations": ["translator-only-not-a-claudico-reimplementation"],
-      "consumer_paths": ["engine/solver_importers/universal.py", "api/v1/handlers.py"],
-      "api_routes": ["/api/v1/game-theory/claudico/translate-action"],
+      "units": [
+        "big-blinds-or-chips",
+        "probability"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used"
+      ],
+      "assumptions": [
+        "ordered-positive-bet-abstraction"
+      ],
+      "limitations": [
+        "translator-only-not-a-claudico-reimplementation"
+      ],
+      "consumer_paths": [
+        "engine/solver_importers/universal.py",
+        "api/v1/handlers.py"
+      ],
+      "api_routes": [
+        "/api/v1/game-theory/claudico/translate-action"
+      ],
       "fallback_engine_id": null
     },
     {
@@ -174,18 +362,51 @@
       "family": "canonical",
       "implementation_level": "analytic",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "typescript"],
-      "source_lineage": ["Chen", "Ankenman"],
+      "runtimes": [
+        "python",
+        "typescript"
+      ],
+      "source_lineage": [
+        "Chen",
+        "Ankenman"
+      ],
       "safe_label": "Jogos canônicos analíticos de Chen e Ankenman",
-      "claims_allowed": ["closed-form-game-evaluation", "clairvoyance-game", "akq-game"],
-      "causal_parameters": ["pot", "bet"],
+      "claims_allowed": [
+        "closed-form-game-evaluation",
+        "clairvoyance-game",
+        "akq-game"
+      ],
+      "causal_parameters": [
+        "pot",
+        "bet"
+      ],
       "reserved_parameters": [],
-      "units": ["big-blinds-or-chips", "probability", "utility"],
-      "provenance_requirements": ["engine_id", "implementation_level", "source_lineage", "units"],
-      "assumptions": ["canonical-toy-game-rules"],
-      "limitations": ["canonical-game-scope-not-a-general-poker-solver", "parity-bounded-to-declared-shared-corpus"],
-      "consumer_paths": ["api/v1/handlers.py", "frontend/src/lib/canonicalTheoryEngine.ts"],
-      "api_routes": ["/api/v1/canonical/clairvoyance/solve", "/api/v1/canonical/akq/solve"],
+      "units": [
+        "big-blinds-or-chips",
+        "probability",
+        "utility"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "source_lineage",
+        "units"
+      ],
+      "assumptions": [
+        "canonical-toy-game-rules"
+      ],
+      "limitations": [
+        "canonical-game-scope-not-a-general-poker-solver",
+        "parity-bounded-to-declared-shared-corpus"
+      ],
+      "consumer_paths": [
+        "api/v1/handlers.py",
+        "frontend/src/lib/canonicalTheoryEngine.ts"
+      ],
+      "api_routes": [
+        "/api/v1/canonical/clairvoyance/solve",
+        "/api/v1/canonical/akq/solve"
+      ],
       "fallback_engine_id": null
     },
     {
@@ -194,17 +415,50 @@
       "family": "canonical",
       "implementation_level": "analytic",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "typescript"],
-      "source_lineage": ["Janda"],
+      "runtimes": [
+        "python",
+        "typescript"
+      ],
+      "source_lineage": [
+        "Janda"
+      ],
       "safe_label": "Cálculos analíticos de MDF, sizing geométrico e proporções de blefe",
-      "claims_allowed": ["mdf", "geometric-bet-sizing", "bluff-to-value-ratios"],
-      "causal_parameters": ["pot", "bet", "num_defenders", "effective_stack", "num_streets", "bet_fraction_of_pot"],
+      "claims_allowed": [
+        "mdf",
+        "geometric-bet-sizing",
+        "bluff-to-value-ratios"
+      ],
+      "causal_parameters": [
+        "pot",
+        "bet",
+        "num_defenders",
+        "effective_stack",
+        "num_streets",
+        "bet_fraction_of_pot"
+      ],
       "reserved_parameters": [],
-      "units": ["big-blinds-or-chips", "probability", "pot-fraction"],
-      "provenance_requirements": ["engine_id", "implementation_level", "source_lineage", "units"],
-      "assumptions": ["canonical-poker-theory-formulas"],
-      "limitations": ["formula-domain-only", "parity-bounded-to-declared-shared-corpus"],
-      "consumer_paths": ["api/v1/handlers.py", "frontend/src/components/simulator/panels/CfrRegretPanel.tsx"],
+      "units": [
+        "big-blinds-or-chips",
+        "probability",
+        "pot-fraction"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "source_lineage",
+        "units"
+      ],
+      "assumptions": [
+        "canonical-poker-theory-formulas"
+      ],
+      "limitations": [
+        "formula-domain-only",
+        "parity-bounded-to-declared-shared-corpus"
+      ],
+      "consumer_paths": [
+        "api/v1/handlers.py",
+        "frontend/src/components/simulator/panels/CfrRegretPanel.tsx"
+      ],
       "api_routes": [
         "/api/v1/canonical/janda/mdf",
         "/api/v1/canonical/janda/geometric-sizing",
@@ -218,13 +472,32 @@
       "family": "forecast",
       "implementation_level": "adapter",
       "runtime_availability": "runtime-dependent",
-      "runtimes": ["python", "next-server-route"],
-      "source_lineage": ["Google Research TimesFM"],
+      "runtimes": [
+        "python",
+        "next-server-route"
+      ],
+      "source_lineage": [
+        "Google Research TimesFM"
+      ],
       "safe_label": "Previsão TimesFM quando os pesos estão carregados; extrapolação analítica quando não estão",
-      "claims_allowed": ["forecast-with-explicit-provenance", "analytic-fallback"],
-      "causal_parameters": ["series", "horizon", "frequency_indicator", "preferred_model", "mode"],
-      "reserved_parameters": ["cfr-worker-regret-history"],
-      "units": ["series-native-unit", "forecast-step"],
+      "claims_allowed": [
+        "forecast-with-explicit-provenance",
+        "analytic-fallback"
+      ],
+      "causal_parameters": [
+        "series",
+        "horizon",
+        "frequency_indicator",
+        "preferred_model",
+        "mode"
+      ],
+      "reserved_parameters": [
+        "cfr-worker-regret-history"
+      ],
+      "units": [
+        "series-native-unit",
+        "forecast-step"
+      ],
       "provenance_requirements": [
         "model_used",
         "intended_model",
@@ -232,14 +505,22 @@
         "fallback_used",
         "license_tier"
       ],
-      "assumptions": ["ordered-univariate-or-multivariate-series"],
-      "limitations": ["model-availability-depends-on-runtime-weights", "current-cfr-panel-uses-analytic-client-fallback"],
+      "assumptions": [
+        "ordered-univariate-or-multivariate-series"
+      ],
+      "limitations": [
+        "model-availability-depends-on-runtime-weights",
+        "current-cfr-panel-uses-analytic-client-fallback"
+      ],
       "consumer_paths": [
         "api/v1/handlers.py",
         "frontend/src/app/api/sota/timesfm-forecast/route.ts",
         "frontend/src/components/simulator/panels/CfrRegretPanel.tsx"
       ],
-      "api_routes": ["/api/v1/timesfm/forecast", "/api/sota/timesfm-forecast"],
+      "api_routes": [
+        "/api/v1/timesfm/forecast",
+        "/api/sota/timesfm-forecast"
+      ],
       "fallback_engine_id": "analytic-linear-forecast"
     },
     {
@@ -248,16 +529,58 @@
       "family": "adapter",
       "implementation_level": "primitive",
       "runtime_availability": "code-available",
-      "runtimes": ["python"],
-      "source_lineage": ["Laya", "Chico SOTA"],
+      "runtimes": [
+        "python"
+      ],
+      "source_lineage": [
+        "Laya",
+        "Chico SOTA"
+      ],
       "safe_label": "Classificacao System-1 zero-download (script/lingua/familia-de-modelo); roteamento semantico e priorizacao observacional da intencao",
-      "claims_allowed": ["script-detection", "language-detection", "model-family-suggestion", "zero-download-inference"],
-      "causal_parameters": ["script", "language", "is_english", "non_latin_fraction", "modelo_sugerido"],
-      "reserved_parameters": ["trained-checkpoint", "cuda-context", "choice", "score", "noul"],
-      "units": ["script", "language", "probability"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
-      "assumptions": ["laya-route-is-zero-download", "script-language-detection-is-deterministic", "heuristic-fallback-when-laya-unavailable"],
-      "limitations": ["predict-trained-model-path-is-gpu-gated-fase4", "zero-download-route-does-not-emit-choice-or-noul", "primeira-classificacao-paga-warmup-torch-1.5s"],
+      "claims_allowed": [
+        "script-detection",
+        "language-detection",
+        "model-family-suggestion",
+        "zero-download-inference"
+      ],
+      "causal_parameters": [
+        "script",
+        "language",
+        "is_english",
+        "non_latin_fraction",
+        "modelo_sugerido"
+      ],
+      "reserved_parameters": [
+        "trained-checkpoint",
+        "cuda-context",
+        "choice",
+        "score",
+        "noul"
+      ],
+      "units": [
+        "script",
+        "language",
+        "probability"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "laya-route-is-zero-download",
+        "script-language-detection-is-deterministic",
+        "heuristic-fallback-when-laya-unavailable"
+      ],
+      "limitations": [
+        "predict-trained-model-path-is-gpu-gated-fase4",
+        "zero-download-route-does-not-emit-choice-or-noul",
+        "primeira-classificacao-paga-warmup-torch-1.5s"
+      ],
       "consumer_paths": [
         "llm/laya_bridge.py",
         "core/arbitrator.py",
@@ -274,18 +597,81 @@
       "family": "adapter",
       "implementation_level": "trained-model",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "torch", "transformers", "onnx"],
-      "source_lineage": ["Laya", "convaiinnovations/laya-multilingual", "Chico SOTA"],
+      "runtimes": [
+        "python",
+        "torch",
+        "transformers",
+        "onnx"
+      ],
+      "source_lineage": [
+        "Laya",
+        "convaiinnovations/laya-multilingual",
+        "Chico SOTA"
+      ],
       "safe_label": "Classificacao System-1 full forward pass: choice, score, e calibrated probability (noul), GPU-gated com fallback heuristico em CPU (laya-multilingual, 322M).",
-      "claims_allowed": ["choice", "score", "noul", "calibrated-probability", "token-usage", "long-context-8192"],
-      "causal_parameters": ["state", "questions", "model", "task", "lang", "n_tokens", "latency_ms", "max_len"],
-      "reserved_parameters": ["cuda-context", "322m-checkpoint-download"],
-      "units": ["model", "choice", "score", "probability", "ms", "n_tokens"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
-      "assumptions": ["laya-predict-single-forward-pass", "device-auto-detect-cpu-or-cuda", "cpu-fallback-when-no-cuda-and-no-override", "override-via-CHICO_LAYA_PREDICT_ALLOW_CPU-env", "canonical-model=multilingual", "host-hybrid-acceleration: GGUF/llama.cpp on AMD Radeon RX 570 via Vulkan; native PyTorch runs via CPU override on Windows"],
-      "limitations": ["cpu-inference-latency-higher", "requires-checkpoint-download-322m", "fallback-noul-is-proxy-not-calibrated", "gpu-gated-by-default-production-safe", "native-pytorch-rocm-unavailable-for-polaris-on-windows"],
-      "consumer_paths": ["llm/laya_bridge.py", "api/v1/handlers.py", "frontend/src/app/api/sota/laya/route.ts", "frontend/src/app/api/sota/laya/predict/route.ts"],
-      "api_routes": ["/api/sota/laya/predict"],
+      "claims_allowed": [
+        "choice",
+        "score",
+        "noul",
+        "calibrated-probability",
+        "token-usage",
+        "long-context-8192"
+      ],
+      "causal_parameters": [
+        "state",
+        "questions",
+        "model",
+        "task",
+        "lang",
+        "n_tokens",
+        "latency_ms",
+        "max_len"
+      ],
+      "reserved_parameters": [
+        "cuda-context",
+        "322m-checkpoint-download"
+      ],
+      "units": [
+        "model",
+        "choice",
+        "score",
+        "probability",
+        "ms",
+        "n_tokens"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "laya-predict-single-forward-pass",
+        "device-auto-detect-cpu-or-cuda",
+        "cpu-fallback-when-no-cuda-and-no-override",
+        "override-via-CHICO_LAYA_PREDICT_ALLOW_CPU-env",
+        "canonical-model=multilingual",
+        "host-hybrid-acceleration: GGUF/llama.cpp on AMD Radeon RX 570 via Vulkan; native PyTorch runs via CPU override on Windows"
+      ],
+      "limitations": [
+        "cpu-inference-latency-higher",
+        "requires-checkpoint-download-322m",
+        "fallback-noul-is-proxy-not-calibrated",
+        "gpu-gated-by-default-production-safe",
+        "native-pytorch-rocm-unavailable-for-polaris-on-windows"
+      ],
+      "consumer_paths": [
+        "llm/laya_bridge.py",
+        "api/v1/handlers.py",
+        "frontend/src/app/api/sota/laya/route.ts",
+        "frontend/src/app/api/sota/laya/predict/route.ts"
+      ],
+      "api_routes": [
+        "/api/sota/laya/predict"
+      ],
       "fallback_engine_id": "laya-s1-predict-fallback"
     },
     {
@@ -294,18 +680,60 @@
       "family": "adapter",
       "implementation_level": "primitive",
       "runtime_availability": "code-available",
-      "runtimes": ["python"],
-      "source_lineage": ["HeuristicRouter", "Chico SOTA"],
+      "runtimes": [
+        "python"
+      ],
+      "source_lineage": [
+        "HeuristicRouter",
+        "Chico SOTA"
+      ],
       "safe_label": "Fallback deterministico para laya.predict() quando CUDA indisponivel: noul proxy via ruin_priority.",
-      "claims_allowed": ["noul-proxy", "choice-heuristic", "score-proxy"],
-      "causal_parameters": ["state", "ruin_priority", "nao_latin_fraction_pct"],
-      "reserved_parameters": ["trained-checkpoint", "cuda-context"],
-      "units": ["ms", "probability"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
-      "assumptions": ["laya-predict-cpu-gated-skipped", "noul-proxy-from-ruin-priority", "zero-download-route-is-deterministic", "canonical-model=multilingual"],
-      "limitations": ["predict-requires-gpu-tier6-edge-ai", "no-trained-checkpoint-loaded-on-cpu", "noul-is-proxy-not-calibrated"],
-      "consumer_paths": ["llm/laya_bridge.py", "frontend/src/app/api/sota/laya/route.ts", "frontend/src/app/api/sota/laya/predict/route.ts"],
-      "api_routes": ["/api/sota/laya/predict"],
+      "claims_allowed": [
+        "noul-proxy",
+        "choice-heuristic",
+        "score-proxy"
+      ],
+      "causal_parameters": [
+        "state",
+        "ruin_priority",
+        "nao_latin_fraction_pct"
+      ],
+      "reserved_parameters": [
+        "trained-checkpoint",
+        "cuda-context"
+      ],
+      "units": [
+        "ms",
+        "probability"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "laya-predict-cpu-gated-skipped",
+        "noul-proxy-from-ruin-priority",
+        "zero-download-route-is-deterministic",
+        "canonical-model=multilingual"
+      ],
+      "limitations": [
+        "predict-requires-gpu-tier6-edge-ai",
+        "no-trained-checkpoint-loaded-on-cpu",
+        "noul-is-proxy-not-calibrated"
+      ],
+      "consumer_paths": [
+        "llm/laya_bridge.py",
+        "frontend/src/app/api/sota/laya/route.ts",
+        "frontend/src/app/api/sota/laya/predict/route.ts"
+      ],
+      "api_routes": [
+        "/api/sota/laya/predict"
+      ],
       "fallback_engine_id": null
     },
     {
@@ -314,16 +742,84 @@
       "family": "adapter",
       "implementation_level": "trained-model",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "torch", "transformers", "typescript"],
-      "source_lineage": ["Laya", "Chico SOTA", "Claudico", "DeepStack", "PMev", "TimesFM", "Dream-RSI"],
+      "runtimes": [
+        "python",
+        "torch",
+        "transformers",
+        "typescript"
+      ],
+      "source_lineage": [
+        "Laya",
+        "Chico SOTA",
+        "Claudico",
+        "DeepStack",
+        "PMev",
+        "TimesFM",
+        "Dream-RSI"
+      ],
       "safe_label": "Interface generica que conecta a classificacao S1 da Laya a Pluribus, DeepStack, CFR+, Monte Carlo, TimesFM 2.5/3.0, Google Dream-RSI, PMev, Prospect Theory e Frameworks.",
-      "claims_allowed": ["choice", "score", "noul", "iterations", "lambda_factor", "tolerance", "ruin_priority", "cfr-discount-alpha", "monte-carlo-samples", "timesfm-horizon", "dream-rsi-pruning"],
-      "causal_parameters": ["state", "questions", "model", "iterations", "lambda_factor", "tolerance", "simulations_count", "horizon", "pruning_margin"],
-      "reserved_parameters": ["cuda-context", "322m-checkpoint-download"],
-      "units": ["model", "choice", "score", "probability", "ms", "n_tokens", "ruin_priority", "adapted_iterations"],
-      "provenance_requirements": ["engine_id", "implementation_level", "runtime_used", "weights_loaded", "fallback_used", "assumptions", "limitations"],
-      "assumptions": ["laya-predict-single-forward-pass", "device-auto-detect-cpu-or-cuda", "cpu-fallback-when-no-cuda-and-no-override", "adapter-modulation-is-advisory", "canonical-model=multilingual", "host-hybrid-acceleration: GGUF/llama.cpp on AMD Radeon RX 570 via Vulkan; native PyTorch runs via CPU override on Windows"],
-      "limitations": ["cpu-inference-latency-higher", "requires-checkpoint-download-322m", "fallback-noul-is-proxy-not-calibrated", "gpu-gated-by-default-production-safe", "native-pytorch-rocm-unavailable-for-polaris-on-windows"],
+      "claims_allowed": [
+        "choice",
+        "score",
+        "noul",
+        "iterations",
+        "lambda_factor",
+        "tolerance",
+        "ruin_priority",
+        "cfr-discount-alpha",
+        "monte-carlo-samples",
+        "timesfm-horizon",
+        "dream-rsi-pruning"
+      ],
+      "causal_parameters": [
+        "state",
+        "questions",
+        "model",
+        "iterations",
+        "lambda_factor",
+        "tolerance",
+        "simulations_count",
+        "horizon",
+        "pruning_margin"
+      ],
+      "reserved_parameters": [
+        "cuda-context",
+        "322m-checkpoint-download"
+      ],
+      "units": [
+        "model",
+        "choice",
+        "score",
+        "probability",
+        "ms",
+        "n_tokens",
+        "ruin_priority",
+        "adapted_iterations"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "laya-predict-single-forward-pass",
+        "device-auto-detect-cpu-or-cuda",
+        "cpu-fallback-when-no-cuda-and-no-override",
+        "adapter-modulation-is-advisory",
+        "canonical-model=multilingual",
+        "host-hybrid-acceleration: GGUF/llama.cpp on AMD Radeon RX 570 via Vulkan; native PyTorch runs via CPU override on Windows"
+      ],
+      "limitations": [
+        "cpu-inference-latency-higher",
+        "requires-checkpoint-download-322m",
+        "fallback-noul-is-proxy-not-calibrated",
+        "gpu-gated-by-default-production-safe",
+        "native-pytorch-rocm-unavailable-for-polaris-on-windows"
+      ],
       "consumer_paths": [
         "llm/laya_solver_adapter.py",
         "engine/dream_timesfm_forecaster.py",
@@ -341,27 +837,414 @@
       "fallback_engine_id": "laya-s1-predict-fallback"
     },
     {
+      "engine_id": "gemini-decision-1",
+      "display_name": "Gemini Decision 1 API (closed-set decisions, v1beta)",
+      "family": "adapter",
+      "implementation_level": "trained-model",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "python",
+        "google-genai>=3.2"
+      ],
+      "source_lineage": [
+        "Google Gemini Decisions API",
+        "google-genai SDK",
+        "Chico SOTA"
+      ],
+      "safe_label": "Avalia ate 1000 perguntas fechadas (noul/choice/score) sobre input multimodal compartilhado em um unico forward pass; usado para roteamento de acoes do Stitch, triagem de intencao e gates de qualidade, nunca para geracao de texto livre.",
+      "claims_allowed": [
+        "noul",
+        "choice",
+        "score",
+        "calibrated-probability",
+        "multimodal-input",
+        "token-usage"
+      ],
+      "causal_parameters": [
+        "state",
+        "questions",
+        "model",
+        "n_tokens",
+        "latency_ms"
+      ],
+      "reserved_parameters": [
+        "api-version-v1beta",
+        "gemini-decision-1-checkpoint"
+      ],
+      "units": [
+        "model",
+        "choice",
+        "score",
+        "probability",
+        "ms",
+        "n_tokens"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "decisions-api-single-forward-pass",
+        "closed-set-questions-only",
+        "api-version=v1beta",
+        "requires-GEMINI_API_KEY-or-GOOGLE_API_KEY",
+        "pricing-0.10-per-1m-input-tokens-output-free"
+      ],
+      "limitations": [
+        "beta-endpoint-v1beta",
+        "paid-api",
+        "no-free-form-generation",
+        "google-ai-studio-or-gemini-api-key-required"
+      ],
+      "consumer_paths": [
+        "llm/gemini_decisions.py"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": "laya-s1-predict-fallback"
+    },
+    {
+      "engine_id": "gemini-decisions-s1-cascade",
+      "display_name": "System-1 Decision Cascade (Laya local -> Gemini Decision 1)",
+      "family": "adapter",
+      "implementation_level": "adapter",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "python"
+      ],
+      "source_lineage": [
+        "Laya",
+        "Google Gemini Decisions API",
+        "Chico SOTA"
+      ],
+      "safe_label": "Cascata System-1: tenta laya_predict local primeiro para texto; escala para gemini-decision-1 quando Laya esta em fallback, quando o input e multimodal ou quando prefer_cloud=True. Proveniencia distingue engine efetiva (laya-s1-trained | gemini-decision-1 | laya-s1-fallback).",
+      "claims_allowed": [
+        "noul",
+        "choice",
+        "score",
+        "calibrated-probability",
+        "engine-provenance",
+        "fallback-escalation"
+      ],
+      "causal_parameters": [
+        "state",
+        "questions",
+        "prefer_cloud",
+        "engine",
+        "latency_ms",
+        "n_tokens"
+      ],
+      "reserved_parameters": [
+        "canonical-model-cost-routing"
+      ],
+      "units": [
+        "model",
+        "choice",
+        "score",
+        "probability",
+        "ms",
+        "n_tokens"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "laya-first-text-only",
+        "gemini-direct-for-multimodal",
+        "laya-fallback-escalates-to-cloud-when-configured",
+        "routing-policy-remains-source-of-truth-for-cost"
+      ],
+      "limitations": [
+        "laya-questions-format-limited-to-text-state",
+        "gemini-decision-requires-api-key",
+        "no-silent-authority-over-model-cost-routing"
+      ],
+      "consumer_paths": [
+        "llm/gemini_decisions.py",
+        "llm/decision_pool.py",
+        "engine/stitch_bridge.py"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": "laya-s1-predict-fallback"
+    },
+    {
+      "engine_id": "decision-key-pool",
+      "display_name": "Decision Key Pool (System-1, DECISION_API_*)",
+      "family": "adapter",
+      "implementation_level": "primitive",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "python",
+        "windows-registry"
+      ],
+      "source_lineage": [
+        "Google AI Studio auth keys",
+        "Chico SOTA"
+      ],
+      "safe_label": "Pool dedicado de chaves DECISION_API_1..9 (HKCU/HKLM Environment) para a Gemini Decisions API; round-robin com circuit breaker (401/403 revoga, 429/5xx cooldown), fallback controlado para GEMINI_API_KEY/GOOGLE_API_KEY e telemetria por fingerprint HMAC sha8 sem expor chave.",
+      "claims_allowed": [
+        "key-rotation",
+        "circuit-breaker",
+        "quota-resilience",
+        "telemetry-sha8"
+      ],
+      "causal_parameters": [
+        "DECISION_API_*",
+        "status_code",
+        "retry_after_s"
+      ],
+      "reserved_parameters": [
+        "raw-api-key-logging",
+        "cross-pool-key-sharing"
+      ],
+      "units": [
+        "keys",
+        "seconds",
+        "sha8"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "keys-stored-in-windows-registry-env",
+        "rate-limits-are-per-project-not-per-key",
+        "dedicated-pool-isolated-from-flash-lite-pool"
+      ],
+      "limitations": [
+        "same-project-keys-share-quota",
+        "requires-HKCU-or-HKLM-provisioning",
+        "no-throughput-multiplication-within-one-project"
+      ],
+      "consumer_paths": [
+        "llm/decision_pool.py",
+        "llm/gemini_decisions.py"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": null
+    },
+    {
+      "engine_id": "system2-local-ollama",
+      "display_name": "System-2 Local Router (Ollama tiers + Flash-Lite fallback)",
+      "family": "adapter",
+      "implementation_level": "primitive",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "python",
+        "ollama"
+      ],
+      "source_lineage": [
+        "Ollama",
+        "Qwen open weights",
+        "Gemma 4",
+        "Google Gemini 3.5 Flash-Lite",
+        "Chico SOTA"
+      ],
+      "safe_label": "Roteador generativo System-2: Ollama local-first com tiers fast/balanced/deep/code resolvidos via data/ollama_models.json; fallback automatico para gemini-3.5-flash-lite (pool gemini_pool_manager) quando local indisponivel. Proveniencia engine+fallback_used em toda resposta; snapshot de hardware (CPU/RAM/VRAM real via registro) acompanha o meta.",
+      "claims_allowed": [
+        "local-inference",
+        "tiered-model-routing",
+        "cloud-fallback",
+        "hardware-aware",
+        "provenance"
+      ],
+      "causal_parameters": [
+        "prompt",
+        "system",
+        "tier",
+        "json_mode",
+        "prefer_local",
+        "allow_cloud_fallback",
+        "timeout_s"
+      ],
+      "reserved_parameters": [
+        "canonical-model-cost-routing",
+        "raw-key-handling"
+      ],
+      "units": [
+        "ms",
+        "tokens",
+        "GB",
+        "threads"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "ollama-manifest-is-source-of-truth-for-aliases",
+        "rx570-polaris-has-no-rocm-ollama-gpu-offload",
+        "llama-cpp-vulkan-is-the-verified-gpu-path-see-llama-cpp-vulkan-engine"
+      ],
+      "limitations": [
+        "ollama-runs-cpu-only-on-polaris-34s-for-trivial-prompt-measured",
+        "27b-tier-needs-~17gb-ram-headroom",
+        "cloud-fallback-shares-gemini-pool-quota"
+      ],
+      "consumer_paths": [
+        "llm/system2_local.py",
+        "data/ollama_models.json"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": "gemini-3.5-flash-lite"
+    },
+    {
+      "engine_id": "llama-cpp-vulkan",
+      "display_name": "llama.cpp Vulkan Server (RX 570 Polaris 8GB, ggml-org b12292)",
+      "family": "adapter",
+      "implementation_level": "trained-model",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "llama.cpp",
+        "vulkan",
+        "windows"
+      ],
+      "source_lineage": [
+        "ggml-org/llama.cpp",
+        "AMD Vulkan driver",
+        "Chico SOTA"
+      ],
+      "safe_label": "Runtime llama.cpp win-vulkan-x64 oficial (b12292) verificado na RX 570 Polaris 8GB: Vulkan enxerga a GPU nativamente, 34.2 t/s geracao / 8.7 t/s prompt em Q4_K_M ~3.3GB com -ngl 99 -fa on. Qwen3.6-35B-A3B-MTP UD-Q4_K_XL (21.3GiB, SHA256 verificado) medido em 2026-11-12: 6.72 t/s tg baseline -> 13.45 t/s com -ncmoe 41 + draft-mtp n-max4 p-min0.75 (~94% draft acceptance, ~2x); --moe-cache-mib mostrou-se CONTRAPRODUCENTE na Polaris (7.5 t/s com cache vs 13.0 sem). Binarios em ~/.gemini/tools/llama.cpp (fora do repo); modo gerenciado via llama-swap v272 em 127.0.0.1:8080 (config ~/.gemini/tools/llama-swap/config.yaml, spawn on-demand + ttl 600s) e launcher manual scripts/ops/Start-LlamaVulkan.ps1 porta 9931. Consumido por llm/system2_local.py tier 'moe'.",
+      "claims_allowed": [
+        "gpu-offload-vulkan",
+        "openai-compatible-server",
+        "moe-expert-offload",
+        "kv-cache-quantization",
+        "measured-tokens-per-second"
+      ],
+      "causal_parameters": [
+        "model_path",
+        "port",
+        "ngl",
+        "n_cpu_moe",
+        "moe_cache_mib",
+        "ctx_size"
+      ],
+      "reserved_parameters": [
+        "model-weights-ownership",
+        "remote-origins-wildcard"
+      ],
+      "units": [
+        "ms",
+        "tokens/s",
+        "GB",
+        "MiB"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "rx570-polaris-gfx803-vulkan-works-on-driver-2026",
+        "ggml_vk_allow_graphics_queue_is-harmless-on-new-builds",
+        "ollama-blobs-are-reusable-gguf",
+        "measured-34-2-tps-q4km-3b-on-rx570-8gb-2026-11-11",
+        "measured-13-45-tps-qwen36-35b-a3b-mtp-draftmtp-nmax4-pmin075-2026-11-12",
+        "measured-moe-cache-mib-counterproductive-on-polaris-2026-11-12"
+      ],
+      "limitations": [
+        "8gb-vram-limits-full-offload-to-~7b-q4",
+        "moe-35b-class-needs-cpu-offload-ram-headroom",
+        "moe-cache-mib-does-not-pay-off-on-polaris-measured",
+        "speculative-mtp-requires-gguf-with-nextn-head-and-np1",
+        "no-rocm-native-on-polaris",
+        "avalon-strata-single-model-targets-need-12gb-plus-vram"
+      ],
+      "consumer_paths": [
+        "scripts/ops/Start-LlamaVulkan.ps1",
+        "llm/system2_local.py",
+        "~/.gemini/tools/llama-swap/config.yaml (fora do repo)"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": "system2-local-ollama"
+    },
+    {
       "engine_id": "chrysalis-live-engine-adapter",
       "display_name": "Chrysalis Live Engine Adapter",
       "family": "adapter",
       "implementation_level": "adapter",
       "runtime_availability": "code-available",
-      "runtimes": ["python", "typescript"],
-      "source_lineage": ["Chrysalis-Engine", "ProjectChrysalis", "Chico SOTA"],
+      "runtimes": [
+        "python",
+        "typescript"
+      ],
+      "source_lineage": [
+        "Chrysalis-Engine",
+        "ProjectChrysalis",
+        "Chico SOTA"
+      ],
       "safe_label": "Adapter externo HTTP para Chrysalis Live Engine: revisao otimista, undo e modos Plan/Accept/Full com paridade Python/TypeScript",
-      "claims_allowed": ["revision-checked-edit", "undo-by-revision", "plan-accept-full-modes", "workspace-path-validation", "compaction-summary"],
-      "causal_parameters": ["workspace_path", "content", "new_content", "expected_revision", "mode", "approved"],
+      "claims_allowed": [
+        "revision-checked-edit",
+        "undo-by-revision",
+        "plan-accept-full-modes",
+        "workspace-path-validation",
+        "compaction-summary"
+      ],
+      "causal_parameters": [
+        "workspace_path",
+        "content",
+        "new_content",
+        "expected_revision",
+        "mode",
+        "approved"
+      ],
       "reserved_parameters": [],
-      "units": ["revision-sha256", "http-status", "apps-count"],
-      "provenance_requirements": ["engine_id", "implementation_level", "assumptions", "limitations", "units"],
-      "assumptions": ["chrysalis-service-external-agpl", "http-only-boundary", "loopback-or-https-only"],
-      "limitations": ["not-a-chrysalis-engine-copy", "chat-endpoint-pending-live-probe", "offline-plan-validation-only"],
+      "units": [
+        "revision-sha256",
+        "http-status",
+        "apps-count"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "assumptions",
+        "limitations",
+        "units"
+      ],
+      "assumptions": [
+        "chrysalis-service-external-agpl",
+        "http-only-boundary",
+        "loopback-or-https-only"
+      ],
+      "limitations": [
+        "not-a-chrysalis-engine-copy",
+        "chat-endpoint-pending-live-probe",
+        "offline-plan-validation-only"
+      ],
       "consumer_paths": [
         "engine/chrysalis_bridge.py",
         "frontend/src/lib/chrysalis.ts",
         "frontend/src/app/api/sota/chrysalis/route.ts"
       ],
-      "api_routes": ["/api/sota/chrysalis"],
+      "api_routes": [
+        "/api/sota/chrysalis"
+      ],
       "fallback_engine_id": null
     }
   ]
