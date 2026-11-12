@@ -32,7 +32,15 @@ def mock_env_pools():
         "OPENROUTER_TIER4_KEY_4": "sk-or-v1-tier4-key-november-1234567890",
         "OPENROUTER_TIER4_KEY_5": "sk-or-v1-tier4-key-oscar-1234567890",
     }
-    with patch.dict(os.environ, env_vars, clear=False):
+    # Isola Registro E os.environ reais: chaves provisionadas em HKCU/HKLM
+    # chegam ao processo de teste e quebram as contagens sinteticas 3/3/5/5.
+    with (
+        patch.dict(os.environ, env_vars, clear=False),
+        patch("llm.openrouter_pool._read_windows_registry_openrouter", lambda env_map: None),
+    ):
+        for k in list(os.environ):
+            if k.upper().startswith("OPENROUTER") and k not in env_vars:
+                os.environ.pop(k, None)
         yield env_vars
 
 
