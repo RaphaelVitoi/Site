@@ -292,10 +292,13 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         notas="Claude Haiku 5.5: Modelo Tier 1 de Fast Operations da Anthropic (trio com Gemini 3.5 Flash-Lite e GPT-6 Luna).",
     ),
     # - ANTHROPIC - Geracao 5 (mantida disponivel; Haiku 4.5 tem regra propria)
+    # FAIXA DE ASSINATURA SUSPENSA (Tier 0, 2026-11-12): a assinatura flat-fee
+    # Anthropic Pro/Max esta temporariamente desativada; cota_por_assinatura=False
+    # em toda a familia ate reativacao expressa do Tier 0.
     "claude-opus-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-5",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_000_000,
         max_output_tokens=131_072,
         price_per_1m_in=5.00,
@@ -312,7 +315,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-sonnet-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-sonnet-5",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_000_000,
         max_output_tokens=131_072,
         price_per_1m_in=2.00,
@@ -334,7 +337,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-opus-4-6": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-opus-4-6",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_000_000,
         max_output_tokens=131_072,
         price_per_1m_in=5.00,
@@ -365,7 +368,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-sonnet-4-6": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-sonnet-4-6",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_000_000,
         max_output_tokens=131_072,
         price_per_1m_in=3.00,
@@ -394,7 +397,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "claude-haiku-4-5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
         model_name="claude-haiku-4-5",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_000_000,
         max_output_tokens=65_536,
         price_per_1m_in=0.80,
@@ -412,10 +415,13 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         notas="Retirado das rotas vigentes do projeto em 2026-10-20.",
     ),
     #  OPENAI  GPT-5.6 (Descontinuado em 2026-10-20 pelo Tier 0)
+    # FAIXA DE ASSINATURA SUSPENSA (Tier 0, 2026-11-12): a assinatura flat-fee
+    # OpenAI Plus/Pro esta temporariamente desativada; cota_por_assinatura=False
+    # em toda a familia ate reativacao expressa do Tier 0.
     GPT_5_6_SOL: ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name=GPT_5_6_SOL,
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
         price_per_1m_in=4.00,
@@ -430,7 +436,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gpt-5.6-terra": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-terra",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
         price_per_1m_in=2.00,
@@ -443,7 +449,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "gpt-5.6-luna": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-5.6-luna",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
         price_per_1m_in=0.20,
@@ -708,7 +714,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
     "chatgpt-5.6-sol": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name=GPT_5_6_SOL,
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_050_000,
         max_output_tokens=131_072,
         price_per_1m_in=4.00,
@@ -721,10 +727,12 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         notas="Descontinuado em favor do ChatGPT 6.0 Sol.",
     ),
     #  OPENAI  GPT-6 (2026-09-03)
+    # FAIXA DE ASSINATURA SUSPENSA (Tier 0, 2026-11-12): assinatura flat-fee
+    # OpenAI temporariamente desativada; cota_por_assinatura=False ate reativacao.
     "gpt-6-astra": ModelCapability(
         adapter=AdapterType.OPENAI,
         model_name="gpt-6-astra",
-        cota_por_assinatura=True,
+        cota_por_assinatura=False,
         context_window_in=1_050_000,
         # A pagina do Astra escreve "128,000 max output tokens". A familia 5.6
         # usa 131_072 ("128K"). Sao numeros diferentes e o menor e o seguro:
@@ -747,7 +755,11 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "devem ser usados estritamente de forma pontual (escalonamento). "
             "FAIXA DE ACESSO -- o que de fato o separa do Fable: o Astra tem "
             "as DUAS (cota de assinatura e pay-as-you-go), e o Fable so a "
-            "segunda. Por token os dois empatam em $10/$50; dentro da cota o "
+            "segunda. ATENCAO (Tier 0, 2026-11-12): a assinatura flat-fee "
+            "OpenAI esta temporariamente desativada — a cota de assinatura "
+            "esta SUSPENSA e cota_por_assinatura=False ate reativacao; "
+            "permanece o pay-as-you-go. Por token os dois empatam em $10/$50; "
+            "dentro da cota o "
             "custo marginal do Astra e ZERO, e e por isso que 'mais barato que "
             "o Fable' e verdade apesar do empate de tabela. "
             "A cota e por TETO DE MENSAGENS (semanal/mensal nos planos Pro), "

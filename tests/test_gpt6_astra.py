@@ -267,15 +267,28 @@ def test_toda_faixa_e_declarada_e_nenhuma_vem_do_default() -> None:
 
     sem_cota = {a for a, c in MODEL_REGISTRY.items() if not c.cota_por_assinatura}
     assert sem_cota == {
+        # Anthropic/OpenAI: faixa suspensa pelo Tier 0 em 2026-11-12 — as
+        # assinaturas flat-fee estao temporariamente desativadas. Ativas:
+        # Google AI Studio Pro (Gemini) e Devin Desktop SWE-2 Flash Medium.
         "claude-opus-5.5",
         "claude-sonnet-5.5",
         "claude-haiku-5.5",
+        "claude-opus-5",
+        "claude-sonnet-5",
+        "claude-opus-4-6",
+        "claude-sonnet-4-6",
+        "claude-haiku-4-5",
         "gpt-6.0-sol",
         "chatgpt-6.0-sol",
         "gpt-6.0-terra",
         "chatgpt-6.0-terra",
         "gpt-6.0-luna",
         "chatgpt-6.0-luna",
+        "gpt-5.6-sol",
+        "gpt-5.6-terra",
+        "gpt-5.6-luna",
+        "chatgpt-5.6-sol",
+        "gpt-6-astra",
     }, "A faixa de assinatura deve refletir as rotas com cota realmente verificada."
     # A familia Fable teve a faixa declarada e saiu por causa dela; o motivo
     # sobrevive em MODELOS_RETIRADOS, nao no campo.
