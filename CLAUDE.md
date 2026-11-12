@@ -70,8 +70,9 @@ Hierarquia canônica de 8 Tiers sob Soberania de Raphael Vitoi:
 
 PENDENTE commit e registro deve declarar sinteticamente:
 
-- **SHA:** Hash criptográfico Git
+- **SHA:** Hash criptográfico Git (o `tree` SHA do índice no ato do commit — `git write-tree`)
 - **Assinatura:** Autor e Tier correspondente (ex: `Claude Opus 5.5+ [Tier 1]`, `Claude Sonnet 5.5+ [Tier 1]`, `antigravity@gemini-4-argon`)
+  - **Anatomia obrigatória da linha `Assinatura:` (determinado pelo Tier 0 em 2026-11-12):** depois de `--` devem constar os cinco campos — `modelo=<id>`, `condutor=<veiculo>`, `ts=<ISO-8601 com fuso>`, `sha=<tree-sha do índice>`, `supervisao=assistida|automatizada` — mais `sessao=<id>` para rastreabilidade. Ex.: `Assinatura: Devin (SWE-2 Flash) [Tier 1] -- modelo=swe-2-flash condutor=devin-desktop ts=2026-11-12T17:00:00-03:00 sha=9f2c1ab0 supervisao=assistida sessao=devin-swe2-site-2026-11-12`
 - **Propósito:** Razão de ser técnica da alteração e escopo protegido.
 
 ### Chico é o grupo; a assinatura é individual
