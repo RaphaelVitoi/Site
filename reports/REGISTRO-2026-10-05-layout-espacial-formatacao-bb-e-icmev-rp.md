@@ -45,6 +45,7 @@ revisoes_de_ancora:
       em marcadores Markdown validos antes do parsing, evitando que codigo HTML
       vaze para o DOM como texto puro sem alterar os contratos de seguranca.
 config_medida:
+  congelada_em: '2026-10-05'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   commit: HEAD

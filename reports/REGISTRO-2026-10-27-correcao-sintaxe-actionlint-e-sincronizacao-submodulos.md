@@ -12,6 +12,7 @@ caminhos:
   - .github/actionlint.yaml
   - reports/REGISTRO-2026-10-27-correcao-sintaxe-actionlint-e-sincronizacao-submodulos.md
 config_medida:
+  congelada_em: '2026-10-27'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'
