@@ -144,6 +144,14 @@
       "modelo": "swe-2-flash",
       "tier": "1",
       "nota": "Condutor Devin CLI/Desktop (Cognition), membro do coletivo CHICO no Tier 1. Registrado em 2026-11-10 apos aviso do commit-msg hook; PROMOVIDO de Tier 2 para Tier 1 pelo Tier 0 em 2026-11-10, com identidade propria dentro do CHICO. Veiculo: Devin Desktop Harness."
+    },
+    {
+      "nome": "Devin (SWE-1.6 Slow)",
+      "email": "158243242+devin-ai-integration[bot]@users.noreply.github.com",
+      "veiculo": "devin-desktop",
+      "modelo": "swe-1.6-slow",
+      "tier": "1",
+      "nota": "Variante SWE-1.6 Slow do condutor Devin (Cognition), Tier 1, identidade individual propria dentro do CHICO. Determinada pelo Tier 0 em 2026-11-12 como preferencial para engenharia pontual e complexa de codigo e orquestracao agentica de codigo denso, junto de Devin (SWE-2 Flash) - sem feudos; a escolha efetiva observa especialidade, custo, disponibilidade e arbitragem."
     }
   ],
   "nunca": [
