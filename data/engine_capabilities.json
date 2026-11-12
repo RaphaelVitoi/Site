@@ -1166,6 +1166,70 @@
       "fallback_engine_id": "system2-local-ollama"
     },
     {
+      "engine_id": "media-key-pool",
+      "display_name": "Multimodal Key Pool (Gemini TTS/Video/Image/Translate, AI Studio + OpenRouter)",
+      "family": "adapter",
+      "implementation_level": "primitive",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "python",
+        "windows-registry"
+      ],
+      "source_lineage": [
+        "Google AI Studio auth keys",
+        "OpenRouter API keys",
+        "Chico SOTA"
+      ],
+      "safe_label": "Pool multimodal por modalidade (tts/video/image/translate) com chave dedicada AI Studio (GEMINI_{MOD}_KEY) e OpenRouter (OPENROUTER_GEMINI_{MOD}_KEY) em HKCU/HKLM Environment; round-robin com circuit breaker por (modalidade, provider), fallback controlado para GEMINI_API_KEY/OPENROUTER_API_KEY, ordem configuravel via MEDIA_POOL_PROVIDER e telemetria sha8 sem vazar chave.",
+      "claims_allowed": [
+        "key-rotation",
+        "circuit-breaker",
+        "modality-isolation",
+        "provider-fallback",
+        "telemetry-sha8"
+      ],
+      "causal_parameters": [
+        "GEMINI_*_KEY",
+        "OPENROUTER_GEMINI_*_KEY",
+        "MEDIA_POOL_PROVIDER",
+        "status_code",
+        "retry_after_s"
+      ],
+      "reserved_parameters": [
+        "raw-api-key-logging",
+        "cross-modality-key-sharing"
+      ],
+      "units": [
+        "keys",
+        "seconds",
+        "sha8"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "keys-stored-in-windows-registry-env",
+        "media-modalities-are-tts-video-image-translate",
+        "dedicated-keys-isolated-from-text-pools"
+      ],
+      "limitations": [
+        "requires-HKCU-or-HKLM-provisioning",
+        "same-project-aistudio-keys-share-quota",
+        "no-media-generation-endpoint-yet-consumer-defined"
+      ],
+      "consumer_paths": [
+        "llm/media_pool.py"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": null
+    },
+    {
       "engine_id": "system2-local-ollama",
       "display_name": "System-2 Local Router (Ollama tiers + Flash-Lite fallback)",
       "family": "adapter",
