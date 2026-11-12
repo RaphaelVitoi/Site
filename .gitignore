@@ -261,3 +261,4 @@ frontend/src/projects/subagents/
 
 # Symlinks de skills gerados por `npx skills add` (ponteiros locais p/ Claude Code)
 frontend/.claude/
+/history/
