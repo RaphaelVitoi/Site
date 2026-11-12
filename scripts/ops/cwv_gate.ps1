@@ -12,7 +12,12 @@ param(
     [double]$TbtThreshold = 200.0,
     [double]$TtfbThreshold = 800.0,
     [double]$MaxHeapThresholdMb = 128.0,
-    [int[]]$CdpPorts = @(9223, 9222),
+    # 9226 = perfil Chrome 'Measure' (Launch-ChromeSOTA.ps1): dedicado a
+    # medicao, sem extensoes e sem o ruido do navegador diario. Preferido
+    # porque LCP/TTFB medidos no perfil SOTA flutuam com a carga de abas do
+    # usuario (medido 2026-11-12: LCP 7,7s com 26 abas vs 475ms em perfil
+    # limpo). 9223/9222 seguem como fallback quando o Measure nao esta de pe.
+    [int[]]$CdpPorts = @(9226, 9223, 9222),
     [string]$ReportDir = "",
     [string]$A11yReviewBaselinePath = "",
     [string]$CwvManualReviewPath = "",
@@ -38,7 +43,8 @@ function Get-Sha256Hex {
     $fluxo = [System.IO.File]::OpenRead($LiteralPath)
     try {
         return ([System.BitConverter]::ToString($sha.ComputeHash($fluxo))).Replace('-', '')
-    } finally {
+    }
+    finally {
         $fluxo.Dispose()
         $sha.Dispose()
     }
@@ -123,7 +129,8 @@ foreach ($port in $CdpPorts) {
         $cdpPort = $port
         Write-Host "[CDP] Active runtime connection on ${port}: $($cdpVer.Browser) -- $paginas pagina(s)" -ForegroundColor Green
         break
-    } catch {
+    }
+    catch {
         continue
     }
 }
@@ -141,13 +148,13 @@ if (-not $cdpActive) {
 # e a soma de long tasks do Next dev não é TBT. Ambos ficam explícitos como
 # diagnósticos, sem receber selo de métrica normativa.
 $perfMetrics = [ordered]@{
-    "LCP_MS"                        = @{ Val = $null; Limit = $LcpThreshold;        Unit = "ms"; Category = "Performance";      Enforcement = "Fail";    Desc = "Maior pintura observada no navegador" }
-    "CLS"                           = @{ Val = $null; Limit = $ClsThreshold;        Unit = "";   Category = "Performance";      Enforcement = "Fail";    Desc = "Deslocamento visual cumulativo observado" }
-    "TBT_MS"                        = @{ Val = $null; Limit = $TbtThreshold;        Unit = "ms"; Category = "Performance";      Enforcement = "Fail";    Desc = "Total Blocking Time calculado pelo Lighthouse em build de producao e Chrome isolado" }
-    "TTFB_MS"                       = @{ Val = $null; Limit = $TtfbThreshold;       Unit = "ms"; Category = "Performance";      Enforcement = "Fail";    Desc = "Resposta inicial observada via Navigation Timing. O teto e normativo de PRODUCAO: em build de desenvolvimento o Next renderiza por requisicao, e medido em 2026-09-10 deu 1078 ms em dev contra 3 ms em producao. Confirme qual build foi medido antes de tratar como regressao" }
-    "MAX_HEAP_MB"                   = @{ Val = $null; Limit = $MaxHeapThresholdMb; Unit = "MB"; Category = "Resource Economy"; Enforcement = "Fail";    Desc = "Heap JavaScript observado" }
-    "OBSERVED_EVENT_LATENCY_MS"     = @{ Val = $null; Limit = $null;                Unit = "ms"; Category = "Diagnostic";       Enforcement = "Observe"; Desc = "Event Timing observado; não certifica INP sem interação humana" }
-    "OBSERVED_LONG_TASK_BLOCKING_MS" = @{ Val = $null; Limit = $null;                Unit = "ms"; Category = "Diagnostic";       Enforcement = "Observe"; Desc = "Soma de long tasks observada; não equivale a TBT laboratorial" }
+    "LCP_MS"                         = @{ Val = $null; Limit = $LcpThreshold; Unit = "ms"; Category = "Performance"; Enforcement = "Fail"; Desc = "Maior pintura observada no navegador" }
+    "CLS"                            = @{ Val = $null; Limit = $ClsThreshold; Unit = ""; Category = "Performance"; Enforcement = "Fail"; Desc = "Deslocamento visual cumulativo observado" }
+    "TBT_MS"                         = @{ Val = $null; Limit = $TbtThreshold; Unit = "ms"; Category = "Performance"; Enforcement = "Fail"; Desc = "Total Blocking Time calculado pelo Lighthouse em build de producao e Chrome isolado" }
+    "TTFB_MS"                        = @{ Val = $null; Limit = $TtfbThreshold; Unit = "ms"; Category = "Performance"; Enforcement = "Fail"; Desc = "Resposta inicial observada via Navigation Timing. O teto e normativo de PRODUCAO: em build de desenvolvimento o Next renderiza por requisicao, e medido em 2026-09-10 deu 1078 ms em dev contra 3 ms em producao. Confirme qual build foi medido antes de tratar como regressao" }
+    "MAX_HEAP_MB"                    = @{ Val = $null; Limit = $MaxHeapThresholdMb; Unit = "MB"; Category = "Resource Economy"; Enforcement = "Fail"; Desc = "Heap JavaScript observado" }
+    "OBSERVED_EVENT_LATENCY_MS"      = @{ Val = $null; Limit = $null; Unit = "ms"; Category = "Diagnostic"; Enforcement = "Observe"; Desc = "Event Timing observado; não certifica INP sem interação humana" }
+    "OBSERVED_LONG_TASK_BLOCKING_MS" = @{ Val = $null; Limit = $null; Unit = "ms"; Category = "Diagnostic"; Enforcement = "Observe"; Desc = "Soma de long tasks observada; não equivale a TBT laboratorial" }
 }
 
 # 2. Accessibility & Quality Rules Matrix
@@ -192,7 +199,8 @@ function Add-QualityFinding {
 
     if ($Severity -eq 'ERROR') {
         $script:failures += $finding
-    } else {
+    }
+    else {
         $script:warnings += $finding
     }
 }
@@ -232,7 +240,8 @@ function Test-AxeManualReviewApproval {
 
     try {
         $baseline = Get-Content -LiteralPath $BaselinePath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-    } catch {
+    }
+    catch {
         return New-AxeManualReviewResult -Approved $false -Code 'BASELINE_INVALID' -Message "baseline de revisao humana invalido: $($_.Exception.Message)"
     }
 
@@ -247,8 +256,8 @@ function Test-AxeManualReviewApproval {
 
     $runtimeRule = $runtimeRules[0]
     $candidates = @($baseline.reviews | Where-Object {
-        $_.status -eq 'approved' -and $_.rule_id -eq [string]$runtimeRule.id
-    })
+            $_.status -eq 'approved' -and $_.rule_id -eq [string]$runtimeRule.id
+        })
     if ($candidates.Count -ne 1) {
         return New-AxeManualReviewResult -Approved $false -Code 'REVIEW_NOT_UNIQUE' -Message "nenhuma ou mais de uma revisao aprovada corresponde a regra '$($runtimeRule.id)'"
     }
@@ -317,7 +326,8 @@ function Read-CwvManualReviewRecord {
 
     try {
         $record = Get-Content -LiteralPath $RecordPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-    } catch {
+    }
+    catch {
         return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_INVALID'; Message = "registro humano CWV invalido: $($_.Exception.Message)"; Review = $null }
     }
 
@@ -327,8 +337,8 @@ function Read-CwvManualReviewRecord {
 
     $normalizedTarget = $ExpectedTargetUrl.TrimEnd('/')
     $candidates = @($record.reviews | Where-Object {
-        $_.status -eq 'positive_observation' -and ([string]$_.target_url).TrimEnd('/') -eq $normalizedTarget
-    })
+            $_.status -eq 'positive_observation' -and ([string]$_.target_url).TrimEnd('/') -eq $normalizedTarget
+        })
     if ($candidates.Count -ne 1) {
         return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_NOT_UNIQUE'; Message = "nenhuma ou mais de uma observacao humana positiva corresponde a $ExpectedTargetUrl"; Review = $null }
     }
@@ -336,9 +346,9 @@ function Read-CwvManualReviewRecord {
     $review = $candidates[0]
     $required = @('id', 'reviewer_authority', 'reviewed_at', 'target_url')
     $missing = @($required | Where-Object {
-        $property = $review.PSObject.Properties[$_]
-        $null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)
-    })
+            $property = $review.PSObject.Properties[$_]
+            $null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)
+        })
     if ($missing.Count -gt 0 -or @($review.observations).Count -eq 0 -or @($review.limitations).Count -eq 0) {
         return [pscustomobject]@{ Recorded = $false; Code = 'CWV_REVIEW_METADATA_MISSING'; Message = "registro humano CWV sem campos obrigatorios: $($missing -join ', ')"; Review = $review }
     }
@@ -376,7 +386,8 @@ function Test-FiniteNonNegativeNumber {
     try {
         $number = [double]$Value
         return -not [double]::IsNaN($number) -and -not [double]::IsInfinity($number) -and $number -ge 0
-    } catch {
+    }
+    catch {
         return $false
     }
 }
@@ -402,7 +413,8 @@ function Read-LighthouseProductionAudit {
 
     try {
         $artifact = Get-Content -LiteralPath $ArtifactPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-    } catch {
+    }
+    catch {
         return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_ARTIFACT_INVALID' -Message "artefato Lighthouse invalido: $($_.Exception.Message)"
     }
 
@@ -412,9 +424,9 @@ function Read-LighthouseProductionAudit {
 
     $required = @('generated_at', 'target_url', 'input_fingerprint_sha256')
     $missing = @($required | Where-Object {
-        $property = $artifact.PSObject.Properties[$_]
-        $null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)
-    })
+            $property = $artifact.PSObject.Properties[$_]
+            $null -eq $property -or [string]::IsNullOrWhiteSpace([string]$property.Value)
+        })
     if ($missing.Count -gt 0 -or $null -eq $artifact.metrics -or -not (Test-FiniteNonNegativeNumber -Value $artifact.metrics.tbtMs)) {
         return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_METADATA_MISSING' -Message "artefato Lighthouse sem campos obrigatorios ou TBT numerico: $($missing -join ', ')" -Artifact $artifact
     }
@@ -436,7 +448,8 @@ function Read-LighthouseProductionAudit {
         if ($LASTEXITCODE -ne 0 -or $currentFingerprint -notmatch '^[a-f0-9]{64}$') {
             throw "coletor de fingerprint falhou: $currentFingerprint"
         }
-    } catch {
+    }
+    catch {
         return New-LighthouseProductionAuditResult -Measured $false -Code 'LIGHTHOUSE_FINGERPRINT_UNAVAILABLE' -Message "nao foi possivel recalcular o fingerprint de producao: $($_.Exception.Message)" -Artifact $artifact
     }
 
@@ -495,12 +508,15 @@ if ($cdpActive -and $cdpPort -and (Test-Path $probeScript)) {
             $axeManualReview = Test-AxeManualReviewApproval -IncompleteDetails @($runtimeProbe.axe.incompleteDetails) -BaselinePath $A11yReviewBaselinePath -RepositoryRoot $RepoRoot
             $a11yRules["AXE_INCOMPLETE"].ManualReview = $axeManualReview
         }
-    } catch {
+    }
+    catch {
         $probeErro = $_.Exception.Message
     }
-} elseif ($cdpActive) {
+}
+elseif ($cdpActive) {
     $probeErro = "helper runtime ausente: $probeScript"
-} else {
+}
+else {
     $probeErro = "nenhuma porta CDP canonica respondeu"
 }
 
@@ -534,13 +550,16 @@ if ($FASE1_MEDE) {
     if ($cwvManualReview.Recorded -and $lighthouseProductionAudit.Measured) {
         $inp = $cwvManualReview.Review.measurements.inp
         Write-Host "    [CWV] Cobertura composta: INP humano $($inp.local_ms) ms / $($inp.field_p75_ms) ms p75; TBT Lighthouse $($perfMetrics['TBT_MS'].Val) ms." -ForegroundColor Green
-    } elseif ($cwvManualReview.Recorded) {
+    }
+    elseif ($cwvManualReview.Recorded) {
         $inp = $cwvManualReview.Review.measurements.inp
         Add-QualityFinding -Severity 'WARNING' -Component 'cwv.cobertura' -Detail 'Cobertura CWV parcial: INP foi atestado manualmente; TBT nao foi certificado.' -Reason "O arbitro humano registrou INP local de $($inp.local_ms) ms e p75 de campo de $($inp.field_p75_ms) ms para a interacao pointer. O artefato Lighthouse nao esta valido: $($lighthouseProductionAudit.Code) — $($lighthouseProductionAudit.Message)" -Action 'Executar a auditoria Lighthouse de producao em Chrome isolado e vincular o artefato ao fingerprint atual do frontend; nao inferir TBT de estabilidade observada ou long tasks do probe.'
-    } else {
+    }
+    else {
         Add-QualityFinding -Severity 'WARNING' -Component 'cwv.cobertura' -Detail 'Cobertura CWV parcial: INP e TBT nao foram certificados.' -Reason 'O probe observa uma aba temporaria, mas nao executa interacao humana controlada exigida pelo INP nem coleta trace laboratorial exigido pelo TBT; Event Timing e long tasks permanecem diagnosticos.' -Action 'Executar um roteiro humano controlado para INP e uma coleta laboratorial de trace para TBT; registrar ambos sem inferi-los a partir de outras metricas.'
     }
-} else {
+}
+else {
     $fase1Motivo = if ($probeErro) { "$probeErro. Metricas ausentes permaneceram nulas, sem estimativa estatica." } else { 'O probe runtime nao retornou as metricas exigidas; valores ausentes permaneceram nulos.' }
     Add-QualityFinding -Severity 'WARNING' -Component 'cwv.cobertura' -Detail 'Fase 1 (Core Web Vitals) nao mediu integralmente.' -Reason $fase1Motivo -Action "Restabelecer o frontend em $TargetUrl e uma instancia Chrome Dev com CDP somente em loopback; executar novamente o gate antes de concluir sobre CWV."
 }
@@ -578,9 +597,11 @@ foreach ($k in $a11yRules.Keys) {
         $axeRuleIds = @($runtimeProbe.axe.violationDetails | ForEach-Object { $_.id } | Where-Object { $_ }) -join ', '
         if ([string]::IsNullOrWhiteSpace($axeRuleIds)) { $axeRuleIds = 'ids nao retornados pelo probe' }
         Add-QualityFinding -Severity 'ERROR' -Component "a11y.$k" -Detail "${k}: $($r.Val) violation(s)." -Reason "$($r.Desc). axe-core confirmou violacao(oes) no DOM renderizado; regras: $axeRuleIds." -Action 'Corrigir os elementos e seletores reportados pelo axe-core, revisar a semantica acessivel e repetir a auditoria contra o DOM renderizado.'
-    } elseif ($review -and $reviewApproved) {
+    }
+    elseif ($review -and $reviewApproved) {
         Write-Host "    [A11Y] Revisao humana aprovada: $($r.ManualReview.ReviewId) ($($r.ManualReview.Reviewer))." -ForegroundColor Green
-    } elseif ($review) {
+    }
+    elseif ($review) {
         $axeRuleIds = @($runtimeProbe.axe.incompleteDetails | ForEach-Object { $_.id } | Where-Object { $_ }) -join ', '
         if ([string]::IsNullOrWhiteSpace($axeRuleIds)) { $axeRuleIds = 'ids nao retornados pelo probe' }
         $baselineDetail = if ($null -ne $r.ManualReview) { " Baseline: $($r.ManualReview.Code) -- $($r.ManualReview.Message)" } else { '' }
@@ -600,10 +621,10 @@ Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'SECURITY CHECK', 'COUNT', 'LI
 Write-Host ("-" * 68) -ForegroundColor DarkGray
 
 $secRules = [ordered]@{
-    "CRITICAL_CVE_COUNT" = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Critical severity vulnerabilities" }
-    "HIGH_CVE_COUNT"     = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "High severity vulnerabilities" }
-    "TOTAL_VULNERABILITY"= @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Total open vulnerabilities across ALL npm manifests in the repository" }
-    "PY_CVE_ABERTAS"     = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Python CVEs in requirements.txt without a recorded acceptance" }
+    "CRITICAL_CVE_COUNT"  = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Critical severity vulnerabilities" }
+    "HIGH_CVE_COUNT"      = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "High severity vulnerabilities" }
+    "TOTAL_VULNERABILITY" = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Total open vulnerabilities across ALL npm manifests in the repository" }
+    "PY_CVE_ABERTAS"      = @{ Val = 0; Limit = 0; Unit = "cves"; Desc = "Python CVEs in requirements.txt without a recorded acceptance" }
 }
 
 # SEGURANCA (2026-08-22): esta fase FALHAVA ABERTA.
@@ -659,7 +680,8 @@ $manifestosNpm = @()
 $lockfilesRastreados = @()
 try {
     $lockfilesRastreados = @(& git -C $RepoRoot ls-files --full-name '*package-lock.json' 2>$null)
-} catch {
+}
+catch {
     $lockfilesRastreados = @()
 }
 foreach ($lockRelativo in $lockfilesRastreados) {
@@ -690,9 +712,9 @@ if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
     try {
         $insumosCve = @($lockfilesRastreados | Where-Object { $_ }) + @('requirements.txt', 'data/python_cve_acceptances.json', 'data/npm_cve_acceptances.json')
         $cveCacheChave = (@(foreach ($rel in $insumosCve) {
-            $abs = Join-Path $RepoRoot $rel
-            if (Test-Path -LiteralPath $abs -PathType Leaf) { "$rel=" + (Get-Sha256Hex -LiteralPath $abs) } else { "$rel=ausente" }
-        }) -join ';')
+                    $abs = Join-Path $RepoRoot $rel
+                    if (Test-Path -LiteralPath $abs -PathType Leaf) { "$rel=" + (Get-Sha256Hex -LiteralPath $abs) } else { "$rel=ausente" }
+                }) -join ';')
         if (Test-Path -LiteralPath $cveCachePath -PathType Leaf) {
             $lido = Get-Content -LiteralPath $cveCachePath -Raw -Encoding utf8 | ConvertFrom-Json
             $cveCacheIdade = ([DateTimeOffset]::UtcNow.ToUnixTimeSeconds() - [int64]$lido.medido_em_unix) / 3600.0
@@ -701,7 +723,8 @@ if (Test-Path -LiteralPath (Join-Path $RepoRoot '.git') -PathType Container) {
                 $cveCacheHit = $true
             }
         }
-    } catch {
+    }
+    catch {
         # Nunca mais calado: foi este catch que escondeu a falha acima por dias.
         # Cache indisponivel nao reprova (a fase mede do zero), mas aparece.
         $cveCacheHit = $false
@@ -730,7 +753,8 @@ function Test-NpmVulnAceita {
                     return $true
                 }
             }
-        } elseif ($null -ne $viaItem) {
+        }
+        elseif ($null -ne $viaItem) {
             $viaPkg = [string]$viaItem.name
             $url = [string]$viaItem.url
             foreach ($aceite in $Aceites) {
@@ -757,21 +781,25 @@ if (Test-Path -LiteralPath $npmAceitesPath -PathType Leaf) {
                 $npmAceites += "$($a.package)|$($a.version)|$vid"
             }
         }
-    } catch {
+    }
+    catch {
         $cveErro = "arquivo de aceites npm ilegivel: $($_.Exception.Message)"
     }
 }
 
 if ($cveCacheHit) {
     $secRules["CRITICAL_CVE_COUNT"].Val = [int]$cveCache.npm_critico
-    $secRules["HIGH_CVE_COUNT"].Val     = [int]$cveCache.npm_alto
-    $secRules["TOTAL_VULNERABILITY"].Val= [int]$cveCache.npm_total
+    $secRules["HIGH_CVE_COUNT"].Val = [int]$cveCache.npm_alto
+    $secRules["TOTAL_VULNERABILITY"].Val = [int]$cveCache.npm_total
     $cveMedido = $true
-} elseif (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+}
+elseif (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
     $cveErro = 'npm nao foi encontrado no PATH'
-} elseif ($cveManifestos -eq 0) {
+}
+elseif ($cveManifestos -eq 0) {
     $cveErro = 'nenhum package-lock.json encontrado no repositorio'
-} else {
+}
+else {
     $cveCritico = 0
     $cveAlto = 0
     $cveTotal = 0
@@ -795,9 +823,10 @@ if ($cveCacheHit) {
                 if ($null -ne $metadata) {
                     if ($npmAceites.Count -eq 0 -or $null -eq $auditJson.vulnerabilities) {
                         $cveCritico += [int]($metadata.critical)
-                        $cveAlto    += [int]($metadata.high)
-                        $cveTotal   += [int]($metadata.total)
-                    } else {
+                        $cveAlto += [int]($metadata.high)
+                        $cveTotal += [int]($metadata.total)
+                    }
+                    else {
                         foreach ($prop in $auditJson.vulnerabilities.PSObject.Properties) {
                             $vuln = $prop.Value
                             $ehAceita = Test-NpmVulnAceita -v $vuln -allVulns $auditJson.vulnerabilities -Aceites $npmAceites
@@ -809,16 +838,20 @@ if ($cveCacheHit) {
                             }
                         }
                     }
-                } else {
+                }
+                else {
                     $cveFalhas += "$manifesto : JSON sem metadata.vulnerabilities"
                 }
-            } else {
+            }
+            else {
                 $trecho = $auditRaw.Substring(0, [Math]::Min(70, $auditRaw.Length))
                 $cveFalhas += "$manifesto : npm audit nao devolveu JSON: $trecho"
             }
-        } catch {
+        }
+        catch {
             $cveFalhas += "$manifesto : excecao ao rodar npm audit: $($_.Exception.Message)"
-        } finally {
+        }
+        finally {
             $env:NODE_OPTIONS = $prevNodeOptions
             Set-Location -Path $dirAnterior
         }
@@ -826,10 +859,11 @@ if ($cveCacheHit) {
 
     if ($cveFalhas.Count -gt 0) {
         $cveErro = ($cveFalhas -join ' | ')
-    } else {
+    }
+    else {
         $secRules["CRITICAL_CVE_COUNT"].Val = $cveCritico
-        $secRules["HIGH_CVE_COUNT"].Val     = $cveAlto
-        $secRules["TOTAL_VULNERABILITY"].Val= $cveTotal
+        $secRules["HIGH_CVE_COUNT"].Val = $cveAlto
+        $secRules["TOTAL_VULNERABILITY"].Val = $cveTotal
         $cveMedido = $true
     }
 }
@@ -871,7 +905,8 @@ if (Test-Path -LiteralPath $pyAceitesPath -PathType Leaf) {
                 $pyAceites += "$($a.package)|$($a.version)|$vid"
             }
         }
-    } catch {
+    }
+    catch {
         $pyCveErro = "arquivo de aceites ilegivel: $($_.Exception.Message)"
     }
 }
@@ -883,10 +918,12 @@ if ($cveCacheHit) {
     $pyNaoAceitas = @($cveCache.py_nao_aceitas | Where-Object { $_ })
     $secRules["PY_CVE_ABERTAS"].Val = $pyNaoAceitas.Count
     $pyCveMedido = $true
-} elseif (-not $pyCveErro) {
+}
+elseif (-not $pyCveErro) {
     if (-not (Test-Path -LiteralPath $pyRequirements -PathType Leaf)) {
         $pyCveErro = 'requirements.txt ausente'
-    } else {
+    }
+    else {
         try {
             $pyVenv = Join-Path $RepoRoot '.venv\Scripts\python.exe'
             $pyExe = if (Test-Path -LiteralPath $pyVenv) { $pyVenv } else { 'python' }
@@ -896,7 +933,8 @@ if ($cveCacheHit) {
             if ($pyFirst -lt 0 -or $pyLast -le $pyFirst) {
                 $trecho = $pyRaw.Substring(0, [Math]::Min(120, $pyRaw.Length))
                 $pyCveErro = "pip_audit nao devolveu JSON: $trecho"
-            } else {
+            }
+            else {
                 $pyDoc = $pyRaw.Substring($pyFirst, $pyLast - $pyFirst + 1) | ConvertFrom-Json
                 foreach ($dep in @($pyDoc.dependencies)) {
                     foreach ($v in @($dep.vulns)) {
@@ -907,7 +945,8 @@ if ($cveCacheHit) {
                 $secRules["PY_CVE_ABERTAS"].Val = $pyNaoAceitas.Count
                 $pyCveMedido = $true
             }
-        } catch {
+        }
+        catch {
             $pyCveErro = "excecao ao rodar pip_audit: $($_.Exception.Message)"
         }
     }
@@ -924,7 +963,8 @@ if (-not $cveCacheHit -and $cveMedido -and $pyCveMedido -and $cveCacheChave) {
             npm_total      = $secRules["TOTAL_VULNERABILITY"].Val
             py_nao_aceitas = @($pyNaoAceitas)
         } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $cveCachePath -Encoding utf8
-    } catch { }
+    }
+    catch { }
 }
 
 foreach ($k in $secRules.Keys) {
@@ -942,7 +982,7 @@ foreach ($k in $secRules.Keys) {
 
 # A linha que impede a falha aberta: os zeros acima so valem se o audit RODOU.
 $execStatus = if ($cveMedido) { "[PASS]" } else { "[FAIL]" }
-$execColor  = if ($cveMedido) { "Green" } else { "Red" }
+$execColor = if ($cveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_AUDIT_EXECUTADO', $(if ($cveMedido) { 'sim' } else { 'NAO' }), 'sim', $execStatus) -ForegroundColor $execColor
 # Cobertura declarada: sem ela, "0 cves" nao diz sobre QUANTOS projetos.
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'CVE_MANIFESTOS_AUDITADOS', "$cveManifestos npm", '-', 'INFO') -ForegroundColor DarkGray
@@ -952,14 +992,15 @@ if ($cveCacheErro) {
     Write-Host ("  [CACHE CVE INDISPONIVEL] {0}" -f $cveCacheErro) -ForegroundColor DarkYellow
 }
 $pyStatus = if ($pyCveMedido) { "[PASS]" } else { "[FAIL]" }
-$pyColor  = if ($pyCveMedido) { "Green" } else { "Red" }
+$pyColor = if ($pyCveMedido) { "Green" } else { "Red" }
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_AUDIT_EXECUTADO', $(if ($pyCveMedido) { 'sim' } else { 'NAO' }), 'sim', $pyStatus) -ForegroundColor $pyColor
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'NPM_CVE_ACEITAS', "$($npmAceites.Count) aceites", '-', 'INFO') -ForegroundColor DarkGray
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'PY_CVE_ACEITAS', "$($pyAceites.Count) aceites", '-', 'INFO') -ForegroundColor DarkGray
 if (-not $pyCveMedido) {
     Write-Host "   motivo: $pyCveErro" -ForegroundColor Red
     Add-QualityFinding -Severity 'ERROR' -Component 'security.python.execucao' -Detail 'O audit de CVE Python nao executou.' -Reason "$pyCveErro. Zero por ausencia de medicao nao e resultado de seguranca." -Action 'Corrigir a disponibilidade do pip_audit ou a falha de JSON indicada, executar pip_audit -r requirements.txt com sucesso e somente entao avaliar a contagem.'
-} elseif ($pyNaoAceitas.Count -gt 0) {
+}
+elseif ($pyNaoAceitas.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'security.python.aberta' -Detail "CVE Python sem aceite: $($pyNaoAceitas -join ', ')" -Reason 'A CVE consta na declaracao de requirements.txt e nao ha aceite registrado com parecer.' -Action 'Atualizar a dependencia, ou registrar o aceite em data/python_cve_acceptances.json com vetor, alcance medido, consumo real e autoridade -- nunca suprimir a verificacao.'
 }
 if (-not $cveMedido) {
@@ -985,32 +1026,38 @@ $sriErro = ''
 # o POSIX usa bin/python. Resolver so o primeiro quebrava silenciosamente
 # em qualquer host Linux/macOS -- inclusive CI ubuntu-latest.
 $venvPyWindows = Join-Path $RepoRoot '.venv\Scripts\python.exe'
-$venvPyPosix   = Join-Path $RepoRoot '.venv/bin/python'
+$venvPyPosix = Join-Path $RepoRoot '.venv/bin/python'
 $sriScript = Join-Path $PSScriptRoot 'sri_integrity_verifier.py'
 $pythonExe = if (Test-Path $venvPyWindows) {
     $venvPyWindows
-} elseif (Test-Path $venvPyPosix) {
+}
+elseif (Test-Path $venvPyPosix) {
     $venvPyPosix
-} else {
+}
+else {
     $cmd = Get-Command python.exe, python3, python -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($cmd) { $cmd.Source } else { $null }
 }
 
 if (-not $pythonExe) {
     $sriErro = 'nenhum interpretador Python encontrado (venv ausente e python.exe fora do PATH)'
-} elseif (-not (Test-Path $sriScript)) {
+}
+elseif (-not (Test-Path $sriScript)) {
     $sriErro = "verificador ausente: $sriScript"
-} else {
+}
+else {
     $global:LASTEXITCODE = 0
     try {
         $sriOutput = & $pythonExe $sriScript 2>&1
         if ($LASTEXITCODE -eq 0) {
             $sriSuccess = $true
-        } else {
+        }
+        else {
             $sriErro = "verificador saiu com codigo $LASTEXITCODE"
             Write-Verbose "SRI verifier output: $sriOutput"
         }
-    } catch {
+    }
+    catch {
         $sriErro = "excecao ao executar o verificador: $($_.Exception.Message)"
     }
 }
@@ -1179,10 +1226,10 @@ function Test-Ps51CompatibilidadeSubstituta {
 # Script do processo filho, codificado uma unica vez. Le o alvo de
 # $env:SOTA_PS51_ALVO — o caminho e DADO, nunca texto de comando.
 $EncPs51 = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes(
-    '$e = $null; ' +
-    '[System.Management.Automation.Language.Parser]::ParseFile($env:SOTA_PS51_ALVO, [ref]$null, [ref]$e) | Out-Null; ' +
-    'if ($e.Count) { "ERR:" + $e.Count + ":" + $e[0].Extent.StartLineNumber } else { "OK" }'
-))
+        '$e = $null; ' +
+        '[System.Management.Automation.Language.Parser]::ParseFile($env:SOTA_PS51_ALVO, [ref]$null, [ref]$e) | Out-Null; ' +
+        'if ($e.Count) { "ERR:" + $e.Count + ":" + $e[0].Extent.StartLineNumber } else { "OK" }'
+    ))
 
 foreach ($arquivo in $staged) {
     if ($arquivo -notmatch '\.ps1$') { continue }
@@ -1209,7 +1256,8 @@ foreach ($arquivo in $staged) {
         $motivosSubs = Test-Ps51CompatibilidadeSubstituta -Caminho $abs
         if ($motivosSubs.Count -gt 0) {
             $violPs += "$arquivo (incompativel com 5.1: $($motivosSubs -join '; '))"
-        } else {
+        }
+        else {
             $ps51Parcial += $arquivo
         }
         continue
@@ -1236,7 +1284,8 @@ foreach ($arquivo in $staged) {
     $env:SOTA_PS51_ALVO = $abs
     try {
         $saida = & powershell.exe -NoProfile -EncodedCommand $EncPs51
-    } finally {
+    }
+    finally {
         Remove-Item Env:\SOTA_PS51_ALVO -ErrorAction SilentlyContinue
     }
     if ("$saida".Trim() -ne 'OK') {
@@ -1270,13 +1319,13 @@ if ($pyEmStage.Count -gt 0) {
     }
 }
 
-$hygieneRules['StagedFiles']      = @{ Val = $stagedTotal;       Limit = '-';         Desc = 'Arquivos em stage (conteudo ou exclusao)' }
-$hygieneRules['Ps51PorBateria']   = @{ Val = $ps51Parcial.Count;  Limit = '-';         Desc = 'Verificado pela bateria substituta, sem o 5.1 real (INFO)' }
-$hygieneRules['PowerShell51']     = @{ Val = $violPs.Count;      Limit = 0;           Desc = 'Script .ps1 que quebra no interpretador real' }
-$hygieneRules['ForbiddenPaths']   = @{ Val = $violPath.Count;    Limit = 0;           Desc = 'Diretorio de perfil/ferramenta versionado' }
-$hygieneRules['OversizedBlobs']   = @{ Val = $violSize.Count;    Limit = 0;           Desc = "Blob nao-LFS acima de $MaxBlobMb MB" }
-$hygieneRules['UnroutedBinaries'] = @{ Val = $violRoute.Count;   Limit = 0;           Desc = 'Binario sem filter=lfs no .gitattributes' }
-$hygieneRules['RuffFormat']       = @{ Val = $violFmt.Count;     Limit = 0;           Desc = 'Arquivo .py em stage fora do formato do ruff (o CI reprova)' }
+$hygieneRules['StagedFiles'] = @{ Val = $stagedTotal; Limit = '-'; Desc = 'Arquivos em stage (conteudo ou exclusao)' }
+$hygieneRules['Ps51PorBateria'] = @{ Val = $ps51Parcial.Count; Limit = '-'; Desc = 'Verificado pela bateria substituta, sem o 5.1 real (INFO)' }
+$hygieneRules['PowerShell51'] = @{ Val = $violPs.Count; Limit = 0; Desc = 'Script .ps1 que quebra no interpretador real' }
+$hygieneRules['ForbiddenPaths'] = @{ Val = $violPath.Count; Limit = 0; Desc = 'Diretorio de perfil/ferramenta versionado' }
+$hygieneRules['OversizedBlobs'] = @{ Val = $violSize.Count; Limit = 0; Desc = "Blob nao-LFS acima de $MaxBlobMb MB" }
+$hygieneRules['UnroutedBinaries'] = @{ Val = $violRoute.Count; Limit = 0; Desc = 'Binario sem filter=lfs no .gitattributes' }
+$hygieneRules['RuffFormat'] = @{ Val = $violFmt.Count; Limit = 0; Desc = 'Arquivo .py em stage fora do formato do ruff (o CI reprova)' }
 
 Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f 'HYGIENE CHECK', 'COUNT', 'LIMIT', 'GATE') -ForegroundColor White
 foreach ($regra in $hygieneRules.Keys) {
@@ -1288,12 +1337,12 @@ foreach ($regra in $hygieneRules.Keys) {
     Write-Host ("{0,-26} | {1,-10} | {2,-8} | {3}" -f $regra, $v, $l, $marca) -ForegroundColor $cor
 }
 
-foreach ($v in $violPath)  { Write-Host "   - caminho proibido: $v" -ForegroundColor Red }
-foreach ($v in $violSize)  { Write-Host "   - blob grande fora do LFS: $v" -ForegroundColor Red }
+foreach ($v in $violPath) { Write-Host "   - caminho proibido: $v" -ForegroundColor Red }
+foreach ($v in $violSize) { Write-Host "   - blob grande fora do LFS: $v" -ForegroundColor Red }
 foreach ($v in $violRoute) { Write-Host "   - binario sem roteamento LFS: $v" -ForegroundColor Red }
-foreach ($v in $violPs)    { Write-Host "   - PowerShell 5.1: $v" -ForegroundColor Red }
+foreach ($v in $violPs) { Write-Host "   - PowerShell 5.1: $v" -ForegroundColor Red }
 foreach ($v in $ps51Parcial) { Write-Host "   - PowerShell 5.1 por bateria substituta (sem 5.1 real): $v" -ForegroundColor Yellow }
-foreach ($v in $violFmt)   { Write-Host "   - fora do formato do ruff: $v" -ForegroundColor Red }
+foreach ($v in $violFmt) { Write-Host "   - fora do formato do ruff: $v" -ForegroundColor Red }
 
 if ($violPath.Count -gt 0) {
     Add-QualityFinding -Severity 'ERROR' -Component 'repository.forbidden-paths' -Detail "$($violPath.Count) arquivo(s) sob diretorio de perfil/ferramenta: $($violPath -join '; ')." -Reason 'Estado local de ferramenta foi colocado em stage; ele nao e fonte versionavel do projeto.' -Action 'Retirar esses caminhos do stage e registrar a exclusao em .gitignore, preservando configuracoes compartilhadas fora dos diretorios de runtime.'
@@ -1344,9 +1393,11 @@ $latestMdPath = Join-Path $ReportDir "latest_cwv_report.md"
 $TETO_DE_WARNINGS = 2
 $triState = if ($failures.Count -gt 0 -or $warnings.Count -gt $TETO_DE_WARNINGS) {
     "FALHOU (VERMELHO)"
-} elseif ($warnings.Count -gt 0) {
+}
+elseif ($warnings.Count -gt 0) {
     "FRAGIL (AMARELO)"
-} else {
+}
+else {
     "SUCESSO (VERDE)"
 }
 $reportStatus = switch ($triState) {
@@ -1361,48 +1412,49 @@ $reportStatusMarkdown = switch ($reportStatus) {
 }
 $allFindings = @($failures) + @($warnings)
 $lighthouseAuditSummary = [ordered]@{
-    Measured = $lighthouseProductionAudit.Measured
-    Code = $lighthouseProductionAudit.Code
-    Message = $lighthouseProductionAudit.Message
+    Measured            = $lighthouseProductionAudit.Measured
+    Code                = $lighthouseProductionAudit.Code
+    Message             = $lighthouseProductionAudit.Message
     ObservedFingerprint = $lighthouseProductionAudit.ObservedFingerprint
     ExpectedFingerprint = $lighthouseProductionAudit.ExpectedFingerprint
-    Artifact = if ($null -ne $lighthouseProductionAudit.Artifact) {
+    Artifact            = if ($null -ne $lighthouseProductionAudit.Artifact) {
         [ordered]@{
-            SchemaVersion = $lighthouseProductionAudit.Artifact.schema_version
-            Source = $lighthouseProductionAudit.Artifact.source
-            GeneratedAt = $lighthouseProductionAudit.Artifact.generated_at
-            TargetUrl = $lighthouseProductionAudit.Artifact.target_url
-            Metrics = $lighthouseProductionAudit.Artifact.metrics
-            PerformanceScore = $lighthouseProductionAudit.Artifact.performance_score
+            SchemaVersion      = $lighthouseProductionAudit.Artifact.schema_version
+            Source             = $lighthouseProductionAudit.Artifact.source
+            GeneratedAt        = $lighthouseProductionAudit.Artifact.generated_at
+            TargetUrl          = $lighthouseProductionAudit.Artifact.target_url
+            Metrics            = $lighthouseProductionAudit.Artifact.metrics
+            PerformanceScore   = $lighthouseProductionAudit.Artifact.performance_score
             AccessibilityScore = $lighthouseProductionAudit.Artifact.accessibility_score
         }
-    } else {
+    }
+    else {
         $null
     }
 }
 
 $reportData = [ordered]@{
-    Timestamp = (Get-Date).ToString("o")
-    TargetUrl = $TargetUrl
-    CdpActive = $cdpActive
-    CdpPort = $cdpPort
-    RuntimeProbe = $runtimeProbe
-    RuntimeProbeError = $probeErro
-    Status = $reportStatus
-    A11yReviewBaselinePath = $A11yReviewBaselinePath
+    Timestamp                 = (Get-Date).ToString("o")
+    TargetUrl                 = $TargetUrl
+    CdpActive                 = $cdpActive
+    CdpPort                   = $cdpPort
+    RuntimeProbe              = $runtimeProbe
+    RuntimeProbeError         = $probeErro
+    Status                    = $reportStatus
+    A11yReviewBaselinePath    = $A11yReviewBaselinePath
     AccessibilityManualReview = $axeManualReview
-    CwvManualReviewPath = $CwvManualReviewPath
+    CwvManualReviewPath       = $CwvManualReviewPath
     CoreWebVitalsManualReview = $cwvManualReview
-    LighthouseArtifactPath = $LighthouseArtifactPath
+    LighthouseArtifactPath    = $LighthouseArtifactPath
     LighthouseProductionAudit = $lighthouseAuditSummary
-    CoreWebVitals = $perfMetrics
-    AccessibilityRules = $a11yRules
-    SecurityRules = $secRules
-    SriIntegrity = if ($sriSuccess) { "VERIFIED" } else { "FAILED" }
-    RepositoryHygiene = $hygieneRules
-    Failures = $failures
-    Warnings = $warnings
-    Findings = $allFindings
+    CoreWebVitals             = $perfMetrics
+    AccessibilityRules        = $a11yRules
+    SecurityRules             = $secRules
+    SriIntegrity              = if ($sriSuccess) { "VERIFIED" } else { "FAILED" }
+    RepositoryHygiene         = $hygieneRules
+    Failures                  = $failures
+    Warnings                  = $warnings
+    Findings                  = $allFindings
 }
 
 $reportData | ConvertTo-Json -Depth 8 | Set-Content -Path $reportJsonPath -Encoding UTF8
@@ -1448,8 +1500,8 @@ $($axeEvidenceLines -join "`n")
 $cwvManualReviewMarkdown = ''
 if ($cwvManualReview.Recorded) {
     $cwvObservationLines = @($cwvManualReview.Review.observations | ForEach-Object {
-        "- **$($_.dimension):** $($_.verdict) — $($_.statement)"
-    })
+            "- **$($_.dimension):** $($_.verdict) — $($_.statement)"
+        })
     $cwvLimitationLines = @($cwvManualReview.Review.limitations | ForEach-Object { "- $_" })
     $manualInp = $cwvManualReview.Review.measurements.inp
     $tbtManualStatement = if ($lighthouseProductionAudit.Measured) { "**TBT certificado pelo Lighthouse: $($perfMetrics['TBT_MS'].Val) ms em producao isolada.**" } else { '**TBT permanece sem artefato Lighthouse valido.**' }
@@ -1480,7 +1532,7 @@ if ($lighthouseProductionAudit.Measured -and $null -ne $lhA11yScoreProperty -and
     $lhA11yScoreLabel = "{0}/100" -f [int]([double]$lhA11yScoreProperty.Value * 100)
 }
 $lighthouseProductionMarkdown = if ($lighthouseProductionAudit.Measured) {
-@"
+    @"
 ## 1.2 Lighthouse de producao isolada
 > **MEDIDO E VINCULADO AO INPUT.** O artefato abaixo veio de uma build de producao, em Chrome efemero sem extensoes; o fingerprint do `frontend/` atual corresponde exatamente ao registrado.
 
@@ -1494,8 +1546,9 @@ $lighthouseProductionMarkdown = if ($lighthouseProductionAudit.Measured) {
 - **Fingerprint SHA-256:** $($lighthouseProductionAudit.ObservedFingerprint)
 
 "@
-} else {
-@"
+}
+else {
+    @"
 ## 1.2 Lighthouse de producao isolada
 > **NAO APLICAVEL NESTA EXECUCAO.** O gate nao certificou TBT.
 
@@ -1521,7 +1574,8 @@ if ($null -ne $axeManualReview) {
 - **Decisao:** $($axeManualReview.Message)
 
 "@
-    } else {
+    }
+    else {
         $axeManualReviewMarkdown = @"
 ## 2.2 Baseline humano nao aplicavel
 > **NAO APROVADO NESTA EXECUCAO.** O axe-core continua ativo e a revisao humana nao foi dispensada.
@@ -1613,9 +1667,11 @@ if ($triState -eq "SUCESSO (VERDE)") {
     $fasesMedidas = 3 + [int]$FASE1_MEDE + [int]$FASE2_MEDE
     Write-Host "• Status da Bateria: [$triState] Zero Erros e Zero Warnings nas $fasesMedidas Fases medidas do Quality Gate." -ForegroundColor Green
     Write-Host "• Homeostase Total:  Nenhum erro ou warning detectado nas $fasesMedidas fases medidas." -ForegroundColor Green
-} elseif ($triState -eq "FRAGIL (AMARELO)") {
+}
+elseif ($triState -eq "FRAGIL (AMARELO)") {
     Write-Host "• Status da Bateria: [$triState] 0 Erros, mas detectados $($warnings.Count) warnings no Quality Gate (teto $TETO_DE_WARNINGS)." -ForegroundColor Yellow
-} else {
+}
+else {
     Write-Host "• Status da Bateria: [$triState] Bloqueio Termodinamico! ($($failures.Count) Erros, $($warnings.Count) Warnings, teto $TETO_DE_WARNINGS)." -ForegroundColor Red
 }
 
