@@ -1039,6 +1039,133 @@
       "fallback_engine_id": null
     },
     {
+      "engine_id": "gemini-key-pool",
+      "display_name": "Gemini Key Pool (AI Studio, GEMINI_API_KEY_*)",
+      "family": "adapter",
+      "implementation_level": "primitive",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "python",
+        "windows-registry"
+      ],
+      "source_lineage": [
+        "Google AI Studio auth keys",
+        "Chico SOTA"
+      ],
+      "safe_label": "Pool rotacional de chaves GEMINI_API_KEY_1..N + aliases GEMINI_FLASH_KEY_* (HKCU/HKLM Environment) para gemini-3.5-flash-lite; weighted round-robin com circuit breaker (401/403 revoga, 429 cooldown, 5xx cooldown curto), telemetria sha8 sem vazar chave e fallback GEMINI_API_KEY.",
+      "claims_allowed": [
+        "key-rotation",
+        "circuit-breaker",
+        "workload-weighting",
+        "telemetry-sha8"
+      ],
+      "causal_parameters": [
+        "GEMINI_API_KEY_*",
+        "GEMINI_FLASH_KEY_*",
+        "status_code",
+        "retry_after_s"
+      ],
+      "reserved_parameters": [
+        "raw-api-key-logging",
+        "cross-pool-key-sharing"
+      ],
+      "units": [
+        "keys",
+        "seconds",
+        "sha8"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "keys-stored-in-windows-registry-env",
+        "rate-limits-are-per-project-not-per-key"
+      ],
+      "limitations": [
+        "same-project-keys-share-quota",
+        "requires-HKCU-or-HKLM-provisioning",
+        "no-throughput-multiplication-within-one-project"
+      ],
+      "consumer_paths": [
+        "llm/gemini_pool.py",
+        "llm/gemini.py",
+        "llm/system2_local.py"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": null
+    },
+    {
+      "engine_id": "openrouter-key-pool",
+      "display_name": "OpenRouter Multi-Tier Key Pool (OPENROUTER_TIER{1-4}_KEY_*)",
+      "family": "adapter",
+      "implementation_level": "primitive",
+      "runtime_availability": "code-available",
+      "runtimes": [
+        "python",
+        "windows-registry"
+      ],
+      "source_lineage": [
+        "OpenRouter API keys",
+        "Chico SOTA"
+      ],
+      "safe_label": "Pool multi-tier OPENROUTER_TIER{1-4}_KEY_* (HKCU/HKLM Environment) com score adaptativo de saude e circuit breaker (401/403 revoga, 429 cooldown, 5xx cooldown); tiers isolados com fallbacks autorizados (2->4/1, 4->3, 3->Tier6 local); chaves dedicadas por agente (OPENROUTER_{ANTIGRAVITY,DEVIN,HERMES}_KEY) fora dos tiers.",
+      "claims_allowed": [
+        "key-rotation",
+        "circuit-breaker",
+        "tier-isolation",
+        "adaptive-health-score",
+        "telemetry-sha8"
+      ],
+      "causal_parameters": [
+        "OPENROUTER_TIER*_KEY_*",
+        "status_code",
+        "retry_after_s"
+      ],
+      "reserved_parameters": [
+        "raw-api-key-logging",
+        "cross-tier-key-sharing",
+        "tier1-degradation"
+      ],
+      "units": [
+        "keys",
+        "seconds",
+        "sha8"
+      ],
+      "provenance_requirements": [
+        "engine_id",
+        "implementation_level",
+        "runtime_used",
+        "weights_loaded",
+        "fallback_used",
+        "assumptions",
+        "limitations"
+      ],
+      "assumptions": [
+        "keys-stored-in-windows-registry-env",
+        "tier-fallback-policy-authorized",
+        "per-key-quotas-apply"
+      ],
+      "limitations": [
+        "requires-HKCU-or-HKLM-provisioning",
+        "tier3-exhaustion-falls-back-to-local-tier6"
+      ],
+      "consumer_paths": [
+        "llm/openrouter_pool.py",
+        "llm/budget.py",
+        "engine/gemma_server.py",
+        "llm/providers.py",
+        "llm/routing_policy.py"
+      ],
+      "api_routes": [],
+      "fallback_engine_id": "system2-local-ollama"
+    },
+    {
       "engine_id": "system2-local-ollama",
       "display_name": "System-2 Local Router (Ollama tiers + Flash-Lite fallback)",
       "family": "adapter",

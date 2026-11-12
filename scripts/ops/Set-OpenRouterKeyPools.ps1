@@ -5,11 +5,15 @@
 
 .DESCRIPTION
   Grava as chaves OpenRouter nos escopos de Usuario (HKCU) e Maquina (HKLM)
-  organizadas por Tier:
-    - Tier 1: 3 chaves (OPENROUTER_TIER1_KEY_1..3)
-    - Tier 2: 3 chaves (OPENROUTER_TIER2_KEY_1..3)
+  organizadas por Tier (contagens vigentes medidas em 2026-11-12):
+    - Tier 1: 4 chaves ativas (OPENROUTER_TIER1_KEY_1..4; 5a provisao teve
+      uma chave revogada por HTTP 401 na validacao live)
+    - Tier 2: 7 chaves (OPENROUTER_TIER2_KEY_1..7)
     - Tier 3: 5 chaves (OPENROUTER_TIER3_KEY_1..5)
     - Tier 4: 5 chaves (OPENROUTER_TIER4_KEY_1..5)
+  Tambem podem coexistir chaves dedicadas por agente
+  (OPENROUTER_ANTIGRAVITY_KEY / OPENROUTER_DEVIN_KEY / OPENROUTER_HERMES_KEY)
+  e o legado OPENROUTER_API_KEY como fallback.
   Implementa a secao 3 do CLAUDE.md: segredos nunca em texto claro no git.
   Auditoria por SHA-256 truncado (sha8).
 
@@ -108,7 +112,8 @@ foreach ($tier in 1..4) {
       try {
         [Environment]::SetEnvironmentVariable($varName, $keyVal, 'Machine')
         $hklmOk = $true
-      } catch {
+      }
+      catch {
         Write-Warning "Nao foi possivel gravar $varName em HKLM: $_"
       }
     }
