@@ -61,6 +61,22 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+def _tree_sha() -> str:
+    """tree SHA do indice de RAIZ — o mesmo valor que `git write-tree` ve no hook."""
+    r = subprocess.run(["git", "write-tree"], cwd=RAIZ, capture_output=True, text=True, check=False)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def _assinatura(nome: str, tier: str = "[Tier 1]", *, sem_ts: bool = False, extras: str = "") -> str:
+    """Linha Assinatura com a anatomia completa dos seis campos.
+
+    `sha={SHA}` e placeholder: `_rodar_com_autor` o resolve com o tree SHA real
+    do indice, para que a assinatura case com o `git write-tree` do hook.
+    """
+    ts = "" if sem_ts else "ts=2026-11-12T10:00:00-03:00 "
+    return f"Assinatura: {nome} {tier} -- modelo=m condutor=c {ts}sha={{SHA}} supervisao=assistida sessao=t{extras}"
+
+
 def _rodar(mensagem: str, tmp_path) -> subprocess.CompletedProcess:
     """Exercita a REGRA DE ASSUNTO, e so ela.
 
@@ -74,7 +90,7 @@ def _rodar(mensagem: str, tmp_path) -> subprocess.CompletedProcess:
     maquina faria o resultado mudar conforme quem roda.
     """
     return _rodar_com_autor(
-        f"{mensagem}\n\nAssinatura: Claude Opus 5 [Tier 1.B] -- sessao teste\n",
+        f"{mensagem}\n\n{_assinatura('Claude Opus 5', '[Tier 1.B]')}\n",
         "Claude Opus 5",
         tmp_path,
     )
@@ -173,6 +189,7 @@ def test_comentarios_do_editor_sao_ignorados(tmp_path):
 def _rodar_com_autor(mensagem: str, autor: str, tmp_path) -> subprocess.CompletedProcess:
     assert SH is not None
     arquivo = tmp_path / "COMMIT_EDITMSG"
+    mensagem = mensagem.replace("{SHA}", _tree_sha())
     arquivo.write_text(mensagem, encoding="utf-8")
     ambiente = {
         **os.environ,
@@ -192,13 +209,13 @@ def _rodar_com_autor(mensagem: str, autor: str, tmp_path) -> subprocess.Complete
 
 
 COERENTES = [
-    ("Claude Opus 5", "Assinatura: Claude Opus 5 [Tier 1.B] -- sessao s1"),
+    ("Claude Opus 5", _assinatura("Claude Opus 5", "[Tier 1.B]")),
     # A forma composta veiculo@modelo da SS7 e o nome do campo de autor sao a
     # MESMA identidade em duas convencoes. Comparacao literal reprovaria as duas.
-    ("Gemini 3.8 Flash", "Assinatura: antigravity@gemini-3.8-flash -- sessao s2"),
-    ("ChatGPT 5.6", "Assinatura: ChatGPT 5.6 [Tier 1.B]"),
+    ("Gemini 3.8 Flash", _assinatura("antigravity@gemini-3.8-flash")),
+    ("ChatGPT 5.6", _assinatura("ChatGPT 5.6", "[Tier 1.B]")),
     # Autor e committer distintos: o campo de autor e de quem PRODUZIU.
-    ("Gemini 3.8 Flash", "Assinatura: Gemini 3.8 Flash via Claude Opus 5 como committer"),
+    ("Gemini 3.8 Flash", _assinatura("Gemini 3.8 Flash via Claude Opus 5 como committer")),
 ]
 
 
@@ -211,7 +228,7 @@ def test_autor_que_concorda_com_a_assinatura_passa(autor, linha, tmp_path):
 def test_o_caso_medido_em_12_09_seria_barrado(tmp_path):
     """O commit do Gemini que saiu assinado `Codex GPT-5`, cinco vezes num dia."""
     r = _rodar_com_autor(
-        "feat(theory): assunto\n\nAssinatura: antigravity@gemini-3.8-flash -- sessao s2\n",
+        f"feat(theory): assunto\n\n{_assinatura('antigravity@gemini-3.8-flash')}\n",
         "Codex GPT-5",
         tmp_path,
     )
@@ -289,7 +306,7 @@ def test_nenhuma_identidade_canonica_usa_e_mail_de_humano():
 
 @pytest.mark.parametrize("nome", sorted(_nomes_canonicos()))
 def test_todo_nome_do_catalogo_passa_sem_aviso(nome, tmp_path):
-    r = _rodar_com_autor(f"feat(x): assunto\n\nAssinatura: {nome}\n", nome, tmp_path)
+    r = _rodar_com_autor(f"feat(x): assunto\n\n{_assinatura(nome)}\n", nome, tmp_path)
     assert r.returncode == 0, f"{r.stdout}{r.stderr}"
     assert "nao esta em" not in r.stdout + r.stderr, f"canonico avisado: {r.stdout}{r.stderr}"
 
@@ -303,7 +320,7 @@ def test_todo_nome_do_catalogo_passa_sem_aviso(nome, tmp_path):
     ],
 )
 def test_variante_fora_do_catalogo_avisa_sem_bloquear(nome, tmp_path):
-    r = _rodar_com_autor(f"feat(x): assunto\n\nAssinatura: {nome}\n", nome, tmp_path)
+    r = _rodar_com_autor(f"feat(x): assunto\n\n{_assinatura(nome)}\n", nome, tmp_path)
     assert r.returncode == 0, "o aviso de catalogo nunca bloqueia"
     assert "nao esta em" in r.stdout + r.stderr, f"variante passou calada:\n{r.stdout}{r.stderr}"
 
@@ -318,7 +335,7 @@ def test_toda_identidade_do_catalogo_declara_tier():
 def test_o_tier_errado_medido_em_14_09_avisa_sem_bloquear(tmp_path):
     """Dois commits do Gemini 3.8 Flash assinaram [Tier 2], reservado a Jules/Exa/Stitch/Devin."""
     r = _rodar_com_autor(
-        "chore(config): assunto\n\nAssinatura: Gemini 3.8 Flash [Tier 2] -- sessao s\n",
+        f"chore(config): assunto\n\n{_assinatura('Gemini 3.8 Flash', '[Tier 2]')}\n",
         "Gemini 3.8 Flash",
         tmp_path,
     )
@@ -331,11 +348,11 @@ def test_o_tier_errado_medido_em_14_09_avisa_sem_bloquear(tmp_path):
 @pytest.mark.parametrize(
     ("autor", "linha"),
     [
-        ("Gemini 3.8 Flash", "Assinatura: Gemini 3.8 Flash [Tier 1.A] -- sessao s"),
-        ("Claude Opus 5", "Assinatura: Claude Opus 5 [Tier 1.B] -- sessao s"),
+        ("Gemini 3.8 Flash", _assinatura("Gemini 3.8 Flash", "[Tier 1.A]")),
+        ("Claude Opus 5", _assinatura("Claude Opus 5", "[Tier 1.B]")),
         # Sem [Tier]: nada a conferir, nada a avisar.
-        ("Gemini 3.8 Flash", "Assinatura: antigravity@gemini-3.8-flash -- sessao s"),
-        ("google-labs-jules[bot]", "Assinatura: google-labs-jules[bot] [Tier 2] via Jules -- sessao s"),
+        ("Gemini 3.8 Flash", _assinatura("antigravity@gemini-3.8-flash")),
+        ("google-labs-jules[bot]", _assinatura("google-labs-jules[bot]", "[Tier 2] via Jules")),
     ],
 )
 def test_tier_coerente_nao_avisa(autor, linha, tmp_path):
@@ -349,7 +366,7 @@ def test_o_aviso_casa_por_nome_exato_e_nao_por_substring(tmp_path):
     """'Claude' esta dentro de 'Claude Opus 5'. Casar por substring aceitaria a
     variante curta e derrotaria o proposito, que e justamente distinguir as duas."""
     assert "Claude" not in _nomes_canonicos(), "o catalogo nao deve trazer a forma curta"
-    r = _rodar_com_autor("feat(x): assunto\n\nAssinatura: Claude\n", "Claude", tmp_path)
+    r = _rodar_com_autor(f"feat(x): assunto\n\n{_assinatura('Claude')}\n", "Claude", tmp_path)
     assert "nao esta em" in r.stdout + r.stderr, f"substring aceita:\n{r.stdout}{r.stderr}"
 
 
@@ -364,9 +381,7 @@ def test_o_aviso_casa_por_nome_exato_e_nao_por_substring(tmp_path):
 def test_ts_ausente_e_injetado_pelo_harness(tmp_path):
     arquivo = tmp_path / "COMMIT_EDITMSG"
     r = _rodar_com_autor(
-        "feat(x): assunto\n\n"
-        "Assinatura: Devin (SWE-2 Flash) [Tier 1] -- modelo=swe-2-flash "
-        "condutor=devin-desktop sha=abc1234 supervisao=assistida sessao=s1\n",
+        f"feat(x): assunto\n\n{_assinatura('Devin (SWE-2 Flash)', '[Tier 1]', sem_ts=True)}\n",
         "Devin (SWE-2 Flash)",
         tmp_path,
     )
@@ -382,8 +397,8 @@ def test_ts_presente_nao_e_reescrito(tmp_path):
     ts_fixo = "ts=2026-11-12T10:00:00-03:00"
     r = _rodar_com_autor(
         f"feat(x): assunto\n\n"
-        f"Assinatura: Devin (SWE-2 Flash) [Tier 1] -- modelo=swe-2-flash "
-        f"condutor=devin-desktop {ts_fixo} sha=abc1234 supervisao=assistida sessao=s1\n",
+        f"Assinatura: Devin (SWE-2 Flash) [Tier 1] -- modelo=m condutor=c "
+        f"{ts_fixo} sha={{SHA}} supervisao=assistida sessao=s1\n",
         "Devin (SWE-2 Flash)",
         tmp_path,
     )
@@ -393,15 +408,123 @@ def test_ts_presente_nao_e_reescrito(tmp_path):
     assert ts_fixo in corpo
 
 
-def test_campo_ausente_vira_aviso_sem_bloquear(tmp_path):
-    """A exigencia e documental por ora: condutores que ainda nao adotaram a
-    anatomia nao podem ter o commit bloqueado por campo ausente."""
+def test_campo_ausente_rejeita_em_vez_de_avisar(tmp_path):
+    """A anatomia virou exigencia: campos obrigatorios ausentes bloqueiam.
+
+    A secao '--' existe para que o ts= seja injetado pelo harness -- assim a
+    lista de ausentes cobre os outros cinco campos e NAO lista ts=.
+    """
     r = _rodar_com_autor(
-        "feat(x): assunto\n\nAssinatura: Claude Opus 5 [Tier 1.B] -- sessao s\n",
+        "feat(x): assunto\n\nAssinatura: Claude Opus 5 [Tier 1.B] -- anotacao\n",
         "Claude Opus 5",
         tmp_path,
     )
     saida = r.stdout + r.stderr
-    assert r.returncode == 0, saida
-    assert "sem 'modelo='" in saida, saida
-    assert "sem 'supervisao='" in saida, saida
+    assert r.returncode != 0, saida
+    assert "campos ausentes" in saida, saida
+    linha_faltantes = next(linha for linha in saida.splitlines() if "campos ausentes" in linha)
+    for campo in ("modelo=", "condutor=", "sha=", "supervisao=", "sessao="):
+        assert campo in linha_faltantes, linha_faltantes
+    assert "ts=" not in linha_faltantes, linha_faltantes
+
+
+def test_campo_vazio_ou_nome_parecido_nao_conta(tmp_path):
+    """'modelo=' sem valor e 'outro_modelo=' nao satisfazem o campo modelo=.
+
+    Os demais campos estao validos: a lista de ausentes deve conter SOMENTE
+    modelo= -- provando que nem vazio nem substring sao aceitos.
+    """
+    r = _rodar_com_autor(
+        "feat(x): assunto\n\n"
+        "Assinatura: Claude Opus 5 [Tier 1] -- modelo= condutor=c "
+        "outro_modelo=n ts=2026-11-12T10:00:00-03:00 sha=abcd "
+        "supervisao=assistida sessao=s\n",
+        "Claude Opus 5",
+        tmp_path,
+    )
+    saida = r.stdout + r.stderr
+    assert r.returncode != 0, saida
+    linha = next(linha for linha in saida.splitlines() if "campos ausentes" in linha)
+    assert linha.endswith(" modelo="), linha
+    for campo in ("condutor=", "ts=", "sha=", "supervisao=", "sessao="):
+        assert campo not in linha, linha
+
+
+def test_assinatura_apenas_agente_rejeita(tmp_path):
+    """'Assinatura: <agente>' sem a anatomia nao e mais aceita."""
+    r = _rodar_com_autor(
+        "feat(x): assunto\n\nAssinatura: Claude Opus 5\n",
+        "Claude Opus 5",
+        tmp_path,
+    )
+    saida = r.stdout + r.stderr
+    assert r.returncode != 0, saida
+    assert "campos ausentes" in saida, saida
+
+
+def test_sha_da_assinatura_contra_write_tree_em_repo_descartavel(tmp_path):
+    """O sha= e conferido contra `git write-tree` no repo do commit.
+
+    Formato hex valido NAO basta: valor divergente do tree do indice rejeita;
+    SHA completo e prefixo >=4 sao aceitos, e o repo descartavel isola o teste
+    do indice real de RAIZ.
+    """
+    git = shutil.which("git")
+    if git is None:
+        pytest.skip("git indisponivel para o repo descartavel")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    def _git(*args: str) -> str:
+        return subprocess.run(
+            [git, *args],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+        ).stdout.strip()
+
+    _git("init", "-q")
+    _git("config", "user.email", "noreply@exemplo.invalid")
+    _git("config", "user.name", "Claude Opus 5")
+    (repo / "f.txt").write_text("x\n", encoding="utf-8")
+    _git("add", ".")
+    tree = _git("write-tree")
+    assert len(tree) == 40
+
+    def _rodar_repo(sha: str) -> subprocess.CompletedProcess:
+        assert SH is not None
+        msg = repo / "COMMIT_EDITMSG"
+        msg.write_text(
+            "feat(x): assunto\n\n"
+            "Assinatura: Claude Opus 5 [Tier 1] -- modelo=m condutor=c "
+            "ts=2026-11-12T10:00:00-03:00 "
+            f"sha={sha} supervisao=assistida sessao=s\n",
+            encoding="utf-8",
+        )
+        return subprocess.run(
+            [SH, HOOK.as_posix(), msg.as_posix()],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            env={
+                **os.environ,
+                "GIT_AUTHOR_NAME": "Claude Opus 5",
+                "GIT_AUTHOR_EMAIL": "noreply@exemplo.invalid",
+            },
+        )
+
+    ok = _rodar_repo(tree)
+    assert ok.returncode == 0, f"{ok.stdout}{ok.stderr}"
+    prefixo = _rodar_repo(tree[:8])
+    assert prefixo.returncode == 0, f"{prefixo.stdout}{prefixo.stderr}"
+    errado = _rodar_repo("0" * 40)
+    assert errado.returncode != 0, "sha divergente com formato valido passou"
+    assert "tree SHA do indice" in errado.stdout + errado.stderr
+    sujo = _rodar_repo(f"{tree[:8]}ZZZ")
+    assert sujo.returncode != 0, "prefixo hex seguido de caracteres invalidos passou"

@@ -39,6 +39,7 @@ __all__ = [
     "GEMINI_DECISION_MODEL",
     "MAX_CHOICE_OPTIONS",
     "MAX_DECISION_QUESTIONS",
+    "MAX_SCORE_LEVELS",
     "QUESTION_TYPES",
     "DecisionResult",
     "GeminiDecisionsClient",
@@ -55,6 +56,7 @@ DECISIONS_API_VERSION: str = "v1beta"
 QUESTION_TYPES: tuple[str, ...] = ("noul", "choice", "score")
 MIN_CHOICE_OPTIONS: int = 2
 MAX_CHOICE_OPTIONS: int = 255
+MAX_SCORE_LEVELS: int = 255
 MAX_DECISION_QUESTIONS: int = 1000
 ENV_NOT_CONFIGURED: str = "GeminiDecisionsClient nao configurado: GEMINI_API_KEY/GOOGLE_API_KEY ausente."
 
@@ -84,6 +86,10 @@ def _resolve_api_keys() -> list[str]:
         candidates = decision_pool_manager.iter_candidate_keys()
         if candidates:
             return candidates
+        if decision_pool_manager.has_credentials:
+            # Credenciais existem mas estao todas em cooldown/revogacao:
+            # reload() reconstruiria os estados e apagaria os bloqueios.
+            return []
         decision_pool_manager.reload(read_registry=True)
         return decision_pool_manager.iter_candidate_keys()
     except Exception as e:  # pylint: disable=broad-except
@@ -146,8 +152,10 @@ def _norm_choice_criteria(qid: str, criteria: Any) -> dict[str, str]:
 
 
 def _norm_score_criteria(qid: str, criteria: Any) -> list[str]:
-    if not isinstance(criteria, list) or len(criteria) < 2:
-        raise ValueError(f"questions[{qid!r}].criteria (score) deve ser lista ordenada (rubrica).")
+    if not isinstance(criteria, list) or not (2 <= len(criteria) <= MAX_SCORE_LEVELS):
+        raise ValueError(
+            f"questions[{qid!r}].criteria (score) deve ser lista ordenada com 2..{MAX_SCORE_LEVELS} niveis (rubrica)."
+        )
     return [str(c) for c in criteria]
 
 
@@ -156,6 +164,26 @@ _CRITERIA_NORMALIZERS: dict[str, Any] = {
     "choice": _norm_choice_criteria,
     "score": _norm_score_criteria,
 }
+
+
+def _normalize_question_entry(qid: Any, spec: Any) -> dict[str, Any]:
+    """Valida um item de ``questions`` e devolve a entrada normalizada."""
+    if not isinstance(qid, str) or not qid.strip() or len(qid) > 64:
+        raise ValueError(f"question id invalido: {qid!r} (ate 64 chars, [A-Za-z0-9_-]).")
+    if not isinstance(spec, dict):
+        raise ValueError(f"questions[{qid!r}] deve ser um mapa com type/instructions/criteria.")
+    qtype = str(spec.get("type") or "").strip().lower()
+    if qtype not in QUESTION_TYPES:
+        raise ValueError(f"questions[{qid!r}].type invalido: {qtype!r} (use noul|choice|score).")
+    instructions = _normalize_instructions(spec.get("instructions"))
+    if not instructions:
+        raise ValueError(f"questions[{qid!r}].instructions obrigatorio.")
+
+    item: dict[str, Any] = {"type": qtype, "instructions": instructions}
+    criteria = _CRITERIA_NORMALIZERS[qtype](qid, spec.get("criteria"))
+    if criteria is not None:
+        item["criteria"] = criteria
+    return item
 
 
 def normalize_questions(questions: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -173,26 +201,7 @@ def normalize_questions(questions: dict[str, dict[str, Any]]) -> dict[str, dict[
         raise ValueError("questions deve ser um mapa nao vazio de perguntas.")
     if len(questions) > MAX_DECISION_QUESTIONS:
         raise ValueError(f"questions excede o teto da Decisions API ({MAX_DECISION_QUESTIONS}).")
-
-    normalized: dict[str, dict[str, Any]] = {}
-    for qid, spec in questions.items():
-        if not isinstance(qid, str) or not qid.strip() or len(qid) > 64:
-            raise ValueError(f"question id invalido: {qid!r} (ate 64 chars, [A-Za-z0-9_-]).")
-        if not isinstance(spec, dict):
-            raise ValueError(f"questions[{qid!r}] deve ser um mapa com type/instructions/criteria.")
-        qtype = str(spec.get("type") or "").strip().lower()
-        if qtype not in QUESTION_TYPES:
-            raise ValueError(f"questions[{qid!r}].type invalido: {qtype!r} (use noul|choice|score).")
-        instructions = _normalize_instructions(spec.get("instructions"))
-        if not instructions:
-            raise ValueError(f"questions[{qid!r}].instructions obrigatorio.")
-
-        item: dict[str, Any] = {"type": qtype, "instructions": instructions}
-        criteria = _CRITERIA_NORMALIZERS[qtype](qid, spec.get("criteria"))
-        if criteria is not None:
-            item["criteria"] = criteria
-        normalized[qid] = item
-    return normalized
+    return {qid: _normalize_question_entry(qid, spec) for qid, spec in questions.items()}
 
 
 def _to_api_input(state: Any) -> Any:
@@ -219,18 +228,29 @@ class GeminiDecisionsClient:
         api_keys: list[str] | None = None,
         model: str = GEMINI_DECISION_MODEL,
     ) -> None:
-        if api_keys:
-            self._api_keys = list(dict.fromkeys(k for k in api_keys if k))
+        # ``None`` = cliente gerido pelo pool: as candidatas sao resolvidas a
+        # cada chamada, para que cooldown/revogacao entre tentativas seja
+        # respeitado em vez de reutilizar um snapshot congelado no __init__.
+        if api_keys is not None:
+            self._explicit_keys: list[str] | None = list(dict.fromkeys(k for k in api_keys if k))
         elif api_key is not None:
-            self._api_keys = [api_key] if api_key else []
+            self._explicit_keys = [api_key] if api_key else []
         else:
-            self._api_keys = _resolve_api_keys()
+            self._explicit_keys = None
+        self._api_keys = _resolve_api_keys() if self._explicit_keys is None else list(self._explicit_keys)
         self._model = model
         self._clients: dict[str, Any] = {}
 
+    def _candidate_keys(self) -> list[str]:
+        """Candidatas vigentes: explicitas preservadas (mesmo fora do pool);
+        pool-managed consulta ``iter_candidate_keys`` a cada chamada."""
+        if self._explicit_keys is not None:
+            return list(self._explicit_keys)
+        return _resolve_api_keys()
+
     @property
     def is_configured(self) -> bool:
-        return any(self._api_keys)
+        return any(self._candidate_keys())
 
     @property
     def model(self) -> str:
@@ -238,7 +258,7 @@ class GeminiDecisionsClient:
 
     @property
     def api_keys(self) -> list[str]:
-        return list(self._api_keys)
+        return self._candidate_keys()
 
     def _get_client(self, api_key: str) -> Any:
         if api_key not in self._clients:
@@ -257,7 +277,7 @@ class GeminiDecisionsClient:
         key: str | None = None,
     ) -> Any:
         """Executa ``decisions.create`` e devolve a resposta crua do SDK."""
-        api_key = key or (self._api_keys[0] if self._api_keys else "")
+        api_key = key or next(iter(self._candidate_keys()), "")
         if not api_key:
             raise ValueError(ENV_NOT_CONFIGURED)
         normalized = normalize_questions(questions)
@@ -326,11 +346,20 @@ def _laya_answers(pred: Any, questions: dict[str, dict[str, Any]]) -> dict[str, 
     """Extrai answers por questao do resultado bruto da Laya predict."""
     raw = getattr(pred, "answers", None)
     inner = raw.get("answers", raw) if isinstance(raw, dict) else {}
+    type_counts: dict[str, int] = {}
+    for spec in questions.values():
+        qtype = str(spec.get("type") or "")
+        type_counts[qtype] = type_counts.get(qtype, 0) + 1
     answers: dict[str, Any] = {}
     for qid, spec in questions.items():
         qtype = str(spec.get("type") or "")
         entry = inner.get(qid) if isinstance(inner, dict) else None
         if entry is None:
+            if type_counts.get(qtype, 0) != 1:
+                # O agregado do pred (noul/choice/score unico) nao da para
+                # associar inequivocamente a esta pergunta -- trata como
+                # ausente em vez de fabricar uma resposta.
+                continue
             # fallback: campos agregados do LayaPrediction
             entry = {
                 "noul": getattr(pred, "noul", None),
@@ -340,6 +369,27 @@ def _laya_answers(pred: Any, questions: dict[str, dict[str, Any]]) -> dict[str, 
             }
         answers[qid] = _answer_from_laya(entry, qtype)
     return answers
+
+
+def _laya_answer_present(answer: dict[str, Any], qtype: str) -> bool:
+    """True quando a resposta tem valor no campo do tipo da pergunta.
+
+    ``0``/``0.0`` sao respostas validas; somente ``None`` (ou campo ausente)
+    conta como resposta faltante.
+    """
+    if qtype not in ("noul", "choice", "score"):
+        return True
+    return answer.get(qtype) is not None
+
+
+def _laya_missing(answers: dict[str, Any], questions: dict[str, dict[str, Any]]) -> list[str]:
+    """Qids sem resposta utilizavel: ausentes de ``answers`` ou com o campo
+    do tipo ``None`` (``0`` segue valido)."""
+    return [
+        qid
+        for qid, spec in questions.items()
+        if qid not in answers or not _laya_answer_present(answers[qid], str(spec.get("type") or ""))
+    ]
 
 
 def _provenia_gemini(model: str, latency_ms: float, n_tokens: int, multimodal: bool) -> Provenia:
@@ -367,11 +417,11 @@ def _provenia_gemini(model: str, latency_ms: float, n_tokens: int, multimodal: b
     )
 
 
-def _provenia_laya(pred: Any) -> Provenia:
+def _provenia_laya(pred: Any, engine_id: str = "laya-s1-trained") -> Provenia:
     base = getattr(pred, "provenia", None)
     if isinstance(base, Provenia):
         return Provenia(
-            engine_id="laya-s1-trained",
+            engine_id=engine_id,
             implementation_level=base.implementation_level,
             runtime_used=base.runtime_used,
             model_used=base.model_used,
@@ -383,7 +433,7 @@ def _provenia_laya(pred: Any) -> Provenia:
             units=list(base.units),
         )
     return Provenia(
-        engine_id="laya-s1-trained",
+        engine_id=engine_id,
         implementation_level="trained-model",
         runtime_used="unknown",
         model_used="",
@@ -457,43 +507,93 @@ def _status_code_of(err: BaseException) -> int:
     return 0
 
 
-def decide(
-    state: Any,
-    questions: dict[str, dict[str, Any]],
-    client: GeminiDecisionsClient | None = None,
-) -> DecisionResult:
-    """Executa a Decisions API com failover pelo pool 'decision'.
+def _raise_if_project_quota(err: Exception, api_key: str, remaining_keys: list[str]) -> None:
+    """HTTP 429 aborta o failover somente com projeto comprovado em TODAS as restantes.
 
-    Tenta cada chave candidata em ordem; 401/403/429/5xx marcam circuit
-    breaker no pool e rotacionam. Erros de validacao (400) nao rotacionam
-    -- sao deterministicos e falhariam igual com outra chave.
+    Cota e por PROJETO: se a chave que falhou e as candidatas restantes tem a
+    mesma associacao de projeto (``project_of``), insistir e inutil. Chaves sem
+    associacao (fora do pool) ou de projeto divergente seguem sendo tentadas.
     """
-    inicio = time.perf_counter()
-    normalized = normalize_questions(questions)
-    cli = client or GeminiDecisionsClient()
-    keys = cli.api_keys or [""]
-    last_err: Exception | None = None
+    failed_project = decision_pool_manager.project_of(api_key)
+    if failed_project and all(decision_pool_manager.project_of(k) == failed_project for k in remaining_keys):
+        raise RuntimeError(
+            f"[gemini-decisions] HTTP 429: cota do projeto "
+            f"'{decision_pool_manager.project_name}' esgotada; cooldown aplicado pelo pool."
+        ) from err
 
-    for api_key in keys:
+
+def _create_with_key_failover(
+    cli: GeminiDecisionsClient,
+    state: Any,
+    normalized: dict[str, dict[str, Any]],
+):
+    """Failover por chave do pool 'decision': 4xx/429/5xx marcam breaker e rotacionam.
+
+    Erros de validacao (400) e erros sem status nao rotacionam -- sao
+    deterministicos e falhariam igual com outra chave.
+    """
+    keys = cli.api_keys
+    if not keys:
+        raise RuntimeError(f"[gemini-decisions] pool '{DECISION_POOL_NAME}' sem chave saudavel.")
+    last_err: Exception | None = None
+    for idx, api_key in enumerate(keys):
         try:
-            response = cli.create(state, normalized, key=api_key)
-            break
+            return cli.create(state, normalized, key=api_key)
         except Exception as e:  # pylint: disable=broad-except
             last_err = e
             status = _status_code_of(e)
             if status == 400 or not status:
                 raise
             decision_pool_manager.mark_failure(api_key, status_code=status)
+            if status == 429:
+                _raise_if_project_quota(e, api_key, keys[idx + 1 :])
             logger.debug("[gemini-decisions] chave sha8=%.8s falhou HTTP %s; failover.", _sha8(api_key), status)
-    else:
-        raise RuntimeError(f"[gemini-decisions] pool '{DECISION_POOL_NAME}' sem chave saudavel.") from last_err
+    raise RuntimeError(f"[gemini-decisions] pool '{DECISION_POOL_NAME}' sem chave saudavel.") from last_err
 
+
+def _gemini_answer_present(raw: Any, qtype: str) -> bool:
+    """True quando a Answer tem valor no campo do tipo (``0``/``False`` validos;
+    ``None`` ou campo ausente conta como resposta faltante)."""
+    field = {"noul": "noul", "choice": "choice", "score": "score"}.get(qtype)
+    if field is None:
+        return raw is not None
+    return _as_dict(raw).get(field) is not None
+
+
+def _validated_answers(response: Any, normalized: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    """Extrai ``answers`` do response; rejeita prompt bloqueado e respostas
+    sem o valor de decisao do tipo (ex.: ``choice``/``noul``/``score`` nulos)."""
+    feedback = _as_dict(getattr(response, "prompt_feedback", None) or getattr(response, "promptFeedback", None))
+    block_reason = feedback.get("block_reason") or feedback.get("blockReason")
+    if block_reason:
+        raise RuntimeError(f"[gemini-decisions] prompt bloqueado pela Decisions API: {block_reason}")
+
+    raw_answers = _as_dict(getattr(response, "answers", None))
+    missing = [
+        qid
+        for qid, spec in normalized.items()
+        if not _gemini_answer_present(raw_answers.get(qid), str(spec.get("type") or ""))
+    ]
+    if missing:
+        raise RuntimeError(f"[gemini-decisions] Decisions API omitiu respostas para: {', '.join(missing)}.")
+    return {qid: _answer_from_gemini(raw_answers[qid]) for qid in normalized}
+
+
+def decide(
+    state: Any,
+    questions: dict[str, dict[str, Any]],
+    client: GeminiDecisionsClient | None = None,
+) -> DecisionResult:
+    """Executa a Decisions API com failover pelo pool 'decision'."""
+    inicio = time.perf_counter()
+    normalized = normalize_questions(questions)
+    cli = client or GeminiDecisionsClient()
+    response = _create_with_key_failover(cli, state, normalized)
     if response is None:  # pragma: no cover - defensivo
         raise RuntimeError("[gemini-decisions] resposta vazia do SDK.")
     latency_ms = (time.perf_counter() - inicio) * 1000.0
 
-    raw_answers = _as_dict(getattr(response, "answers", None) or getattr(response, "answers", {}))
-    answers = {qid: _answer_from_gemini(raw_answers.get(qid)) for qid in normalized}
+    answers = _validated_answers(response, normalized)
     n_tokens = _extract_usage_n_tokens(response)
 
     return DecisionResult(
@@ -509,6 +609,26 @@ def decide(
 def _gemini_available(client: GeminiDecisionsClient | None) -> bool:
     cli = client or GeminiDecisionsClient()
     return cli.is_configured
+
+
+def _laya_decision_result(pred: Any, questions: dict[str, dict[str, Any]], engine: str) -> DecisionResult:
+    """DecisionResult a partir de um ``laya_predict`` (engine ``laya-s1-trained`` ou ``-fallback``).
+
+    Resposta incompta nunca vira decisao: qid sem valor no campo do tipo
+    levanta erro explicito em vez de devolver ``DecisionResult`` vazio.
+    """
+    answers = _laya_answers(pred, questions)
+    missing = _laya_missing(answers, questions)
+    if missing:
+        raise RuntimeError(f"[gemini-decisions] Laya ({engine}) sem respostas para {missing}.")
+    return DecisionResult(
+        answers=answers,
+        engine=engine,
+        model_used=str(getattr(pred, "model_used", "") or ""),
+        latency_ms=float(getattr(pred, "latency_ms", 0.0) or 0.0),
+        n_tokens=int(getattr(pred, "n_tokens", 0) or 0),
+        provenia=_provenia_laya(pred, engine_id=engine),
+    )
 
 
 def decide_s1(
@@ -542,14 +662,16 @@ def decide_s1(
 
     if pred is not None and not getattr(getattr(pred, "provenia", None), "fallback_used", True):
         answers = _laya_answers(pred, questions)
-        return DecisionResult(
-            answers=answers,
-            engine="laya-s1-trained",
-            model_used=str(getattr(pred, "model_used", "") or ""),
-            latency_ms=float(getattr(pred, "latency_ms", 0.0) or 0.0),
-            n_tokens=int(getattr(pred, "n_tokens", 0) or 0),
-            provenia=_provenia_laya(pred),
-        )
+        missing = _laya_missing(answers, questions)
+        if not missing:
+            return _laya_decision_result(pred, questions, engine="laya-s1-trained")
+        # Answers ausentes/ambiguos nao sustentam uma decisao: escala para a
+        # nuvem quando configurada; sem nuvem, falha explicita em vez de
+        # devolver um laya-s1-trained incompleto.
+        logger.debug("[gemini-decisions] laya sem answers para %s; escalando/falhando.", missing)
+        if cli.is_configured:
+            return decide(state, questions, client=cli)
+        raise RuntimeError(f"[gemini-decisions] Laya sem respostas para {missing} e GeminiDecisionsClient sem chave.")
 
     # Laya indisponivel/gated: escalona para a nuvem se configurada.
     if cli.is_configured:
@@ -558,15 +680,7 @@ def decide_s1(
 
     # Sem nuvem: devolve o resultado Laya (mesmo heuristico) com proveniencia honesta.
     if pred is not None:
-        answers = _laya_answers(pred, questions)
-        return DecisionResult(
-            answers=answers,
-            engine="laya-s1-fallback",
-            model_used=str(getattr(pred, "model_used", "") or ""),
-            latency_ms=float(getattr(pred, "latency_ms", 0.0) or 0.0),
-            n_tokens=int(getattr(pred, "n_tokens", 0) or 0),
-            provenia=_provenia_laya(pred),
-        )
+        return _laya_decision_result(pred, questions, engine="laya-s1-fallback")
     raise RuntimeError("Nenhum motor de decisao disponivel: Laya falhou e GeminiDecisionsClient sem chave.")
 
 

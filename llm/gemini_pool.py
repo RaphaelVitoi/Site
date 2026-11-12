@@ -14,7 +14,6 @@ Todas as credenciais sao carregadas do ambiente seguro (HKCU:\\Environment no Wi
 
 from __future__ import annotations
 
-import asyncio
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 import hashlib
@@ -22,6 +21,7 @@ import hmac
 import logging
 import os
 import sys
+import threading
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -143,11 +143,13 @@ class GeminiPoolManager:
       - Rotacao Weighted Round-Robin adaptativa.
       - Circuit breaker para HTTP 429 (Rate Limit) e 401/403 (Revogacao).
       - Isolamento e priorizacao por tipo de carga (edicoes atomicas, triagem, linting).
-      - Thread-safety via asyncio.Lock.
+      - Thread-safety via threading.Lock (as secoes criticas nao tem await;
+        threading.Lock e agnostico de event loop -- asyncio.Lock quebraria
+        sob loops concorrentes, ex.: fallback System-2 em thread dedicada).
     """
 
     def __init__(self, read_registry: bool = True) -> None:
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
         self._keys: list[str] = []
         self._stats: dict[str, KeyStats] = {}
         self._round_robin_idx: int = 0
@@ -191,13 +193,13 @@ class GeminiPoolManager:
         """Retorna quantas chaves estao aptas a responder no momento."""
         return sum(1 for st in self._stats.values() if st.is_available())
 
-    async def get_key_for_workload(self, workload: GeminiWorkload | str = GeminiWorkload.TRIAGEM) -> tuple[str, str]:
+    def get_key_for_workload(self, workload: GeminiWorkload | str = GeminiWorkload.TRIAGEM) -> tuple[str, str]:
         """
         Seleciona a melhor chave do pool para a carga de trabalho informada.
         Retorna (raw_key, sha8).
         Gera RuntimeError se todas as chaves estiverem em cooldown ou revogadas.
         """
-        async with self._lock:
+        with self._lock:
             if not self._keys:
                 raise RuntimeError(
                     "[GEMINI POOL] Nenhuma chave Gemini configurada no ambiente. "
@@ -243,10 +245,10 @@ class GeminiPoolManager:
 
             return chosen.key, chosen.sha8
 
-    async def mark_success(self, key: str, latency_ms: float) -> None:
+    def mark_success(self, key: str, latency_ms: float) -> None:
         """Registra sucesso na requisicao, refinando a media de latencia."""
         sha = _key_sha8(key)
-        async with self._lock:
+        with self._lock:
             if sha not in self._stats:
                 return
             st = self._stats[sha]
@@ -257,7 +259,7 @@ class GeminiPoolManager:
             # Media movel exponencial (70% anterior, 30% recente)
             st.avg_latency_ms = (st.avg_latency_ms * 0.7) + (latency_ms * 0.3)
 
-    async def mark_failure(
+    def mark_failure(
         self,
         key: str,
         status_code: int = 500,
@@ -267,7 +269,7 @@ class GeminiPoolManager:
         """Aciona o circuit breaker com base no status HTTP retornado."""
         sha = _key_sha8(key)
         now = datetime.now(UTC)
-        async with self._lock:
+        with self._lock:
             if sha not in self._stats:
                 return
             st = self._stats[sha]

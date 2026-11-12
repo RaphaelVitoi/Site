@@ -142,9 +142,11 @@ class NotepadMemory:
         with self._lock:
             lines = [
                 "# SOTA Working Memory & Notepad Scratchpad",
+                "",
                 f"> **Protocolo Chico v8.0 GOLD** | Ultima Atualizacao: {time.strftime('%Y-%m-%d %H:%M:%S')}",
                 "",
                 f"**Total de Blocos Ativos:** `{len(self._blocks)}`",
+                "",
                 "---",
                 "",
             ]
@@ -153,6 +155,7 @@ class NotepadMemory:
                 lines.extend(
                     [
                         f"## [{block.key}] {block.title} {tags_str}",
+                        "",
                         f"*Atualizado em: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(block.updated_at))}*",
                         "",
                         block.content,

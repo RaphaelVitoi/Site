@@ -516,7 +516,7 @@ def test_stitch_client_design_system_crud() -> None:
     mock_resp_data = {
         "jsonrpc": "2.0",
         "id": 1,
-        "result": {"structuredContent": {"name": "designSystems/ds1"}},
+        "result": {"structuredContent": {"name": "assets/ds1"}},
     }
     mock_resp = MagicMock()
     mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
@@ -530,12 +530,16 @@ def test_stitch_client_design_system_crud() -> None:
         assert args1["projectId"] == "10"
         assert args1["designSystem"]["displayName"] == "Nexus DS"
 
-        client.update_design_system("10", "Nexus DS v2", ds_payload)
+        ds_name = res1["name"]
+        assert isinstance(ds_name, str)
+        update_payload = {"displayName": "Nexus DS v2", "theme": {"color": "#030610"}}
+        client.update_design_system("10", ds_name, update_payload)
         args2 = _args_enviados(m)
-        assert args2["name"] == "Nexus DS v2"
+        assert args2["name"] == "assets/ds1"
+        assert args2["designSystem"]["displayName"] == "Nexus DS v2"
         assert args2["designSystem"]["theme"]["color"] == "#030610"
 
-    assert res1["name"] == "designSystems/ds1"
+    assert ds_name == "assets/ds1"
 
 
 def test_classify_stitch_operation_usa_cascata_system1() -> None:
@@ -547,7 +551,7 @@ def test_classify_stitch_operation_usa_cascata_system1() -> None:
         res = classify_stitch_operation("crie uma tela de login")
 
     assert res == fake_result
-    args, kwargs = mock_decide.call_args
+    args, _kwargs = mock_decide.call_args
     assert args[0] == "crie uma tela de login"
     assert args[1] is STITCH_ACTION_QUESTIONS
     assert "acao_stitch" in STITCH_ACTION_QUESTIONS

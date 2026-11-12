@@ -155,6 +155,7 @@
         "!**/skills/**"
     ],
     "files.associations": {
+        "**/.devin/config.json": "jsonc",
         "**/.venv/**": "plaintext",
         "**/*.dist-info/METADATA": "plaintext",
         "**/.remember/tmp/*.ts": "plaintext",

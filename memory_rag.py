@@ -855,7 +855,7 @@ class MemoryRAG:
             system_prompt = "Voce e um especialista em search query expansion. Dada uma pergunta, gere 4 variacoes ou perguntas relacionadas que capturem a mesma intencao, mas com palavras-chave diferentes. Retorne apenas uma lista de strings em formato JSON, nada mais."
             user_prompt = f"Pergunta original: '{question}'"
 
-            session = await get_global_http_session()
+            session = get_global_http_session()
 
             response = await self._fetch_expanded_query(session, system_prompt, user_prompt)
             if response:
@@ -1318,7 +1318,7 @@ class MemoryRAG:
             )
             user_prompt = f"Foco de Extracao: {question}\n\nContexto da Mente Coletiva:\n{context_text}"
 
-            session = await get_global_http_session()
+            session = get_global_http_session()
             raw_json = await self._extract_causal_graph(session, system_prompt, user_prompt)
 
             # Purificacao contra entropia de encoding (markdown injetado por LLMs)

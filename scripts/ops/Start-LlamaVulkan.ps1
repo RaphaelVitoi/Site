@@ -43,12 +43,12 @@
 #>
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$ModelPath,
+  [Parameter(Mandatory = $true)]
+  [string]$ModelPath,
 
-    [int]$Port = 9931,
+  [int]$Port = 9931,
 
-    [string[]]$ExtraArgs = @()
+  [string[]]$ExtraArgs = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -57,29 +57,30 @@ $LlamaDir = Join-Path $env:USERPROFILE '.gemini\tools\llama.cpp'
 $ServerExe = Join-Path $LlamaDir 'llama-server.exe'
 
 if (-not (Test-Path $ServerExe)) {
-    throw "llama-server.exe nao encontrado em $ServerExe. Baixe o asset llama-bNNNNN-bin-win-vulkan-x64.zip do release mais recente e extraia em $LlamaDir."
+  throw "llama-server.exe nao encontrado em $ServerExe. Baixe o asset llama-bNNNNN-bin-win-vulkan-x64.zip do release mais recente e extraia em $LlamaDir."
 }
 if (-not (Test-Path $ModelPath)) {
-    throw "Modelo nao encontrado: $ModelPath"
+  throw "Modelo nao encontrado: $ModelPath"
 }
 
 $env:GGML_VK_ALLOW_GRAPHICS_QUEUE = '1'
 
 $serverArgs = @(
-    '-m', $ModelPath,
-    '--host', '127.0.0.1',
-    '--port', "$Port",
-    '-ngl', '99',
-    '-fa', 'on',
-    '-ctk', 'q8_0',
-    '-ctv', 'q4_0',
-    '--jinja',
-    '--fit', 'on',
-    '-c', '32768',
-    '-t', '8'
+  '-m', $ModelPath,
+  '--host', '127.0.0.1',
+  '--port', "$Port",
+  '-ngl', '99',
+  '-fa', 'on',
+  '-ctk', 'q8_0',
+  '-ctv', 'q4_0',
+  '--jinja',
+  '--fit', 'on',
+  '-c', '32768',
+  '-t', '8'
 ) + $ExtraArgs
 
 Write-Host "[llama-vulkan] RX 570 8GB | modelo: $(Split-Path $ModelPath -Leaf)" -ForegroundColor Cyan
 Write-Host "[llama-vulkan] args: $($serverArgs -join ' ')" -ForegroundColor DarkGray
 
 & $ServerExe @serverArgs
+exit $LASTEXITCODE

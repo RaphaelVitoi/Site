@@ -37,8 +37,10 @@ function Test-ChrysalisHealth {
         $req.Method = 'GET'
         $req.Timeout = 1500
         $res = $req.GetResponse()
+        $res.Close()
         return $true
-    } catch [System.Net.WebException] {
+    }
+    catch [System.Net.WebException] {
         if ($_.Exception -and $_.Exception.Response) {
             $code = [int]$_.Exception.Response.StatusCode
             # 200, 401 ou 403 significam que o servidor HTTP esta ativo e respondendo
@@ -47,7 +49,8 @@ function Test-ChrysalisHealth {
             }
         }
         return $false
-    } catch {
+    }
+    catch {
         return $false
     }
 }
@@ -78,7 +81,8 @@ if ($Status) {
     if ($isAlive) {
         Write-Host "[CHRYSALIS] ONLINE (Porta $Port)" -ForegroundColor Green
         exit 0
-    } else {
+    }
+    else {
         Write-Host "[CHRYSALIS] OFFLINE na porta $Port." -ForegroundColor Yellow
         exit 1
     }
@@ -89,7 +93,8 @@ if ($Restart) {
     Write-Host "[CHRYSALIS] Reiniciando Chrysalis Live Engine..." -ForegroundColor Cyan
     Stop-ChrysalisProcess -TargetPort $Port
     Start-Sleep -Seconds 1
-} elseif ($isAlive) {
+}
+elseif ($isAlive) {
     Write-Host "[CHRYSALIS] Servico ja esta ONLINE na porta $Port." -ForegroundColor Green
     exit 0
 }
@@ -102,7 +107,8 @@ if (-not $chrysalisBin) {
     $fallbackNpm = Join-Path $env:APPDATA 'npm\chrysalis.ps1'
     if (Test-Path -LiteralPath $fallbackNpm) {
         $chrysalisBin = $fallbackNpm
-    } else {
+    }
+    else {
         Write-Error "[CHRYSALIS] Executavel chrysalis nao localizado no PATH ou npm global."
         exit 1
     }
@@ -130,7 +136,8 @@ while ((Get-Date) -lt $deadline) {
 if ($ready) {
     Write-Host "[CHRYSALIS] SUCESSO: Chrysalis Live Engine ativo e operacional na porta $Port!" -ForegroundColor Green
     exit 0
-} else {
+}
+else {
     Write-Host "[CHRYSALIS] AVISO: Servico demorou para responder. Verifique logs em AppData\Local\Chrysalis\data\logs." -ForegroundColor Yellow
     exit 0
 }

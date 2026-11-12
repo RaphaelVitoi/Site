@@ -5,7 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 try:
-    import polars as pl
+    import polars as pl  # type: ignore  # extra opcional (pmev); checkers nao resolvem extras
 
     POLARS_AVAILABLE = True
 except ImportError:

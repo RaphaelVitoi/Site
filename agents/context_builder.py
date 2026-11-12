@@ -252,7 +252,7 @@ async def _execute_web_search(task: Task, manager: QueueManager) -> tuple[str, i
                 te._c(task.agent),
                 task.agent,  # pylint: disable=protected-access
             )
-            session = await get_global_http_session()
+            session = get_global_http_session()
             web_context = await _fetch_web_search(task, manager, session)
             if web_context:
                 _update_web_search_cache(cache_key, web_context)
