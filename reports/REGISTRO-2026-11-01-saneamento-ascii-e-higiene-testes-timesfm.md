@@ -25,6 +25,7 @@ revisoes_de_ancora:
       Revisado em 2026-11-01. Mantida a conformidade de tipagem estrita e linters
       apos limpeza de importacao redundante em test_timesfm_engine.py.
 config_medida:
+  congelada_em: '2026-11-01'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   commit: HEAD

@@ -13,6 +13,7 @@ caminhos:
   - frontend/src/components/simulator/workers/cfr.worker.ts
   - reports/REGISTRO-2026-10-31-remediacao-matematica-cfr-e-otimizacao-recursos.md
 config_medida:
+  congelada_em: '2026-10-31'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'

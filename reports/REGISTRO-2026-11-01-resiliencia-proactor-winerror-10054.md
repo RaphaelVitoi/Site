@@ -20,6 +20,7 @@ caminhos:
 - tests/test_worker_startup_shutdown.py
 - worker/startup.py
 config_medida:
+  congelada_em: '2026-11-01'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: 3.14.7

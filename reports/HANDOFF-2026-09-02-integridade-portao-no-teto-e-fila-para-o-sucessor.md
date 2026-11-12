@@ -13,6 +13,7 @@ caminhos:
   - reports/REGISTRO-2026-09-02-tensor-portavel-e-varredura-fora-de-python.md
   - .claude/agent-memory/chico/HANDOFF_LATEST.md
 config_medida:
+  congelada_em: '2026-09-02'
   raiz: /home/user/Site
   branch: master
   commit_base: 61bc5fcf3a5f007224b0cd7bc43dc07e5c904255

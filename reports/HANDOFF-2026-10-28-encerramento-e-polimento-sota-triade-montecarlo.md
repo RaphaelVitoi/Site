@@ -11,6 +11,7 @@ classes: [interno, medido, governanca, handoff, triade, montecarlo, sota]
 caminhos:
   - reports/HANDOFF-2026-10-28-encerramento-e-polimento-sota-triade-montecarlo.md
 config_medida:
+  congelada_em: '2026-10-28'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   python: '3.14.7'

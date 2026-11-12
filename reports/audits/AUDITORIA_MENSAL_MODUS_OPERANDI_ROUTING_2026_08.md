@@ -13,6 +13,7 @@ fontes:
   - {fonte: data/agents_manifest.json, consultado_em: 2026-08-30T15:40-03:00, versao_alvo: local}
 ttl_dias: 90
 config_medida:
+  congelada_em: '2026-08-30'
   python: '3.14.6'
   modelos_auditados: 5
   rotas_declaradas: 8
