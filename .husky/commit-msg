@@ -31,7 +31,7 @@ assinatura=$(sed '/^#/d' "$commit_msg_file" | grep -i '^Assinatura:' | head -n 1
 
 if [ -z "$assinatura" ]; then
     echo "[COMMIT-MSG REJEITADO] falta a linha 'Assinatura:' no corpo da mensagem."
-    echo "   corrigir: acrescente ao corpo 'Assinatura: <agente> [Tier X] -- sessao <session_id>'"
+    echo "   corrigir: acrescente ao corpo 'Assinatura: <agente> [Tier X] -- modelo=<id> condutor=<veiculo> ts=<ISO-8601> sha=<tree-sha> supervisao=assistida|automatizada sessao=<session_id>'"
     echo "   nomes canonicos: data/agent_identities.json"
     exit 1
 fi
