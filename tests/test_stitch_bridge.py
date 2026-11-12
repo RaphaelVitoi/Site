@@ -185,11 +185,12 @@ def _args_enviados(mock_urlopen_patch) -> dict[str, Any]:
 
 
 def test_o_enum_oficial_do_portao_chega_ao_payload() -> None:
-    """O contrato da porta e conservado: enum reconhecido vira `modelId`.
+    """O contrato da porta e conservado: tier reconhecido vira `modelId`.
 
-    O portao de entrada do MCP tem enum proprio, e ele NAO acompanha o nome
-    comercial do modelo do dia -- o produto opera hoje em Gemini 3.8 Flash e
-    3.5 Flash-Lite, e o enum da porta continua sendo o que sempre foi.
+    Medicao viva via tools/list (2026-11-11): o enum do portao e
+    GEMINI_3_8_FLASH | GEMINI_3_5_FLASH_LITE. Identificadores legados
+    (GEMINI_3_FLASH, GEMINI_3_1_PRO) sao mapeados para o sucessor vigente,
+    pois repassa-los crus seria rejeitado pelo MCP.
     """
     mock_resp_data = {
         "jsonrpc": "2.0",
@@ -205,10 +206,32 @@ def test_o_enum_oficial_do_portao_chega_ao_payload() -> None:
         client.generate_screen_from_text(
             project_id="10",
             prompt="Dashboard SOTA PMev",
+            model_tier="BALANCED",
+        )
+
+    assert _args_enviados(m)["modelId"] == "GEMINI_3_8_FLASH"
+
+
+def test_modelo_legado_mapeia_para_enum_vigente() -> None:
+    """Gemini 3 Flash / 3.1 Pro sairam do enum do portao; o bridge traduz."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"name": "projects/10/screens/23"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        client.generate_screen_from_text(
+            project_id="10",
+            prompt="Tela legada",
             model_tier="GEMINI_3_FLASH",
         )
 
-    assert _args_enviados(m)["modelId"] == "GEMINI_3_FLASH"
+    assert _args_enviados(m)["modelId"] == "GEMINI_3_8_FLASH"
 
 
 def test_sem_modelo_declarado_a_escolha_fica_com_o_produto() -> None:
@@ -434,6 +457,101 @@ def test_stitch_client_apply_design_system_and_create_from_design_md() -> None:
         args_apply = _args_enviados(m)
         assert args_apply["projectId"] == "10"
         assert args_apply["assetId"] == "ds123"
+
+
+def test_stitch_client_update_project() -> None:
+    """Valida update_project com update_mask e screen_instances."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"name": "projects/10"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        res = client.update_project(
+            "10",
+            title="Novo Titulo",
+            visibility="PRIVATE",
+            screen_instances=[{"id": "inst1", "x": 100, "y": 0}],
+            update_mask=["title", "visibility", "screen_instances"],
+        )
+        assert res["name"] == "projects/10"
+        args = _args_enviados(m)
+        assert args["name"] == "projects/10"
+        assert args["title"] == "Novo Titulo"
+        assert args["updateMask"] == ["title", "visibility", "screen_instances"]
+
+
+def test_stitch_client_update_screen() -> None:
+    """Valida update_screen com html base64 e update_mask."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"name": "projects/10/screens/20"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        res = client.update_screen(
+            "projects/10/screens/20",
+            html_code_base64="PGI+aGk8L2I+",
+            update_mask=["html_code"],
+        )
+        assert res["name"] == "projects/10/screens/20"
+        args = _args_enviados(m)
+        assert args["name"] == "projects/10/screens/20"
+        assert args["htmlCodeBase64"] == "PGI+aGk8L2I+"
+        assert args["updateMask"] == ["html_code"]
+
+
+def test_stitch_client_design_system_crud() -> None:
+    """Valida create/update_design_system (camada Rapid/design-system nativa)."""
+    mock_resp_data = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {"structuredContent": {"name": "designSystems/ds1"}},
+    }
+    mock_resp = MagicMock()
+    mock_resp.read.return_value = json.dumps(mock_resp_data).encode("utf-8")
+    mock_resp.__enter__.return_value = mock_resp
+
+    with patch("urllib.request.urlopen", return_value=mock_resp) as m:
+        client = StitchClient(api_key="fake-key")
+        ds_payload = {"displayName": "Nexus DS", "theme": {"color": "#030610"}}
+        res1 = client.create_design_system("projects/10", ds_payload)
+        args1 = _args_enviados(m)
+        assert args1["projectId"] == "10"
+        assert args1["designSystem"]["displayName"] == "Nexus DS"
+
+        client.update_design_system("10", "Nexus DS v2", ds_payload)
+        args2 = _args_enviados(m)
+        assert args2["name"] == "Nexus DS v2"
+        assert args2["designSystem"]["theme"]["color"] == "#030610"
+
+    assert res1["name"] == "designSystems/ds1"
+
+
+def test_classify_stitch_operation_usa_cascata_system1() -> None:
+    """A classificacao de intencao Stitch delega a cascata Laya->Decisions."""
+    from engine.stitch_bridge import STITCH_ACTION_QUESTIONS, classify_stitch_operation
+
+    fake_result = {"engine": "laya-s1-trained", "answers": {}}
+    with patch("llm.gemini_decisions.decide_s1", return_value=fake_result) as mock_decide:
+        res = classify_stitch_operation("crie uma tela de login")
+
+    assert res == fake_result
+    args, kwargs = mock_decide.call_args
+    assert args[0] == "crie uma tela de login"
+    assert args[1] is STITCH_ACTION_QUESTIONS
+    assert "acao_stitch" in STITCH_ACTION_QUESTIONS
+    assert STITCH_ACTION_QUESTIONS["acao_stitch"]["criteria"]["generate_screen"]
 
 
 def test_stitch_enhance_prompt() -> None:

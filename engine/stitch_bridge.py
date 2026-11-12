@@ -28,13 +28,17 @@ STITCH_PROJECTS_PREFIX: Final[str] = "projects/"
 DEFAULT_STITCH_PROJECT_ID: Final[str] = "18242753218562483944"
 DEFAULT_OBSIDIAN_DESIGN_SYSTEM: Final[str] = "assets/6f9c8c6e7114422393d45b0c4ca02808"
 
+# Enum oficial medido via tools/list do Stitch MCP em 2026-11-11:
+#   MODEL_ID_UNSPECIFIED | GEMINI_3_8_FLASH | GEMINI_3_5_FLASH_LITE
+# Os identificadores legados abaixo do enum sao mapeados para o sucessor
+# vigente -- repassa-los crus seria rejeitado pelo portao.
 MODEL_TIER_MAPPING: Final[dict[str, str]] = {
     "BALANCED": "GEMINI_3_8_FLASH",
     "SPEED": "GEMINI_3_5_FLASH_LITE",
     "GEMINI_3_8_FLASH": "GEMINI_3_8_FLASH",
     "GEMINI_3_5_FLASH_LITE": "GEMINI_3_5_FLASH_LITE",
-    "GEMINI_3_FLASH": "GEMINI_3_FLASH",
-    "GEMINI_3_1_PRO": "GEMINI_3_1_PRO",
+    "GEMINI_3_FLASH": "GEMINI_3_8_FLASH",
+    "GEMINI_3_1_PRO": "GEMINI_3_8_FLASH",
 }
 
 
@@ -293,6 +297,86 @@ class StitchClient:
         res = self._call_tool("get_screen", {"name": screen_name})
         return StitchScreen.from_dict(res)
 
+    def update_project(
+        self,
+        project_name_or_id: str,
+        title: str | None = None,
+        visibility: str | None = None,
+        background_theme: str | None = None,
+        screen_instances: list[dict[str, object]] | None = None,
+        update_mask: list[str] | None = None,
+    ) -> dict[str, object]:
+        """Atualiza metadados do projeto (titulo, visibilidade, tema) e/ou
+        instancias de tela no canvas (posicao, dimensao, label, hidden).
+
+        Suporta projetos V1 (PROJECT_DESIGN) e V2 (DESIGN_V2).
+        """
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        formatted_name = (
+            project_name_or_id
+            if project_name_or_id.startswith(STITCH_PROJECTS_PREFIX)
+            else f"{STITCH_PROJECTS_PREFIX}{project_name_or_id}"
+        )
+        args: dict[str, object] = {"name": formatted_name}
+        if title is not None:
+            args["title"] = title
+        if visibility is not None:
+            args["visibility"] = visibility
+        if background_theme is not None:
+            args["backgroundTheme"] = background_theme
+        if screen_instances is not None:
+            args["screenInstances"] = screen_instances
+        if update_mask is not None:
+            args["updateMask"] = update_mask
+        return self._call_tool("update_project", args)
+
+    def update_screen(
+        self,
+        screen_name: str,
+        html_code_base64: str | None = None,
+        screenshot_base64: str | None = None,
+        update_mask: list[str] | None = None,
+    ) -> dict[str, object]:
+        """Atualiza o HTML ou o screenshot de uma tela especifica do projeto."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        args: dict[str, object] = {"name": screen_name}
+        if html_code_base64 is not None:
+            args["htmlCodeBase64"] = html_code_base64
+        if screenshot_base64 is not None:
+            args["screenshotBase64"] = screenshot_base64
+        if update_mask is not None:
+            args["updateMask"] = update_mask
+        return self._call_tool("update_screen", args)
+
+    def create_design_system(self, project_id: str, design_system: dict[str, object]) -> dict[str, object]:
+        """Cria um novo design system no projeto (cores, tipografia, forma,
+        aparencia light/dark, design_md livre). O portao exige
+        ``update_design_system`` em seguida para aplicar ao projeto."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
+        return self._call_tool(
+            "create_design_system",
+            {"projectId": clean_id, "designSystem": design_system},
+        )
+
+    def update_design_system(
+        self,
+        project_id: str,
+        name: str,
+        design_system: dict[str, object],
+    ) -> dict[str, object]:
+        """Atualiza um design system existente do projeto."""
+        if not self.is_configured:
+            raise ValueError(STITCH_ERROR_NOT_CONFIGURED)
+        clean_id = project_id.replace(STITCH_PROJECTS_PREFIX, "")
+        return self._call_tool(
+            "update_design_system",
+            {"projectId": clean_id, "name": name, "designSystem": design_system},
+        )
+
     def download_file(self, file_resource_name: str) -> dict[str, object]:
         """Baixa o conteudo de um arquivo (HTML ou screenshot) gerado pelo Stitch."""
         if not self.is_configured:
@@ -496,3 +580,52 @@ class StitchClient:
                 "selectedScreenInstances": selected_screen_instances,
             },
         )
+
+
+# Perguntas fechadas da cascata System-1 para roteamento de intencao Stitch.
+# Reutilizam o shape Laya/Decisions ({type, instructions, criteria}) -- ver
+# llm/gemini_decisions.normalize_questions para o contrato completo.
+STITCH_ACTION_QUESTIONS: Final[dict[str, dict[str, Any]]] = {
+    "acao_stitch": {
+        "type": "choice",
+        "instructions": (
+            "Classifique o pedido do usuario em UMA acao do Google Stitch MCP. "
+            "generate_screen: criar tela nova a partir de texto/prompt. "
+            "edit_screens: modificar telas existentes selecionadas. "
+            "generate_variants: explorar variantes de telas existentes. "
+            "design_system: criar/atualizar/aplicar design system. "
+            "handoff_export: exportar HTML/artefatos para o frontend."
+        ),
+        "criteria": {
+            "generate_screen": "Criar uma nova tela/prototipo do zero via generate_screen_from_text.",
+            "edit_screens": "Editar uma ou mais telas existentes via edit_screens.",
+            "generate_variants": "Gerar variantes exploratorias de telas existentes.",
+            "design_system": "Operacao de design system (criar, atualizar, aplicar, upload DESIGN.md).",
+            "handoff_export": "Exportar/download de artefatos (HTML, screenshots, arquivos) para handoff.",
+            "outro": "Pedido fora do escopo das tools Stitch (consulta, auditoria, conversa).",
+        },
+    },
+    "precisa_enhance": {
+        "type": "noul",
+        "instructions": (
+            "O prompt de design esta vago ou incompleto a ponto de precisar de "
+            "enriquecimento automatico (enhance_prompt) antes de gerar a tela?"
+        ),
+        "criteria": {
+            "true_description": "Prompt generico, sem especificacao de layout, cor ou componente.",
+            "false_description": "Prompt ja especifico o suficiente para geracao direta.",
+        },
+    },
+}
+
+
+def classify_stitch_operation(prompt: str, decision_client: Any | None = None) -> Any:
+    """Classifica a intencao do usuario via cascata System-1 (Laya -> Gemini Decision 1).
+
+    Retorna ``DecisionResult`` de ``llm.gemini_decisions.decide_s1``: a engine
+    efetiva (``laya-s1-trained`` | ``gemini-decision-1`` | ``laya-s1-fallback``)
+    vem na proveniencia -- nunca assume silenciosamente a nuvem.
+    """
+    from llm.gemini_decisions import decide_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    return decide_s1(prompt, STITCH_ACTION_QUESTIONS, client=decision_client)
