@@ -37,7 +37,6 @@ import os
 from pathlib import Path
 import time
 from typing import Any
-import urllib.error
 import urllib.request
 
 logger = logging.getLogger(__name__)
@@ -104,6 +103,59 @@ def tier_model(tier: str = "fast") -> str:
 _HW_CACHE: dict[str, Any] | None = None
 
 
+def _probe_ram_gb(snap: dict[str, Any]) -> None:
+    try:
+        import psutil  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        snap["ram_gb"] = round(psutil.virtual_memory().total / (1024**3), 1)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.debug("[system2] psutil indisponivel: %s", e)
+
+
+def _probe_vram_windows(snap: dict[str, Any]) -> None:
+    """VRAM real via registro (WMI AdapterRAM satura em ~4GB em GPUs de 8GB)."""
+    if os.name != "nt":
+        return
+    try:
+        import winreg  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        base = r"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base) as cls:
+            idx = 0
+            while True:
+                try:
+                    sub = winreg.EnumKey(cls, idx)
+                    idx += 1
+                except OSError:
+                    break
+                _probe_gpu_device(cls, sub, snap)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.debug("[system2] leitura VRAM falhou: %s", e)
+
+
+def _probe_gpu_device(cls: Any, sub: str, snap: dict[str, Any]) -> None:
+    import winreg  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    try:
+        with winreg.OpenKey(cls, sub) as dev:
+            try:
+                mem, _ = winreg.QueryValueEx(dev, "HardwareInformation.qwMemorySize")
+            except OSError:
+                return
+            if not mem:
+                return
+            gb = float(mem) / (1024**3)
+            if gb <= snap["vram_gb"]:
+                return
+            snap["vram_gb"] = round(gb, 1)
+            try:
+                snap["gpu_name"], _ = winreg.QueryValueEx(dev, "DriverDesc")
+            except OSError:
+                snap["gpu_name"] = snap["gpu_name"] or ""
+    except (OSError, TypeError, ValueError):
+        return
+
+
 def hardware_snapshot() -> dict[str, Any]:
     """Snapshot de hardware relevante ao roteamento local (cache por processo)."""
     global _HW_CACHE  # noqa: PLW0603
@@ -115,44 +167,8 @@ def hardware_snapshot() -> dict[str, Any]:
         "vram_gb": 0.0,
         "gpu_name": "",
     }
-    try:
-        import psutil  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-
-        snap["ram_gb"] = round(psutil.virtual_memory().total / (1024**3), 1)
-    except Exception as e:  # pylint: disable=broad-except
-        logger.debug("[system2] psutil indisponivel: %s", e)
-    if os.name == "nt":  # VRAM real via registro (WMI AdapterRAM satura em 4GB)
-        try:
-            import winreg  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-
-            base = r"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
-            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base) as cls:
-                idx = 0
-                while True:
-                    try:
-                        sub = winreg.EnumKey(cls, idx)
-                        idx += 1
-                        try:
-                            with winreg.OpenKey(cls, sub) as dev:
-                                try:
-                                    mem, _ = winreg.QueryValueEx(dev, "HardwareInformation.qwMemorySize")
-                                    if not mem:
-                                        continue
-                                    gb = float(mem) / (1024**3)
-                                    if gb > snap["vram_gb"]:
-                                        snap["vram_gb"] = round(gb, 1)
-                                        try:
-                                            snap["gpu_name"], _ = winreg.QueryValueEx(dev, "DriverDesc")
-                                        except OSError:
-                                            snap["gpu_name"] = snap["gpu_name"] or ""
-                                except (OSError, TypeError, ValueError):
-                                    continue
-                        except OSError:
-                            continue
-                    except OSError:
-                        break
-        except Exception as e:  # pylint: disable=broad-except
-            logger.debug("[system2] leitura VRAM falhou: %s", e)
+    _probe_ram_gb(snap)
+    _probe_vram_windows(snap)
     _HW_CACHE = snap
     return snap
 
@@ -167,7 +183,7 @@ def ollama_online(timeout_s: float = 3.0) -> bool:
         req = urllib.request.Request(f"{_ollama_base()}/api/tags")  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
         with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
             return resp.status == 200
-    except (OSError, urllib.error.URLError, TimeoutError):
+    except OSError:
         return False
 
 
@@ -181,7 +197,7 @@ def llama_server_online(timeout_s: float = 3.0) -> bool:
         req = urllib.request.Request(f"{_llama_base()}/health")  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
         with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
             return resp.status == 200
-    except (OSError, urllib.error.URLError, TimeoutError):
+    except OSError:
         return False
 
 
@@ -297,6 +313,54 @@ def _flash_lite_fallback(
     return text, meta
 
 
+def _try_moe_local(
+    model: str,
+    prompt: str,
+    system: str,
+    json_mode: bool,
+    timeout: float,
+    meta_base: dict[str, Any],
+) -> tuple[str, dict[str, Any]] | None:
+    """Caminho tier ``moe``: llama-swap/llama-server -> Ollama deep degradado."""
+    if llama_server_online():
+        try:
+            text, meta = _llama_generate(model, prompt, system, json_mode, timeout)
+            meta.update(meta_base)
+            return text, meta
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning("[system2] llama-server falhou para %s: %s", model, e)
+    deep_model = tier_model("deep")
+    if ollama_online():
+        try:
+            text, meta = _ollama_generate(deep_model, prompt, system, json_mode, timeout)
+            meta.update(meta_base)
+            meta["model"] = deep_model
+            meta["degraded_from"] = "llama-cpp-vulkan"
+            return text, meta
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning("[system2] Ollama deep falhou: %s", e)
+    return None
+
+
+def _try_ollama_local(
+    model: str,
+    prompt: str,
+    system: str,
+    json_mode: bool,
+    timeout: float,
+    meta_base: dict[str, Any],
+) -> tuple[str, dict[str, Any]] | None:
+    if not ollama_online():
+        return None
+    try:
+        text, meta = _ollama_generate(model, prompt, system, json_mode, timeout)
+        meta.update(meta_base)
+        return text, meta
+    except Exception as e:  # pylint: disable=broad-except
+        logger.warning("[system2] Ollama falhou para %s: %s", model, e)
+        return None
+
+
 def system2_generate(
     prompt: str,
     system: str = "",
@@ -317,31 +381,14 @@ def system2_generate(
     timeout = timeout_s if timeout_s is not None else OLLAMA_TIMEOUT_S
     meta_base: dict[str, Any] = {"tier": tier_key, "requested_model": model, "hardware": hw}
 
-    if prefer_local and tier_key == "moe":
-        if llama_server_online():
-            try:
-                text, meta = _llama_generate(model, prompt, system, json_mode, timeout)
-                meta.update(meta_base)
-                return text, meta
-            except Exception as e:  # pylint: disable=broad-except
-                logger.warning("[system2] llama-server falhou para %s: %s", model, e)
-        deep_model = tier_model("deep")
-        if ollama_online():
-            try:
-                text, meta = _ollama_generate(deep_model, prompt, system, json_mode, timeout)
-                meta.update(meta_base)
-                meta["model"] = deep_model
-                meta["degraded_from"] = "llama-cpp-vulkan"
-                return text, meta
-            except Exception as e:  # pylint: disable=broad-except
-                logger.warning("[system2] Ollama deep falhou: %s", e)
-    elif prefer_local and ollama_online():
-        try:
-            text, meta = _ollama_generate(model, prompt, system, json_mode, timeout)
-            meta.update(meta_base)
-            return text, meta
-        except Exception as e:  # pylint: disable=broad-except
-            logger.warning("[system2] Ollama falhou para %s: %s", model, e)
+    if prefer_local:
+        local = (
+            _try_moe_local(model, prompt, system, json_mode, timeout, meta_base)
+            if tier_key == "moe"
+            else _try_ollama_local(model, prompt, system, json_mode, timeout, meta_base)
+        )
+        if local is not None:
+            return local
 
     if not allow_cloud_fallback:
         return "", {**meta_base, "engine": "none", "error": "local-unavailable-no-cloud-fallback"}

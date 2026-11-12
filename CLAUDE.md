@@ -489,6 +489,7 @@ gerador ou o manifesto.
 - **Pool Gemini (AI Studio — 5 chaves):** `GEMINI_API_KEY_1..5` + aliases `GEMINI_FLASH_KEY_1..5`, servida por `llm/gemini_pool.py` (rotação weighted + circuit breaker) para `gemini-3.5-flash-lite`; `GEMINI_API_KEY` espelha a chave 1 como fallback.
 - **Pool Decision (System-1 — 3 chaves):** `DECISION_API_1..3` para a Gemini Decisions API, servida por `llm/decision_pool.py` na cascata Laya → `gemini-decision-1`; fallback controlado para `GEMINI_API_KEY`/`GOOGLE_API_KEY`.
 - **Config GCP/OAuth:** `GCP_PROJECT_ID`/`GCP_PROJECT_NUMBER`/`GOOGLE_CLOUD_PROJECT_NUMBER`/`GCP_ACCOUNT_EMAIL` (`original-498419` / `913870412920`), `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET`, `WEBHOOK_OPENROUTER_SECRET` (nome fora do prefixo `OPENROUTER_` de propósito — não é chave de API e poluiria a auditoria de `OPENROUTER_KEYS`).
+- **Pool Multimodal Gemini (TTS/Video/Image/Translate — 8 chaves):** `GEMINI_{TTS,VIDEO,IMAGE,TRANSLATE}_KEY` (AI Studio) + `OPENROUTER_GEMINI_{TTS,VIDEO,IMAGE,TRANSLATE}_KEY` (OpenRouter), servida por `llm/media_pool.py` (`media_pool_manager`) com circuit breaker por modalidade/provider; fallback para `GEMINI_API_KEY`/`OPENROUTER_API_KEY`; `MEDIA_POOL_PROVIDER` controla a ordem (`aistudio` default primeiro).
 - **HuggingFace (SOTA):** `HF_TOKEN` / `PLATFORM_HF_KEY` (Sincronizado via Registry para suporte a MCP e inferência).
 
 > Inventário consolidado, fingerprints sha8 e validação live de cada chave:
@@ -520,7 +521,7 @@ O custo de provisionar, hospedar e manter servidores dedicados, instâncias em n
 
 1. **1º Nível — Cotas Pagas de Assinatura Pro (`Faixa.FLAT_FEE`):** Primazia mandatória para o Tier 1; custo marginal zero dentro do teto mensal contratado.
 2. **2º Nível — Modelos Free em Nuvem e Edge:** Ingestão maciça de rotina via Ollama local (Gemma 4/Qwen — `:cloud` descontinuado), llama.cpp (família Qwen, sufixo `b` por ser condutor) e Hermes Agent (roteamento dinâmico Laguna, sufixo `b`, blindado da calibração). Custo de infraestrutura = zero.
-3. **3º Nível — Pools Multi-Tier OpenRouter:** 16 chaves dedicadas e particionadas em HKCU/HKLM com isolamento estrito de cotas e circuit breaker adaptativo (Tiers 1 a 4).
+3. **3º Nível — Pools Multi-Tier OpenRouter:** 21 chaves de tier + 3 dedicadas por agente + 4 multimodais, particionadas em HKCU/HKLM com isolamento estrito de cotas e circuit breaker adaptativo (Tiers 1 a 4 + dedicadas).
 4. **4º Nível — Pay-as-you-go Sob Demanda:** Acionamento estrito e cirúrgico com tetos autorizados em `esforcos_autorizados`.
 
 ---

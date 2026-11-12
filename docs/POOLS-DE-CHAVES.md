@@ -3,14 +3,15 @@ id: docs-pools-de-chaves
 tipo: referencia
 escopo:
   Site -- inventario consolidado das pools de chaves e credenciais (OpenRouter
-  tiers, Gemini, Decision, GCP/OAuth) com fingerprints sha8 e validacao live
+  tiers, Gemini, Decision, multimodal TTS/video/imagem/traducao, GCP/OAuth) com
+  fingerprints sha8 e validacao live
 status: active
 owner: site-governance
 autor:
   Devin (SWE-2 Flash)
   <158243242+devin-ai-integration[bot]@users.noreply.github.com>
 criado_em: "2026-11-12T12:30:00-03:00"
-atualizado_em: "2026-11-12T12:30:00-03:00"
+atualizado_em: "2026-11-12T14:00:00-03:00"
 verificado:
   - "Pool Gemini: 5/5 chaves validadas HTTP 200 em /v1beta/models (2026-11-12)"
   - "Pool Decision: 3/3 validadas HTTP 200 + decide_s1 live via
@@ -18,6 +19,8 @@ verificado:
   - "Pool OpenRouter: 21/21 tiers + 3/3 dedicadas validadas HTTP 200 em
     /api/v1/auth/key"
   - "Incidente TIER1_KEY_2 (HTTP 401) documentado e corrigido com renumeracao"
+  - "Pool multimodal: 8/8 chaves (4 AI Studio + 4 OpenRouter) validadas HTTP 200
+    em 2026-11-12"
 nao_verificado:
   - "Pools Anthropic e OpenAI: nao provisionadas (pendencia aberta)"
   - "Quota/throughput real por chave: apenas autenticacao medida"
@@ -107,7 +110,29 @@ Fallback controlado: pool vazio → `GEMINI_API_KEY`/`GOOGLE_API_KEY`/
 `GOOGLE_GENAI_API_KEY` (mesma família de credencial AI Studio). Suporta
 `DECISION_API_1..9`; hoje 3 provisionadas.
 
-## 4. Configuração GCP / OAuth / projeto
+## 4. Pool Multimodal Gemini — 4 modalidades × 2 providers
+
+Gerenciada por `llm/media_pool.py` (`MediaPoolManager`, singleton
+`media_pool_manager`): round-robin + circuit breaker por (modalidade, provider),
+isolada dos pools de texto. Cada modalidade tem uma chave **AI Studio** (`AQ.*`,
+endpoint generativelanguage) e uma **OpenRouter** (`sk-or-v1-*`), com fallback
+controlado para `GEMINI_API_KEY`/`OPENROUTER_API_KEY` quando a dedicada estiver
+ausente. Ordem default: `aistudio` primeiro; `MEDIA_POOL_PROVIDER`
+(`aistudio`|`openrouter`|`auto`) reordena.
+
+| Modalidade  | Variável AI Studio     | sha8 (media) | Variável OpenRouter               | sha8 (media) | Validação 2026-11-12 |
+| ----------- | ---------------------- | ------------ | --------------------------------- | ------------ | -------------------- |
+| `tts`       | `GEMINI_TTS_KEY`       | `6480db8d`   | `OPENROUTER_GEMINI_TTS_KEY`       | `46a23a76`   | HTTP 200 OK (2/2)    |
+| `video`     | `GEMINI_VIDEO_KEY`     | `dc35d4f4`   | `OPENROUTER_GEMINI_VIDEO_KEY`     | `2d30d9f0`   | HTTP 200 OK (2/2)    |
+| `image`     | `GEMINI_IMAGE_KEY`     | `5105e757`   | `OPENROUTER_GEMINI_IMAGE_KEY`     | `ebce6d81`   | HTTP 200 OK (2/2)    |
+| `translate` | `GEMINI_TRANSLATE_KEY` | `28f4d05e`   | `OPENROUTER_GEMINI_TRANSLATE_KEY` | `3fc00c37`   | HTTP 200 OK (2/2)    |
+
+Validação: OpenRouter via `GET /api/v1/auth/key`; AI Studio via
+`GET /v1beta/models?key=…`. Sufixos `_1.._5` aceitos para crescimento futuro.
+Chaves OpenRouter dedicadas **fora** dos tier pools (mesmo padrão de
+`OPENROUTER_{ANTIGRAVITY,DEVIN,HERMES}_KEY`).
+
+## 5. Configuração GCP / OAuth / projeto
 
 | Variável                      | sha8       | Conteúdo (não-secreto)                                                                                                                                                                             |
 | ----------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -118,14 +143,14 @@ Fallback controlado: pool vazio → `GEMINI_API_KEY`/`GOOGLE_API_KEY`/
 | `GOOGLE_OAUTH_CLIENT_ID`      | `ba9ab749` | `913870412920-00so1m1htnorevj81pbud44irj5n34ai.apps.googleusercontent.com` (público por definição; injetado em `{{OAUTH_CLIENT_ID}}` de manifests de extensão por `scripts/ops/build-manifest.py`) |
 | `GOOGLE_OAUTH_CLIENT_SECRET`  | `b80cf4b7` | client secret OAuth do cliente "Gemini" (tipo Computador, criado 2026-09-04)                                                                                                                       |
 
-## 5. Pendentes (`pend-2026-11-10-key-pools-api`)
+## 6. Pendentes (`pend-2026-11-10-key-pools-api`)
 
 - **Anthropic** (`ANTHROPIC_API_KEY`/tiers): não provisionado — aguarda chaves.
 - **OpenAI** (`OPENAI_API_KEY`/tiers): não provisionado — aguarda chaves.
 - Demais providers do `OPENROUTER_KEYS`/auditoria seguem cobertos pelas pools
   acima.
 
-## 6. Notas operacionais
+## 7. Notas operacionais
 
 - **Cota é por projeto, não por chave** (AI Studio/GCP): as 3 chaves Decision e
   as 5 Gemini dividem a quota do projeto `913870412920`. A rotação serve para
@@ -142,9 +167,11 @@ Fallback controlado: pool vazio → `GEMINI_API_KEY`/`GOOGLE_API_KEY`/
 
 ## Verificação executada (2026-11-12)
 
-| Pool                 | Chaves | Resultado                                                 |
-| -------------------- | ------ | --------------------------------------------------------- |
-| Gemini               | 5/5    | HTTP 200 em `/v1beta/models` para todas                   |
-| Decision             | 3/3    | HTTP 200 + `decide_s1` live via `gemini-decision-1`       |
-| OpenRouter tiers     | 21/21  | HTTP 200 em `/api/v1/auth/key` (após remoção da inválida) |
-| OpenRouter dedicadas | 3/3    | HTTP 200                                                  |
+| Pool                  | Chaves | Resultado                                                 |
+| --------------------- | ------ | --------------------------------------------------------- |
+| Gemini                | 5/5    | HTTP 200 em `/v1beta/models` para todas                   |
+| Decision              | 3/3    | HTTP 200 + `decide_s1` live via `gemini-decision-1`       |
+| OpenRouter tiers      | 21/21  | HTTP 200 em `/api/v1/auth/key` (após remoção da inválida) |
+| OpenRouter dedicadas  | 3/3    | HTTP 200                                                  |
+| Multimodal AI Studio  | 4/4    | HTTP 200 em `/v1beta/models` (TTS/Video/Image/Translate)  |
+| Multimodal OpenRouter | 4/4    | HTTP 200 em `/api/v1/auth/key`                            |

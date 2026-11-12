@@ -120,6 +120,44 @@ def _normalize_instructions(raw: Any) -> Any:
     return raw
 
 
+def _norm_noul_criteria(qid: str, criteria: Any) -> dict[str, str] | None:
+    """Criteria ``noul``: aceita ``{"true":..,"false":..}`` (Laya) e devolve
+    o shape do SDK ``true_description``/``false_description``."""
+    if criteria is None:
+        return None
+    if not isinstance(criteria, dict):
+        raise ValueError(f"questions[{qid!r}].criteria (noul) deve ser mapa true/false.")
+    mapped: dict[str, str] = {}
+    for k, v in criteria.items():
+        key = str(k)
+        if key in ("true", "false"):
+            key = f"{key}_description"
+        if key in ("true_description", "false_description"):
+            mapped[key] = str(v)
+    return mapped or None
+
+
+def _norm_choice_criteria(qid: str, criteria: Any) -> dict[str, str]:
+    if not isinstance(criteria, dict) or not (MIN_CHOICE_OPTIONS <= len(criteria) <= MAX_CHOICE_OPTIONS):
+        raise ValueError(
+            f"questions[{qid!r}].criteria (choice) deve ser mapa com {MIN_CHOICE_OPTIONS}..{MAX_CHOICE_OPTIONS} opcoes."
+        )
+    return {str(k): str(v) for k, v in criteria.items()}
+
+
+def _norm_score_criteria(qid: str, criteria: Any) -> list[str]:
+    if not isinstance(criteria, list) or len(criteria) < 2:
+        raise ValueError(f"questions[{qid!r}].criteria (score) deve ser lista ordenada (rubrica).")
+    return [str(c) for c in criteria]
+
+
+_CRITERIA_NORMALIZERS: dict[str, Any] = {
+    "noul": _norm_noul_criteria,
+    "choice": _norm_choice_criteria,
+    "score": _norm_score_criteria,
+}
+
+
 def normalize_questions(questions: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Valida e normaliza perguntas no formato aceito pela Decisions API.
 
@@ -150,33 +188,9 @@ def normalize_questions(questions: dict[str, dict[str, Any]]) -> dict[str, dict[
             raise ValueError(f"questions[{qid!r}].instructions obrigatorio.")
 
         item: dict[str, Any] = {"type": qtype, "instructions": instructions}
-        criteria = spec.get("criteria")
-        if qtype == "noul":
-            if criteria is not None:
-                if not isinstance(criteria, dict):
-                    raise ValueError(f"questions[{qid!r}].criteria (noul) deve ser mapa true/false.")
-                # SDK exige true_description/false_description; aceitamos
-                # tambem o atalho Laya-style {"true":..,"false":..}.
-                mapped: dict[str, str] = {}
-                for k, v in criteria.items():
-                    key = str(k)
-                    if key in ("true", "false"):
-                        key = f"{key}_description"
-                    if key in ("true_description", "false_description"):
-                        mapped[key] = str(v)
-                if mapped:
-                    item["criteria"] = mapped
-        elif qtype == "choice":
-            if not isinstance(criteria, dict) or not (MIN_CHOICE_OPTIONS <= len(criteria) <= MAX_CHOICE_OPTIONS):
-                raise ValueError(
-                    f"questions[{qid!r}].criteria (choice) deve ser mapa com "
-                    f"{MIN_CHOICE_OPTIONS}..{MAX_CHOICE_OPTIONS} opcoes."
-                )
-            item["criteria"] = {str(k): str(v) for k, v in criteria.items()}
-        else:  # score
-            if not isinstance(criteria, list) or len(criteria) < 2:
-                raise ValueError(f"questions[{qid!r}].criteria (score) deve ser lista ordenada (rubrica).")
-            item["criteria"] = [str(c) for c in criteria]
+        criteria = _CRITERIA_NORMALIZERS[qtype](qid, spec.get("criteria"))
+        if criteria is not None:
+            item["criteria"] = criteria
         normalized[qid] = item
     return normalized
 
