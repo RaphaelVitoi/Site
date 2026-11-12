@@ -6,11 +6,12 @@ para garantir resiliencia de conexao e prevencao de vazamento de I/O em ambiente
 
 # pylint: disable=global-statement, broad-exception-caught
 # ruff: noqa: S310
-# ruff: noqa: S310
 import asyncio
+import contextlib
 import json
 import socket
 import ssl
+import threading
 from typing import Any
 import urllib.error
 import urllib.request
@@ -18,12 +19,32 @@ import urllib.request
 import aiohttp
 import certifi
 
-_GLOBAL_HTTP_SESSION: aiohttp.ClientSession | None = None
-_GLOBAL_HTTP_SESSION_LOCK = None  # Lazy - instanciado sob o event loop ativo
+# Sessoes HTTP sao POR EVENT LOOP: um ClientSession criado num loop nao pode ser
+# usado em outro ("attached to a different loop"). O fallback System-2 roda em
+# thread dedicada com loop proprio, entao mantemos uma sessao por loop — mesmo
+# padrao de _API_SEMAPHORES. O loop vai junto no valor para que seu id() nao
+# seja reciclado por um loop futuro enquanto a sessao estiver viva; entradas
+# de loops encerrados sao podadas no proximo acesso.
+_GLOBAL_HTTP_SESSIONS: dict[int, tuple[asyncio.AbstractEventLoop, aiohttp.ClientSession]] = {}
+_HTTP_SESSIONS_GUARD = threading.Lock()
 
-# Lazy Initialization das Primitivas Asyncio.
-# A instanciacao direta no modulo viola o escopo do loop de eventos.
-API_CONCURRENCY_SEMAPHORE = None
+# Primitivas Asyncio sao POR EVENT LOOP: um asyncio.Semaphore/Lock compartilhado
+# entre loops distintos (ex.: asyncio.run por chamada + loop dedicado do
+# fallback System-2) quebra com "bound to a different event loop" sob contencao.
+# Mantemos um semaforo por loop, no mesmo padrao de budget.get_telemetry_lock.
+API_CONCURRENCY_LIMIT = 20
+_API_SEMAPHORES: dict[int, tuple[asyncio.AbstractEventLoop, asyncio.Semaphore]] = {}
+_API_SEMAPHORES_GUARD = threading.Lock()
+
+
+def _purge_dead_loop_entries(
+    registry: dict[int, tuple[asyncio.AbstractEventLoop, Any]], active_loop: asyncio.AbstractEventLoop
+) -> None:
+    """Remove entradas de loops encerrados — nada mais pode usa-las e, com a
+    referencia ao loop no valor, seu id() nao e reciclado por um loop futuro."""
+    for lid, (loop_obj, _) in list(registry.items()):
+        if loop_obj.is_closed() and loop_obj is not active_loop:
+            registry.pop(lid, None)
 
 
 def make_client_timeout(
@@ -47,52 +68,83 @@ def make_client_timeout(
 
 
 def get_api_semaphore() -> asyncio.Semaphore:
-    """Retorna o semaforo global que limita a concorrencia da API."""
-    global API_CONCURRENCY_SEMAPHORE
-    if API_CONCURRENCY_SEMAPHORE is None:
-        API_CONCURRENCY_SEMAPHORE = asyncio.Semaphore(20)
-    return API_CONCURRENCY_SEMAPHORE
+    """Retorna o semaforo de concorrencia do event loop corrente."""
+    loop = asyncio.get_running_loop()
+    loop_id = id(loop)
+    with _API_SEMAPHORES_GUARD:
+        _purge_dead_loop_entries(_API_SEMAPHORES, loop)
+        par = _API_SEMAPHORES.get(loop_id)
+        if par is None or par[0] is not loop:
+            par = (loop, asyncio.Semaphore(API_CONCURRENCY_LIMIT))
+            _API_SEMAPHORES[loop_id] = par
+        return par[1]
 
 
-async def get_global_http_session() -> aiohttp.ClientSession:
-    """Retorna a sessao HTTP aiohttp global, instanciando-a de forma lazy se necessario."""
-    global _GLOBAL_HTTP_SESSION, _GLOBAL_HTTP_SESSION_LOCK
-    if _GLOBAL_HTTP_SESSION_LOCK is None:
-        _GLOBAL_HTTP_SESSION_LOCK = asyncio.Lock()
-    async with _GLOBAL_HTTP_SESSION_LOCK:
-        if _GLOBAL_HTTP_SESSION is None or _GLOBAL_HTTP_SESSION.closed:
-            ssl_context = ssl.create_default_context(cafile=certifi.where())
-            ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
-            connector = aiohttp.TCPConnector(
-                ssl=ssl_context,
-                family=socket.AF_INET,
-                limit=60,  # teto global (semaphore=20 + gordura de infra)
-                limit_per_host=20,  # espelha API_CONCURRENCY_SEMAPHORE
-                # SOTA: Reduzido para 5s previne TCP drop pela API (Connection closed)
-                keepalive_timeout=5,
-                ttl_dns_cache=300,  # renova IPs de load balancers a cada 5 min
-                # enable_cleanup_closed removido: no-op e DeprecationWarning no Python 3.14+
-                # (corrigido em https://github.com/python/cpython/pull/118960)
-            )
-            default_headers = {
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/123.0.0.0 Safari/537.36"
-                ),
-                "Accept": "application/json, text/plain, */*",
-                "Connection": "keep-alive",
-            }
-            # SOTA: Timeouts intrinsecos de socket para evitar paralisia I/O (TCP Drop).
-            # connect=15s (teto do handshake), sock_read=300s (limite sem receber bytes vivos).
-            global_timeout = make_client_timeout(total=600, connect=15, sock_read=300)
-            _GLOBAL_HTTP_SESSION = aiohttp.ClientSession(
-                trust_env=True,
-                connector=connector,
-                headers=default_headers,
-                timeout=global_timeout,
-            )
-        return _GLOBAL_HTTP_SESSION
+def _build_http_session() -> aiohttp.ClientSession:
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+    connector = aiohttp.TCPConnector(
+        ssl=ssl_context,
+        family=socket.AF_INET,
+        limit=60,  # teto global (semaphore=20 + gordura de infra)
+        limit_per_host=20,  # espelha API_CONCURRENCY_LIMIT
+        # SOTA: Reduzido para 5s previne TCP drop pela API (Connection closed)
+        keepalive_timeout=5,
+        ttl_dns_cache=300,  # renova IPs de load balancers a cada 5 min
+        # enable_cleanup_closed removido: no-op e DeprecationWarning no Python 3.14+
+        # (corrigido em https://github.com/python/cpython/pull/118960)
+    )
+    default_headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/123.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json, text/plain, */*",
+        "Connection": "keep-alive",
+    }
+    # SOTA: Timeouts intrinsecos de socket para evitar paralisia I/O (TCP Drop).
+    # connect=15s (teto do handshake), sock_read=300s (limite sem receber bytes vivos).
+    global_timeout = make_client_timeout(total=600, connect=15, sock_read=300)
+    return aiohttp.ClientSession(
+        trust_env=True,
+        connector=connector,
+        headers=default_headers,
+        timeout=global_timeout,
+    )
+
+
+def _aclose_orphaned_session(sess: aiohttp.ClientSession) -> None:
+    """Fecha (best-effort) sessao orfa de loop morto, agendando no loop corrente."""
+
+    async def _close() -> None:
+        with contextlib.suppress(Exception):
+            await sess.close()
+
+    with contextlib.suppress(RuntimeError):
+        asyncio.get_running_loop().create_task(_close())
+
+
+def get_global_http_session() -> aiohttp.ClientSession:
+    """Retorna a sessao HTTP aiohttp global do loop corrente, instanciando-a lazy."""
+    loop = asyncio.get_running_loop()
+    loop_id = id(loop)
+    with _HTTP_SESSIONS_GUARD:
+        # Poda sessoes de loops encerrados (asyncio.run por chamada): fecha
+        # best-effort e remove a entrada para o registro nao crescer sem fim.
+        orphans = [
+            (lid, sess)
+            for lid, (loop_obj, sess) in _GLOBAL_HTTP_SESSIONS.items()
+            if loop_obj.is_closed() and loop_obj is not loop
+        ]
+        for lid, sess in orphans:
+            _GLOBAL_HTTP_SESSIONS.pop(lid, None)
+            _aclose_orphaned_session(sess)
+        par = _GLOBAL_HTTP_SESSIONS.get(loop_id)
+        if par is None or par[0] is not loop or par[1].closed:
+            par = (loop, _build_http_session())
+            _GLOBAL_HTTP_SESSIONS[loop_id] = par
+        return par[1]
 
 
 def _sync_fallback_request(

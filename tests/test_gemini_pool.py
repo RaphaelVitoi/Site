@@ -55,7 +55,7 @@ async def test_gemini_pool_round_robin_rotation(mock_pool_keys):
     manager = GeminiPoolManager(read_registry=False)
     selected_keys = []
     for _ in range(5):
-        key, sha8 = await manager.get_key_for_workload(GeminiWorkload.TRIAGEM)
+        key, sha8 = manager.get_key_for_workload(GeminiWorkload.TRIAGEM)
         selected_keys.append(key)
         assert sha8 == _key_sha8(key)
 
@@ -67,16 +67,16 @@ async def test_gemini_pool_round_robin_rotation(mock_pool_keys):
 async def test_gemini_pool_circuit_breaker_429(mock_pool_keys):
     """Valida que uma chave que recebe HTTP 429 entra em cooldown e a pool rotaciona imediatamente."""
     manager = GeminiPoolManager(read_registry=False)
-    key1, sha1 = await manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
+    key1, sha1 = manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
 
     # Marca erro 429 com 60 segundos de retry_after
-    await manager.mark_failure(key1, status_code=429, retry_after_s=60.0)
+    manager.mark_failure(key1, status_code=429, retry_after_s=60.0)
 
     # Chave 1 agora deve estar indisponivel
     assert manager.available_keys_count() == 4
 
     # Proxima requisicao deve retornar chave diferente
-    key2, sha2 = await manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
+    key2, sha2 = manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
     assert key2 != key1
     assert sha2 != sha1
 
@@ -85,9 +85,9 @@ async def test_gemini_pool_circuit_breaker_429(mock_pool_keys):
 async def test_gemini_pool_permanent_isolation_401_403(mock_pool_keys):
     """Valida que chave com 401 ou 403 e revogada permanentemente e removida da rotacao."""
     manager = GeminiPoolManager(read_registry=False)
-    key1, sha1 = await manager.get_key_for_workload(GeminiWorkload.LINTING)
+    key1, sha1 = manager.get_key_for_workload(GeminiWorkload.LINTING)
 
-    await manager.mark_failure(key1, status_code=401, error_msg="API_KEY_INVALID")
+    manager.mark_failure(key1, status_code=401, error_msg="API_KEY_INVALID")
 
     # Verifica marcacao definitiva
     assert manager.available_keys_count() == 4
@@ -98,7 +98,7 @@ async def test_gemini_pool_permanent_isolation_401_403(mock_pool_keys):
 
     # Proximas 10 chamadas nunca devem selecionar a chave revogada
     for _ in range(10):
-        next_key, _ = await manager.get_key_for_workload(GeminiWorkload.LINTING)
+        next_key, _ = manager.get_key_for_workload(GeminiWorkload.LINTING)
         assert next_key != key1
 
 
@@ -107,10 +107,10 @@ async def test_gemini_pool_workload_counters(mock_pool_keys):
     """Valida o rastreamento das 3 funcoes prioritarias do Gemini 3.5 Flash-Lite."""
     manager = GeminiPoolManager(read_registry=False)
 
-    await manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
-    await manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
-    await manager.get_key_for_workload(GeminiWorkload.TRIAGEM)
-    await manager.get_key_for_workload(GeminiWorkload.LINTING)
+    manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
+    manager.get_key_for_workload(GeminiWorkload.ATOMIC_EDITS)
+    manager.get_key_for_workload(GeminiWorkload.TRIAGEM)
+    manager.get_key_for_workload(GeminiWorkload.LINTING)
 
     summary = manager.get_telemetry_summary()
     total_edits = sum(s["atomic_edits"] for s in summary)
@@ -126,9 +126,9 @@ async def test_gemini_pool_workload_counters(mock_pool_keys):
 async def test_gemini_pool_latency_and_success_update(mock_pool_keys):
     """Valida atualizacao de media movel de latencia e contagem de sucesso."""
     manager = GeminiPoolManager(read_registry=False)
-    key, sha = await manager.get_key_for_workload(GeminiWorkload.TRIAGEM)
+    key, sha = manager.get_key_for_workload(GeminiWorkload.TRIAGEM)
 
-    await manager.mark_success(key, latency_ms=100.0)
+    manager.mark_success(key, latency_ms=100.0)
     summary = manager.get_telemetry_summary()
     entry = [s for s in summary if s["sha8"] == sha][0]
 

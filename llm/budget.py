@@ -388,37 +388,70 @@ class AsyncTokenBucket:
         self.tokens = float(capacity)
         self.fill_rate_per_sec = fill_rate_per_minute / 60.0
         self.last_fill = time.monotonic()
-        self.lock: asyncio.Lock | None = None
+        # Lock asyncio POR EVENT LOOP: o bucket e global, mas asyncio.Lock nao
+        # atravessa loops concorrentes (fallback System-2 roda em thread
+        # dedicada). Estado segue compartilhado; a exclusao e por loop.
+        # O loop vai junto no valor: is_closed() permite podar entradas de
+        # loops mortos (asyncio.run por chamada) sem reter referencias.
+        self._locks: dict[int, tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
+        self._locks_guard = threading.Lock()
+        # Estado do bucket e GLOBAL entre loops/threads: refill, checagem e
+        # debito ficam sob um threading.Lock de secao critica curta (sem await
+        # dentro), eliminando drift de contagem sob loops concorrentes.
+        self._state_guard = threading.Lock()
         self.starvation_events = 0  # Telemetria interna de exaustao
         self.last_consume = 0.0
 
+    def _lock_for_loop(self) -> asyncio.Lock:
+        loop = asyncio.get_running_loop()
+        loop_id = id(loop)
+        with self._locks_guard:
+            # Poda loops encerrados: nada mais pode esperar num lock de loop
+            # morto; sem isto o dict cresceria a cada asyncio.run.
+            dead = [lid for lid, (loop_obj, _) in self._locks.items() if loop_obj.is_closed() and loop_obj is not loop]
+            for lid in dead:
+                self._locks.pop(lid, None)
+            par = self._locks.get(loop_id)
+            if par is None or par[0] is not loop:
+                par = (loop, asyncio.Lock())
+                self._locks[loop_id] = par
+            return par[1]
+
+    def _token_wait(self, tokens: int) -> float:
+        """Espera de refill: 0 quando ha tokens; 3600s quando o bucket nunca enche."""
+        if self.tokens >= tokens:
+            return 0.0
+        if self.fill_rate_per_sec > 0:
+            return (tokens - self.tokens) / self.fill_rate_per_sec
+        return 3600.0
+
     async def consume(self, tokens: int = 1):
-        if self.lock is None:
-            self.lock = asyncio.Lock()
-
-        async with self.lock:
+        async with self._lock_for_loop():
             min_spacing = 1.0 / self.fill_rate_per_sec if self.fill_rate_per_sec > 0 else 4.2
-            now = time.monotonic()
-            if now - self.last_consume < min_spacing:
-                await asyncio.sleep(min_spacing - (now - self.last_consume))
-            self.last_consume = time.monotonic()
-
             while True:
-                current_time = time.monotonic()
-                elapsed = current_time - self.last_fill
-                self.tokens = min(self.capacity, self.tokens + elapsed * self.fill_rate_per_sec)
-                self.last_fill = current_time
+                # Secao critica sincrona e curta: refill + checagem + debito sao
+                # atomicos entre loops e threads; os sleeps ficam de fora.
+                with self._state_guard:
+                    now = time.monotonic()
+                    elapsed = now - self.last_fill
+                    self.tokens = min(self.capacity, self.tokens + elapsed * self.fill_rate_per_sec)
+                    self.last_fill = now
 
-                if self.tokens >= tokens:
-                    self.tokens -= tokens
-                    return
+                    spacing_wait = max(0.0, min_spacing - (now - self.last_consume))
+                    if self.tokens >= tokens and spacing_wait <= 0.0:
+                        self.tokens -= tokens
+                        self.last_consume = now
+                        return
 
-                self.starvation_events += 1
-                deficit = tokens - self.tokens
-                wait_time = deficit / self.fill_rate_per_sec
+                    token_wait = self._token_wait(tokens)
+                    wait_time = max(spacing_wait, token_wait)
+                    starved = self.tokens < tokens
+                    if starved:
+                        self.starvation_events += 1
+                    starvation_events = self.starvation_events
 
                 # SOTA: Dispara Alerta Proativo (Toast) se a cota secar para evitar silent failures
-                if self.starvation_events % 5 == 1:
+                if starved and starvation_events % 5 == 1:
                     with contextlib.suppress(ImportError):
                         send_toast(
                             "[WARN] Rate Limit Fallback SOTA",
@@ -426,9 +459,10 @@ class AsyncTokenBucket:
                             "warning",
                         )
 
-                logger.warning(
-                    f"[Rate Limiter SOTA] Starvation detectado. Aguardando {wait_time:.2f}s para {tokens} tokens."
-                )
+                if starved:
+                    logger.warning(
+                        f"[Rate Limiter SOTA] Starvation detectado. Aguardando {wait_time:.2f}s para {tokens} tokens."
+                    )
                 await asyncio.sleep(wait_time)
 
     def get_metrics(self) -> dict:

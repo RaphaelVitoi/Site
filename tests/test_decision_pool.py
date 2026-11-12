@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from unittest.mock import patch
 
 import pytest
@@ -93,10 +92,39 @@ def test_cooldown_expira() -> None:
     env = _env_com_pool()
     with patch.dict("os.environ", env, clear=True):
         pool = DecisionPoolManager(read_registry=False)
-    k1 = env["DECISION_API_1"]
-    pool.mark_failure(k1, status_code=429, retry_after_s=0.01)
-    assert pool.next_key() != k1 or True  # pode ser k1 ou k2 dependendo do rr
-    time.sleep(0.02)
-    # apos expirar, k1 volta a ser elegivel
-    keys = {pool.next_key() for _ in range(4)}
-    assert k1 in keys or env["DECISION_API_2"] in keys
+    k1, k2 = env["DECISION_API_1"], env["DECISION_API_2"]
+    t0 = 1_000.0
+    # relogio controlado: cooldown padrao de 429 (45s) a partir de t0
+    with patch("llm.decision_pool.time.monotonic", return_value=t0):
+        pool.mark_failure(k1, status_code=429)
+        # k1 em cooldown: somente k2 e elegivel ate a expiracao
+        assert pool.next_key() == k2
+        assert pool.next_key() == k2
+    # avanca o relogio alem do cooldown: k1 volta a ser elegivel e duas
+    # chamadas consecutivas precisam cobrir as duas chaves dedicadas
+    with patch("llm.decision_pool.time.monotonic", return_value=t0 + 46.0):
+        keys = {pool.next_key() for _ in range(2)}
+    assert keys == {k1, k2}
+
+
+def test_pool_totalmente_bloqueado_sinaliza_credenciais_configuradas() -> None:
+    """Cooldown/revogacao de TODAS as chaves != pool vazio: has_credentials
+    segue True e iter_candidate_keys devolve [] sem apagar os bloqueios."""
+    env = _env_com_pool()
+    with patch.dict("os.environ", env, clear=True):
+        pool = DecisionPoolManager(read_registry=False)
+    for key in (env["DECISION_API_1"], env["DECISION_API_2"], env["GEMINI_API_KEY"]):
+        pool.mark_failure(key, status_code=401)
+    assert pool.has_credentials is True
+    assert pool.iter_candidate_keys() == []
+
+
+def test_mark_failure_aplica_a_dedicada_e_fallback_repetidas() -> None:
+    """A mesma credencial em DECISION_API_* e GEMINI_API_KEY e revogada nas duas."""
+    mesma = "k" * 30 + "-dup"
+    env = {"DECISION_API_1": mesma, "DECISION_API_2": "k" * 30 + "-bbb", "GEMINI_API_KEY": mesma}
+    with patch.dict("os.environ", env, clear=True):
+        pool = DecisionPoolManager(read_registry=False)
+    pool.mark_failure(mesma, status_code=401)
+    assert pool.next_key().endswith("-bbb")
+    assert pool.iter_candidate_keys() == [env["DECISION_API_2"]]

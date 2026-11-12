@@ -18,7 +18,7 @@ def test_resolve_model_usa_manifesto() -> None:
 
 def test_tier_model_defaults() -> None:
     with patch.dict("os.environ", {}, clear=False):
-        for k in ("CHICO_S2_FAST_MODEL", "CHICO_S2_DEEP_MODEL"):
+        for k in ("CHICO_S2_FAST_MODEL", "CHICO_S2_DEEP_MODEL", "CHICO_S2_CODE_MODEL"):
             import os
 
             os.environ.pop(k, None)
@@ -44,7 +44,10 @@ def test_system2_generate_local_primeiro() -> None:
 
     with (
         patch.object(system2_local, "ollama_online", return_value=True),
+        patch.object(system2_local, "_ollama_model_fits_ram", return_value=True),
         patch("urllib.request.urlopen", return_value=fake_resp),
+        # hermetico: se o caminho local falhar, o fallback nao pode sair para a rede
+        patch.object(system2_local, "_flash_lite_fallback", return_value=("FALLBACK-INESPERADO", {})),
     ):
         text, meta = system2_local.system2_generate("pergunta", tier="fast")
 
@@ -94,9 +97,12 @@ def test_hardware_snapshot_tem_campos() -> None:
     assert snap["cpu_threads"] > 0
     assert "ram_gb" in snap
     assert "vram_gb" in snap
-    # no Windows mede VRAM real (RX 570 8GB); fora do Windows pode ser 0
-    if system2_local.os.name == "nt":
-        assert snap["vram_gb"] >= 4.0
+    # formato e limites dos campos, sem pressupor GPU especifica:
+    # hosts com GPU integrada ou leitura de registro indisponivel medem 0.0
+    assert isinstance(snap["ram_gb"], float)
+    assert snap["ram_gb"] >= 0.0
+    assert isinstance(snap["vram_gb"], float)
+    assert snap["vram_gb"] >= 0.0
 
 
 @pytest.mark.parametrize("tier", ["fast", "balanced", "deep", "code", "moe", "inexistente"])
@@ -135,6 +141,8 @@ def test_system2_generate_moe_usa_llama_server() -> None:
     with (
         patch.object(system2_local, "llama_server_online", return_value=True),
         patch("urllib.request.urlopen", return_value=_fake_chat_response()),
+        # hermetico: se o llama-server falhar, o fallback nao pode sair para a rede
+        patch.object(system2_local, "_flash_lite_fallback", return_value=("FALLBACK-INESPERADO", {})),
     ):
         text, meta = system2_local.system2_generate("pergunta", tier="moe")
     assert text == "resposta moe"
@@ -152,7 +160,10 @@ def test_system2_generate_moe_cai_para_ollama_deep() -> None:
     with (
         patch.object(system2_local, "llama_server_online", return_value=False),
         patch.object(system2_local, "ollama_online", return_value=True),
+        patch.object(system2_local, "_ollama_model_fits_ram", return_value=True),
         patch("urllib.request.urlopen", return_value=fake_resp),
+        # hermetico: se o caminho local falhar, o fallback nao pode sair para a rede
+        patch.object(system2_local, "_flash_lite_fallback", return_value=("FALLBACK-INESPERADO", {})),
     ):
         text, meta = system2_local.system2_generate("pergunta", tier="moe")
 
@@ -175,3 +186,65 @@ def test_system2_generate_moe_cai_para_cloud_sem_locais() -> None:
     assert text == "resposta cloud"
     assert meta["engine"] == "gemini-3.5-flash-lite"
     assert meta["fallback_used"] is True
+
+
+# ---------------------------------------------------------------------------
+# _ollama_model_fits_ram — implementacao real, fontes de telemetria mockadas
+# ---------------------------------------------------------------------------
+
+_GIB = 1024**3
+
+
+def _ps_entry(name: str, size_gib: float, vram_gib: float = 0.0) -> dict:
+    return {"name": name, "size": int(size_gib * _GIB), "size_vram": int(vram_gib * _GIB)}
+
+
+def test_ollama_model_fits_ram_casos() -> None:
+    """RAM suficiente/insuficiente/zero-valido, modelo carregado, telemetria
+    ausente (None) e memoria recuperavel de modelo ocioso -- sem rede."""
+    with (
+        patch.dict(system2_local._MANIFEST_SIZES, {"m:big": 10.0}, clear=True),
+        patch.object(system2_local, "_vram_total_gb", return_value=0.0),
+        patch.object(system2_local, "_ollama_ps_models", return_value=[]),
+    ):
+        # needed = 10.0 * 1.4 = 14 GiB
+        with patch.object(system2_local, "_available_ram_gb", return_value=20.0):
+            assert system2_local._ollama_model_fits_ram("m:big") is True
+        with patch.object(system2_local, "_available_ram_gb", return_value=5.0):
+            assert system2_local._ollama_model_fits_ram("m:big") is False
+        # 0.0 e leitura VALIDA de RAM esgotada -- nao e telemetria ausente
+        with patch.object(system2_local, "_available_ram_gb", return_value=0.0):
+            assert system2_local._ollama_model_fits_ram("m:big") is False
+        # None = telemetria falhou -> nao bloqueia
+        with patch.object(system2_local, "_available_ram_gb", return_value=None):
+            assert system2_local._ollama_model_fits_ram("m:big") is True
+        # modelo fora do manifesto -> sem size_gb -> mantem a tentativa
+        with patch.object(system2_local, "_available_ram_gb", return_value=0.0):
+            assert system2_local._ollama_model_fits_ram("desconhecido:9b") is True
+
+
+def test_ollama_model_fits_ram_carregado_e_recuperavel() -> None:
+    with (
+        patch.dict(system2_local._MANIFEST_SIZES, {"m:big": 10.0}, clear=True),
+        patch.object(system2_local, "_vram_total_gb", return_value=0.0),
+    ):
+        # ja carregado: consumo ja esta debitado do available -> True
+        with (
+            patch.object(system2_local, "_available_ram_gb", return_value=1.0),
+            patch.object(system2_local, "_ollama_ps_models", return_value=[_ps_entry("m:big", 12.0)]),
+        ):
+            assert system2_local._ollama_model_fits_ram("m:big") is True
+        # modelo ocioso ocupa RAM recuperavel (size - size_vram): 20-4=16 GiB
+        # cobre o deficit de 14-5=9 GiB -> Ollama pode evictar e admitir
+        with (
+            patch.object(system2_local, "_available_ram_gb", return_value=5.0),
+            patch.object(system2_local, "_ollama_ps_models", return_value=[_ps_entry("outro:1b", 20.0, vram_gib=4.0)]),
+        ):
+            assert system2_local._ollama_model_fits_ram("m:big") is True
+        # VRAM total cobre a faixa intermediaria -> delega admissao ao Ollama
+        with (
+            patch.object(system2_local, "_available_ram_gb", return_value=5.0),
+            patch.object(system2_local, "_ollama_ps_models", return_value=[]),
+            patch.object(system2_local, "_vram_total_gb", return_value=12.0),
+        ):
+            assert system2_local._ollama_model_fits_ram("m:big") is True

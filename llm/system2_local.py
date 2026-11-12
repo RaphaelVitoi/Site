@@ -31,10 +31,12 @@ Invariantes:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 from pathlib import Path
+import threading
 import time
 from typing import Any
 import urllib.request
@@ -74,6 +76,109 @@ def _load_manifest_aliases() -> dict[str, str]:
 
 
 _MANIFEST_ALIASES: dict[str, str] = _load_manifest_aliases()
+
+
+def _load_manifest_sizes() -> dict[str, float]:
+    """Mapa ``tag -> size_gb`` do manifesto Ollama (para checagem de RAM)."""
+    try:
+        with OLLAMA_MANIFEST.open(encoding="utf-8") as fh:
+            data = json.load(fh)
+        return {
+            str(m["tag"]): float(m["size_gb"])
+            for m in data.get("models", [])
+            if m.get("tag") and isinstance(m.get("size_gb"), (int, float))
+        }
+    except (OSError, KeyError, TypeError, ValueError):
+        return {}
+
+
+_MANIFEST_SIZES: dict[str, float] = _load_manifest_sizes()
+
+# O modelo em RAM exige folga para KV cache, ctx (num_ctx=8192) e SO:
+# size_gb * headroom <= RAM disponivel no momento da decisao.
+_OLLAMA_RAM_HEADROOM = 1.4
+
+_FLASH_LITE_MODEL = "gemini-3.5-flash-lite"
+
+
+def _available_ram_gb() -> float | None:
+    """RAM disponivel AGORA via psutil; ``None`` quando a telemetria falha.
+
+    ``None`` e sentinela de "nao sei" -- distinto de ``0.0``, que e uma leitura
+    valida de RAM esgotada e deve reprovar o modelo.
+    """
+    try:
+        import psutil  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        return psutil.virtual_memory().available / (1024**3)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.debug("[system2] psutil indisponivel para available: %s", e)
+        return None
+
+
+def _ollama_ps_models() -> list[dict[str, Any]]:
+    """Modelos carregados no Ollama (``/api/ps``); ``[]`` quando indisponivel."""
+    try:
+        req = urllib.request.Request(f"{_ollama_base()}/api/ps")  # noqa: S310 - endpoint loopback local (Ollama)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
+        with urllib.request.urlopen(req, timeout=3.0) as resp:  # noqa: S310 - endpoint loopback local (Ollama)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
+            body = json.loads(resp.read().decode("utf-8"))
+    except (OSError, ValueError):
+        return []
+    return [e for e in body.get("models") or [] if isinstance(e, dict)]
+
+
+def _ollama_model_loaded(model: str) -> bool:
+    """True quando o modelo ja consta como carregado no Ollama (``/api/ps``)."""
+    return any(model in (e.get("name"), e.get("model")) for e in _ollama_ps_models())
+
+
+def _reclaimable_ram_gb(loaded: list[dict[str, Any]], exclude: str) -> float:
+    """RAM ocupada por OUTROS modelos carregados -- recuperavel via eviction."""
+    total = 0.0
+    for entry in loaded:
+        name = str(entry.get("name") or entry.get("model") or "")
+        if name == exclude:
+            continue
+        size_b = entry.get("size")
+        if not isinstance(size_b, (int, float)):
+            continue
+        vram_b = entry.get("size_vram")
+        total += max(0.0, float(size_b) - float(vram_b or 0.0)) / (1024**3)
+    return round(total, 1)
+
+
+def _vram_total_gb() -> float:
+    """VRAM total do dispositivo (teto otimista de offload do Ollama)."""
+    try:
+        return float(hardware_snapshot().get("vram_gb") or 0.0)
+    except Exception:  # pylint: disable=broad-except
+        return 0.0
+
+
+def _ollama_model_fits_ram(model: str) -> bool:
+    """True quando o modelo provavelmente cabe na memoria do dispositivo.
+
+    Usada a memoria disponivel atual (nao o total do snapshot). Um modelo ja
+    carregado retorna True -- seu consumo ja esta debitado do ``available``.
+    Alem da RAM, soma a memoria recuperavel de outros modelos ociosos
+    (``/api/ps``: o Ollama os despeja para abrir espaco) e, na faixa em que so
+    a VRAM total cobriria, delega a admissao ao proprio Ollama (offload
+    parcial). Sem ``size_gb`` no manifesto ou sem telemetria de RAM, mantem a
+    tentativa -- nao bloqueia hosts sem medicao.
+    """
+    size_gb = _MANIFEST_SIZES.get(model)
+    avail_gb = _available_ram_gb()
+    if not size_gb or avail_gb is None:
+        return True
+    loaded = _ollama_ps_models()
+    if any(model in (e.get("name"), e.get("model")) for e in loaded):
+        return True
+    needed = size_gb * _OLLAMA_RAM_HEADROOM
+    reclaimable = _reclaimable_ram_gb(loaded, exclude=model)
+    if needed <= avail_gb + reclaimable:
+        return True
+    vram_gb = _vram_total_gb()
+    return bool(vram_gb) and needed <= avail_gb + reclaimable + vram_gb
 
 
 def resolve_model(alias_or_tag: str) -> str:
@@ -274,6 +379,8 @@ def _ollama_generate(
         body = json.loads(resp.read().decode("utf-8"))
     latency_ms = (time.perf_counter() - inicio) * 1000.0
     text = str(body.get("response") or "")
+    if not text.strip():
+        raise RuntimeError(f"[system2] Ollama devolveu 'response' vazio para {model}.")
     meta = {
         "engine": "ollama-local",
         "model": model,
@@ -284,13 +391,36 @@ def _ollama_generate(
     return text, meta
 
 
+_FALLBACK_LOOP: asyncio.AbstractEventLoop | None = None
+_FALLBACK_LOOP_GUARD = threading.Lock()
+
+
+def _shared_fallback_loop() -> asyncio.AbstractEventLoop:
+    """Loop dedicado e unico para as chamadas Gemini do fallback System-2.
+
+    ``llm/gemini_pool`` e ``llm/budget`` usam ``asyncio.Lock``/``Semaphore``
+    de modulo: um ``asyncio.run`` por chamada criava loops distintos que
+    disputavam esses locks. Um unico loop em thread daemon isola o estado
+    assincrono compartilhado.
+    """
+    global _FALLBACK_LOOP  # noqa: PLW0603
+    with _FALLBACK_LOOP_GUARD:
+        if _FALLBACK_LOOP is None or _FALLBACK_LOOP.is_closed():
+            _FALLBACK_LOOP = asyncio.new_event_loop()
+            threading.Thread(
+                target=_FALLBACK_LOOP.run_forever,
+                name="system2-gemini-loop",
+                daemon=True,
+            ).start()
+        return _FALLBACK_LOOP
+
+
 def _flash_lite_fallback(
     prompt: str,
     system: str,
     json_mode: bool,
 ) -> tuple[str, dict[str, Any]]:
-    """Fallback cloud: gemini-3.5-flash-lite via pool existente (async->sync)."""
-    import asyncio  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+    """Fallback cloud: gemini-3.5-flash-lite via pool existente (loop compartilhado)."""
 
     async def _run() -> tuple[str, dict]:
         import aiohttp  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
@@ -307,9 +437,23 @@ def _flash_lite_fallback(
                 require_json=json_mode,
             )
 
-    text, raw_meta = asyncio.run(_run())
+    inicio = time.perf_counter()
+    future = asyncio.run_coroutine_threadsafe(_run(), _shared_fallback_loop())
+    try:
+        text, raw_meta = future.result(timeout=90)
+    except Exception:
+        future.cancel()
+        raise
+    latency_ms = (time.perf_counter() - inicio) * 1000.0
     meta = dict(raw_meta) if isinstance(raw_meta, dict) else {}
-    meta.update({"engine": "gemini-3.5-flash-lite", "fallback_used": True})
+    meta.update(
+        {
+            "engine": _FLASH_LITE_MODEL,
+            "model": _FLASH_LITE_MODEL,
+            "latency_ms": round(latency_ms, 1),
+            "fallback_used": True,
+        }
+    )
     return text, meta
 
 
@@ -330,6 +474,9 @@ def _try_moe_local(
         except Exception as e:  # pylint: disable=broad-except
             logger.warning("[system2] llama-server falhou para %s: %s", model, e)
     deep_model = tier_model("deep")
+    if not _ollama_model_fits_ram(deep_model):
+        logger.info("[system2] deep (%s) nao cabe na RAM disponivel; sem degradacao Ollama.", deep_model)
+        return None
     if ollama_online():
         try:
             text, meta = _ollama_generate(deep_model, prompt, system, json_mode, timeout)
@@ -350,6 +497,9 @@ def _try_ollama_local(
     timeout: float,
     meta_base: dict[str, Any],
 ) -> tuple[str, dict[str, Any]] | None:
+    if not _ollama_model_fits_ram(model):
+        logger.info("[system2] %s nao cabe na RAM disponivel; escalando para fallback.", model)
+        return None
     if not ollama_online():
         return None
     try:
@@ -391,11 +541,16 @@ def system2_generate(
             return local
 
     if not allow_cloud_fallback:
-        return "", {**meta_base, "engine": "none", "error": "local-unavailable-no-cloud-fallback"}
+        return "", {
+            **meta_base,
+            "engine": "none",
+            "error": "local-unavailable-no-cloud-fallback",
+            "fallback_used": False,
+        }
 
     try:
         text, meta = _flash_lite_fallback(prompt, system, json_mode)
-        meta.setdefault("engine", "gemini-3.5-flash-lite")
+        meta.setdefault("engine", _FLASH_LITE_MODEL)
         meta.update(meta_base)
         meta["fallback_used"] = True
         return text, meta

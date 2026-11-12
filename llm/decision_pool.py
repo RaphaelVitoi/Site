@@ -119,7 +119,7 @@ class DecisionPoolManager:
         self._lock = threading.Lock()
         self._states: list[_KeyState] = []
         self._rr: int = 0
-        self._fallbacks: list[str] = []
+        self._fallbacks: list[_KeyState] = []
         self._project_id = "projects/913870412920"
         self._project_name = "original-498419"
         self.reload(read_registry=read_registry)
@@ -138,7 +138,7 @@ class DecisionPoolManager:
         keys = _collect_decision_keys(env_map)
         with self._lock:
             self._states = [_KeyState(k, i + 1) for i, k in enumerate(keys)]
-            self._fallbacks = _collect_fallback_keys(env_map)
+            self._fallbacks = [_KeyState(k, 0) for k in _collect_fallback_keys(env_map)]
             self._rr = 0
         logger.info(
             "[DECISION POOL] Pool '%s' carregado com %d chave(s) dedicada(s) + %d fallback(s) (projeto %s).",
@@ -156,6 +156,17 @@ class DecisionPoolManager:
     def project_name(self) -> str:
         return self._project_name
 
+    @property
+    def has_credentials(self) -> bool:
+        """True quando ha credenciais registradas, mesmo bloqueadas/revogadas.
+
+        Distingue "pool sem configuracao" (``iter_candidate_keys`` vazio por
+        ausencia de chaves) de "todas temporariamente indisponiveis" -- caso
+        em que recarregar apagaria ``blocked_until``/``revoked``.
+        """
+        with self._lock:
+            return bool(self._states or self._fallbacks)
+
     def total_dedicated_keys(self) -> int:
         return len(self._states)
 
@@ -170,18 +181,27 @@ class DecisionPoolManager:
                 chosen = avail[self._rr % len(avail)]
                 self._rr += 1
                 return chosen.key
-            if self._fallbacks:
-                return self._fallbacks[self._rr % len(self._fallbacks)]
+            fb_avail = [s for s in self._fallbacks if s.available(now)]
+            if fb_avail:
+                chosen = fb_avail[self._rr % len(fb_avail)]
+                self._rr += 1
+                return chosen.key
         raise RuntimeError(
             f"[DECISION POOL] Pool '{DECISION_POOL_NAME}' vazio e sem fallback "
             "GEMINI_API_KEY/GOOGLE_API_KEY configurado."
         )
 
     def iter_candidate_keys(self) -> list[str]:
-        """Lista ordenada de candidatas para failover manual (dedicadas + fallback)."""
+        """Lista ordenada de candidatas saudaveis para failover (dedicadas + fallback).
+
+        Chaves revogadas (401/403) ou em cooldown (429/5xx) sao excluidas para
+        que ``decide`` nao gaste tentativa em credencial ja marcada como falha.
+        """
+        now = time.monotonic()
         with self._lock:
-            dedicated = [s.key for s in self._states]
-            return dedicated + [k for k in self._fallbacks if k not in dedicated]
+            dedicated = [s.key for s in self._states if s.available(now)]
+            fallbacks = [s.key for s in self._fallbacks if s.available(now) and s.key not in dedicated]
+            return dedicated + fallbacks
 
     # -- telemetria / circuit breaker ---------------------------------------
 
@@ -192,7 +212,7 @@ class DecisionPoolManager:
     def mark_failure(self, key: str, status_code: int = 500, retry_after_s: float = 0.0) -> None:
         now = time.monotonic()
         with self._lock:
-            for s in self._states:
+            for s in self._states + self._fallbacks:
                 if s.key == key:
                     if status_code in (401, 403):
                         s.revoked = True
@@ -210,7 +230,20 @@ class DecisionPoolManager:
                         )
                     elif status_code >= 500:
                         s.blocked_until = now + _COOLDOWN_5XX_S
-                    return
+                    # sem return: a mesma credencial pode constar como dedicada
+                    # e fallback -- a falha se aplica a todas as ocorrencias.
+
+    def project_of(self, key: str) -> str:
+        """Projeto associado a uma chave do pool (``''`` quando a chave nao e do pool).
+
+        Hoje todas as chaves do pool compartilham ``project_id`` (ver docstring
+        do modulo); chaves injetadas fora do pool nao tem associacao comprovada.
+        """
+        with self._lock:
+            for s in self._states + self._fallbacks:
+                if s.key == key:
+                    return self._project_id
+        return ""
 
     def telemetry(self) -> list[dict[str, Any]]:
         now = time.monotonic()

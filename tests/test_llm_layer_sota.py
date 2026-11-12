@@ -32,21 +32,23 @@ def patch_valid_agents(monkeypatch: pytest.MonkeyPatch) -> None:
 # ==============================================================================
 
 
+@pytest.mark.asyncio
 @pytest.mark.unit
-def test_get_api_semaphore() -> None:
-    """Valida que o semaforo de concorrencia e criado e retornado corretemente."""
+async def test_get_api_semaphore() -> None:
+    """Valida que o semaforo de concorrencia e criado por event loop."""
     sem = session.get_api_semaphore()
     assert isinstance(sem, asyncio.Semaphore)
+    assert session.get_api_semaphore() is sem  # mesmo loop -> mesma instancia
 
 
 @pytest.mark.asyncio
 @pytest.mark.unit
 async def test_get_global_http_session() -> None:
-    """Valida o singleton de ClientSession do aiohttp no session.py."""
-    with patch("llm.session._GLOBAL_HTTP_SESSION", None):
-        sess = await session.get_global_http_session()
+    """Valida a sessao de ClientSession do aiohttp por event loop."""
+    with patch.dict("llm.session._GLOBAL_HTTP_SESSIONS", {}, clear=True):
+        sess = session.get_global_http_session()
         assert not sess.closed
-        sess2 = await session.get_global_http_session()
+        sess2 = session.get_global_http_session()
         assert sess is sess2
         await sess.close()
 

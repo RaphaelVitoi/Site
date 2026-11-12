@@ -114,8 +114,9 @@ def test_client_nao_configurado_levanta() -> None:
     with patch.dict("os.environ", {}, clear=True):
         cli = GeminiDecisionsClient(api_key="")
         assert not cli.is_configured
+        pergunta = _pergunta_basica()
         with pytest.raises(ValueError, match="nao configurado"):
-            cli.create("estado", _pergunta_basica())
+            cli.create("estado", pergunta)
 
 
 def test_client_decide_normaliza_resposta() -> None:
@@ -127,8 +128,12 @@ def test_client_decide_normaliza_resposta() -> None:
     assert isinstance(result, DecisionResult)
     assert result.engine == "gemini-decision-1"
     assert result.n_tokens == 123
-    assert result.answer("eh_design_system")["noul"] == pytest.approx(0.82)
-    assert result.answer("acao")["choice"] == "gerar"
+    resp_design = result.answer("eh_design_system")
+    resp_acao = result.answer("acao")
+    assert resp_design is not None
+    assert resp_acao is not None
+    assert resp_design["noul"] == pytest.approx(0.82)
+    assert resp_acao["choice"] == "gerar"
     assert result.provenia.engine_id == "gemini-decision-1"
     assert result.provenia.fallback_used is False
 
@@ -204,8 +209,41 @@ def test_decide_s1_laya_treinada_vence() -> None:
     with patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_treinada()):
         result = decide_s1("crie uma tela de login", _pergunta_basica(), client=cli)
     assert result.engine == "laya-s1-trained"
-    assert result.answer("acao")["choice"] == "gerar"
+    acao = result.answer("acao")
+    assert acao is not None
+    assert acao["choice"] == "gerar"
     assert result.provenia.fallback_used is False
+
+
+def _duas_perguntas_noul() -> dict[str, dict[str, Any]]:
+    return {
+        "q1": {"type": "noul", "instructions": "Primeira afirmacao e verdadeira?"},
+        "q2": {"type": "noul", "instructions": "Segunda afirmacao e verdadeira?"},
+    }
+
+
+def test_decide_s1_laya_ambiguo_escalona_para_nuvem() -> None:
+    """Duas perguntas noul: o agregado da Laya e ambiguo -> escala p/ Decisions API."""
+    cli = GeminiDecisionsClient(api_key="fake")
+    fake_resp = _resposta_fake_gemini(_duas_perguntas_noul())
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_treinada()),
+        patch.object(cli, "create", return_value=fake_resp) as mock_create,
+    ):
+        result = decide_s1("texto", _duas_perguntas_noul(), client=cli)
+    mock_create.assert_called_once()
+    assert result.engine == "gemini-decision-1"
+    assert result.answer("q1") is not None
+    assert result.answer("q2") is not None
+
+
+def test_decide_s1_laya_ambiguo_sem_nuvem_levanta() -> None:
+    """Sem nuvem e sem answers completas, decide_s1 falha em vez de inventar."""
+    cli = GeminiDecisionsClient(api_key="")
+    perguntas = _duas_perguntas_noul()
+    with patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_treinada()):
+        with pytest.raises(RuntimeError, match="sem respostas"):
+            decide_s1("texto", perguntas, client=cli)
 
 
 def test_decide_s1_laya_fallback_escalona_para_nuvem() -> None:
@@ -217,7 +255,9 @@ def test_decide_s1_laya_fallback_escalona_para_nuvem() -> None:
     ):
         result = decide_s1("crie uma tela de login", _pergunta_basica(), client=cli)
     assert result.engine == "gemini-decision-1"
-    assert result.answer("acao")["choice"] == "gerar"
+    acao = result.answer("acao")
+    assert acao is not None
+    assert acao["choice"] == "gerar"
 
 
 def test_decide_s1_sem_nuvem_devolve_fallback_honesto() -> None:
@@ -226,6 +266,40 @@ def test_decide_s1_sem_nuvem_devolve_fallback_honesto() -> None:
         result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
     assert result.engine == "laya-s1-fallback"
     assert result.provenia.fallback_used is True
+
+
+def test_decide_s1_fallback_incompleto_sem_nuvem_levanta() -> None:
+    """Fallback heuristico sem nuvem e com answers ambiguas nao vira decisao."""
+    cli = GeminiDecisionsClient(api_key="")
+    perguntas = _duas_perguntas_noul()
+    with patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()):
+        with pytest.raises(RuntimeError, match="sem respostas"):
+            decide_s1("texto", perguntas, client=cli)
+
+
+def test_resolve_api_keys_nao_recarrega_quando_tudo_bloqueado() -> None:
+    """Todas as chaves em cooldown/revogacao: _resolve_api_keys devolve []
+    sem reload -- reload reconstruiria os estados e apagaria os bloqueios."""
+    from llm.decision_pool import DecisionPoolManager
+    from llm.gemini_decisions import _resolve_api_keys
+
+    env = {
+        "DECISION_API_1": "k" * 30 + "-aaa",
+        "GEMINI_API_KEY": "g" * 30 + "-ggg",
+    }
+    with patch.dict("os.environ", env, clear=True):
+        pool = DecisionPoolManager(read_registry=False)
+    for key in (env["DECISION_API_1"], env["GEMINI_API_KEY"]):
+        pool.mark_failure(key, status_code=401)
+    with (
+        patch("llm.gemini_decisions._load_env_once"),
+        patch("llm.gemini_decisions.decision_pool_manager", pool),
+        patch.object(pool, "reload", wraps=pool.reload) as reload_spy,
+    ):
+        keys = _resolve_api_keys()
+    assert keys == []
+    reload_spy.assert_not_called()
+    assert pool.iter_candidate_keys() == []  # bloqueios preservados
 
 
 def test_decide_s1_multimodal_vai_direto_a_nuvem() -> None:
@@ -254,6 +328,7 @@ def test_decide_s1_laya_explode_e_nuvem_configurada() -> None:
 
 def test_decide_s1_sem_motor_nenhum_levanta() -> None:
     cli = GeminiDecisionsClient(api_key="")
+    pergunta = _pergunta_basica()
     with patch("llm.gemini_decisions.laya_predict", side_effect=RuntimeError("off")):
         with pytest.raises(RuntimeError, match="Nenhum motor"):
-            decide_s1("texto", _pergunta_basica(), client=cli)
+            decide_s1("texto", pergunta, client=cli)

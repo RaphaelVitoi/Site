@@ -285,7 +285,7 @@ async def _compress_context(
             "compression_system_prompt",
             "Voce e um especialista em sumarizacao. Resuma o texto a seguir de forma densa e informativa, preservando todos os pontos criticos, nomes de arquivos, decisoes chave e a intencao original. O output deve ser em portugues (Pure ASCII).",
         )
-        session = await get_global_http_session()
+        session = get_global_http_session()
 
         gemini_failed = False
         if not prefer_local_fallback:
@@ -432,7 +432,7 @@ async def call_llm_api(
     provider_retries = te._agent_sla_value(task.agent, "provider_retries", 2)
     request_timeout = make_client_timeout(total=timeout_seconds)
 
-    session = await get_global_http_session()
+    session = get_global_http_session()
 
     for model in models_to_try:
         provider = _infer_provider_for_model(model)

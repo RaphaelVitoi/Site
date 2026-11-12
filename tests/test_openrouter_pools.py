@@ -36,7 +36,7 @@ def mock_env_pools():
     # chegam ao processo de teste e quebram as contagens sinteticas 3/3/5/5.
     with (
         patch.dict(os.environ, env_vars, clear=False),
-        patch("llm.openrouter_pool._read_windows_registry_openrouter", lambda env_map: None),
+        patch("llm.openrouter_pool._read_windows_registry_openrouter", return_value=None),
     ):
         for k in list(os.environ):
             if k.upper().startswith("OPENROUTER") and k not in env_vars:

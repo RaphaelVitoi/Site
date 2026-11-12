@@ -204,7 +204,7 @@ async def call_gemini(
     workload = kwargs.pop("workload", GeminiWorkload.TRIAGEM)
     active_key = api_key
     if not active_key:
-        active_key, _ = await gemini_pool_manager.get_key_for_workload(workload)
+        active_key, _ = gemini_pool_manager.get_key_for_workload(workload)
 
     system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     # SOTA: Multi-Bucket Rate Limiter (Lei de Shannon). Respeita as cotas individuais (Pro vs Flash).
@@ -233,14 +233,14 @@ async def call_gemini(
                 timeout=timeout_val + 5.0,
             )
             lat_ms = (time.perf_counter() - start_t) * 1000.0
-            await gemini_pool_manager.mark_success(active_key, lat_ms)
+            gemini_pool_manager.mark_success(active_key, lat_ms)
             return res_text, res_usage
         except RuntimeError as err:
             status_code, retry_after = _parse_gemini_error_info(str(err))
-            await gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(err))
+            gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(err))
             raise
         except (aiohttp.ClientError, TimeoutError, ConnectionResetError) as net_err:
-            await gemini_pool_manager.mark_failure(active_key, 503, 10.0, str(net_err))
+            gemini_pool_manager.mark_failure(active_key, 503, 10.0, str(net_err))
             return await _execute_native_fallback(url, data, client_timeout, active_key)
 
 

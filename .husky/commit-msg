@@ -31,7 +31,7 @@ assinatura=$(sed '/^#/d' "$commit_msg_file" | grep -i '^Assinatura:' | head -n 1
 
 if [ -z "$assinatura" ]; then
     echo "[COMMIT-MSG REJEITADO] falta a linha 'Assinatura:' no corpo da mensagem."
-    echo "   corrigir: acrescente ao corpo 'Assinatura: <agente> [Tier X] -- modelo=<id> condutor=<veiculo> ts=<ISO-8601> sha=<tree-sha> supervisao=assistida|automatizada sessao=<session_id>'"
+    echo "   corrigir: acrescente ao corpo 'Assinatura: <agente> [Tier X] -- modelo=<id> condutor=<veiculo> ts=<ISO-8601-com-fuso> sha=<tree-sha> supervisao=assistida|automatizada sessao=<session_id>'"
     echo "   nomes canonicos: data/agent_identities.json"
     exit 1
 fi
@@ -88,9 +88,9 @@ if [ -n "$autor" ] && [ -f "$CATALOGO" ]; then
     fi
 fi
 
-# Anatomia de 5 campos (CLAUDE.md SS0, 2026-11-12): ts= e carimbo do harness —
+# Anatomia obrigatoria (CLAUDE.md SS0, 2026-11-12): ts= e carimbo do harness —
 # se a secao '--' existe e ts falta, o hook o injeta com o relogio do commit.
-# Os demais campos viram aviso, nunca bloqueio: condutores ainda nao adotaram.
+# Os seis campos sao exigidos: modelo, condutor, ts, sha, supervisao, sessao.
 if printf '%s' "$assinatura" | grep -q ' -- '; then
     if ! printf '%s' "$assinatura" | grep -q 'ts='; then
         ts_agora=$(date +%Y-%m-%dT%H:%M:%S%:z)
@@ -102,12 +102,70 @@ if printf '%s' "$assinatura" | grep -q ' -- '; then
             { print }
         ' "$commit_msg_file" > "$tmp_msg" && mv "$tmp_msg" "$commit_msg_file"
         echo "[COMMIT-MSG INFO] ts=$ts_agora injetado automaticamente na Assinatura (carimbo do harness)."
+        assinatura=$(sed '/^#/d' "$commit_msg_file" | grep -i '^Assinatura:' | head -n 1)
     fi
-    for campo in modelo= condutor= sha= supervisao=; do
-        if ! printf '%s' "$assinatura" | grep -q "$campo"; then
-            echo "[COMMIT-MSG AVISO] Assinatura sem '$campo' — a anatomia exige modelo/condutor/ts/sha/supervisao (CLAUDE.md SS0)."
-        fi
+fi
+
+# Cada campo obrigatorio deve existir como token 'chave=valor' com valor nao
+# vazio -- substring ('xmodelo=') e 'chave=' sem valor nao contam.
+faltando=""
+set -f
+for campo in modelo condutor ts sha supervisao sessao; do
+    achou=""
+    for tok in $assinatura; do
+        case "$tok" in
+            "$campo"=*)
+                if [ -n "${tok#*=}" ]; then
+                    achou=1
+                fi
+                ;;
+        esac
     done
+    if [ -z "$achou" ]; then
+        faltando="$faltando $campo="
+    fi
+done
+set +f
+if [ -n "$faltando" ]; then
+    echo "[COMMIT-MSG REJEITADO] Assinatura incompleta; campos ausentes:$faltando"
+    echo "   corrigir: 'Assinatura: <agente> [Tier X] -- modelo=<id> condutor=<veiculo> ts=<ISO-8601-com-fuso> sha=<tree-sha> supervisao=assistida|automatizada sessao=<session_id>'"
+    exit 1
+fi
+
+# sha= deve ser o tree SHA do indice no ato do commit (CLAUDE.md SS0): o valor
+# declarado pode ser o SHA completo ou um prefixo de >=4 hex; ambos devem
+# casar com a saida de `git write-tree`. Se o indice nao permite write-tree
+# (ex.: merge nao resolvido), a conferencia nao pode medir e vira aviso.
+tree_sha=$(git write-tree 2>/dev/null || true)
+if [ -n "$tree_sha" ]; then
+    # Token integral 'sha=<valor>': caracteres invalidos apos um prefixo hex
+    # NAO sao descartados -- o valor inteiro e validado contra o tree SHA.
+    sha_decl=""
+    set -f
+    for tok in $assinatura; do
+        case "$tok" in
+            sha=*)
+                sha_decl="${tok#sha=}"
+                break
+                ;;
+        esac
+    done
+    set +f
+    sha_decl=$(printf '%s' "$sha_decl" | tr 'A-F' 'a-f')
+    sha_valido=0
+    if [ -n "$sha_decl" ] && [ "${#sha_decl}" -ge 4 ] && [ "${#sha_decl}" -le 40 ]; then
+        case "$sha_decl" in
+            *[!0-9a-f]*) ;;
+            *) sha_valido=1 ;;
+        esac
+    fi
+    if [ "$sha_valido" -eq 0 ] || ! printf '%s\n' "$tree_sha" | grep -q "^$sha_decl"; then
+        echo "[COMMIT-MSG REJEITADO] sha='$sha_decl' da Assinatura difere do tree SHA do indice ($tree_sha)."
+        echo "   corrigir: rode 'git write-tree' e declare o resultado (SHA completo ou prefixo >=4) em sha=."
+        exit 1
+    fi
+else
+    echo "[COMMIT-MSG AVISO] 'git write-tree' indisponivel; sha= da Assinatura nao conferido."
 fi
 
 exit 0
