@@ -2,7 +2,6 @@
   "recommendations": [
     "ms-python.python",
     "ms-python.debugpy",
-    "ms-python.vscode-python-envs",
     "charliermarsh.ruff",
     "dustypomerleau.rust-syntax",
     "rust-lang.rust-analyzer",
