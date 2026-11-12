@@ -322,6 +322,8 @@ def _infer_provider_for_model(model: str) -> str | None:
         return "gemini"
     if "claude" in model_l or "anthropic" in model_l:
         return "anthropic"
+    if model_l.startswith("ollama/") or model_l == "glm-5.3-flash":
+        return "ollama"
     if "gpt" in model_l or "openai" in model_l:
         return "openai"
     if "/" in model_l:

@@ -14,6 +14,7 @@ from database.queue_manager import QueueManager
 from llm.budget import (
     ANTHROPIC_KEYS,
     COMPRESSION_CIRCUIT_BREAKER,
+    OLLAMA_KEYS,
     OPENROUTER_KEYS,
     APIKeysExhaustedError,
     _gemini_key_pool_for_model,
@@ -340,6 +341,8 @@ async def _dispatch_llm_provider(
         keys = OPENROUTER_KEYS
     elif provider == "anthropic":
         keys = ANTHROPIC_KEYS
+    elif provider == "ollama":
+        keys = OLLAMA_KEYS
     elif provider == "local":
         keys = ["local-dummy-key"]
     elif provider == "strata":
