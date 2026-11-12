@@ -280,7 +280,10 @@ def test_nenhuma_identidade_canonica_usa_e_mail_de_humano():
     for item in dados["canonicas"]:
         email = item["email"]
         assert email.startswith("noreply@") or email.endswith(
-            ("@users.noreply.github.com", ".users.noreply.github.com")
+            (
+                "@users.noreply.github.com",
+                ".users.noreply.github.com",
+            )
         ), f"{item['nome']} usa um e-mail que pode resolver para perfil humano: {email}"
 
 
@@ -348,3 +351,57 @@ def test_o_aviso_casa_por_nome_exato_e_nao_por_substring(tmp_path):
     assert "Claude" not in _nomes_canonicos(), "o catalogo nao deve trazer a forma curta"
     r = _rodar_com_autor("feat(x): assunto\n\nAssinatura: Claude\n", "Claude", tmp_path)
     assert "nao esta em" in r.stdout + r.stderr, f"substring aceita:\n{r.stdout}{r.stderr}"
+
+
+# ---------------------------------------------------------------------------
+# ANATOMIA DE 5 CAMPOS -- ts= e carimbo do harness (CLAUDE.md SS0, 2026-11-12).
+#
+# O relogio nao pode ser declarado pelo condutor: seria um campo que ele
+# escolheria, e a escolha e sempre a favor dele. Quem carimba e o hook, no ato
+# do commit, com a hora do sistema.
+
+
+def test_ts_ausente_e_injetado_pelo_harness(tmp_path):
+    arquivo = tmp_path / "COMMIT_EDITMSG"
+    r = _rodar_com_autor(
+        "feat(x): assunto\n\n"
+        "Assinatura: Devin (SWE-2 Flash) [Tier 1] -- modelo=swe-2-flash "
+        "condutor=devin-desktop sha=abc1234 supervisao=assistida sessao=s1\n",
+        "Devin (SWE-2 Flash)",
+        tmp_path,
+    )
+    assert r.returncode == 0, f"{r.stdout}{r.stderr}"
+    assert "carimbo do harness" in r.stdout, f"injecao nao anunciada:\n{r.stdout}"
+    corpo = arquivo.read_text(encoding="utf-8")
+    import re
+
+    assert re.search(r"ts=\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", corpo), corpo
+
+
+def test_ts_presente_nao_e_reescrito(tmp_path):
+    ts_fixo = "ts=2026-11-12T10:00:00-03:00"
+    r = _rodar_com_autor(
+        f"feat(x): assunto\n\n"
+        f"Assinatura: Devin (SWE-2 Flash) [Tier 1] -- modelo=swe-2-flash "
+        f"condutor=devin-desktop {ts_fixo} sha=abc1234 supervisao=assistida sessao=s1\n",
+        "Devin (SWE-2 Flash)",
+        tmp_path,
+    )
+    assert r.returncode == 0, f"{r.stdout}{r.stderr}"
+    assert "carimbo do harness" not in r.stdout, "ts declarado foi reescrito"
+    corpo = (tmp_path / "COMMIT_EDITMSG").read_text(encoding="utf-8")
+    assert ts_fixo in corpo
+
+
+def test_campo_ausente_vira_aviso_sem_bloquear(tmp_path):
+    """A exigencia e documental por ora: condutores que ainda nao adotaram a
+    anatomia nao podem ter o commit bloqueado por campo ausente."""
+    r = _rodar_com_autor(
+        "feat(x): assunto\n\nAssinatura: Claude Opus 5 [Tier 1.B] -- sessao s\n",
+        "Claude Opus 5",
+        tmp_path,
+    )
+    saida = r.stdout + r.stderr
+    assert r.returncode == 0, saida
+    assert "sem 'modelo='" in saida, saida
+    assert "sem 'supervisao='" in saida, saida

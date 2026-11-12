@@ -88,4 +88,26 @@ if [ -n "$autor" ] && [ -f "$CATALOGO" ]; then
     fi
 fi
 
+# Anatomia de 5 campos (CLAUDE.md SS0, 2026-11-12): ts= e carimbo do harness —
+# se a secao '--' existe e ts falta, o hook o injeta com o relogio do commit.
+# Os demais campos viram aviso, nunca bloqueio: condutores ainda nao adotaram.
+if printf '%s' "$assinatura" | grep -q ' -- '; then
+    if ! printf '%s' "$assinatura" | grep -q 'ts='; then
+        ts_agora=$(date +%Y-%m-%dT%H:%M:%S%:z)
+        tmp_msg="$commit_msg_file.hooktmp"
+        awk -v ts="$ts_agora" '
+            /^Assinatura:/ && !feita && $0 !~ /ts=/ {
+                sub(/[[:space:]]*$/, ""); printf "%s ts=%s\n", $0, ts; feita = 1; next
+            }
+            { print }
+        ' "$commit_msg_file" > "$tmp_msg" && mv "$tmp_msg" "$commit_msg_file"
+        echo "[COMMIT-MSG INFO] ts=$ts_agora injetado automaticamente na Assinatura (carimbo do harness)."
+    fi
+    for campo in modelo= condutor= sha= supervisao=; do
+        if ! printf '%s' "$assinatura" | grep -q "$campo"; then
+            echo "[COMMIT-MSG AVISO] Assinatura sem '$campo' — a anatomia exige modelo/condutor/ts/sha/supervisao (CLAUDE.md SS0)."
+        fi
+    done
+fi
+
 exit 0
