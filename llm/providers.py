@@ -51,6 +51,18 @@ except Exception as exc:  # noqa: BLE001
         exc,
     )
 
+try:
+    from llm.ollama_cloud import call_ollama_cloud
+
+    OLLAMA_CLOUD_AVAILABLE = True
+except Exception as exc:  # noqa: BLE001
+    call_ollama_cloud = None  # type: ignore[assignment] # pylint: disable=invalid-name
+    OLLAMA_CLOUD_AVAILABLE = False
+    logging.getLogger(__name__).warning(
+        "Ollama Cloud module unavailable; provider disabled: %s",
+        exc,
+    )
+
 from utils.text import enforce_pure_ascii
 
 # =========================================================================
@@ -197,6 +209,43 @@ class OpenRouterStrategy(LLMProviderStrategy):
         if call_openrouter is None:
             raise RuntimeError("OpenRouter module unavailable.")
         return await call_openrouter(
+            session,
+            model,
+            system_prompt,
+            user_prompt,
+            key,
+            client_timeout,
+            require_json=require_json,
+            **kwargs,
+        )
+
+
+class OllamaCloudStrategy(LLMProviderStrategy):
+    """Strategy implementation for Ollama Cloud (ollama.com/api)."""
+
+    @property
+    def name(self) -> str:
+        return "OllamaCloud"
+
+    @property
+    def token_keys(self) -> tuple[str, str]:
+        return ("prompt_tokens", "completion_tokens")
+
+    async def call(
+        self,
+        session: aiohttp.ClientSession,
+        model: str,
+        system_prompt: str,
+        user_prompt: str,
+        key: str,
+        client_timeout: aiohttp.ClientTimeout | None,
+        require_json: bool,
+        **kwargs: Any,
+    ) -> tuple[str, dict[str, Any]]:
+        """Executes Ollama Cloud API call."""
+        if call_ollama_cloud is None:
+            raise RuntimeError("Ollama Cloud module unavailable.")
+        return await call_ollama_cloud(
             session,
             model,
             system_prompt,
@@ -405,6 +454,7 @@ _STRATEGY_OPENROUTER = OpenRouterStrategy()
 _STRATEGY_LOCAL = GemmaLocalStrategy()
 _STRATEGY_STRATA = StrataStrategy()
 _STRATEGY_SPLASH = SplashStrategy()
+_STRATEGY_OLLAMA_CLOUD = OllamaCloudStrategy()
 
 # Tabela Hash O(1) imutavel. Evita alocacao de dicionario no Event Loop a cada inferencia.
 _STRATEGIES_MAP = {
@@ -413,6 +463,7 @@ _STRATEGIES_MAP = {
     "local": _STRATEGY_LOCAL,
     "strata": _STRATEGY_STRATA,
     "splash": _STRATEGY_SPLASH,
+    "ollama": _STRATEGY_OLLAMA_CLOUD,
 }
 
 
@@ -508,6 +559,13 @@ async def _check_provider_availability(provider: str, model: str) -> bool:
         return await _check_openrouter_availability()
     if provider == "gemini":
         return _check_gemini_availability()
+    if provider == "ollama":
+        try:
+            from llm.ollama_cloud import is_configured  # noqa: PLC0415
+
+            return is_configured()
+        except Exception:  # noqa: BLE001
+            return False
 
     # For cloud providers without explicit pool, check OpenAI key if GPT model
     return _check_openai_key_availability(model)

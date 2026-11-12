@@ -149,6 +149,15 @@ OPENROUTER_KEYS = list(
     )
 )
 ANTHROPIC_KEYS = _collect_keys(("ANTHROPIC", "CLAUDE"))
+# Ollama Cloud: nomes exatos -- OLLAMA_AGENT_* e credencial de outro produto
+# e nao pode vazar como Bearer para ollama.com/api.
+OLLAMA_KEYS = list(
+    dict.fromkeys(
+        v
+        for k, v in ALL_ENV_VARS.items()
+        if k.upper() in {"OLLAMA_API_KEY", "OLLAMA_CLOUD_KEY"} and _is_real_key_value(v)
+    )
+)
 TAVILY_KEYS = _collect_keys(("TAVILY",))
 PERPLEXITY_KEYS = _collect_keys(("PERPLEXITY",))
 API_SECRET_TOKEN = ALL_ENV_VARS.get("API_SECRET_TOKEN", "")
