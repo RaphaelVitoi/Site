@@ -206,10 +206,16 @@ _CHAT_COMPLETION_CHUNK = "chat.completion.chunk"
 # fallback sequer comecar. Sao dois eventos diferentes e agora tem limites
 # diferentes:
 #   sock_connect  o daemon nao aceita conexao        -> falha em 3 s
-#   sock_read     conectou mas nao manda byte nenhum -> falha em 90 s
+#   sock_read     conectou mas nao manda byte nenhum -> falha no limite
 #   total         teto da geracao inteira, inalterado
 # Geracao lenta continua tendo os 600 s; so o silencio e cortado cedo.
-_OLLAMA_TIMEOUT = aiohttp.ClientTimeout(total=600.0, sock_connect=3.0, sock_read=90.0)
+# sock_read=90 assumia Ollama ocioso. Com filas (ex.: benchmark MKA rodando
+# gemma4:e4b por minutos), o daemon segura a conexao em silencio enquanto a
+# request espera a vez — silencio de fila nao e hang. 240 s tolera ~4 min de
+# fila+TTFT em CPU e ainda corta stall real muito antes do total=600.
+# Override: SOTA_OLLAMA_SOCK_READ=<segundos>.
+_OLLAMA_SOCK_READ = float(os.environ.get("SOTA_OLLAMA_SOCK_READ", "240"))
+_OLLAMA_TIMEOUT = aiohttp.ClientTimeout(total=600.0, sock_connect=3.0, sock_read=_OLLAMA_SOCK_READ)
 _CLOUD_TIMEOUT = aiohttp.ClientTimeout(total=60.0)
 
 
