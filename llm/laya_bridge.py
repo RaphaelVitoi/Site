@@ -27,15 +27,19 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
+import json
 import logging
 import os
 import re
+import threading
 import time
 from typing import Any
+import urllib.request
 
 __all__ = [
     "CANONICAL_LAYA_MODEL",
     "CANONICAL_LAYA_REPO",
+    "DEFAULT_LAYA_SERVICE_URL",
     "Provenia",
     "LayaIntent",
     "LayaRouter",
@@ -46,6 +50,7 @@ __all__ = [
     "ruin_priority_from_laya_prediction",
     "LayaPrediction",
     "laya_predict",
+    "laya_predict_remote",
     "predict_batch",
     "LAYA_DEFAULT_QUESTIONS",
     "LAYA_POKER_PRESETS",
@@ -176,20 +181,27 @@ class LayaRouter:
 
     _router: Any = None
     _tentado: bool = False
+    _load_lock: threading.Lock = threading.Lock()
 
     @classmethod
-    def _carregar_router(cls) -> Any:
+    def _carregar_router(cls, retry: bool = False) -> Any:
+        if retry:
+            cls._tentado = False
+            cls._router = None
         if not cls._tentado:
-            cls._tentado = True
-            try:
-                # lazy: from laya.router evita importar laya/__init__ (torch).
-                from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+            with cls._load_lock:
+                if cls._tentado:
+                    return cls._router
+                cls._tentado = True
+                try:
+                    # lazy: from laya.router evita importar laya/__init__ (torch).
+                    from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
-                cls._router = _Router(default=CANONICAL_LAYA_MODEL)
-                logger.debug("[laya-s1] Router carregado (lazy, default=%s).", CANONICAL_LAYA_MODEL)
-            except Exception as e:  # pylint: disable=broad-except
-                logger.debug("[laya-s1] laya indisponivel (%s); fallback heuristico.", e)
-                cls._router = None
+                    cls._router = _Router(default=CANONICAL_LAYA_MODEL)
+                    logger.debug("[laya-s1] Router carregado (lazy, default=%s).", CANONICAL_LAYA_MODEL)
+                except Exception as e:  # pylint: disable=broad-except
+                    logger.debug("[laya-s1] laya indisponivel (%s); fallback heuristico.", e)
+                    cls._router = None
         return cls._router
 
     @classmethod
@@ -514,17 +526,18 @@ def _construir_fallback_prediction(
     )
 
 
-_PREDICT_ROUTER: Any = None
-
-
 def _obter_predict_router() -> Any:
-    """Obtem ou instancia o Router com cache persistente de agentes carregados em memoria."""
-    global _PREDICT_ROUTER
-    if _PREDICT_ROUTER is None:
-        from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+    """Router preditivo: compartilha o cache do ``LayaRouter`` (checkpoint unico).
 
-        _PREDICT_ROUTER = _Router(default=CANONICAL_LAYA_MODEL)
-    return _PREDICT_ROUTER
+    Antes existia um segundo singleton (``_PREDICT_ROUTER``) que podia carregar
+    o checkpoint 322M uma segunda vez no mesmo processo. Se a tentativa
+    anterior falhou (``_tentado`` sem ``_router``), ``retry=True`` tenta o
+    import novamente -- ex.: dependencia instalada apos o primeiro route().
+    """
+    router = LayaRouter._carregar_router(retry=LayaRouter._tentado and LayaRouter._router is None)
+    if router is None:
+        raise RuntimeError("laya.router indisponivel")
+    return router
 
 
 def laya_predict(
@@ -721,6 +734,108 @@ def predict_batch(
     except Exception as err:
         logger.debug("[laya-s1] predict_batch falhou (%s); caindo para laya_predict sequencial.", err)
         return [laya_predict(req.get("state", ""), req.get("questions"), model_override) for req in requests]
+
+
+# =============================================================================
+# CAMADA S1-REMOTE: microservico HTTP Laya (:8192)
+# =============================================================================
+
+DEFAULT_LAYA_SERVICE_URL: str = "http://127.0.0.1:8192"
+_LAYA_SERVICE_ENV_KEYS: tuple[str, ...] = ("CHICO_LAYA_SERVICE_URL", "LAYA_SERVICE_URL")
+
+
+def _laya_service_config() -> tuple[str, float]:
+    """Base URL e timeout (s) do microservico Laya; ``LAYA_SERVICE_URL`` alinhado ao frontend."""
+    url = ""
+    for key in _LAYA_SERVICE_ENV_KEYS:
+        url = (os.environ.get(key) or "").strip()
+        if url:
+            break
+    if not url:
+        url = DEFAULT_LAYA_SERVICE_URL
+    try:
+        timeout_ms = float(os.environ.get("CHICO_LAYA_SERVICE_TIMEOUT_MS", "2000") or 2000)
+    except ValueError:
+        timeout_ms = 2000.0
+    return url.rstrip("/"), max(0.2, timeout_ms / 1000.0)
+
+
+def _provenia_from_service(raw: Any) -> Provenia:
+    data = raw if isinstance(raw, dict) else {}
+    return Provenia(
+        engine_id=str(data.get("engine_id") or "laya-s1-trained"),
+        implementation_level=str(data.get("implementation_level") or "trained-model"),
+        runtime_used=str(data.get("runtime_used") or "laya-http-service"),
+        model_used=str(data.get("model_used") or ""),
+        intended_model=str(data.get("intended_model") or CANONICAL_LAYA_MODEL),
+        weights_loaded=bool(data.get("weights_loaded", False)),
+        fallback_used=bool(data.get("fallback_used", False)),
+        assumptions=[*list(data.get("assumptions") or []), "laya-http-service"],
+        limitations=[*list(data.get("limitations") or [])],
+        units=[*list(data.get("units") or [])],
+    )
+
+
+def laya_predict_remote(
+    state: str | dict[str, Any],
+    questions: dict[str, dict[str, Any]] | None = None,
+    timeout_s: float | None = None,
+) -> LayaPrediction | None:
+    """Executa ``laya_predict`` no microservico HTTP Laya (``:8192``).
+
+    Retorna ``None`` quando o servico esta fora, lento demais ou responde
+    sem ``status=SUCCESS`` -- o chamador decide o fallback (in-process ou
+    escalonamento nuvem). ``CHICO_LAYA_SERVICE_DISABLE=1`` desliga a sonda.
+    Proveniencia do servico e preservada e marcada com ``laya-http-service``.
+    """
+    if os.environ.get("CHICO_LAYA_SERVICE_DISABLE", "0") == "1":
+        return None
+    base, default_timeout = _laya_service_config()
+    timeout = timeout_s if timeout_s is not None else default_timeout
+    qs = questions if questions is not None else LAYA_DEFAULT_QUESTIONS
+    payload_state = state if isinstance(state, str) else json.dumps(state, ensure_ascii=False)
+    body = json.dumps(
+        {
+            "state": payload_state,
+            "questions": qs,
+            "model": CANONICAL_LAYA_MODEL,
+        }
+    ).encode("utf-8")
+    req = urllib.request.Request(  # noqa: S310 - endpoint loopback local (microservico Laya)  # Record-Id: registro-2026-11-12-s1-achados-remediacao
+        f"{base}/predict",
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    inicio = time.perf_counter()
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 - endpoint loopback local (microservico Laya)  # Record-Id: registro-2026-11-12-s1-achados-remediacao
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:  # pylint: disable=broad-except
+        logger.debug("[laya-s1] microservico %s/predict indisponivel: %s", base, e)
+        return None
+    if not isinstance(data, dict) or data.get("status") != "SUCCESS":
+        logger.debug("[laya-s1] microservico %s/predict resposta invalida.", base)
+        return None
+    p = data.get("prediction")
+    if not isinstance(p, dict):
+        return None
+    try:
+        return LayaPrediction(
+            answers=p.get("answers") or {},
+            model_used=str(p.get("model_used") or CANONICAL_LAYA_MODEL),
+            device=str(p.get("device") or "remote-service"),
+            n_tokens=int(p.get("n_tokens") or 0),
+            latency_ms=float(p.get("latency_ms") or round((time.perf_counter() - inicio) * 1000.0, 2)),
+            noul=float(p["noul"]) if p.get("noul") is not None else None,
+            choice=str(p["choice"]) if p.get("choice") is not None else None,
+            score=float(p["score"]) if p.get("score") is not None else None,
+            confidence=float(p["confidence"]) if p.get("confidence") is not None else None,
+            provenia=_provenia_from_service(p.get("provenia")),
+        )
+    except (TypeError, ValueError) as e:
+        logger.debug("[laya-s1] payload do microservico invalido: %s", e)
+        return None
 
 
 def ruin_priority_from_intencao(intencao_s1: dict[str, Any] | None = None) -> float:
