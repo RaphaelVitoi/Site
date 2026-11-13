@@ -417,6 +417,25 @@ def test_resumo_de_nao_vigentes_lista_registros_e_nao_trunca_motivo_com_parentes
     assert "reports/B.md" in saida
     assert "[1] OBSOLETO -- superseded por registro mais novo" in saida
     assert "reports/C.md" in saida
+    assert "reincide" in saida
+
+
+def test_aviso_nao_vigente_sempre_nomeia_o_registro_para_leitura(tmp_path, monkeypatch):
+    """Todo aviso de nao vigente carrega o caminho do registro -- sem ele o
+    condutor nao tem como dar a atencao que o aviso exige. Contrato: a linha
+    emitida casa com _RE_AVISO_NAO_VIGENTE e o grupo `rel` e o caminho do
+    proprio registro, para que abrir e classificar seja possivel."""
+    _ancorado(tmp_path, "classes: [interno]\n")
+    monkeypatch.setattr(record_gate, "RAIZ", tmp_path)
+    monkeypatch.setattr(record_gate, "arquivos_em_stage", lambda: ["engine/alvo.py"])
+    monkeypatch.setattr(record_gate, "_git", lambda *a: "reports/ANCORADO.md\n" if a[:1] == ("ls-files",) else "")
+    erros, avisos = record_gate.verificar()
+    alvos = [a for a in avisos if "Nao bloqueia: registro nao vigente" in a]
+    assert alvos, avisos
+    for a in alvos:
+        m = record_gate._RE_AVISO_NAO_VIGENTE.match(a)
+        assert m is not None, a
+        assert m["rel"] == "reports/ANCORADO.md"
 
 
 def _ancorado_em(raiz: Path, caminho: str) -> None:

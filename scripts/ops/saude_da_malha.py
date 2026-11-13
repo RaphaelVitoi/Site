@@ -242,7 +242,8 @@ def imprimir(hoje: date | None = None) -> None:
     print(f"\n[SAUDE DA MALHA] {len(sinais)} sinal(is), {graves} grave(s). Nao bloqueiam o commit.")
     for sinal in sinais:
         print(sinal.linha())
-    print()
+    print("   info = observacao ainda nao classificada -- ruido a identificar, nao aprovado.")
+    print("   ALERTA = fato grave medido -- exige acao. Todo sinal reincide ate ser respondido.\n")
 
 
 if __name__ == "__main__":
