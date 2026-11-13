@@ -60,11 +60,11 @@ def get_model_status() -> dict:
             "installed": gemma_4b_installed,
             "status": "READY (Local)" if gemma_4b_installed else "PENDING_PULL",
         },
-        "strata_moe_125b": {
-            "name": "Strata MoE 125B Coder",
-            "tag": "strata:coder-iq1m",
+        "llama_moe_qwen36": {
+            "name": "Qwen3.6-35B-A3B-MTP (llama-swap)",
+            "tag": "qwen-moe",
             "tier": "local_moe",
-            "installed": is_port_open(8080) or (Path.home() / "Strata").exists(),
+            "installed": is_port_open(8080),
             "status": "ONLINE (Port 8080)" if is_port_open(8080) else "STANDBY (Pronto)",
         },
     }

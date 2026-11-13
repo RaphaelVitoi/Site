@@ -95,6 +95,8 @@ revisoes_de_ancora:
       - scripts/ops/strata_local_node.py
     parecer: >-
       Revisado em 2026-10-14 e mantido valido. Simplificacao de atribuicao de variaveis de mensagem em strata_local_node.py mantendo paridade de execucao.
+referencias_nao_resolviveis:
+  - scripts/ops/strata_local_node.py
 ---
 
 # REGISTRO: Saneamento de Tipagem, Dependencias e Configuracao de IDE

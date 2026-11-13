@@ -133,7 +133,7 @@ function Build-Frame {
     Add-Line (S '' 'Gray')
     Add-Line (S '  [1] ACESSIBILIDADE DE MODELOS & MOTOR LOCAL/CLOUD' 'Yellow')
     if ($Data.models) {
-        foreach ($key in 'qwen_7b', 'gemma4_4b', 'strata_moe_125b') {
+        foreach ($key in 'qwen_7b', 'gemma4_4b', 'llama_moe_qwen36') {
             $m = $Data.models.$key
             if (-not $m) { continue }
             $color = 'Yellow'
@@ -221,7 +221,7 @@ function Build-Frame {
         @('Ollama', 11434, [bool]($p -and $p.ollama_11434)),
         @('Gemma Server', 17043, [bool]($p -and $p.gemma_server_17043)),
         @('Backend', $backendPort, $backendOn),
-        @('Strata', 8080, [bool]($p -and $p.vulkan_8080))
+        @('Llama MoE', 8080, [bool]($p -and $p.vulkan_8080))
     )
     $segs = @(S '    ' 'Gray')
     foreach ($s in $svc) {

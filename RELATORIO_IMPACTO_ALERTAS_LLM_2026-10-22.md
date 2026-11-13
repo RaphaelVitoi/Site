@@ -4,6 +4,10 @@ type: executive
 status: active
 owner: site-governance
 updated_at: 2026-10-30
+referencias_nao_resolviveis:
+  - llm/strata_client.py
+  - tests/test_strata_client.py
+  - scripts/ops/strata_local_node.py
 ---
 
 # 📊 RELATÓRIO DE IMPACTO — Harmonização de Alertas LLM SOTA v8.0 GOLD

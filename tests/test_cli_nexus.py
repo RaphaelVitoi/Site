@@ -538,8 +538,8 @@ def test_turno_unico_com_resposta_e_aprovado():
         ri.main()  # nao pode levantar
 
 
-def test_nexus_ops_strata_command():
-    """Valida presenca e integridade do subcomando ops strata no orquestrador."""
-    res = runner.invoke(app, ["ops", "strata", "--help"])
+def test_nexus_ops_start_gemma_command():
+    """Valida presenca e integridade do subcomando ops start-gemma no orquestrador."""
+    res = runner.invoke(app, ["ops", "start-gemma", "--help"])
     assert res.exit_code == 0
-    assert "Strata MoE 125B" in res.stdout
+    assert "Gemma" in res.stdout

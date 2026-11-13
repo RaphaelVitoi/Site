@@ -137,6 +137,9 @@ revisoes_de_ancora:
       - pyproject.toml
       - uv.lock
     parecer: 'Caminhos revisados em 2026-11-07: saneamento de linters Ruff/Pyright, dependencias opcionais dev, settings IDE e telemetria Jules sem regressao nos contratos estabelecidos.'
+referencias_nao_resolviveis:
+  - llm/strata_client.py
+  - tests/test_strata_client.py
 ---
 
 # Registro 2026-11-07 — Auditoria Jules Cloud, Saneamento de Linters, Tipagem e pyproject.toml

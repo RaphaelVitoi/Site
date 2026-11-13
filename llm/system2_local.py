@@ -297,13 +297,24 @@ def _llama_base() -> str:
 
 
 def llama_server_online(timeout_s: float = 3.0) -> bool:
-    """Health-check rapido do llama-server Vulkan (OpenAI-compatible)."""
+    """Health-check do llama-swap/llama-server com verificacao de identidade.
+
+    ``/health`` sozinho aceita qualquer HTTP 200 — um backend estranho na
+    porta 8080 seria classificado como llama.cpp e receberia trafego MoE.
+    A identidade e confirmada em ``/v1/models``: e preciso haver um modelo
+    ``qwen*`` na lista (alias canonico do llama-swap: qwen-moe /
+    system2-moe / qwen3.6-35b-a3b-mtp).
+    """
     try:
-        req = urllib.request.Request(f"{_llama_base()}/health")  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
+        req = urllib.request.Request(f"{_llama_base()}/v1/models")  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
         with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
-            return resp.status == 200
-    except OSError:
+            if resp.status != 200:
+                return False
+            body = json.loads(resp.read().decode("utf-8"))
+    except (OSError, json.JSONDecodeError):
         return False
+    models = body.get("data") or []
+    return any("qwen" in str(m.get("id", "")).lower() for m in models if isinstance(m, dict))
 
 
 def _llama_generate(

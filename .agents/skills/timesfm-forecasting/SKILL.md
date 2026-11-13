@@ -5,13 +5,13 @@ metadata:
   hermes:
     tags: ['forecasting', 'timesfm', 'time-series', 'prediction']
     category: data-science
-    related_skills: ['strata-inference-engine']
+    related_skills: []
 ---
 
 # SKILL: Google Research TimesFM — Previsão de Séries Temporais & Governança
 
-> **Repositório:** [github.com/google-research/timesfm](https://github.com/google-research/timesfm)  
-> **Coleção Hugging Face:** [huggingface.co/collections/google/timesfm-release](https://huggingface.co/collections/google/timesfm-release-66e4be5fdb56e960c1e482a6)  
+> **Repositório:** [github.com/google-research/timesfm](https://github.com/google-research/timesfm)
+> **Coleção Hugging Face:** [huggingface.co/collections/google/timesfm-release](https://huggingface.co/collections/google/timesfm-release-66e4be5fdb56e960c1e482a6)
 > **Módulo Canônico:** [`engine/timesfm_engine.py`](file:///c:/Users/rapha/.gemini/Site/engine/timesfm_engine.py)
 
 ---

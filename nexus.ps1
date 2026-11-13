@@ -16,7 +16,7 @@
 .EXAMPLE
     .\nexus.ps1 dashboard --once
 .EXAMPLE
-    .\nexus.ps1 ops strata -p 8080 -d
+    .\nexus.ps1 ops start-gemma -f
 .LINK
     file:///scripts/cli/nexus.py
 #>
@@ -28,7 +28,7 @@ $ExitCode = 1
 try {
     $NexusCliPy = Join-Path $ScriptDir "scripts\cli\nexus.py"
     $VenvPython = Join-Path $ScriptDir ".venv\Scripts\python.exe"
-    $UvCmd      = Get-Command uv -ErrorAction SilentlyContinue
+    $UvCmd = Get-Command uv -ErrorAction SilentlyContinue
 
     # Camada 1: Fast-Path com uv run (se disponivel no PATH)
     if ($UvCmd) {
@@ -60,7 +60,8 @@ try {
         Write-Host "================================================================================`n" -ForegroundColor Red
         $ExitCode = 127
     }
-} finally {
+}
+finally {
     Pop-Location
 }
 

@@ -55,6 +55,8 @@ revisoes_de_ancora:
     caminhos:
       - tests/test_jules_bridge.py
     parecer: 'Revisao em 2026-11-08: remocao de acento em docstring de teste para conformidade com a Blindagem ASCII.'
+referencias_nao_resolviveis:
+  - llm/strata_client.py
 ---
 
 # Registro 2026-11-08: Blindagem ASCII em Modulos Python

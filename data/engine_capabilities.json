@@ -1364,7 +1364,7 @@
         "moe-cache-mib-does-not-pay-off-on-polaris-measured",
         "speculative-mtp-requires-gguf-with-nextn-head-and-np1",
         "no-rocm-native-on-polaris",
-        "avalon-strata-single-model-targets-need-12gb-plus-vram"
+        "single-large-model-offload-targets-need-12gb-plus-vram"
       ],
       "consumer_paths": [
         "scripts/ops/Start-LlamaVulkan.ps1",

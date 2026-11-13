@@ -1,5 +1,5 @@
 """
-Base client for local LLM engines (Strata, Splash, etc.) that provide
+Base client for local LLM engines (Splash, etc.) that provide
 OpenAI-compatible APIs and basic health/control endpoints.
 Governanca: Protocolo Master Chico SOTA v8.0 GOLD.
 """

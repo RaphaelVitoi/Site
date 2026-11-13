@@ -638,8 +638,11 @@ def _resolve_cloud_zero_ram_target(model: str, model_l: str) -> tuple[str, str] 
 
 
 def _resolve_local_or_ollama_target(model: str, model_l: str) -> tuple[str, str] | None:
-    if "strata" in model_l or "qwen3.8" in model_l:
-        return "strata", model
+    if "strata" in model_l:
+        # Eixo Strata aposentado em 2026-11-13 (NO-GO medido em gfx803):
+        # nomes legados caem no Ollama e falham de forma honesta, em vez de
+        # rotear para a porta 8080 (dona exclusiva: llama-swap).
+        return "ollama", model
     if "g9v3" in model_l or "ai9stars" in model_l or "ling" in model_l:
         return "local_llama", model
     if "qwen" in model_l and not model_l.startswith("openrouter/"):
@@ -746,20 +749,6 @@ def _resolve_model_provider_and_target(
     return "unknown", model
 
 
-def _try_dispatch_strata(target_model: str, prompt: str) -> str | None:
-    try:
-        from llm.strata_client import LocalStrataClient  # noqa: PLC0415
-
-        strata_client = LocalStrataClient()
-        if strata_client.is_healthy():
-            res = strata_client.complete(prompt)
-            if res:
-                return res
-    except Exception as e:
-        logger.debug("Falha na chamada ao Strata Local (%s): %s. Recorrendo a fallback...", target_model, e)
-    return None
-
-
 def _resolve_local_llama_port(model_lower: str) -> int:
     from llm.local_llama_client import (  # noqa: PLC0415
         DEFAULT_G9_PORT,
@@ -792,14 +781,8 @@ def _try_dispatch_local_llama(target_model: str, prompt: str) -> str | None:
 def _dispatch_local_engine(
     provider: str, target_model: str, system_prompt: str, user_prompt: str
 ) -> tuple[str | None, str]:
-    """Tenta Strata ou LocalLlama. Retorna (resultado, proximo_provedor)."""
+    """Tenta LocalLlama. Retorna (resultado, proximo_provedor)."""
     prompt = f"{system_prompt}\n\n{user_prompt}"
-    if provider == "strata":
-        res = _try_dispatch_strata(target_model, prompt)
-        if res:
-            return res, provider
-        provider = "ollama"
-
     if provider == "local_llama":
         res = _try_dispatch_local_llama(target_model, prompt)
         if res:

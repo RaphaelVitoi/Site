@@ -10,7 +10,7 @@ $DocDir = Split-Path $DocPath
 
 # Garante que o diretório docs exista
 if (-not (Test-Path -LiteralPath $DocDir)) {
-    New-Item -ItemType Directory -Path $DocDir -Force | Out-Null
+  New-Item -ItemType Directory -Path $DocDir -Force | Out-Null
 }
 
 $Now = (Get-Date).ToString('yyyy-MM-dd HH:mm:ss')
@@ -42,8 +42,6 @@ $MarkdownContent = @'
   * **Descrição:** Inicializa o executor de background (`task_executor.py`) com persistência.
 * `stop-worker`
   * **Descrição:** Paralisa o executor de background com segurança (SIGINT gracioso).
-* `start-strata` ou `nexus ops strata` [Atalho X no Dashboard]
-  * **Descrição:** Inicializa o nó local de inferência Strata MoE 125B (v0.1.39) com prioridade normal e pre-flight de porta.
 * `nexus-watch`
   * **Descrição:** Inicia a vigília ativa de arquivos (.md, .py, etc.) acionando re-ingestão e sincronia debounced.
 * `nexus-cli [args]`

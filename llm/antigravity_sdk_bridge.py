@@ -568,7 +568,7 @@ class AntigravityAgentBridge:
         lightweight: bool = True,
         allow_run_command: bool = False,
     ) -> LocalOpenAIAgentConfig:
-        """Cria configuracao Local OpenAI-compatible (Strata MoE :8080, Ollama :11434)."""
+        """Cria configuracao Local OpenAI-compatible (llama-swap :8080, Ollama :11434)."""
         behavior = AgentBehavior.AUTONOMOUS if self.autonomous else AgentBehavior.INTERACTIVE
         skills_paths = discover_skill_directories() if self.load_skills else None
         mcp_servers = load_mcp_servers_from_nucleo() if self.load_mcp else None

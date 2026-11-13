@@ -331,17 +331,6 @@ Set-Alias -Name vitoi_dashboard -Value Invoke-Dashboard
 Set-Alias -Name gemini-cli -Value nexus-cli
 Set-Alias -Name sota -Value nexus
 
-function start-strata {
-    param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
-    $script = Join-Path (Split-Path $Global:NexusProjectRoot -Parent) "scripts\ops\Start-StrataNode.ps1"
-    if (Test-Path $script) {
-        & $script @Args
-    } else {
-        & "$Global:NexusProjectRoot\dashboard.ps1" ops strata @Args
-    }
-}
-Set-Alias -Name nexus-strata -Value start-strata
-
 # --- Substituicao de Aliases Nativos (Friccao Zero) ---
 Remove-Item Alias:gc -Force -ErrorAction SilentlyContinue
 function gc { nexus @args }
@@ -360,7 +349,8 @@ Write-Host "[OK] Ecossistema Nexus ancorado em: $ProfilePath" -ForegroundColor G
 # Salva no arquivo alternativo (garante suporte a Windows PowerShell E PowerShell 7 Core)
 $AltProfilePath = if ($ProfilePath -match 'WindowsPowerShell') {
     $ProfilePath -replace 'WindowsPowerShell', 'PowerShell'
-} else {
+}
+else {
     $ProfilePath -replace 'PowerShell', 'WindowsPowerShell'
 }
 $AltProfileDir = Split-Path $AltProfilePath
@@ -369,4 +359,3 @@ if (-not (Test-Path -LiteralPath $AltProfileDir)) {
 }
 Set-Content -Path $AltProfilePath -Value $FinalProfileContent -Encoding UTF8
 Write-Host "[OK] Ecossistema Nexus ancorado no profile alternativo: $AltProfilePath" -ForegroundColor Green
-

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     NEXUS DASHBOARD SOTA v8.0 GOLD - Gateway Executivo Unificado (CEO Level)
 .DESCRIPTION
@@ -27,7 +27,7 @@
     file:///scripts/ops/Start-NexusDashboard.ps1
 #>
 
-$ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $NexusScript = Join-Path $ScriptDir 'nexus.ps1'
 
 # Interceptador fluido de modos operacionais especificos do Dashboard
@@ -67,7 +67,7 @@ if ($args.Count -gt 0) {
         Write-Host "`n  ATALHOS RAPIDOS DO ECOSSISTEMA:" -ForegroundColor White
         Write-Host "    * .\nexus.ps1 status              -> Telemetria do DAL e fila de tarefas" -ForegroundColor DarkCyan
         Write-Host "    * .\nexus.ps1 ops quality-gate    -> Bateria Tri-State de Qualidade" -ForegroundColor DarkCyan
-        Write-Host "    * .\nexus.ps1 ops strata          -> Inicializacao do Strata MoE 125B" -ForegroundColor DarkCyan
+        Write-Host "    * .\nexus.ps1 ops start-gemma     -> Servidor Gemma local" -ForegroundColor DarkCyan
         Write-Host "    * .\nexus.ps1 agent handoff       -> Exportacao de contexto mental" -ForegroundColor DarkCyan
         Write-Host "================================================================================`n" -ForegroundColor Cyan
         exit 0
