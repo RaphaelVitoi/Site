@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: codex@gpt-5
 criado_em: 2026-09-01T04:10-03:00
 atualizado_em: 2026-09-01T04:10-03:00
-commit: 95913907
+commit: "95913907"
 commit_inicio_auditoria: 26b9b6ab6625c6410b475901cf807d17c61c2c56
 classes: [interno, medido, release]
 caminhos:

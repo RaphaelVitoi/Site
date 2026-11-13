@@ -39,6 +39,7 @@ revisoes_de_ancora:
     finalidade do modulo tornou obsoleta. Nao reescrevo registro publicado: a
     divergencia fica aqui, datada, medida e ratificada.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

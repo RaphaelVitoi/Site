@@ -13,6 +13,7 @@ caminhos:
   - scripts/ops/lighthouse_cwv_audit.mjs
 supersede: null
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

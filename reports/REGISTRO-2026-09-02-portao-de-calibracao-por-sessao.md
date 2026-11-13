@@ -17,6 +17,7 @@ caminhos:
   - scripts/ops/Register-AgentCalibrationDailyTask.ps1
   - tests/test_calibracao_portao_por_sessao.py
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: /home/user/Site
   branch: master
   so: Linux

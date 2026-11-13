@@ -12,6 +12,7 @@ caminhos:
   - reports/agent-calibration/daily/2026-09-12.md
 supersede: null
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   head: 72670ac61039947fb2611327a64200d303f607c6

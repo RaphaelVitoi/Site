@@ -42,6 +42,7 @@ revisoes_de_ancora:
     documenta que o GATILHO de recertificacao dispara por arquivo que nao entra
     no bundle.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

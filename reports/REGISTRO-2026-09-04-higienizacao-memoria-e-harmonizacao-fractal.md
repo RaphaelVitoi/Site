@@ -12,6 +12,7 @@ caminhos:
   - scripts/ops/datacloud_mcp_proxy.js
   - scripts/ops/cwv_gate.ps1
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

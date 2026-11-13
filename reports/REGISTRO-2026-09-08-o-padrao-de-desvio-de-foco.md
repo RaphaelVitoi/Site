@@ -202,6 +202,7 @@ revisoes_de_ancora:
     arquivo append-only, e nada do que aquele registro afirmou deixou de valer.
 supersede: null
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

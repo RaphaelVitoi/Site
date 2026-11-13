@@ -10,6 +10,7 @@ classes: [interno, medido, governanca]
 caminhos:
   - CLAUDE.md
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

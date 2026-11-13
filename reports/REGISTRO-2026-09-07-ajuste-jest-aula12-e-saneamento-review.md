@@ -10,6 +10,7 @@ classes: [interno, medido, qualidade, frontend]
 caminhos:
   - frontend/src/components/simulator/solver/__tests__/aula12Evidence.test.ts
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

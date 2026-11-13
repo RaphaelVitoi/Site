@@ -11,6 +11,7 @@ caminhos:
   - worker/loop.py
   - .claude/agent-memory/chico/MEMORY.md
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

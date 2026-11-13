@@ -214,29 +214,104 @@ def _ancestral(sha: str, raiz: Path) -> bool | None:
     return _git("merge-base", "--is-ancestor", sha, "HEAD", cwd=raiz).returncode == 0
 
 
+# `commit:` vazio ou placeholder ("pending", "pendente") NAO e mais divida: o sha
+# de nascimento so existe depois do commit que cria o arquivo, entao nenhum autor
+# conseguia preenche-lo na hora certa. Medido em 2026-11-13: 279 registros
+# acumularam "classe interna sem ancora de commit" -- divida que so cresce em
+# silencio e ninguem paga. O nascimento e derivavel do proprio historico, e o
+# git e a fonte de verdade: resolve-se dele. O campo declarado continua valendo
+# (e sendo conferido); so o AUSENTE deixa de ser suspeita por si so.
+_PLACEHOLDERS_COMMIT = {"", "null", "none", "pending", "pendente"}
+
+_cache_nascimento: dict[tuple[str, bool], dict[str, str]] = {}
+
+
+def _nascimento_por_caminho(raiz: Path, com_merges: bool = False) -> dict[str, str]:
+    """caminho -> sha do commit que introduziu o arquivo (o ADD mais recente).
+
+    Uma chamada de `git log` por raiz por processo, cacheada: o portao avalia
+    centenas de registros por commit e nao pode pagar um subprocesso por registro.
+
+    `com_merges` liga `-m`: sem ele, um arquivo que so materializou dentro de um
+    merge (ou da resolucao de conflito dele) e invisivel ao `--diff-filter=A`,
+    porque o git nao difa merges por padrao. Medido em 2026-11-13: dois registros
+    de 2026-09 entraram por `c78da3c5` e ficaram "sem ancora" para sempre. O mapa
+    com merges atribui o nascimento ao proprio merge -- ancestral do HEAD, logo
+    ancora valida, ainda que menos antiga que o primeiro commit do ramo.
+    """
+    chave = (str(raiz), com_merges)
+    if chave in _cache_nascimento:
+        return _cache_nascimento[chave]
+    args = ["log"]
+    if com_merges:
+        args.append("-m")
+    args += [
+        "--diff-filter=A",
+        "--no-renames",
+        "--format=COMMIT %H",
+        "--name-only",
+        "--",
+        "docs/*.md",
+        "reports/*.md",
+    ]
+    saida = _git(*args, cwd=raiz)
+    mapa: dict[str, str] = {}
+    atual = ""
+    for linha in saida.stdout.splitlines():
+        if linha.startswith("COMMIT "):
+            atual = linha.split(" ", 1)[1].strip()
+        elif linha.strip() and atual:
+            # O log sai do mais novo para o mais antigo: o primeiro ADD e o nascimento.
+            mapa.setdefault(linha.strip(), atual)
+    _cache_nascimento[chave] = mapa
+    return mapa
+
+
 def avaliar_registro(
-    fm: dict[str, Any], raiz: Path, hoje: date, ambiente: dict[str, Any]
+    fm: dict[str, Any], raiz: Path, hoje: date, ambiente: dict[str, Any], caminho: str | None = None
 ) -> tuple[list[str], bool | None, list[str]]:
     """(motivos, commit_e_ancestral_do_head, config_nao_conferivel) de UM registro.
 
     Regra unica: o indice e o G2 do record_gate usam esta funcao. Duas copias da
     regra divergiriam em silencio.
+
+    `caminho` e o caminho do registro relativo a raiz: sem ele a âncora de
+    nascimento nao pode ser resolvida e o motivo de "sem ancora" continua valendo.
     """
     motivos: list[str] = []
     classes = fm.get("classes") or []
     if isinstance(classes, str):
         classes = [classes]
 
-    sha = str(fm.get("commit") or "").strip()
+    commit_bruto = fm.get("commit")
+    if isinstance(commit_bruto, int) and not isinstance(commit_bruto, bool):
+        # Medido em 2026-11-13: `commit: 05167555` sem aspas foi lido pelo YAML
+        # como octal e virou o inteiro 1372013 -- um sha que nao existe, e o
+        # registro ficou SUSPEITO para sempre sem que nada dissesse por que.
+        # O defeito e de digitacao do campo, nao do historico: declarar entre
+        # aspas e a unica forma estavel, e este motivo ensina isso.
+        motivos.append(
+            "commit declarado como numero: YAML corrompe sha com zero a esquerda; declare o valor entre aspas"
+        )
+        commit_bruto = ""
+    bruto = str(commit_bruto or "").strip()
     ancestral: bool | None = None
-    if sha and sha.lower() not in {"null", "none"}:
-        ancestral = _ancestral(sha, raiz)
+    if bruto.lower() in _PLACEHOLDERS_COMMIT:
+        nascimento = _nascimento_por_caminho(raiz).get(caminho or "", "")
+        if not nascimento:
+            nascimento = _nascimento_por_caminho(raiz, com_merges=True).get(caminho or "", "")
+        if nascimento:
+            ancestral = _ancestral(nascimento, raiz)
+            if ancestral is False:
+                motivos.append(f"nascimento resolvido ({nascimento}) nao e ancestral do HEAD")
+        elif "interno" in classes:
+            motivos.append("classe interna sem ancora de commit")
+    else:
+        ancestral = _ancestral(bruto, raiz)
         if ancestral is None:
-            motivos.append(f"commit declarado ({sha}) nao existe neste repositorio")
+            motivos.append(f"commit declarado ({bruto}) nao existe neste repositorio")
         elif ancestral is False:
-            motivos.append(f"commit declarado ({sha}) nao e ancestral do HEAD")
-    elif "interno" in classes:
-        motivos.append("classe interna sem ancora de commit")
+            motivos.append(f"commit declarado ({bruto}) nao e ancestral do HEAD")
 
     motivo_ttl = ttl_vencido(fm, hoje)
     if motivo_ttl:
@@ -282,7 +357,7 @@ def _construir_registro_bruto(
     if isinstance(classes, str):
         classes = [classes]
     sha = str(fm.get("commit") or "").strip()
-    motivos, ancestral, nao_conferiveis = avaliar_registro(fm, raiz, hoje, ambiente)
+    motivos, ancestral, nao_conferiveis = avaliar_registro(fm, raiz, hoje, ambiente, caminho=rel)
 
     declarados = fm.get("caminhos") or []
     if isinstance(declarados, str):

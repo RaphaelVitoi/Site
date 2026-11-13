@@ -12,6 +12,7 @@ caminhos:
   - tests/test_model_registry.py
   - tests/test_gpt6_astra.py
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

@@ -13,6 +13,7 @@ caminhos:
   - scripts/validation/testar_h8_downward_drift.py
   - tests/test_pmev_h8_drift.py
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: /home/user/Site
   branch: claude/project-thread-du5exa
   commit_base: 7dfdb32

@@ -115,6 +115,7 @@ revisoes_de_ancora:
     quadro dele -- na cota livre o teto sobe de 50 RPD para 1.500 e 2.000 RPD por
     chave, embora eu nao tenha medido essas cotas, que vem do estudo citado.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

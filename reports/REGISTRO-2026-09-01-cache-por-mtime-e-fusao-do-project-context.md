@@ -8,6 +8,7 @@ criado_em: 2026-09-02T01:05-03:00
 atualizado_em: 2026-09-02T01:05-03:00
 classes: [interno, medido]
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: /home/user/Site
   branch: master
   so: Linux

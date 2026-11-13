@@ -16,6 +16,7 @@ caminhos:
   - tests/test_database_sota.py
 supersede: null
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

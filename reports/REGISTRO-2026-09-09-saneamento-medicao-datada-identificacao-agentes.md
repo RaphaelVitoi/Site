@@ -100,6 +100,7 @@ revisoes_de_ancora:
       Ancora as metricas de impacto. O ajuste remove contagens transitorias de
       texto de governanca e consolida a regra permanente, preservando metricas.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

@@ -310,6 +310,42 @@ def test_o_portao_cobra_ancora_declarada(tmp_path, monkeypatch):
     assert not any("ANCORADO.md" in e for e in erros), f"registro revisado junto foi acusado assim mesmo: {erros}"
 
 
+def _git(repo: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+
+def test_commit_ausente_ou_placeholder_resolve_do_nascimento_no_git(tmp_path):
+    """`commit:` e o sha de nascimento -- dado que so existe depois do commit.
+
+    Medido em 2026-11-13: 279 registros acumularam "classe interna sem ancora
+    de commit" por um campo que nenhum autor conseguia preencher na hora da
+    escrita. A correcao e o git responder pelo nascimento, nao perdoar a
+    ausencia -- e quando nem o git sabe, o motivo continua de pe.
+    """
+    repo = tmp_path / "repo"
+    (repo / "reports").mkdir(parents=True)
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "user.email", "teste@exemplo.invalid")
+    _git(repo, "config", "user.name", "Teste")
+    (repo / "reports" / "R.md").write_text(
+        "---\nid: r\ntipo: registro\nclasses: [interno]\n---\n\ncorpo\n", encoding="utf-8"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "reg")
+
+    fm, _ = record_index.ler_frontmatter(repo / "reports" / "R.md")
+    for valor in ("", "pending", "pendente"):
+        fm["commit"] = valor
+        motivos, ancestral, _ = record_index.avaliar_registro(fm, repo, date.today(), {}, caminho="reports/R.md")
+        assert motivos == [], f"commit={valor!r} virou suspeito mesmo com nascimento no git: {motivos}"
+        assert ancestral is True
+
+    # E quando o git nao conhece o caminho, o motivo de "sem ancora" segue de pe.
+    fm["commit"] = ""
+    motivos, _, _ = record_index.avaliar_registro(fm, repo, date.today(), {}, caminho="reports/FORA-DO-RECORTE.md")
+    assert motivos == ["classe interna sem ancora de commit"]
+
+
 def _ancorado(raiz: Path, extra: str) -> None:
     (raiz / "reports").mkdir(exist_ok=True)
     (raiz / "reports" / "ANCORADO.md").write_text(
@@ -339,8 +375,10 @@ def test_ancora_de_registro_suspeito_avisa_e_nao_bloqueia(tmp_path, monkeypatch,
     assert any("ANCORADO.md" in a and "SUSPEITO" in a and "engine/alvo.py" in a for a in avisos), avisos
 
 
-def test_ancora_de_registro_obsoleto_avisa_e_nao_bloqueia(tmp_path, monkeypatch):
-    """Registro aposentado por `supersede` de outro tambem nao bloqueia."""
+def test_ancora_de_registro_obsoleto_nao_gera_aviso_nem_bloqueio(tmp_path, monkeypatch):
+    """Aposentado e decisao tomada: o portao cala. Aviso recorrente de registro
+    encerrado era ruido permanente -- 41 avisos por commit em 2026-11-13 sem
+    acrescimo de informacao. O indice segue reportando o estado."""
     _ancorado(tmp_path, "")
     (tmp_path / "reports" / "NOVO.md").write_text(
         "---\nid: novo\ntipo: relatorio\nescopo: Site\nautor: claude@opus-5\n"
@@ -357,7 +395,7 @@ def test_ancora_de_registro_obsoleto_avisa_e_nao_bloqueia(tmp_path, monkeypatch)
     )
     erros, avisos = record_gate.verificar()
     assert not any("ANCORADO.md" in e for e in erros), erros
-    assert any("ANCORADO.md" in a and "OBSOLETO" in a for a in avisos), avisos
+    assert not any("ANCORADO.md" in a for a in avisos), avisos
 
 
 def test_resumo_de_nao_vigentes_lista_registros_e_nao_trunca_motivo_com_parenteses(capsys):

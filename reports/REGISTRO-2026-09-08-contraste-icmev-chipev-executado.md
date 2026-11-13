@@ -28,6 +28,7 @@ revisoes_de_ancora:
     Renovar o fingerprint apos tocar frontend/ preserva a certificacao; nao a
     contradiz.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

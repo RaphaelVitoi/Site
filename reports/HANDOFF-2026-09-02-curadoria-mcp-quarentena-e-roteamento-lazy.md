@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: gemini-3.8-flash-high
 criado_em: 2026-09-02 23:30:00-03:00
 atualizado_em: 2026-09-02 23:30:00-03:00
-commit: pendente
+commit: dfbbcb9e
 classes:
   - interno
   - continuidade
@@ -18,6 +18,7 @@ caminhos:
   - reports/AUDITORIA-2026-09-02-curadoria-mcp-e-processos-residuais.md
   - reports/agent-calibration/feedback-ledger.jsonl
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   origem: origin/master
