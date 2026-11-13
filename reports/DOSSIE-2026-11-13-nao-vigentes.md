@@ -209,6 +209,228 @@ revisoes_de_ancora:
       completo. A alteracao fortalece o portao sem invalidar o atestado do registro, que permanece
       valido para o seu escopo declarado.
 
+  - registro: taxonomia-canonica-de-documentacao-e-relatorios
+    caminhos:
+      - scripts/ops/record_gate.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado.
+  - registro: auditoria-2026-09-12-o-ci-vermelho-que-nenhum-portao-local-media
+    caminhos:
+      - scripts/ops/record_gate.py
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: test_record_index.py ganhou contrato de
+      contexto (todo aviso de nao vigente nomeia o caminho do registro) e assert de rodape --
+      reforco de teste, sem mudanca de comportamento. Nao invalida o atestado do registro, que
+      permanece valido para o seu escopo declarado.
+  - registro: auditoria-2026-09-29-elo-de-autonomia-entre-politica-e-runtime
+    caminhos:
+      - scripts/ops/record_gate.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado.
+  - registro: handoff-2026-09-17-interceptacao-da-reincidencia-e-uniao-da-evidencia
+    caminhos:
+      - scripts/ops/record_gate.py
+      - scripts/ops/saude_da_malha.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: saude_da_malha.py recebeu apenas a legenda
+      info/ALERTA na saida (info = ruido nao classificado a identificar, ALERTA = fato grave
+      medido) -- mudanca de apresentacao, sem alteracao na coleta nem nos limiares. Nao invalida o
+      atestado do registro, que permanece valido para o seu escopo declarado.
+  - registro: handoff-2026-09-22-integracao-system1-llm-dashboard
+    caminhos:
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: test_record_index.py ganhou contrato de contexto (todo
+      aviso de nao vigente nomeia o caminho do registro) e assert de rodape -- reforco de teste,
+      sem mudanca de comportamento. Nao invalida o atestado do registro, que permanece valido para
+      o seu escopo declarado.
+  - registro: registro-2026-09-01-ancora-de-merge-e-instrucao-indexada
+    caminhos:
+      - scripts/ops/record_gate.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado.
+  - registro: registro-2026-09-01-resolucao-de-skill-e-referencia-por-ponto-de-partida
+    caminhos:
+      - scripts/ops/record_gate.py
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: test_record_index.py ganhou contrato de
+      contexto (todo aviso de nao vigente nomeia o caminho do registro) e assert de rodape --
+      reforco de teste, sem mudanca de comportamento. Nao invalida o atestado do registro, que
+      permanece valido para o seu escopo declarado.
+  - registro: registro-2026-09-05-fechamento-do-ciclo-de-calibracao
+    caminhos:
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: test_record_index.py ganhou contrato de contexto (todo
+      aviso de nao vigente nomeia o caminho do registro) e assert de rodape -- reforco de teste,
+      sem mudanca de comportamento. Nao invalida o atestado do registro, que permanece valido para
+      o seu escopo declarado.
+  - registro: registro-2026-09-08-alternancia-de-extensoes-no-portao-de-registro
+    caminhos:
+      - scripts/ops/record_gate.py
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: test_record_index.py ganhou contrato de
+      contexto (todo aviso de nao vigente nomeia o caminho do registro) e assert de rodape --
+      reforco de teste, sem mudanca de comportamento. Nao invalida o atestado do registro, que
+      permanece valido para o seu escopo declarado.
+  - registro: registro-2026-09-08-ruff-format-e-o-ci-vermelho
+    caminhos:
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: test_record_index.py ganhou contrato de contexto (todo
+      aviso de nao vigente nomeia o caminho do registro) e assert de rodape -- reforco de teste,
+      sem mudanca de comportamento. Nao invalida o atestado do registro, que permanece valido para
+      o seu escopo declarado.
+  - registro: registro-2026-09-13-append-em-jsonl-e-suite-em-todos-os-nucleos
+    caminhos:
+      - scripts/ops/record_gate.py
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: test_record_index.py ganhou contrato de
+      contexto (todo aviso de nao vigente nomeia o caminho do registro) e assert de rodape --
+      reforco de teste, sem mudanca de comportamento. Nao invalida o atestado do registro, que
+      permanece valido para o seu escopo declarado.
+  - registro: registro-2026-09-13-g2-so-bloqueia-registro-vigente
+    caminhos:
+      - scripts/ops/record_gate.py
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: test_record_index.py ganhou contrato de
+      contexto (todo aviso de nao vigente nomeia o caminho do registro) e assert de rodape --
+      reforco de teste, sem mudanca de comportamento. Nao invalida o atestado do registro, que
+      permanece valido para o seu escopo declarado.
+  - registro: registro-2026-09-13-portoes-enxutos-e-horizontais
+    caminhos:
+      - scripts/ops/record_gate.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado.
+  - registro: registro-2026-09-14-saneamento-linter-e-tipagem-tests-e-skills
+    caminhos:
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: test_record_index.py ganhou contrato de contexto (todo
+      aviso de nao vigente nomeia o caminho do registro) e assert de rodape -- reforco de teste,
+      sem mudanca de comportamento. Nao invalida o atestado do registro, que permanece valido para
+      o seu escopo declarado.
+  - registro: registro-2026-09-17-uniao-da-evidencia-aula12-com-o-motor-bayesiano
+    caminhos:
+      - scripts/ops/record_gate.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado.
+  - registro: registro-2026-09-18-saneamento-geral-de-linters-e-gate-remocao-citada
+    caminhos:
+      - scripts/ops/record_gate.py
+      - scripts/ops/saude_da_malha.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: saude_da_malha.py recebeu apenas a legenda
+      info/ALERTA na saida (info = ruido nao classificado a identificar, ALERTA = fato grave
+      medido) -- mudanca de apresentacao, sem alteracao na coleta nem nos limiares. Nao invalida o
+      atestado do registro, que permanece valido para o seu escopo declarado.
+  - registro: registro-2026-09-19-refatoracao-sonar-python-e-icm
+    caminhos:
+      - scripts/ops/record_gate.py
+      - scripts/ops/saude_da_malha.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: saude_da_malha.py recebeu apenas a legenda
+      info/ALERTA na saida (info = ruido nao classificado a identificar, ALERTA = fato grave
+      medido) -- mudanca de apresentacao, sem alteracao na coleta nem nos limiares. Nao invalida o
+      atestado do registro, que permanece valido para o seu escopo declarado.
+  - registro: registro-2026-11-07-otimizacao-ux-portao-registro-e-congelamento-medicoes
+    caminhos:
+      - scripts/ops/record_gate.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado.
+  - registro: registro-2026-11-13-avisos-do-portao-e-saude-da-malha
+    caminhos:
+      - scripts/ops/record_gate.py
+      - scripts/ops/saude_da_malha.py
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: saude_da_malha.py recebeu apenas a legenda
+      info/ALERTA na saida (info = ruido nao classificado a identificar, ALERTA = fato grave
+      medido) -- mudanca de apresentacao, sem alteracao na coleta nem nos limiares. Nao invalida o
+      atestado do registro, que permanece valido para o seu escopo declarado. Revisado contra o
+      diff deste commit: test_record_index.py ganhou contrato de contexto (todo aviso de nao
+      vigente nomeia o caminho do registro) e assert de rodape -- reforco de teste, sem mudanca de
+      comportamento. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado.
+  - registro: validacao-2026-09-12-a-identidade-de-autoria-deixa-de-ser-prosa
+    caminhos:
+      - scripts/ops/record_gate.py
+      - tests/test_record_index.py
+    parecer: >-
+      Revisado contra o diff deste commit: record_gate.py recebeu apenas o rodape de triagem no
+      digest de nao vigentes (abrir cada registro, classificar, reconciliar ou pendenciar; aviso
+      nao respondido reincide) -- mudanca de apresentacao, sem alteracao na derivacao de estado nem
+      no bloqueio. Nao invalida o atestado do registro, que permanece valido para o seu escopo
+      declarado. Revisado contra o diff deste commit: test_record_index.py ganhou contrato de
+      contexto (todo aviso de nao vigente nomeia o caminho do registro) e assert de rodape --
+      reforco de teste, sem mudanca de comportamento. Nao invalida o atestado do registro, que
+      permanece valido para o seu escopo declarado.
+
 pendencias_resolvidas:
   - pend-2026-11-13-reconciliacao-ancoras-registros
 

@@ -1039,9 +1039,11 @@ def _resumir_nao_vigentes(nao_vigentes: list[str]) -> None:
         print(f"      - {a}")
     if grupos:
         print(
-            "      Cada linha e um registro cuja ancora foi tocada neste commit. "
-            "O conjunto encolhe por reconciliacao de auditoria (backfill de `commit:` "
-            "ou `supersede`), nunca por edicao casual de registro publicado."
+            "      Cada linha e um registro cuja ancora foi tocada neste commit: abra-o, "
+            "classifique e decida -- reconciliar (metadata, `commit:` ou `supersede`) ou "
+            "declarar pendencia. Aviso nao respondido reincide em todo commit; nao e "
+            "silencio. O conjunto encolhe por reconciliacao de auditoria, nunca por "
+            "edicao casual de registro publicado."
         )
 
 
