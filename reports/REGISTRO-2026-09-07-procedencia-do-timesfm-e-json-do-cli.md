@@ -116,6 +116,7 @@ revisoes_de_ancora:
     que ela indicou -- correcao aditiva no rotulo, sem tocar o calculo. Os outros
     oito findings abertos seguem abertos.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

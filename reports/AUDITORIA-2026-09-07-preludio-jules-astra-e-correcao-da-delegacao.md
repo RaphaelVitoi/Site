@@ -13,6 +13,7 @@ caminhos:
   - tests/test_model_registry.py
   - AGENTS.md
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

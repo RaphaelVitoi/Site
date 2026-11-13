@@ -120,6 +120,7 @@ revisoes_de_ancora:
     delecao e a linha da data. Nenhuma metrica, limiar ou baseline daquele
     relatorio e funcao do texto acrescentado.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

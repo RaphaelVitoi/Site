@@ -128,6 +128,7 @@ revisoes_de_ancora:
     oito achados do contraste depende de LCP, o unico valor que variou
     (400.27 -> 417.20 ms, ambos com folga de 5x contra o teto).
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

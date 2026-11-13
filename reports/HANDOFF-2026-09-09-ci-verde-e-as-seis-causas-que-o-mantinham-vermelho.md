@@ -13,6 +13,7 @@ caminhos:
   - reports/PLANO-FRENTES-ABERTAS-2026-09-08.md
 supersede: null
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

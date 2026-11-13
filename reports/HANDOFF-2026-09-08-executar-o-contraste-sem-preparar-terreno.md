@@ -11,6 +11,7 @@ caminhos:
   - frontend/src/lib/rpDeriver.ts
   - frontend/src/lib/perspectiva.ts
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

@@ -11,6 +11,7 @@ classes: [interno, medido, calibracao]
 caminhos:
   - reports/agent-calibration/feedback-ledger.jsonl
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: /home/user/Site
   branch: master
   ledger_antes: valid, 2 registros, tail 75fdb4d4

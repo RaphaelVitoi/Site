@@ -12,6 +12,7 @@ caminhos:
   - .agents/skills/google-workspace/SKILL.md
   - .claude/agent-memory/chico/HANDOFF_LATEST.md
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

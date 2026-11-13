@@ -265,6 +265,7 @@ revisoes_de_ancora:
     registro afirmou sobre esses arquivos continua verdadeiro no ponto em que o
     afirmou: crescer e o comportamento previsto de arquivo append-only.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

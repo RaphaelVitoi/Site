@@ -18,6 +18,7 @@ caminhos:
   - reports/agent-calibration/daily/2026-09-04.json
   - reports/agent-calibration/daily/2026-09-05.json
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

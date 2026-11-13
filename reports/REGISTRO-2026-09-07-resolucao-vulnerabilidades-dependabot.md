@@ -12,6 +12,7 @@ caminhos:
   - core/nexus-core-rust/Cargo.lock
   - core/nexus-core-rust/src/lib.rs
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows

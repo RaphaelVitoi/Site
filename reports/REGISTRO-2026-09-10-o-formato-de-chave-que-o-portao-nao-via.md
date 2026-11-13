@@ -8,6 +8,7 @@ criado_em: 2026-09-10T12:20:00-03:00
 atualizado_em: 2026-09-10T12:20:00-03:00
 classes: [interno, medido, seguranca]
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   origem: origin/master

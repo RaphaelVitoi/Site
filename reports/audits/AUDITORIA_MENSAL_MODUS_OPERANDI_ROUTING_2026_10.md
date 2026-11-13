@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: gemini-antigravity
 autor: sota-routine-daemon@scripts/routines/audit_monthly_modus_operandi_and_routing.py
 criado_em: 2026-10-18T16:14-03:00
-commit: 05167555
+commit: "05167555"
 classes: [interno, externo, medido]
 fontes:
   - {fonte: llm/model_registry.py, consultado_em: 2026-10-18T16:14-03:00, versao_alvo: local}
@@ -13,6 +13,7 @@ fontes:
   - {fonte: data/agents_manifest.json, consultado_em: 2026-10-18T16:14-03:00, versao_alvo: local}
 ttl_dias: 90
 config_medida:
+  congelada_em: '2026-11-13'
   python: '3.14.7'
   modelos_auditados: 4
   rotas_declaradas: 8

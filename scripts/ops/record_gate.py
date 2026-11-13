@@ -47,6 +47,7 @@ if str(RAIZ) not in sys.path:
     sys.path.insert(0, str(RAIZ))
 
 from scripts.ops.record_index import (  # noqa: E402
+    OBSOLETO,
     VIGENTE,
     avaliar_registro,
     conferir_config_medida,
@@ -869,8 +870,15 @@ def _verificar_estado_ancora(
     ambiente: dict,
     avisos: list[str],
 ) -> str | None:
-    motivos, ancestral, _ = avaliar_registro(fm, RAIZ, hoje, ambiente)
+    motivos, ancestral, _ = avaliar_registro(fm, RAIZ, hoje, ambiente, caminho=rel)
     estado = estado_de(motivos, ancestral, aposentado)
+    if estado == OBSOLETO:
+        # Aposentado e decisao ja tomada: o registro saiu de vigor por `supersede`
+        # ou por estar fora da historia. Avisar a cada commit que toca seus
+        # caminhos era ruido permanente -- medido em 2026-11-13, quando os avisos
+        # de nao vigentes chegaram a 41 por commit sem nenhum acrescimo de
+        # informacao. O indice continua listando o estado; o portao cala.
+        return None
     if estado != VIGENTE:
         motivo = motivos[0] if motivos else "superseded por registro mais novo"
         avisos.append(f"{rel} ({estado}, {motivo}) ancora {pendentes}. Nao bloqueia: registro nao vigente.")

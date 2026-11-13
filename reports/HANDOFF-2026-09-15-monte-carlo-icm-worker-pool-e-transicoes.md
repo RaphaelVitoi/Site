@@ -12,6 +12,7 @@ conductor_model: gemini-3.7-flash
 conductor_vehicle: antigravity-ide
 supervision_mode: assistida
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   so: Windows
   python: '3.14.6'

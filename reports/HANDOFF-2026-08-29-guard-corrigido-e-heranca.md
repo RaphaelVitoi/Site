@@ -6,7 +6,7 @@ ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T04:45-03:00
 atualizado_em: 2026-08-30T13:10-03:00
-commit: 07492035
+commit: "07492035"
 classes: [interno]
 caminhos:
   - scripts/cli/nexus.py

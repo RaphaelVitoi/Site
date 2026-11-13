@@ -37,6 +37,7 @@ revisoes_de_ancora:
       Ancora os custom commands e rotinas de build do motor PMev. Nenhuma
       configuracao de execucao ou solver foi modificada.
 config_medida:
+  congelada_em: '2026-11-13'
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
   so: Windows
