@@ -360,6 +360,27 @@ def test_ancora_de_registro_obsoleto_avisa_e_nao_bloqueia(tmp_path, monkeypatch)
     assert any("ANCORADO.md" in a and "OBSOLETO" in a for a in avisos), avisos
 
 
+def test_resumo_de_nao_vigentes_lista_registros_e_nao_trunca_motivo_com_parenteses(capsys):
+    """O motivo pode conter `(...)`: o resumo antigo truncava em `commit declarado (pending`.
+
+    Contrato: agrupar por (estado, motivo) completo e nomear cada registro atingido,
+    para que o digest seja auditavel em vez de uma contagem opaca.
+    """
+    avisos = [
+        "reports/A.md (SUSPEITO, classe interna sem ancora de commit) ancora ['x.py']. Nao bloqueia: registro nao vigente.",
+        "reports/B.md (SUSPEITO, commit declarado (pending) nao existe neste repositorio) ancora ['y.py']. Nao bloqueia: registro nao vigente.",
+        "reports/C.md (OBSOLETO, superseded por registro mais novo) ancora ['z.py']. Nao bloqueia: registro nao vigente.",
+    ]
+    record_gate._resumir_nao_vigentes(avisos)
+    saida = capsys.readouterr().out
+    assert "[1] SUSPEITO -- classe interna sem ancora de commit" in saida
+    assert "reports/A.md" in saida
+    assert "[1] SUSPEITO -- commit declarado (pending) nao existe neste repositorio" in saida
+    assert "reports/B.md" in saida
+    assert "[1] OBSOLETO -- superseded por registro mais novo" in saida
+    assert "reports/C.md" in saida
+
+
 def _ancorado_em(raiz: Path, caminho: str) -> None:
     (raiz / "reports").mkdir(exist_ok=True)
     (raiz / "reports" / "ANCORADO.md").write_text(

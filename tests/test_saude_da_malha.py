@@ -171,6 +171,30 @@ class TestTarefaAgendada:
         assert "Qualquer" not in titulos(saude_da_malha.coletar(date(2026, 9, 17)))
 
 
+class TestLastroAtrasado:
+    """A tarefa grava as 23:59: um dia de atraso e o calendario, nao a falha.
+
+    Ate 2026-11-13 o bloco emitia um `info` para QUALQUER lastro anterior ao dia,
+    e ele aparecia em todo commit feito antes das 23:59 -- ruido diario sem
+    informacao nova. O contrato agora: atraso de 1 dia e silencio legitimo;
+    2 dias ou mais e anomalia grave.
+    """
+
+    def test_ultimo_dia_de_atraso_nao_gera_sinal(self, diario: Path) -> None:
+        """Lastro de ontem, auditoria de ontem: malha em ordem, lista vazia."""
+        gravar(diario, "2026-09-16", calibration_planning_permitted=False)
+        auditar(diario, "2026-09-16")
+        assert saude_da_malha.coletar(date(2026, 9, 17)) == []
+
+    def test_dois_dias_de_atraso_e_grave(self, diario: Path) -> None:
+        """Dois dias sem lastro novo: anomalia, e o titulo diz quantos dias."""
+        gravar(diario, "2026-09-15", calibration_planning_permitted=False)
+        auditar(diario, "2026-09-15")
+        sinal = next(s for s in saude_da_malha.coletar(date(2026, 9, 17)) if "Lastro mais recente" in s.titulo)
+        assert sinal.grave
+        assert "2 dias de atraso" in sinal.titulo
+
+
 def test_malha_saudavel_nao_inventa_sinal(diario: Path) -> None:
     """Lastro e auditoria do dia, portao fechado: lista vazia."""
     gravar(diario, "2026-09-17", calibration_planning_permitted=False)
