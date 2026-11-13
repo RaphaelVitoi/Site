@@ -50,6 +50,8 @@ revisoes_de_ancora:
       - api/v1/server.py
     parecer: >-
       Revisado em 2026-10-13 e mantido valido. Inclusao da rota alias /api/v1/health apontando para handle_health em server.py e liberada no middleware preservando a correlacao de request_id e metricas HTTP.
+referencias_nao_resolviveis:
+  - scripts/ops/strata_local_node.py
 ---
 
 # REGISTRO: Conclusão Integral das 4 Trilhas Evolutivas

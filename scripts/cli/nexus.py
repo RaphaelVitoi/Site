@@ -755,7 +755,7 @@ _DASH_SERVICES: tuple[tuple[str, int], ...] = (
     ("Ollama", 11434),
     ("Gemma Server", 17043),
     ("Backend API", 17042),
-    ("Strata 125B MoE", 8080),
+    ("Llama MoE :8080", 8080),
 )
 
 
@@ -1118,7 +1118,6 @@ _DASHBOARD_SHORTCUTS: tuple[_Atalho, ...] = (
     _Atalho("r", _GRP_OPERACOES, "ops optimize-ram", "Esvaziar e Otimizar RAM", ("ops", "optimize-ram")),
     _Atalho("m", _GRP_OPERACOES, "ops maintenance", "Manutencao Geral SOTA", ("ops", "maintenance")),
     _Atalho("a", _GRP_OPERACOES, "ops check-ascii", "Blindagem ASCII", ("ops", "check-ascii")),
-    _Atalho("x", _GRP_OPERACOES, "ops strata", "Strata MoE 125B", ("ops", "strata")),
     _Atalho("g", _GRP_OPERACOES, "ops start-gemma", "Servidor Gemma local", ("ops", "start-gemma", "-f")),
     _Atalho("i", _GRP_OPERACOES, "ops chat-gemma", "Chat Gemma interativo", ("ops", "chat-gemma")),
     _Atalho("5", _GRP_AGENTES, "agent handoff", "Sessao Web (Clipboard)", ("agent", "handoff")),
@@ -2617,47 +2616,6 @@ def run_maintenance():
 
 
 HELP_MODEL_CHOICES = "Modelo: 12b, 12b_qat, e4b, e2b, 4b, qwen, laguna"
-
-
-@ops_app.command("strata")
-@ops_app.command("start-strata")
-def start_strata(
-    dry_run: bool = typer.Option(
-        False, "--dry-run", "-d", help="Valida configuracao e pre-flight sem iniciar o processo"
-    ),
-    install: bool = typer.Option(
-        False, "--install", "-i", help="Clona e instala o repositorio Strata automaticamente se ausente"
-    ),
-    family: str = typer.Option("coder", "--family", help="Familia: coder, qwen, swift"),
-    model: str = typer.Option("IQ1_M", "--model", help="Variante: IQ1_M, Q2_0, IQ2_XS"),
-    port: int = typer.Option(8080, "--port", "-p", help="Porta local HTTP"),
-):
-    """Gatilho de ignicao do Servidor de Inferencia Local Strata MoE 125B (v0.1.39)."""
-    script_caminho = BASE_DIR.parent / "scripts" / "ops" / "Start-StrataNode.ps1"
-    if not script_caminho.exists():
-        script_caminho = Path.home() / ".gemini" / "scripts" / "ops" / "Start-StrataNode.ps1"
-
-    cmd = [
-        "pwsh",
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        str(script_caminho),
-        "-Port",
-        str(port),
-        "-Family",
-        family,
-        "-Model",
-        model,
-    ]
-    if install:
-        cmd.append("-Install")
-    if dry_run:
-        cmd.append("-DryRun")
-
-    console.print(f"[bold cyan]Disparando inicializacao do no Strata ({family} {model}) na porta {port}...[/]")
-    subprocess.run(cmd, check=False)
 
 
 @ops_app.command("start-gemma")

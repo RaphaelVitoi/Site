@@ -24,7 +24,6 @@ God Mode 2.0, Roteamento Hibrido SOTA, Arbitragem Absoluta, Execucao Implacavel,
 - `agy-customizations`
 - `windows-system-maintenance`
 - `windows-visual-tuning`
-- `strata-inference-engine`
 - `session-impact-evaluator`
 - `site-session-handoff`
 - `devin-managed-ops`

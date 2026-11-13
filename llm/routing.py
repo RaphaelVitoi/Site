@@ -314,8 +314,6 @@ def _infer_provider_for_model(model: str) -> str | None:
     model_l = model.lower()
     if "space-bunny" in model_l or model_l.startswith("hermes/"):
         return "hermes"
-    if "strata" in model_l:
-        return "strata"
     if _is_local_model(model_l):
         return "local"
     if "gemini" in model_l:
