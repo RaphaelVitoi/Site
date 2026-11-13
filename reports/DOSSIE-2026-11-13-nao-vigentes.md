@@ -9,6 +9,7 @@ autor:
 criado_em: "2026-11-13T12:00:00-03:00"
 atualizado_em: "2026-11-13T12:00:00-03:00"
 classes: [interno, governanca]
+commit: "01aa08c0"
 verificado:
   - "censo completo dos 681 registros do corpus via
     record_index.avaliar_registro + estado_de com supersede real"
