@@ -6,17 +6,19 @@ metadata:
     tags: ['google', 'jules', 'cloud', 'ai', 'bolt']
     category: devops
     related_skills: ['google-stitch-design', 'exa-search-engine', 'sota-quality-gate']
+triggers:
+  - user
 ---
 
 # SKILL: Google Jules Cloud — Orquestração Assíncrona & Engenharia em Nuvem
 
-> **Plataforma Oficial:** [jules.google.com](https://jules.google.com/)  
-> **API REST v1alpha:** `https://jules.googleapis.com/v1alpha`  
-> **Módulo Canônico:** [`engine/jules_bridge.py`](../../../engine/jules_bridge.py)  
-> **CLI Operacional:** [`scripts/ops/run_jules_agent.py`](../../../scripts/ops/run_jules_agent.py)  
-> **Relatório Dinâmico:** [`JULES_REPORT.md`](../../../reports/integrations/JULES_REPORT.md)  
-> **Sincronizador Oficial:** [`scripts/ops/sync_jules_report.py`](../../../scripts/ops/sync_jules_report.py)  
-> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules · Régua `CLAUDE.md §10`  
+> **Plataforma Oficial:** [jules.google.com](https://jules.google.com/)
+> **API REST v1alpha:** `https://jules.googleapis.com/v1alpha`
+> **Módulo Canônico:** [`engine/jules_bridge.py`](../../../engine/jules_bridge.py)
+> **CLI Operacional:** [`scripts/ops/run_jules_agent.py`](../../../scripts/ops/run_jules_agent.py)
+> **Relatório Dinâmico:** [`JULES_REPORT.md`](../../../reports/integrations/JULES_REPORT.md)
+> **Sincronizador Oficial:** [`scripts/ops/sync_jules_report.py`](../../../scripts/ops/sync_jules_report.py)
+> **Governança:** Protocolo Master Chico SOTA v8.0 GOLD · Tríade Stitch, Exa & Jules · Régua `CLAUDE.md §10`
 
 ---
 

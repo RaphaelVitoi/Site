@@ -9,6 +9,11 @@ metadata:
     tags: ['poker', 'pmev', 'knowledge', 'engine', 'game']
     category: research
     related_skills: ['pmev-game-theory-engine']
+allowed-tools:
+  - read
+  - grep
+  - glob
+  - exec
 ---
 
 # Poker & PMev Knowledge Engine (`poker-pmev-knowledge-engine`)

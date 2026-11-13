@@ -28,6 +28,7 @@ Dominio absoluto em Next.js, React, Python e PowerShell SOTA. Engenharia de Soft
 - `mcp-toolbox-database`
 - `chrysalis-live-editing`
 - `site-session-handoff`
+- `data-analyst-sota`
 
 ## Scripts & Ferramentas Integradas
 

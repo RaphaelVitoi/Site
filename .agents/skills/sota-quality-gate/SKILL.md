@@ -6,6 +6,11 @@ metadata:
     tags: ['quality-gate', 'sota', 'validation', 'gate']
     category: devops
     related_skills: ['nexus-sota-audit']
+allowed-tools:
+  - read
+  - grep
+  - glob
+  - exec
 ---
 
 # SKILL: SOTA Quality Gate & Invariant Assurance
