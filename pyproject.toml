@@ -453,6 +453,7 @@ ignore = [
 "engine/jules_bridge.py" = ["S310"]
 "engine/stitch_bridge.py" = ["S310"]
 "engine/chrysalis_bridge.py" = ["S310"]
+"scripts/ops/devin_session_insights.py" = ["S310"]
 "engine/vitoi_perspective_engine.py" = ["S110"]
 "tools/hybrid_router/plot_benchmark.py" = ["S404"]
 "memory_rag.py" = ["N806"]  # convencao vetorial

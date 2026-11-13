@@ -27,6 +27,11 @@ God Mode 2.0, Roteamento Hibrido SOTA, Arbitragem Absoluta, Execucao Implacavel,
 - `strata-inference-engine`
 - `session-impact-evaluator`
 - `site-session-handoff`
+- `devin-managed-ops`
+- `devin-session-insights`
+- `devin-session-supervision`
+- `devin-desktop-customizations`
+- `devin-desktop-architecture`
 
 ## Scripts & Ferramentas Integradas
 

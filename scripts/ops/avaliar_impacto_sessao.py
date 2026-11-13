@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 import json
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 import time
 
@@ -291,10 +292,161 @@ def medir_eficiencia_economica_e_infraestrutura() -> dict[str, object]:
     }
 
 
+def _git_memoria_repo(memoria_root: Path) -> dict[str, object]:
+    """Le o estado do repo-git da memoria local (analogo ao memory drive do Devin)."""
+    info: dict[str, object] = {"e_repo_git": False, "dirty_files": 0, "ultimo_commit": "N/A"}
+    try:
+        probe = subprocess.run(
+            ["git", "-C", str(memoria_root), "rev-parse", "--git-dir"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return info
+    if probe.returncode != 0:
+        return info
+    info["e_repo_git"] = True
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(memoria_root), "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        info["dirty_files"] = len([ln for ln in out.stdout.splitlines() if ln.strip()])
+        log = subprocess.run(
+            ["git", "-C", str(memoria_root), "log", "-1", "--format=%cI"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        info["ultimo_commit"] = log.stdout.strip()[:10] or "N/A"
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return info
+
+
+def medir_memoria_agentica_e_devin(
+    devin_session: str | None = None,
+    devin_insights_path: str | None = None,
+    devin_generate: bool = False,
+    devin_timeout: float = 120.0,
+) -> dict[str, object]:
+    """Mede o corpus de memoria agentica local e, opcionalmente, insights Devin.
+
+    Paridade com Devin Memory/Dreaming (docs.devin.ai/product-guides/memory):
+    - Site/memory/**.md          ~= memory drive do Devin (notas por topico)
+    - ~/.gemini/memoria (repo git) ~= o proprio memory drive (git + Markdown)
+    - "Dreaming" diario           ~= ultimo commit do repo de memoria
+      (divida de consolidacao: se o commit mais recente e velho, a memoria
+      acumulou notas sem revisao consolidada).
+    """
+    superficies: dict[str, dict[str, object]] = {}
+    superficies_config = [
+        ("site_memory", SITE_ROOT / "memory", "Site/memory"),
+        ("gemini_memoria", SITE_ROOT.parent / "memoria", "~/.gemini/memoria"),
+    ]
+    total_notas = 0
+    nota_mais_recente: float = 0.0
+    for chave, raiz, rotulo in superficies_config:
+        notas = [p for p in raiz.rglob("*.md") if "__pycache__" not in p.parts] if raiz.exists() else []
+        subdirs: dict[str, int] = {}
+        for p in notas:
+            rel = p.relative_to(raiz)
+            bucket = rel.parts[0] if len(rel.parts) > 1 else "(raiz)"
+            subdirs[bucket] = subdirs.get(bucket, 0) + 1
+        mais_recente = max((p.stat().st_mtime for p in notas), default=0.0)
+        nota_mais_recente = max(nota_mais_recente, mais_recente)
+        total_notas += len(notas)
+        superficies[chave] = {
+            "rotulo": rotulo,
+            "notas_md": len(notas),
+            "subdirs": subdirs,
+            "nota_mais_recente": (
+                datetime.fromtimestamp(mais_recente, UTC).strftime("%Y-%m-%d") if mais_recente else "N/A"
+            ),
+        }
+
+    memoria_repo = _git_memoria_repo(SITE_ROOT.parent / "memoria")
+
+    devin: dict[str, object] | None = None
+    if devin_insights_path:
+        try:
+            devin = json.loads(Path(devin_insights_path).read_text(encoding="utf-8"))
+            devin["_fonte"] = f"arquivo:{devin_insights_path}"
+        except (OSError, json.JSONDecodeError) as exc:
+            devin = {"_erro": f"falha ao ler insights: {exc}"}
+    elif devin_session:
+        try:
+            from scripts.ops.devin_session_insights import (  # noqa: PLC0415
+                _env_or_reg,
+                _normalizar_devin_id,
+                aguardar_analise,
+                gerar_insights,
+            )
+
+            token = _env_or_reg("DEVIN_API_TOKEN")
+            org_id = _env_or_reg("DEVIN_ORG_ID")
+            base = _env_or_reg("DEVIN_API_BASE", "https://api.devin.ai")
+            if not token or not org_id:
+                devin = {"_status": "nao_configurado", "_detalhe": "DEVIN_API_TOKEN/DEVIN_ORG_ID ausentes"}
+            else:
+                did = _normalizar_devin_id(devin_session)
+                if devin_generate:
+                    gerar_insights(base, org_id, did, token)
+                devin = aguardar_analise(base, org_id, did, token, devin_timeout, 5.0)
+                devin["_fonte"] = f"api:{did}"
+        except Exception as exc:  # eixo externo nunca derruba o painel local
+            devin = {"_erro": str(exc)[:200]}
+
+    devin_resumo: dict[str, object] | None = None
+    if isinstance(devin, dict) and not devin.get("_erro") and not devin.get("_status"):
+        analysis = devin.get("analysis") or {}
+        issues = analysis.get("issues") or []
+        action_items = analysis.get("action_items") or []
+        skill_usage = analysis.get("skill_usage") or {}
+        devin_resumo = {
+            "session_id": devin.get("session_id"),
+            "session_size": devin.get("session_size"),
+            "category": devin.get("category"),
+            "acus_consumed": devin.get("acus_consumed"),
+            "num_user_messages": devin.get("num_user_messages"),
+            "num_devin_messages": devin.get("num_devin_messages"),
+            "analysis_status": devin.get("analysis_status"),
+            "issues_total": len(issues),
+            "issues_high": sum(1 for i in issues if str(i.get("impact", "")).lower() == "high"),
+            "action_items_total": len(action_items),
+            "skills_usados": len(skill_usage.get("used") or skill_usage.get("items") or []),
+            "skills_enganosos": len(skill_usage.get("misleading") or skill_usage.get("misleading_items") or []),
+            "suggested_prompt": bool(analysis.get("suggested_prompt")),
+        }
+    elif isinstance(devin, dict):
+        devin_resumo = {k: v for k, v in devin.items() if k.startswith("_")}
+
+    return {
+        "timestamp": datetime.now(UTC).isoformat(),
+        "superficies": superficies,
+        "total_notas_md": total_notas,
+        "nota_mais_recente": (
+            datetime.fromtimestamp(nota_mais_recente, UTC).strftime("%Y-%m-%d") if nota_mais_recente else "N/A"
+        ),
+        "memoria_repo_git": memoria_repo,
+        "devin_insights": devin_resumo,
+    }
+
+
 def avaliar_impacto_sessao(
     pendencias_inicio: int | None = None,
     saida_markdown: bool = False,
     forcar_benchmark: bool = False,
+    devin_session: str | None = None,
+    devin_insights_path: str | None = None,
+    devin_generate: bool = False,
+    devin_timeout: float = 120.0,
 ) -> dict[str, object]:
     """Gera o diagnostico quantitativo completo da sessao."""
     pend = medir_pendencias()
@@ -304,6 +456,12 @@ def avaliar_impacto_sessao(
     ingress = medir_ingress_fast_path()
     pools = medir_pools_openrouter()
     economia = medir_eficiencia_economica_e_infraestrutura()
+    memoria = medir_memoria_agentica_e_devin(
+        devin_session=devin_session,
+        devin_insights_path=devin_insights_path,
+        devin_generate=devin_generate,
+        devin_timeout=devin_timeout,
+    )
 
     delta_pendencias_pct = 0.0
     if pendencias_inicio is not None and pendencias_inicio > 0:
@@ -323,6 +481,7 @@ def avaliar_impacto_sessao(
         "ingress_fast_path": ingress,
         "pools_openrouter": pools,
         "eficiencia_economica_infra": economia,
+        "memoria_agentica_devin": memoria,
     }
 
     if saida_markdown:
@@ -342,6 +501,7 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
     ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
     pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
     econ: dict[str, object] = r.get("eficiencia_economica_infra", {})  # type: ignore
+    mem: dict[str, object] = r.get("memoria_agentica_devin", {})  # type: ignore
 
     md: list[str] = [
         "### Painel de Avaliacao de Impacto da Sessao (Agnostico Tier 1-2-3)",
@@ -377,6 +537,33 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
         md.append(
             f"| **Eficiencia Economica & Infra** | **{econ.get('modelos_cloud_zero_ram_count', 0)} cloud / {econ.get('modelos_locais_quantizados_count', 0)} locais** | Cotas Pro Tier 1 prioritarias (Faixa.FLAT_FEE); Mitigacao ativa de custos de servidores |"
         )
+    if mem:
+        superficies: dict[str, dict[str, object]] = mem.get("superficies", {})  # type: ignore
+        site_mem = superficies.get("site_memory", {})
+        repo = mem.get("memoria_repo_git", {})
+        dirty = repo.get("dirty_files", "?")
+        ultimo = repo.get("ultimo_commit", "N/A")
+        md.append(
+            f"| **Memoria Agentica Local** | **{mem.get('total_notas_md', 0)} notas**"
+            f" (site: {site_mem.get('notas_md', 0)}) |"
+            f" Analogo ao Devin Memory/Dreaming; repo ~/.gemini/memoria: {dirty} dirty, ultimo commit {ultimo} |"
+        )
+        devin_resumo: dict[str, object] | None = mem.get("devin_insights")  # type: ignore
+        if devin_resumo:
+            if devin_resumo.get("session_size"):
+                md.append(
+                    f"| **Devin Session Insights** | **{str(devin_resumo.get('session_size')).upper()}**"
+                    f" / {devin_resumo.get('category') or 'N/A'} |"
+                    f" ACU: {devin_resumo.get('acus_consumed')} | msgs: {devin_resumo.get('num_user_messages')}u/"
+                    f"{devin_resumo.get('num_devin_messages')}d | issues: {devin_resumo.get('issues_total')}"
+                    f" ({devin_resumo.get('issues_high')} altas) | action_items: {devin_resumo.get('action_items_total')}"
+                    f" | skills enganosas: {devin_resumo.get('skills_enganosos')} |"
+                )
+            else:
+                detalhe = (
+                    devin_resumo.get("_erro") or devin_resumo.get("_status") or devin_resumo.get("_detalhe") or "?"
+                )
+                md.append(f"| **Devin Session Insights** | **indisponivel** | {detalhe} |")
     md.append("")
     return "\n".join(md)
 
@@ -390,6 +577,7 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
     ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
     pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
     econ: dict[str, object] = r.get("eficiencia_economica_infra", {})  # type: ignore
+    mem: dict[str, object] = r.get("memoria_agentica_devin", {})  # type: ignore
 
     print("\n" + "=" * 65)
     print("  AVALIACAO DE IMPACTO OBJETIVO DE SESSAO (SOTA AGNOSTIC)")
@@ -417,6 +605,22 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
             f"\u2022 Eficiencia Economica & Infra:  Cotas Pro Tier 1 prioritarias (FLAT_FEE) | {econ.get('modelos_cloud_zero_ram_count', 0)} cloud Zero-RAM / {econ.get('modelos_locais_quantizados_count', 0)} locais"
         )
         print("                                 Runtimes: Ollama local + llama.cpp Qwen + Hermes Agent")
+    if mem:
+        repo = mem.get("memoria_repo_git", {})
+        print(
+            f"\u2022 Memoria Agentica Local:       {mem.get('total_notas_md', 0)} notas |"
+            f" repo memoria: {repo.get('dirty_files', '?')} dirty, ultimo commit {repo.get('ultimo_commit', 'N/A')}"
+        )
+        devin_resumo = mem.get("devin_insights")
+        if devin_resumo and devin_resumo.get("session_size"):
+            print(
+                f"\u2022 Devin Session Insights:       size={str(devin_resumo.get('session_size')).upper()}"
+                f" cat={devin_resumo.get('category')} issues={devin_resumo.get('issues_total')}"
+                f" action_items={devin_resumo.get('action_items_total')}"
+            )
+        elif devin_resumo:
+            detalhe = devin_resumo.get("_erro") or devin_resumo.get("_status") or "?"
+            print(f"\u2022 Devin Session Insights:       indisponivel ({detalhe})")
     print("=" * 65 + "\n")
 
 
@@ -434,6 +638,29 @@ def main() -> int:
         action="store_true",
         help="Forca execucao do benchmark em regime ignorando telemetria viva",
     )
+    parser.add_argument(
+        "--devin-session",
+        type=str,
+        default=None,
+        help="ID de sessao Devin Cloud para ingerir Session Insights via API v3",
+    )
+    parser.add_argument(
+        "--devin-insights",
+        type=str,
+        default=None,
+        help="Caminho para JSON de Session Insights previamente exportado (modo offline)",
+    )
+    parser.add_argument(
+        "--devin-generate",
+        action="store_true",
+        help="Dispara geracao de insights no Devin antes de consultar (requer ManageOrgSessions)",
+    )
+    parser.add_argument(
+        "--devin-timeout",
+        type=float,
+        default=120.0,
+        help="Timeout de polling da analise Devin em segundos",
+    )
 
     args = parser.parse_args()
 
@@ -441,6 +668,10 @@ def main() -> int:
         pendencias_inicio=args.pendencias_inicio,
         saida_markdown=args.markdown,
         forcar_benchmark=args.forcar_benchmark,
+        devin_session=args.devin_session,
+        devin_insights_path=args.devin_insights,
+        devin_generate=args.devin_generate,
+        devin_timeout=args.devin_timeout,
     )
 
     if args.json:

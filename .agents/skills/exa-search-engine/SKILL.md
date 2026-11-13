@@ -6,17 +6,19 @@ metadata:
     tags: ['exa', 'search', 'engine', 'web']
     category: research
     related_skills: ['arxiv', 'competitor-news-monitor']
+triggers:
+  - user
 ---
 
 # SKILL: Exa MCP — Busca Semântica, Web Fetch & Exa Agent SOTA
 
-> **Servidor MCP Remoto:** `https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_run` (JSON-RPC 2.0 / SSE)  
-> **API REST Direta:** `https://api.exa.ai`  
-> **Módulo Canônico:** [`engine/exa_bridge.py`](../../../engine/exa_bridge.py)  
-> **Relatório Dinâmico:** [`EXA_REPORT.md`](../../../reports/integrations/EXA_REPORT.md)  
-> **Sincronizador Oficial:** [`scripts/ops/sync_exa_report.py`](../../../scripts/ops/sync_exa_report.py)  
-> **Membro da Tríade:** Stitch (UI), Jules (Cloud Dev/Refactor) e **Exa** (Busca Semântica & Pesquisa Autônoma)  
-> **Equipe Vinculada:** `Raphael Vitoi's Personal` (`cmsxf2xch006ejw04uvohyrb8`) | **Rate Limit:** `10 QPS`  
+> **Servidor MCP Remoto:** `https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_run` (JSON-RPC 2.0 / SSE)
+> **API REST Direta:** `https://api.exa.ai`
+> **Módulo Canônico:** [`engine/exa_bridge.py`](../../../engine/exa_bridge.py)
+> **Relatório Dinâmico:** [`EXA_REPORT.md`](../../../reports/integrations/EXA_REPORT.md)
+> **Sincronizador Oficial:** [`scripts/ops/sync_exa_report.py`](../../../scripts/ops/sync_exa_report.py)
+> **Membro da Tríade:** Stitch (UI), Jules (Cloud Dev/Refactor) e **Exa** (Busca Semântica & Pesquisa Autônoma)
+> **Equipe Vinculada:** `Raphael Vitoi's Personal` (`cmsxf2xch006ejw04uvohyrb8`) | **Rate Limit:** `10 QPS`
 
 ---
 

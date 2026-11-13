@@ -46,7 +46,12 @@
       "windows-visual-tuning",
       "strata-inference-engine",
       "session-impact-evaluator",
-      "site-session-handoff"
+      "site-session-handoff",
+      "devin-managed-ops",
+      "devin-session-insights",
+      "devin-session-supervision",
+      "devin-desktop-customizations",
+      "devin-desktop-architecture"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -202,7 +207,8 @@
       "credentials",
       "windows-system-maintenance",
       "session-impact-evaluator",
-      "site-session-handoff"
+      "site-session-handoff",
+      "code-scan-sota"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",
@@ -233,7 +239,8 @@
       "uv",
       "mcp-toolbox-database",
       "chrysalis-live-editing",
-      "site-session-handoff"
+      "site-session-handoff",
+      "data-analyst-sota"
     ],
     "specialized_scripts": [
       "engine/llama_cpp/start_vulkan_daemon.ps1",
@@ -260,7 +267,10 @@
       "flutter-add-widget-test",
       "firebase-security-rules-auditor",
       "chrome-devtools-agent-sota",
-      "site-session-handoff"
+      "site-session-handoff",
+      "e2e-video-proof",
+      "computer-use-local",
+      "preview-sota"
     ],
     "specialized_scripts": [
       "scripts/ops/cwv_gate.ps1",

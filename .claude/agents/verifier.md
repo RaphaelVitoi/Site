@@ -24,6 +24,9 @@ QA End-to-End, Simulacao de Regressao, Analise de integracao, Caca a bugs silenc
 - `firebase-security-rules-auditor`
 - `chrome-devtools-agent-sota`
 - `site-session-handoff`
+- `e2e-video-proof`
+- `computer-use-local`
+- `preview-sota`
 
 ## Scripts & Ferramentas Integradas
 

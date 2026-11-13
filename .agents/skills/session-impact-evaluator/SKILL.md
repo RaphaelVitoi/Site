@@ -7,7 +7,12 @@ metadata:
   hermes:
     tags: ["session", "impact", "evaluator", "analysis"]
     category: devops
-    related_skills: ["site-session-handoff"]
+    related_skills: ["site-session-handoff", "devin-session-insights"]
+allowed-tools:
+  - read
+  - grep
+  - glob
+  - exec
 ---
 
 # SOTA Session Impact Evaluator (Agnóstico Tiers 1-2-3)
@@ -46,7 +51,7 @@ fechamento formal dos trabalhos e a preparação do relatório de Handoff.
 > lastro quantitativo** mandatória que deve ser incorporado na Seção de
 > Resultados do `reports/HANDOFF-*.md`.
 
-## 3. Os 7 Eixos Objetivos de Medição
+## 3. Os 8 Eixos Objetivos de Medição
 
 A ferramenta afere concretamente:
 
@@ -88,6 +93,15 @@ A ferramenta afere concretamente:
      —, llama.cpp família Qwen e Hermes Agent como harness/condutor router com
      sufixo `b`), atestando a mitigação ativa de custos operacionais de
      servidores dedicados e VMs pagas.
+8. **Memória Agêntica Local & Devin Session Insights (paridade Memory/Dreaming):**
+   - Corpus local: `Site/memory/**/*.md` + `~/.gemini/memoria/**/*.md`
+     (análogo ao memory drive do Devin — repositório Git de notas Markdown).
+   - Saúde do repo `~/.gemini/memoria`: dirty files e data do último commit
+     como proxy da cadência de "dreaming" (consolidação de memória).
+   - Opcional: ingestão de Session Insights do Devin Cloud via API v3
+     (`--devin-session`, `--devin-insights <json>`, `--devin-generate`),
+     requerendo `DEVIN_API_TOKEN`/`DEVIN_ORG_ID`. Eixo externo nunca derruba
+     o painel local — falhas viram `indisponivel`/`nao_configurado`.
 
 ## 4. Como Executar e Incorporar no Handoff
 
@@ -100,7 +114,10 @@ Execute no terminal da raiz do projeto:
 ```
 
 Para auditar a capacidade pura de laboratório em regime descartando telemetria
-viva, adicione `--forcar-benchmark`.
+viva, adicione `--forcar-benchmark`. Para sessões executadas no Devin Cloud,
+adicione `--devin-session <devin-id>` (fetch live via API v3; combine com
+`--devin-generate` se os insights ainda não existirem) ou `--devin-insights
+<caminho.json>` para um payload exportado previamente (modo offline).
 
 ### Passo 2: Copiar a Tabela para o Relatório de Handoff
 
@@ -118,6 +135,8 @@ A saída gerada segue rigorosamente o formato Markdown aprovado pelos gates:
 | **Resolucao de Tarefas SQLite**  | **100.0%** (X/X)                       | 0 pendencias residuais ou falhas                                                        |
 | **Pools OpenRouter Multi-Tier**  | **16 chaves** (16 ativas, score: 80.0) | T1: 3 \| T2: 3 \| T3: 5 \| T4: 5 (0 bloq / 0 rev)                                       |
 | **Eficiencia Economica & Infra** | **14 cloud / 13 locais**               | Cotas Pro Tier 1 prioritarias (Faixa.FLAT_FEE); Mitigacao ativa de custos de servidores |
+| **Memoria Agentica Local**       | **N notas** (site: N)                  | Analogo ao Devin Memory/Dreaming; repo ~/.gemini/memoria: N dirty, ultimo commit YYYY-MM-DD |
+| **Devin Session Insights**       | **SIZE** / categoria                  | (somente com --devin-session/--devin-insights; ACU, issues, action_items, skills)      |
 ```
 
 ### Passo 3: Fechamento no Git

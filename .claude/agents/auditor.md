@@ -24,6 +24,7 @@ Analise de seguranca estrutural, Auditoria ASCII-only, Deteccao de edge cases, P
 - `windows-system-maintenance`
 - `session-impact-evaluator`
 - `site-session-handoff`
+- `code-scan-sota`
 
 ## Scripts & Ferramentas Integradas
 

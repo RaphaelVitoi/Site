@@ -59,7 +59,9 @@ $CredenciaisConhecidas = @(
     'EXA_API_KEY',
     'GITHUB_TOKEN',
     'RENDER_API_KEY',
-    'GOOGLE_CLOUD_PROJECT'
+    'GOOGLE_CLOUD_PROJECT',
+    'DEVIN_API_TOKEN',
+    'DEVIN_ORG_ID'
 )
 
 function Show-Estado {
