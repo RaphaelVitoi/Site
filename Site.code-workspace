@@ -81,10 +81,7 @@
     },
     "eslint.useFlatConfig": true,
     "eslint.workingDirectories": [
-      {
-        "directory": "frontend",
-        "!cwd": false,
-      },
+      "frontend",
     ],
     "tailwindCSS.experimental.classRegex": [
       [
