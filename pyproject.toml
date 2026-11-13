@@ -514,6 +514,7 @@ extraPaths = [
     ".",
     ".venv/Lib/site-packages",
     ".venv/lib/site-packages",
+    "../extensions/sota-chrome-cockpit/python-backend",
     "scripts",
     "engine",
     "core",
