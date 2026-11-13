@@ -12,7 +12,6 @@
     "openai.chatgpt",
     "esbenp.prettier-vscode",
     "dbaeumer.vscode-eslint",
-    "SonarSource.sonarlint-vscode",
     "llvm-vs-code-extensions.lldb-dap",
     "DavidAnson.vscode-markdownlint",
     "yzhang.markdown-all-in-one",

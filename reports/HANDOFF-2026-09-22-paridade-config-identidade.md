@@ -3,9 +3,10 @@ id: handoff-2026-09-22-paridade-config-identidade
 tipo: handoff
 escopo: Site
 ecossistema: nexus-sota
-autor: "Codex GPT-6 Luna [Tier 1] -- sessao 01a0cad2-cb70-7111-95f0-3d080332f420"
-criado_em: '2026-09-22T21:37:00-03:00'
-atualizado_em: '2026-09-22T21:37:00-03:00'
+autor:
+  "Codex GPT-6 Luna [Tier 1] -- sessao 01a0cad2-cb70-7111-95f0-3d080332f420"
+criado_em: "2026-09-22T21:37:00-03:00"
+atualizado_em: "2026-09-22T21:37:00-03:00"
 commit: b529aa7a
 classes: [interno, medido, continuidade, governanca, configuracao, qualidade]
 config_medida:
@@ -29,16 +30,26 @@ caminhos:
   - reports/integrations/JULES_REPORT.md
   - reports/AUDITORIA-2026-09-22-paridade-config-identidade.md
   - reports/HANDOFF-2026-09-22-paridade-config-identidade.md
-revisoes_de_ancora: []
+revisoes_de_ancora:
+  - registro: handoff-2026-09-22-paridade-config-identidade
+    caminhos: [.vscode/extensions.json]
+    parecer:
+      "Em 2026-11-12 o ecossistema desabilitou SonarLint globalmente (quarentena
+      no Devin); a remocao de SonarSource.sonarlint-vscode dos recomendados e
+      consequencia direta e nao altera o handoff historico de paridade de
+      2026-09-22."
 verificado:
   - Alteracoes e testes registrados na auditoria relacionada.
-  - Suite global e pre-push aprovaram com zero erros/warnings e dois skips documentados.
-  - CWV, higiene, portao de ancoras e portao de registros aprovados; hooks oficiais passaram.
+  - Suite global e pre-push aprovaram com zero erros/warnings e dois skips
+    documentados.
+  - CWV, higiene, portao de ancoras e portao de registros aprovados; hooks
+    oficiais passaram.
   - Push em origin/master confirmado; HEAD local e remoto coincidem.
 nao_verificado:
   - Inicio exato da sessao nao recuperavel do contexto disponivel.
   - CI remoto; runtime IDE e instalacao efetiva de extensoes nao medidos.
-  - Sincronizacao global do nucleo nao executada, e limite informado de 100 sessoes Gemini nao pesquisado nesta sessao.
+  - Sincronizacao global do nucleo nao executada, e limite informado de 100
+    sessoes Gemini nao pesquisado nesta sessao.
 ---
 
 # Handoff — paridade de configuração e identidade
@@ -60,8 +71,8 @@ não o invento.
    governa MCPs/plugins/hooks, não formatters ou tiers.
 2. Corrigido o formatter YAML para Prettier e incluídas recomendações de
    extensões compatíveis; adicionada regressão de paridade.
-3. Incluído Codex GPT-6 Sol como condutor Tier 1 assistido, mantendo explícita
-   a distinção entre veículo de condução e modelo de inferência do produto.
+3. Incluído Codex GPT-6 Sol como condutor Tier 1 assistido, mantendo explícita a
+   distinção entre veículo de condução e modelo de inferência do produto.
 4. Harmonizadas as skills Jules/Stitch: caminhos relativos, descrição realista
    das capacidades, sem garantias operacionais ou roteamento não comprovados.
 5. Removidas do gerador Jules afirmações de quota fixa e cron ativo não
@@ -87,8 +98,8 @@ validação estrutural das skills foram aprovadas anteriormente nesta sessão.
 Os testes direcionados passaram. O usuário autorizou incluir as duas skills
 Jules/Stitch preexistentes unstaged; os portões locais e hooks oficiais passaram
 e o push foi confirmado com HEAD remoto igual ao local. A suíte global e o
-pre-push tiveram dois skips documentados e zero erros/warnings. CI remoto não foi
-consultado; instalação e runtime do IDE não foram validados.
+pre-push tiveram dois skips documentados e zero erros/warnings. CI remoto não
+foi consultado; instalação e runtime do IDE não foram validados.
 
 ## Estado atual e continuidade
 

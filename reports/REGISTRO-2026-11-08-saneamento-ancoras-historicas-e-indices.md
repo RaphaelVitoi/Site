@@ -1,23 +1,28 @@
 ---
 id: registro-2026-11-08-saneamento-ancoras-historicas-e-indices
 tipo: registro
-escopo: Site -- saneamento e resolucao de 25 avisos de registros historicos nao vigentes (18 classes internas sem commit e 6 medicoes divergentes congeladas)
+escopo:
+  Site -- saneamento e resolucao de 25 avisos de registros historicos nao
+  vigentes (18 classes internas sem commit e 6 medicoes divergentes congeladas)
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
-criado_em: '2026-11-08T08:45:00-03:00'
-atualizado_em: '2026-11-08T08:45:00-03:00'
+criado_em: "2026-11-08T08:45:00-03:00"
+atualizado_em: "2026-11-08T08:45:00-03:00"
 commit: HEAD
 verificado:
-  - 'Atribuicao de SHAs historicos validos e ancestrais a 18 registros de classe interna'
-  - 'Congelamento formal (congelada_em) de 6 medicoes passadas divergentes do Python 3.14.9'
-  - 'Reconciliacao de ancoras passadas atingidas em registros historicos via revisoes_de_ancora'
-  - 'Aprovacao com zero erros no portao de registros record_gate.py M.O. 13.F'
+  - "Atribuicao de SHAs historicos validos e ancestrais a 18 registros de classe
+    interna"
+  - "Congelamento formal (congelada_em) de 6 medicoes passadas divergentes do
+    Python 3.14.9"
+  - "Reconciliacao de ancoras passadas atingidas em registros historicos via
+    revisoes_de_ancora"
+  - "Aprovacao com zero erros no portao de registros record_gate.py M.O. 13.F"
 nao_verificado:
-  - 'Execucao de testes em plataformas legadas Linux / Python 3.14.6'
+  - "Execucao de testes em plataformas legadas Linux / Python 3.14.6"
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
-  data_das_medicoes: '2026-11-08'
+  data_das_medicoes: "2026-11-08"
   toolchain: uv sync + ruff check + pytest + record_gate.py
   python: 3.14.9
   so: Windows
@@ -56,28 +61,51 @@ revisoes_de_ancora:
   - registro: handoff-2026-09-02-integridade-portao-no-teto-e-fila-para-o-sucessor
     caminhos:
       - reports/AUDITORIA-2026-09-02-integridade-do-projeto-e-piso-de-transformers.md
-    parecer: 'Caminho revisado em 2026-11-08: ancoragem com commit 61bc5fcf e congelamento de medicao historica sem alterar o escopo original.'
+    parecer:
+      "Caminho revisado em 2026-11-08: ancoragem com commit 61bc5fcf e
+      congelamento de medicao historica sem alterar o escopo original."
   - registro: handoff-2026-09-04-pmev-credenciais-e-submodulos
     caminhos:
       - reports/REGISTRO-2026-09-04-credenciais-submodulos-e-adaptador-hrc.md
-    parecer: 'Caminho revisado em 2026-11-08: ancoragem com commit 96ac0bc6 e congelamento de medicao historica sem alterar o escopo original.'
+    parecer:
+      "Caminho revisado em 2026-11-08: ancoragem com commit 96ac0bc6 e
+      congelamento de medicao historica sem alterar o escopo original."
   - registro: handoff-2026-09-09-ci-verde-e-as-seis-causas
     caminhos:
       - reports/PLANO-FRENTES-ABERTAS-2026-09-08.md
-    parecer: 'Caminho revisado em 2026-11-08: ancoragem com commit d8e51cb1 e congelamento de medicao historica mantendo o plano consistente.'
+    parecer:
+      "Caminho revisado em 2026-11-08: ancoragem com commit d8e51cb1 e
+      congelamento de medicao historica mantendo o plano consistente."
   - registro: handoff-2026-09-09-verde-nos-dois-portoes
     caminhos:
       - reports/PLANO-FRENTES-ABERTAS-2026-09-08.md
-    parecer: 'Caminho revisado em 2026-11-08: ancoragem com commit d8e51cb1 e congelamento de medicao historica mantendo o plano consistente.'
+    parecer:
+      "Caminho revisado em 2026-11-08: ancoragem com commit d8e51cb1 e
+      congelamento de medicao historica mantendo o plano consistente."
   - registro: registro-2026-09-09-upgrade-pwsh-e-harmonizacao
     caminhos:
       - reports/PLANO-FRENTES-ABERTAS-2026-09-08.md
-    parecer: 'Caminho revisado em 2026-11-08: ancoragem com commit d8e51cb1 e congelamento de medicao historica mantendo o plano consistente.'
+    parecer:
+      "Caminho revisado em 2026-11-08: ancoragem com commit d8e51cb1 e
+      congelamento de medicao historica mantendo o plano consistente."
+  - registro: registro-2026-11-08-saneamento-ancoras-historicas-e-indices
+    caminhos:
+      - reports/AUDITORIA-2026-09-22-paridade-config-identidade.md
+      - reports/HANDOFF-2026-09-22-paridade-config-identidade.md
+    parecer:
+      "Caminhos revisados em 2026-11-12: os dois registros receberam
+      revisoes_de_ancora próprias pela remocao de SonarSource.sonarlint-vscode
+      dos recomendados (.vscode/extensions.json); alteracao aditiva em
+      frontmatter, sem tocar no conteudo ancorado."
 ---
 
 # Registro 2026-11-08: Saneamento de Ancoras Historicas e Indices (M.O. 13.C / 13.F)
 
 Resolucao integral dos 25 avisos de registros historicos nao vigentes:
-- 18 registros de classe interna ancorados em SHAs historicos reais e ancestrais do HEAD.
-- 6 registros com divergencia de config_medida congelados formalmente (congelada_em) preservando as medicoes originais.
-- Ancoras historicas atingidas reconciliadas formalmente atraves de revisoes_de_ancora.
+
+- 18 registros de classe interna ancorados em SHAs historicos reais e ancestrais
+  do HEAD.
+- 6 registros com divergencia de config_medida congelados formalmente
+  (congelada_em) preservando as medicoes originais.
+- Ancoras historicas atingidas reconciliadas formalmente atraves de
+  revisoes_de_ancora.
