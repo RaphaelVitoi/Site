@@ -1,7 +1,4 @@
 {
-  // Devin project config — Site (Nexus Orchestrator SOTA)
-  // Pre-approves routine read-only/dev commands; denies irreversible or
-  // secret-touching actions. Deny always wins over allow.
   "permissions": {
     "allow": [
       "Read(**)",
