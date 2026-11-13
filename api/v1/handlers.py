@@ -378,6 +378,45 @@ async def handle_ask_oracle(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_ask_oracle")
 
 
+async def handle_s1_decide(request: web.Request) -> web.Response:
+    """POST /api/v1/s1/decide — cascata System-1 (Laya -> microservico -> Gemini Decision 1).
+
+    Body: ``{"state": str|dict, "questions": {qid: {type,instructions,criteria}},
+    "prefer_cloud": bool?}``. Resposta: ``DecisionResult.to_dict()`` com
+    proveniencia §4 (engine ``laya-s1-trained`` | ``laya-s1-fallback`` |
+    ``gemini-decision-1``). Erros de formato -> 400; nenhum motor -> 503.
+    """
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+
+    state = data.get("state")
+    questions = data.get("questions")
+    if state is None or state == "" or not isinstance(questions, dict) or not questions:
+        return web.json_response(
+            {"status": "ERROR", "error": "Parametros 'state' e 'questions' (mapa nao vazio) sao obrigatorios."},
+            status=400,
+        )
+    prefer_cloud = bool(data.get("prefer_cloud", False))
+
+    def _run_decide() -> Any:
+        from llm.gemini_decisions import decide_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        return decide_s1(state, questions, prefer_cloud=prefer_cloud)
+
+    try:
+        result = await asyncio.to_thread(_run_decide)
+    except RuntimeError as e:
+        return web.json_response({"status": "ERROR", "error": str(e)[:300]}, status=503)
+    except Exception as e:  # noqa: BLE001
+        return _internal_error(e, "handle_s1_decide")
+
+    payload = result.to_dict()
+    payload["status"] = "SUCCESS"
+    return web.json_response(payload)
+
+
 async def handle_health(request: web.Request) -> web.Response:
     """Retorna status operacional do worker: contagens de tarefas e uptime."""
     manager = request.app[MANAGER_KEY]
@@ -782,7 +821,18 @@ _SENSITIVE_DIR_COMPONENTS = frozenset({".git", ".secrets", ".ssh", ".gnupg", ".a
 #: metadata) e leitura de servico hoje. Formato de banco por SUFIXO, porque e
 #: o que o `.gitignore` ja proibe: as duas listas medem o mesmo fato.
 _SENSITIVE_SUFFIXES = frozenset(
-    {".pem", ".key", ".p12", ".pfx", ".keystore", ".jks", ".db", ".sqlite", ".sqlite3", ".lance"}
+    {
+        ".pem",
+        ".key",
+        ".p12",
+        ".pfx",
+        ".keystore",
+        ".jks",
+        ".db",
+        ".sqlite",
+        ".sqlite3",
+        ".lance",
+    }
 )
 _SENSITIVE_NAMES = frozenset({"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", ".netrc", ".npmrc", ".pypirc"})
 

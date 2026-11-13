@@ -105,6 +105,19 @@ def test_is_multimodal_input_bloco_imagem() -> None:
     assert is_multimodal_input(state) is True
 
 
+def test_is_multimodal_input_dict_textual_nao_e_nuvem() -> None:
+    """Dicts de estado estruturados (sem marcador de midia) ficam no caminho Laya."""
+    assert is_multimodal_input({"pot": 1200, "street": "flop", "hero": "BTN"}) is False
+    assert is_multimodal_input({"text": "crie uma tela de login"}) is False
+    assert is_multimodal_input({"parts": [{"text": "somente texto"}]}) is False
+
+
+def test_is_multimodal_input_dict_com_marcador_de_midia() -> None:
+    assert is_multimodal_input({"type": "image", "uri": "gs://x.png"}) is True
+    assert is_multimodal_input({"parts": [{"inline_data": {"mime_type": "image/png"}}]}) is True
+    assert is_multimodal_input({"mime_type": "application/pdf", "data": "..."}) is True
+
+
 # ---------------------------------------------------------------------------
 # GeminiDecisionsClient
 # ---------------------------------------------------------------------------
@@ -251,6 +264,7 @@ def test_decide_s1_laya_fallback_escalona_para_nuvem() -> None:
     fake_resp = _resposta_fake_gemini(_pergunta_basica())
     with (
         patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None),
         patch.object(cli, "create", return_value=fake_resp),
     ):
         result = decide_s1("crie uma tela de login", _pergunta_basica(), client=cli)
@@ -262,7 +276,10 @@ def test_decide_s1_laya_fallback_escalona_para_nuvem() -> None:
 
 def test_decide_s1_sem_nuvem_devolve_fallback_honesto() -> None:
     cli = GeminiDecisionsClient(api_key="")
-    with patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()):
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None),
+    ):
         result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
     assert result.engine == "laya-s1-fallback"
     assert result.provenia.fallback_used is True
@@ -272,7 +289,10 @@ def test_decide_s1_fallback_incompleto_sem_nuvem_levanta() -> None:
     """Fallback heuristico sem nuvem e com answers ambiguas nao vira decisao."""
     cli = GeminiDecisionsClient(api_key="")
     perguntas = _duas_perguntas_noul()
-    with patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()):
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None),
+    ):
         with pytest.raises(RuntimeError, match="sem respostas"):
             decide_s1("texto", perguntas, client=cli)
 
@@ -320,6 +340,7 @@ def test_decide_s1_laya_explode_e_nuvem_configurada() -> None:
     fake_resp = _resposta_fake_gemini(_pergunta_basica())
     with (
         patch("llm.gemini_decisions.laya_predict", side_effect=RuntimeError("torch off")),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None),
         patch.object(cli, "create", return_value=fake_resp),
     ):
         result = decide_s1("texto", _pergunta_basica(), client=cli)
@@ -329,6 +350,58 @@ def test_decide_s1_laya_explode_e_nuvem_configurada() -> None:
 def test_decide_s1_sem_motor_nenhum_levanta() -> None:
     cli = GeminiDecisionsClient(api_key="")
     pergunta = _pergunta_basica()
-    with patch("llm.gemini_decisions.laya_predict", side_effect=RuntimeError("off")):
+    with (
+        patch("llm.gemini_decisions.laya_predict", side_effect=RuntimeError("off")),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None),
+    ):
         with pytest.raises(RuntimeError, match="Nenhum motor"):
             decide_s1("texto", pergunta, client=cli)
+
+
+def test_decide_s1_normaliza_questions_no_topo() -> None:
+    """Formato invalido falha antes de qualquer motor ser acionado."""
+    cli = GeminiDecisionsClient(api_key="")
+    with (
+        patch("llm.gemini_decisions.laya_predict") as mock_laya,
+        patch("llm.gemini_decisions.laya_predict_remote") as mock_remote,
+    ):
+        with pytest.raises(ValueError, match="type invalido"):
+            decide_s1("texto", {"x": {"type": "ranking", "instructions": "..."}}, client=cli)
+    mock_laya.assert_not_called()
+    mock_remote.assert_not_called()
+
+
+def test_decide_s1_microservico_assume_quando_in_process_fallback() -> None:
+    """In-process em fallback -> microservico :8192 com pesos quentes decide."""
+    cli = GeminiDecisionsClient(api_key="")
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=_predicao_laya_treinada()),
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
+    assert result.engine == "laya-s1-trained"
+    assert result.provenia.fallback_used is False
+
+
+def test_decide_s1_microservico_fallback_tambem_escalona() -> None:
+    """Microservico tambem em fallback -> mesma semantica de antes (nuvem/fallback)."""
+    cli = GeminiDecisionsClient(api_key="")
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=_predicao_laya_fallback()),
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
+    assert result.engine == "laya-s1-fallback"
+    assert result.provenia.fallback_used is True
+
+
+def test_decide_s1_in_process_treinado_nao_consulta_microservico() -> None:
+    """Fast path local preservado: predição treinada in-process nao paga HTTP."""
+    cli = GeminiDecisionsClient(api_key="")
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_treinada()),
+        patch("llm.gemini_decisions.laya_predict_remote") as mock_remote,
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
+    mock_remote.assert_not_called()
+    assert result.engine == "laya-s1-trained"

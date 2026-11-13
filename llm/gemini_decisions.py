@@ -32,7 +32,7 @@ import time
 from typing import Any
 
 from llm.decision_pool import DECISION_POOL_NAME, _sha8, decision_pool_manager
-from llm.laya_bridge import Provenia, laya_predict
+from llm.laya_bridge import Provenia, laya_predict, laya_predict_remote
 
 __all__ = [
     "DECISIONS_API_VERSION",
@@ -108,13 +108,85 @@ def _resolve_api_key() -> str:
     return keys[0] if keys else ""
 
 
+_MEDIA_PART_TYPES: frozenset[str] = frozenset(
+    {
+        "image",
+        "img",
+        "audio",
+        "video",
+        "pdf",
+        "file",
+        "media",
+        "blob",
+        "binary",
+        "document",
+        "inline_data",
+        "file_data",
+    }
+)
+_MEDIA_DATA_KEYS: frozenset[str] = frozenset(
+    {
+        "inline_data",
+        "inlinedata",
+        "file_data",
+        "filedata",
+        "image_url",
+        "image",
+        "audio",
+        "video",
+        "pdf",
+        "media",
+        "blob",
+    }
+)
+_MEDIA_MIME_PREFIXES: tuple[str, ...] = ("image/", "audio/", "video/", "application/pdf")
+_MAX_MEDIA_SCAN_DEPTH: int = 8
+
+
+def _dict_tem_marcador_midia(obj: Any, depth: int = 0) -> bool:
+    """Varredura recursiva por marcadores de midia reais (chaves de blob, tipos
+    de parte de midia e mime_type midia). Dicts de estado arbitrarios
+    (ex.: ``{"pot": 100, "street": "flop"}``) NAO sao multimodais -- so
+    conteudo explicitamente binario/midia escala para a nuvem."""
+    if depth > _MAX_MEDIA_SCAN_DEPTH:
+        return False
+    if isinstance(obj, dict):
+        part_type = obj.get("type")
+        if isinstance(part_type, str) and part_type.strip().lower() in _MEDIA_PART_TYPES:
+            return True
+        mime = obj.get("mime_type") or obj.get("mimetype")
+        if isinstance(mime, str) and mime.strip().lower().startswith(_MEDIA_MIME_PREFIXES):
+            return True
+        for key, value in obj.items():
+            if str(key).lower() in _MEDIA_DATA_KEYS and value:
+                return True
+            if _dict_tem_marcador_midia(value, depth + 1):
+                return True
+    elif isinstance(obj, (list, tuple)):
+        return any(_dict_tem_marcador_midia(item, depth + 1) for item in obj)
+    return False
+
+
 def is_multimodal_input(state: Any) -> bool:
-    """True quando ``state`` carrega blocos de conteudo multimodal (nao-string puro)."""
+    """True quando ``state`` carrega conteudo multimodal de verdade.
+
+    - ``str`` -> texto puro;
+    - ``list``/``tuple`` -> blocos de conteudo: qualquer parte dict com
+      ``type`` nao-texto (semantica original de content-parts) ou marcador
+      de midia aninhado;
+    - ``dict`` -> somente com marcador de midia explicito (chave de blob,
+      ``type`` de midia, ``mime_type`` midia) -- dicts textuais/estruturados
+      seguem o caminho local da Laya.
+    """
     if isinstance(state, str):
         return False
     if isinstance(state, (list, tuple)):
-        return any(isinstance(b, dict) and b.get("type") not in (None, "text") for b in state)
-    return isinstance(state, dict)
+        return any(
+            isinstance(b, dict) and b.get("type") not in (None, "text") for b in state
+        ) or _dict_tem_marcador_midia(state)
+    if isinstance(state, dict):
+        return _dict_tem_marcador_midia(state)
+    return False
 
 
 def _normalize_instructions(raw: Any) -> Any:
@@ -631,6 +703,38 @@ def _laya_decision_result(pred: Any, questions: dict[str, dict[str, Any]], engin
     )
 
 
+def _laya_predict_com_servico(
+    state: Any,
+    questions: dict[str, dict[str, Any]],
+) -> Any:
+    """Predict System-1 local com degrau de microservico HTTP (:8192).
+
+    Ordem:
+      - ``CHICO_LAYA_PREFER_SERVICE=1`` -> microservico primeiro (pesos quentes);
+      - ``laya_predict`` in-process (GPU/custo zero);
+      - se o resultado esta em ``fallback_used`` (CPU-gated/checkpoint ausente)
+        ou falhou, o microservico dedicado e sondado -- neste host (RX 570 sem
+        CUDA) e o unico caminho que executa o checkpoint 322M de verdade.
+    O microservico nunca e consultado quando o caminho in-process ja entregou
+    predição treinada -- o fast path local permanece intocado.
+    """
+    if os.environ.get("CHICO_LAYA_PREFER_SERVICE", "0") == "1":
+        remote = laya_predict_remote(state, questions=dict(questions))
+        if remote is not None and not getattr(remote.provenia, "fallback_used", True):
+            return remote
+    try:
+        pred = laya_predict(state, questions=dict(questions))
+    except Exception as e:  # pylint: disable=broad-except
+        logger.debug("[gemini-decisions] laya_predict falhou (%s).", e)
+        pred = None
+    if pred is not None and not getattr(getattr(pred, "provenia", None), "fallback_used", True):
+        return pred
+    remote = laya_predict_remote(state, questions=dict(questions))
+    if remote is not None:
+        return remote
+    return pred
+
+
 def decide_s1(
     state: Any,
     questions: dict[str, dict[str, Any]],
@@ -640,47 +744,48 @@ def decide_s1(
     """Cascata System-1: Laya local primeiro, Gemini Decision 1 como escalonamento.
 
     Regras medidas:
-      - input multimodal (lista de blocos / dict) -> Gemini direto
-        (a Laya so processa texto);
+      - input multimodal (lista de blocos / dict com marcador de midia) ->
+        Gemini direto (a Laya so processa texto);
       - ``prefer_cloud=True`` -> Gemini direto (benchmark/validacao);
-      - texto-only -> ``laya_predict``; se a provenia marcar ``fallback_used``
-        (CPU-gated ou checkpoint ausente), escala para a Decisions API quando
+      - ``questions`` e validada/normalizada uma unica vez no topo
+        (``normalize_questions``) -- formato invalido falha antes de qualquer
+        motor ser acionado;
+      - texto-only -> ``laya_predict`` in-process, com degrau de microservico
+        HTTP :8192 quando o caminho local esta em fallback; se a provenia
+        marcar ``fallback_used``, escala para a Decisions API quando
         configurada; caso contrario devolve o resultado heuristico da Laya com
         proveniencia explicita.
     """
     cli = client or GeminiDecisionsClient()
+    normalized = normalize_questions(questions)
     multimodal = is_multimodal_input(state)
 
     if multimodal or prefer_cloud:
-        return decide(state, questions, client=cli)
+        return decide(state, normalized, client=cli)
 
-    try:
-        pred = laya_predict(state, questions=dict(questions))
-    except Exception as e:  # pylint: disable=broad-except
-        logger.debug("[gemini-decisions] laya_predict falhou (%s); escalando.", e)
-        pred = None
+    pred = _laya_predict_com_servico(state, questions)
 
     if pred is not None and not getattr(getattr(pred, "provenia", None), "fallback_used", True):
-        answers = _laya_answers(pred, questions)
-        missing = _laya_missing(answers, questions)
+        answers = _laya_answers(pred, normalized)
+        missing = _laya_missing(answers, normalized)
         if not missing:
-            return _laya_decision_result(pred, questions, engine="laya-s1-trained")
+            return _laya_decision_result(pred, normalized, engine="laya-s1-trained")
         # Answers ausentes/ambiguos nao sustentam uma decisao: escala para a
         # nuvem quando configurada; sem nuvem, falha explicita em vez de
         # devolver um laya-s1-trained incompleto.
         logger.debug("[gemini-decisions] laya sem answers para %s; escalando/falhando.", missing)
         if cli.is_configured:
-            return decide(state, questions, client=cli)
+            return decide(state, normalized, client=cli)
         raise RuntimeError(f"[gemini-decisions] Laya sem respostas para {missing} e GeminiDecisionsClient sem chave.")
 
     # Laya indisponivel/gated: escalona para a nuvem se configurada.
     if cli.is_configured:
         logger.debug("[gemini-decisions] laya em fallback; escalando para %s.", cli.model)
-        return decide(state, questions, client=cli)
+        return decide(state, normalized, client=cli)
 
     # Sem nuvem: devolve o resultado Laya (mesmo heuristico) com proveniencia honesta.
     if pred is not None:
-        return _laya_decision_result(pred, questions, engine="laya-s1-fallback")
+        return _laya_decision_result(pred, normalized, engine="laya-s1-fallback")
     raise RuntimeError("Nenhum motor de decisao disponivel: Laya falhou e GeminiDecisionsClient sem chave.")
 
 

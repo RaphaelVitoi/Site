@@ -500,9 +500,11 @@ def criar_fastapi_app() -> FastAPI:
     def health():
         profile = obter_perfil_hardware()
         cpu_allowed = os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
-        from llm.laya_bridge import _PREDICT_ROUTER  # noqa: PLC0415
+        from llm.laya_bridge import LayaRouter  # noqa: PLC0415
 
-        weights_resident = _PREDICT_ROUTER is not None and "multilingual" in getattr(_PREDICT_ROUTER, "_agents", {})
+        weights_resident = LayaRouter._router is not None and "multilingual" in getattr(
+            LayaRouter._router, "_agents", {}
+        )
         weights_ready = (profile.cuda_available or cpu_allowed) and weights_resident
         return {
             "status": "HEALTHY",

@@ -250,6 +250,57 @@ async def test_ask_oracle_retorna_contexto_e_proveniencia_system1(monkeypatch) -
 
 @pytest.mark.asyncio
 @pytest.mark.unit
+async def test_s1_decide_retorna_decisao_com_engine_e_proveniencia(monkeypatch) -> None:
+    """POST /api/v1/s1/decide delega a cascata System-1 e devolve DecisionResult."""
+    import json
+
+    from api.v1 import handlers
+
+    class FakeResult:
+        def to_dict(self) -> dict:
+            return {
+                "engine": "laya-s1-trained",
+                "model_used": "laya-multilingual",
+                "latency_ms": 12.0,
+                "n_tokens": 0,
+                "answers": {"q": {"type": "noul", "noul": 0.9}},
+                "provenia": {"engine_id": "laya-s1-trained", "fallback_used": False},
+            }
+
+    async def fake_json() -> dict:
+        return {
+            "state": "crie uma tela de login",
+            "questions": {"q": {"type": "noul", "instructions": "Eh design system?"}},
+        }
+
+    monkeypatch.setattr("llm.gemini_decisions.decide_s1", lambda *a, **k: FakeResult())
+    response = await handlers.handle_s1_decide(cast(web.Request, SimpleNamespace(json=fake_json)))
+    payload = json.loads(response.text or "{}")
+    assert response.status == 200
+    assert payload["status"] == "SUCCESS"
+    assert payload["engine"] == "laya-s1-trained"
+    assert payload["provenia"]["fallback_used"] is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
+async def test_s1_decide_valida_payload_antes_de_chamar_motor() -> None:
+    """Body sem state/questions responde 400 sem tocar a cascata System-1."""
+    import json
+
+    from api.v1 import handlers
+
+    async def fake_json() -> dict:
+        return {"state": ""}
+
+    response = await handlers.handle_s1_decide(cast(web.Request, SimpleNamespace(json=fake_json)))
+    payload = json.loads(response.text or "{}")
+    assert response.status == 400
+    assert payload["status"] == "ERROR"
+
+
+@pytest.mark.asyncio
+@pytest.mark.unit
 async def test_view_file_recusa_caminho_fora_das_fronteiras(local_tmp_dir: Path, monkeypatch) -> None:
     """Path traversal e ausencia de 'path' respondem 403/400, nunca conteudo."""
     async with _cliente_local(local_tmp_dir, monkeypatch, "traversal.db") as cliente:
