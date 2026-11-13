@@ -183,16 +183,22 @@ def coletar(hoje: date | None = None) -> list[Sinal]:
             )
         )
 
-    # 3. O lastro do dia ainda nao foi gravado (a tarefa roda as 23:59).
-    if data < hoje:
+    # 3. Lastro atrasado. A tarefa grava as 23:59, entao faltar o dia corrente
+    #    e o estado ESPERADO durante ~24h -- emitir um sinal para isso era ruido
+    #    diario medido em 2026-11-13 (aparecia em todo commit feito antes das
+    #    23:59, sempre "informativo", nunca acionavel). So a partir de DOIS dias
+    #    de atraso ha anomalia de verdade; um dia e o calendario, nao a falha.
+    atraso = (hoje - data).days
+    if atraso > 1:
         sinais.append(
             Sinal(
-                grave=(hoje - data).days > 1,
-                titulo=f"Lastro mais recente e de {data}",
+                grave=True,
+                titulo=f"Lastro mais recente e de {data} ({atraso} dias de atraso)",
                 detalhe=(
-                    "A tarefa grava as 23:59; faltar o dia corrente antes disso e esperado. "
-                    "Mais de um dia de atraso nao e."
+                    "A tarefa grava as 23:59; um dia de atraso e o estado esperado ate la. "
+                    "Dois dias ou mais sem lastro novo e anomalia."
                 ),
+                acao="pwsh scripts/ops/New-AgentCalibrationDailyEvidence.ps1",
             )
         )
 

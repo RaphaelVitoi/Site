@@ -1002,18 +1002,39 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
     return erros, avisos
 
 
+# O aviso tem a forma `{rel} ({estado}, {motivo}) ancora {pendentes}. ...` e o
+# motivo PODE conter parenteses -- `commit declarado (pending) nao existe...` ja
+# produziu o agrupamento truncado `[1] OBSOLETO, commit declarado (pending`.
+# O motivo vai ate o ULTIMO `)` antes de ` ancora `, que e costura unica da linha.
+_RE_AVISO_NAO_VIGENTE = re.compile(r"^(?P<rel>.*?) \((?P<estado>[^,]+), (?P<motivo>.+)\) ancora ")
+
+
 def _resumir_nao_vigentes(nao_vigentes: list[str]) -> None:
     print(
         f"\n   AVISOS ({len(nao_vigentes)}) em registros historicos nao vigentes "
         "(ancoras passadas atingidas; nao bloqueiam o commit):"
     )
-    por_motivo: dict[str, int] = {}
+    grupos: dict[tuple[str, str], list[str]] = {}
+    outros: list[str] = []
     for a in nao_vigentes:
-        m = re.search(r"\(([^)]+)\)", a)
-        chave = m.group(1) if m else "outros"
-        por_motivo[chave] = por_motivo.get(chave, 0) + 1
-    for motivo, total in sorted(por_motivo.items(), key=lambda x: -x[1]):
-        print(f"      - [{total}] {motivo}")
+        m = _RE_AVISO_NAO_VIGENTE.match(a)
+        if m is None:
+            outros.append(a)
+            continue
+        chave = (m["estado"], m["motivo"])
+        grupos.setdefault(chave, []).append(m["rel"])
+    for (estado, motivo), registros in sorted(grupos.items(), key=lambda x: -len(x[1])):
+        print(f"      - [{len(registros)}] {estado} -- {motivo}")
+        for rel in sorted(registros):
+            print(f"          {rel}")
+    for a in outros:
+        print(f"      - {a}")
+    if grupos:
+        print(
+            "      Cada linha e um registro cuja ancora foi tocada neste commit. "
+            "O conjunto encolhe por reconciliacao de auditoria (backfill de `commit:` "
+            "ou `supersede`), nunca por edicao casual de registro publicado."
+        )
 
 
 def _imprimir_avisos(avisos: list[str]) -> None:
