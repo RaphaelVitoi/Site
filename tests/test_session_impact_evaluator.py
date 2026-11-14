@@ -255,3 +255,55 @@ def test_qualitativo_narrativa_e_markdown_completo(tmp_path: Path) -> None:
     md_so_tabela = mod.gerar_tabela_markdown(r, incluir_narrativa=False)
     assert "### Painel de Avaliacao de Impacto da Sessao" in md_so_tabela
     assert "### Resumo Escrito da Sessao" not in md_so_tabela
+
+
+def test_marcador_suite_verde_valida_por_arvore(tmp_path: Path) -> None:
+    """Marcador .git/sota-suite-verde valida pelo SHA da arvore mesmo apos commit novo."""
+    git_dir = tmp_path / ".git"
+    git_dir.mkdir(parents=True)
+    (git_dir / "sota-suite-verde").write_text(
+        json.dumps(
+            {
+                "contrato": 1,
+                "arvore": "tree12345678",
+                "head_na_medicao": "oldhead0000",
+                "em": "2026-11-14T06:07:02-03:00",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with (
+        patch.object(mod, "SITE_ROOT", tmp_path),
+        patch.object(mod, "_arvore_atual_site", return_value="tree12345678"),
+        patch.object(mod, "_git_cmd", return_value="newhead1111"),
+    ):
+        res = mod._ler_marcador_suite_verde()
+
+    assert res["disponivel"] is True
+    assert res["atualizado_no_head"] is True
+    assert res["arvore"] == "tree1234"
+
+
+def test_medir_atividade_git_usa_cutoff_iso_utc() -> None:
+    """Passa timestamp ISO-8601 ao git log --since em vez de float em 'hours ago'."""
+    chamadas: list[tuple[str, ...]] = []
+
+    def fake_git(*args: str, timeout: float = 10.0) -> str:
+        del timeout
+        chamadas.append(args)
+        if args and args[0] == "branch":
+            return "master\n"
+        if args and args[0] == "rev-parse":
+            return "57402261\n"
+        return ""
+
+    with patch.object(mod, "_git_cmd", side_effect=fake_git):
+        res = mod.medir_atividade_git_sessao(horas=14.0, max_commits=10)
+
+    assert res["janela_horas"] == 14.0
+    log_calls = [c for c in chamadas if c and c[0] == "log"]
+    assert len(log_calls) == 1
+    since_arg = next(a for a in log_calls[0] if a.startswith("--since="))
+    assert "hours ago" not in since_arg
+    assert "+00:00" in since_arg or "Z" in since_arg
