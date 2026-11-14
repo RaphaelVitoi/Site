@@ -259,7 +259,7 @@ def test_o_axe_confirma_a_hierarquia_no_dom() -> None:
 
     def _is_service_live(host: str, port: int, path: str = "/") -> bool:
         try:
-            conn = http.client.HTTPConnection(host, port, timeout=4)
+            conn = http.client.HTTPConnection(host, port, timeout=10)
             conn.request("HEAD", path)
             resp = conn.getresponse()
             conn.close()
