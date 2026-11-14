@@ -78,7 +78,7 @@ def execute_autopoietic_cycle() -> dict[str, Any]:
     logger.info("Horario: %s | Repositorio: RaphaelVitoi/Site", now_utc)
 
     # 1. Fase Jules Cloud
-    logger.info("[FASE 1/3] Sincronizando Google Jules Cloud (Gemini 3.8 Flash & Gemini 3.1 Pro Preview)...")
+    logger.info("[FASE 1/3] Sincronizando Google Jules Cloud (Gemini 3.8 Flash & Gemini 3.1 Pro)...")
     code_jules, out_jules = run_python_script("scripts/ops/sync_jules_report.py", "--write")
     jules_ok = code_jules == 0
     logger.info("  -> Status Jules: %s", "CONCLUIDO" if jules_ok else "FALHOU")
@@ -117,7 +117,7 @@ def execute_autopoietic_cycle() -> dict[str, Any]:
             "status": "OK" if jules_ok else "ERROR",
             "report": "reports/integrations/JULES_REPORT.md",
             "active_model": "Gemini 3.8 Flash (Default)",
-            "deep_model": "Gemini 3.1 Pro Preview",
+            "deep_model": "Gemini 3.1 Pro",
         },
         "stitch": {
             "status": "OK" if stitch_ok else "ERROR",

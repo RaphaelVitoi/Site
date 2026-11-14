@@ -102,7 +102,7 @@ function Get-AgentCalibrationProvenance {
                 # duas camadas tem de concordar sobre o que EXISTE e divergir apenas
                 # sobre o que esta autorizado -- guard em tests/test_agent_calibration_provenance.py.
                 '^claude-(?:opus|sonnet|haiku|fable)-\d+(?:[.-]\d+)*(?:-[a-z0-9]+)*$' { 'claude-code'; break }
-                '^gemini-\d+(?:\.\d+)*-(?:flash|pro)(?:-[a-z0-9]+)*$' { 'antigravity'; break }
+                '^gemini-(?:\d+(?:\.\d+)*-(?:flash|pro)|(?:pro|flash(?:-lite)?)-latest)(?:-[a-z0-9]+)*$' { 'antigravity'; break }
                 # Runtimes locais e condutores nao-API: Hermes Agent (solar-pro4),
                 # Ollama (modelos GGUF como qwen2.5-coder:7b, llama3.2, etc.),
                 # llama.cpp direto. Esses modelos nao pertencem a uma familia de
