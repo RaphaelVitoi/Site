@@ -143,6 +143,17 @@ _MEDIA_MIME_PREFIXES: tuple[str, ...] = ("image/", "audio/", "video/", "applicat
 _MAX_MEDIA_SCAN_DEPTH: int = 8
 
 
+def _dict_direto_tem_midia(obj: dict[Any, Any]) -> bool:
+    """Verifica marcadores de midia diretos num unico dicionario."""
+    part_type = obj.get("type")
+    if isinstance(part_type, str) and part_type.strip().lower() in _MEDIA_PART_TYPES:
+        return True
+    mime = obj.get("mime_type") or obj.get("mimetype")
+    if isinstance(mime, str) and mime.strip().lower().startswith(_MEDIA_MIME_PREFIXES):
+        return True
+    return any(str(key).lower() in _MEDIA_DATA_KEYS and value for key, value in obj.items())
+
+
 def _dict_tem_marcador_midia(obj: Any, depth: int = 0) -> bool:
     """Varredura recursiva por marcadores de midia reais (chaves de blob, tipos
     de parte de midia e mime_type midia). Dicts de estado arbitrarios
@@ -150,21 +161,13 @@ def _dict_tem_marcador_midia(obj: Any, depth: int = 0) -> bool:
     conteudo explicitamente binario/midia escala para a nuvem."""
     if depth > _MAX_MEDIA_SCAN_DEPTH:
         return False
-    if isinstance(obj, dict):
-        part_type = obj.get("type")
-        if isinstance(part_type, str) and part_type.strip().lower() in _MEDIA_PART_TYPES:
-            return True
-        mime = obj.get("mime_type") or obj.get("mimetype")
-        if isinstance(mime, str) and mime.strip().lower().startswith(_MEDIA_MIME_PREFIXES):
-            return True
-        for key, value in obj.items():
-            if str(key).lower() in _MEDIA_DATA_KEYS and value:
-                return True
-            if _dict_tem_marcador_midia(value, depth + 1):
-                return True
-    elif isinstance(obj, (list, tuple)):
+    if isinstance(obj, (list, tuple)):
         return any(_dict_tem_marcador_midia(item, depth + 1) for item in obj)
-    return False
+    if not isinstance(obj, dict):
+        return False
+    if _dict_direto_tem_midia(obj):
+        return True
+    return any(_dict_tem_marcador_midia(value, depth + 1) for value in obj.values())
 
 
 def is_multimodal_input(state: Any) -> bool:

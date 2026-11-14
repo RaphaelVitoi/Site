@@ -330,6 +330,104 @@ def _git_memoria_repo(memoria_root: Path) -> dict[str, object]:
     return info
 
 
+def _medir_uma_superficie(raiz: Path, rotulo: str) -> tuple[dict[str, object], int, float]:
+    """Mede notas Markdown e recencia numa unica superficie de memoria."""
+    notas = [p for p in raiz.rglob("*.md") if "__pycache__" not in p.parts] if raiz.exists() else []
+    subdirs: dict[str, int] = {}
+    for p in notas:
+        rel = p.relative_to(raiz)
+        bucket = rel.parts[0] if len(rel.parts) > 1 else "(raiz)"
+        subdirs[bucket] = subdirs.get(bucket, 0) + 1
+    mais_recente = max((p.stat().st_mtime for p in notas), default=0.0)
+    resumo: dict[str, object] = {
+        "rotulo": rotulo,
+        "notas_md": len(notas),
+        "subdirs": subdirs,
+        "nota_mais_recente": (
+            datetime.fromtimestamp(mais_recente, UTC).strftime("%Y-%m-%d") if mais_recente else "N/A"
+        ),
+    }
+    return resumo, len(notas), mais_recente
+
+
+def _carregar_devin_insights(
+    devin_session: str | None,
+    devin_insights_path: str | None,
+    devin_generate: bool,
+    devin_timeout: float,
+) -> dict[str, object] | None:
+    """Carrega insights Devin de arquivo local ou via API v3."""
+    if devin_insights_path:
+        try:
+            devin: dict[str, object] = json.loads(Path(devin_insights_path).read_text(encoding="utf-8"))
+            devin["_fonte"] = f"arquivo:{devin_insights_path}"
+            return devin
+        except (OSError, json.JSONDecodeError) as exc:
+            return {"_erro": f"falha ao ler insights: {exc}"}
+
+    if not devin_session:
+        return None
+
+    try:
+        from scripts.ops.devin_session_insights import (  # noqa: PLC0415
+            _env_or_reg,
+            _normalizar_devin_id,
+            aguardar_analise,
+            gerar_insights,
+        )
+
+        token = _env_or_reg("DEVIN_API_TOKEN")
+        org_id = _env_or_reg("DEVIN_ORG_ID")
+        base = _env_or_reg("DEVIN_API_BASE", "https://api.devin.ai")
+        if not token or not org_id:
+            return {"_status": "nao_configurado", "_detalhe": "DEVIN_API_TOKEN/DEVIN_ORG_ID ausentes"}
+        did = _normalizar_devin_id(devin_session)
+        if devin_generate:
+            gerar_insights(base, org_id, did, token)
+        devin = aguardar_analise(base, org_id, did, token, devin_timeout, 5.0)
+        devin["_fonte"] = f"api:{did}"
+        return devin
+    except Exception as exc:  # eixo externo nunca derruba o painel local
+        return {"_erro": str(exc)[:200]}
+
+
+def _como_dict(val: object) -> dict[str, object]:
+    return val if isinstance(val, dict) else {}
+
+
+def _como_lista_dicts(val: object) -> list[dict[str, object]]:
+    return [x for x in val if isinstance(x, dict)] if isinstance(val, list) else []
+
+
+def _resumir_devin_insights(devin: dict[str, object] | None) -> dict[str, object] | None:
+    """Resume o payload de insights Devin para o diagnostico de impacto."""
+    if not isinstance(devin, dict):
+        return None
+    if devin.get("_erro") or devin.get("_status"):
+        return {k: v for k, v in devin.items() if k.startswith("_")}
+    analysis = _como_dict(devin.get("analysis"))
+    issues = _como_lista_dicts(analysis.get("issues"))
+    action_items = _como_lista_dicts(analysis.get("action_items"))
+    skill_usage = _como_dict(analysis.get("skill_usage"))
+    usados = skill_usage.get("used") or skill_usage.get("items")
+    enganosos = skill_usage.get("misleading") or skill_usage.get("misleading_items")
+    return {
+        "session_id": devin.get("session_id"),
+        "session_size": devin.get("session_size"),
+        "category": devin.get("category"),
+        "acus_consumed": devin.get("acus_consumed"),
+        "num_user_messages": devin.get("num_user_messages"),
+        "num_devin_messages": devin.get("num_devin_messages"),
+        "analysis_status": devin.get("analysis_status"),
+        "issues_total": len(issues),
+        "issues_high": sum(1 for i in issues if str(i.get("impact", "")).lower() == "high"),
+        "action_items_total": len(action_items),
+        "skills_usados": len(usados) if isinstance(usados, list) else 0,
+        "skills_enganosos": len(enganosos) if isinstance(enganosos, list) else 0,
+        "suggested_prompt": bool(analysis.get("suggested_prompt")),
+    }
+
+
 def medir_memoria_agentica_e_devin(
     devin_session: str | None = None,
     devin_insights_path: str | None = None,
@@ -353,79 +451,13 @@ def medir_memoria_agentica_e_devin(
     total_notas = 0
     nota_mais_recente: float = 0.0
     for chave, raiz, rotulo in superficies_config:
-        notas = [p for p in raiz.rglob("*.md") if "__pycache__" not in p.parts] if raiz.exists() else []
-        subdirs: dict[str, int] = {}
-        for p in notas:
-            rel = p.relative_to(raiz)
-            bucket = rel.parts[0] if len(rel.parts) > 1 else "(raiz)"
-            subdirs[bucket] = subdirs.get(bucket, 0) + 1
-        mais_recente = max((p.stat().st_mtime for p in notas), default=0.0)
+        resumo, qtd, mais_recente = _medir_uma_superficie(raiz, rotulo)
+        superficies[chave] = resumo
+        total_notas += qtd
         nota_mais_recente = max(nota_mais_recente, mais_recente)
-        total_notas += len(notas)
-        superficies[chave] = {
-            "rotulo": rotulo,
-            "notas_md": len(notas),
-            "subdirs": subdirs,
-            "nota_mais_recente": (
-                datetime.fromtimestamp(mais_recente, UTC).strftime("%Y-%m-%d") if mais_recente else "N/A"
-            ),
-        }
 
     memoria_repo = _git_memoria_repo(SITE_ROOT.parent / "memoria")
-
-    devin: dict[str, object] | None = None
-    if devin_insights_path:
-        try:
-            devin = json.loads(Path(devin_insights_path).read_text(encoding="utf-8"))
-            devin["_fonte"] = f"arquivo:{devin_insights_path}"
-        except (OSError, json.JSONDecodeError) as exc:
-            devin = {"_erro": f"falha ao ler insights: {exc}"}
-    elif devin_session:
-        try:
-            from scripts.ops.devin_session_insights import (  # noqa: PLC0415
-                _env_or_reg,
-                _normalizar_devin_id,
-                aguardar_analise,
-                gerar_insights,
-            )
-
-            token = _env_or_reg("DEVIN_API_TOKEN")
-            org_id = _env_or_reg("DEVIN_ORG_ID")
-            base = _env_or_reg("DEVIN_API_BASE", "https://api.devin.ai")
-            if not token or not org_id:
-                devin = {"_status": "nao_configurado", "_detalhe": "DEVIN_API_TOKEN/DEVIN_ORG_ID ausentes"}
-            else:
-                did = _normalizar_devin_id(devin_session)
-                if devin_generate:
-                    gerar_insights(base, org_id, did, token)
-                devin = aguardar_analise(base, org_id, did, token, devin_timeout, 5.0)
-                devin["_fonte"] = f"api:{did}"
-        except Exception as exc:  # eixo externo nunca derruba o painel local
-            devin = {"_erro": str(exc)[:200]}
-
-    devin_resumo: dict[str, object] | None = None
-    if isinstance(devin, dict) and not devin.get("_erro") and not devin.get("_status"):
-        analysis = devin.get("analysis") or {}
-        issues = analysis.get("issues") or []
-        action_items = analysis.get("action_items") or []
-        skill_usage = analysis.get("skill_usage") or {}
-        devin_resumo = {
-            "session_id": devin.get("session_id"),
-            "session_size": devin.get("session_size"),
-            "category": devin.get("category"),
-            "acus_consumed": devin.get("acus_consumed"),
-            "num_user_messages": devin.get("num_user_messages"),
-            "num_devin_messages": devin.get("num_devin_messages"),
-            "analysis_status": devin.get("analysis_status"),
-            "issues_total": len(issues),
-            "issues_high": sum(1 for i in issues if str(i.get("impact", "")).lower() == "high"),
-            "action_items_total": len(action_items),
-            "skills_usados": len(skill_usage.get("used") or skill_usage.get("items") or []),
-            "skills_enganosos": len(skill_usage.get("misleading") or skill_usage.get("misleading_items") or []),
-            "suggested_prompt": bool(analysis.get("suggested_prompt")),
-        }
-    elif isinstance(devin, dict):
-        devin_resumo = {k: v for k, v in devin.items() if k.startswith("_")}
+    devin = _carregar_devin_insights(devin_session, devin_insights_path, devin_generate, devin_timeout)
 
     return {
         "timestamp": datetime.now(UTC).isoformat(),
@@ -435,7 +467,7 @@ def medir_memoria_agentica_e_devin(
             datetime.fromtimestamp(nota_mais_recente, UTC).strftime("%Y-%m-%d") if nota_mais_recente else "N/A"
         ),
         "memoria_repo_git": memoria_repo,
-        "devin_insights": devin_resumo,
+        "devin_insights": _resumir_devin_insights(devin),
     }
 
 
@@ -540,7 +572,7 @@ def gerar_tabela_markdown(r: dict[str, object]) -> str:
     if mem:
         superficies: dict[str, dict[str, object]] = mem.get("superficies", {})  # type: ignore
         site_mem = superficies.get("site_memory", {})
-        repo = mem.get("memoria_repo_git", {})
+        repo = _como_dict(mem.get("memoria_repo_git"))
         dirty = repo.get("dirty_files", "?")
         ultimo = repo.get("ultimo_commit", "N/A")
         md.append(
@@ -606,12 +638,12 @@ def imprimir_painel_console(r: dict[str, object]) -> None:
         )
         print("                                 Runtimes: Ollama local + llama.cpp Qwen + Hermes Agent")
     if mem:
-        repo = mem.get("memoria_repo_git", {})
+        repo = _como_dict(mem.get("memoria_repo_git"))
         print(
             f"\u2022 Memoria Agentica Local:       {mem.get('total_notas_md', 0)} notas |"
             f" repo memoria: {repo.get('dirty_files', '?')} dirty, ultimo commit {repo.get('ultimo_commit', 'N/A')}"
         )
-        devin_resumo = mem.get("devin_insights")
+        devin_resumo = _como_dict(mem.get("devin_insights"))
         if devin_resumo and devin_resumo.get("session_size"):
             print(
                 f"\u2022 Devin Session Insights:       size={str(devin_resumo.get('session_size')).upper()}"
