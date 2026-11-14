@@ -44,6 +44,14 @@
       "nota": "Integrante do trio de apice Tier 1 (ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+), mesma doutrina de uso pontual. Adicionado pelo Tier 0 em 2026-11-10."
     },
     {
+      "nome": "Gemini 4 Hydrogen",
+      "email": "noreply@google.com",
+      "veiculo": "antigravity",
+      "modelo": "gemini-4-hydrogen",
+      "tier": "1",
+      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity, especializado em orquestração agêntica de longa duração, baixa latência e bom custo. Adicionado pelo Tier 0 em 2026-11-14."
+    },
+    {
       "nome": "Gemini 3.8 Flash",
       "email": "noreply@google.com",
       "veiculo": "antigravity",
