@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from datetime import UTC, datetime
 import logging
+import os
 import time
 from typing import Any, cast
 
@@ -147,11 +148,15 @@ def _aplicar_reordenacao_laya_s1(models_to_try: list[str], intencao_s1: dict) ->
     """Reordena models_to_try pela classificacao zero-download S1 (laya).
 
     Texto nao-latino (devanagari/han/non-latin) tenta primeiro o modelo local
-    multi-script gemma4:e4b (zero $) antes do cloud.
+    multi-script gemma4:e4b (zero $) antes do cloud, promovendo-o para index 0
+    mesmo se ja estiver mais abaixo na lista.
     """
     _script = str(intencao_s1.get("script", "") or "")
-    if _script in {"devanagari", "han", "non-latin"} and "gemma4:e4b" not in models_to_try:
-        models_to_try.insert(0, "gemma4:e4b")
+    target_multiscript = os.environ.get("CHICO_S1_MULTISCRIPT_MODEL", "gemma4:e4b").strip() or "gemma4:e4b"
+    if _script in {"devanagari", "han", "non-latin"}:
+        if target_multiscript in models_to_try:
+            models_to_try.remove(target_multiscript)
+        models_to_try.insert(0, target_multiscript)
     return models_to_try
 
 
@@ -209,60 +214,6 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
         models_to_try = _aplicar_reordenacao_laya_s1(models_to_try, _intencao_s1)
 
     return models_to_try, agent_type, designated_model
-
-
-async def _apply_s1_advisory(
-    task: Task,
-    system_prompt: str,
-    user_prompt: str,
-    manager: QueueManager,
-) -> tuple[str, dict | None]:
-    """Aplica consultoria S1 (laya) ao prompt, registrando telemetry.
-
-    Returns (system_prompt, laya_metadata). laya_metadata e None se advisory unavailable.
-    """
-    _c = te._c
-    try:
-        from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415,I001 -- importo sob demanda para evitar import circular
-
-        system_prompt, laya_metadata = compor_advisory_s1(system_prompt, user_prompt)
-        if laya_metadata:
-            task.metadata["intencao_s1"] = laya_metadata
-            await manager.update_task_metadata(task.id, {"intencao_s1": laya_metadata}, merge=True)
-        return system_prompt, laya_metadata
-    except Exception as laya_error:
-        logger.debug("[laya-s1] advisory unavailable for task %s: %s", task.id, laya_error)
-        return system_prompt, None
-
-
-def _build_route_selected(
-    models_to_try: list[str],
-    agent_type: str,
-    designated_model: str | None,
-    provider_retries: int,
-    timeout_seconds: int,
-    response: dict,
-    s1_metadata: dict | None,
-) -> dict:
-    """Constroi o dicionario de telemetry de rota selecionada."""
-    route_selected = {
-        "route_selected": models_to_try,
-        "reason_codes": [
-            f"agent_type:{agent_type}",
-            f"designated_model:{designated_model}" if designated_model else "designated_model:none",
-            f"provider_retries:{provider_retries}",
-            f"timeout_seconds:{timeout_seconds}",
-        ],
-        "model_used": response.get("model"),
-        "provider_used": response.get("provider"),
-        "latency_ms": response.get("latency_ms"),
-        "retry_count": response.get("retry_count", 0),
-    }
-    if s1_metadata:
-        route_selected["reason_codes"].append(
-            f"s1:{s1_metadata.get('modelo_sugerido', 'multilingual')}|{s1_metadata.get('script', 'unknown')}"
-        )
-    return route_selected
 
 
 # =========================================================================

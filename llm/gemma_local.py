@@ -23,6 +23,12 @@ async def call_gemma_local(
     Consome o motor de inferencia local @gemma4 (Gemma 2/4 FastAPI Server).
     """
     from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+    from llm.system2_local import model_fits_device  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    if not model_fits_device(model):
+        raise MemoryError(
+            f"Modelo local '{model}' excede a folga RAM+VRAM disponivel no dispositivo; rotacionando rota."
+        )
 
     system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     url = "http://127.0.0.1:17043/generate"

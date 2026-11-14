@@ -32,6 +32,7 @@ Invariantes:
 from __future__ import annotations
 
 import asyncio
+import http.client
 import json
 import logging
 import os
@@ -39,6 +40,7 @@ from pathlib import Path
 import threading
 import time
 from typing import Any
+import urllib.parse
 import urllib.request
 
 logger = logging.getLogger(__name__)
@@ -47,6 +49,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OLLAMA_MANIFEST = PROJECT_ROOT / "data" / "ollama_models.json"
 DEFAULT_OLLAMA_BASE = "http://127.0.0.1:11434"
 DEFAULT_LLAMA_BASE = "http://127.0.0.1:8080"  # llama-swap proxy (gerencia spawn/unload do llama-server)
+DEFAULT_GEMMA_PROXY_BASE = "http://127.0.0.1:17043"
 OLLAMA_TIMEOUT_S = float(os.environ.get("CHICO_S2_TIMEOUT_S", "120"))
 
 SYSTEM2_TIERS: dict[str, str] = {
@@ -55,6 +58,7 @@ SYSTEM2_TIERS: dict[str, str] = {
     "deep": "qwen3_8_27b",
     "code": "qwen_code_surgical",
     "moe": "qwen3.6-35b-a3b-mtp",
+    "edge": "12b",
 }
 
 _TIER_ENV: dict[str, str] = {
@@ -63,6 +67,7 @@ _TIER_ENV: dict[str, str] = {
     "deep": "CHICO_S2_DEEP_MODEL",
     "code": "CHICO_S2_CODE_MODEL",
     "moe": "CHICO_S2_MOE_MODEL",
+    "edge": "CHICO_S2_EDGE_MODEL",
 }
 
 
@@ -153,6 +158,11 @@ def _vram_total_gb() -> float:
         return float(hardware_snapshot().get("vram_gb") or 0.0)
     except Exception:  # pylint: disable=broad-except
         return 0.0
+
+
+def model_fits_device(model: str) -> bool:
+    """Wrapper publico de admissao RAM+VRAM para consumidores locais (gemma_local/S2)."""
+    return _ollama_model_fits_ram(model)
 
 
 def _ollama_model_fits_ram(model: str) -> bool:
@@ -289,6 +299,45 @@ def ollama_online(timeout_s: float = 3.0) -> bool:
         with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
             return resp.status == 200
     except OSError:
+        return False
+
+
+def _loopback_http(
+    method: str,
+    url: str,
+    body: bytes | None = None,
+    headers: dict[str, str] | None = None,
+    timeout: float = 5.0,
+) -> tuple[int, bytes]:
+    """Requisicao HTTP sincrona sobre loopback via ``http.client``."""
+    parsed = urllib.parse.urlsplit(url)
+    host = parsed.hostname or "127.0.0.1"
+    port = parsed.port or 80
+    path = parsed.path or "/"
+    if parsed.query:
+        path = f"{path}?{parsed.query}"
+    conn = http.client.HTTPConnection(host, port, timeout=timeout)
+    try:
+        conn.request(method, path, body=body, headers=headers or {})
+        resp = conn.getresponse()
+        return int(resp.status), resp.read()
+    finally:
+        conn.close()
+
+
+def _gemma_proxy_base() -> str:
+    return (os.environ.get("CHICO_GEMMA_PROXY_BASE") or DEFAULT_GEMMA_PROXY_BASE).rstrip("/")
+
+
+def edge_proxy_online(timeout_s: float = 2.0) -> bool:
+    """Health-check do gateway Gemma SOTA (:17043/health)."""
+    try:
+        status, raw = _loopback_http("GET", f"{_gemma_proxy_base()}/health", timeout=timeout_s)
+        if status != 200:
+            return False
+        body = json.loads(raw.decode("utf-8"))
+        return body.get("health") == "ok" or "Operacional" in str(body.get("status", ""))
+    except (OSError, ValueError, http.client.HTTPException):
         return False
 
 
@@ -522,6 +571,51 @@ def _try_ollama_local(
         return None
 
 
+def _try_edge_proxy_local(
+    model: str,
+    prompt: str,
+    system: str,
+    json_mode: bool,
+    timeout: float,
+    meta_base: dict[str, Any],
+) -> tuple[str, dict[str, Any]] | None:
+    """Caminho tier ``edge``: Gemma Edge Proxy (:17043) -> Ollama local."""
+    auth_token = os.environ.get("API_SECRET_TOKEN") or os.environ.get("VITOI_AUTH_TOKEN")
+    if auth_token and _ollama_model_fits_ram(model) and edge_proxy_online():
+        payload: dict[str, Any] = {
+            "prompt": prompt,
+            "system_prompt": system,
+            "model": model,
+            "max_tokens": 2048,
+        }
+        if json_mode:
+            payload["response_format"] = {"type": "json_object"}
+        inicio = time.perf_counter()
+        try:
+            status, raw = _loopback_http(
+                "POST",
+                f"{_gemma_proxy_base()}/generate",
+                body=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "X-Vitoi-Auth": auth_token},
+                timeout=timeout,
+            )
+            text = raw.decode("utf-8") if status == 200 else ""
+            if status != 200:
+                raise RuntimeError(f"HTTP {status} do proxy :17043")
+            if text.strip():
+                meta = {
+                    **meta_base,
+                    "engine": "gemma-edge-proxy",
+                    "model": model,
+                    "latency_ms": round((time.perf_counter() - inicio) * 1000.0, 1),
+                    "fallback_used": False,
+                }
+                return text, meta
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning("[system2] edge proxy :17043 falhou para %s: %s", model, e)
+    return _try_ollama_local(model, prompt, system, json_mode, timeout, meta_base)
+
+
 def system2_generate(
     prompt: str,
     system: str = "",
@@ -543,11 +637,12 @@ def system2_generate(
     meta_base: dict[str, Any] = {"tier": tier_key, "requested_model": model, "hardware": hw}
 
     if prefer_local:
-        local = (
-            _try_moe_local(model, prompt, system, json_mode, timeout, meta_base)
-            if tier_key == "moe"
-            else _try_ollama_local(model, prompt, system, json_mode, timeout, meta_base)
-        )
+        if tier_key == "moe":
+            local = _try_moe_local(model, prompt, system, json_mode, timeout, meta_base)
+        elif tier_key == "edge":
+            local = _try_edge_proxy_local(model, prompt, system, json_mode, timeout, meta_base)
+        else:
+            local = _try_ollama_local(model, prompt, system, json_mode, timeout, meta_base)
         if local is not None:
             return local
 

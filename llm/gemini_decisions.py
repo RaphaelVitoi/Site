@@ -721,7 +721,9 @@ def _laya_predict_com_servico(
     O microservico nunca e consultado quando o caminho in-process ja entregou
     predição treinada -- o fast path local permanece intocado.
     """
+    remote_tried = False
     if os.environ.get("CHICO_LAYA_PREFER_SERVICE", "0") == "1":
+        remote_tried = True
         remote = laya_predict_remote(state, questions=dict(questions))
         if remote is not None and not getattr(remote.provenia, "fallback_used", True):
             return remote
@@ -732,9 +734,10 @@ def _laya_predict_com_servico(
         pred = None
     if pred is not None and not getattr(getattr(pred, "provenia", None), "fallback_used", True):
         return pred
-    remote = laya_predict_remote(state, questions=dict(questions))
-    if remote is not None:
-        return remote
+    if not remote_tried:
+        remote = laya_predict_remote(state, questions=dict(questions))
+        if remote is not None:
+            return remote
     return pred
 
 

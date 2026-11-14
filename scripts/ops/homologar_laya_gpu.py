@@ -12,18 +12,21 @@ com endpoints /health, /predict e /solve.
 from __future__ import annotations
 
 import argparse
+from collections import deque
 from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 import http.client
 import json
 import logging
+import math
 import os
 import platform
 import socket
 import statistics
 import subprocess
 import sys
+import threading
 import time
 from typing import Annotated, Any
 
@@ -457,6 +460,7 @@ class PredictRequest(BaseModel):
     state: str = Field(..., description="Estado, mao ou prompt para classificacao S1")
     model: str = Field(default=CANONICAL_MODEL, description="Modelo Laya canonico")
     questions: dict[str, dict[str, Any]] | None = None
+    max_len: int | None = Field(default=None, ge=64, le=8192)
 
 
 class SolveRequest(BaseModel):
@@ -468,8 +472,34 @@ class SolveRequest(BaseModel):
 
 def criar_fastapi_app() -> FastAPI:
     """Cria a aplicacao FastAPI para o microservico de inferencia Laya GPU."""
-    from llm.laya_bridge import LayaPrediction, laya_predict  # noqa: PLC0415
+    from llm.laya_bridge import LAYA_POKER_PRESETS, LayaPrediction, laya_predict  # noqa: PLC0415
     from llm.laya_solver_adapter import LayaSolverAdapter  # noqa: PLC0415
+
+    metrics_lock = threading.Lock()
+    latency_window: deque[float] = deque(maxlen=64)
+    requests_total = 0
+
+    def _record_latency(ms: float) -> None:
+        nonlocal requests_total
+        with metrics_lock:
+            requests_total += 1
+            latency_window.append(round(float(ms), 2))
+
+    def _metrics_snapshot() -> dict[str, Any]:
+        with metrics_lock:
+            samples = sorted(latency_window)
+            total = requests_total
+        if not samples:
+            return {"requests_total": total, "window_size": 0, "last_latency_ms": None, "p50_ms": None, "p95_ms": None}
+        p50 = round(statistics.median(samples), 2)
+        p95_idx = min(len(samples) - 1, max(0, math.ceil(0.95 * (len(samples) - 1))))
+        return {
+            "requests_total": total,
+            "window_size": len(samples),
+            "last_latency_ms": round(latency_window[-1], 2),
+            "p50_ms": p50,
+            "p95_ms": round(samples[p95_idx], 2),
+        }
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -481,6 +511,11 @@ def criar_fastapi_app() -> FastAPI:
             t0 = time.perf_counter()
             try:
                 laya_predict("Warmup Laya Multilingual S1 SOTA", model_override=CANONICAL_MODEL)
+                laya_predict(
+                    "Hero opens BTN 2.2bb, BB 3bets 8.5bb on Kd 9c 2s.",
+                    questions=LAYA_POKER_PRESETS["street_triage"],
+                    model_override=CANONICAL_MODEL,
+                )
                 elapsed = (time.perf_counter() - t0) * 1000.0
                 logger.info("Aquecimento Laya 322M concluido com sucesso em %.1f ms!", elapsed)
             except Exception as e:
@@ -513,12 +548,19 @@ def criar_fastapi_app() -> FastAPI:
             "weights_ready": weights_ready,
             "cpu_override_active": cpu_allowed,
             "devices": [asdict(d) for d in profile.devices],
+            "metrics": _metrics_snapshot(),
         }
 
     @app.post("/predict", responses={500: {"description": "Erro interno durante predicao Laya"}})
     def predict(req: Annotated[PredictRequest, Body()]):
         try:
-            pred: LayaPrediction = laya_predict(req.state, req.questions, model_override=req.model)
+            pred: LayaPrediction = laya_predict(
+                req.state,
+                req.questions,
+                model_override=req.model,
+                max_len=req.max_len or 1024,
+            )
+            _record_latency(pred.latency_ms)
             return {
                 "status": "SUCCESS",
                 "prediction": {
@@ -542,6 +584,7 @@ def criar_fastapi_app() -> FastAPI:
     def solve(req: Annotated[SolveRequest, Body()]):
         try:
             pred: LayaPrediction = laya_predict(req.state, model_override=req.model)
+            _record_latency(pred.latency_ms)
             bridge = adapter.adapt_for_solver(req.solver_name, pred, req.base_parameters or {})
             bridge_payload = {
                 "target_solver": bridge.target_solver,
