@@ -13,6 +13,7 @@ import os
 import re
 from typing import Any, Final
 import urllib.error
+import urllib.parse
 import urllib.request
 
 try:
@@ -372,24 +373,33 @@ class JulesClient:
             logger.warning("[JULES] list_sessions retornou excecao: %s", e)
             return []
 
-    def get_activities(self, session_id: str) -> list[dict[str, object]]:
-        """Recupera todas as atividades detalhadas de uma sessao."""
+    def get_activities(self, session_id: str, page_size: int = 100) -> list[dict[str, object]]:
+        """Recupera todas as atividades detalhadas de uma sessao (com paginacao)."""
         if not self.is_configured:
             return []
 
-        url = f"{JULES_API_BASE}/sessions/{session_id}/activities"
-        req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
+        all_activities: list[dict[str, object]] = []
+        page_token = ""
 
         try:
-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
+            while True:
+                url = f"{JULES_API_BASE}/sessions/{session_id}/activities?pageSize={page_size}"
+                if page_token:
+                    url += f"&pageToken={urllib.parse.quote(page_token)}"
+                req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
+                with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
                 activities = data.get("activities")
                 if isinstance(activities, list):
-                    return activities
-                return []
+                    all_activities.extend(activities)
+                next_token = data.get("nextPageToken")
+                if not isinstance(next_token, str) or not next_token:
+                    break
+                page_token = next_token
+            return all_activities
         except Exception as e:
             logger.warning("[JULES] get_activities para %s retornou excecao: %s", session_id, e)
-            return []
+            return all_activities
 
     def get_source(self, source_name: str) -> dict[str, object]:
         """Consulta informacoes detalhadas de uma fonte (e.g. sources/github/RaphaelVitoi/Site)."""

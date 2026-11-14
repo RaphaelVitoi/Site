@@ -26,7 +26,7 @@ import { SpatialControls } from './ui/SpatialControls';
 import { SectionHeader } from '../ui/layout/SectionHeader';
 import { useMounted } from '../../hooks/useMounted';
 import dynamic from 'next/dynamic';
-import { Suspense, useEffect, useMemo, useDeferredValue, useTransition, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useDeferredValue, useTransition, useState } from 'react';
 import useSWR from 'swr';
 
 import { MasterTableVisualizer } from './ui/MasterTableVisualizer';
@@ -94,7 +94,9 @@ export default function MasterSimulator() {
   const { physics, updatePhysics, isHydrated: isSyncHydrated } = useSotaSync();
   const { scenario, setScenario, scenarios } = useScenario();
   const [isPending, startTransition] = useTransition();
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'laboratorio' | 'dashboard' | 'referencial' | 'lente'>('laboratorio');
+  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'laboratorio' | 'dashboard' | 'referencial' | 'lente'>(
+    'laboratorio',
+  );
   const [spotSubView, setSpotSubView] = useState<'nash' | 'insolvency' | 'ranges' | 'theory' | 'quiz'>('nash');
 
   const { data: predictiveData } = useSWR('/api/v1/predictive', fetcher, {
@@ -142,14 +144,7 @@ export default function MasterSimulator() {
         setHeroInvested(physics.heroInvested);
       }
     }
-  }, [
-    isSyncHydrated,
-    physics,
-    currentPot,
-    heroInvested,
-    setCurrentPot,
-    setHeroInvested,
-  ]);
+  }, [isSyncHydrated, physics, currentPot, heroInvested, setCurrentPot, setHeroInvested]);
 
   const { handleStreetFreqChange } = useFrequencyPropagation(setStreetFreqs);
 
@@ -281,6 +276,14 @@ export default function MasterSimulator() {
     setHeroInvested,
   });
 
+  const handleAggressionChange = useCallback(
+    (factor: number) => {
+      setAggressionFactor(factor);
+      updatePhysics({ edgeFactor: factor });
+    },
+    [setAggressionFactor, updatePhysics],
+  );
+
   const insolvencyRadarData = useInsolvencyRadar(apiQuantumMetrics);
 
   const activeToolContent = useMemo(() => {
@@ -288,11 +291,9 @@ export default function MasterSimulator() {
       scenario: (
         <Suspense fallback={<LoadingFallback />}>
           {/* Cockpit 2-Colunas · Proporção Equilibrada (6:6) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-
+          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
             {/* ═══ COLUNA PRINCIPAL (6/12) · Mesa + Controles + Lentes Modulares ═══ */}
-            <div className="lg:col-span-6 flex flex-col gap-5">
-
+            <div className="flex flex-col gap-5 lg:col-span-6">
               {/* Mesa Interativa 9P */}
               <div className="w-full">
                 <MasterTableVisualizer
@@ -326,7 +327,7 @@ export default function MasterSimulator() {
               </div>
 
               {/* Seletor de Lentes do Spot */}
-              <div className="flex items-center gap-1.5 p-1 bg-slate-950/50 rounded-2xl border border-white/8 shadow-inner overflow-x-auto no-scrollbar">
+              <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-white/8 bg-slate-950/50 p-1 shadow-inner">
                 {[
                   { id: 'nash', label: 'Nash & Ações', icon: 'fa-chess-knight' },
                   { id: 'insolvency', label: 'Insolvência', icon: 'fa-satellite-dish' },
@@ -340,10 +341,10 @@ export default function MasterSimulator() {
                       key={sub.id}
                       type="button"
                       onClick={() => setSpotSubView(sub.id as 'nash' | 'insolvency' | 'ranges' | 'theory' | 'quiz')}
-                      className={`flex-1 px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                      className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold tracking-wide whitespace-nowrap uppercase transition-all duration-200 ${
                         isSubActive
-                          ? 'bg-accent-indigo-surface/20 text-white border border-accent-indigo/40 shadow-md shadow-indigo-500/10'
-                          : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
+                          ? 'bg-accent-indigo-surface/20 border-accent-indigo/40 border text-white shadow-md shadow-indigo-500/10'
+                          : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
                       }`}
                     >
                       <i className={`fa-solid ${sub.icon} text-[0.55rem] ${isSubActive ? 'text-accent-indigo' : ''}`} />
@@ -355,7 +356,7 @@ export default function MasterSimulator() {
 
               {/* Conteúdo da Lente Ativa */}
               {spotSubView === 'nash' && (
-                <div className="flex flex-col gap-4 animate-sota-in">
+                <div className="animate-sota-in flex flex-col gap-4">
                   <div className="w-full">
                     <GuideToolbar onExport={handleExportHRC} />
                   </div>
@@ -374,10 +375,7 @@ export default function MasterSimulator() {
                         blindsRisingSoon={blindsRisingSoon}
                         isBaseline={isBaseline}
                         onStreetFreqChange={handleStreetFreqChange}
-                        onAggressionChange={(factor) => {
-                          setAggressionFactor(factor);
-                          updatePhysics({ edgeFactor: factor });
-                        }}
+                        onAggressionChange={handleAggressionChange}
                         onPkoChange={setPkoValue}
                         onPayjumpToggle={setIsNearPayjump}
                         onBlindsToggle={setBlindsRisingSoon}
@@ -388,10 +386,10 @@ export default function MasterSimulator() {
               )}
 
               {spotSubView === 'insolvency' && (
-                <div className="animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg space-y-5">
+                <div className="animate-sota-in space-y-5 rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
                   {/* Radar de Insolvência */}
                   <div className="rounded-2xl border border-white/5 bg-black/30 p-5 shadow-inner">
-                    <div className="flex items-center gap-2.5 mb-4">
+                    <div className="mb-4 flex items-center gap-2.5">
                       <div className="text-accent-rose flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10">
                         <i className="fa-solid fa-satellite-dish text-sm" />
                       </div>
@@ -424,13 +422,13 @@ export default function MasterSimulator() {
               )}
 
               {spotSubView === 'ranges' && (
-                <div className="w-full animate-sota-in">
+                <div className="animate-sota-in w-full">
                   <RangeMatrix ipRp={finalIpRp} oopRp={finalOopRp} scenarioId={scenario.id} />
                 </div>
               )}
 
               {spotSubView === 'theory' && (
-                <div className="w-full animate-sota-in">
+                <div className="animate-sota-in w-full">
                   <TheoryPanel
                     scenario={scenario}
                     effectiveSprData={effectiveSprData}
@@ -441,17 +439,17 @@ export default function MasterSimulator() {
               )}
 
               {spotSubView === 'quiz' && (
-                <div className="w-full animate-sota-in rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-                  <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/5">
+                <div className="animate-sota-in w-full rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
+                  <div className="mb-4 flex items-center justify-between border-b border-white/5 pb-3">
                     <div className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-accent-indigo-surface/10 border border-accent-indigo/20 text-accent-indigo text-xs">
+                      <div className="bg-accent-indigo-surface/10 border-accent-indigo/20 text-accent-indigo flex h-6 w-6 items-center justify-center rounded-lg border text-xs">
                         <i className="fa-solid fa-graduation-cap" />
                       </div>
-                      <h4 className="text-xs font-black text-white uppercase tracking-wider m-0">
+                      <h4 className="m-0 text-xs font-black tracking-wider text-white uppercase">
                         Laboratório Didático ICM · {scenario.name}
                       </h4>
                     </div>
-                    <span className="text-[0.52rem] font-mono text-accent-indigo-light uppercase tracking-widest bg-accent-indigo-surface/10 px-2 py-0.5 rounded border border-accent-indigo/30">
+                    <span className="text-accent-indigo-light bg-accent-indigo-surface/10 border-accent-indigo/30 rounded border px-2 py-0.5 font-mono text-[0.52rem] tracking-widest uppercase">
                       Quiz Dinâmico SOTA
                     </span>
                   </div>
@@ -463,8 +461,7 @@ export default function MasterSimulator() {
             </div>
 
             {/* ═══ COLUNA LATERAL (6/12) · Narrativa + IA + Telemetria ═══ */}
-            <div className="lg:col-span-6 flex flex-col gap-5">
-
+            <div className="flex flex-col gap-5 lg:col-span-6">
               {/* Cenário: Narrativa e Medidores de Risco */}
               <ScenarioStage
                 scenario={scenario}
@@ -474,38 +471,34 @@ export default function MasterSimulator() {
               />
 
               {/* Telemetria Quântica do Spot */}
-              <div className="rounded-3xl border border-white/8 bg-slate-950/60 backdrop-blur-2xl p-5 shadow-xl space-y-3">
-                <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-                  <span className="font-mono text-xs font-black uppercase tracking-wide text-accent-emerald flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
+              <div className="space-y-3 rounded-3xl border border-white/8 bg-slate-950/60 p-5 shadow-xl backdrop-blur-2xl">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                  <span className="text-accent-emerald flex items-center gap-2 font-mono text-xs font-black tracking-wide uppercase">
+                    <span className="bg-accent-emerald h-1.5 w-1.5 animate-pulse rounded-full" />
                     <span>Física do Spot</span>
                   </span>
-                  <span className="text-[0.5rem] font-mono text-text-dim uppercase tracking-wider">
-                    v8.0 GOLD
-                  </span>
+                  <span className="text-text-dim font-mono text-[0.5rem] tracking-wider uppercase">v8.0 GOLD</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
                       IP Risk Premium
                     </span>
-                    <span className="font-mono text-base font-black text-accent-indigo-light">
+                    <span className="text-accent-indigo-light font-mono text-base font-black">
                       {finalIpRp.toFixed(1)}%
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
                       OOP Risk Premium
                     </span>
-                    <span className="font-mono text-base font-black text-accent-rose">
-                      {finalOopRp.toFixed(1)}%
-                    </span>
+                    <span className="text-accent-rose font-mono text-base font-black">{finalOopRp.toFixed(1)}%</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
                       Assimetria (ΔRP)
                     </span>
                     <span className="font-mono text-base font-black text-white">
@@ -513,11 +506,11 @@ export default function MasterSimulator() {
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-xs font-bold uppercase tracking-normal text-text-dim block mb-0.5">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
                       Inércia FGS
                     </span>
-                    <span className="font-mono text-base font-black text-accent-emerald">
+                    <span className="text-accent-emerald font-mono text-base font-black">
                       {blindsRisingSoon ? 'Subindo' : 'Estável'}
                     </span>
                   </div>
@@ -529,14 +522,14 @@ export default function MasterSimulator() {
       ),
       calculator: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
             <EquityCalculator key={`calc-${scenario.id}`} />
           </div>
         </Suspense>
       ),
       matchup: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
             <MatchupSelector key={`match-${scenario.id}`} />
           </div>
         </Suspense>
@@ -559,7 +552,7 @@ export default function MasterSimulator() {
       ),
       perspectiva: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
             <PerspectivePanel
               key={`persp-${scenario.id}`}
               initialStacks={scenario.stacks}
@@ -576,7 +569,7 @@ export default function MasterSimulator() {
       ),
       posflop: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
             <PostFlopPanel
               key={`pf-${scenario.id}`}
               anteSize={anteSize}
@@ -594,7 +587,7 @@ export default function MasterSimulator() {
       ),
       cfr: (
         <Suspense fallback={<LoadingFallback />}>
-          <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg overflow-hidden min-h-140">
+          <div className="min-h-140 overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
             <CfrRegretPanel
               key={`cfr-${scenario.id}`}
               initialPot={safeCurrentPot}
@@ -632,6 +625,7 @@ export default function MasterSimulator() {
     blindsRisingSoon,
     isBaseline,
     handleStreetFreqChange,
+    handleAggressionChange,
     finalIpRp,
     finalOopRp,
     effectiveSprData,
@@ -643,7 +637,6 @@ export default function MasterSimulator() {
     nashResults?.flop,
     nashResults?.turn,
     nashResults?.river,
-    setAggressionFactor,
     setPkoValue,
     setIsNearPayjump,
     setBlindsRisingSoon,
@@ -681,7 +674,7 @@ export default function MasterSimulator() {
     <SotaSpotContext value={spotContextValue}>
       <SotaMetricsContext value={metricsContextValue}>
         <SotaWasmContext value={wasmContextValue}>
-          <div className="w-full flex flex-col min-h-screen">
+          <div className="flex min-h-screen w-full flex-col">
             {/* Espaços de trabalho do simulador — a identidade está na barra de laboratórios acima. */}
             <nav
               aria-label="Áreas de trabalho do Simulador Mestre"
@@ -697,10 +690,10 @@ export default function MasterSimulator() {
                         type="button"
                         key={tab}
                         onClick={() => setActiveWorkspaceTab(tab)}
-                        className={`px-3 py-1.5 rounded-lg text-[0.58rem] font-black uppercase tracking-[0.12em] transition-all duration-200 flex items-center gap-1.5 cursor-pointer ${
+                        className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.58rem] font-black tracking-[0.12em] uppercase transition-all duration-200 ${
                           isActive
-                            ? 'bg-accent-indigo/20 text-white border border-accent-indigo/40 shadow-md'
-                            : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
+                            ? 'bg-accent-indigo/20 border-accent-indigo/40 border text-white shadow-md'
+                            : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
                         }`}
                       >
                         <i className={`fa-solid ${meta.icon} text-[0.55rem] ${isActive ? 'text-accent-indigo' : ''}`} />
@@ -715,9 +708,12 @@ export default function MasterSimulator() {
             {/* Conteúdo do Workspace Ativo */}
             <div className="w-full flex-1 py-6">
               {activeWorkspaceTab === 'laboratorio' && (
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5 animate-sota-in" aria-label="Cockpit Estratégico & Cenários">
+                <section
+                  className="animate-sota-in mx-auto max-w-7xl space-y-5 px-4 sm:px-6 lg:px-8"
+                  aria-label="Cockpit Estratégico & Cenários"
+                >
                   {/* Atlas: cenários organizados por família estratégica */}
-                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-4 sm:p-5 shadow-lg">
+                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-4 shadow-lg sm:p-5">
                     <ScenarioQuickSelector
                       scenarios={scenarios}
                       activeId={scenario.id}
@@ -745,7 +741,10 @@ export default function MasterSimulator() {
               )}
 
               {activeWorkspaceTab === 'dashboard' && (
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Dashboard Quântico de Telemetria e Radar">
+                <section
+                  className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+                  aria-label="Dashboard Quântico de Telemetria e Radar"
+                >
                   <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
                     <SectionHeader
                       step="00"
@@ -767,7 +766,10 @@ export default function MasterSimulator() {
               )}
 
               {activeWorkspaceTab === 'referencial' && (
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Referencial Empírico">
+                <section
+                  className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+                  aria-label="Referencial Empírico"
+                >
                   <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
                     <SectionHeader
                       step="01"
@@ -784,7 +786,10 @@ export default function MasterSimulator() {
               )}
 
               {activeWorkspaceTab === 'lente' && (
-                <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-sota-in" aria-label="Framework de Perspectiva Matemática">
+                <section
+                  className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+                  aria-label="Framework de Perspectiva Matemática"
+                >
                   <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
                     <SectionHeader
                       step="02"
@@ -808,7 +813,6 @@ export default function MasterSimulator() {
                 </section>
               )}
             </div>
-
           </div>
         </SotaWasmContext>
       </SotaMetricsContext>
