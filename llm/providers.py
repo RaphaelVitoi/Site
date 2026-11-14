@@ -478,9 +478,9 @@ async def _check_provider_availability(provider: str, model: str) -> bool:
         return _check_gemini_availability()
     if provider == "ollama":
         try:
-            from llm.ollama_cloud import is_configured  # noqa: PLC0415
+            from llm.ollama_cloud import billing_cooldown_remaining_s, is_configured  # noqa: PLC0415
 
-            return is_configured()
+            return is_configured() and billing_cooldown_remaining_s() <= 0.0
         except Exception:  # noqa: BLE001
             return False
 
