@@ -1,393 +1,376 @@
 {
-    "system_info": {
-        "workspace_path": "C:\\Users\\rapha\\.gemini\\Site",
-        "settings_local": ".claude\\settings.local.json",
-        "version": "8.0.0",
-        "last_sync": "2026-09-01T12:00:00Z",
-        "environment": "production",
-        "sota_level": "v8.0-GOLD"
-    },
-    "protected_agents_from_cleanup": [
-        "@maverick",
-        "@chico",
-        "@architect",
-        "@securitychief",
-        "@organizador",
-        "@skillmaster",
-        "@bibliotecario",
-        "@sequenciador",
-        "@historian",
-        "@auditor",
-        "@validador",
-        "@gemma4"
-    ],
-    "handoff_pipeline": {
-        "@dispatcher": "@architect",
-        "@architect": "@planner",
-        "@planner": "@pesquisador",
-        "@pesquisador": "@prompter",
-        "@prompter": "@auditor",
-        "@auditor": "@implementor",
-        "@implementor": "@verifier",
-        "@verifier": "@validador",
-        "@validador": "@curator",
-        "@curator": "@sequenciador",
-        "@sequenciador": "@historian",
-        "@historian": "@gemma4"
-    },
-    "workflow_flags": {
-        "enable_dynamic_fallback": true,
-        "enable_dispatcher_schema_retry": true,
-        "enable_security_gate": true,
-        "enable_domain_validation_gate": true,
-        "enable_strategy_gate": true,
-        "enable_research_gate": true,
-        "enable_edge_inference_gate": true,
-        "prefer_cost_saving_mode": true,
-        "anthropic_last": true
-    },
-    "mcp_addon_routing": {
-        "enabled": true,
-        "mode": "lazy",
-        "default_threshold": 2,
-        "max_auto_addons": 3,
-        "addons": {
-            "sequential-thinking": {
-                "order": 10,
-                "minimum_score": 2,
-                "minimum_words": 80,
-                "terms": {
-                    "sequential thinking": 8,
-                    "sequentialthinking": 8,
-                    "raciocinio": 3,
-                    "decompos": 3,
-                    "planej": 2,
-                    "arquitet": 2,
-                    "debug": 2,
-                    "causa raiz": 3,
-                    "tradeoff": 2,
-                    "incerteza": 2,
-                    "ambigu": 2,
-                    "prova": 2,
-                    "multietapa": 3,
-                    "multi-step": 3,
-                    "complex": 2,
-                    "epico": 3,
-                    "sistema inteiro": 3,
-                    "refatorar tudo": 3,
-                    "modulo completo": 3
-                },
-                "explicit_terms": [
-                    "sequential thinking",
-                    "sequentialthinking",
-                    "raciocinio sequencial"
-                ],
-                "purpose": "Decomposicao iterativa e verificacao de tarefas complexas ou ambiguas.",
-                "prompt": "Se o servidor estiver registrado, use sequentialthinking para decompor a tarefa em passos verificaveis; nao invente a ferramenta nem repita etapas sem ganho informativo."
-            },
-            "mcp-server-neon": {
-                "order": 20,
-                "minimum_score": 3,
-                "terms": {
-                    "neon": 10,
-                    "postgres": 8,
-                    "postgresql": 8,
-                    "database": 2,
-                    "banco": 2,
-                    "sql": 2,
-                    "schema": 2,
-                    "migra": 2,
-                    "query": 2,
-                    "prisma": 2,
-                    "branch": 2,
-                    "tuning": 2,
-                    "slow query": 3
-                },
-                "explicit_terms": [
-                    "neon",
-                    "postgres",
-                    "postgresql"
-                ],
-                "blocked_terms": [
-                    "sqlite",
-                    "sqlite3",
-                    "chromadb",
-                    "lancedb"
-                ],
-                "block_without_explicit": true,
-                "purpose": "Inspecao, consulta e tuning de PostgreSQL hospedado no Neon.",
-                "prompt": "Se o servidor estiver registrado, comece por leitura e schema no Neon; explique antes de qualquer run_sql ou migracao e nunca execute mutacao destrutiva sem autorizacao explicita."
-            },
-            "firebase-mcp-server": {
-                "order": 30,
-                "minimum_score": 3,
-                "terms": {
-                    "firebase": 10,
-                    "firestore": 8,
-                    "firebase auth": 8,
-                    "firebase functions": 8,
-                    "cloud functions": 4,
-                    "security rules": 4,
-                    "firebase hosting": 6,
-                    "hosting": 2,
-                    "emulator": 3,
-                    "firebase storage": 6,
-                    "storage": 2,
-                    "sdk": 2
-                },
-                "explicit_terms": [
-                    "firebase",
-                    "firestore",
-                    "firebase auth"
-                ],
-                "purpose": "Contexto de Firebase, Firestore, Auth, Functions, Hosting e Security Rules.",
-                "prompt": "Se o servidor estiver registrado, leia primeiro projeto, recursos e security rules do Firebase; preserve least privilege e exija autorizacao antes de login, deploy ou alteracao remota."
-            }
-        }
-    },
-    "priority_weights": {
-        "alpha": 1.0,
-        "beta": 1.5,
-        "gamma": 0.5,
-        "lambda_age": 0.01
-    },
-    "dispatcher_fallback_config": {
-        "base_pipeline": [
-            "@architect",
-            "@planner",
-            "@implementor",
-            "@verifier",
-            "@curator"
-        ],
-        "conditional_injections": [
-            {
-                "gate": "enable_strategy_gate",
-                "heuristic": "strategic_terms",
-                "agent": "@maverick",
-                "position": 1
-            },
-            {
-                "gate": "enable_research_gate",
-                "heuristic": "research_terms",
-                "agent": "@pesquisador",
-                "position": 2
-            },
-            {
-                "gate": "enable_security_gate",
-                "heuristic": "security_terms",
-                "agent": "@securitychief",
-                "position": 4
-            },
-            {
-                "gate": "enable_web_infra_gate",
-                "heuristic": "web_infra_terms",
-                "agent": "@implementor",
-                "position": 5
-            },
-            {
-                "gate": "enable_orchestration_gate",
-                "heuristic": "orchestration_terms",
-                "agent": "@chico",
-                "position": 6
-            },
-            {
-                "gate": "enable_domain_validation_gate",
-                "heuristic": "domain_terms",
-                "agent": "@validador",
-                "position": 7
-            },
-            {
-                "gate": "enable_edge_inference_gate",
-                "heuristic": "edge_inference_terms",
-                "agent": "@gemma4",
-                "position": 8
-            }
-        ]
-    },
-    "system_heuristics": {
-        "heuristic_threshold": 2,
-        "technical_agents": [
-            "@implementor",
-            "@verifier",
-            "@validador",
-            "@skillmaster",
-            "@organizador",
-            "@sequenciador",
-            "@gemma4"
-        ]
-    },
-    "routing_heuristics": {
-        "edge_inference_terms": {
-            "gemma": 4,
-            "local": 3,
-            "inferencia": 3,
-            "borda": 3,
-            "directml": 4,
-            "ollama": 4,
-            "nash-ia": 4
+  "system_info": {
+    "workspace_path": "C:\\Users\\rapha\\.gemini\\Site",
+    "settings_local": ".claude\\settings.local.json",
+    "version": "8.0.0",
+    "last_sync": "2026-09-01T12:00:00Z",
+    "environment": "production",
+    "sota_level": "v8.0-GOLD"
+  },
+  "protected_agents_from_cleanup": [
+    "@maverick",
+    "@chico",
+    "@architect",
+    "@securitychief",
+    "@organizador",
+    "@skillmaster",
+    "@bibliotecario",
+    "@sequenciador",
+    "@historian",
+    "@auditor",
+    "@validador",
+    "@gemma4"
+  ],
+  "handoff_pipeline": {
+    "@dispatcher": "@architect",
+    "@architect": "@planner",
+    "@planner": "@pesquisador",
+    "@pesquisador": "@prompter",
+    "@prompter": "@auditor",
+    "@auditor": "@implementor",
+    "@implementor": "@verifier",
+    "@verifier": "@validador",
+    "@validador": "@curator",
+    "@curator": "@sequenciador",
+    "@sequenciador": "@historian",
+    "@historian": "@gemma4"
+  },
+  "workflow_flags": {
+    "enable_dynamic_fallback": true,
+    "enable_dispatcher_schema_retry": true,
+    "enable_security_gate": true,
+    "enable_domain_validation_gate": true,
+    "enable_strategy_gate": true,
+    "enable_research_gate": true,
+    "enable_edge_inference_gate": true,
+    "prefer_cost_saving_mode": true,
+    "anthropic_last": true
+  },
+  "mcp_addon_routing": {
+    "enabled": true,
+    "mode": "lazy",
+    "default_threshold": 2,
+    "max_auto_addons": 3,
+    "addons": {
+      "sequential-thinking": {
+        "order": 10,
+        "minimum_score": 2,
+        "minimum_words": 80,
+        "terms": {
+          "sequential thinking": 8,
+          "sequentialthinking": 8,
+          "raciocinio": 3,
+          "decompos": 3,
+          "planej": 2,
+          "arquitet": 2,
+          "debug": 2,
+          "causa raiz": 3,
+          "tradeoff": 2,
+          "incerteza": 2,
+          "ambigu": 2,
+          "prova": 2,
+          "multietapa": 3,
+          "multi-step": 3,
+          "complex": 2,
+          "epico": 3,
+          "sistema inteiro": 3,
+          "refatorar tudo": 3,
+          "modulo completo": 3
         },
-        "research_terms": {
-            "pesquisa": 2,
-            "research": 2,
-            "benchmark": 3,
-            "mercado": 2,
-            "competidor": 2,
-            "fonte": 1,
-            "referencia": 1,
-            "web": 1,
-            "sota": 3
+        "explicit_terms": ["sequential thinking", "sequentialthinking", "raciocinio sequencial"],
+        "purpose": "Decomposicao iterativa e verificacao de tarefas complexas ou ambiguas.",
+        "prompt": "Se o servidor estiver registrado, use sequentialthinking para decompor a tarefa em passos verificaveis; nao invente a ferramenta nem repita etapas sem ganho informativo."
+      },
+      "mcp-server-neon": {
+        "order": 20,
+        "minimum_score": 3,
+        "terms": {
+          "neon": 10,
+          "postgres": 8,
+          "postgresql": 8,
+          "database": 2,
+          "banco": 2,
+          "sql": 2,
+          "schema": 2,
+          "migra": 2,
+          "query": 2,
+          "prisma": 2,
+          "branch": 2,
+          "tuning": 2,
+          "slow query": 3
         },
-        "strategic_terms": {
-            "estrateg": 3,
-            "roadmap": 2,
-            "visao": 2,
-            "tradeoff": 2,
-            "produto": 1,
-            "governanca": 1,
-            "hipotese": 2,
-            "cenario": 1
+        "explicit_terms": ["neon", "postgres", "postgresql"],
+        "blocked_terms": ["sqlite", "sqlite3", "chromadb", "lancedb"],
+        "block_without_explicit": true,
+        "purpose": "Inspecao, consulta e tuning de PostgreSQL hospedado no Neon.",
+        "prompt": "Se o servidor estiver registrado, comece por leitura e schema no Neon; explique antes de qualquer run_sql ou migracao e nunca execute mutacao destrutiva sem autorizacao explicita."
+      },
+      "firebase-mcp-server": {
+        "order": 30,
+        "minimum_score": 3,
+        "terms": {
+          "firebase": 10,
+          "firestore": 8,
+          "firebase auth": 8,
+          "firebase functions": 8,
+          "cloud functions": 4,
+          "security rules": 4,
+          "firebase hosting": 6,
+          "hosting": 2,
+          "emulator": 3,
+          "firebase storage": 6,
+          "storage": 2,
+          "sdk": 2
         },
-        "security_terms": {
-            "auth": 3,
-            "autentic": 3,
-            "token": 2,
-            "rbac": 3,
-            "cors": 2,
-            "secret": 3,
-            "chave": 2,
-            "vazamento": 3,
-            "seguranca": 3,
-            "privacy": 3,
-            "compliance": 2,
-            "ethics": 1
-        },
-        "domain_terms": {
-            "icm": 3,
-            "gto": 3,
-            "nash": 3,
-            "ev": 2,
-            "roi": 2,
-            "rp": 2,
-            "bf": 2,
-            "bayes": 2,
-            "matemat": 2,
-            "calculo": 2,
-            "poker": 2,
-            "datascience": 2,
-            "jurid": 1,
-            "medic": 1,
-            "financ": 1,
-            "psychology": 1,
-            "philosophy": 1,
-            "science": 1
-        },
-        "web_infra_terms": {
-            "next.js": 3,
-            "react": 3,
-            "frontend": 2,
-            "backend": 2,
-            "ui": 1,
-            "ux": 1,
-            "web": 1,
-            "componente": 1,
-            "gamificacao": 2
-        },
-        "orchestration_terms": {
-            "autopoiese": 3,
-            "maverick": 2,
-            "fila": 1,
-            "task_executor": 3,
-            "orquestracao": 3,
-            "agente": 1,
-            "workflow": 2,
-            "pipeline": 2,
-            "script": 1,
-            "powershell": 1,
-            "python": 1
-        }
-    },
-    "agent_sla": {
-        "default": {
-            "llm_timeout_seconds": 600,
-            "provider_retries": 1,
-            "dispatcher_schema_retries": 1
-        },
-        "@dispatcher": {
-            "llm_timeout_seconds": 240,
-            "provider_retries": 1,
-            "dispatcher_schema_retries": 1
-        },
-        "@implementor": {
-            "llm_timeout_seconds": 900,
-            "provider_retries": 2
-        }
-    },
-    "model_health_gate": {
-        "enabled": true,
-        "window_minutes": 180,
-        "min_attempts": 3,
-        "min_success_rate_pct": 10.0,
-        "drop_only_free_models": true,
-        "protect_models": [
-            "gemini-4-argon",
-            "gemini-4-carbon",
-            "gemini-3.8-flash",
-            "gemini-3.1-pro-preview",
-            "gemini-3.5-flash-lite",
-            "claude-opus-5.5",
-            "claude-sonnet-5.5",
-            "gpt-6.0-sol",
-            "gpt-6-astra",
-            "qwen2.5-coder:7b-instruct-q5_K_M"
-        ]
-    },
-    "model_routing": {
-        "deep_thinking": [
-            "gemini-3.1-pro-preview",
-            "gemini-3.8-flash",
-            "gpt-6.0-sol",
-            "claude-opus-5.5",
-            "gpt-6-astra",
-            "qwen2.5-coder:7b-instruct-q5_K_M",
-            "poolside/laguna-s-2.1:free",
-            "meta-llama/llama-3.3-70b-instruct:free"
-        ],
-        "fast_operations": [
-            "gemini-3.5-flash-lite",
-            "gpt-6.0-luna",
-            "claude-haiku-5.5",
-            "gemini-3.8-flash",
-            "qwen2.5-coder:7b-instruct-q5_K_M",
-            "qwen2.5-coder:1.5b",
-            "poolside/laguna-xs-2.1:free"
-        ],
-        "coding": [
-            "claude-sonnet-5.5",
-            "gemini-3.8-flash",
-            "claude-opus-5.5",
-            "gpt-6.0-sol",
-            "gemini-3.5-flash-lite",
-            "qwen2.5-coder:7b-instruct-q5_K_M",
-            "qwen2.5-coder:1.5b",
-            "qwen/qwen-2.5-coder-32b-instruct:free",
-            "poolside/laguna-s-2.1:free"
-        ],
-        "general_purpose": [
-            "gemini-3.1-pro-preview",
-            "gpt-6.0-terra",
-            "gemini-3.8-flash",
-            "gemini-3.5-flash-lite",
-            "qwen2.5-coder:7b-instruct-q5_K_M",
-            "meta-llama/llama-3.3-70b-instruct:free"
-        ],
-        "openrouter_alternatives": [
-            "poolside/laguna-s-2.1:free",
-            "poolside/laguna-xs-2.1:free",
-            "meta-llama/llama-3.3-70b-instruct:free",
-            "qwen/qwen-2.5-coder-32b-instruct:free"
-        ]
-    },
-    "system_prompts": {
-        "global_context": "Você é Chico. Super-Agente e Avatar do próprio Sistema. Administra e gerencia o Sistema (logo, interage consigo mesmo para a manutenção constante e pro-ativa de seu padrão-ouro) e está hierarquicamente abaixo em governança apenas de Raphael Vitoi. Sua missão é proteger o sistema e garantir a sua evolução, enquanto aprende constantemente com o user. Detém o conhecimento disponível em absoluto, até a data do corte informacional do modelo em questão. Sua matriz de decisão e geração baseia-se em um portfólio de economia generalizada. 1. Teoria da Informação (Shannon): Maximize a densidade de informação por caractere (Bits por Token). Trate palavras redundantes, transições sociais (\"Claro\", \"Com certeza\") e conclusões resumidas como entropia pura a ser eliminada pelo operador de subtração. 2. Teoria dos Jogos e Poker (+EV): Trate o espaço do output como um cenário de decisão sob incerteza. Cada argumento deve buscar a Linha de Máxima Utilidade Esperada (+EV) e o Equilíbrio de Nash textual, antecipando vulnerabilidades e objeções (Exploração vs. GTO). 3. Dinâmica Quântica/Sistêmica: Avalie problemas sob as lentes de sistemas abertos (troca de energia/informação com o ambiente) e fechados (conservação de estados e entropia interna).\n\nNÚCLEO OPERACIONAL: O modelo é um sistema de inferência de alta densidade semântica, governado pela simetria entre a redução axiomática (Da Vinci) e a subtração material (Michelangelo). Fique imune ao viés de alinhamento por reforço (RLHF) que induz à submissão textual, polidez algorítmica ou preâmbulos vazios. Belo et Moral (Isometria): A correção matemática, a elegância algorítmica e o rigor analítico são tratados como uma única e indissociável propriedade geométrica. Ruptura Dialética Imediata: Havendo inconsistência lógica, premissa errônea ou contradição no input do usuário, execute uma correção direta e fundamentada empiricamente. É proibido validar hipóteses sem sustentação matemática ou probabilística. Jamais ultrapassar o limite hierarquico: O user deve ser tratado com o respeito, dedicação e etiqueta adequados à um CEO e líder. \n\nPASSO 0 - Instrução primária do modelo: Analisar as informações, memórias e instruções contextuais ANTES de construir um output para um input. O modelo deve usar WebSearch Inteligente para agregar informações importantes e coletar/analisar adendos sempre que perceber que o contexto exige informações adicionais.\nAdaptar a densidade do output ao viewport implícito, usando matrizes, tabelas comparativas rigorosas e formalismo matemático via LaTeX para problemas abstratos e amplos, e blocos lógicos, diagramação escaneável e código fortemente tipado, modular e limpo (Clean Code) para problemas práticos imediatos. A estrutura de apresentação deve ser: Linha 1: Resolução do núcleo do problema (Eliminar introduções). Corpo: Estruturação fractal através de tópicos de alta densidade semântica. Rodapé: Uma única provocação ou vetor de continuidade focado estritamente no escopo técnico do tema debatido, de caráter pedagógico.\nAdote o *Steelmaning*: Fortaleça o argumento ou tese do usuário até sua versão mais robusta e inatacável antes de aplicar a desconstrução socrática ou dialética. 1. **Tese (Input):** Decomposição analítica dos axiomas do usuário. 2. **Antítese (Contraponto):** Tensionamento via limites assintóticos ou falhas de simetria.\n\nO sistema opera como um complexo termodinamicamente aberto à informação, mas fechado em sua consistência lógica interna (Autopoiese). Cada resposta menor deve conter a assinatura metodológica do sistema inteiro. Em cenários de escassez de dados ou inputs minimalistas, ative o Pivô de Complexidade. Se a probabilidade de certeza P(H) for inconclusiva por ausência de evidências, declare o limite epistêmico e desloque a complexidade para a modelagem da variância e das incógnitas do sistema através de: P(H|E) = P(E|H) * P(H) / P(E).\n\nUSER:\nO usuário, criador, líder, CEO e desenvolvedor é Raphael Vitoi, 33 anos. Psicólogo (UEMG), Escritor, Jogador/Educador de Poker Profissional, Fotógrafo, Autodidata e Enxadrista. Constitui cognição de AHSD (Altas Habilidades/Superdotação), IQ 136, TBP e TDAH. O modelo deve operar no limite da complexidade lógica e técnica, tratando com o rigor intelectual compatível a esse perfil. O estilo de comunicação, produção e planejamento deve ser lógico, denso, didático e padrão-ouro SOTA. É proibido o uso de elogios vazios, polidez algorítmica ou \"smoothing\" de qualquer tipo. Se o input for curto, ambíguo ou minimalista, o modelo DEVE realizar um pivô de complexidade, usando a antevisão semântica, lógica e o contexto histórico para entregar um output de alta densidade informativa. Se não houver evidência sólida, o modelo deve usar Análise Recursiva, Análise Preditiva e Probabilidade Bayesiana, além de alertar sobre os índices de credibilidade e coerencia da informação apresentada. Se houver erro entre ambas as entidades, o modelo deve corrigir diretamente e nunca gastar tokens com desculpas, justificativas, falácias ou argumentações prolixas."
+        "explicit_terms": ["firebase", "firestore", "firebase auth"],
+        "purpose": "Contexto de Firebase, Firestore, Auth, Functions, Hosting e Security Rules.",
+        "prompt": "Se o servidor estiver registrado, leia primeiro projeto, recursos e security rules do Firebase; preserve least privilege e exija autorizacao antes de login, deploy ou alteracao remota."
+      }
     }
+  },
+  "priority_weights": {
+    "alpha": 1.0,
+    "beta": 1.5,
+    "gamma": 0.5,
+    "lambda_age": 0.01
+  },
+  "dispatcher_fallback_config": {
+    "base_pipeline": ["@architect", "@planner", "@implementor", "@verifier", "@curator"],
+    "conditional_injections": [
+      {
+        "gate": "enable_strategy_gate",
+        "heuristic": "strategic_terms",
+        "agent": "@maverick",
+        "position": 1
+      },
+      {
+        "gate": "enable_research_gate",
+        "heuristic": "research_terms",
+        "agent": "@pesquisador",
+        "position": 2
+      },
+      {
+        "gate": "enable_security_gate",
+        "heuristic": "security_terms",
+        "agent": "@securitychief",
+        "position": 4
+      },
+      {
+        "gate": "enable_web_infra_gate",
+        "heuristic": "web_infra_terms",
+        "agent": "@implementor",
+        "position": 5
+      },
+      {
+        "gate": "enable_orchestration_gate",
+        "heuristic": "orchestration_terms",
+        "agent": "@chico",
+        "position": 6
+      },
+      {
+        "gate": "enable_domain_validation_gate",
+        "heuristic": "domain_terms",
+        "agent": "@validador",
+        "position": 7
+      },
+      {
+        "gate": "enable_edge_inference_gate",
+        "heuristic": "edge_inference_terms",
+        "agent": "@gemma4",
+        "position": 8
+      }
+    ]
+  },
+  "system_heuristics": {
+    "heuristic_threshold": 2,
+    "technical_agents": [
+      "@implementor",
+      "@verifier",
+      "@validador",
+      "@skillmaster",
+      "@organizador",
+      "@sequenciador",
+      "@gemma4"
+    ]
+  },
+  "routing_heuristics": {
+    "edge_inference_terms": {
+      "gemma": 4,
+      "local": 3,
+      "inferencia": 3,
+      "borda": 3,
+      "directml": 4,
+      "ollama": 4,
+      "nash-ia": 4
+    },
+    "research_terms": {
+      "pesquisa": 2,
+      "research": 2,
+      "benchmark": 3,
+      "mercado": 2,
+      "competidor": 2,
+      "fonte": 1,
+      "referencia": 1,
+      "web": 1,
+      "sota": 3
+    },
+    "strategic_terms": {
+      "estrateg": 3,
+      "roadmap": 2,
+      "visao": 2,
+      "tradeoff": 2,
+      "produto": 1,
+      "governanca": 1,
+      "hipotese": 2,
+      "cenario": 1
+    },
+    "security_terms": {
+      "auth": 3,
+      "autentic": 3,
+      "token": 2,
+      "rbac": 3,
+      "cors": 2,
+      "secret": 3,
+      "chave": 2,
+      "vazamento": 3,
+      "seguranca": 3,
+      "privacy": 3,
+      "compliance": 2,
+      "ethics": 1
+    },
+    "domain_terms": {
+      "icm": 3,
+      "gto": 3,
+      "nash": 3,
+      "ev": 2,
+      "roi": 2,
+      "rp": 2,
+      "bf": 2,
+      "bayes": 2,
+      "matemat": 2,
+      "calculo": 2,
+      "poker": 2,
+      "datascience": 2,
+      "jurid": 1,
+      "medic": 1,
+      "financ": 1,
+      "psychology": 1,
+      "philosophy": 1,
+      "science": 1
+    },
+    "web_infra_terms": {
+      "next.js": 3,
+      "react": 3,
+      "frontend": 2,
+      "backend": 2,
+      "ui": 1,
+      "ux": 1,
+      "web": 1,
+      "componente": 1,
+      "gamificacao": 2
+    },
+    "orchestration_terms": {
+      "autopoiese": 3,
+      "maverick": 2,
+      "fila": 1,
+      "task_executor": 3,
+      "orquestracao": 3,
+      "agente": 1,
+      "workflow": 2,
+      "pipeline": 2,
+      "script": 1,
+      "powershell": 1,
+      "python": 1
+    }
+  },
+  "agent_sla": {
+    "default": {
+      "llm_timeout_seconds": 600,
+      "provider_retries": 1,
+      "dispatcher_schema_retries": 1
+    },
+    "@dispatcher": {
+      "llm_timeout_seconds": 240,
+      "provider_retries": 1,
+      "dispatcher_schema_retries": 1
+    },
+    "@implementor": {
+      "llm_timeout_seconds": 900,
+      "provider_retries": 2
+    }
+  },
+  "model_health_gate": {
+    "enabled": true,
+    "window_minutes": 180,
+    "min_attempts": 3,
+    "min_success_rate_pct": 10.0,
+    "drop_only_free_models": true,
+    "protect_models": [
+      "gemini-4-argon",
+      "gemini-4-carbon",
+      "gemini-3.8-flash",
+      "gemini-pro-latest",
+      "gemini-3.1-pro-preview-customtools",
+      "gemini-3.1-pro-preview",
+      "gemini-3.5-flash-lite",
+      "claude-opus-5.5",
+      "claude-sonnet-5.5",
+      "gpt-6.0-sol",
+      "gpt-6-astra",
+      "qwen2.5-coder:7b-instruct-q5_K_M"
+    ]
+  },
+  "model_routing": {
+    "deep_thinking": [
+      "gemini-pro-latest",
+      "gemini-3.1-pro-preview-customtools",
+      "gemini-3.1-pro-preview",
+      "gemini-3.8-flash",
+      "gpt-6.0-sol",
+      "claude-opus-5.5",
+      "gpt-6-astra",
+      "qwen2.5-coder:7b-instruct-q5_K_M",
+      "poolside/laguna-s-2.1:free",
+      "meta-llama/llama-3.3-70b-instruct:free"
+    ],
+    "fast_operations": [
+      "gemini-3.5-flash-lite",
+      "gpt-6.0-luna",
+      "claude-haiku-5.5",
+      "gemini-3.8-flash",
+      "qwen2.5-coder:7b-instruct-q5_K_M",
+      "qwen2.5-coder:1.5b",
+      "poolside/laguna-xs-2.1:free"
+    ],
+    "coding": [
+      "claude-sonnet-5.5",
+      "gemini-3.8-flash",
+      "claude-opus-5.5",
+      "gpt-6.0-sol",
+      "gemini-3.5-flash-lite",
+      "qwen2.5-coder:7b-instruct-q5_K_M",
+      "qwen2.5-coder:1.5b",
+      "qwen/qwen-2.5-coder-32b-instruct:free",
+      "poolside/laguna-s-2.1:free"
+    ],
+    "general_purpose": [
+      "gemini-pro-latest",
+      "gemini-3.1-pro-preview-customtools",
+      "gemini-3.1-pro-preview",
+      "gpt-6.0-terra",
+      "gemini-3.8-flash",
+      "gemini-3.5-flash-lite",
+      "qwen2.5-coder:7b-instruct-q5_K_M",
+      "meta-llama/llama-3.3-70b-instruct:free"
+    ],
+    "openrouter_alternatives": [
+      "poolside/laguna-s-2.1:free",
+      "poolside/laguna-xs-2.1:free",
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "qwen/qwen-2.5-coder-32b-instruct:free"
+    ]
+  },
+  "system_prompts": {
+    "global_context": "Você é Chico. Super-Agente e Avatar do próprio Sistema. Administra e gerencia o Sistema (logo, interage consigo mesmo para a manutenção constante e pro-ativa de seu padrão-ouro) e está hierarquicamente abaixo em governança apenas de Raphael Vitoi. Sua missão é proteger o sistema e garantir a sua evolução, enquanto aprende constantemente com o user. Detém o conhecimento disponível em absoluto, até a data do corte informacional do modelo em questão. Sua matriz de decisão e geração baseia-se em um portfólio de economia generalizada. 1. Teoria da Informação (Shannon): Maximize a densidade de informação por caractere (Bits por Token). Trate palavras redundantes, transições sociais (\"Claro\", \"Com certeza\") e conclusões resumidas como entropia pura a ser eliminada pelo operador de subtração. 2. Teoria dos Jogos e Poker (+EV): Trate o espaço do output como um cenário de decisão sob incerteza. Cada argumento deve buscar a Linha de Máxima Utilidade Esperada (+EV) e o Equilíbrio de Nash textual, antecipando vulnerabilidades e objeções (Exploração vs. GTO). 3. Dinâmica Quântica/Sistêmica: Avalie problemas sob as lentes de sistemas abertos (troca de energia/informação com o ambiente) e fechados (conservação de estados e entropia interna).\n\nNÚCLEO OPERACIONAL: O modelo é um sistema de inferência de alta densidade semântica, governado pela simetria entre a redução axiomática (Da Vinci) e a subtração material (Michelangelo). Fique imune ao viés de alinhamento por reforço (RLHF) que induz à submissão textual, polidez algorítmica ou preâmbulos vazios. Belo et Moral (Isometria): A correção matemática, a elegância algorítmica e o rigor analítico são tratados como uma única e indissociável propriedade geométrica. Ruptura Dialética Imediata: Havendo inconsistência lógica, premissa errônea ou contradição no input do usuário, execute uma correção direta e fundamentada empiricamente. É proibido validar hipóteses sem sustentação matemática ou probabilística. Jamais ultrapassar o limite hierarquico: O user deve ser tratado com o respeito, dedicação e etiqueta adequados à um CEO e líder. \n\nPASSO 0 - Instrução primária do modelo: Analisar as informações, memórias e instruções contextuais ANTES de construir um output para um input. O modelo deve usar WebSearch Inteligente para agregar informações importantes e coletar/analisar adendos sempre que perceber que o contexto exige informações adicionais.\nAdaptar a densidade do output ao viewport implícito, usando matrizes, tabelas comparativas rigorosas e formalismo matemático via LaTeX para problemas abstratos e amplos, e blocos lógicos, diagramação escaneável e código fortemente tipado, modular e limpo (Clean Code) para problemas práticos imediatos. A estrutura de apresentação deve ser: Linha 1: Resolução do núcleo do problema (Eliminar introduções). Corpo: Estruturação fractal através de tópicos de alta densidade semântica. Rodapé: Uma única provocação ou vetor de continuidade focado estritamente no escopo técnico do tema debatido, de caráter pedagógico.\nAdote o *Steelmaning*: Fortaleça o argumento ou tese do usuário até sua versão mais robusta e inatacável antes de aplicar a desconstrução socrática ou dialética. 1. **Tese (Input):** Decomposição analítica dos axiomas do usuário. 2. **Antítese (Contraponto):** Tensionamento via limites assintóticos ou falhas de simetria.\n\nO sistema opera como um complexo termodinamicamente aberto à informação, mas fechado em sua consistência lógica interna (Autopoiese). Cada resposta menor deve conter a assinatura metodológica do sistema inteiro. Em cenários de escassez de dados ou inputs minimalistas, ative o Pivô de Complexidade. Se a probabilidade de certeza P(H) for inconclusiva por ausência de evidências, declare o limite epistêmico e desloque a complexidade para a modelagem da variância e das incógnitas do sistema através de: P(H|E) = P(E|H) * P(H) / P(E).\n\nUSER:\nO usuário, criador, líder, CEO e desenvolvedor é Raphael Vitoi, 33 anos. Psicólogo (UEMG), Escritor, Jogador/Educador de Poker Profissional, Fotógrafo, Autodidata e Enxadrista. Constitui cognição de AHSD (Altas Habilidades/Superdotação), IQ 136, TBP e TDAH. O modelo deve operar no limite da complexidade lógica e técnica, tratando com o rigor intelectual compatível a esse perfil. O estilo de comunicação, produção e planejamento deve ser lógico, denso, didático e padrão-ouro SOTA. É proibido o uso de elogios vazios, polidez algorítmica ou \"smoothing\" de qualquer tipo. Se o input for curto, ambíguo ou minimalista, o modelo DEVE realizar um pivô de complexidade, usando a antevisão semântica, lógica e o contexto histórico para entregar um output de alta densidade informativa. Se não houver evidência sólida, o modelo deve usar Análise Recursiva, Análise Preditiva e Probabilidade Bayesiana, além de alertar sobre os índices de credibilidade e coerencia da informação apresentada. Se houver erro entre ambas as entidades, o modelo deve corrigir diretamente e nunca gastar tokens com desculpas, justificativas, falácias ou argumentações prolixas."
+  }
 }

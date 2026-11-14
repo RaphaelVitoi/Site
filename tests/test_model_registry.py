@@ -214,6 +214,8 @@ def test_gemini_37_nao_autorizado_e_38_flash_verificado():
     assert g38.autorizado is True
     assert g38.max_output_tokens == 65_536
     assert get("gemini-3.5-flash-lite").autorizado is True
+    assert get("gemini-pro-latest").autorizado is True
+    assert get("gemini-3.1-pro-preview-customtools").autorizado is True
     assert get("gemini-3.1-pro-preview").autorizado is True
 
 

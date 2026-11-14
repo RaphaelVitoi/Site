@@ -480,6 +480,46 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "provas formais PMev e arquitetura de ponta), nunca como primarios rotineiros."
         ),
     ),
+    "gemini-pro-latest": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-pro-latest",
+        cota_por_assinatura=True,
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=2.00,
+        price_per_1m_out=12.00,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
+        notas=(
+            "Gemini 3.1 Pro (entrypoint primario favorecido: gemini-pro-latest; "
+            "failovers em ordem: 1) gemini-3.1-pro-preview-customtools, "
+            "2) gemini-3.1-pro-preview — os 3 entrypoints constam neste registro "
+            "para failover em cadeia). Operador pontual apenas para projetos "
+            "ULTRA DENSOS e COMPLEXOS que envolvem matematica e reasoning e "
+            "uma abordagem pragmatica, estruturada, sistematica, focada e sem "
+            "desvios; nunca primario rotineiro."
+        ),
+    ),
+    "gemini-3.1-pro-preview-customtools": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-3.1-pro-preview-customtools",
+        cota_por_assinatura=True,
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=2.00,
+        price_per_1m_out=12.00,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.VERIFICADO,
+        notas=(
+            "Gemini 3.1 Pro (1o failover de gemini-pro-latest; otimizado para "
+            "bash e custom tools em workflows agenticos; 2o failover: "
+            "gemini-3.1-pro-preview). Mesmo escopo restrito a projetos ULTRA "
+            "DENSOS e COMPLEXOS com matematica e reasoning sob abordagem "
+            "pragmatica, estruturada, sistematica, focada e sem desvios."
+        ),
+    ),
     "gemini-3.1-pro-preview": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.1-pro-preview",
@@ -492,21 +532,18 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Gemini 3.1 Pro: modelo de reasoning frontier da linha 3 — "
-            "especialista em POUQUISSIMAS funcoes muito densas, nunca trabalho "
-            "rotineiro. Benchmarks de referencia (card do fabricante, "
-            "fevereiro/2026): HLE 44.4% sem ferramentas (51.4% com "
+            "Gemini 3.1 Pro (2o failover de gemini-pro-latest, apos "
+            "gemini-3.1-pro-preview-customtools — todos os 3 entrypoints "
+            "mantidos como nota e failover). Operador apenas para projetos "
+            "ULTRA DENSOS e COMPLEXOS que envolvem matematica e reasoning e "
+            "uma abordagem pragmatica, estruturada, sistematica, focada e sem "
+            "desvios, nunca trabalho rotineiro. Benchmarks de referencia (card "
+            "do fabricante, fevereiro/2026): HLE 44.4% sem ferramentas (51.4% com "
             "search+code), GPQA Diamond 94.3%, ARC-AGI-2 77.1%, Terminal-Bench "
             "2.0 68.5%, SWE-Bench Verified 80.6%, tau2-Bench Telecom 99.3%, "
-            "MCP Atlas 69.2%, MMMU-Pro 80.5%. Artificial Analysis o coloca "
-            "entre os lideres em HLE, GPQA-Diamond, SciCode e Terminal-Bench "
-            "Hard a menos da metade do custo dos frontier peers. Preco "
-            "$2/$12 por 1M (ate 200k de contexto). Head de "
-            "deep_thinking/general_purpose em system_config.json — topo do "
-            "caminho de inferencia densa, nao por ser o mais novo, mas por "
-            "rendimento por dollar medido. CONFIRMADO VIGENTE pelo Tier 0 "
-            "em 2026-11-10: a descontinuacao atinge a linha Gemini 3 Flash "
-            "(nao-lite), NAO o 3.1 Pro."
+            "MCP Atlas 69.2%, MMMU-Pro 80.5%. Preco $2/$12 por 1M (ate 200k de "
+            "contexto). CONFIRMADO VIGENTE pelo Tier 0: a descontinuacao "
+            "atinge a linha Gemini 3 Flash (nao-lite <= 3.7), NAO o 3.1 Pro."
         ),
     ),
     "gemini-4-carbon": ModelCapability(

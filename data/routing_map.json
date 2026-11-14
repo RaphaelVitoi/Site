@@ -2,6 +2,8 @@
   "_uso": "FALLBACK APENAS. core/config.py faz MODEL_ROUTING = SYSTEM_CONFIG.get('model_routing', ROUTING_CONFIG), entao data/system_config.json tem precedencia e este arquivo so entra em vigor se 'model_routing' sumir de la. As listas abaixo eram byte a byte identicas as de system_config em 2026-08-21.",
   "_removido_2026_08_21": "'agent_map' foi removido: tinha ZERO consumidores em todo o codigo e contradizia data/agents_manifest.json em 3 agentes (implementor, verifier, bibliotecario). A preferencia por agente vem do manifesto, via core.config.AGENT_ROUTING_MAP, consumido em engine/llm_api.py:528 e llm/orchestrator.py:147.",
   "deep_thinking": [
+    "gemini-pro-latest",
+    "gemini-3.1-pro-preview-customtools",
     "gemini-3.1-pro-preview",
     "gemini-3.8-flash",
     "gpt-6.0-sol",

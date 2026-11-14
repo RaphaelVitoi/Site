@@ -378,6 +378,8 @@ class GoogleGenAIAdapter:
             in (
                 "gemini-3.5-flash-lite",
                 "gemini-3.8-flash",
+                "gemini-pro-latest",
+                "gemini-3.1-pro-preview-customtools",
                 "gemini-3.1-pro-preview",
                 "gemini-4-argon",
             )
