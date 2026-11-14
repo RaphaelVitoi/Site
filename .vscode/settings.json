@@ -444,7 +444,7 @@
     "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
     "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
     "wam.switchDevinCli": true,
-    "files.autoSave": "off",
+    "files.autoSave": "afterDelay",
     "editor.codeActions.triggerOnFocusChange": true,
     "editor.definitionLinkOpensInPeek": true,
     "editor.experimental.asyncTokenizationLogging": true,
@@ -688,5 +688,7 @@
     "antigravity.binary.path": "C:\\Users\\rapha\\AppData\\Local\\agy\\bin\\agy.exe",
     "python.terminal.useEnvFile": true,
     "chat.useClaudeHooks": true,
-    "python.analysis.diagnosticsSource": "Pylance"
+    "python.analysis.diagnosticsSource": "Pylance",
+    "nexrall.auditTrail": true,
+    "terminal-in-status-bar.statusBarLabel": true
 }

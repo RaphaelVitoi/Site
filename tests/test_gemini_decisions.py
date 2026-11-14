@@ -405,3 +405,16 @@ def test_decide_s1_in_process_treinado_nao_consulta_microservico() -> None:
         result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
     mock_remote.assert_not_called()
     assert result.engine == "laya-s1-trained"
+
+
+def test_decide_s1_prefer_service_nao_duplica_sonda_quando_offline(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Com CHICO_LAYA_PREFER_SERVICE=1 e :8192 offline, nao sonda HTTP duas vezes."""
+    monkeypatch.setenv("CHICO_LAYA_PREFER_SERVICE", "1")
+    cli = GeminiDecisionsClient(api_key="")
+    with (
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None) as mock_remote,
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()),
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
+    assert mock_remote.call_count == 1
+    assert result.engine == "laya-s1-fallback"

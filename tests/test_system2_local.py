@@ -248,3 +248,34 @@ def test_ollama_model_fits_ram_carregado_e_recuperavel() -> None:
             patch.object(system2_local, "_vram_total_gb", return_value=12.0),
         ):
             assert system2_local._ollama_model_fits_ram("m:big") is True
+
+
+def test_tier_edge_proxy_e_fallback_ollama() -> None:
+    assert system2_local.tier_model("edge") == "gemma4:12b"
+    with (
+        patch.dict("os.environ", {"API_SECRET_TOKEN": "tok-test"}),
+        patch.object(system2_local, "edge_proxy_online", return_value=True),
+        patch.object(system2_local, "_ollama_model_fits_ram", return_value=True),
+        patch.object(system2_local, "_loopback_http", return_value=(200, b"resposta edge 12b")),
+    ):
+        text, meta = system2_local.system2_generate("pergunta edge", tier="edge")
+    assert text == "resposta edge 12b"
+    assert meta["engine"] == "gemma-edge-proxy"
+    assert meta["fallback_used"] is False
+
+
+def test_homologar_laya_fastapi_metrics_e_max_len(monkeypatch: pytest.MonkeyPatch) -> None:
+    from fastapi.testclient import TestClient
+
+    from scripts.ops.homologar_laya_gpu import criar_fastapi_app
+
+    monkeypatch.setenv("CHICO_LAYA_PREDICT_ALLOW_CPU", "0")
+    app = criar_fastapi_app()
+    client = TestClient(app)
+    r_pred = client.post("/predict", json={"state": "Hero BTN AKo", "max_len": 2048})
+    assert r_pred.status_code == 200
+    assert r_pred.json()["status"] == "SUCCESS"
+    r_health = client.get("/health")
+    assert r_health.status_code == 200
+    assert r_health.json()["metrics"]["requests_total"] == 1
+    assert r_health.json()["metrics"]["last_latency_ms"] is not None

@@ -122,3 +122,11 @@ def test_laya_s1_proveniancia_registrada_no_reason_codes():
     fb_md = fb.metadados_s1()
     assert fb_md["provenia"]["fallback_used"] is True
     assert fb_md["provenia"]["engine_id"] == "heuristic-script-detector"
+
+
+def test_laya_s1_promove_multiscript_sem_duplicar_quando_ja_na_lista():
+    from llm.orchestrator import _aplicar_reordenacao_laya_s1
+
+    modelos = ["claude-opus-5.5", "gemini-3.8-flash", "gemma4:e4b"]
+    reordenados = _aplicar_reordenacao_laya_s1(list(modelos), {"script": "han"})
+    assert reordenados == ["gemma4:e4b", "claude-opus-5.5", "gemini-3.8-flash"]

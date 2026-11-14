@@ -392,7 +392,14 @@ def _get_provider_strategy(provider: str) -> LLMProviderStrategy | None:
 
 
 def _check_local_llama_availability(model: str) -> bool:
-    """Check local LLaMA provider health based on model name."""
+    """Check local S2 availability: Gemma Edge Proxy (:17043) first, then Splash/llama (:8081..8083)."""
+    try:
+        from llm.system2_local import edge_proxy_online  # noqa: PLC0415
+
+        if edge_proxy_online(timeout_s=1.5):
+            return True
+    except Exception as exc:
+        logger.debug("[LOCAL PROXY] Probe :17043 indisponivel: %s", exc)
     try:
         from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
 

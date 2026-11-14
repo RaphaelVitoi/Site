@@ -240,3 +240,76 @@ class TestLayaMultilingualSOTA:
             provenia=p,
         )
         assert ruin_priority_from_laya_prediction(pred_incerta) == 1.30
+
+    def test_compor_advisory_respeita_kill_switch(self, monkeypatch):
+        monkeypatch.setenv("CHICO_S1_LAYA", "0")
+        prompt, meta = compor_advisory_s1("Base.", "Hero BTN AKo")
+        assert prompt == "Base."
+        assert meta is None
+
+    def test_laya_predict_extrai_usage_real_e_encaminha_max_len(self, monkeypatch):
+        from unittest.mock import MagicMock, patch
+
+        from llm.laya_bridge import laya_predict
+
+        monkeypatch.setenv("CHICO_LAYA_PREDICT_ALLOW_CPU", "1")
+        captured: dict[str, object] = {}
+
+        def _fake_predict(state, questions, model=None, max_len=None):
+            captured["max_len"] = max_len
+            return {
+                "answers": {"guard": {"type": "noul", "noul": 0.12, "confidence": 0.9}},
+                "usage": {"input_tokens": 37, "output_tokens": 5, "state_tokens": 9},
+                "routing": {"model": model or "multilingual"},
+            }
+
+        fake_router = MagicMock()
+        fake_router.predict = _fake_predict
+        long_state = " ".join(["BTN"] * 420)
+        with patch("llm.laya_bridge._obter_predict_router", return_value=fake_router):
+            pred = laya_predict(long_state, model_override="multilingual")
+
+        assert captured["max_len"] == 8192
+        assert pred.n_tokens == 42
+        assert pred.provenia.fallback_used is False
+
+    def test_laya_predict_remote_cooldown_e_max_len(self, monkeypatch):
+        from unittest.mock import MagicMock, patch
+
+        from llm.laya_bridge import laya_predict_remote, reset_laya_service_circuit
+
+        reset_laya_service_circuit()
+        monkeypatch.setenv("CHICO_LAYA_SERVICE_COOLDOWN_S", "30")
+        with patch("urllib.request.urlopen", side_effect=OSError("refused")) as mock_open:
+            assert laya_predict_remote("Hero BTN AKo") is None
+            # Segunda chamada dentro do cooldown pula socket
+            assert laya_predict_remote("Hero BTN AKo") is None
+            assert mock_open.call_count == 1
+
+        reset_laya_service_circuit()
+        fake_resp = MagicMock()
+        fake_resp.read.return_value = json.dumps(
+            {
+                "status": "SUCCESS",
+                "prediction": {
+                    "answers": {},
+                    "model_used": "multilingual",
+                    "device": "cpu",
+                    "n_tokens": 55,
+                    "latency_ms": 90.0,
+                    "noul": 0.2,
+                    "choice": "simple",
+                    "provenia": {"engine_id": "laya-s1-trained", "weights_loaded": True, "fallback_used": False},
+                },
+            }
+        ).encode()
+        fake_resp.__enter__.return_value = fake_resp
+        long_state = " ".join(["fold"] * 420)
+        with patch("urllib.request.urlopen", return_value=fake_resp) as mock_ok:
+            pred = laya_predict_remote(long_state)
+        assert pred is not None
+        assert pred.n_tokens == 55
+        req_sent = mock_ok.call_args.args[0]
+        body = json.loads(req_sent.data.decode("utf-8"))
+        assert body["max_len"] == 8192
+        reset_laya_service_circuit()

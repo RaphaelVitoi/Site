@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
+import inspect
 import json
 import logging
 import os
@@ -51,6 +52,7 @@ __all__ = [
     "LayaPrediction",
     "laya_predict",
     "laya_predict_remote",
+    "reset_laya_service_circuit",
     "predict_batch",
     "LAYA_DEFAULT_QUESTIONS",
     "LAYA_POKER_PRESETS",
@@ -265,7 +267,10 @@ def compor_advisory_s1(system_prompt: str, user_prompt: str) -> tuple[str, dict[
 
     O contrato e deliberadamente compacto: nao injeta texto livre derivado da
     entrada, nao troca modelo/provedor e informa quando a rota e fallback.
+    Respeita ``CHICO_S1_LAYA=0`` como kill-switch unificado com o Arbitrator.
     """
+    if os.environ.get("CHICO_S1_LAYA", "1") == "0":
+        return system_prompt, None
     marcador = "[System-1 advisory \u2014 Laya; input-side signal, not an answer or authority]"
     if not user_prompt or marcador in system_prompt:
         return system_prompt, None
@@ -540,6 +545,45 @@ def _obter_predict_router() -> Any:
     return router
 
 
+def _extract_n_tokens(result: dict[str, Any]) -> int:
+    """Extrai contagem real de tokens da resposta Laya (``usage`` ou ``token_usage``)."""
+    if not isinstance(result, dict):
+        return 0
+    for key in ("usage", "token_usage"):
+        usage = result.get(key)
+        if not isinstance(usage, dict):
+            continue
+        for total_key in ("total_tokens", "total", "totalTokenCount"):
+            if usage.get(total_key) is not None:
+                return int(usage[total_key])
+        inp = int(usage.get("input_tokens") or 0)
+        out = int(usage.get("output_tokens") or 0)
+        if inp or out:
+            return inp + out
+        if usage.get("state_tokens") is not None:
+            return int(usage["state_tokens"])
+    return 0
+
+
+def _invoke_router_predict(
+    router: Any,
+    state: Any,
+    qs: dict[str, dict[str, Any]],
+    model_name: str,
+    eff_max_len: int,
+) -> dict[str, Any]:
+    """Chama ``router.predict`` encaminhando ``max_len`` quando suportado pelo router."""
+    predict_fn = router.predict
+    try:
+        params = inspect.signature(predict_fn).parameters
+        accepts_max_len = "max_len" in params or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
+    except (TypeError, ValueError):
+        accepts_max_len = False
+    if accepts_max_len:
+        return predict_fn(state, qs, model=model_name, max_len=eff_max_len)
+    return predict_fn(state, qs, model=model_name)
+
+
 def laya_predict(
     state: str | dict[str, Any],
     questions: dict[str, dict[str, Any]] | None = None,
@@ -581,7 +625,7 @@ def laya_predict(
 
         # O modelo canonico e sempre 'multilingual', a menos que explicitamente sobrescrito
         model_name = model_override or CANONICAL_LAYA_MODEL
-        result = router.predict(state, qs, model=model_name)
+        result = _invoke_router_predict(router, state, qs, model_name, eff_max_len)
 
         latency_ms = (time.perf_counter() - inicio) * 1000.0
         noul, choice, score, conf = _extrair_grandes_dados(result, qs)
@@ -591,9 +635,7 @@ def laya_predict(
             answers=result,
             model_used=model_used,
             device=device_str,
-            n_tokens=int(result.get("token_usage", {}).get("total_tokens", 0))
-            if isinstance(result.get("token_usage"), dict)
-            else 0,
+            n_tokens=_extract_n_tokens(result),
             latency_ms=round(latency_ms, 2),
             noul=round(noul, 6) if noul is not None else None,
             choice=choice if choice else None,
@@ -669,9 +711,7 @@ def _build_batch_prediction_item(
         answers=res,
         model_used=m_used,
         device=device_str,
-        n_tokens=int(res.get("token_usage", {}).get("total_tokens", 0))
-        if isinstance(res.get("token_usage"), dict)
-        else 0,
+        n_tokens=_extract_n_tokens(res),
         latency_ms=0.0,
         noul=round(noul, 6) if noul is not None else None,
         choice=choice if choice else None,
@@ -742,6 +782,17 @@ def predict_batch(
 
 DEFAULT_LAYA_SERVICE_URL: str = "http://127.0.0.1:8192"
 _LAYA_SERVICE_ENV_KEYS: tuple[str, ...] = ("CHICO_LAYA_SERVICE_URL", "LAYA_SERVICE_URL")
+# Calibrado sobre i9-9900K (CPU) onde Hand Histories >400 palavras atingem ~2.4s.
+_DEFAULT_SERVICE_TIMEOUT_MS: float = 4000.0
+_SERVICE_CIRCUIT_LOCK = threading.Lock()
+_SERVICE_COOLDOWN_UNTIL: float = 0.0
+
+
+def reset_laya_service_circuit() -> None:
+    """Reinicia o cooldown de falha do microservico :8192 (uso em testes/ops)."""
+    global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603
+    with _SERVICE_CIRCUIT_LOCK:
+        _SERVICE_COOLDOWN_UNTIL = 0.0
 
 
 def _laya_service_config() -> tuple[str, float]:
@@ -754,10 +805,20 @@ def _laya_service_config() -> tuple[str, float]:
     if not url:
         url = DEFAULT_LAYA_SERVICE_URL
     try:
-        timeout_ms = float(os.environ.get("CHICO_LAYA_SERVICE_TIMEOUT_MS", "2000") or 2000)
+        timeout_ms = float(
+            os.environ.get("CHICO_LAYA_SERVICE_TIMEOUT_MS", str(int(_DEFAULT_SERVICE_TIMEOUT_MS)))
+            or _DEFAULT_SERVICE_TIMEOUT_MS
+        )
     except ValueError:
-        timeout_ms = 2000.0
+        timeout_ms = _DEFAULT_SERVICE_TIMEOUT_MS
     return url.rstrip("/"), max(0.2, timeout_ms / 1000.0)
+
+
+def _service_cooldown_seconds() -> float:
+    try:
+        return max(0.0, float(os.environ.get("CHICO_LAYA_SERVICE_COOLDOWN_S", "5.0") or 0.0))
+    except ValueError:
+        return 5.0
 
 
 def _provenia_from_service(raw: Any) -> Provenia:
@@ -805,6 +866,7 @@ def laya_predict_remote(
     state: str | dict[str, Any],
     questions: dict[str, dict[str, Any]] | None = None,
     timeout_s: float | None = None,
+    max_len: int | None = None,
 ) -> LayaPrediction | None:
     """Executa ``laya_predict`` no microservico HTTP Laya (``:8192``).
 
@@ -813,19 +875,28 @@ def laya_predict_remote(
     escalonamento nuvem). ``CHICO_LAYA_SERVICE_DISABLE=1`` desliga a sonda.
     Proveniencia do servico e preservada e marcada com ``laya-http-service``.
     """
+    global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603
     if os.environ.get("CHICO_LAYA_SERVICE_DISABLE", "0") == "1":
         return None
+    if timeout_s is None:
+        with _SERVICE_CIRCUIT_LOCK:
+            if time.monotonic() < _SERVICE_COOLDOWN_UNTIL:
+                return None
     base, default_timeout = _laya_service_config()
     timeout = timeout_s if timeout_s is not None else default_timeout
     qs = questions if questions is not None else LAYA_DEFAULT_QUESTIONS
     payload_state = state if isinstance(state, str) else json.dumps(state, ensure_ascii=False)
-    body = json.dumps(
-        {
-            "state": payload_state,
-            "questions": qs,
-            "model": CANONICAL_LAYA_MODEL,
-        }
-    ).encode("utf-8")
+    eff_max_len = 8192 if len(payload_state.split()) > 400 or (max_len is not None and max_len > 1024) else max_len
+    if timeout_s is None and eff_max_len is not None and eff_max_len > 1024:
+        timeout = max(timeout, 10.0)
+    req_payload: dict[str, Any] = {
+        "state": payload_state,
+        "questions": qs,
+        "model": CANONICAL_LAYA_MODEL,
+    }
+    if eff_max_len is not None:
+        req_payload["max_len"] = eff_max_len
+    body = json.dumps(req_payload).encode("utf-8")
     req = urllib.request.Request(  # noqa: S310 - endpoint loopback local (microservico Laya)  # Record-Id: registro-2026-11-12-s1-achados-remediacao
         f"{base}/predict",
         data=body,
@@ -838,7 +909,13 @@ def laya_predict_remote(
             data = json.loads(resp.read().decode("utf-8"))
     except Exception as e:  # pylint: disable=broad-except
         logger.debug("[laya-s1] microservico %s/predict indisponivel: %s", base, e)
+        cooldown_s = _service_cooldown_seconds()
+        if timeout_s is None and cooldown_s > 0.0:
+            with _SERVICE_CIRCUIT_LOCK:
+                _SERVICE_COOLDOWN_UNTIL = time.monotonic() + cooldown_s
         return None
+    with _SERVICE_CIRCUIT_LOCK:
+        _SERVICE_COOLDOWN_UNTIL = 0.0
     if not isinstance(data, dict) or data.get("status") != "SUCCESS":
         logger.debug("[laya-s1] microservico %s/predict resposta invalida.", base)
         return None
