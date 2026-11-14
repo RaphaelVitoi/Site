@@ -638,7 +638,7 @@ def laya_predict(
             n_tokens=_extract_n_tokens(result),
             latency_ms=round(latency_ms, 2),
             noul=round(noul, 6) if noul is not None else None,
-            choice=choice if choice else None,
+            choice=choice or None,
             score=round(score, 6) if score is not None else None,
             confidence=round(conf, 6) if conf is not None else None,
             provenia=Provenia(
@@ -714,7 +714,7 @@ def _build_batch_prediction_item(
         n_tokens=_extract_n_tokens(res),
         latency_ms=0.0,
         noul=round(noul, 6) if noul is not None else None,
-        choice=choice if choice else None,
+        choice=choice or None,
         score=round(score, 6) if score is not None else None,
         confidence=round(conf, 6) if conf is not None else None,
         provenia=Provenia(

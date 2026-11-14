@@ -470,36 +470,65 @@ class SolveRequest(BaseModel):
     model: str = Field(default=CANONICAL_MODEL)
 
 
-def criar_fastapi_app() -> FastAPI:
-    """Cria a aplicacao FastAPI para o microservico de inferencia Laya GPU."""
-    from llm.laya_bridge import LAYA_POKER_PRESETS, LayaPrediction, laya_predict  # noqa: PLC0415
-    from llm.laya_solver_adapter import LayaSolverAdapter  # noqa: PLC0415
+class _LatencyTracker:
+    """Rastreador thread-safe de janela rolante de latencia para o /health."""
 
-    metrics_lock = threading.Lock()
-    latency_window: deque[float] = deque(maxlen=64)
-    requests_total = 0
+    def __init__(self, maxlen: int = 64) -> None:
+        self._lock = threading.Lock()
+        self._window: deque[float] = deque(maxlen=maxlen)
+        self._total = 0
 
-    def _record_latency(ms: float) -> None:
-        nonlocal requests_total
-        with metrics_lock:
-            requests_total += 1
-            latency_window.append(round(float(ms), 2))
+    def record(self, ms: float) -> None:
+        with self._lock:
+            self._total += 1
+            self._window.append(round(float(ms), 2))
 
-    def _metrics_snapshot() -> dict[str, Any]:
-        with metrics_lock:
-            samples = sorted(latency_window)
-            total = requests_total
-        if not samples:
-            return {"requests_total": total, "window_size": 0, "last_latency_ms": None, "p50_ms": None, "p95_ms": None}
+    def snapshot(self) -> dict[str, Any]:
+        with self._lock:
+            total = self._total
+            if not self._window:
+                return {
+                    "requests_total": total,
+                    "window_size": 0,
+                    "last_latency_ms": None,
+                    "p50_ms": None,
+                    "p95_ms": None,
+                }
+            last_ms = round(self._window[-1], 2)
+            samples = sorted(self._window)
         p50 = round(statistics.median(samples), 2)
         p95_idx = min(len(samples) - 1, max(0, math.ceil(0.95 * (len(samples) - 1))))
         return {
             "requests_total": total,
             "window_size": len(samples),
-            "last_latency_ms": round(latency_window[-1], 2),
+            "last_latency_ms": last_ms,
             "p50_ms": p50,
             "p95_ms": round(samples[p95_idx], 2),
         }
+
+
+def _serialize_prediction(pred: Any) -> dict[str, Any]:
+    """Serializa uma LayaPrediction para o payload JSON dos endpoints HTTP."""
+    return {
+        "answers": pred.answers,
+        "model_used": pred.model_used,
+        "device": pred.device,
+        "n_tokens": pred.n_tokens,
+        "latency_ms": pred.latency_ms,
+        "noul": pred.noul,
+        "choice": pred.choice,
+        "score": pred.score,
+        "confidence": pred.confidence,
+        "provenia": asdict(pred.provenia),
+    }
+
+
+def criar_fastapi_app() -> FastAPI:
+    """Cria a aplicacao FastAPI para o microservico de inferencia Laya GPU."""
+    from llm.laya_bridge import LAYA_POKER_PRESETS, LayaPrediction, laya_predict  # noqa: PLC0415
+    from llm.laya_solver_adapter import LayaSolverAdapter  # noqa: PLC0415
+
+    tracker = _LatencyTracker()
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -548,7 +577,7 @@ def criar_fastapi_app() -> FastAPI:
             "weights_ready": weights_ready,
             "cpu_override_active": cpu_allowed,
             "devices": [asdict(d) for d in profile.devices],
-            "metrics": _metrics_snapshot(),
+            "metrics": tracker.snapshot(),
         }
 
     @app.post("/predict", responses={500: {"description": "Erro interno durante predicao Laya"}})
@@ -560,21 +589,10 @@ def criar_fastapi_app() -> FastAPI:
                 model_override=req.model,
                 max_len=req.max_len or 1024,
             )
-            _record_latency(pred.latency_ms)
+            tracker.record(pred.latency_ms)
             return {
                 "status": "SUCCESS",
-                "prediction": {
-                    "answers": pred.answers,
-                    "model_used": pred.model_used,
-                    "device": pred.device,
-                    "n_tokens": pred.n_tokens,
-                    "latency_ms": pred.latency_ms,
-                    "noul": pred.noul,
-                    "choice": pred.choice,
-                    "score": pred.score,
-                    "confidence": pred.confidence,
-                    "provenia": asdict(pred.provenia),
-                },
+                "prediction": _serialize_prediction(pred),
             }
         except Exception as e:
             logger.exception("Erro durante predicao Laya: %s", e)
@@ -584,23 +602,12 @@ def criar_fastapi_app() -> FastAPI:
     def solve(req: Annotated[SolveRequest, Body()]):
         try:
             pred: LayaPrediction = laya_predict(req.state, model_override=req.model)
-            _record_latency(pred.latency_ms)
+            tracker.record(pred.latency_ms)
             bridge = adapter.adapt_for_solver(req.solver_name, pred, req.base_parameters or {})
             bridge_payload = {
                 "target_solver": bridge.target_solver,
                 "adapted_parameters": bridge.adapted_parameters,
-                "s1_prediction": {
-                    "answers": pred.answers,
-                    "model_used": pred.model_used,
-                    "device": pred.device,
-                    "n_tokens": pred.n_tokens,
-                    "latency_ms": pred.latency_ms,
-                    "noul": pred.noul,
-                    "choice": pred.choice,
-                    "score": pred.score,
-                    "confidence": pred.confidence,
-                    "provenia": asdict(pred.provenia),
-                },
+                "s1_prediction": _serialize_prediction(pred),
                 "ruin_priority": bridge.ruin_priority,
                 "framework_signals": bridge.framework_signals,
                 "provenia": asdict(bridge.provenia),
