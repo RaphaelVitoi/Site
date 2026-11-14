@@ -8,7 +8,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import type { ChipEvFreqs, IcmDistortionResult, StreetChipEvFreqs } from '../solver/types';
 import { ActionRow } from '../ui/ActionRow';
 import { PkoDevControl } from '../ui/PkoDevControl';
@@ -61,7 +61,7 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
       </div>
       <div className="flex items-baseline gap-3">
         <span
-          className={`font-mono text-3xl sm:text-4xl font-black tracking-tighter text-white tabular-nums ${current.textShadowClass}`}
+          className={`font-mono text-3xl font-black tracking-tighter text-white tabular-nums sm:text-4xl ${current.textShadowClass}`}
         >
           {ipRp.toFixed(1)}
         </span>
@@ -85,7 +85,7 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
         <i className="fa-solid fa-shield-halved text-accent-amber/20 group-hover/oop:text-accent-amber/60 text-[0.7rem] transition-colors" />
       </div>
       <div className="flex items-baseline gap-3">
-        <span className="text-accent-amber font-mono text-3xl sm:text-4xl font-black tracking-tighter tabular-nums [text-shadow:0_0_25px_rgba(245,158,11,0.3)]">
+        <span className="text-accent-amber font-mono text-3xl font-black tracking-tighter tabular-nums [text-shadow:0_0_25px_rgba(245,158,11,0.3)] sm:text-4xl">
           {oopRp.toFixed(1)}
         </span>
         <span className="text-text-muted text-xs font-bold uppercase">{LABELS.rpPct}</span>
@@ -104,16 +104,14 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
 
 const ActionStrategies = ({
   current,
-  activeStreet,
-  onStreetFreqChange,
+  onActionChange,
 }: {
   current: StreetInfo;
-  activeStreet: keyof StreetChipEvFreqs;
-  onStreetFreqChange: (s: keyof StreetChipEvFreqs, f: ChipEvFreqs) => void;
+  onActionChange: (f: ChipEvFreqs) => void;
 }) => (
   <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2">
     {/* Card IP (Agressor) */}
-    <div className="w-full flex flex-col rounded-3xl border border-accent-indigo/20 bg-slate-900/50 p-3.5 sm:p-4 shadow-lg shadow-indigo-950/20 backdrop-blur-md">
+    <div className="border-accent-indigo/20 flex w-full flex-col rounded-3xl border bg-slate-900/50 p-3.5 shadow-lg shadow-indigo-950/20 backdrop-blur-md sm:p-4">
       <div className="text-accent-indigo-light border-accent-indigo/20 mb-3 flex items-center border-b px-1 pb-2.5 text-sm font-bold tracking-wide">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-indigo h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-indigo)]" />
@@ -128,7 +126,7 @@ const ActionStrategies = ({
           field="ip_check"
           accent="var(--color-accent-indigo-light)"
           freqs={current.freqs}
-          onChange={(f) => onStreetFreqChange(activeStreet, f)}
+          onChange={onActionChange}
         />
         <ActionRow
           label="Bet S"
@@ -137,7 +135,7 @@ const ActionStrategies = ({
           field="ip_bet_small"
           accent="var(--color-accent-indigo-light)"
           freqs={current.freqs}
-          onChange={(f) => onStreetFreqChange(activeStreet, f)}
+          onChange={onActionChange}
         />
         <ActionRow
           label="Bet L"
@@ -146,13 +144,13 @@ const ActionStrategies = ({
           field="ip_bet_large"
           accent="var(--color-accent-indigo-light)"
           freqs={current.freqs}
-          onChange={(f) => onStreetFreqChange(activeStreet, f)}
+          onChange={onActionChange}
         />
       </div>
     </div>
 
     {/* Card OOP (Defensor) */}
-    <div className="w-full flex flex-col rounded-3xl border border-accent-rose/20 bg-slate-900/50 p-3.5 sm:p-4 shadow-lg shadow-rose-950/20 backdrop-blur-md">
+    <div className="border-accent-rose/20 flex w-full flex-col rounded-3xl border bg-slate-900/50 p-3.5 shadow-lg shadow-rose-950/20 backdrop-blur-md sm:p-4">
       <div className="text-accent-rose border-accent-rose/20 mb-3 flex items-center border-b px-1 pb-2.5 text-sm font-bold tracking-wide">
         <div className="flex items-center gap-2.5">
           <div className="bg-accent-rose h-2.5 w-2.5 rounded-full shadow-[0_0_12px_var(--accent-rose)]" />
@@ -167,7 +165,7 @@ const ActionStrategies = ({
           field="oop_call"
           accent="var(--color-accent-rose)"
           freqs={current.freqs}
-          onChange={(f) => onStreetFreqChange(activeStreet, f)}
+          onChange={onActionChange}
         />
         <ActionRow
           label="Fold"
@@ -176,7 +174,7 @@ const ActionStrategies = ({
           field="oop_fold"
           accent="var(--color-accent-rose)"
           freqs={current.freqs}
-          onChange={(f) => onStreetFreqChange(activeStreet, f)}
+          onChange={onActionChange}
         />
         <ActionRow
           label="Raise"
@@ -185,7 +183,7 @@ const ActionStrategies = ({
           field="oop_raise"
           accent="var(--color-accent-rose)"
           freqs={current.freqs}
-          onChange={(f) => onStreetFreqChange(activeStreet, f)}
+          onChange={onActionChange}
         />
       </div>
     </div>
@@ -207,11 +205,11 @@ const EntropyModulators = ({
       theme="indigo"
       fullWidth
     >
-      <div className="hover:border-accent-indigo/40 group/psi relative overflow-hidden rounded-3xl border border-white/5 bg-slate-900/40 p-5 sm:p-6 shadow-inner transition-all hover:bg-slate-900/60">
+      <div className="hover:border-accent-indigo/40 group/psi relative overflow-hidden rounded-3xl border border-white/5 bg-slate-900/40 p-5 shadow-inner transition-all hover:bg-slate-900/60 sm:p-6">
         <div className="from-accent-indigo/5 pointer-events-none absolute inset-0 bg-radial-[at_top_right] to-transparent" />
         <div className="relative z-10 mb-6 flex items-center justify-between px-1">
           <div className="space-y-1.5">
-            <span className="text-text-muted group-hover/psi:text-white text-[0.75rem] font-black tracking-[0.25em] uppercase transition-colors">
+            <span className="text-text-muted text-[0.75rem] font-black tracking-[0.25em] uppercase transition-colors group-hover/psi:text-white">
               Modulador Ψ
             </span>
             <p className="text-text-darker m-0 text-[0.6rem] font-black tracking-widest uppercase">
@@ -249,7 +247,7 @@ const LABELS = {
   injectTelemetry: 'Injetar Telemetria',
 } as const;
 
-export default function NashPanel({
+const NashPanel = memo(function NashPanel({
   nashFlop,
   nashTurn,
   nashRiver,
@@ -268,6 +266,13 @@ export default function NashPanel({
   onBlindsToggle,
 }: Readonly<NashPanelProps>) {
   const [activeStreet, setActiveStreet] = useState<'flop' | 'turn' | 'river'>('flop');
+
+  const handleActionFreqChange = useCallback(
+    (freqs: ChipEvFreqs) => {
+      onStreetFreqChange(activeStreet, freqs);
+    },
+    [onStreetFreqChange, activeStreet],
+  );
 
   const safeAggression =
     Number.isNaN(Number(aggressionFactor)) || aggressionFactor == null ? 1 : Number(aggressionFactor);
@@ -318,7 +323,7 @@ export default function NashPanel({
   const oopRp = isBaseline ? 0 : current.rps.oop;
 
   return (
-    <div className="glass-panel p-4! sm:p-5! lg:p-6! bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-5 sm:gap-7 overflow-hidden rounded-4xl border border-white/10 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700">
+    <div className="glass-panel bg-bg-panel/80 group/nash animate-sota-in relative flex flex-col gap-5 overflow-hidden rounded-4xl border border-white/10 p-4! shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] backdrop-blur-3xl transition-all duration-700 sm:gap-7 sm:p-5! lg:p-6!">
       <div className="bg-accent-indigo/10 group-hover/nash:bg-accent-indigo/15 pointer-events-none absolute -top-32 -right-32 h-80 w-80 rounded-full blur-[140px] transition-all duration-1000" />
       <div className="bg-accent-rose/5 pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full blur-[140px]" />
 
@@ -342,15 +347,11 @@ export default function NashPanel({
 
         <div className="grid w-full grid-cols-2 gap-4">
           <div className="flex flex-col">
-            <span className="text-text-muted text-xs font-bold tracking-wide uppercase">
-              Instabilidade &delta;
-            </span>
+            <span className="text-text-muted text-xs font-bold tracking-wide uppercase">Instabilidade &delta;</span>
             <span className="font-mono text-base font-black text-white">{deltaRp.toFixed(1)}%</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-text-muted text-xs font-bold tracking-wide uppercase">
-              Agressividade (&Psi;)
-            </span>
+            <span className="text-text-muted text-xs font-bold tracking-wide uppercase">Agressividade (&Psi;)</span>
             <span className="font-mono text-base font-black text-white">{safeAggression.toFixed(1)}x</span>
           </div>
         </div>
@@ -441,11 +442,10 @@ export default function NashPanel({
       </div>
 
       <StreetDashboards ipRp={ipRp} oopRp={oopRp} current={current} />
-      <ActionStrategies current={current} activeStreet={activeStreet} onStreetFreqChange={onStreetFreqChange} />
-      <EntropyModulators
-        aggressionFactor={safeAggression}
-        onAggressionChange={onAggressionChange}
-      />
+      <ActionStrategies current={current} onActionChange={handleActionFreqChange} />
+      <EntropyModulators aggressionFactor={safeAggression} onAggressionChange={onAggressionChange} />
     </div>
   );
-}
+});
+
+export default NashPanel;

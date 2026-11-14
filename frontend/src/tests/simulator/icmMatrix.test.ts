@@ -6,7 +6,13 @@ import {
   getPairwiseMatchupDetail,
   TOURNAMENT_PRESETS,
 } from '../../lib/icmMatrix';
-import { evaluateHandDetail } from '../../lib/holdemEquities';
+import {
+  computeRangeMatrixSummary,
+  evaluateHandDetail,
+  evaluateRangeMatrixCells,
+  SHOVE_PROFILES,
+  type ShoveProfile,
+} from '../../lib/holdemEquities';
 
 describe('ICM matrix type-safety boundaries and mathematical invariants', () => {
   it('preserves Malmuth-Harville prize mass and produces finite matchup metrics', () => {
@@ -86,5 +92,47 @@ describe('ICM matrix type-safety boundaries and mathematical invariants', () => 
     expect(valid.r1).toBe('A');
     expect(valid.r2).toBe('K');
     expect(() => evaluateHandDetail('A', 'STANDARD_25', 10)).toThrow(RangeError);
+  });
+
+  it('maintains 100% parity between precomputed TypedArrays, matrix cells, and summary across shove profiles', () => {
+    const profiles = Object.keys(SHOVE_PROFILES) as ShoveProfile[];
+    for (const profile of profiles) {
+      for (const rp of [0, 12.5, 25, 45]) {
+        const cells = evaluateRangeMatrixCells(profile, rp);
+        expect(cells).toHaveLength(169);
+
+        let expectedCall = 0;
+        let expectedCore = 0;
+        let expectedMarginal = 0;
+        let expectedRisky = 0;
+        let expectedDeath = 0;
+
+        for (const cell of cells) {
+          const single = evaluateHandDetail(cell.hand, profile, rp);
+          expect(cell).toEqual(single);
+
+          if (cell.verdict === 'CORE_CALL') {
+            expectedCall += cell.combos;
+            expectedCore += cell.combos;
+          } else if (cell.verdict === 'MARGINAL_CALL') {
+            expectedCall += cell.combos;
+            expectedMarginal += cell.combos;
+          } else if (cell.verdict === 'RISKY_FOLD') {
+            expectedRisky += cell.combos;
+          } else {
+            expectedDeath += cell.combos;
+          }
+        }
+
+        const summary = computeRangeMatrixSummary(profile, rp);
+        expect(summary.totalCombos).toBe(1326);
+        expect(summary.callCombos).toBe(expectedCall);
+        expect(summary.coreCallCombos).toBe(expectedCore);
+        expect(summary.marginalCallCombos).toBe(expectedMarginal);
+        expect(summary.riskyFoldCombos).toBe(expectedRisky);
+        expect(summary.deathFoldCombos).toBe(expectedDeath);
+        expect(summary.callCombos + summary.foldCombos).toBe(1326);
+      }
+    }
   });
 });

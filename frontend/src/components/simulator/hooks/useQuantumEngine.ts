@@ -725,7 +725,7 @@ export function useQuantumEngine({
       quantumPerspectiva,
       insolvencyMatrixData,
       isCalculatingInsolvency,
-      multiwayTensorRef,
+      // Refs sao estaveis por identidade; mantido fora das deps do memo de retorno.
       isCalculatingMultiway,
       nashResults,
       dispatchInsolvencyMatrix,

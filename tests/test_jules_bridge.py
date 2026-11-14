@@ -354,5 +354,24 @@ def test_jules_client_get_source_and_activity() -> None:
         src = client.get_source("github/RaphaelVitoi/Site")
         assert src["name"] == "sources/github/RaphaelVitoi/Site"
 
-        act = client.get_activity("s1", "a1")
-        assert act["originator"] == "agent"
+
+def test_jules_client_get_activities_pagination() -> None:
+    """Valida paginacao completa via nextPageToken em get_activities."""
+    page1 = {"activities": [{"id": "act-1"}, {"id": "act-2"}], "nextPageToken": "tok-2"}
+    page2 = {"activities": [{"id": "act-3"}]}
+
+    resp1 = MagicMock()
+    resp1.read.return_value = json.dumps(page1).encode("utf-8")
+    resp1.__enter__.return_value = resp1
+
+    resp2 = MagicMock()
+    resp2.read.return_value = json.dumps(page2).encode("utf-8")
+    resp2.__enter__.return_value = resp2
+
+    with patch("urllib.request.urlopen", side_effect=[resp1, resp2]) as mock_urlopen:
+        client = JulesClient(api_key="AIzaFakeKey", project_id="original-498419")
+        activities = client.get_activities("sess-pag", page_size=50)
+        assert [a["id"] for a in activities] == ["act-1", "act-2", "act-3"]
+        assert mock_urlopen.call_count == 2
+        assert "pageSize=50" in mock_urlopen.call_args_list[0][0][0].full_url
+        assert "pageToken=tok-2" in mock_urlopen.call_args_list[1][0][0].full_url

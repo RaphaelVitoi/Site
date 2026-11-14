@@ -12,7 +12,7 @@ import React, { useMemo, useState } from 'react';
 import {
 	computeRangeMatrixSummary,
 	evaluateHandDetail,
-	RANKS,
+	evaluateRangeMatrixCells,
 	SHOVE_PROFILES,
 	type HandEquityDetail,
 	type HandVerdict,
@@ -106,51 +106,25 @@ export default function RangeMatrix({
 		}
 	}, [displayMode]);
 
-	// ⚡ Bolt Optimization: Pré-computação memoizada de todas as 169 células da grade 13x13.
-	// Evita reavaliar evaluateHandDetail, getCellColorAndBorder e calculateReverseRequiredFoldEquity
-	// a cada re-render (ex: eventos frequentes de hover de mouse na grade), reduzindo o custo de hover em ~97%.
+	// ⚡ Bolt Evolution: FE_REQ por célula depende apenas de `shoveProfile` (equidade estática 169×),
+	// desacoplado de `activeRp` e `displayMode` para evitar 169 recalculos no arrasto do slider.
+	const feReqByCell = useMemo(() => {
+		const baseCells = evaluateRangeMatrixCells(shoveProfile, 0);
+		return baseCells.map((detail) => calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15));
+	}, [shoveProfile]);
+
+	// ⚡ Bolt Evolution: Avaliação matricial 13x13 em lote com TypedArrays e cálculo único de ReqEq(RP).
 	const memoizedGridCells = useMemo(() => {
-		const cells: Array<{
-			hand: string;
-			r1: string;
-			r2: string;
-			detail: HandEquityDetail;
-			cellStyle: string;
-			feReqCell: number;
-		}> = [];
-
-		for (let i = 0; i < RANKS.length; i++) {
-			for (let j = 0; j < RANKS.length; j++) {
-				const r1 = RANKS[i]!;
-				const r2 = RANKS[j]!;
-				const isPair = i === j;
-				const isSuited = j > i;
-				let hand: string;
-				if (isPair) {
-					hand = `${r1}${r2}`;
-				} else if (isSuited) {
-					hand = `${r1}${r2}s`;
-				} else {
-					hand = `${r2}${r1}o`;
-				}
-
-				const detail = evaluateHandDetail(hand, shoveProfile, activeRp);
-				const cellStyle = getCellColorAndBorder(detail, displayMode);
-				const feReqCell = calculateReverseRequiredFoldEquity(15, 20, detail.equity / 100, 15);
-
-				cells.push({
-					hand,
-					r1,
-					r2,
-					detail,
-					cellStyle,
-					feReqCell,
-				});
-			}
-		}
-
-		return cells;
-	}, [shoveProfile, activeRp, displayMode, getCellColorAndBorder]);
+		const details = evaluateRangeMatrixCells(shoveProfile, activeRp);
+		return details.map((detail, idx) => ({
+			hand: detail.hand,
+			r1: detail.r1,
+			r2: detail.r2,
+			detail,
+			cellStyle: getCellColorAndBorder(detail, displayMode),
+			feReqCell: feReqByCell[idx]!,
+		}));
+	}, [shoveProfile, activeRp, displayMode, getCellColorAndBorder, feReqByCell]);
 
 	const getVerdictBadge = (verdict: HandVerdict) => {
 		switch (verdict) {
