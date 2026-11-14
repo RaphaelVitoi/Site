@@ -18,6 +18,7 @@ import argparse
 from datetime import UTC, datetime
 import json
 from pathlib import Path
+import re
 import sqlite3
 import subprocess
 import sys
@@ -36,59 +37,100 @@ from llm.mcp_tool_interceptor import (  # noqa: E402
 from scripts.ops.record_gate import coletar_pendencias  # noqa: E402
 
 
-def medir_pendencias() -> dict[str, int | float]:
+def medir_pendencias() -> dict[str, object]:
     """Mede pendencias ativas no corpus atraves da funcao canonica do record_gate."""
     abertas, _ = coletar_pendencias()
     total_abertas = len(abertas)
     vencidas = sum(1 for p in abertas if p.get("vencida"))
+    itens_abertos: list[dict[str, object]] = [
+        {
+            "id": str(p.get("id") or ""),
+            "prazo": str(p.get("prazo") or "sem prazo"),
+            "dono": str(p.get("dono") or ""),
+            "o_que": str(p.get("o_que") or ""),
+            "vencida": bool(p.get("vencida")),
+        }
+        for p in abertas
+    ]
     return {
         "abertas": total_abertas,
         "vencidas": vencidas,
+        "itens_abertos": itens_abertos,
     }
 
 
-def medir_ledger_calibracao() -> dict[str, str | int | float | bool]:
+def _resolver_daily_calibracao(daily_dir: Path) -> Path | None:
+    """Retorna o arquivo daily de calibracao de hoje ou o ultimo disponivel."""
+    hoje_path = daily_dir / f"{datetime.now().strftime('%Y-%m-%d')}.json"
+    if hoje_path.exists():
+        return hoje_path
+    if not daily_dir.is_dir():
+        return None
+    candidatos = sorted(daily_dir.glob("????-??-??.json"), reverse=True)
+    return candidatos[0] if candidatos else None
+
+
+def _ler_tail_ledger(ledger_path: Path) -> tuple[int, str, str]:
+    """Extrai contagem de registros, ultimo hash e tipo do ledger append-only."""
+    if not ledger_path.exists():
+        return 0, "none", "unknown"
+    try:
+        lines = [line.strip() for line in ledger_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    except OSError:
+        return 0, "none", "unknown"
+    if not lines:
+        return 0, "none", "unknown"
+    try:
+        last_obj = json.loads(lines[-1])
+        return len(lines), str(last_obj.get("record_hash", "none")), str(last_obj.get("record_type", "unknown"))
+    except json.JSONDecodeError:
+        return len(lines), "none", "unknown"
+
+
+def _int_ou_zero(val: object) -> int:
+    if isinstance(val, bool):
+        return int(val)
+    if isinstance(val, int | float):
+        return int(val)
+    return 0
+
+
+def medir_ledger_calibracao() -> dict[str, str | int | float | bool | None]:
     """Inspeciona o ledger append-only e o portao de suficiencia da secao 8.3."""
     ledger_path = SITE_ROOT / "reports/agent-calibration/feedback-ledger.jsonl"
-    daily_path = SITE_ROOT / "reports/agent-calibration/daily" / f"{datetime.now().strftime('%Y-%m-%d')}.json"
+    daily_dir = SITE_ROOT / "reports/agent-calibration/daily"
+    records_count, tail_hash, last_record_type = _ler_tail_ledger(ledger_path)
 
-    records_count = 0
-    tail_hash = "none"
-    last_record_type = "unknown"
-
-    if ledger_path.exists():
-        with open(ledger_path, encoding="utf-8") as f:
-            lines = [line.strip() for line in f if line.strip()]
-            records_count = len(lines)
-            if lines:
-                try:
-                    last_obj = json.loads(lines[-1])
-                    tail_hash = str(last_obj.get("record_hash", "none"))
-                    last_record_type = str(last_obj.get("record_type", "unknown"))
-                except json.JSONDecodeError:
-                    pass
-
-    sessoes_acumuladas = 0
-    gate_passed = False
-    calibracao_pendente = False
-
-    if daily_path.exists():
+    daily_path = _resolver_daily_calibracao(daily_dir)
+    daily_data: dict[str, object] = {}
+    if daily_path is not None:
         try:
-            with open(daily_path, encoding="utf-8") as f:
-                daily_data = json.load(f)
-                sessoes_acumuladas = int(daily_data.get("sessoes_com_feedback_count", 0))
-                gate_passed = bool(daily_data.get("calibration_planning_permitted", False))
-                calibracao_pendente = bool(daily_data.get("calibration_pending", False))
+            loaded = json.loads(daily_path.read_text(encoding="utf-8"))
+            if isinstance(loaded, dict):
+                daily_data = loaded
         except (json.JSONDecodeError, OSError):
             pass
+
+    sessoes_acumuladas = _int_ou_zero(daily_data.get("sessoes_com_feedback_count"))
+    timesfm = _como_dict(daily_data.get("timesfm_forecast"))
+    score_raw = daily_data.get("score_mean")
+    score_mean = float(score_raw) if isinstance(score_raw, int | float) else None
 
     return {
         "total_registros": records_count,
         "tail_hash": tail_hash,
         "ultimo_tipo": last_record_type,
+        "data_referencia": daily_path.stem if daily_path is not None else "none",
         "sessoes_acumuladas": sessoes_acumuladas,
-        "gate_passed": gate_passed,
-        "calibracao_pendente": calibracao_pendente,
+        "sessoes_faltantes": _int_ou_zero(daily_data.get("sessoes_faltantes")),
+        "eligible_feedback_count": _int_ou_zero(daily_data.get("eligible_feedback_count")),
+        "excluded_feedback_count": _int_ou_zero(daily_data.get("excluded_feedback_count")),
+        "gate_passed": bool(daily_data.get("calibration_planning_permitted", False)),
+        "calibracao_pendente": bool(daily_data.get("calibration_pending", False)),
+        "timesfm_status": str(timesfm.get("status", "UNKNOWN")),
+        "timesfm_available_points": _int_ou_zero(timesfm.get("available_points")),
+        "timesfm_required_points": _int_ou_zero(timesfm.get("required_points")) or 4,
+        "score_mean": score_mean,
     }
 
 
@@ -261,6 +303,28 @@ def medir_pools_openrouter() -> dict[str, object]:
         }
 
 
+def _contar_identidades_canonicas() -> dict[str, int]:
+    """Conta identidades canonicas por tier no manifesto data/agent_identities.json."""
+    contagem: dict[str, int] = {"total": 0, "tier_1": 0, "tier_2": 0}
+    ident_path = SITE_ROOT / "data/agent_identities.json"
+    if not ident_path.exists():
+        return contagem
+    try:
+        dados = json.loads(ident_path.read_text(encoding="utf-8"))
+        for item in dados.get("canonicas", []):
+            if not isinstance(item, dict):
+                continue
+            contagem["total"] += 1
+            tier = str(item.get("tier", ""))
+            if tier == "1":
+                contagem["tier_1"] += 1
+            elif tier == "2":
+                contagem["tier_2"] += 1
+    except (OSError, json.JSONDecodeError):
+        pass
+    return contagem
+
+
 def medir_eficiencia_economica_e_infraestrutura() -> dict[str, object]:
     """Mede a conformidade de economia, cotas Pro e mitigacao de custos de nuvem/servidores."""
     manifesto_path = SITE_ROOT / "data/ollama_models.json"
@@ -276,13 +340,16 @@ def medir_eficiencia_economica_e_infraestrutura() -> dict[str, object]:
                     cloud_models_count += 1
                 elif tier == "local":
                     local_models_count += 1
-        except Exception:
+        except (OSError, json.JSONDecodeError):
             pass
+
+    identidades = _contar_identidades_canonicas()
 
     return {
         "prioridade_tier1_assinaturas_pro": "Ativa (Faixa.FLAT_FEE tem precedencia sobre API Paga)",
         "modelos_cloud_zero_ram_count": cloud_models_count,
         "modelos_locais_quantizados_count": local_models_count,
+        "identidades_canonicas": identidades,
         "runtimes_mitigacao_infraestrutura": [
             "Ollama (somente execucao local; modelos ':cloud' descontinuados em 2026-11-10)",
             "llama.cpp (Familia Qwen quantizada local de alta taxa tokens/watt; harness/condutor, nao identidade)",
@@ -471,6 +538,565 @@ def medir_memoria_agentica_e_devin(
     }
 
 
+def _float_ou_zero(val: object) -> float:
+    if isinstance(val, bool):
+        return float(int(val))
+    if isinstance(val, int | float):
+        return float(val)
+    return 0.0
+
+
+def _git_cmd(*args: str, timeout: float = 10.0) -> str:
+    """Executa comando git na raiz do Site retornando stdout com seguranca."""
+    try:
+        res = subprocess.run(
+            ["git", *args],
+            cwd=str(SITE_ROOT),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            check=False,
+        )
+        return res.stdout if res.returncode == 0 else ""
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def _processar_cabecalho_commit(linha: str, commits: list[dict[str, str]], autores: list[str]) -> None:
+    partes = linha[10:].split("|", 4)
+    if len(partes) != 5:
+        return
+    sha, nome, email, data_iso, assunto = partes
+    autor = f"{nome} <{email}>"
+    if autor not in autores:
+        autores.append(autor)
+    commits.append({"sha": sha[:8], "autor": autor, "data": data_iso, "assunto": assunto})
+
+
+def _parse_git_log_numstat(saida: str) -> dict[str, object]:
+    """Agrega commits, autores, arquivos e diff numstat do `git log`."""
+    commits: list[dict[str, str]] = []
+    arquivos: set[str] = set()
+    areas: dict[str, int] = {}
+    autores: list[str] = []
+    insercoes = 0
+    delecoes = 0
+
+    for linha in saida.splitlines():
+        if linha.startswith("__COMMIT__"):
+            _processar_cabecalho_commit(linha, commits, autores)
+            continue
+        colunas = linha.split("\t")
+        if len(colunas) != 3:
+            continue
+        ins_raw, del_raw, caminho = colunas
+        insercoes += int(ins_raw) if ins_raw.isdigit() else 0
+        delecoes += int(del_raw) if del_raw.isdigit() else 0
+        caminho_limpo = caminho.strip()
+        if caminho_limpo:
+            arquivos.add(caminho_limpo)
+            bucket = caminho_limpo.split("/", 1)[0] if "/" in caminho_limpo else "(raiz)"
+            areas[bucket] = areas.get(bucket, 0) + 1
+
+    areas_ord = dict(sorted(areas.items(), key=lambda kv: kv[1], reverse=True)[:6])
+    marcos = [f"[{c['sha']}] {c['assunto']}" for c in reversed(commits)]
+    return {
+        "commits_count": len(commits),
+        "autores": autores,
+        "arquivos_unicos_tocados": len(arquivos),
+        "insercoes": insercoes,
+        "delecoes": delecoes,
+        "areas_impactadas": areas_ord,
+        "marcos_commits": marcos,
+    }
+
+
+def medir_atividade_git_sessao(horas: float = 12.0, max_commits: int = 25) -> dict[str, object]:
+    """Mede entregas git na janela recente e estado do working tree."""
+    janela = max(0.5, horas)
+    limite = max(1, max_commits)
+    fmt = "__COMMIT__%H|%aN|%aE|%cI|%s"
+    saida = _git_cmd("log", f"--since={janela} hours ago", "-n", str(limite), "--numstat", f"--format={fmt}")
+    agregado = _parse_git_log_numstat(saida)
+    branch = _git_cmd("branch", "--show-current").strip() or "HEAD"
+    head_sha = _git_cmd("rev-parse", "--short", "HEAD").strip() or "unknown"
+    status_lines = [
+        ln for ln in _git_cmd("status", "--porcelain", "--ignore-submodules=dirty").splitlines() if ln.strip()
+    ]
+    return {
+        "janela_horas": janela,
+        "branch_atual": branch,
+        "head_sha": head_sha,
+        "working_tree_dirty": len(status_lines),
+        **agregado,
+    }
+
+
+def _extrair_numero_celula(celula: str) -> float | None:
+    """Extrai o primeiro numero decimal/inteiro de uma celula de tabela Markdown."""
+    limpa = celula.strip()
+    m = re.search(r"-?\d+(?:\.\d+)?", limpa)
+    if not m:
+        return None
+    try:
+        return float(m.group(0))
+    except ValueError:
+        return None
+
+
+def _processar_linha_tabela_cwv(linha: str, alvos: dict[str, str], dados: dict[str, object]) -> None:
+    celulas = [c.strip() for c in linha.strip().strip("|").split("|")]
+    if len(celulas) < 2:
+        return
+    chave_out = alvos.get(celulas[0].replace("**", "").strip())
+    if not chave_out:
+        return
+    num = _extrair_numero_celula(celulas[1])
+    if num is not None and chave_out.endswith(("violations", "incomplete", "cve", "cve_abertas")):
+        dados[chave_out] = int(num)
+    else:
+        dados[chave_out] = num
+
+
+def _extrair_metricas_cwv(texto: str) -> dict[str, object]:
+    """Extrai timestamp, status e metricas-chave de um relatorio Markdown do CWV gate."""
+    alvos = {
+        "LCP_MS": "lcp_ms",
+        "CLS": "cls",
+        "TBT_MS": "tbt_ms",
+        "TTFB_MS": "ttfb_ms",
+        "MAX_HEAP_MB": "max_heap_mb",
+        "AXE_VIOLATIONS": "axe_violations",
+        "AXE_INCOMPLETE": "axe_incomplete",
+        "CRITICAL_CVE_COUNT": "critical_cve",
+        "HIGH_CVE_COUNT": "high_cve",
+        "TOTAL_VULNERABILITY": "total_cve",
+        "PY_CVE_ABERTAS": "py_cve_abertas",
+    }
+    dados: dict[str, object] = {"timestamp_relatorio": "N/A", "aprovado": False}
+    for linha in texto.splitlines():
+        if linha.startswith("**Timestamp:**"):
+            dados["timestamp_relatorio"] = linha.split("**Timestamp:**", 1)[1].strip()
+        elif linha.startswith("**Status:**"):
+            dados["aprovado"] = "APPROVED" in linha.upper()
+        elif linha.startswith("| **"):
+            _processar_linha_tabela_cwv(linha, alvos, dados)
+    return dados
+
+
+def _ler_marcador_suite_verde() -> dict[str, object]:
+    """Le o marcador local da suite verde em `.git/sota-suite-verde`."""
+    marcador = SITE_ROOT / ".git" / "sota-suite-verde"
+    if not marcador.exists():
+        return {"disponivel": False, "atualizado_no_head": False, "em": "N/A"}
+    try:
+        dados = json.loads(marcador.read_text(encoding="utf-8"))
+        head_full = _git_cmd("rev-parse", "HEAD").strip()
+        head_med = str(dados.get("head_na_medicao", ""))
+        return {
+            "disponivel": True,
+            "atualizado_no_head": bool(head_full and head_med == head_full),
+            "em": str(dados.get("em", "N/A")),
+            "head_na_medicao": head_med[:8] if head_med else "N/A",
+        }
+    except (OSError, json.JSONDecodeError):
+        return {"disponivel": False, "atualizado_no_head": False, "em": "N/A"}
+
+
+def medir_qualidade_ultima_auditoria() -> dict[str, object]:
+    """Le a ultima auditoria CWV/A11y/CVE e o estado do cache `.git/sota-suite-verde`."""
+    cwv_dir = SITE_ROOT / "reports" / "cwv"
+    arquivos = sorted(cwv_dir.glob("cwv_report_*.md"), reverse=True) if cwv_dir.is_dir() else []
+    metricas: dict[str, object] = {"disponivel": False}
+    if arquivos:
+        ultimo = arquivos[0]
+        try:
+            texto = ultimo.read_text(encoding="utf-8", errors="replace")
+            metricas = {
+                "disponivel": True,
+                "arquivo": str(ultimo.relative_to(SITE_ROOT)).replace("\\", "/"),
+                **_extrair_metricas_cwv(texto),
+            }
+        except OSError:
+            pass
+    return {
+        "cwv_report": metricas,
+        "suite_verde": _ler_marcador_suite_verde(),
+    }
+
+
+def medir_saude_malha() -> dict[str, object]:
+    """Consulta os sinais de observabilidade da malha via `scripts/ops/saude_da_malha.py`."""
+    try:
+        from scripts.ops.saude_da_malha import coletar  # noqa: PLC0415
+
+        sinais = coletar()
+        serializados: list[dict[str, object]] = [
+            {
+                "grave": s.grave,
+                "titulo": s.titulo,
+                "detalhe": s.detalhe,
+                "acao": s.acao,
+            }
+            for s in sinais
+        ]
+        graves = sum(1 for s in serializados if s["grave"])
+        infos = len(serializados) - graves
+        if graves > 0:
+            status = "alerta"
+        elif infos > 0:
+            status = "info"
+        else:
+            status = "saudavel"
+        return {
+            "status": status,
+            "total_sinais": len(serializados),
+            "graves": graves,
+            "infos": infos,
+            "sinais": serializados,
+        }
+    except Exception as exc:
+        return {
+            "status": "indisponivel",
+            "total_sinais": 0,
+            "graves": 0,
+            "infos": 0,
+            "sinais": [],
+            "erro": str(exc)[:160],
+        }
+
+
+def _avaliar_eixo_git(git_info: dict[str, object]) -> tuple[str, str, str | None, str | None, str | None]:
+    commits = _int_ou_zero(git_info.get("commits_count"))
+    dirty = _int_ou_zero(git_info.get("working_tree_dirty"))
+    arquivos = _int_ou_zero(git_info.get("arquivos_unicos_tocados"))
+    if commits == 0 and dirty == 0:
+        return ("ESTAVEL", "Sem novos commits ou alteracoes pendentes na janela.", None, None, None)
+    if dirty > 0:
+        return (
+            "ATENCAO",
+            f"{commits} commit(s) na janela, mas {dirty} item(ns) pendente(s) no working tree.",
+            f"Entregas registradas na janela ({commits} commit(s), {arquivos} arquivo(s) unico(s))."
+            if commits > 0
+            else None,
+            f"Working tree contem {dirty} arquivo(s) com alteracoes nao commitadas.",
+            "Revisar e commitar ou descartar alteracoes pendentes no workspace.",
+        )
+    return (
+        "OTIMO",
+        f"{commits} commit(s) limpo(s) tocando {arquivos} arquivo(s) unico(s).",
+        f"Entrega continua verificada: {commits} commit(s) e {arquivos} arquivo(s) consolidado(s) com arvore limpa.",
+        None,
+        None,
+    )
+
+
+def _avaliar_eixo_cwv(qualidade: dict[str, object]) -> tuple[str, str, str | None, str | None, str | None]:
+    cwv = _como_dict(qualidade.get("cwv_report"))
+    if not cwv.get("disponivel"):
+        return (
+            "INDISPONIVEL",
+            "Nenhum relatorio CWV encontrado em reports/cwv/.",
+            None,
+            "Ausencia de relatorio CWV recente impede atestacao de performance/seguranca.",
+            "Executar pre-commit ou scripts/ops/cwv_gate.ps1 com servidor ativo.",
+        )
+    lcp = cwv.get("lcp_ms")
+    cls_val = cwv.get("cls")
+    axe = _int_ou_zero(cwv.get("axe_violations"))
+    crit = _int_ou_zero(cwv.get("critical_cve"))
+    high = _int_ou_zero(cwv.get("high_cve"))
+    py_cve = _int_ou_zero(cwv.get("py_cve_abertas"))
+    cves = crit + high + py_cve
+    if not cwv.get("aprovado") or axe > 0 or cves > 0:
+        return (
+            "BLOQUEIO",
+            f"CWV nao aprovado (axe={axe}, CVE crit/high/py={cves}).",
+            None,
+            f"Portao CWV/Seguranca sinalizou bloqueio: axe={axe}, CVEs relevantes={cves}.",
+            "Corrigir violacoes de acessibilidade ou vulnerabilidades registradas em reports/cwv/.",
+        )
+    lcp_txt = f"{lcp:.1f}ms" if isinstance(lcp, int | float) else "N/A"
+    cls_txt = f"{cls_val:.4f}" if isinstance(cls_val, int | float) else "N/A"
+    return (
+        "OTIMO",
+        f"SOTA GOLD aprovado (LCP {lcp_txt}, CLS {cls_txt}, 0 axe, 0 CVE).",
+        f"Qualidade frontend e seguranca verdes: LCP={lcp_txt}, CLS={cls_txt}, 0 axe e 0 CVEs abertas.",
+        None,
+        None,
+    )
+
+
+def _como_lista_strs(val: object) -> list[str]:
+    return [str(x) for x in val] if isinstance(val, list) else []
+
+
+def _formatar_numero(val: object, casas: int, sufixo: str = "") -> str:
+    return f"{val:.{casas}f}{sufixo}" if isinstance(val, int | float) and not isinstance(val, bool) else "N/A"
+
+
+def _resumo_alertas_malha_e_pendencias(pend: dict[str, object], malha: dict[str, object]) -> str:
+    detalhes: list[str] = []
+    for item in _como_lista_dicts(pend.get("itens_abertos")):
+        pid = str(item.get("id") or "")
+        dono = str(item.get("dono") or "")
+        if pid:
+            detalhes.append(f"pendencia `{pid}` ({dono})" if dono else f"pendencia `{pid}`")
+    for sinal in _como_lista_dicts(malha.get("sinais")):
+        if sinal.get("grave"):
+            detalhes.append(f"malha `{sinal.get('titulo', 'alerta')}`")
+    return "; ".join(detalhes)
+
+
+def _avaliar_eixo_governanca(
+    pend: dict[str, object], malha: dict[str, object]
+) -> tuple[str, str, str | None, str | None, str | None]:
+    abertas = _int_ou_zero(pend.get("abertas"))
+    vencidas = _int_ou_zero(pend.get("vencidas"))
+    graves = _int_ou_zero(malha.get("graves"))
+    detalhe_txt = _resumo_alertas_malha_e_pendencias(pend, malha)
+    sufixo = f" [{detalhe_txt}]" if detalhe_txt else ""
+    if vencidas > 0 or graves > 0:
+        return (
+            "ATENCAO",
+            f"{abertas} pendencia(s) ({vencidas} vencida(s)); {graves} alerta(s) grave(s) na malha.",
+            None,
+            f"Passivo de governanca exige acao: {abertas} pendencia(s) aberta(s) ({vencidas} vencida(s)) e {graves} alerta(s) grave(s){sufixo}.",
+            "Enderecar pendencias abertas via novo REGISTRO e investigar alertas graves em saude_da_malha.py.",
+        )
+    if abertas > 0:
+        return (
+            "ESTAVEL",
+            f"{abertas} pendencia(s) aberta(s) dentro do prazo; malha sem alertas graves.",
+            None,
+            f"Existem {abertas} pendencia(s) formais ainda abertas no corpus{sufixo}.",
+            "Acompanhar encerramento das pendencias abertas via `pendencias_resolvidas:` no proximo REGISTRO.",
+        )
+    return (
+        "OTIMO",
+        "Zero pendencias abertas e malha sem alertas graves.",
+        "Governanca higienizada: 0 pendencias formais abertas e 0 alertas graves na malha.",
+        None,
+        None,
+    )
+
+
+def _avaliar_eixo_calibracao(ledger: dict[str, object]) -> tuple[str, str, str | None, str | None, str | None]:
+    sessoes = _int_ou_zero(ledger.get("sessoes_acumuladas"))
+    faltantes = _int_ou_zero(ledger.get("sessoes_faltantes"))
+    gate_passed = bool(ledger.get("gate_passed"))
+    ts_status = str(ledger.get("timesfm_status", "UNKNOWN"))
+    ts_pts = _int_ou_zero(ledger.get("timesfm_available_points"))
+    ts_req = _int_ou_zero(ledger.get("timesfm_required_points")) or 4
+    if gate_passed:
+        return (
+            "ATENCAO",
+            f"Portao 8.3 ABERTO ({sessoes} sessoes elegiveis; TimesFM {ts_pts}/{ts_req}).",
+            f"Lastro de calibracao atingiu quorum ({sessoes} sessoes distintas).",
+            "Portao de calibracao esta aberto aguardando arbitragem formal do Tier 0.",
+            "Propor ou registrar decisao de calibracao no ledger junto ao Tier 0.",
+        )
+    return (
+        "ESTAVEL",
+        f"Acumulado {sessoes} sessao(oes) elegivel(is) (faltam {faltantes}); TimesFM {ts_status} ({ts_pts}/{ts_req}).",
+        None,
+        (
+            f"Amostra ainda insuficiente para calibracao automatica (faltam {faltantes} sessao(oes)) "
+            f"e TimesFM em {ts_status} ({ts_pts}/{ts_req} pontos)."
+        ),
+        "Coletar novos feedbacks de sessao elegiveis quando houver avaliacao do Tier 0.",
+    )
+
+
+def _avaliar_eixo_infra_e_fila(
+    pools: dict[str, object], fila: dict[str, object], mcp: dict[str, object]
+) -> tuple[str, str, str | None, str | None, str | None]:
+    failed = _int_ou_zero(fila.get("failed"))
+    pending = _int_ou_zero(fila.get("pending"))
+    bloq = _int_ou_zero(pools.get("bloqueadas"))
+    rev = _int_ou_zero(pools.get("revogadas"))
+    econ_pct = _float_ou_zero(mcp.get("economia_media_tokens_pct"))
+    if failed > 0 or rev > 0:
+        return (
+            "ATENCAO",
+            f"Fila failed={failed}, pending={pending}; pools bloq={bloq}, rev={rev}; poda MCP -{econ_pct}%.",
+            f"Poda MCP S1 sustentando -{econ_pct}% de tokens." if econ_pct > 0 else None,
+            f"Degradacao operacional detectada: {failed} tarefa(s) falhada(s) na fila SQLite e {rev} chave(s) revogada(s).",
+            "Auditar falhas em data/task_queue.db e rotacionar/limpar chaves revogadas nos pools OpenRouter.",
+        )
+    return (
+        "OTIMO",
+        f"Fila {fila.get('taxa_resolucao_pct', 100.0)}% resolvida; poda MCP -{econ_pct}%; pools {pools.get('ativas', 0)}/{pools.get('total_chaves', 0)} ativos.",
+        f"Infraestrutura S1/SQLite/Pools nominal: poda MCP -{econ_pct}% e {fila.get('taxa_resolucao_pct', 100.0)}% da fila resolvida.",
+        None,
+        None,
+    )
+
+
+def _avaliar_eixo_memoria(mem: dict[str, object]) -> tuple[str, str, str | None, str | None, str | None]:
+    repo = _como_dict(mem.get("memoria_repo_git"))
+    dirty = _int_ou_zero(repo.get("dirty_files"))
+    ultimo = str(repo.get("ultimo_commit", "N/A"))
+    devin = _como_dict(mem.get("devin_insights"))
+    high_issues = _int_ou_zero(devin.get("issues_high"))
+    misleading = _int_ou_zero(devin.get("skills_enganosos"))
+    if dirty > 0 or high_issues > 0 or misleading > 0:
+        return (
+            "ATENCAO",
+            f"Repo memoria dirty={dirty} (commit {ultimo}); Devin issues_high={high_issues}, skills_enganosos={misleading}.",
+            None,
+            f"Sinais de atrito em memoria/Devin: {dirty} arquivo(s) dirty em ~/.gemini/memoria, {high_issues} issue(s) alta(s) Devin.",
+            "Consolidar/commitar notas em ~/.gemini/memoria e revisar skills marcadas como enganosas.",
+        )
+    return (
+        "OTIMO",
+        f"{mem.get('total_notas_md', 0)} notas consolidadas; repo memoria limpo (commit {ultimo}).",
+        f"Memoria agentica sincronizada ({mem.get('total_notas_md', 0)} notas, repo limpo).",
+        None,
+        None,
+    )
+
+
+def analisar_sinais_qualitativos(r: dict[str, object]) -> dict[str, object]:
+    """Sintetiza sinais qualitativos estritamente a partir dos dados quantitativos medidos."""
+    avaliacoes = {
+        "entrega_git": _avaliar_eixo_git(_como_dict(r.get("atividade_git"))),
+        "qualidade_cwv": _avaliar_eixo_cwv(_como_dict(r.get("qualidade_cwv"))),
+        "governanca_malha": _avaliar_eixo_governanca(_como_dict(r.get("pendencias")), _como_dict(r.get("saude_malha"))),
+        "calibracao_timesfm": _avaliar_eixo_calibracao(_como_dict(r.get("ledger"))),
+        "infra_mcp_pools": _avaliar_eixo_infra_e_fila(
+            _como_dict(r.get("pools_openrouter")),
+            _como_dict(r.get("fila_tarefas")),
+            _como_dict(r.get("interceptador_mcp")),
+        ),
+        "memoria_dreaming": _avaliar_eixo_memoria(_como_dict(r.get("memoria_agentica_devin"))),
+    }
+
+    eixos: dict[str, dict[str, str]] = {}
+    fortalezas: list[str] = []
+    atritos: list[str] = []
+    acoes: list[str] = []
+
+    for nome, (nivel, sinal, forte, atrito, acao) in avaliacoes.items():
+        eixos[nome] = {"nivel": nivel, "sinal": sinal}
+        if forte:
+            fortalezas.append(forte)
+        if atrito:
+            atritos.append(atrito)
+        if acao:
+            acoes.append(acao)
+
+    niveis = [info["nivel"] for info in eixos.values()]
+    if "BLOQUEIO" in niveis:
+        saude_geral = "CRITICO"
+    elif "ATENCAO" in niveis:
+        saude_geral = "ATENCAO"
+    elif niveis.count("OTIMO") >= 4:
+        saude_geral = "OTIMO"
+    else:
+        saude_geral = "ESTAVEL"
+
+    return {
+        "saude_geral": saude_geral,
+        "eixos": eixos,
+        "fortalezas": fortalezas,
+        "dificuldades_detectadas": atritos,
+        "proximos_passos_factuais": acoes,
+    }
+
+
+def _deduplicar_preservando_ordem(itens: list[str]) -> list[str]:
+    vistos: set[str] = set()
+    saida: list[str] = []
+    for item in itens:
+        limpo = item.strip()
+        if limpo and limpo not in vistos:
+            vistos.add(limpo)
+            saida.append(limpo)
+    return saida
+
+
+def gerar_resumo_escrito_sessao(
+    r: dict[str, object],
+    marcos_manuais: list[str] | None = None,
+    dificuldades_manuais: list[str] | None = None,
+    conclusoes_manuais: list[str] | None = None,
+) -> dict[str, object]:
+    """Produz texto corrido em prosa factica resumindo a sessao, marcos, atritos e conclusoes."""
+    git_info = _como_dict(r.get("atividade_git"))
+    qual = _como_dict(r.get("qualitativo"))
+    pend = _como_dict(r.get("pendencias"))
+    ledger = _como_dict(r.get("ledger"))
+    mcp = _como_dict(r.get("interceptador_mcp"))
+    ing = _como_dict(r.get("ingress_fast_path"))
+    cwv_wrap = _como_dict(r.get("qualidade_cwv"))
+    cwv = _como_dict(cwv_wrap.get("cwv_report"))
+    suite = _como_dict(cwv_wrap.get("suite_verde"))
+
+    janela = _float_ou_zero(git_info.get("janela_horas"))
+    commits = _int_ou_zero(git_info.get("commits_count"))
+    arqs = _int_ou_zero(git_info.get("arquivos_unicos_tocados"))
+    ins = _int_ou_zero(git_info.get("insercoes"))
+    dele = _int_ou_zero(git_info.get("delecoes"))
+    autores_raw = git_info.get("autores")
+    autores = [str(a) for a in autores_raw] if isinstance(autores_raw, list) else []
+    autores_txt = ", ".join(autores) if autores else "nenhum autor git registrado na janela"
+
+    p1 = (
+        f"Na janela das ultimas {janela:g}h na branch `{git_info.get('branch_atual', 'HEAD')}` "
+        f"(HEAD `{git_info.get('head_sha', 'unknown')}`), foram consolidados {commits} commit(s) "
+        f"por {autores_txt}, alterando {arqs} arquivo(s) unico(s) (+{ins}/-{dele} linhas). "
+        f"A telemetria local S1 sustenta poda MCP de -{mcp.get('economia_media_tokens_pct', 0.0)}% "
+        f"({mcp.get('overhead_latencia_us', 0.0)} us) e triagem Ingress Fast-Path em "
+        f"{ing.get('latencia_s1_ms', 0.0)} ms."
+    )
+
+    cwv_estado = "APROVADO (SOTA GOLD)" if cwv.get("aprovado") else "NAO VERIFICADO / PENDENTE"
+    lcp_txt = _formatar_numero(cwv.get("lcp_ms"), 1, "ms")
+    cls_txt = _formatar_numero(cwv.get("cls"), 4)
+    suite_estado = (
+        "no HEAD atual"
+        if suite.get("atualizado_no_head")
+        else f"em commit anterior ({suite.get('head_na_medicao', 'N/A')})"
+    )
+    p2 = (
+        f"No plano de qualidade e governanca, a ultima auditoria CWV/A11y/CVE registra status {cwv_estado} "
+        f"(LCP={lcp_txt}, CLS={cls_txt}, axe={cwv.get('axe_violations', 'N/A')}) "
+        f"com marcador `.git/sota-suite-verde` {suite_estado}. O passivo formal contabiliza "
+        f"{pend.get('abertas', 0)} pendencia(s) aberta(s) ({pend.get('vencidas', 0)} vencida(s)), enquanto o "
+        f"ledger append-only soma {ledger.get('total_registros', 0)} registros com {ledger.get('sessoes_acumuladas', 0)} "
+        f"sessao(oes) elegivel(is) no lastro de {ledger.get('data_referencia', 'none')} "
+        f"(postura geral classificada como `{qual.get('saude_geral', 'ESTAVEL')}`)."
+    )
+
+    marcos_commits = [f"[Git] {m}" for m in _como_lista_strs(git_info.get("marcos_commits"))]
+    marcos_decl = [f"[Declarado] {m}" for m in (marcos_manuais or [])]
+    marcos_lista = _deduplicar_preservando_ordem(marcos_decl + marcos_commits)
+    if not marcos_lista:
+        marcos_lista = ["Nenhum commit ou marco manual registrado na janela avaliada."]
+
+    atritos_med = [f"[Medido] {d}" for d in _como_lista_strs(qual.get("dificuldades_detectadas"))]
+    atritos_decl = [f"[Declarado] {d}" for d in (dificuldades_manuais or [])]
+    dificuldades_lista = _deduplicar_preservando_ordem(atritos_decl + atritos_med)
+    if not dificuldades_lista:
+        dificuldades_lista = ["Nenhuma dificuldade ou bloqueio detectado automaticamente nos instrumentos medidos."]
+
+    acoes_med = [f"[Medido] {a}" for a in _como_lista_strs(qual.get("proximos_passos_factuais"))]
+    concl_decl = [f"[Declarado] {c}" for c in (conclusoes_manuais or [])]
+    conclusoes_lista = _deduplicar_preservando_ordem(concl_decl + acoes_med)
+    if not conclusoes_lista:
+        conclusoes_lista = ["Estado nominal sem pendencias bloqueantes; manter cadencia de verificacao pre-commit."]
+
+    return {
+        "sintese_executiva": f"{p1}\n\n{p2}",
+        "marcos": marcos_lista,
+        "dificuldades": dificuldades_lista,
+        "conclusoes": conclusoes_lista,
+    }
+
+
 def avaliar_impacto_sessao(
     pendencias_inicio: int | None = None,
     saida_markdown: bool = False,
@@ -479,8 +1105,13 @@ def avaliar_impacto_sessao(
     devin_insights_path: str | None = None,
     devin_generate: bool = False,
     devin_timeout: float = 120.0,
+    horas: float = 12.0,
+    marcos: list[str] | None = None,
+    dificuldades: list[str] | None = None,
+    conclusoes: list[str] | None = None,
+    so_tabela: bool = False,
 ) -> dict[str, object]:
-    """Gera o diagnostico quantitativo completo da sessao."""
+    """Gera o diagnostico quantitativo, qualitativo e narrativo completo da sessao."""
     pend = medir_pendencias()
     ledger = medir_ledger_calibracao()
     fila = medir_fila_tarefas()
@@ -494,10 +1125,13 @@ def avaliar_impacto_sessao(
         devin_generate=devin_generate,
         devin_timeout=devin_timeout,
     )
+    atividade_git = medir_atividade_git_sessao(horas=horas)
+    qualidade_cwv = medir_qualidade_ultima_auditoria()
+    saude_malha = medir_saude_malha()
 
     delta_pendencias_pct = 0.0
     if pendencias_inicio is not None and pendencias_inicio > 0:
-        abertas_atuais = int(pend["abertas"])
+        abertas_atuais = _int_ou_zero(pend.get("abertas"))
         delta_pendencias_pct = round(((pendencias_inicio - abertas_atuais) / pendencias_inicio) * 100.0, 2)
 
     resultado: dict[str, object] = {
@@ -514,156 +1148,258 @@ def avaliar_impacto_sessao(
         "pools_openrouter": pools,
         "eficiencia_economica_infra": economia,
         "memoria_agentica_devin": memoria,
+        "atividade_git": atividade_git,
+        "qualidade_cwv": qualidade_cwv,
+        "saude_malha": saude_malha,
     }
 
+    resultado["qualitativo"] = analisar_sinais_qualitativos(resultado)
+    resultado["narrativa"] = gerar_resumo_escrito_sessao(
+        resultado,
+        marcos_manuais=marcos,
+        dificuldades_manuais=dificuldades,
+        conclusoes_manuais=conclusoes,
+    )
+
     if saida_markdown:
-        print(gerar_tabela_markdown(resultado))
+        print(gerar_tabela_markdown(resultado, incluir_narrativa=not so_tabela))
     else:
         imprimir_painel_console(resultado)
 
     return resultado
 
 
-def gerar_tabela_markdown(r: dict[str, object]) -> str:
-    """Gera tabela padrao-ouro Markdown para inclusao direta no HANDOFF da sessao."""
-    pend: dict[str, object] = r["pendencias"]  # type: ignore
-    ledger: dict[str, object] = r["ledger"]  # type: ignore
-    fila: dict[str, object] = r["fila_tarefas"]  # type: ignore
-    mcp: dict[str, object] = r["interceptador_mcp"]  # type: ignore
-    ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
-    pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
-    econ: dict[str, object] = r.get("eficiencia_economica_infra", {})  # type: ignore
-    mem: dict[str, object] = r.get("memoria_agentica_devin", {})  # type: ignore
+def _anexar_secao_qualitativa_e_narrativa(md: list[str], r: dict[str, object]) -> None:
+    """Anexa a matriz qualitativa e a prosa narrativa da sessao ao Markdown."""
+    qual = _como_dict(r.get("qualitativo"))
+    narr = _como_dict(r.get("narrativa"))
+    eixos = _como_dict(qual.get("eixos"))
+    if eixos:
+        md.extend(
+            [
+                f"### Diagnostico Qualitativo por Eixo (Postura Geral: {qual.get('saude_geral', 'ESTAVEL')})",
+                "",
+                "| Eixo Avaliado | Nivel | Evidencia Medida |",
+                "| :--- | :--- | :--- |",
+            ]
+        )
+        for nome, raw_info in eixos.items():
+            info = _como_dict(raw_info)
+            md.append(f"| `{nome}` | **{info.get('nivel', '?')}** | {info.get('sinal', '')} |")
+        md.append("")
+
+    if narr:
+        md.extend(
+            [
+                "### Resumo Escrito da Sessao",
+                "",
+                "#### Sintese Executiva",
+                str(narr.get("sintese_executiva", "")),
+                "",
+                "#### Marcos e Entregas",
+            ]
+        )
+        for item in _como_lista_strs(narr.get("marcos")):
+            md.append(f"- {item}")
+        md.extend(["", "#### Dificuldades e Atritos"])
+        for item in _como_lista_strs(narr.get("dificuldades")):
+            md.append(f"- {item}")
+        md.extend(["", "#### Conclusoes e Proximos Passos"])
+        for item in _como_lista_strs(narr.get("conclusoes")):
+            md.append(f"- {item}")
+        md.append("")
+
+
+def _anexar_linhas_git_e_cwv(md: list[str], r: dict[str, object]) -> None:
+    """Anexa linhas de entregas git e qualidade CWV/A11y/CVE ao painel Markdown."""
+    git_info = _como_dict(r.get("atividade_git"))
+    if git_info:
+        md.append(
+            f"| **Entregas Git ({git_info.get('janela_horas', 12)}h)** | **{git_info.get('commits_count', 0)} commits / {git_info.get('arquivos_unicos_tocados', 0)} arq.** |"
+            f" +{git_info.get('insercoes', 0)}/-{git_info.get('delecoes', 0)} linhas, branch `{git_info.get('branch_atual', 'HEAD')}`, dirty={git_info.get('working_tree_dirty', 0)} |"
+        )
+    cwv_wrap = _como_dict(r.get("qualidade_cwv"))
+    if not cwv_wrap:
+        return
+    cwv = _como_dict(cwv_wrap.get("cwv_report"))
+    suite = _como_dict(cwv_wrap.get("suite_verde"))
+    if cwv.get("disponivel"):
+        lcp_txt = _formatar_numero(cwv.get("lcp_ms"), 1, "ms")
+        cls_txt = _formatar_numero(cwv.get("cls"), 4)
+        tbt_txt = _formatar_numero(cwv.get("tbt_ms"), 1, "ms")
+        cves = _int_ou_zero(cwv.get("critical_cve")) + _int_ou_zero(cwv.get("high_cve"))
+        md.append(
+            f"| **CWV, A11y & Seguranca** | **LCP {lcp_txt} / CLS {cls_txt}** |"
+            f" TBT {tbt_txt}, axe={cwv.get('axe_violations', 'N/A')}, CVE crit/high={cves}, suite HEAD={suite.get('atualizado_no_head', False)} |"
+        )
+
+
+def _anexar_linhas_devin_e_memoria(md: list[str], mem: dict[str, object]) -> None:
+    """Anexa linhas de memoria agentica local e Devin Session Insights ao painel Markdown."""
+    if not mem:
+        return
+    superficies = _como_dict(mem.get("superficies"))
+    site_mem = _como_dict(superficies.get("site_memory"))
+    repo = _como_dict(mem.get("memoria_repo_git"))
+    md.append(
+        f"| **Memoria Agentica Local** | **{mem.get('total_notas_md', 0)} notas**"
+        f" (site: {site_mem.get('notas_md', 0)}) |"
+        f" repo ~/.gemini/memoria: {repo.get('dirty_files', '?')} dirty, ultimo commit {repo.get('ultimo_commit', 'N/A')} |"
+    )
+    devin_resumo = _como_dict(mem.get("devin_insights"))
+    if not devin_resumo:
+        return
+    if devin_resumo.get("session_size"):
+        md.append(
+            f"| **Devin Session Insights** | **{str(devin_resumo.get('session_size')).upper()}**"
+            f" / {devin_resumo.get('category') or 'N/A'} |"
+            f" ACU: {devin_resumo.get('acus_consumed')} | msgs: {devin_resumo.get('num_user_messages')}u/"
+            f"{devin_resumo.get('num_devin_messages')}d | issues: {devin_resumo.get('issues_total')}"
+            f" ({devin_resumo.get('issues_high')} altas) | action_items: {devin_resumo.get('action_items_total')}"
+            f" | skills enganosas: {devin_resumo.get('skills_enganosos')} |"
+        )
+    else:
+        detalhe = devin_resumo.get("_erro") or devin_resumo.get("_status") or devin_resumo.get("_detalhe") or "?"
+        md.append(f"| **Devin Session Insights** | **indisponivel** | {detalhe} |")
+
+
+def gerar_tabela_markdown(r: dict[str, object], incluir_narrativa: bool = True) -> str:
+    """Gera tabela padrao-ouro Markdown, matriz qualitativa e prosa narrativa para o HANDOFF."""
+    pend = _como_dict(r.get("pendencias"))
+    ledger = _como_dict(r.get("ledger"))
+    fila = _como_dict(r.get("fila_tarefas"))
+    mcp = _como_dict(r.get("interceptador_mcp"))
+    ing = _como_dict(r.get("ingress_fast_path"))
+    pools = _como_dict(r.get("pools_openrouter"))
+    econ = _como_dict(r.get("eficiencia_economica_infra"))
+    malha = _como_dict(r.get("saude_malha"))
 
     md: list[str] = [
         "### Painel de Avaliacao de Impacto da Sessao (Agnostico Tier 1-2-3)",
         "",
         "| Metrica de Impacto | Valor Medido | Status / Observacao |",
         "| :--- | :--- | :--- |",
-        (
-            f"| **Economia de Tokens MCP (S1)** | **-{mcp['economia_media_tokens_pct']}%** |"
-            f" {mcp.get('status', 'Poda dinamica de schemas irrelevantes')} (overhead: {mcp['overhead_latencia_us']} us) |"
-        ),
-        (
-            f"| **Ingress Fast-Path S1** | **{ing['latencia_s1_ms']} ms** ({ing['latencia_s1_us']} us) |"
-            " Triagem O(1) de tarefas sem compilar grafo |"
-        ),
-        (
-            f"| **Passivo de Pendencias** | **{pend['abertas']} abertas** (reducao: {pend['reducao_pct']}%) |"
-            " Resolucao formal via M.O. 13.F |"
-        ),
-        (
-            f"| **Integridade do Ledger** | **{ledger['total_registros']} registros** (tail: `{str(ledger['tail_hash'])[:8]}`) |"
-            f" Portao acumulado: {ledger['sessoes_acumuladas']} sessoes |"
-        ),
-        (
-            f"| **Resolucao de Tarefas SQLite** | **{fila['taxa_resolucao_pct']}%** ({fila['completed']}/{fila['total_tarefas']}) |"
-            " 0 pendencias residuais ou falhas |"
-        ),
     ]
+    _anexar_linhas_git_e_cwv(md, r)
+    md.extend(
+        [
+            (
+                f"| **Economia de Tokens MCP (S1)** | **-{mcp.get('economia_media_tokens_pct', 0.0)}%** |"
+                f" {mcp.get('status', 'Poda dinamica de schemas irrelevantes')} (overhead: {mcp.get('overhead_latencia_us', 0.0)} us) |"
+            ),
+            (
+                f"| **Ingress Fast-Path S1** | **{ing.get('latencia_s1_ms', 0.0)} ms** ({ing.get('latencia_s1_us', 0.0)} us) |"
+                " Triagem O(1) de tarefas sem compilar grafo |"
+            ),
+            (
+                f"| **Passivo de Pendencias** | **{pend.get('abertas', 0)} abertas** ({pend.get('vencidas', 0)} vencidas, reducao: {pend.get('reducao_pct', 0.0)}%) |"
+                " Resolucao formal via M.O. 13.F |"
+            ),
+            (
+                f"| **Integridade do Ledger** | **{ledger.get('total_registros', 0)} registros** (tail: `{str(ledger.get('tail_hash', 'none'))[:8]}`) |"
+                f" Portao: {ledger.get('sessoes_acumuladas', 0)} sessoes (faltam {ledger.get('sessoes_faltantes', 0)}, ref {ledger.get('data_referencia', 'none')}, TimesFM: {ledger.get('timesfm_status', 'N/A')}) |"
+            ),
+            (
+                f"| **Resolucao de Tarefas SQLite** | **{fila.get('taxa_resolucao_pct', 100.0)}%** ({fila.get('completed', 0)}/{fila.get('total_tarefas', 0)}) |"
+                f" pending={fila.get('pending', 0)} / failed={fila.get('failed', 0)} |"
+            ),
+        ]
+    )
+    if malha:
+        malha_status = str(malha.get("status", "indisponivel")).upper()
+        md.append(
+            f"| **Saude da Malha** | **{malha_status}** ({malha.get('graves', 0)} alertas graves) |"
+            f" {malha.get('total_sinais', 0)} sinal(is) observado(s) via saude_da_malha.py |"
+        )
     if pools and pools.get("total_chaves"):
         md.append(
-            f"| **Pools OpenRouter Multi-Tier** | **{pools['total_chaves']} chaves** ({pools['ativas']} ativas, score: {pools['score_medio']}) | T1: {pools['tier1_count']} \\| T2: {pools['tier2_count']} \\| T3: {pools['tier3_count']} \\| T4: {pools['tier4_count']} ({pools['bloqueadas']} bloq / {pools['revogadas']} rev) |"
+            f"| **Pools OpenRouter Multi-Tier** | **{pools['total_chaves']} chaves** ({pools['ativas']} ativas, score: {pools['score_medio']}) |"
+            f" T1: {pools['tier1_count']} \\| T2: {pools['tier2_count']} \\| T3: {pools['tier3_count']} \\| T4: {pools['tier4_count']} ({pools['bloqueadas']} bloq / {pools['revogadas']} rev) |"
         )
     if econ:
+        idents = _como_dict(econ.get("identidades_canonicas"))
         md.append(
-            f"| **Eficiencia Economica & Infra** | **{econ.get('modelos_cloud_zero_ram_count', 0)} cloud / {econ.get('modelos_locais_quantizados_count', 0)} locais** | Cotas Pro Tier 1 prioritarias (Faixa.FLAT_FEE); Mitigacao ativa de custos de servidores |"
+            f"| **Eficiencia Economica & Infra** | **{econ.get('modelos_locais_quantizados_count', 0)} locais / {idents.get('total', 0)} identidades** |"
+            f" Tier 1={idents.get('tier_1', 0)}, Tier 2={idents.get('tier_2', 0)}; Cotas Pro Tier 1 (Faixa.FLAT_FEE) prioritarias |"
         )
-    if mem:
-        superficies: dict[str, dict[str, object]] = mem.get("superficies", {})  # type: ignore
-        site_mem = superficies.get("site_memory", {})
-        repo = _como_dict(mem.get("memoria_repo_git"))
-        dirty = repo.get("dirty_files", "?")
-        ultimo = repo.get("ultimo_commit", "N/A")
-        md.append(
-            f"| **Memoria Agentica Local** | **{mem.get('total_notas_md', 0)} notas**"
-            f" (site: {site_mem.get('notas_md', 0)}) |"
-            f" Analogo ao Devin Memory/Dreaming; repo ~/.gemini/memoria: {dirty} dirty, ultimo commit {ultimo} |"
-        )
-        devin_resumo: dict[str, object] | None = mem.get("devin_insights")  # type: ignore
-        if devin_resumo:
-            if devin_resumo.get("session_size"):
-                md.append(
-                    f"| **Devin Session Insights** | **{str(devin_resumo.get('session_size')).upper()}**"
-                    f" / {devin_resumo.get('category') or 'N/A'} |"
-                    f" ACU: {devin_resumo.get('acus_consumed')} | msgs: {devin_resumo.get('num_user_messages')}u/"
-                    f"{devin_resumo.get('num_devin_messages')}d | issues: {devin_resumo.get('issues_total')}"
-                    f" ({devin_resumo.get('issues_high')} altas) | action_items: {devin_resumo.get('action_items_total')}"
-                    f" | skills enganosas: {devin_resumo.get('skills_enganosos')} |"
-                )
-            else:
-                detalhe = (
-                    devin_resumo.get("_erro") or devin_resumo.get("_status") or devin_resumo.get("_detalhe") or "?"
-                )
-                md.append(f"| **Devin Session Insights** | **indisponivel** | {detalhe} |")
+    _anexar_linhas_devin_e_memoria(md, _como_dict(r.get("memoria_agentica_devin")))
     md.append("")
+    if incluir_narrativa:
+        _anexar_secao_qualitativa_e_narrativa(md, r)
     return "\n".join(md)
 
 
 def imprimir_painel_console(r: dict[str, object]) -> None:
-    """Imprime sumario condensado no console."""
-    pend: dict[str, object] = r["pendencias"]  # type: ignore
-    ledger: dict[str, object] = r["ledger"]  # type: ignore
-    fila: dict[str, object] = r["fila_tarefas"]  # type: ignore
-    mcp: dict[str, object] = r["interceptador_mcp"]  # type: ignore
-    ing: dict[str, object] = r["ingress_fast_path"]  # type: ignore
-    pools: dict[str, object] = r.get("pools_openrouter", {})  # type: ignore
-    econ: dict[str, object] = r.get("eficiencia_economica_infra", {})  # type: ignore
-    mem: dict[str, object] = r.get("memoria_agentica_devin", {})  # type: ignore
+    """Imprime sumario quantitativo, diagnostico qualitativo e resumo escrito no console."""
+    pend = _como_dict(r.get("pendencias"))
+    ledger = _como_dict(r.get("ledger"))
+    fila = _como_dict(r.get("fila_tarefas"))
+    mcp = _como_dict(r.get("interceptador_mcp"))
+    ing = _como_dict(r.get("ingress_fast_path"))
+    pools = _como_dict(r.get("pools_openrouter"))
+    git_info = _como_dict(r.get("atividade_git"))
+    qual = _como_dict(r.get("qualitativo"))
+    narr = _como_dict(r.get("narrativa"))
 
-    print("\n" + "=" * 65)
-    print("  AVALIACAO DE IMPACTO OBJETIVO DE SESSAO (SOTA AGNOSTIC)")
-    print("=" * 65)
-    print(
-        f"\u2022 Economia de Tokens MCP (S1):   -{mcp['economia_media_tokens_pct']}% [{mcp.get('status', 'Poda dinamica')}] (overhead: {mcp['overhead_latencia_us']} us)"
-    )
-    print(f"\u2022 Ingress Fast-Path S1:          {ing['latencia_s1_ms']} ms ({ing['latencia_s1_us']} us) por tarefa")
-    print(f"\u2022 Passivo de Pendencias:         {pend['abertas']} abertas (reducao: {pend['reducao_pct']}%)")
-    print(
-        f"\u2022 Ledger de Calibracao:          {ledger['total_registros']} registros (tail: {str(ledger['tail_hash'])[:12]}...)"
-    )
-    print(
-        f"\u2022 Portao de Suficiencia (\u00a78.3):  {ledger['sessoes_acumuladas']} sessoes acumuladas (gate_passed: {ledger['gate_passed']})"
-    )
-    print(
-        f"\u2022 Fila de Tarefas Assincronas:   {fila['taxa_resolucao_pct']}% taxa de resolucao ({fila['completed']} concluidas, {fila['pending']} pendentes)"
-    )
-    if pools and pools.get("total_chaves"):
+    print("\n" + "=" * 68)
+    print("  AVALIACAO DE IMPACTO DE SESSAO (QUANTITATIVO + QUALITATIVO)")
+    print("=" * 68)
+    if git_info:
         print(
-            f"\u2022 Pools OpenRouter Multi-Tier:   {pools['total_chaves']} chaves ({pools['ativas']} ativas, T1:{pools['tier1_count']} T2:{pools['tier2_count']} T3:{pools['tier3_count']} T4:{pools['tier4_count']} | Score: {pools['score_medio']})"
+            f"* Entregas Git ({git_info.get('janela_horas', 12)}h):      {git_info.get('commits_count', 0)} commits | {git_info.get('arquivos_unicos_tocados', 0)} arq. | +{git_info.get('insercoes', 0)}/-{git_info.get('delecoes', 0)}"
         )
-    if econ:
-        print(
-            f"\u2022 Eficiencia Economica & Infra:  Cotas Pro Tier 1 prioritarias (FLAT_FEE) | {econ.get('modelos_cloud_zero_ram_count', 0)} cloud Zero-RAM / {econ.get('modelos_locais_quantizados_count', 0)} locais"
-        )
-        print("                                 Runtimes: Ollama local + llama.cpp Qwen + Hermes Agent")
-    if mem:
-        repo = _como_dict(mem.get("memoria_repo_git"))
-        print(
-            f"\u2022 Memoria Agentica Local:       {mem.get('total_notas_md', 0)} notas |"
-            f" repo memoria: {repo.get('dirty_files', '?')} dirty, ultimo commit {repo.get('ultimo_commit', 'N/A')}"
-        )
-        devin_resumo = _como_dict(mem.get("devin_insights"))
-        if devin_resumo and devin_resumo.get("session_size"):
-            print(
-                f"\u2022 Devin Session Insights:       size={str(devin_resumo.get('session_size')).upper()}"
-                f" cat={devin_resumo.get('category')} issues={devin_resumo.get('issues_total')}"
-                f" action_items={devin_resumo.get('action_items_total')}"
-            )
-        elif devin_resumo:
-            detalhe = devin_resumo.get("_erro") or devin_resumo.get("_status") or "?"
-            print(f"\u2022 Devin Session Insights:       indisponivel ({detalhe})")
-    print("=" * 65 + "\n")
+    print(
+        f"* Economia Tokens MCP (S1):    -{mcp.get('economia_media_tokens_pct', 0.0)}% ({mcp.get('overhead_latencia_us', 0.0)} us)"
+    )
+    print(f"* Ingress Fast-Path S1:        {ing.get('latencia_s1_ms', 0.0)} ms ({ing.get('latencia_s1_us', 0.0)} us)")
+    print(f"* Passivo de Pendencias:       {pend.get('abertas', 0)} abertas ({pend.get('vencidas', 0)} vencidas)")
+    print(
+        f"* Ledger & Portao (8.3):       {ledger.get('total_registros', 0)} reg | {ledger.get('sessoes_acumuladas', 0)} sessoes (ref {ledger.get('data_referencia', 'none')})"
+    )
+    print(
+        f"* Fila SQLite / Pools OR:      {fila.get('taxa_resolucao_pct', 100.0)}% fila | {pools.get('ativas', 0)} chaves OR ativas"
+    )
+    if qual:
+        print("-" * 68)
+        print(f"  POSTURA QUALITATIVA: {qual.get('saude_geral', 'ESTAVEL')}")
+        for nome, raw_info in _como_dict(qual.get("eixos")).items():
+            info = _como_dict(raw_info)
+            print(f"  - [{info.get('nivel', '?'):8}] {nome}: {info.get('sinal', '')}")
+    if narr:
+        print("-" * 68)
+        print("  RESUMO ESCRITO DA SESSAO:")
+        print(str(narr.get("sintese_executiva", "")))
+    print("=" * 68 + "\n")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Avalia o impacto objetivo de uma sessao de forma quantitativa e agnostica."
+        description="Avalia o impacto quantitativo, qualitativo e narrativo de uma sessao de forma agnostica."
     )
     parser.add_argument(
         "--pendencias-inicio", type=int, default=None, help="Numero de pendencias abertas no inicio da sessao"
     )
-    parser.add_argument("--markdown", action="store_true", help="Gera a saida em formato de tabela Markdown")
+    parser.add_argument("--horas", type=float, default=12.0, help="Janela em horas para metricas git da sessao")
+    parser.add_argument(
+        "--marcos",
+        action="append",
+        default=[],
+        help="Marco qualitativo/entrega relevante observada na sessao (repetivel)",
+    )
+    parser.add_argument(
+        "--dificuldades",
+        action="append",
+        default=[],
+        help="Dificuldade ou atrito encontrado na sessao (repetivel)",
+    )
+    parser.add_argument(
+        "--conclusoes",
+        action="append",
+        default=[],
+        help="Conclusao ou proximo passo declarado para a sessao (repetivel)",
+    )
+    parser.add_argument("--markdown", action="store_true", help="Gera a saida em formato Markdown")
+    parser.add_argument("--so-tabela", action="store_true", help="Emite apenas a tabela quantitativa no Markdown")
     parser.add_argument("--json", action="store_true", help="Imprime o payload JSON completo")
     parser.add_argument(
         "--forcar-benchmark",
@@ -704,6 +1440,11 @@ def main() -> int:
         devin_insights_path=args.devin_insights,
         devin_generate=args.devin_generate,
         devin_timeout=args.devin_timeout,
+        horas=args.horas,
+        marcos=args.marcos,
+        dificuldades=args.dificuldades,
+        conclusoes=args.conclusoes,
+        so_tabela=args.so_tabela,
     )
 
     if args.json:
