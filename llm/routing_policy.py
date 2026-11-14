@@ -548,6 +548,9 @@ def _check_provider_availability_sync(provider: str, model: str) -> bool:
     if "PYTEST_CURRENT_TEST" in os.environ:
         return True
 
+    if provider == "anthropic":
+        return False
+
     # Para providers locais, verifica health check
     if provider == "local":
         try:

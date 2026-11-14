@@ -72,7 +72,7 @@ const hash = file => createHash('sha256').update(fs.readFileSync(file)).digest('
 function nativeRead(name, raw) {
   const file = path.join(out, name + '.json');
   fs.writeFileSync(file, raw);
-  const result = run('java', ['-cp', classpath, 'HrcNativeReadProbe', file]);
+  const result = run('java', ['-cp', classpath, 'scripts.validation.HrcNativeReadProbe', file]);
   fs.writeFileSync(path.join(out, name + '.native.json'), result.stdout);
   return JSON.parse(result.stdout);
 }
@@ -123,7 +123,7 @@ for (const [name, raw] of cases) {
 validConfig.handdata.anteType = 'INVALID_ANTE_TYPE';
 const negative = path.join(out, 'invalid-ante.json');
 fs.writeFileSync(negative, JSON.stringify(validConfig));
-const rejected = run('java', ['-cp', classpath, 'HrcNativeReadProbe', negative], 1);
+const rejected = run('java', ['-cp', classpath, 'scripts.validation.HrcNativeReadProbe', negative], 1);
 assert.match(rejected.stderr, /Native hand roundtrip changed field: anteType/);
 const summary = { generatedAt: new Date().toISOString(), hrcJarSha256: hash(jar),
   scope: 'Native HRC hand deserialization and structure parser only; no wizard, tree validation, solve or EV certification.',

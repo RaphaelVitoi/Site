@@ -6,21 +6,19 @@
     "gemini-3.1-pro-preview-customtools",
     "gemini-3.1-pro-preview",
     "gemini-3.8-flash",
-    "gpt-6.0-sol",
-    "claude-opus-5.5",
-    "gpt-6-astra",
-    "qwen2.5-coder:7b-instruct-q5_K_M",
     "poolside/laguna-s-2.1:free",
-    "meta-llama/llama-3.3-70b-instruct:free"
+    "meta-llama/llama-3.3-70b-instruct:free",
+    "qwen/qwen-2.5-coder-32b-instruct:free",
+    "qwen2.5-coder:7b-instruct-q5_K_M",
+    "gemma4:e4b"
   ],
   "fast_operations": [
     "gemini-3.5-flash-lite",
-    "gpt-6.0-luna",
-    "claude-haiku-5.5",
     "gemini-3.8-flash",
-    "qwen2.5-coder:7b-instruct-q5_K_M",
+    "poolside/laguna-xs-2.1:free",
     "qwen2.5-coder:1.5b",
-    "poolside/laguna-xs-2.1:free"
+    "qwen2.5-coder:7b-instruct-q5_K_M",
+    "gemma4:e4b"
   ],
   "routing_config": {
     "last_updated": "2026-10-20",

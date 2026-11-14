@@ -8,6 +8,7 @@ API requests from resilience and circuit breaker logic.
 from abc import ABC, abstractmethod
 import asyncio
 from collections.abc import Callable
+import contextlib
 from dataclasses import dataclass
 import logging
 import os
@@ -161,7 +162,15 @@ class GeminiStrategy(LLMProviderStrategy):
         )
 
     async def check_quarantine(self, model: str, key: str) -> bool:
-        return await _is_gemini_model_key_blocked(model, key)
+        if await _is_gemini_model_key_blocked(model, key):
+            return True
+        with contextlib.suppress(Exception):
+            from llm.gemini_pool import _key_sha8, gemini_pool_manager  # noqa: PLC0415
+
+            stats = gemini_pool_manager._stats.get(_key_sha8(key))
+            if stats is not None and not stats.is_available():
+                return True
+        return False
 
     async def handle_semantic_error(self, e: Exception, model: str, key: str) -> None:
         """Trata erros semanticos especificos do Gemini."""
@@ -644,6 +653,7 @@ async def _handle_5xx_error(
     general_retries_left: int,
     rate_limit_retries_left: int,
 ) -> tuple[bool, int, int]:
+    await _register_route_failure(route_key)
     if general_retries_left < 0:
         logger.error(
             "[[%s]%s[/]] Erro 5xx persistente em %s. Esgotando retries.",
@@ -651,7 +661,6 @@ async def _handle_5xx_error(
             ctx.task.agent,
             strategy.name,
         )
-        await _register_route_failure(route_key)
         return False, general_retries_left, rate_limit_retries_left
     logger.warning(
         "[[%s]%s[/]] HTTP %s transiente em %s. Retentando (%d restantes)...",
@@ -728,6 +737,10 @@ async def _handle_general_error(
     error_msg = str(e).encode("ascii", "backslashreplace").decode("ascii")
     latency_ms = int((time.monotonic() - start_time) * 1000)
     status_code = getattr(e, "status", 0) if isinstance(e, aiohttp.ClientResponseError) else 0
+    if status_code == 0:
+        match_http = re.search(r"\bHTTP\s+(\d{3})\b", error_msg)
+        if match_http:
+            status_code = int(match_http.group(1))
 
     if (status_code >= 500) or "chaoscore: 503" in error_msg.lower():
         return await _handle_5xx_error(
@@ -971,7 +984,10 @@ async def _try_provider(
     _c = _te._c
     strategy = _get_provider_strategy(provider)
     if not strategy:
-        logger.error("Provedor desconhecido: %s", provider)
+        if provider == "anthropic":
+            logger.debug("Provedor '%s' indisponivel no momento; pulando modelo %s.", provider, model)
+        else:
+            logger.error("Provedor desconhecido: %s", provider)
         return None
 
     route_key = _route_identifier(provider, model)

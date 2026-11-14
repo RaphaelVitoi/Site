@@ -100,8 +100,8 @@ def _read_windows_registry_env(env_map: dict[str, str]) -> None:
         import winreg  # noqa: PLC0415
 
         for hkey, subkey in (
-            (winreg.HKEY_CURRENT_USER, r"Environment"),
             (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+            (winreg.HKEY_CURRENT_USER, r"Environment"),
         ):
             try:
                 with winreg.OpenKey(hkey, subkey) as k:
@@ -121,18 +121,32 @@ def _read_windows_registry_env(env_map: dict[str, str]) -> None:
         pass
 
 
-def _collect_gemini_keys_from_map(env_map: dict[str, str]) -> list[str]:
+_AUXILIARY_GEMINI_KEY_VARS = (
+    "GEMINI_IMAGE_KEY",
+    "GEMINI_TRANSLATE_KEY",
+    "GEMINI_TTS_KEY",
+    "GEMINI_VIDEO_KEY",
+)
+
+
+def _append_valid_key(collected: list[str], raw_value: str) -> None:
+    val = raw_value.strip()
+    if len(val) >= 20 and val not in collected:
+        collected.append(val)
+
+
+def _collect_gemini_keys_from_map(env_map: dict[str, str], include_auxiliary: bool = False) -> list[str]:
     """Coleta chaves com nomes ordenados (GEMINI_API_KEY_1..20, etc)."""
     collected: list[str] = []
     for i in range(1, 21):
         for prefix in ("GEMINI_API_KEY_", "GEMINI_FLASH_KEY_", "GEMINI_KEY_"):
-            val = env_map.get(f"{prefix}{i}", "").strip()
-            if val and len(val) >= 20 and val not in collected:
-                collected.append(val)
+            _append_valid_key(collected, env_map.get(f"{prefix}{i}", ""))
 
-    global_key = env_map.get("GEMINI_API_KEY", "").strip()
-    if global_key and len(global_key) >= 20 and global_key not in collected:
-        collected.append(global_key)
+    _append_valid_key(collected, env_map.get("GEMINI_API_KEY", ""))
+
+    if include_auxiliary:
+        for var_name in _AUXILIARY_GEMINI_KEY_VARS:
+            _append_valid_key(collected, env_map.get(var_name, ""))
     return collected
 
 
@@ -170,7 +184,7 @@ class GeminiPoolManager:
         if "GEMINI_PROJECT_NAME" in env_map:
             self._project_name = env_map["GEMINI_PROJECT_NAME"]
 
-        self._keys = _collect_gemini_keys_from_map(env_map)
+        self._keys = _collect_gemini_keys_from_map(env_map, include_auxiliary=read_registry)
 
         # Inicializa registros de estatistica
         for i, key in enumerate(self._keys):

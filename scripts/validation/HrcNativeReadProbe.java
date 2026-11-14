@@ -1,4 +1,5 @@
-// NOSONAR - Standalone CLI probe in default package for hrc-native-read.mjs
+package scripts.validation;
+
 import com.google.gson.*; // NOSONAR
 import java.nio.file.*;
 import java.util.*;
@@ -10,7 +11,7 @@ import net.holdemresources.internal.oO;
 /** Read-only probe for the installed HRC 4.1.0.202603231401 serialization classes.
  * This does not open the wizard, build an action tree or run a solver.
  */
-@SuppressWarnings({"java:S1220", "java:S106"})
+@SuppressWarnings("java:S106")
 public class HrcNativeReadProbe {
     private static final Gson GSON = oH.GSON;
 

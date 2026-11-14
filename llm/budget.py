@@ -7,6 +7,7 @@ import hashlib
 import hmac
 import logging
 import os
+import sys
 import threading
 import time
 from typing import Any
@@ -85,7 +86,7 @@ def _collect_keys(prefixes: tuple, exclude_prefixes: tuple = ()) -> list[str]:
 GEMINI_PRO_KEYS = _collect_keys(("GEMINI_PRO", "GOOGLE_PRO"))
 GEMINI_FLASH_KEYS = _collect_keys(("GEMINI_FLASH", "GOOGLE_FLASH"))
 GEMINI_KEYS = _collect_keys(
-    ("GEMINI", "GOOGLE"),
+    ("GEMINI", "GOOGLE_API_KEY", "GOOGLE_KEY"),
     exclude_prefixes=(
         "GEMINI_CLI",
         "GEMINI_PRO",
@@ -149,15 +150,54 @@ OPENROUTER_KEYS = list(
     )
 )
 ANTHROPIC_KEYS = _collect_keys(("ANTHROPIC", "CLAUDE"))
-# Ollama Cloud: nomes exatos -- OLLAMA_AGENT_* e credencial de outro produto
-# e nao pode vazar como Bearer para ollama.com/api.
-OLLAMA_KEYS = list(
-    dict.fromkeys(
+
+
+def _read_ollama_registry_keys() -> list[str]:
+    if sys.platform != "win32":
+        return []
+    try:
+        import winreg  # noqa: PLC0415
+    except ImportError:
+        return []
+
+    found: list[str] = []
+    for hkey, subkey in (
+        (winreg.HKEY_CURRENT_USER, r"Environment"),
+        (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+    ):
+        found.extend(_read_ollama_keys_from_reg_key(winreg, hkey, subkey))
+    return found
+
+
+def _read_ollama_keys_from_reg_key(winreg_mod: Any, hkey: int, subkey: str) -> list[str]:
+    found: list[str] = []
+    try:
+        with winreg_mod.OpenKey(hkey, subkey) as reg_key:
+            for var_name in ("OLLAMA_API_KEY", "OLLAMA_CLOUD_KEY"):
+                try:
+                    val, _ = winreg_mod.QueryValueEx(reg_key, var_name)
+                    if isinstance(val, str) and _is_real_key_value(val):
+                        found.append(val.strip())
+                except OSError:
+                    pass
+    except OSError:
+        pass
+    return found
+
+
+def _collect_ollama_keys() -> list[str]:
+    keys = [
         v
         for k, v in ALL_ENV_VARS.items()
         if k.upper() in {"OLLAMA_API_KEY", "OLLAMA_CLOUD_KEY"} and _is_real_key_value(v)
-    )
-)
+    ]
+    keys.extend(_read_ollama_registry_keys())
+    return list(dict.fromkeys(keys))
+
+
+# Ollama Cloud: nomes exatos -- OLLAMA_AGENT_* e credencial de outro produto
+# e nao pode vazar como Bearer para ollama.com/api.
+OLLAMA_KEYS = _collect_ollama_keys()
 TAVILY_KEYS = _collect_keys(("TAVILY",))
 PERPLEXITY_KEYS = _collect_keys(("PERPLEXITY",))
 API_SECRET_TOKEN = ALL_ENV_VARS.get("API_SECRET_TOKEN", "")
@@ -261,15 +301,14 @@ def _gemini_key_pool_for_model(model: str) -> list[str]:
     from llm.gemini_pool import gemini_pool_manager  # noqa: PLC0415
 
     pool_keys = [k for k in gemini_pool_manager._keys if _is_real_key_value(k)]
-    if pool_keys:
-        return pool_keys
-
     model_l = model.lower()
     if "pro" in model_l:
-        return list(dict.fromkeys(GEMINI_PRO_KEYS + GEMINI_KEYS + GEMINI_FLASH_KEYS))
-    if "flash" in model_l:
-        return list(dict.fromkeys(GEMINI_FLASH_KEYS + GEMINI_KEYS + GEMINI_PRO_KEYS))
-    return list(dict.fromkeys(GEMINI_KEYS + GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS))
+        extra = GEMINI_PRO_KEYS + GEMINI_KEYS + GEMINI_FLASH_KEYS
+    elif "flash" in model_l:
+        extra = GEMINI_FLASH_KEYS + GEMINI_KEYS + GEMINI_PRO_KEYS
+    else:
+        extra = GEMINI_KEYS + GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS
+    return list(dict.fromkeys(pool_keys + extra))
 
 
 def _is_semantic_gemini_error(err: Exception) -> bool:

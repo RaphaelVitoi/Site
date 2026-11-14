@@ -30,7 +30,8 @@
         "**/dist": true,
         "**/build": true,
         "**/reports/coverage": true,
-        "**/.pytest_cache": true
+        "**/.pytest_cache": true,
+        "**/.pytest_tmp": true
     },
     "files.watcherExclude": {
         "**/.git/objects/**": true,
@@ -42,6 +43,7 @@
         "**/.turbo/**": true,
         "**/__pycache__/**": true,
         "**/.pytest_cache/**": true,
+        "**/.pytest_tmp/**": true,
         "**/.ruff_cache/**": true,
         "**/dist/**": true,
         "**/dist-workers/**": true,
@@ -57,6 +59,7 @@
         ".venv",
         ".next",
         ".pytest_cache",
+        ".pytest_tmp",
         ".ruff_cache",
         "target"
     ],
@@ -78,6 +81,7 @@
     "files.exclude": {
         "**/__pycache__": true,
         "**/.pytest_cache": true,
+        "**/.pytest_tmp": true,
         "**/.ruff_cache": true,
         "**/reports/coverage": true,
         "**/coverage/lcov-report": true,
@@ -508,18 +512,43 @@
     "ollamaDirectCustomAgent.assistantAutoLaunch": true,
     "claudeCode.disableLoginPrompt": true,
     "java.project.exclusionFilters": [
-        "**/scripts/validation/**"
+        "**/scripts/validation/**",
+        "**/.pytest_tmp/**",
+        "**/.pytest_cache/**",
+        "**/.venv/**",
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/dist-workers/**",
+        "**/build/**",
+        "**/core/vendor/**",
+        "**/worker/Java/**"
     ],
     "java.project.resourceFilters": [
         "node_modules",
         ".git",
+        ".venv",
+        ".pytest_tmp",
+        ".pytest_cache",
+        "dist",
+        "dist-workers",
+        "build",
+        "core/vendor",
+        "worker/Java",
         "scripts/validation"
     ],
     "java.import.exclusions": [
-        "**/scripts/validation/**"
+        "**/scripts/validation/**",
+        "**/.pytest_tmp/**",
+        "**/.pytest_cache/**",
+        "**/.venv/**",
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/core/vendor/**",
+        "**/worker/Java/**"
     ],
     "java.diagnostic.filter": [
-        "**/scripts/validation/**"
+        "**/scripts/validation/**",
+        "**/.pytest_tmp/**"
     ],
     "java.errors.incompleteClasspath.severity": "ignore",
     "sqltools.connections": [

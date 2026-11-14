@@ -13,7 +13,6 @@ import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
-    ANTHROPIC_KEYS,
     COMPRESSION_CIRCUIT_BREAKER,
     OLLAMA_KEYS,
     OPENROUTER_KEYS,
@@ -160,11 +159,7 @@ def _aplicar_reordenacao_laya_s1(models_to_try: list[str], intencao_s1: dict) ->
     return models_to_try
 
 
-async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[list[str], str, str | None]:
-    agent_type = te.AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
-    models_to_try = list(te.DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(te.FAST_OPERATIONS_MODELS)
-
-    agent_clean = task.agent.replace("@", "")
+def _resolve_designated_model(agent_clean: str, task: Task, models_to_try: list[str]) -> str | None:
     # A politica de roteamento e a autoridade aqui desde 2026-08-28. Antes esta
     # linha lia `primary_model` do manifesto direto, e `AGENT_MODEL_MAP` --
     # resolvido pela politica em core/config -- nao tinha consumidor de
@@ -172,10 +167,31 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     # escolhido. `modelo_do_agente` e a fonte unica dos quatro leitores.
     raw_model = te.modelo_do_agente(agent_clean, override=(task.metadata or {}).get("model_override"))
     designated_model = str(raw_model) if raw_model else None
-    if designated_model:
-        if designated_model in models_to_try:
-            models_to_try.remove(designated_model)
-        models_to_try.insert(0, designated_model)
+    if not designated_model or "PYTEST_CURRENT_TEST" in os.environ:
+        return designated_model
+
+    designated_provider = _infer_provider_for_model(designated_model)
+    missing_openai_key = designated_provider == "openai" and not os.environ.get("OPENAI_API_KEY", "").strip()
+    if designated_provider == "anthropic" or missing_openai_key:
+        return models_to_try[0] if models_to_try else None
+    return designated_model
+
+
+def _prioritize_model(models_to_try: list[str], model: str | None) -> None:
+    if not model:
+        return
+    if model in models_to_try:
+        models_to_try.remove(model)
+    models_to_try.insert(0, model)
+
+
+async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[list[str], str, str | None]:
+    agent_type = te.AGENT_ROUTING_MAP.get(task.agent, "fast_operations")
+    models_to_try = list(te.DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(te.FAST_OPERATIONS_MODELS)
+
+    agent_clean = task.agent.replace("@", "")
+    designated_model = _resolve_designated_model(agent_clean, task, models_to_try)
+    _prioritize_model(models_to_try, designated_model)
 
     recent_failure = (time.time() - COMPRESSION_CIRCUIT_BREAKER["last_failure"]) < 900
     frequent_failures = COMPRESSION_CIRCUIT_BREAKER["consecutive_failures"] >= 3
@@ -291,7 +307,8 @@ async def _dispatch_llm_provider(
     elif provider == "openrouter":
         keys = OPENROUTER_KEYS
     elif provider == "anthropic":
-        keys = ANTHROPIC_KEYS
+        logger.debug("Provedor 'anthropic' indisponivel no momento; pulando modelo %s.", model)
+        return None
     elif provider == "ollama":
         keys = OLLAMA_KEYS
     elif provider == "local":

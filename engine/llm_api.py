@@ -1265,7 +1265,7 @@ def _build_models_to_try(
 
     if openrouter_keys:
         extras = (
-            ["anthropic/claude-opus-5.5", "anthropic/claude-sonnet-5.5", MODEL_WORKING_FREE_FALLBACK]
+            [MODEL_WORKING_FREE_FALLBACK]
             if agent_type == "deep_thinking"
             else [
                 MODEL_OPENROUTER_GEMINI_35_FLASH_LITE,

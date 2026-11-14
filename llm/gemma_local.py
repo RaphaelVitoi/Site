@@ -9,6 +9,15 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 
+_GEMMA_STREAM_ERROR_PREFIXES = (
+    "[MOTOR LOCAL INDISPONIVEL]",
+    "[ENTROPIA OLLAMA]",
+    "[ERRO LOCAL - STREAM ABORTADO]",
+    "[ENTROPIA CRITICA]",
+    "[ERRO CLOUD",
+)
+
+
 async def call_gemma_local(
     session: aiohttp.ClientSession,
     model: str,
@@ -22,6 +31,7 @@ async def call_gemma_local(
     """
     Consome o motor de inferencia local @gemma4 (Gemma 2/4 FastAPI Server).
     """
+    from llm.budget import ALL_ENV_VARS  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
     from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
     from llm.system2_local import model_fits_device  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
@@ -45,7 +55,12 @@ async def call_gemma_local(
         if opt_field in kwargs:
             payload[opt_field] = kwargs[opt_field]
 
-    auth_token = os.environ.get("API_SECRET_TOKEN") or os.environ.get("VITOI_AUTH_TOKEN")
+    auth_token = (
+        os.environ.get("API_SECRET_TOKEN")
+        or os.environ.get("VITOI_AUTH_TOKEN")
+        or ALL_ENV_VARS.get("API_SECRET_TOKEN")
+        or ALL_ENV_VARS.get("VITOI_AUTH_TOKEN")
+    )
     if not auth_token:
         raise RuntimeError("Nenhum token (API_SECRET_TOKEN ou VITOI_AUTH_TOKEN) configurado no ambiente.")
     headers = {"X-Vitoi-Auth": auth_token, "Content-Type": "application/json"}
@@ -59,6 +74,9 @@ async def call_gemma_local(
             # O servidor gemma_server.py retorna stream raw ou texto plano.
             # Como o orchestrator espera a resposta completa:
             text = await response.text()
+            stripped = text.strip()
+            if not stripped or stripped.startswith(_GEMMA_STREAM_ERROR_PREFIXES):
+                raise RuntimeError(f"Gemma Local Stream Error: {stripped[:300]}")
 
             # Metadados de uso ficticios (Local nao consome tokens de API paga)
             usage = {

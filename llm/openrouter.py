@@ -46,22 +46,19 @@ async def call_openrouter(
     timeout_val = client_timeout.total if client_timeout and client_timeout.total else 60.0
 
     async def _make_request():
-        response = None
-        try:
-            async with session.post(url, json=data, headers=headers, **request_kwargs) as response:
-                if response.status == 429:
-                    retry_delay_s = 0.0
-                    with contextlib.suppress(ValueError, TypeError):
-                        retry_delay_s = float(response.headers.get("Retry-After", "0"))
-                    raise RuntimeError(f"HTTP 429: RATE_LIMITED retry_after={retry_delay_s:.0f}s")
-                response.raise_for_status()
-                result = await response.json()
-                text = result["choices"][0]["message"]["content"]
-                usage = result.get("usage", {})
-                return text, usage
-        except aiohttp.ClientResponseError as e:
-            error_body = await response.text() if response else ""
-            raise RuntimeError(f"HTTP {e.status}: {e.message} - {error_body}") from e
+        async with session.post(url, json=data, headers=headers, **request_kwargs) as response:
+            if response.status == 429:
+                retry_delay_s = 0.0
+                with contextlib.suppress(ValueError, TypeError):
+                    retry_delay_s = float(response.headers.get("Retry-After", "0"))
+                raise RuntimeError(f"HTTP 429: RATE_LIMITED retry_after={retry_delay_s:.0f}s")
+            if response.status != 200:
+                error_body = await response.text()
+                raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_body}")
+            result = await response.json()
+            text = result["choices"][0]["message"]["content"]
+            usage = result.get("usage", {})
+            return text, usage
 
     try:
         async with get_api_semaphore():

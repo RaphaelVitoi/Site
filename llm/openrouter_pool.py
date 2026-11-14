@@ -73,8 +73,8 @@ def _read_windows_registry_openrouter(env_map: dict[str, str]) -> None:
         import winreg  # noqa: PLC0415
 
         for hkey, subkey in (
-            (winreg.HKEY_CURRENT_USER, r"Environment"),
             (winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"),
+            (winreg.HKEY_CURRENT_USER, r"Environment"),
         ):
             try:
                 with winreg.OpenKey(hkey, subkey) as k:
@@ -93,6 +93,17 @@ def _read_windows_registry_openrouter(env_map: dict[str, str]) -> None:
         pass
 
 
+_NAMED_OPENROUTER_KEY_VARS = (
+    "OPENROUTER_ANTIGRAVITY_KEY",
+    "OPENROUTER_DEVIN_KEY",
+    "OPENROUTER_HERMES_KEY",
+    "OPENROUTER_GEMINI_IMAGE_KEY",
+    "OPENROUTER_GEMINI_TRANSLATE_KEY",
+    "OPENROUTER_GEMINI_TTS_KEY",
+    "OPENROUTER_GEMINI_VIDEO_KEY",
+)
+
+
 def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
     new_pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
     for var_name, var_value in env_map.items():
@@ -107,6 +118,13 @@ def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
     legacy_key = env_map.get("OPENROUTER_API_KEY", "").strip()
     if legacy_key and len(legacy_key) >= 10 and not new_pools[1]:
         new_pools[1].append(legacy_key)
+
+    known_keys = {k for tier_keys in new_pools.values() for k in tier_keys}
+    for var_name in _NAMED_OPENROUTER_KEY_VARS:
+        val = env_map.get(var_name, "").strip()
+        if val and len(val) >= 10 and val not in known_keys:
+            new_pools[4].append(val)
+            known_keys.add(val)
     return new_pools
 
 

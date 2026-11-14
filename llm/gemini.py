@@ -146,45 +146,41 @@ async def _execute_primary_request(
     request_kwargs: dict,
 ) -> tuple[str, dict]:
     """Canal principal de IO assincrono."""
-    response = None
-    try:
-        async with session.post(url, json=data, headers=headers, **request_kwargs) as response:
-            if response.status == 429:
-                retry_delay_s = 0.0
-                try:
-                    body = await response.json(content_type=None)
-                    for detail in body.get("error", {}).get("details", []):
-                        if "retryDelay" in detail:
-                            retry_delay_s = float(str(detail["retryDelay"]).rstrip("s"))
-                except Exception:  # noqa: BLE001, S110
-                    pass
-                raise RuntimeError(f"HTTP 429: RESOURCE_EXHAUSTED retry_after={retry_delay_s:.0f}s")
-            response.raise_for_status()
-            result = await response.json()
-            parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-            text = _extract_text_from_parts(parts)
-            usage = result.get("usageMetadata", {})
-            return text, usage
-    except aiohttp.ClientResponseError as e:
-        error_body = await response.text() if response else ""
-        raise RuntimeError(f"HTTP {e.status}: {e.message} - {error_body}") from e
+    async with session.post(url, json=data, headers=headers, **request_kwargs) as response:
+        if response.status == 429:
+            retry_delay_s = 0.0
+            try:
+                body = await response.json(content_type=None)
+                for detail in body.get("error", {}).get("details", []):
+                    if "retryDelay" in detail:
+                        retry_delay_s = float(str(detail["retryDelay"]).rstrip("s"))
+            except Exception:  # noqa: BLE001, S110
+                pass
+            raise RuntimeError(f"HTTP 429: RESOURCE_EXHAUSTED retry_after={retry_delay_s:.0f}s")
+        if response.status != 200:
+            error_body = await response.text()
+            raise RuntimeError(f"HTTP {response.status}: {response.reason} - {error_body}")
+        result = await response.json()
+        parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        text = _extract_text_from_parts(parts)
+        usage = result.get("usageMetadata", {})
+        return text, usage
 
 
 def _parse_gemini_error_info(err_str: str) -> tuple[int, float]:
     """Extrai status_code HTTP e retry_after de mensagem de erro da API Gemini."""
+    import re  # noqa: PLC0415
+
     status_code = 500
     retry_after = 0.0
-    if "HTTP 429" in err_str:
-        status_code = 429
-        if "retry_after=" in err_str:
-            try:
-                retry_after = float(err_str.split("retry_after=")[1].split("s")[0])
-            except (IndexError, ValueError):
-                retry_after = 45.0
-    elif "HTTP 401" in err_str:
-        status_code = 401
-    elif "HTTP 403" in err_str:
-        status_code = 403
+    match = re.search(r"\bHTTP\s+(\d{3})\b", err_str)
+    if match:
+        status_code = int(match.group(1))
+    if status_code == 429 and "retry_after=" in err_str:
+        try:
+            retry_after = float(err_str.split("retry_after=")[1].split("s")[0])
+        except (IndexError, ValueError):
+            retry_after = 45.0
     return status_code, retry_after
 
 
@@ -240,8 +236,18 @@ async def call_gemini(
             gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(err))
             raise
         except (aiohttp.ClientError, TimeoutError, ConnectionResetError) as net_err:
-            gemini_pool_manager.mark_failure(active_key, 503, 10.0, str(net_err))
-            return await _execute_native_fallback(url, data, client_timeout, active_key)
+            try:
+                res_text, res_usage = await _execute_native_fallback(url, data, client_timeout, active_key)
+                lat_ms = (time.perf_counter() - start_t) * 1000.0
+                gemini_pool_manager.mark_success(active_key, lat_ms)
+                return res_text, res_usage
+            except RuntimeError as fb_err:
+                status_code, retry_after = _parse_gemini_error_info(str(fb_err))
+                gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(fb_err))
+                raise
+            except Exception:
+                gemini_pool_manager.mark_failure(active_key, 503, 10.0, str(net_err))
+                raise
 
 
 async def call_gemini_flash_lite(

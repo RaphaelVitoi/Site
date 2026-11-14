@@ -35,6 +35,39 @@ from engine.pmev_hh_canon import (  # noqa: E402
 DESTINO_PADRAO = RAIZ / "data" / "pmev_benchmark_icm_chipev.v1.json"
 
 
+def _contar_funil_estruturas(
+    textos: list[str],
+    estruturas: dict[str, Any],
+) -> tuple[int, dict[str, dict[str, Any]]]:
+    """Conta maos unicas lidas, correspondencias por estrutura e fields completos."""
+    maos_vistas: set[int] = set()
+    por_estrutura: dict[str, dict[str, Any]] = {
+        sid: {"maos_da_familia": 0, "estados_field_completo": 0} for sid in estruturas
+    }
+    for texto in textos:
+        for mao in parse_pokerstars_hands(texto):
+            if mao.hand_id in maos_vistas:
+                continue
+            maos_vistas.add(mao.hand_id)
+            estrutura = match_structure(mao, estruturas.values())
+            if estrutura is not None:
+                por_estrutura[estrutura.id]["maos_da_familia"] += 1
+                por_estrutura[estrutura.id]["estados_field_completo"] += int(is_complete_field(mao, estrutura))
+    return len(maos_vistas), por_estrutura
+
+
+def _coletar_observacoes_estrutura(textos: list[str], estrutura: Any) -> list[HeroObservation]:
+    """Coleta observacoes unicas do heroi para uma estrutura."""
+    vistos: set[int] = set()
+    lista: list[HeroObservation] = []
+    for texto in textos:
+        for obs in hero_observations(texto, estrutura):
+            if obs.hand_id not in vistos:
+                vistos.add(obs.hand_id)
+                lista.append(obs)
+    return lista
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Gera o artefato publico do benchmark ICM x ChipEV.")
     parser.add_argument("--maos", action="append", required=True, type=Path, help="diretorio com .txt de hand history")
@@ -50,29 +83,11 @@ def main() -> int:
         return 1
 
     # Funil medido aqui, onde as maos existem: lidas -> da familia -> field completo -> com resultado.
-    maos_vistas: set[int] = set()
-    por_estrutura: dict[str, dict[str, Any]] = {
-        sid: {"maos_da_familia": 0, "estados_field_completo": 0} for sid in estruturas
-    }
-    for texto in textos:
-        for mao in parse_pokerstars_hands(texto):
-            if mao.hand_id in maos_vistas:
-                continue
-            maos_vistas.add(mao.hand_id)
-            estrutura = match_structure(mao, estruturas.values())
-            if estrutura is not None:
-                por_estrutura[estrutura.id]["maos_da_familia"] += 1
-                por_estrutura[estrutura.id]["estados_field_completo"] += int(is_complete_field(mao, estrutura))
+    maos_lidas, por_estrutura = _contar_funil_estruturas(textos, estruturas)
 
     observacoes: dict[str, list[HeroObservation]] = {}
     for sid, estrutura in estruturas.items():
-        vistos: set[int] = set()
-        lista: list[HeroObservation] = []
-        for texto in textos:
-            for o in hero_observations(texto, estrutura):
-                if o.hand_id not in vistos:
-                    vistos.add(o.hand_id)
-                    lista.append(o)
+        lista = _coletar_observacoes_estrutura(textos, estrutura)
         observacoes[sid] = lista
         por_estrutura[sid]["estados_com_resultado"] = len(lista)
 
@@ -81,7 +96,7 @@ def main() -> int:
         estruturas,
         generated_at=args.gerado_em,
         n_boot=args.bootstrap,
-        funnel={"maos_ps_lidas": len(maos_vistas), "por_estrutura": por_estrutura},
+        funnel={"maos_ps_lidas": maos_lidas, "por_estrutura": por_estrutura},
     )
     args.saida.parent.mkdir(parents=True, exist_ok=True)
     args.saida.write_text(json.dumps(dataset, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
