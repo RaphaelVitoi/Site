@@ -237,12 +237,25 @@ try {
       { type: "mouseReleased", x: pontoInerte.x, y: pontoInerte.y, button: "left", clickCount: 1 },
       sessionId,
     );
-    const prazo = Date.now() + 1_500;
-    while (Date.now() < prazo) {
-      const observado = await runtimeValue(client, sessionId, `window.__sotaRuntimeQuality?.inp ?? null`);
-      if (observado !== null) break;
-      await new Promise((resolve) => setTimeout(resolve, 60));
-    }
+    await runtimeValue(
+      client,
+      sessionId,
+      `new Promise((resolve) => {
+        const current = window.__sotaRuntimeQuality?.inp ?? null;
+        if (current !== null) {
+          resolve(current);
+          return;
+        }
+        const deadline = Date.now() + 1500;
+        const timer = setInterval(() => {
+          const observed = window.__sotaRuntimeQuality?.inp ?? null;
+          if (observed !== null || Date.now() >= deadline) {
+            clearInterval(timer);
+            resolve(observed);
+          }
+        }, 60);
+      })`,
+    );
   }
 
   trace("collect-performance");
