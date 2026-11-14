@@ -109,10 +109,18 @@ class NativeCdp {
 
 const observerSource = `(() => {
   const measurements = { cls: 0, inp: null, lcp: null, longTask: null };
-  const observe = (type, callback) => { try { new PerformanceObserver((entries) => callback(entries.getEntries())).observe({ type, buffered: true }); } catch {} };
+  const observe = (type, callback, extra = {}) => {
+    try { new PerformanceObserver((entries) => callback(entries.getEntries())).observe({ type, buffered: true, ...extra }); } catch {}
+  };
+  const recordEventDuration = (entries) => {
+    for (const entry of entries) {
+      measurements.inp = measurements.inp === null ? entry.duration : Math.max(measurements.inp, entry.duration);
+    }
+  };
   observe('largest-contentful-paint', (entries) => { const last = entries.at(-1); if (last) measurements.lcp = last.startTime; });
   observe('layout-shift', (entries) => { for (const entry of entries) if (!entry.hadRecentInput) measurements.cls += entry.value; });
-  observe('event', (entries) => { for (const entry of entries) { measurements.inp = measurements.inp === null ? entry.duration : Math.max(measurements.inp, entry.duration); } });
+  observe('event', recordEventDuration, { durationThreshold: 0 });
+  observe('first-input', recordEventDuration);
   observe('longtask', (entries) => { for (const entry of entries) measurements.longTask = (measurements.longTask ?? 0) + Math.max(0, entry.duration - 50); });
   window.__sotaRuntimeQuality = measurements;
 })();`;
@@ -201,6 +209,40 @@ try {
       `O documento medido esta em ${obtido.origin}, e o alvo declarado e ` +
         `${target.origin}. Portao que nao confirma o que auditou nao mede nada.`
     );
+  }
+
+  trace("observe-event-timing");
+  const pontoInerte = await runtimeValue(client, sessionId, `(() => {
+    const seletorInterativo = 'a, button, input, select, textarea, summary, [role="button"], [tabindex]';
+    const candidatos = [[1, 1], [12, 12], [24, 120], [Math.floor(window.innerWidth * 0.5), 16]];
+    for (const [x, y] of candidatos) {
+      const el = document.elementFromPoint(x, y);
+      if (el && !el.closest(seletorInterativo)) return { x, y };
+    }
+    return null;
+  })()`);
+  if (pontoInerte) {
+    await client.send(
+      "Input.dispatchMouseEvent",
+      { type: "mouseMoved", x: pontoInerte.x, y: pontoInerte.y },
+      sessionId,
+    );
+    await client.send(
+      "Input.dispatchMouseEvent",
+      { type: "mousePressed", x: pontoInerte.x, y: pontoInerte.y, button: "left", clickCount: 1 },
+      sessionId,
+    );
+    await client.send(
+      "Input.dispatchMouseEvent",
+      { type: "mouseReleased", x: pontoInerte.x, y: pontoInerte.y, button: "left", clickCount: 1 },
+      sessionId,
+    );
+    const prazo = Date.now() + 1_500;
+    while (Date.now() < prazo) {
+      const observado = await runtimeValue(client, sessionId, `window.__sotaRuntimeQuality?.inp ?? null`);
+      if (observado !== null) break;
+      await new Promise((resolve) => setTimeout(resolve, 60));
+    }
   }
 
   trace("collect-performance");
