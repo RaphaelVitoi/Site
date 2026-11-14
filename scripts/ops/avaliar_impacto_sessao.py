@@ -15,7 +15,7 @@ Padrao SOTA: Pure ASCII, PEP 585/604, Python 3.12+, Zero-Any.
 from __future__ import annotations
 
 import argparse
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 import json
 from pathlib import Path
 import re
@@ -617,8 +617,9 @@ def medir_atividade_git_sessao(horas: float = 12.0, max_commits: int = 25) -> di
     """Mede entregas git na janela recente e estado do working tree."""
     janela = max(0.5, horas)
     limite = max(1, max_commits)
+    cutoff_iso = (datetime.now(UTC) - timedelta(hours=janela)).isoformat()
     fmt = "__COMMIT__%H|%aN|%aE|%cI|%s"
-    saida = _git_cmd("log", f"--since={janela} hours ago", "-n", str(limite), "--numstat", f"--format={fmt}")
+    saida = _git_cmd("log", f"--since={cutoff_iso}", "-n", str(limite), "--numstat", f"--format={fmt}")
     agregado = _parse_git_log_numstat(saida)
     branch = _git_cmd("branch", "--show-current").strip() or "HEAD"
     head_sha = _git_cmd("rev-parse", "--short", "HEAD").strip() or "unknown"
@@ -686,6 +687,16 @@ def _extrair_metricas_cwv(texto: str) -> dict[str, object]:
     return dados
 
 
+def _arvore_atual_site() -> str:
+    """Retorna o SHA da arvore atual alinhado ao contrato do `suite_verde.py`."""
+    try:
+        from scripts.ops.suite_verde import arvore_de_conteudo  # noqa: PLC0415
+
+        return arvore_de_conteudo().strip()
+    except Exception:
+        return _git_cmd("rev-parse", "HEAD^{tree}").strip()
+
+
 def _ler_marcador_suite_verde() -> dict[str, object]:
     """Le o marcador local da suite verde em `.git/sota-suite-verde`."""
     marcador = SITE_ROOT / ".git" / "sota-suite-verde"
@@ -693,12 +704,20 @@ def _ler_marcador_suite_verde() -> dict[str, object]:
         return {"disponivel": False, "atualizado_no_head": False, "em": "N/A"}
     try:
         dados = json.loads(marcador.read_text(encoding="utf-8"))
+        arvore_medida = str(dados.get("arvore", "")).strip()
+        head_med = str(dados.get("head_na_medicao", "")).strip()
+        arvore_atual = _arvore_atual_site()
         head_full = _git_cmd("rev-parse", "HEAD").strip()
-        head_med = str(dados.get("head_na_medicao", ""))
+        atualizado = (
+            bool(arvore_atual and arvore_medida == arvore_atual)
+            if arvore_medida
+            else bool(head_full and head_med == head_full)
+        )
         return {
             "disponivel": True,
-            "atualizado_no_head": bool(head_full and head_med == head_full),
+            "atualizado_no_head": atualizado,
             "em": str(dados.get("em", "N/A")),
+            "arvore": arvore_medida[:8] if arvore_medida else "N/A",
             "head_na_medicao": head_med[:8] if head_med else "N/A",
         }
     except (OSError, json.JSONDecodeError):
