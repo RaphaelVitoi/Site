@@ -33,7 +33,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-argon",
       "tier": "1",
-      "nota": "Nova geração frontier da Google (Outubro/2026). Integrante pleno do Tier 1 / Coletivo CHICO. Compartilha da mesma situação do GPT-6 Astra: modelos mais potentes e custosos, acionados pontualmente."
+      "nota": "Nova geração frontier da Google (Outubro/2026). Integrante pleno do Tier 1 / Coletivo CHICO. Especialização (Tier 0, 2026-11-14): Código e Reasoning de Elite. Compartilha da mesma situação do GPT-6 Astra e Gemini 4 Carbon: modelos mais potentes e custosos, acionados pontualmente."
     },
     {
       "nome": "Gemini 4 Carbon",
@@ -41,7 +41,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-carbon",
       "tier": "1",
-      "nota": "Integrante do trio de apice Tier 1 (ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+), mesma doutrina de uso pontual. Adicionado pelo Tier 0 em 2026-11-10."
+      "nota": "Integrante do trio de apice Tier 1 (ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+), mesma doutrina de uso pontual. Especialização (Tier 0, 2026-11-14): Projetos DENSOS e ULTRA COMPLEXOS. Adicionado pelo Tier 0 em 2026-11-10."
     },
     {
       "nome": "Gemini 4 Hydrogen",
@@ -49,7 +49,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-hydrogen",
       "tier": "1",
-      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity, especializado em orquestração agêntica de longa duração, baixa latência e bom custo. Adicionado pelo Tier 0 em 2026-11-14."
+      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity. Especialização (Tier 0, 2026-11-14): tarefas do dia a dia de complexidade média/alta e orquestração agêntica de longa duração, com baixa latência e bom custo. Adicionado pelo Tier 0 em 2026-11-14."
     },
     {
       "nome": "Gemini 3.8 Flash",
@@ -57,7 +57,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-3.8-flash",
       "tier": "1",
-      "nota": "Determinado pelo Tier 0 em 2026-09-12: o Antigravity CLI conduz o Gemini 3.8 Flash, e e esta a identidade que ele passa no commit. Forma composta equivalente em prosa: antigravity@gemini-3.8-flash. Permanece ativo por decisao do Tier 0 (2026-11-10): a descontinuacao vale para a familia flash nao-lite ATE 3.7; o 3.8 Flash continua Tier 1."
+      "nota": "Determinado pelo Tier 0 em 2026-09-12: o Antigravity CLI conduz o Gemini 3.8 Flash, e e esta a identidade que ele passa no commit. Forma composta equivalente em prosa: antigravity@gemini-3.8-flash. Permanece ativo por decisao do Tier 0 (2026-11-10): a descontinuacao vale para a familia flash nao-lite ATE 3.7; o 3.8 Flash continua Tier 1. Especialização (Tier 0, 2026-11-14): tarefas do dia a dia de média e baixa complexidade, orquestração agêntica de média e baixa duração e curadoria."
     },
     {
       "nome": "Gemini 3.5 Flash-Lite",
@@ -65,7 +65,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-3.5-flash-lite",
       "tier": "1",
-      "nota": "Permanece ativo por decisao do Tier 0 (2026-11-10): o que sai e o Gemini 3.5 Flash NAO-lite; o Flash-Lite e modelo importante e continua na rota de fast operations."
+      "nota": "Permanece ativo por decisao do Tier 0 (2026-11-10): o que sai e o Gemini 3.5 Flash NAO-lite; o Flash-Lite e modelo importante e continua na rota de fast operations. Especialização (Tier 0, 2026-11-14): modelo ultrarrápido, baixa latência e econômico para triagem, linting, limpeza, edições pontuais, autocomplete e funções rápidas e repetitivas do cotidiano executadas com excelência."
     },
     {
       "nome": "Claude Opus 5.5",
