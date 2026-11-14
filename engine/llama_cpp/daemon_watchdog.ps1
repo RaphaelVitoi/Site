@@ -5,9 +5,9 @@
 # ==============================================================================
 
 param (
-    [string]$ModelPath = "models/qwen2.5-coder-7b-instruct-q5_k_m.gguf",
+    [string]$ModelPath = "",
     [string]$HostAddress = "127.0.0.1",
-    [int]$Port = 8080,
+    [int]$Port = 9931,
     [int]$HealthIntervalSec = 2,
     [int]$MaxConsecutiveFailures = 3,
     [int]$ProbeTimeoutMs = 1500,
@@ -38,7 +38,8 @@ function Start-LlamaDaemon {
     # Executa o daemon em job assíncrono mantendo canal de processo
     $pinfo = New-Object System.Diagnostics.ProcessStartInfo
     $pinfo.FileName = "powershell.exe"
-    $pinfo.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$Path`" -ModelPath `"$Model`" -Port $TargetPort -Host $HostAddress"
+    $routerFlag = if ([string]::IsNullOrWhiteSpace($Model)) { "-RouterMode:`$true" } else { "-ModelPath `"$Model`" -RouterMode:`$false" }
+    $pinfo.Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$Path`" $routerFlag -Port $TargetPort -ListenHost $HostAddress"
     $pinfo.UseShellExecute = $false
     $pinfo.CreateNoWindow = $false
 

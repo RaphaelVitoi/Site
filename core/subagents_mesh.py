@@ -136,6 +136,17 @@ MODEL_QWEN_CODE_SURGICAL = "qwen-code-surgical:latest"
 MODEL_QWEN_7B_INSTRUCT = "qwen2.5-coder:7b-instruct-q5_K_M"
 MODEL_GEMMA4_E4B = "gemma4:e4b"
 
+LLAMA_CPP_FALLBACK_MAP: dict[str, str] = {
+    MODEL_QWEN_CODE_SURGICAL: "qwen2.5-coder-1.5b-q8_0",
+    MODEL_QWEN_7B_INSTRUCT: "qwen2.5-coder-1.5b-q8_0",
+    "qwen2.5-coder:7b": "qwen2.5-coder-1.5b-q8_0",
+    "qwen2.5-coder:1.5b": "qwen2.5-coder-1.5b-q8_0",
+    "qwen2.5-coder:0.5b": "Ling-3.0-tiny-Q4_K_M",
+    "qwen-pmev-math:latest": "Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL",
+    "qwen-poetics:latest": "gemma-4-12b-it-Q5_K_S",
+    MODEL_GEMMA4_E4B: "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P",
+}
+
 SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.APPSEC: MODEL_QWEN_CODE_SURGICAL,
     SubagentTier.MATH: "qwen-pmev-math:latest",
@@ -240,6 +251,60 @@ class SubagentMeshController:
         return SubagentTier.SELF
 
     @staticmethod
+    async def _call_llama_cpp_inference(
+        assigned_model: str,
+        system_instruction: str,
+        prompt: str,
+        timeout_seconds: int,
+    ) -> tuple[str | None, dict[str, Any]]:
+        """Fallback local via router llama.cpp 1.0 (:9931 / OpenAI-compatible)."""
+        llama_base = os.environ.get("CHICO_LLAMA_API_BASE", "http://127.0.0.1:9931").rstrip("/")
+        router_model = LLAMA_CPP_FALLBACK_MAP.get(assigned_model, "ai9stars_G9v3-3B-Q4_K_M")
+        payload = {
+            "model": router_model,
+            "messages": [
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": prompt},
+            ],
+            "stream": False,
+            "temperature": 0.2,
+            "max_tokens": 1024,
+        }
+        default_timeout = 2.0 if "pytest" in sys.modules else 45.0
+        sock_timeout = 1.0 if "pytest" in sys.modules else 2.0
+        req_timeout = float(
+            os.environ.get("LLAMA_CPP_TIMEOUT_SECONDS", str(min(float(timeout_seconds), default_timeout)))
+        )
+        timeout = aiohttp.ClientTimeout(total=req_timeout, sock_connect=sock_timeout)
+        try:
+            async with (
+                aiohttp.ClientSession(timeout=timeout) as session,
+                session.post(f"{llama_base}/v1/chat/completions", json=payload) as resp,
+            ):
+                if resp.status == 200:
+                    data = await resp.json()
+                    choices = data.get("choices") or []
+                    raw_content = str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
+                    thought_channel, final_answer = (
+                        parse_gemma4_channel_output(raw_content) if raw_content else (None, "")
+                    )
+                    usage = data.get("usage") or {}
+                    meta: dict[str, Any] = {
+                        "inference_mode": "real_llama_cpp",
+                        "llama_cpp_model": router_model,
+                        "prompt_eval_count": usage.get("prompt_tokens", 0),
+                        "eval_count": usage.get("completion_tokens", 0),
+                    }
+                    if thought_channel:
+                        meta["thought_channel"] = thought_channel
+                    return (final_answer or None), meta
+        except Exception as e_llama:
+            logger.debug(
+                "[SUBAGENTS MESH] Fallback llama.cpp (:9931) indisponivel para '%s': %s", router_model, e_llama
+            )
+        return None, {}
+
+    @staticmethod
     async def _call_ollama_inference(
         assigned_model: str,
         tier_value: str,
@@ -300,11 +365,16 @@ class SubagentMeshController:
                 else:
                     err_body = await resp.text()
                     logger.warning(
-                        "[SUBAGENTS MESH] Ollama HTTP %d para modelo '%s': %s. Ativando fallback gracioso.",
+                        "[SUBAGENTS MESH] Ollama HTTP %d para modelo '%s': %s. Tentando fallback llama.cpp (:9931).",
                         resp.status,
                         assigned_model,
                         err_body[:200],
                     )
+                    llama_content, llama_meta = await SubagentMeshController._call_llama_cpp_inference(
+                        assigned_model, system_instruction, prompt, timeout_seconds
+                    )
+                    if llama_content:
+                        return llama_content, llama_meta
                     metadata.update(
                         {
                             "inference_mode": "fallback_deterministic",
@@ -314,10 +384,15 @@ class SubagentMeshController:
         except Exception as e_ollama:
             err_detail = str(e_ollama).strip() or type(e_ollama).__name__
             logger.warning(
-                "[SUBAGENTS MESH] Inferencia real via Ollama (127.0.0.1:11434) para modelo '%s' falhou (%s). Ativando fallback gracioso.",
+                "[SUBAGENTS MESH] Inferencia real via Ollama (127.0.0.1:11434) para modelo '%s' falhou (%s). Tentando fallback llama.cpp (:9931).",
                 assigned_model,
                 err_detail,
             )
+            llama_content, llama_meta = await SubagentMeshController._call_llama_cpp_inference(
+                assigned_model, system_instruction, prompt, timeout_seconds
+            )
+            if llama_content:
+                return llama_content, llama_meta
             metadata.update(
                 {
                     "inference_mode": "fallback_deterministic",

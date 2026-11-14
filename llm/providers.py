@@ -401,7 +401,7 @@ def _get_provider_strategy(provider: str) -> LLMProviderStrategy | None:
 
 
 def _check_local_llama_availability(model: str) -> bool:
-    """Check local S2 availability: Gemma Edge Proxy (:17043) first, then Splash/llama (:8081..8083)."""
+    """Check local S2 availability: Gemma Edge Proxy (:17043) first, then llama.cpp (:9931) / legacy (:8081..8083)."""
     try:
         from llm.system2_local import edge_proxy_online  # noqa: PLC0415
 
@@ -412,14 +412,17 @@ def _check_local_llama_availability(model: str) -> bool:
     try:
         from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
 
-        if "qwen" in model.lower() or "coder" in model.lower():
+        model_l = model.lower()
+        if "qwen" in model_l or "coder" in model_l:
             port = 8083
-        elif "ling" in model.lower():
+        elif "ling" in model_l:
             port = 8082
-        else:
+        elif "g9" in model_l:
             port = 8081
+        else:
+            port = 9931
 
-        client = LocalLlamaClient(port=port, timeout=2.0)
+        client = LocalLlamaClient(port=port, timeout=1.0)
         return client.is_healthy()
     except Exception:
         return False

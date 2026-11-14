@@ -48,8 +48,17 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OLLAMA_MANIFEST = PROJECT_ROOT / "data" / "ollama_models.json"
 DEFAULT_OLLAMA_BASE = "http://127.0.0.1:11434"
-DEFAULT_LLAMA_BASE = "http://127.0.0.1:8080"  # llama-swap proxy (gerencia spawn/unload do llama-server)
+DEFAULT_LLAMA_BASE = "http://127.0.0.1:9931"  # llama.cpp 1.0 (b12375) Router Nativo (llama-swap legado em :8080)
 DEFAULT_GEMMA_PROXY_BASE = "http://127.0.0.1:17043"
+
+_LLAMA_ROUTER_ALIASES: dict[str, str] = {
+    "qwen3.6-35b-a3b-mtp": "Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL",
+    "qwen3.6-35b-a3b-eagle3": "Qwen3.6-35B-A3B-Eagle3Draft-Q5_K_M",
+    "gemma4:e4b": "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P",
+    "gemma4:12b": "gemma-4-12b-it-Q5_K_S",
+    "qwen2.5-coder:1.5b": "qwen2.5-coder-1.5b-q8_0",
+}
+_LLAMA_MODEL_CACHE: dict[str, list[str]] = {}
 OLLAMA_TIMEOUT_S = float(os.environ.get("CHICO_S2_TIMEOUT_S", "120"))
 _CONTENT_TYPE_JSON = "application/json"
 
@@ -343,20 +352,42 @@ def edge_proxy_online(timeout_s: float = 2.0) -> bool:
 
 
 def _llama_base() -> str:
-    return (os.environ.get("CHICO_LLAMA_API_BASE") or DEFAULT_LLAMA_BASE).rstrip("/")
+    env_url = (os.environ.get("CHICO_LLAMA_API_BASE") or os.environ.get("LLAMA_SERVER_URL") or "").strip()
+    if env_url:
+        return env_url.rstrip("/")
+    return DEFAULT_LLAMA_BASE
+
+
+def _resolve_llama_router_model(base: str, requested_model: str) -> str:
+    """Resolve alias System-2 para o ID concreto exposto pelo router llama.cpp (:9931)."""
+    cleaned = (requested_model or "").strip()
+    if not cleaned:
+        return cleaned
+    cached = _LLAMA_MODEL_CACHE.get(base)
+    if cached:
+        if cleaned in cached:
+            return cleaned
+        norm_req = cleaned.lower().replace("-", "").replace("_", "").replace(":", "")
+        for candidate in cached:
+            if candidate.lower() == cleaned.lower():
+                return candidate
+        alias_target = _LLAMA_ROUTER_ALIASES.get(cleaned)
+        if alias_target and alias_target in cached:
+            return alias_target
+        for candidate in cached:
+            norm_cand = candidate.lower().replace("-", "").replace("_", "")
+            if norm_req and norm_req in norm_cand:
+                return candidate
+    if ":9931" in base or base == DEFAULT_LLAMA_BASE:
+        return _LLAMA_ROUTER_ALIASES.get(cleaned, cleaned)
+    return cleaned
 
 
 def llama_server_online(timeout_s: float = 3.0) -> bool:
-    """Health-check do llama-swap/llama-server com verificacao de identidade.
-
-    ``/health`` sozinho aceita qualquer HTTP 200 — um backend estranho na
-    porta 8080 seria classificado como llama.cpp e receberia trafego MoE.
-    A identidade e confirmada em ``/v1/models``: e preciso haver um modelo
-    ``qwen*`` na lista (alias canonico do llama-swap: qwen-moe /
-    system2-moe / qwen3.6-35b-a3b-mtp).
-    """
+    """Health-check do router llama.cpp (:9931) ou llama-swap legado (:8080)."""
+    base = _llama_base()
     try:
-        req = urllib.request.Request(f"{_llama_base()}/v1/models")  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
+        req = urllib.request.Request(f"{base}/v1/models")  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
         with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
             if resp.status != 200:
                 return False
@@ -364,7 +395,9 @@ def llama_server_online(timeout_s: float = 3.0) -> bool:
     except (OSError, json.JSONDecodeError):
         return False
     models = body.get("data") or []
-    return any("qwen" in str(m.get("id", "")).lower() for m in models if isinstance(m, dict))
+    ids = [str(m.get("id", "")) for m in models if isinstance(m, dict) and m.get("id")]
+    _LLAMA_MODEL_CACHE[base] = ids
+    return any("qwen" in mid.lower() or "gemma" in mid.lower() for mid in ids)
 
 
 def _llama_generate(
@@ -375,12 +408,14 @@ def _llama_generate(
     timeout_s: float,
 ) -> tuple[str, dict[str, Any]]:
     """Chamada sincrona a /v1/chat/completions do llama-server."""
+    base = _llama_base()
+    wire_model = _resolve_llama_router_model(base, model)
     messages: list[dict[str, str]] = []
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
     payload: dict[str, Any] = {
-        "model": model,
+        "model": wire_model,
         "messages": messages,
         "stream": False,
         "temperature": 0.4,
@@ -389,7 +424,7 @@ def _llama_generate(
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
     req = urllib.request.Request(  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
-        f"{_llama_base()}/v1/chat/completions",
+        f"{base}/v1/chat/completions",
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": _CONTENT_TYPE_JSON},
         method="POST",
@@ -401,13 +436,15 @@ def _llama_generate(
     choices = body.get("choices") or []
     text = str((choices[0].get("message") or {}).get("content") or "") if choices else ""
     usage = body.get("usage") or {}
-    meta = {
+    meta: dict[str, Any] = {
         "engine": "llama-cpp-vulkan",
         "model": model,
         "latency_ms": round(latency_ms, 1),
         "completion_tokens": usage.get("completion_tokens"),
         "fallback_used": False,
     }
+    if wire_model != model:
+        meta["resolved_model"] = wire_model
     return text, meta
 
 

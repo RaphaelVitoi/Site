@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Gerenciador Operacional dos Modelos Locais via llama.cpp (Vulkan / CPU)
     Modelos:
@@ -48,13 +48,21 @@ $G9ModelPath = Join-Path $ModelsDir 'ai9stars_G9v3-3B-Q4_K_M.gguf'
 $LingModelPath = Join-Path $ModelsDir 'Ling-3.0-tiny-Q4_K_M.gguf'
 $QwenModelPath = Join-Path $ModelsDir 'qwen2.5-coder-1.5b-q8_0.gguf'
 
-# Localizacao do binario do llama-server
+# Localizacao do binario do llama-server (prioridade: engine b12387 Vulkan -> tools -> WinGet -> PATH)
 $LlamaServerBin = $null
-$WinGetLlama = 'C:\Users\rapha\AppData\Local\Microsoft\WinGet\Packages\ggml.llamacpp_Microsoft.Winget.Source_8wekyb3d8bbwe\llama-server.EXE'
+$CandidateBins = @(
+    'C:\Users\rapha\.gemini\Site\engine\llama_cpp\llama-server.exe',
+    'C:\Users\rapha\.gemini\tools\llama.cpp\llama-server.exe',
+    'C:\Users\rapha\AppData\Local\Microsoft\WinGet\Packages\ggml.llamacpp_Microsoft.Winget.Source_8wekyb3d8bbwe\llama-server.EXE'
+)
 
-if (Test-Path $WinGetLlama) {
-    $LlamaServerBin = $WinGetLlama
-} else {
+foreach ($Candidate in $CandidateBins) {
+    if (Test-Path $Candidate) {
+        $LlamaServerBin = $Candidate
+        break
+    }
+}
+if (-not $LlamaServerBin) {
     $Cmd = Get-Command 'llama-server' -ErrorAction SilentlyContinue
     if ($Cmd) { $LlamaServerBin = $Cmd.Source }
 }
@@ -91,6 +99,14 @@ function Stop-LlamaProcess([int]$Port) {
 
 function Show-Status {
     Write-Host "`n=== STATUS DOS MODELOS LOCAIS LLAMA.CPP ===" -ForegroundColor Cyan
+
+    # Router Unificado 1.0 (:9931)
+    $routerOnline = Test-LlamaHealth 9931
+    $routerColor = if ($routerOnline) { 'Green' } else { 'DarkGray' }
+    $routerText = if ($routerOnline) { 'ONLINE (Llama App / Router :9931)' } else { 'OFFLINE' }
+    Write-Host "0. Router Unificado 1.0 (Porta 9931): " -NoNewline
+    Write-Host $routerText -ForegroundColor $routerColor
+    Write-Host "   Binario preferencial: $LlamaServerBin`n"
     
     # G9v3
     $g9Online = Test-LlamaHealth $PortG9
@@ -155,7 +171,15 @@ if ($Model -in @('G9v3', 'Duo', 'All')) {
             "-dev", "Vulkan0",
             "-ngl", "99",
             "-c", "16384",
-            "-fa", "auto",
+            "-fa", "on",
+            "-ctk", "q8_0",
+            "-ctv", "q4_0",
+            "-t", "8",
+            "-b", "2048",
+            "-ub", "512",
+            "--cache-reuse", "256",
+            "--fit", "on",
+            "--metrics",
             "--reasoning", "off",
             "--reasoning-format", "none",
             "-np", "1"
@@ -192,7 +216,15 @@ if ($Model -in @('Ling3', 'All')) {
             "-dev", "Vulkan0",
             "-ngl", "32",
             "-c", "16384",
-            "-fa", "auto",
+            "-fa", "on",
+            "-ctk", "q8_0",
+            "-ctv", "q4_0",
+            "-t", "8",
+            "-b", "2048",
+            "-ub", "512",
+            "--cache-reuse", "256",
+            "--fit", "on",
+            "--metrics",
             "--reasoning", "off",
             "--reasoning-format", "none",
             "-np", "1"
@@ -229,7 +261,15 @@ if ($Model -in @('QwenCoder', 'Duo', 'All')) {
             "-dev", "Vulkan0",
             "-ngl", "99",
             "-c", "16384",
-            "-fa", "auto",
+            "-fa", "on",
+            "-ctk", "q8_0",
+            "-ctv", "q4_0",
+            "-t", "8",
+            "-b", "2048",
+            "-ub", "512",
+            "--cache-reuse", "256",
+            "--fit", "on",
+            "--metrics",
             "-np", "1"
         )
         $procQwen = Start-Process -FilePath $LlamaServerBin -ArgumentList $argsQwen -PassThru -WindowStyle Hidden

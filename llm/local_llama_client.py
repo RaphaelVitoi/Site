@@ -37,6 +37,14 @@ logger = logging.getLogger(__name__)
 DEFAULT_G9_PORT = 8081
 DEFAULT_LING_PORT = 8082
 DEFAULT_QWEN_PORT = 8083
+DEFAULT_ROUTER_PORT = 9931
+
+PORT_TO_ROUTER_MODEL: dict[int, str] = {
+    DEFAULT_G9_PORT: "ai9stars_G9v3-3B-Q4_K_M",
+    DEFAULT_LING_PORT: "Ling-3.0-tiny-Q4_K_M",
+    DEFAULT_QWEN_PORT: "qwen2.5-coder-1.5b-q8_0",
+    DEFAULT_ROUTER_PORT: "ai9stars_G9v3-3B-Q4_K_M",
+}
 
 
 def sanitize_think_tags(text: str) -> str:
@@ -65,6 +73,7 @@ def _build_chat_payload(
     tools: list[dict[str, Any]] | None,
     tool_choice: str | dict[str, Any] | None,
     response_format: dict[str, Any] | None,
+    model: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "messages": messages,
@@ -72,6 +81,8 @@ def _build_chat_payload(
         "max_tokens": max_tokens,
         "stream": False,
     }
+    if model:
+        payload["model"] = model
     if tools:
         payload["tools"] = tools
         if tool_choice:
@@ -82,24 +93,53 @@ def _build_chat_payload(
 
 
 class LocalLlamaClient:
-    """Cliente HTTP sincrono e ultraleve para instancias locais do llama-server."""
+    """Cliente HTTP sincrono e ultraleve para instancias locais e router (:9931) do llama-server."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = DEFAULT_G9_PORT, timeout: float = 30.0) -> None:
+    def __init__(
+        self,
+        host: str = "127.0.0.1",
+        port: int = DEFAULT_ROUTER_PORT,
+        timeout: float = 30.0,
+        model: str | None = None,
+    ) -> None:
         self.host = host
         self.port = port
         self.base_url = f"http://{host}:{port}/v1"  # NOSONAR
         self.timeout = timeout
+        self.model = model
+        self.router_model_id = model or PORT_TO_ROUTER_MODEL.get(port, PORT_TO_ROUTER_MODEL[DEFAULT_ROUTER_PORT])
+        self._effective_port: int | None = None
 
-    def is_healthy(self) -> bool:
-        """Verifica se o servidor local esta ativo e respondendo."""
+    @staticmethod
+    def get_engine_version() -> str:
+        """Retorna a versao/identificador do runtime llama.cpp integrado."""
+        return "llama.cpp-b12387-1.0-vulkan-router"
+
+    def _probe_port_health(self, target_port: int, timeout_s: float = 1.0) -> bool:
         try:
-            url = f"http://{self.host}:{self.port}/health"  # NOSONAR
+            url = f"http://{self.host}:{target_port}/health"  # NOSONAR
             req = urllib.request.Request(url, method="GET")  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
-            with urllib.request.urlopen(req, timeout=2.0) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
+            with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
                 data = json.loads(resp.read().decode("utf-8"))
-                return data.get("status") in ("ok", "loading model")
+                return data.get("status") in ("ok", "loaded", "loading model")
         except Exception:
             return False
+
+    def is_healthy(self) -> bool:
+        """Verifica se o router unificado (:9931) ou instancia dedicada esta ativa e respondendo."""
+        if self.port != DEFAULT_ROUTER_PORT and self.port in PORT_TO_ROUTER_MODEL:
+            # Sonde o router nativo (:9931) primeiro para evitar retry TCP em portas legadas fechadas no Windows.
+            if self._probe_port_health(DEFAULT_ROUTER_PORT, timeout_s=min(self.timeout, 1.0)):
+                self._effective_port = DEFAULT_ROUTER_PORT
+                return True
+            if self._probe_port_health(self.port, timeout_s=min(self.timeout, 0.5)):
+                self._effective_port = self.port
+                return True
+            return False
+        if self._probe_port_health(self.port, timeout_s=min(self.timeout, 1.5)):
+            self._effective_port = self.port
+            return True
+        return False
 
     def complete(self, prompt: str, temperature: float = 0.2, max_tokens: int = 1024) -> str:
         """Metodo de conveniencia direto para completar texto ou obter resposta semantica."""
@@ -113,6 +153,31 @@ class LocalLlamaClient:
         except (KeyError, IndexError):
             return ""
 
+    def _post_chat(self, target_port: int, payload: dict[str, Any]) -> dict[str, Any]:
+        url = f"http://{self.host}:{target_port}/v1/chat/completions"  # NOSONAR
+        req_data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
+            url,
+            data=req_data,
+            headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
+            method="POST",
+        )
+        t0 = time.time()
+        with urllib.request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
+            result = json.loads(resp.read().decode("utf-8"))
+        latency_ms = (time.time() - t0) * 1000.0
+        result["_sota_telemetry"] = {
+            "latency_ms": round(latency_ms, 2),
+            "port": target_port,
+            "requested_port": self.port,
+            "model": payload.get("model"),
+            "endpoint": url,
+            "engine": self.get_engine_version(),
+        }
+        if "choices" in result:
+            _sanitize_completion_choices(result["choices"])
+        return result
+
     def chat_completion(
         self,
         messages: list[dict[str, str]],
@@ -124,39 +189,36 @@ class LocalLlamaClient:
     ) -> dict[str, Any]:
         """
         Executa chamada de chat completion compativel com o endpoint /v1/chat/completions.
-        Garante remocao de tags <think> e injecao de telemetria de latencia.
+        Redireciona portas legadas (8081-8083) para o router nativo (:9931) quando indisponiveis.
         """
-        payload = _build_chat_payload(messages, temperature, max_tokens, tools, tool_choice, response_format)
-
-        url = f"{self.base_url}/chat/completions"
-        req_data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
-            url,
-            data=req_data,
-            headers={"Content-Type": "application/json", "Authorization": "Bearer local"},
-            method="POST",
+        target_port = self._effective_port or self.port
+        include_model = (
+            target_port == DEFAULT_ROUTER_PORT or self.model is not None or self.port in PORT_TO_ROUTER_MODEL
+        )
+        payload = _build_chat_payload(
+            messages,
+            temperature,
+            max_tokens,
+            tools,
+            tool_choice,
+            response_format,
+            model=self.router_model_id if include_model else None,
         )
 
-        t0 = time.time()
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
-                result = json.loads(resp.read().decode("utf-8"))
-                latency_ms = (time.time() - t0) * 1000.0
-                result["_sota_telemetry"] = {
-                    "latency_ms": round(latency_ms, 2),
-                    "port": self.port,
-                    "endpoint": url,
-                }
-                # Sanitizacao mandatoria contra vazamento de tags <think></think>
-                if "choices" in result:
-                    _sanitize_completion_choices(result["choices"])
-                return result
+            return self._post_chat(target_port, payload)
         except urllib.error.URLError as e:
-            logger.exception("Falha de conexao com o llama-server na porta %d", self.port)
+            if target_port != DEFAULT_ROUTER_PORT and self.port in PORT_TO_ROUTER_MODEL:
+                try:
+                    router_payload = {**payload, "model": self.router_model_id}
+                    result = self._post_chat(DEFAULT_ROUTER_PORT, router_payload)
+                    self._effective_port = DEFAULT_ROUTER_PORT
+                    return result
+                except urllib.error.URLError:
+                    pass
+            logger.exception("Falha de conexao com o llama-server na porta %d", target_port)
             raise ConnectionError(
-                f"llama-server offline na porta {self.port}. "
-                f"Inicie via scripts/ops/Start-LocalLlama.ps1 ou: "
-                f"pwsh -File scripts/ops/Start-LocalLlama.ps1 -Port {self.port}"
+                f"llama-server offline na porta {target_port}. Inicie via scripts/ops/Start-LlamaServer.ps1 -Port 9931"
             ) from e
 
 

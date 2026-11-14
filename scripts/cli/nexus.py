@@ -755,6 +755,7 @@ _DASH_SERVICES: tuple[tuple[str, int], ...] = (
     ("Ollama", 11434),
     ("Gemma Server", 17043),
     ("Backend API", 17042),
+    ("Llama.cpp 1.0", 9931),
     ("Llama MoE :8080", 8080),
 )
 

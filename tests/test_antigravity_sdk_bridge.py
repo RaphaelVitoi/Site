@@ -383,3 +383,88 @@ def test_nexus_cli_antigravity_warmup_mock(monkeypatch: pytest.MonkeyPatch) -> N
     result = runner.invoke(app, ["antigravity", "warmup", "qwen-code-surgical"])
     assert result.exit_code == 0
     assert "carregado em 0.05s" in result.stdout
+
+
+def test_resolve_and_build_llama_cpp_config() -> None:
+    """Verifica resolucao de aliases e config OpenAI-compat para llama.cpp 1.0 (:9931)."""
+    from llm.antigravity_sdk_bridge import (
+        DEFAULT_LLAMA_CPP_BASE_URL,
+        LLAMA_CPP_MODEL_ALIASES,
+        resolve_llama_cpp_model,
+    )
+
+    assert resolve_llama_cpp_model("coder-fast") == LLAMA_CPP_MODEL_ALIASES["coder-fast"]
+    assert resolve_llama_cpp_model("gemma4_e4b") == "gemma-4-E4B-it-UD-Q4_K_XL.gguf"
+    assert resolve_llama_cpp_model("custom.gguf") == "custom.gguf"
+
+    bridge = AntigravityAgentBridge()
+    cfg = bridge.build_local_llama_cpp_config(model="gemma4-12b")
+    assert isinstance(cfg, LocalOpenAIAgentConfig)
+    assert cfg.model == "gemma-4-12b-it-Q5_K_S.gguf"
+    assert cfg.base_url == f"{DEFAULT_LLAMA_CPP_BASE_URL}/v1"
+
+
+def test_fetch_llama_cpp_runtime_status_mock(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Garante leitura de /v1/models e /props do router llama.cpp 1.0 (:9931)."""
+    import http.client
+
+    from llm.antigravity_sdk_bridge import fetch_llama_cpp_runtime_status
+
+    class _FakeHttpResp:
+        def __init__(self, payload: dict[str, object]) -> None:
+            self.status = 200
+            self._body = json.dumps(payload).encode("utf-8")
+
+        def read(self) -> bytes:
+            return self._body
+
+        def __enter__(self) -> "_FakeHttpResp":
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            return None
+
+    class _FakeHTTPConnection:
+        def __init__(self, host: str, timeout: float = 1.5) -> None:
+            self._host = host
+            self._timeout = timeout
+            self._path = "/"
+
+        def request(self, method: str, path: str, headers: dict[str, str] | None = None) -> None:
+            self._path = path
+
+        def getresponse(self) -> _FakeHttpResp:
+            if self._path.endswith("/v1/models"):
+                return _FakeHttpResp(
+                    {
+                        "data": [
+                            {"id": "qwen2.5-coder-1.5b-q8_0.gguf", "status": {"value": "loaded"}},
+                            {"id": "gemma-4-12b-it-Q5_K_S.gguf", "status": {"value": "unloaded"}},
+                        ]
+                    }
+                )
+            if self._path.endswith("/props"):
+                return _FakeHttpResp(
+                    {
+                        "default_generation_settings": {"n_ctx": 32768},
+                        "total_slots": 2,
+                        "build_info": "b12375",
+                    }
+                )
+            raise OSError(f"URL inesperada: {self._host}{self._path}")
+
+        def close(self) -> None:
+            return None
+
+    monkeypatch.setattr(http.client, "HTTPConnection", _FakeHTTPConnection)
+    status = fetch_llama_cpp_runtime_status()
+    assert status["online"] is True
+    assert status["loaded_models"] == ["qwen2.5-coder-1.5b-q8_0.gguf"]
+    assert status["n_ctx"] == 32768
+    assert status["total_slots"] == 2
+    assert status["build_info"] == "b12375"
+    assert status["error"] is None
+
+    audit = AntigravityAgentBridge.audit_ecosystem()
+    assert "llama_cpp" in audit["local_models"]
+    assert audit["local_models"]["llama_cpp"]["online"] is True

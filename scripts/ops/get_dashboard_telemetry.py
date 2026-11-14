@@ -61,11 +61,15 @@ def get_model_status() -> dict:
             "status": "READY (Local)" if gemma_4b_installed else "PENDING_PULL",
         },
         "llama_moe_qwen36": {
-            "name": "Qwen3.6-35B-A3B-MTP (llama-swap)",
+            "name": "Qwen3.6-35B-A3B-MTP (llama.cpp :9931)",
             "tag": "qwen-moe",
             "tier": "local_moe",
-            "installed": is_port_open(8080),
-            "status": "ONLINE (Port 8080)" if is_port_open(8080) else "STANDBY (Pronto)",
+            "installed": is_port_open(9931) or is_port_open(8080),
+            "status": (
+                "ONLINE (Router :9931)"
+                if is_port_open(9931)
+                else ("ONLINE (Port 8080)" if is_port_open(8080) else "STANDBY (Pronto)")
+            ),
         },
     }
 
@@ -118,6 +122,7 @@ def _ports_status() -> dict[str, bool]:
         "gemma_server_17043": is_port_open(17043),
         "backend_8000": is_port_open(8000),
         "backend_17042": is_port_open(17042),
+        "llama_cpp_9931": is_port_open(9931),
         "vulkan_8080": is_port_open(8080),
     }
 

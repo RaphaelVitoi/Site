@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Nexus Dashboard SOTA v8.0 GOLD - Monitor de Telemetria, Modelos e Pipeline de Operacoes.
 .DESCRIPTION
@@ -217,11 +217,13 @@ function Build-Frame {
         if ($p.PSObject.Properties.Name -contains 'backend_17042') { $backendOn = [bool]$p.backend_17042 }
         else { $backendOn = [bool]$p.backend_8000; $backendPort = 8000 }
     }
+    $llama9931On = [bool]($p -and $p.PSObject.Properties.Name -contains 'llama_cpp_9931' -and $p.llama_cpp_9931)
+    $llamaPort = if ($llama9931On) { 9931 } elseif ($p -and $p.vulkan_8080) { 8080 } else { 9931 }
     $svc = @(
         @('Ollama', 11434, [bool]($p -and $p.ollama_11434)),
         @('Gemma Server', 17043, [bool]($p -and $p.gemma_server_17043)),
         @('Backend', $backendPort, $backendOn),
-        @('Llama MoE', 8080, [bool]($p -and $p.vulkan_8080))
+        @('Llama.cpp', $llamaPort, ($llama9931On -or [bool]($p -and $p.vulkan_8080)))
     )
     $segs = @(S '    ' 'Gray')
     foreach ($s in $svc) {

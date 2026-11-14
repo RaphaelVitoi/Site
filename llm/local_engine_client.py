@@ -43,6 +43,7 @@ def _build_chat_payload(
     tools: list[dict[str, Any]] | None = None,
     tool_choice: str | dict[str, Any] | None = None,
     response_format: dict[str, Any] | None = None,
+    model: str | None = None,
 ) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "messages": messages,
@@ -50,6 +51,8 @@ def _build_chat_payload(
         "max_tokens": max_tokens,
         "stream": False,
     }
+    if model:
+        payload["model"] = model
     if tools:
         payload["tools"] = tools
         if tool_choice:
@@ -121,8 +124,11 @@ class LocalEngineClient:
         tools: list[dict[str, Any]] | None = None,
         tool_choice: str | dict[str, Any] | None = None,
         response_format: dict[str, Any] | None = None,
+        model: str | None = None,
     ) -> dict[str, Any]:
-        payload = _build_chat_payload(messages, temperature, max_tokens, tools, tool_choice, response_format)
+        payload = _build_chat_payload(
+            messages, temperature, max_tokens, tools, tool_choice, response_format, model=model
+        )
         req_data = json.dumps(payload).encode("utf-8")
         headers = {
             "Content-Type": CONTENT_TYPE_JSON,

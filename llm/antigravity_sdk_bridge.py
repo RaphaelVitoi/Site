@@ -20,6 +20,7 @@ import asyncio
 from collections.abc import AsyncIterator, Callable
 import contextlib
 from dataclasses import dataclass, field
+import http.client
 from importlib.metadata import version as pkg_version
 import json
 import logging
@@ -31,6 +32,7 @@ import subprocess  # noqa: S404  # Record-Id: registro-2026-11-08-integracao-sot
 import sys
 import time
 from typing import Any, Final
+from urllib.parse import urlsplit
 import urllib.request
 
 from dotenv import load_dotenv
@@ -74,8 +76,31 @@ AGY_CLI_SETTINGS = RAIZ_DIR / "antigravity-cli" / "settings.json"
 AGY_DEFAULT_BIN = Path(os.environ.get("LOCALAPPDATA", str(HOME / "AppData/Local"))) / "agy" / "bin" / "agy.exe"
 REF_RE = re.compile(r"\$\{([A-Z0-9_]+)\}")
 
-# Catalogo canonico de modelos locais otimizados servidos no daemon Ollama (:11434)
+# Catalogo canonico de modelos locais otimizados servidos no daemon Ollama (:11434) e llama.cpp 1.0 (:9931)
 ANTIGRAVITY_BRIDGE_USER_AGENT: Final[str] = "Antigravity-Bridge/1.0"
+DEFAULT_LLAMA_CPP_BASE_URL: Final[str] = "http://127.0.0.1:9931"
+
+LLAMA_CPP_MODEL_ALIASES: Final[dict[str, str]] = {
+    "coder-fast": "qwen2.5-coder-1.5b-q8_0.gguf",
+    "coder-1.5b": "qwen2.5-coder-1.5b-q8_0.gguf",
+    "gemma4-e4b": "gemma-4-E4B-it-UD-Q4_K_XL.gguf",
+    "gemma4-12b": "gemma-4-12b-it-Q5_K_S.gguf",
+    "gemma4-e2b": "gemma-4-E2B-it-Q4_K_M.gguf",
+    "qwen3.5-4b": "Qwen3.5-4B.Q4_K_M.gguf",
+    "qwen3.5-2b": "Qwen3.5-2B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf",
+    "qwen3.6-moe": "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
+}
+
+
+def resolve_llama_cpp_model(alias_or_id: str) -> str:
+    """Resolve alias simplificado para o ID de modelo no router llama.cpp 1.0 (:9931)."""
+    cleaned = (alias_or_id or "").strip()
+    if not cleaned:
+        return LLAMA_CPP_MODEL_ALIASES["coder-fast"]
+    normalized = cleaned.replace("_", "-").lower()
+    if normalized in LLAMA_CPP_MODEL_ALIASES:
+        return LLAMA_CPP_MODEL_ALIASES[normalized]
+    return cleaned
 
 
 LOCAL_OPTIMIZED_MODELS: Final[dict[str, str]] = {
@@ -160,6 +185,93 @@ def fetch_ollama_runtime_status(base_url: str = "http://127.0.0.1:11434") -> dic
             ]
     except Exception as e:
         logger.debug(f"Aviso ao consultar /api/ps: {e}")
+
+    return status
+
+
+def _fetch_json_http(url: str, timeout: float = 1.5) -> object:
+    """Executa GET JSON local via http.client com esquema validado (evita S310)."""
+    parsed = urlsplit(url)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        raise ValueError(f"URL HTTP invalida: {url}")
+    path = parsed.path or "/"
+    if parsed.query:
+        path = f"{path}?{parsed.query}"
+    conn_cls = http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
+    conn = conn_cls(parsed.netloc, timeout=timeout)
+    try:
+        conn.request("GET", path, headers={"User-Agent": ANTIGRAVITY_BRIDGE_USER_AGENT})
+        resp = conn.getresponse()
+        if resp.status >= 400:
+            raise OSError(f"HTTP {resp.status} ao consultar {url}")
+        return json.loads(resp.read().decode("utf-8"))
+    finally:
+        conn.close()
+
+
+def fetch_llama_cpp_runtime_status(
+    base_url: str = DEFAULT_LLAMA_CPP_BASE_URL,
+    timeout: float = 1.5,
+) -> dict[str, object]:
+    """Consulta o router nativo llama.cpp 1.0 (:9931) via /v1/models e /props."""
+    clean_base = base_url.rstrip("/")
+    status: dict[str, object] = {
+        "online": False,
+        "base_url": clean_base,
+        "models": [],
+        "loaded_models": [],
+        "n_ctx": None,
+        "total_slots": None,
+        "build_info": None,
+        "error": None,
+    }
+    if not clean_base.startswith(("http://", "https://")):
+        status["error"] = f"Esquema de URL invalido para llama.cpp: {base_url}"
+        return status
+
+    models_list: list[dict[str, object]] = []
+    loaded_models: list[str] = []
+    try:
+        payload = _fetch_json_http(f"{clean_base}/v1/models", timeout=timeout)
+        raw_models = payload.get("data", []) if isinstance(payload, dict) else []
+        for item in raw_models:
+            if not isinstance(item, dict) or not item.get("id"):
+                continue
+            model_id = str(item["id"])
+            raw_status = item.get("status")
+            status_value = str(raw_status.get("value", "unknown")) if isinstance(raw_status, dict) else "loaded"
+            is_loaded = status_value == "loaded"
+            if is_loaded:
+                loaded_models.append(model_id)
+            models_list.append(
+                {
+                    "id": model_id,
+                    "status": status_value,
+                    "loaded": is_loaded,
+                }
+            )
+        status["models"] = models_list
+        status["loaded_models"] = loaded_models
+        status["online"] = True
+    except OSError as e:
+        status["error"] = f"Falha de conexao com llama.cpp ({e})"
+        return status
+    except Exception as e:
+        status["error"] = f"Erro ao processar /v1/models: {e}"
+        return status
+
+    try:
+        props = _fetch_json_http(f"{clean_base}/props", timeout=timeout)
+        if isinstance(props, dict):
+            gen_settings = props.get("default_generation_settings")
+            if isinstance(gen_settings, dict) and "n_ctx" in gen_settings:
+                status["n_ctx"] = gen_settings.get("n_ctx")
+            if "total_slots" in props:
+                status["total_slots"] = props.get("total_slots")
+            if "build_info" in props:
+                status["build_info"] = props.get("build_info")
+    except Exception as e:
+        logger.debug(f"Aviso ao consultar /props do llama.cpp: {e}")
 
     return status
 
@@ -600,6 +712,22 @@ class AntigravityAgentBridge:
             allow_run_command=allow_run_command,
         )
 
+    def build_local_llama_cpp_config(
+        self,
+        model: str = "coder-fast",
+        base_url: str = f"{DEFAULT_LLAMA_CPP_BASE_URL}/v1",
+        lightweight: bool = True,
+        allow_run_command: bool = False,
+    ) -> LocalOpenAIAgentConfig:
+        """Cria configuracao especializada para o router nativo llama.cpp 1.0 (:9931)."""
+        model_id = resolve_llama_cpp_model(model)
+        return self.build_local_openai_config(
+            model=model_id,
+            base_url=base_url,
+            lightweight=lightweight,
+            allow_run_command=allow_run_command,
+        )
+
     async def run_prompt(
         self,
         prompt: str,
@@ -709,8 +837,9 @@ class AntigravityAgentBridge:
         custom_subagents = discover_custom_subagents()
         builtin_enabled = discover_enabled_builtin_subagents()
 
-        # Auditoria de Modelos Locais Otimizados no Ollama
+        # Auditoria de Modelos Locais Otimizados no Ollama e Router llama.cpp 1.0 (:9931)
         ollama_status = fetch_ollama_runtime_status()
+        llama_cpp_status = fetch_llama_cpp_runtime_status()
         installed_names = [str(m.get("name", "")) for m in ollama_status["installed_models"]]
         active_names = [str(m.get("name", "")) for m in ollama_status["active_in_memory"]]
         catalog_coverage = {
@@ -758,6 +887,7 @@ class AntigravityAgentBridge:
                 "active_in_memory_count": len(ollama_status["active_in_memory"]),
                 "active_models": ollama_status["active_in_memory"],
                 "catalog": catalog_coverage,
+                "llama_cpp": llama_cpp_status,
                 "error": ollama_status["error"],
             },
             "auth": key_status,

@@ -1301,7 +1301,7 @@
     },
     {
       "engine_id": "llama-cpp-vulkan",
-      "display_name": "llama.cpp Vulkan Server (RX 570 Polaris 8GB, ggml-org b12292)",
+      "display_name": "llama.cpp 1.0 Vulkan Server & Router (RX 570 Polaris 8GB, b12387 + Llama App 0.14.1.0 b12375)",
       "family": "adapter",
       "implementation_level": "trained-model",
       "runtime_availability": "code-available",
@@ -1315,12 +1315,15 @@
         "AMD Vulkan driver",
         "Chico SOTA"
       ],
-      "safe_label": "Runtime llama.cpp win-vulkan-x64 oficial (b12292) verificado na RX 570 Polaris 8GB: Vulkan enxerga a GPU nativamente, 34.2 t/s geracao / 8.7 t/s prompt em Q4_K_M ~3.3GB com -ngl 99 -fa on. Qwen3.6-35B-A3B-MTP UD-Q4_K_XL (21.3GiB, SHA256 verificado) medido em 2026-11-12: 6.72 t/s tg baseline -> 13.45 t/s com -ncmoe 41 + draft-mtp n-max4 p-min0.75 (~94% draft acceptance, ~2x); --moe-cache-mib mostrou-se CONTRAPRODUCENTE na Polaris (7.5 t/s com cache vs 13.0 sem). Binarios em ~/.gemini/tools/llama.cpp (fora do repo); modo gerenciado via llama-swap v272 em 127.0.0.1:8080 (config ~/.gemini/tools/llama-swap/config.yaml, spawn on-demand + ttl 600s) e launcher manual scripts/ops/Start-LlamaVulkan.ps1 porta 9931. Consumido por llm/system2_local.py tier 'moe'.",
+      "safe_label": "Runtime llama.cpp win-vulkan-x64 oficial atualizado para b12387 (Site/engine/llama_cpp e ~/.gemini/tools/llama.cpp) + Llama App 0.14.1.0 (llama.exe 1.0.0-dev b12375) como Router Nativo em 127.0.0.1:9931. Medicao empirica no host i9-9900K (8C/16T) + RX 570 8GB Vulkan0 em 2026-11-14: llama-bench qwen2.5-coder-1.5b-q8_0 pp512=556.03 t/s e tg128=25.91 t/s com -t 8 -b 2048 -ub 512 -fa on -ctk q8_0 -ctv q8_0; no router :9931 (-ctk q8_0 -ctv q4_0 -c 32768 --parallel 2 --cache-reuse 256 --cache-ram 4096 --metrics --props), prompt eval subiu de 77.23 t/s para 188.82 t/s (+2.44x) com KV prefix reuse ativo. Qwen3.6-35B-A3B-MTP UD-Q4_K_XL medido em 13.45 t/s com -ncmoe 41 + draft-mtp n-max4 p-min0.75 (np=1 via Start-LlamaVulkan.ps1).",
       "claims_allowed": [
         "gpu-offload-vulkan",
         "openai-compatible-server",
+        "router-mode-v1-models",
         "moe-expert-offload",
         "kv-cache-quantization",
+        "prompt-prefix-cache-reuse",
+        "prometheus-metrics-and-props",
         "measured-tokens-per-second"
       ],
       "causal_parameters": [
@@ -1329,7 +1332,13 @@
         "ngl",
         "n_cpu_moe",
         "moe_cache_mib",
-        "ctx_size"
+        "ctx_size",
+        "threads",
+        "batch_size",
+        "ubatch_size",
+        "cache_reuse",
+        "cache_ram",
+        "parallel"
       ],
       "reserved_parameters": [
         "model-weights-ownership",
@@ -1356,22 +1365,38 @@
         "ollama-blobs-are-reusable-gguf",
         "measured-34-2-tps-q4km-3b-on-rx570-8gb-2026-11-11",
         "measured-13-45-tps-qwen36-35b-a3b-mtp-draftmtp-nmax4-pmin075-2026-11-12",
-        "measured-moe-cache-mib-counterproductive-on-polaris-2026-11-12"
+        "measured-moe-cache-mib-counterproductive-on-polaris-2026-11-12",
+        "measured-b12387-t8-b2048-ub512-pp556-tg25-91-on-i9-9900k-rx570-2026-11-14",
+        "measured-router-9931-prompt-eval-188-82-tps-with-cache-reuse-2026-11-14"
       ],
       "limitations": [
         "8gb-vram-limits-full-offload-to-~7b-q4",
         "moe-35b-class-needs-cpu-offload-ram-headroom",
         "moe-cache-mib-does-not-pay-off-on-polaris-measured",
         "speculative-mtp-requires-gguf-with-nextn-head-and-np1",
+        "llama-app-0141-duplicate-ini-quirk-avoided-via-global-custom-serve-args",
         "no-rocm-native-on-polaris",
         "single-large-model-offload-targets-need-12gb-plus-vram"
       ],
       "consumer_paths": [
-        "scripts/ops/Start-LlamaVulkan.ps1",
+        "llm/local_llama_client.py",
         "llm/system2_local.py",
-        "~/.gemini/tools/llama-swap/config.yaml (fora do repo)"
+        "llm/providers.py",
+        "llm/routing_policy.py",
+        "llm/antigravity_sdk_bridge.py",
+        "core/subagents_mesh.py",
+        "scripts/ops/Start-LlamaVulkan.ps1",
+        "scripts/ops/Start-LocalLlama.ps1",
+        "engine/llama_cpp/start_vulkan_daemon.ps1",
+        "~/.gemini/scripts/ops/Start-LlamaServer.ps1",
+        "~/.gemini/extensions/sota-chrome-cockpit/python-backend/sota_router.py"
       ],
-      "api_routes": [],
+      "api_routes": [
+        "http://127.0.0.1:9931/health",
+        "http://127.0.0.1:9931/v1/models",
+        "http://127.0.0.1:9931/props",
+        "http://127.0.0.1:9931/metrics"
+      ],
       "fallback_engine_id": "system2-local-ollama"
     },
     {

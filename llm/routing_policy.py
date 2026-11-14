@@ -556,12 +556,15 @@ def _check_provider_availability_sync(provider: str, model: str) -> bool:
         try:
             from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
 
-            if "qwen" in model.lower() or "coder" in model.lower():
+            model_l = model.lower()
+            if "qwen" in model_l or "coder" in model_l:
                 port = 8083
-            elif "ling" in model.lower():
+            elif "ling" in model_l:
                 port = 8082
-            else:
+            elif "g9" in model_l:
                 port = 8081
+            else:
+                port = 9931
 
             client = LocalLlamaClient(port=port, timeout=1.0)
             return client.is_healthy()

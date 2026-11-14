@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Launcher SOTA do llama.cpp Vulkan para a RX 570 Polaris (gfx803, 8GB).
 
@@ -53,11 +53,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$LlamaDir = Join-Path $env:USERPROFILE '.gemini\tools\llama.cpp'
-$ServerExe = Join-Path $LlamaDir 'llama-server.exe'
+$SiteLlamaExe = Join-Path $env:USERPROFILE '.gemini\Site\engine\llama_cpp\llama-server.exe'
+$ToolsLlamaExe = Join-Path $env:USERPROFILE '.gemini\tools\llama.cpp\llama-server.exe'
+$ServerExe = if (Test-Path $SiteLlamaExe) { $SiteLlamaExe } else { $ToolsLlamaExe }
 
 if (-not (Test-Path $ServerExe)) {
-  throw "llama-server.exe nao encontrado em $ServerExe. Baixe o asset llama-bNNNNN-bin-win-vulkan-x64.zip do release mais recente e extraia em $LlamaDir."
+  throw "llama-server.exe nao encontrado em $SiteLlamaExe nem em $ToolsLlamaExe. Extraia llama-bNNNNN-bin-win-vulkan-x64.zip."
 }
 if (-not (Test-Path $ModelPath)) {
   throw "Modelo nao encontrado: $ModelPath"
@@ -69,6 +70,7 @@ $serverArgs = @(
   '-m', $ModelPath,
   '--host', '127.0.0.1',
   '--port', "$Port",
+  '-dev', 'Vulkan0',
   '-ngl', '99',
   '-fa', 'on',
   '-ctk', 'q8_0',
@@ -76,7 +78,11 @@ $serverArgs = @(
   '--jinja',
   '--fit', 'on',
   '-c', '32768',
-  '-t', '8'
+  '-t', '8',
+  '-b', '2048',
+  '-ub', '512',
+  '--cache-reuse', '256',
+  '--metrics'
 ) + $ExtraArgs
 
 Write-Host "[llama-vulkan] RX 570 8GB | modelo: $(Split-Path $ModelPath -Leaf)" -ForegroundColor Cyan
