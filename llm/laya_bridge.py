@@ -545,23 +545,30 @@ def _obter_predict_router() -> Any:
     return router
 
 
+def _extract_tokens_from_usage(usage: dict[str, Any]) -> int | None:
+    """Extrai contagem de tokens de um dicionario de uso individual."""
+    for total_key in ("total_tokens", "total", "totalTokenCount"):
+        if usage.get(total_key) is not None:
+            return int(usage[total_key])
+    inp = int(usage.get("input_tokens") or 0)
+    out = int(usage.get("output_tokens") or 0)
+    if inp or out:
+        return inp + out
+    if usage.get("state_tokens") is not None:
+        return int(usage["state_tokens"])
+    return None
+
+
 def _extract_n_tokens(result: dict[str, Any]) -> int:
     """Extrai contagem real de tokens da resposta Laya (``usage`` ou ``token_usage``)."""
     if not isinstance(result, dict):
         return 0
     for key in ("usage", "token_usage"):
         usage = result.get(key)
-        if not isinstance(usage, dict):
-            continue
-        for total_key in ("total_tokens", "total", "totalTokenCount"):
-            if usage.get(total_key) is not None:
-                return int(usage[total_key])
-        inp = int(usage.get("input_tokens") or 0)
-        out = int(usage.get("output_tokens") or 0)
-        if inp or out:
-            return inp + out
-        if usage.get("state_tokens") is not None:
-            return int(usage["state_tokens"])
+        if isinstance(usage, dict):
+            tokens = _extract_tokens_from_usage(usage)
+            if tokens is not None:
+                return tokens
     return 0
 
 
@@ -862,6 +869,34 @@ def _parse_remote_prediction(p: dict[str, Any], elapsed_ms: float) -> LayaPredic
         return None
 
 
+def _build_remote_predict_body(
+    state: str | dict[str, Any],
+    questions: dict[str, dict[str, Any]] | None,
+    max_len: int | None,
+) -> tuple[bytes, int | None]:
+    """Serializa payload JSON para ``/predict`` e retorna ``(body, eff_max_len)``."""
+    qs = questions if questions is not None else LAYA_DEFAULT_QUESTIONS
+    payload_state = state if isinstance(state, str) else json.dumps(state, ensure_ascii=False)
+    eff_max_len = 8192 if len(payload_state.split()) > 400 or (max_len is not None and max_len > 1024) else max_len
+    req_payload: dict[str, Any] = {
+        "state": payload_state,
+        "questions": qs,
+        "model": CANONICAL_LAYA_MODEL,
+    }
+    if eff_max_len is not None:
+        req_payload["max_len"] = eff_max_len
+    return json.dumps(req_payload).encode("utf-8"), eff_max_len
+
+
+def _record_service_failure_cooldown(allow_cooldown: bool) -> None:
+    """Ativa cooldown do circuito de servico Laya quando permitido."""
+    cooldown_s = _service_cooldown_seconds()
+    if allow_cooldown and cooldown_s > 0.0:
+        with _SERVICE_CIRCUIT_LOCK:
+            global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603
+            _SERVICE_COOLDOWN_UNTIL = time.monotonic() + cooldown_s
+
+
 def laya_predict_remote(
     state: str | dict[str, Any],
     questions: dict[str, dict[str, Any]] | None = None,
@@ -883,20 +918,10 @@ def laya_predict_remote(
             if time.monotonic() < _SERVICE_COOLDOWN_UNTIL:
                 return None
     base, default_timeout = _laya_service_config()
+    body, eff_max_len = _build_remote_predict_body(state, questions, max_len)
     timeout = timeout_s if timeout_s is not None else default_timeout
-    qs = questions if questions is not None else LAYA_DEFAULT_QUESTIONS
-    payload_state = state if isinstance(state, str) else json.dumps(state, ensure_ascii=False)
-    eff_max_len = 8192 if len(payload_state.split()) > 400 or (max_len is not None and max_len > 1024) else max_len
     if timeout_s is None and eff_max_len is not None and eff_max_len > 1024:
         timeout = max(timeout, 10.0)
-    req_payload: dict[str, Any] = {
-        "state": payload_state,
-        "questions": qs,
-        "model": CANONICAL_LAYA_MODEL,
-    }
-    if eff_max_len is not None:
-        req_payload["max_len"] = eff_max_len
-    body = json.dumps(req_payload).encode("utf-8")
     req = urllib.request.Request(  # noqa: S310 - endpoint loopback local (microservico Laya)  # Record-Id: registro-2026-11-12-s1-achados-remediacao
         f"{base}/predict",
         data=body,
@@ -909,10 +934,7 @@ def laya_predict_remote(
             data = json.loads(resp.read().decode("utf-8"))
     except Exception as e:  # pylint: disable=broad-except
         logger.debug("[laya-s1] microservico %s/predict indisponivel: %s", base, e)
-        cooldown_s = _service_cooldown_seconds()
-        if timeout_s is None and cooldown_s > 0.0:
-            with _SERVICE_CIRCUIT_LOCK:
-                _SERVICE_COOLDOWN_UNTIL = time.monotonic() + cooldown_s
+        _record_service_failure_cooldown(timeout_s is None)
         return None
     with _SERVICE_CIRCUIT_LOCK:
         _SERVICE_COOLDOWN_UNTIL = 0.0

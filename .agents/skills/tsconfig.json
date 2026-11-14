@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowArbitraryExtensions": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "rootDirs": ["remotion", "types/stubs-remotion", "stitch-react-native", "types/stubs-rn"]
+  },
+  "include": [
+    "types/**/*.d.ts",
+    "remotion/**/*.ts",
+    "remotion/**/*.tsx",
+    "shadcn-ui/**/*.ts",
+    "shadcn-ui/**/*.tsx",
+    "stitch-react-components/**/*.ts",
+    "stitch-react-components/**/*.tsx",
+    "stitch-react-native/**/*.ts",
+    "stitch-react-native/**/*.tsx"
+  ],
+  "exclude": ["node_modules", "**/node_modules", "stitch-extract-static-html"]
+}

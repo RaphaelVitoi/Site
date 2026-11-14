@@ -51,6 +51,7 @@ DEFAULT_OLLAMA_BASE = "http://127.0.0.1:11434"
 DEFAULT_LLAMA_BASE = "http://127.0.0.1:8080"  # llama-swap proxy (gerencia spawn/unload do llama-server)
 DEFAULT_GEMMA_PROXY_BASE = "http://127.0.0.1:17043"
 OLLAMA_TIMEOUT_S = float(os.environ.get("CHICO_S2_TIMEOUT_S", "120"))
+_CONTENT_TYPE_JSON = "application/json"
 
 SYSTEM2_TIERS: dict[str, str] = {
     "fast": "qwen3_5_4b",
@@ -320,7 +321,7 @@ def _loopback_http(
     try:
         conn.request(method, path, body=body, headers=headers or {})
         resp = conn.getresponse()
-        return int(resp.status), resp.read()
+        return resp.status, resp.read()
     finally:
         conn.close()
 
@@ -390,7 +391,7 @@ def _llama_generate(
     req = urllib.request.Request(  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
         f"{_llama_base()}/v1/chat/completions",
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": _CONTENT_TYPE_JSON},
         method="POST",
     )
     inicio = time.perf_counter()
@@ -431,7 +432,7 @@ def _ollama_generate(
     req = urllib.request.Request(  # noqa: S310 - endpoint loopback local (Ollama/llama-swap)  # Record-Id: registro-2026-11-12-arquitetura-s1-s2-llama-vulkan
         f"{_ollama_base()}/api/generate",
         data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": _CONTENT_TYPE_JSON},
         method="POST",
     )
     inicio = time.perf_counter()
@@ -596,7 +597,7 @@ def _try_edge_proxy_local(
                 "POST",
                 f"{_gemma_proxy_base()}/generate",
                 body=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json", "X-Vitoi-Auth": auth_token},
+                headers={"Content-Type": _CONTENT_TYPE_JSON, "X-Vitoi-Auth": auth_token},
                 timeout=timeout,
             )
             text = raw.decode("utf-8") if status == 200 else ""
