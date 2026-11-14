@@ -1014,7 +1014,7 @@ def verificar(hoje: date | None = None) -> tuple[list[str], list[str]]:
 # motivo PODE conter parenteses -- `commit declarado (pending) nao existe...` ja
 # produziu o agrupamento truncado `[1] OBSOLETO, commit declarado (pending`.
 # O motivo vai ate o ULTIMO `)` antes de ` ancora `, que e costura unica da linha.
-_RE_AVISO_NAO_VIGENTE = re.compile(r"^(?P<rel>.*?) \((?P<estado>[^,]+), (?P<motivo>.+)\) ancora ")
+_RE_AVISO_NAO_VIGENTE = re.compile(r"^(?P<rel>\S+) \((?P<estado>[^,)]+), (?P<motivo>.+)\) ancora ")
 
 
 def _resumir_nao_vigentes(nao_vigentes: list[str]) -> None:

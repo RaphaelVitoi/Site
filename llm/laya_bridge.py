@@ -776,6 +776,31 @@ def _provenia_from_service(raw: Any) -> Provenia:
     )
 
 
+def _opt_float(p: dict[str, Any], key: str) -> float | None:
+    val = p.get(key)
+    return float(val) if val is not None else None
+
+
+def _parse_remote_prediction(p: dict[str, Any], elapsed_ms: float) -> LayaPrediction | None:
+    try:
+        raw_choice = p.get("choice")
+        return LayaPrediction(
+            answers=p.get("answers") or {},
+            model_used=str(p.get("model_used") or CANONICAL_LAYA_MODEL),
+            device=str(p.get("device") or "remote-service"),
+            n_tokens=int(p.get("n_tokens") or 0),
+            latency_ms=float(p.get("latency_ms") or elapsed_ms),
+            noul=_opt_float(p, "noul"),
+            choice=str(raw_choice) if raw_choice is not None else None,
+            score=_opt_float(p, "score"),
+            confidence=_opt_float(p, "confidence"),
+            provenia=_provenia_from_service(p.get("provenia")),
+        )
+    except (TypeError, ValueError) as e:
+        logger.debug("[laya-s1] payload do microservico invalido: %s", e)
+        return None
+
+
 def laya_predict_remote(
     state: str | dict[str, Any],
     questions: dict[str, dict[str, Any]] | None = None,
@@ -820,22 +845,7 @@ def laya_predict_remote(
     p = data.get("prediction")
     if not isinstance(p, dict):
         return None
-    try:
-        return LayaPrediction(
-            answers=p.get("answers") or {},
-            model_used=str(p.get("model_used") or CANONICAL_LAYA_MODEL),
-            device=str(p.get("device") or "remote-service"),
-            n_tokens=int(p.get("n_tokens") or 0),
-            latency_ms=float(p.get("latency_ms") or round((time.perf_counter() - inicio) * 1000.0, 2)),
-            noul=float(p["noul"]) if p.get("noul") is not None else None,
-            choice=str(p["choice"]) if p.get("choice") is not None else None,
-            score=float(p["score"]) if p.get("score") is not None else None,
-            confidence=float(p["confidence"]) if p.get("confidence") is not None else None,
-            provenia=_provenia_from_service(p.get("provenia")),
-        )
-    except (TypeError, ValueError) as e:
-        logger.debug("[laya-s1] payload do microservico invalido: %s", e)
-        return None
+    return _parse_remote_prediction(p, round((time.perf_counter() - inicio) * 1000.0, 2))
 
 
 def ruin_priority_from_intencao(intencao_s1: dict[str, Any] | None = None) -> float:

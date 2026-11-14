@@ -267,22 +267,24 @@ def _nascimento_por_caminho(raiz: Path, com_merges: bool = False) -> dict[str, s
     return mapa
 
 
-def avaliar_registro(
-    fm: dict[str, Any], raiz: Path, hoje: date, ambiente: dict[str, Any], caminho: str | None = None
-) -> tuple[list[str], bool | None, list[str]]:
-    """(motivos, commit_e_ancestral_do_head, config_nao_conferivel) de UM registro.
+def _avaliar_placeholder_commit(classes: list[str], raiz: Path, caminho: str | None) -> tuple[list[str], bool | None]:
+    nascimento = _nascimento_por_caminho(raiz).get(caminho or "", "")
+    if not nascimento:
+        nascimento = _nascimento_por_caminho(raiz, com_merges=True).get(caminho or "", "")
+    if nascimento:
+        ancestral = _ancestral(nascimento, raiz)
+        if ancestral is False:
+            return [f"nascimento resolvido ({nascimento}) nao e ancestral do HEAD"], ancestral
+        return [], ancestral
+    if "interno" in classes:
+        return ["classe interna sem ancora de commit"], None
+    return [], None
 
-    Regra unica: o indice e o G2 do record_gate usam esta funcao. Duas copias da
-    regra divergiriam em silencio.
 
-    `caminho` e o caminho do registro relativo a raiz: sem ele a âncora de
-    nascimento nao pode ser resolvida e o motivo de "sem ancora" continua valendo.
-    """
+def _avaliar_ancora_commit(
+    fm: dict[str, Any], classes: list[str], raiz: Path, caminho: str | None
+) -> tuple[list[str], bool | None]:
     motivos: list[str] = []
-    classes = fm.get("classes") or []
-    if isinstance(classes, str):
-        classes = [classes]
-
     commit_bruto = fm.get("commit")
     if isinstance(commit_bruto, int) and not isinstance(commit_bruto, bool):
         # Medido em 2026-11-13: `commit: 05167555` sem aspas foi lido pelo YAML
@@ -295,23 +297,35 @@ def avaliar_registro(
         )
         commit_bruto = ""
     bruto = str(commit_bruto or "").strip()
-    ancestral: bool | None = None
     if bruto.lower() in _PLACEHOLDERS_COMMIT:
-        nascimento = _nascimento_por_caminho(raiz).get(caminho or "", "")
-        if not nascimento:
-            nascimento = _nascimento_por_caminho(raiz, com_merges=True).get(caminho or "", "")
-        if nascimento:
-            ancestral = _ancestral(nascimento, raiz)
-            if ancestral is False:
-                motivos.append(f"nascimento resolvido ({nascimento}) nao e ancestral do HEAD")
-        elif "interno" in classes:
-            motivos.append("classe interna sem ancora de commit")
-    else:
-        ancestral = _ancestral(bruto, raiz)
-        if ancestral is None:
-            motivos.append(f"commit declarado ({bruto}) nao existe neste repositorio")
-        elif ancestral is False:
-            motivos.append(f"commit declarado ({bruto}) nao e ancestral do HEAD")
+        motivos_ph, ancestral = _avaliar_placeholder_commit(classes, raiz, caminho)
+        motivos.extend(motivos_ph)
+        return motivos, ancestral
+
+    ancestral = _ancestral(bruto, raiz)
+    if ancestral is None:
+        motivos.append(f"commit declarado ({bruto}) nao existe neste repositorio")
+    elif ancestral is False:
+        motivos.append(f"commit declarado ({bruto}) nao e ancestral do HEAD")
+    return motivos, ancestral
+
+
+def avaliar_registro(
+    fm: dict[str, Any], raiz: Path, hoje: date, ambiente: dict[str, Any], caminho: str | None = None
+) -> tuple[list[str], bool | None, list[str]]:
+    """(motivos, commit_e_ancestral_do_head, config_nao_conferivel) de UM registro.
+
+    Regra unica: o indice e o G2 do record_gate usam esta funcao. Duas copias da
+    regra divergiriam em silencio.
+
+    `caminho` e o caminho do registro relativo a raiz: sem ele a âncora de
+    nascimento nao pode ser resolvida e o motivo de "sem ancora" continua valendo.
+    """
+    classes = fm.get("classes") or []
+    if isinstance(classes, str):
+        classes = [classes]
+
+    motivos, ancestral = _avaliar_ancora_commit(fm, classes, raiz, caminho)
 
     motivo_ttl = ttl_vencido(fm, hoje)
     if motivo_ttl:

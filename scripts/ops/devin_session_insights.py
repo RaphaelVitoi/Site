@@ -123,19 +123,50 @@ def aguardar_analise(
     return ultimo
 
 
+def _como_dict(val: object) -> dict[str, object]:
+    return val if isinstance(val, dict) else {}
+
+
+def _como_lista_dicts(val: object) -> list[dict[str, object]]:
+    return [x for x in val if isinstance(x, dict)] if isinstance(val, list) else []
+
+
+def _como_lista(val: object) -> list[object]:
+    return val if isinstance(val, list) else []
+
+
+def _ou_na(mapa: dict[str, object], chave: str) -> object:
+    return mapa.get(chave) or "N/A"
+
+
+def _formatar_top_issues(issues: list[dict[str, object]]) -> list[str]:
+    if not issues:
+        return []
+    linhas: list[str] = ["**Issues (top impacto):**", ""]
+    ordenadas = sorted(
+        issues,
+        key=lambda i: {"high": 0, "medium": 1}.get(str(i.get("impact", "")).lower(), 2),
+    )
+    for iss in ordenadas[:5]:
+        rotulo = iss.get("label") or iss.get("title") or "issue"
+        linhas.append(f"- [{str(iss.get('impact', '?')).upper()}] {rotulo}: {str(iss.get('description', ''))[:200]}")
+    linhas.append("")
+    return linhas
+
+
 def gerar_painel_markdown(dados: dict[str, object]) -> str:
     """Gera painel Markdown no formato do handoff para sessoes Devin Cloud."""
-    analysis = dados.get("analysis") or {}
-    issues = analysis.get("issues") or []
-    timeline = analysis.get("timeline") or []
-    action_items = analysis.get("action_items") or []
-    skill_usage = analysis.get("skill_usage") or {}
+    analysis = _como_dict(dados.get("analysis"))
+    issues = _como_lista_dicts(analysis.get("issues"))
+    timeline = _como_lista(analysis.get("timeline"))
+    action_items = _como_lista(analysis.get("action_items"))
+    skill_usage = _como_dict(analysis.get("skill_usage"))
     suggested = analysis.get("suggested_prompt") or {}
 
     alto = sum(1 for i in issues if str(i.get("impact", "")).lower() == "high")
     medio = sum(1 for i in issues if str(i.get("impact", "")).lower() == "medium")
-    skills_used = len(skill_usage.get("used") or skill_usage.get("items") or [])
-    skills_misleading = len(skill_usage.get("misleading") or skill_usage.get("misleading_items") or [])
+    skills_used = len(_como_lista(skill_usage.get("used") or skill_usage.get("items")))
+    skills_misleading = len(_como_lista(skill_usage.get("misleading") or skill_usage.get("misleading_items")))
 
     md: list[str] = [
         "### Painel de Insights Devin Cloud (Session Insights API v3)",
@@ -144,7 +175,7 @@ def gerar_painel_markdown(dados: dict[str, object]) -> str:
         "| :--- | :--- | :--- |",
         (
             f"| **ACU Consumido** | **{dados.get('acus_consumed', 'N/A')}** |"
-            f" Modo: {dados.get('devin_mode') or 'N/A'} | Origem: {dados.get('origin') or 'N/A'} |"
+            f" Modo: {_ou_na(dados, 'devin_mode')} | Origem: {_ou_na(dados, 'origin')} |"
         ),
         (
             f"| **Mensagens** | **{dados.get('num_user_messages', 'N/A')} user / {dados.get('num_devin_messages', 'N/A')} devin** |"
@@ -152,7 +183,7 @@ def gerar_painel_markdown(dados: dict[str, object]) -> str:
         ),
         (
             f"| **Tamanho da Sessao** | **{str(dados.get('session_size', 'N/A')).upper()}** |"
-            f" Categoria: {dados.get('category') or 'N/A'} | Status analise: {dados.get('analysis_status') or 'N/A'} |"
+            f" Categoria: {_ou_na(dados, 'category')} | Status analise: {_ou_na(dados, 'analysis_status')} |"
         ),
         (
             f"| **Issues Detectadas** | **{len(issues)}** ({alto} altas / {medio} medias) |"
@@ -172,19 +203,7 @@ def gerar_painel_markdown(dados: dict[str, object]) -> str:
         ),
         "",
     ]
-    if issues:
-        md.append("**Issues (top impacto):**")
-        md.append("")
-        ordenadas = sorted(
-            issues,
-            key=lambda i: {"high": 0, "medium": 1}.get(str(i.get("impact", "")).lower(), 2),
-        )
-        for iss in ordenadas[:5]:
-            md.append(
-                f"- [{str(iss.get('impact', '?')).upper()}] {iss.get('label') or iss.get('title') or 'issue'}: "
-                f"{str(iss.get('description', ''))[:200]}"
-            )
-        md.append("")
+    md.extend(_formatar_top_issues(issues))
     return "\n".join(md)
 
 
