@@ -160,10 +160,11 @@ try {
 
     $rows = @(Get-Content -LiteralPath $ledgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json })
     $tail = $rows[-1]
+    $normalizedScore = if (($Score % 1) -eq 0) { [int]$Score } else { [double]$Score }
     $campos = [ordered]@{
         event_id   = [guid]::NewGuid().ToString()
         session_id = $SessionId
-        score      = $Score
+        score      = $normalizedScore
         scope      = $Scope.Trim()
     }
     if (-not [string]::IsNullOrWhiteSpace($Feedback)) {

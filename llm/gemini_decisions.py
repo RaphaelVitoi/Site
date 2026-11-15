@@ -42,6 +42,7 @@ from llm.laya_bridge import (
 
 __all__ = [
     "DECISIONS_API_VERSION",
+    "DEFAULT_S1_MIN_CONFIDENCE",
     "GEMINI_DECISION_MODEL",
     "MAX_CHOICE_OPTIONS",
     "MAX_DECISION_QUESTIONS",
@@ -51,6 +52,7 @@ __all__ = [
     "GeminiDecisionsClient",
     "decide",
     "decide_s1",
+    "default_min_confidence",
     "is_multimodal_input",
     "normalize_questions",
 ]
@@ -59,6 +61,7 @@ logger = logging.getLogger(__name__)
 
 GEMINI_DECISION_MODEL: str = "gemini-decision-1"
 DECISIONS_API_VERSION: str = "v1beta"
+DEFAULT_S1_MIN_CONFIDENCE: float = 0.55
 QUESTION_TYPES: tuple[str, ...] = ("noul", "choice", "score")
 MIN_CHOICE_OPTIONS: int = 2
 MAX_CHOICE_OPTIONS: int = 255
@@ -67,6 +70,17 @@ MAX_DECISION_QUESTIONS: int = 1000
 ENV_NOT_CONFIGURED: str = "GeminiDecisionsClient nao configurado: GEMINI_API_KEY/GOOGLE_API_KEY ausente."
 
 _ENV_KEYS: tuple[str, ...] = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY")
+
+
+def default_min_confidence() -> float:
+    """Retorna limiar S1 padrao para escalar predicoes Laya incertas para gemini-decision-1."""
+    raw = os.environ.get("CHICO_S1_MIN_CONFIDENCE")
+    if raw is None or not raw.strip():
+        return DEFAULT_S1_MIN_CONFIDENCE
+    try:
+        return max(0.0, min(1.0, float(raw)))
+    except ValueError:
+        return DEFAULT_S1_MIN_CONFIDENCE
 
 
 def _env_loaded() -> bool:
@@ -411,9 +425,15 @@ def _answer_from_gemini(raw: Any) -> dict[str, Any]:
 
 
 def _answer_from_laya(raw: Any, qtype: str) -> dict[str, Any]:
-    """Normaliza uma resposta da Laya para o mesmo shape de DecisionAnswer."""
+    """Normaliza uma resposta da Laya para o mesmo shape de DecisionAnswer, preservando probabilidades."""
     data = _as_dict(raw)
     out: dict[str, Any] = {"type": qtype, "confidence": _float_or_none(data.get("confidence"))}
+    ans_conf = _float_or_none(data.get("answer_confidence"))
+    if ans_conf is not None:
+        out["answer_confidence"] = ans_conf
+    raw_probs = data.get("probabilities") or data.get("probs")
+    if isinstance(raw_probs, dict) and raw_probs:
+        out["probabilities"] = {str(k): _float_or_none(v) for k, v in raw_probs.items()}
     if qtype == "noul":
         out["noul"] = _float_or_none(data.get("noul", data.get("probability", data.get("value"))))
     elif qtype == "choice":

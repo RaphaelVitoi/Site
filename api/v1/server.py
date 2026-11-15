@@ -49,6 +49,7 @@ from api.v1.handlers import (
     handle_set_state,
     handle_simulate_perspective_tree,
     handle_timesfm_forecast,
+    handle_translate,
     handle_view_file,
     handle_web_search,
 )
@@ -166,6 +167,7 @@ def create_app(manager: QueueManager) -> web.Application:
             web.get("/api/v1/chrysalis/health", handle_chrysalis_health),
             web.post("/api/v1/chrysalis/validate-plan", handle_chrysalis_validate_plan),
             web.post("/api/v1/s1/decide", handle_s1_decide),
+            web.post("/api/v1/translate", handle_translate),
             web.post("/api/v1/game-theory/pluribus/solve", handle_pluribus_solve),
             web.post("/api/v1/game-theory/deepstack/resolve", handle_deepstack_resolve),
             web.post("/api/v1/game-theory/rebel/pbs/evaluate", handle_rebel_pbs_evaluate),

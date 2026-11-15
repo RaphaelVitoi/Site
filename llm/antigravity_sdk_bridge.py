@@ -112,6 +112,7 @@ LOCAL_OPTIMIZED_MODELS: Final[dict[str, str]] = {
     "gemma4-12b": "gemma4:12b",
     "gemma4-e2b": "gemma4:e2b",
     "gemma4": "gemma4:latest",
+    "translategemma": "translategemma:4b",
     "qwen-coder-7b": "qwen2.5-coder:7b-instruct-q5_K_M",
     "qwen-coder-1.5b": "qwen2.5-coder:1.5b",
     "qwen-coder-0.5b": "qwen2.5-coder:0.5b",

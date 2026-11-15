@@ -622,3 +622,38 @@ def test_timesfm_dream_rsi_laya_s1_pruning() -> None:
         laya_choice="complex",
     )
     assert prune_complex is False
+
+
+def test_dream_timesfm_batch_and_confidence_guard() -> None:
+    """Valida forecast_trajectories_batch e protecao contra fast-prune quando S1 tem baixa confianca."""
+    from engine.dream_timesfm_forecaster import DreamTimesFMForecaster  # noqa: PLC0415
+
+    forecaster = DreamTimesFMForecaster()
+    batch = forecaster.forecast_trajectories_batch(
+        {"r1": [0.4, 0.5, 0.6, 0.7], "short": [0.2, 0.3], "r2": [0.8, 0.75, 0.7, 0.65]},
+        horizon=3,
+    )
+    assert set(batch.keys()) == {"r1", "r2"}
+    assert len(batch["r1"].mean_prediction) == 3
+
+    # Com confianca baixa (0.25), fast-prune NAO deve ser disparado cegamente
+    prune_low_conf, reason_low = forecaster.should_prune_with_laya_s1(
+        scores=[0.75, 0.70, 0.68, 0.72],
+        global_best_score=0.98,
+        laya_noul=0.10,
+        laya_choice="surrender_fold",
+        laya_confidence=0.25,
+    )
+    assert "[LAYA-S1-FAST-PRUNE]" not in reason_low
+    assert isinstance(prune_low_conf, bool)
+
+    # Com confianca alta (0.85) e score muito inferior, fast-prune dispara
+    prune_high_conf, reason_high = forecaster.should_prune_with_laya_s1(
+        scores=[0.10, 0.15],
+        global_best_score=0.90,
+        laya_noul=0.10,
+        laya_choice="surrender_fold",
+        laya_confidence=0.85,
+    )
+    assert prune_high_conf is True
+    assert "[LAYA-S1-FAST-PRUNE]" in reason_high

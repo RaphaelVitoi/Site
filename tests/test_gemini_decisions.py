@@ -516,3 +516,22 @@ def test_laya_0_4_32_revision_e_failover_helper() -> None:
     mock_laya.assert_called_once()
     assert "laya-multilingual-failover-active" in res.provenia.assumptions
     assert res.choice == "gerar"
+
+
+def test_laya_answer_preserva_probabilities_e_answer_confidence() -> None:
+    """Normalizacao Laya->DecisionResult preserva probabilities e answer_confidence sem descarte."""
+    from llm.gemini_decisions import _answer_from_laya  # noqa: PLC0415
+
+    ans = _answer_from_laya(
+        {
+            "type": "choice",
+            "choice": "wet",
+            "confidence": 0.34,
+            "answer_confidence": 0.68,
+            "probabilities": {"dry": 0.22, "wet": 0.68, "monotone": 0.10},
+        },
+        "choice",
+    )
+    assert ans["choice"] == "wet"
+    assert ans["answer_confidence"] == pytest.approx(0.68)
+    assert ans["probabilities"] == {"dry": 0.22, "wet": 0.68, "monotone": 0.10}

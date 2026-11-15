@@ -399,11 +399,18 @@ async def handle_s1_decide(request: web.Request) -> web.Response:
             status=400,
         )
     prefer_cloud = bool(data.get("prefer_cloud", False))
+    raw_min_conf = data.get("min_confidence")
 
     def _run_decide() -> Any:
-        from llm.gemini_decisions import decide_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+        from llm.gemini_decisions import decide_s1, default_min_confidence  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
-        return decide_s1(state, questions, prefer_cloud=prefer_cloud)
+        if raw_min_conf is not None:
+            eff_min_conf: float | None = float(raw_min_conf)
+        elif "min_confidence" in data:
+            eff_min_conf = None
+        else:
+            eff_min_conf = default_min_confidence()
+        return decide_s1(state, questions, prefer_cloud=prefer_cloud, min_confidence=eff_min_conf)
 
     try:
         result = await asyncio.to_thread(_run_decide)
@@ -415,6 +422,90 @@ async def handle_s1_decide(request: web.Request) -> web.Response:
     payload = result.to_dict()
     payload["status"] = "SUCCESS"
     return web.json_response(payload)
+
+
+def _parse_translate_payload(data: Any) -> tuple[dict[str, Any] | None, web.Response | None]:
+    """Valida e normaliza payload JSON de ``POST /api/v1/translate``."""
+    if not isinstance(data, dict):
+        return None, web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+    text = data.get("text")
+    image_b64 = data.get("image_base64") or data.get("image_path")
+    has_text = isinstance(text, str) and bool(text.strip())
+    has_img = isinstance(image_b64, str) and bool(image_b64.strip())
+    if not has_text and not has_img:
+        return None, web.json_response(
+            {"status": "ERROR", "error": "Informe 'text' ou 'image_base64'/'image_path' nao vazio."},
+            status=400,
+        )
+    domain = str(data.get("domain") or "general").strip().lower()
+    if domain not in ("general", "poker", "tech"):
+        return None, web.json_response(
+            {"status": "ERROR", "error": "Parametro 'domain' deve ser general, poker ou tech."},
+            status=400,
+        )
+    glossary_terms = data.get("glossary_terms")
+    if glossary_terms is not None and not isinstance(glossary_terms, list):
+        return None, web.json_response(
+            {"status": "ERROR", "error": "Parametro 'glossary_terms' deve ser lista de strings."},
+            status=400,
+        )
+    return {
+        "has_img": has_img,
+        "text": str(text or ""),
+        "image": str(image_b64 or ""),
+        "target_lang": str(data.get("target_lang") or "pt-BR"),
+        "source_lang": str(data.get("source_lang") or "auto"),
+        "domain": domain,
+        "glossary_terms": [str(t) for t in glossary_terms] if glossary_terms else None,
+        "prefer_local": bool(data.get("prefer_local", True)),
+        "allow_cloud_fallback": bool(data.get("allow_cloud_fallback", True)),
+    }, None
+
+
+async def handle_translate(request: web.Request) -> web.Response:
+    """POST /api/v1/translate -- traducao multilingue/vision via TranslateGemma 4B."""
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+
+    params, err_resp = _parse_translate_payload(data)
+    if err_resp is not None or params is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+
+    def _run_translate() -> Any:
+        from llm.translategemma import translate_image, translate_text  # noqa: PLC0415
+
+        if params["has_img"]:
+            src = "en" if params["source_lang"] == "auto" else params["source_lang"]
+            return translate_image(
+                params["image"],
+                target_lang=params["target_lang"],
+                source_lang=src,
+                domain=params["domain"],
+                prefer_local=params["prefer_local"],
+                allow_cloud_fallback=params["allow_cloud_fallback"],
+            )
+        return translate_text(
+            params["text"],
+            target_lang=params["target_lang"],
+            source_lang=params["source_lang"],
+            domain=params["domain"],
+            glossary_terms=params["glossary_terms"],
+            prefer_local=params["prefer_local"],
+            allow_cloud_fallback=params["allow_cloud_fallback"],
+        )
+
+    try:
+        result = await asyncio.to_thread(_run_translate)
+    except RuntimeError as e:
+        return web.json_response({"status": "ERROR", "error": str(e)[:300]}, status=503)
+    except Exception as e:  # noqa: BLE001
+        return _internal_error(e, "handle_translate")
+
+    payload = result.to_dict()
+    payload["status"] = "ERROR" if result.error else "SUCCESS"
+    return web.json_response(payload, status=503 if result.error else 200)
 
 
 async def handle_health(request: web.Request) -> web.Response:
@@ -1397,6 +1488,7 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
                 "pluribus",
                 query_text,
                 {"iterations": req.iterations, "lambda_factor": req.state.lambda_factor},
+                use_cascade=True,
             )
             adapted_iters = int(bridge_res.adapted_parameters.get("iterations", req.iterations))
             adapted_lambda = float(bridge_res.adapted_parameters.get("lambda_factor", req.state.lambda_factor))
@@ -1497,6 +1589,7 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
                 "deepstack",
                 query_text,
                 {"tolerance": float(getattr(req, "tolerance", 0.01))},
+                use_cascade=True,
             )
             adapted_iters = (
                 int(req.iterations * (1.0 - bridge_res.s1_prediction.noul * 0.2))

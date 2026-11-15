@@ -1315,8 +1315,20 @@ class MemoryRAG:
         n_results: int = 3,
         local_only: bool = False,
         engine: str = "auto",
+        normalize_non_english: bool = False,
     ) -> str:
         try:
+            if normalize_non_english:
+                from llm.translategemma import normalize_for_reasoning  # noqa: PLC0415
+
+                question, _ = await asyncio.to_thread(
+                    normalize_for_reasoning,
+                    question,
+                    target_lang="en",
+                    domain="poker",
+                    prefer_local=True,
+                    allow_cloud_fallback=not local_only,
+                )
             target_engine = self._select_target_engine(question, engine)
 
             if target_engine == "hybrid_federated" and self.lance_backend:

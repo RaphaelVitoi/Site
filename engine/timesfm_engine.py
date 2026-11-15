@@ -10,11 +10,13 @@ GOVERNANCE:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 import json
 import logging
 import math
+import sys
 import threading
 from typing import Any, Literal
 
@@ -203,15 +205,170 @@ class TimesFMGovernanceError(PermissionError):
     """Lancado quando uma tentativa de deploy comercial viola a licenca do TimesFM 3.0."""
 
 
-def _normalize_covariates_array(
+def has_local_pretrained_weights(
+    model_key: str = TIMESFM_25_200M,
+    cache_dir: str | None = None,
+) -> bool:
+    """Verifica offline (zero rede) se o snapshot do modelo TimesFM esta em cache local."""
+    canonical_key = TIMESFM_ALIASES.get(model_key.strip().lower(), model_key)
+    meta = TIMESFM_CATALOG.get(canonical_key)
+    if meta is None or canonical_key == TIMESFM_20_500M:
+        return False
+    if canonical_key in _PRETRAINED_MODEL_CACHE:
+        return True
+    try:
+        from huggingface_hub import snapshot_download  # noqa: PLC0415
+
+        snapshot_download(repo_id=meta.model_id, cache_dir=cache_dir, local_files_only=True)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+_ERR_MIN_HISTORY = "A serie historica deve possuir ao menos 4 pontos para inferencia."
+
+
+def _align_1d_sequence(values: list[float] | np.ndarray, target_len: int, *, pad_left: bool) -> list[float]:
+    """Alinha serie 1D ao comprimento exato replicando borda (zero alocacao desnecessaria)."""
+    arr = [float(v) for v in np.asarray(values, dtype=np.float64).flatten()]
+    if target_len <= 0:
+        return []
+    if not arr:
+        return [0.0] * target_len
+    if len(arr) >= target_len:
+        return arr[-target_len:] if pad_left else arr[:target_len]
+    pad_val = arr[0] if pad_left else arr[-1]
+    pad = [pad_val] * (target_len - len(arr))
+    return (pad + arr) if pad_left else (arr + pad)
+
+
+def _coerce_covariates_map(
     covariates: dict[str, list[float]] | np.ndarray | None,
-) -> np.ndarray | None:
-    """Converte covariadas em dicionario ou array para ndarray float32."""
+    prefix: str,
+) -> dict[str, list[float] | np.ndarray]:
+    """Converte dict ou ndarray de covariadas em mapa homogeneo ``chave -> serie``."""
     if covariates is None:
-        return None
+        return {}
     if isinstance(covariates, dict):
-        return np.array(list(covariates.values()), dtype=np.float32)
-    return np.asarray(covariates, dtype=np.float32)
+        return dict(covariates)
+    arr = np.asarray(covariates, dtype=np.float32)
+    rows = [arr] if arr.ndim == 1 else list(arr)
+    return {f"{prefix}_{i}": row for i, row in enumerate(rows)}
+
+
+def _resolve_2p5_covariate_pair(
+    key: str,
+    history_len: int,
+    horizon: int,
+    past_map: Mapping[str, list[float] | np.ndarray],
+    fut_map: Mapping[str, list[float] | np.ndarray],
+) -> list[list[float]] | None:
+    """Resolve e alinha um par (past, future) para ``dynamic_numerical_covariates``."""
+    past_vals = _align_1d_sequence(past_map[key], history_len, pad_left=True) if key in past_map else None
+    fut_vals = _align_1d_sequence(fut_map[key], horizon, pad_left=False) if key in fut_map else None
+    if past_vals is None:
+        if fut_vals is None:
+            return None
+        past_vals = [fut_vals[0] if fut_vals else 0.0] * history_len
+    elif fut_vals is None:
+        fut_vals = [past_vals[-1] if past_vals else 0.0] * horizon
+    return [past_vals + fut_vals]
+
+
+def _build_2p5_dynamic_covariates(
+    history_len: int,
+    horizon: int,
+    past_covariates: dict[str, list[float]] | np.ndarray | None,
+    future_covariates: dict[str, list[float]] | np.ndarray | None,
+) -> dict[str, list[list[float]]]:
+    """Constroi dict dynamic_numerical_covariates no shape exigido por TimesFM 2.5 XReg."""
+    past_map = _coerce_covariates_map(past_covariates, "past_cov")
+    fut_map = _coerce_covariates_map(future_covariates, "fut_cov")
+
+    dyn_covs: dict[str, list[list[float]]] = {}
+    for key in dict.fromkeys([*past_map.keys(), *fut_map.keys()]):
+        pair = _resolve_2p5_covariate_pair(key, history_len, horizon, past_map, fut_map)
+        if pair is not None:
+            dyn_covs[key] = pair
+    return dyn_covs
+
+
+def _append_dict_covariates_3p0(
+    history_len: int,
+    horizon: int,
+    past_map: dict[str, list[float]],
+    fut_map: dict[str, list[float]],
+    po_rows: list[list[float]],
+    pf_rows: list[list[float]],
+) -> None:
+    """Separa covariadas em dicionario nos blocos ``past_only`` e ``past_future``."""
+    for key, raw_past in past_map.items():
+        past_vals = _align_1d_sequence(raw_past, history_len, pad_left=True)
+        if key in fut_map:
+            fut_vals = _align_1d_sequence(fut_map[key], horizon, pad_left=False)
+            pf_rows.append(past_vals + fut_vals)
+        else:
+            po_rows.append(past_vals)
+    for key, raw_fut in fut_map.items():
+        if key in past_map:
+            continue
+        fut_vals = _align_1d_sequence(raw_fut, horizon, pad_left=False)
+        past_vals = [fut_vals[0] if fut_vals else 0.0] * history_len
+        pf_rows.append(past_vals + fut_vals)
+
+
+def _append_array_covariates_3p0(
+    history_len: int,
+    horizon: int,
+    past_covariates: np.ndarray | None,
+    future_covariates: np.ndarray | None,
+    po_rows: list[list[float]],
+    pf_rows: list[list[float]],
+) -> None:
+    """Alinha arrays NumPy brutos para ``past_only`` (T_hist) e ``past_future`` (T_hist + horizon)."""
+    if past_covariates is not None:
+        arr = np.atleast_2d(np.asarray(past_covariates, dtype=np.float32))
+        for row in arr:
+            po_rows.append(_align_1d_sequence(row, history_len, pad_left=True))
+    if future_covariates is not None:
+        arr = np.atleast_2d(np.asarray(future_covariates, dtype=np.float32))
+        target_total = history_len + horizon
+        for row in arr:
+            if len(row) >= target_total:
+                pf_rows.append(_align_1d_sequence(row, target_total, pad_left=True))
+                continue
+            fut_vals = _align_1d_sequence(row, horizon, pad_left=False)
+            past_vals = [fut_vals[0] if fut_vals else 0.0] * history_len
+            pf_rows.append(past_vals + fut_vals)
+
+
+def _build_3p0_covariates_arrays(
+    history_len: int,
+    horizon: int,
+    past_covariates: dict[str, list[float]] | np.ndarray | None,
+    future_covariates: dict[str, list[float]] | np.ndarray | None,
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    """Constroi arrays 2D (n_cov, T) no contrato TimesFM 3.0 (past_only=T_hist, past_future=T_hist+horizon)."""
+    po_rows: list[list[float]] = []
+    pf_rows: list[list[float]] = []
+
+    if isinstance(past_covariates, dict) or isinstance(future_covariates, dict):
+        past_map = dict(past_covariates) if isinstance(past_covariates, dict) else {}
+        fut_map = dict(future_covariates) if isinstance(future_covariates, dict) else {}
+        _append_dict_covariates_3p0(history_len, horizon, past_map, fut_map, po_rows, pf_rows)
+
+    _append_array_covariates_3p0(
+        history_len,
+        horizon,
+        past_covariates if isinstance(past_covariates, np.ndarray) else None,
+        future_covariates if isinstance(future_covariates, np.ndarray) else None,
+        po_rows,
+        pf_rows,
+    )
+
+    po_arr = np.asarray(po_rows, dtype=np.float32) if po_rows else None
+    pf_arr = np.asarray(pf_rows, dtype=np.float32) if pf_rows else None
+    return po_arr, pf_arr
 
 
 def _extract_quantiles_from_predict(
@@ -300,7 +457,7 @@ class TimesFMEngine:
                     )
                     _PRETRAINED_MODEL_CACHE[self.preferred_model_key] = model
                 self._model = model
-            logger.info("TimesFM 3.0 (Research) carregado com pesos: %s", self.metadata.model_id)
+            logger.debug("TimesFM 3.0 (Research) carregado com pesos: %s", self.metadata.model_id)
             return True
 
         if self.preferred_model_key == TIMESFM_25_200M:
@@ -310,27 +467,37 @@ class TimesFMEngine:
             with _PRETRAINED_MODEL_LOCK:
                 model = _PRETRAINED_MODEL_CACHE.get(self.preferred_model_key)
                 if model is None:
-                    from timesfm.configs import ForecastConfig  # noqa: PLC0415
-                    from timesfm.timesfm_2p5.timesfm_2p5_torch import TimesFM_2p5_200M_torch  # noqa: PLC0415
+                    saved_stdout, saved_stderr = sys.stdout, sys.stderr
+                    prev_disable = logging.root.manager.disable
+                    logging.disable(logging.INFO)
+                    try:
+                        from timesfm.configs import ForecastConfig  # noqa: PLC0415
+                        from timesfm.timesfm_2p5.timesfm_2p5_torch import TimesFM_2p5_200M_torch  # noqa: PLC0415
 
-                    model = TimesFM_2p5_200M_torch.from_pretrained(
-                        self.metadata.model_id,
-                        cache_dir=cache_dir,
-                        local_files_only=local_files_only,
-                        torch_compile=False,
-                    )
-                    model.compile(
-                        ForecastConfig(
-                            max_context=2048,
-                            max_horizon=128,
-                            per_core_batch_size=1,
-                            normalize_inputs=True,
-                            infer_is_positive=False,
+                        model = TimesFM_2p5_200M_torch.from_pretrained(
+                            self.metadata.model_id,
+                            cache_dir=cache_dir,
+                            local_files_only=local_files_only,
+                            torch_compile=False,
                         )
-                    )
+                        model.compile(
+                            ForecastConfig(
+                                max_context=2048,
+                                max_horizon=128,
+                                per_core_batch_size=8,
+                                normalize_inputs=True,
+                                infer_is_positive=False,
+                                fix_quantile_crossing=True,
+                                force_flip_invariance=True,
+                                return_backcast=True,
+                            )
+                        )
+                    finally:
+                        logging.disable(prev_disable)
+                        sys.stdout, sys.stderr = saved_stdout, saved_stderr
                     _PRETRAINED_MODEL_CACHE[self.preferred_model_key] = model
                 self._model = model
-            logger.info("TimesFM 2.5 carregado com pesos: %s", self.metadata.model_id)
+            logger.debug("TimesFM 2.5 carregado com pesos: %s", self.metadata.model_id)
             return True
 
         raise RuntimeError(
@@ -470,27 +637,123 @@ class TimesFMEngine:
         _ = frequency_indicator
         history = np.asarray(series, dtype=np.float32)
         if len(history) < 4:
-            raise ValueError("A serie historica deve possuir ao menos 4 pontos para inferencia.")
+            raise ValueError(_ERR_MIN_HISTORY)
 
         if self._model is not None:
             return self._forecast_model_univariate(history, horizon, target_name)
 
         return self._forecast_analytic_fallback(history, horizon, target_name)
 
+    def _weight_forecast_result(
+        self,
+        target_name: str,
+        history_len: int,
+        horizon: int,
+        mean_pred: list[float],
+        q10: list[float],
+        q90: list[float],
+    ) -> ForecastResult:
+        """Constroi ForecastResult padronizado para inferencia neural com pesos carregados."""
+        return ForecastResult(
+            target_name=target_name,
+            history_length=history_len,
+            forecast_horizon=horizon,
+            mean_prediction=mean_pred,
+            quantile_10=q10,
+            quantile_90=q90,
+            model_used=self.metadata.model_id,
+            license_tier=self.metadata.license_tier.value,
+            intended_model=self.metadata.model_id,
+            weights_loaded=True,
+        )
+
     def forecast_multivariate(
         self,
         series_dict: dict[str, list[float]],
         horizon: int = 12,
     ) -> dict[str, ForecastResult]:
-        """Executa previsao multivariada (multiplas series correlacionadas, e.g. Fator Psi + RIO + Pressao)."""
-        results: dict[str, ForecastResult] = {}
+        """Executa previsao multivariada em batch unico quando pesos neurais estao carregados."""
+        if not series_dict:
+            return {}
+        histories: list[tuple[str, np.ndarray]] = []
         for name, series in series_dict.items():
-            results[name] = self.forecast_univariate(
-                series=series,
-                horizon=horizon,
-                target_name=name,
+            hist = np.asarray(series, dtype=np.float32)
+            if len(hist) < 4:
+                raise ValueError(_ERR_MIN_HISTORY)
+            histories.append((name, hist))
+
+        model: Any = self._model
+        if model is not None and hasattr(model, "predict_batch"):
+            outputs = list(
+                model.predict_batch(
+                    contexts=[h.astype(np.float32) for _, h in histories],
+                    horizon=horizon,
+                    return_quantiles=True,
+                )
             )
-        return results
+            return {
+                name: self._weight_forecast_result(
+                    name, len(hist), horizon, *_extract_quantiles_from_predict(out, horizon)
+                )
+                for (name, hist), out in zip(histories, outputs, strict=True)
+            }
+
+        if model is not None and hasattr(model, "forecast"):
+            points, quantiles = model.forecast(horizon, [h.astype(np.float32) for _, h in histories])
+            return {
+                name: self._weight_forecast_result(
+                    name,
+                    len(hist),
+                    horizon,
+                    *_extract_quantiles_from_legacy_forecast([points[idx]], [quantiles[idx]], horizon),
+                )
+                for idx, (name, hist) in enumerate(histories)
+            }
+
+        return {name: self._forecast_analytic_fallback(hist, horizon, name) for name, hist in histories}
+
+    def _forecast_xreg_ridge_2p5(
+        self,
+        model: Any,
+        history: np.ndarray,
+        horizon: int,
+        dyn_covs: dict[str, list[list[float]]],
+        target_name: str,
+    ) -> ForecastResult:
+        """Executa xreg+timesfm em Ridge puro (NumPy/scikit-learn) quando `timesfm[xreg]` (jax) nao esta instalado."""
+        n_hist = len(history)
+        mat = np.column_stack([np.asarray(vals[0], dtype=np.float64) for vals in dyn_covs.values()])
+        x_past = mat[:n_hist]
+        x_future = mat[n_hist : n_hist + horizon]
+
+        means = x_past.mean(axis=0)
+        stds = x_past.std(axis=0)
+        stds = np.where(stds > 1e-6, stds, 1.0)
+        xp_scaled = (x_past - means) / stds
+        xf_scaled = (x_future - means) / stds
+
+        try:
+            from sklearn.linear_model import Ridge  # noqa: PLC0415
+
+            reg = Ridge(alpha=1.0)
+            reg.fit(xp_scaled, history.astype(np.float64))
+            lin_past = reg.predict(xp_scaled).astype(np.float32)
+            lin_future = reg.predict(xf_scaled).astype(np.float32)
+        except ImportError:
+            design_past = np.column_stack([np.ones(n_hist, dtype=np.float64), xp_scaled])
+            design_future = np.column_stack([np.ones(horizon, dtype=np.float64), xf_scaled])
+            coef, *_ = np.linalg.lstsq(design_past, history.astype(np.float64), rcond=None)
+            lin_past = (design_past @ coef).astype(np.float32)
+            lin_future = (design_future @ coef).astype(np.float32)
+
+        residuals = (history - lin_past).astype(np.float32)
+        points, quantiles = model.forecast(horizon, [residuals])
+        res_mean, res_q10, res_q90 = _extract_quantiles_from_legacy_forecast(points, quantiles, horizon)
+
+        mean_pred = [float(lf + rm) for lf, rm in zip(lin_future, res_mean, strict=False)]
+        q10 = [min(m, float(lf + rq10)) for m, lf, rq10 in zip(mean_pred, lin_future, res_q10, strict=False)]
+        q90 = [max(m, float(lf + rq90)) for m, lf, rq90 in zip(mean_pred, lin_future, res_q90, strict=False)]
+        return self._weight_forecast_result(target_name, n_hist, horizon, mean_pred, q10, q90)
 
     def forecast_with_covariates(
         self,
@@ -502,19 +765,23 @@ class TimesFMEngine:
         target_name: str = "metric",
         target_series: list[float] | np.ndarray | None = None,
     ) -> ForecastResult:
-        """Executa previsao condicionada a covariaveis temporais passadas e futuras."""
+        """Executa previsao condicionada a covariaveis temporais (TimesFM 2.5 XReg ou 3.0)."""
         _ = frequency_indicator
         actual_series = series if series is not None else target_series
         if actual_series is None:
             raise ValueError("Uma serie historica deve ser informada (series ou target_series).")
         history = np.asarray(actual_series, dtype=np.float32)
         if len(history) < 4:
-            raise ValueError("A serie historica deve possuir ao menos 4 pontos para inferencia.")
+            raise ValueError(_ERR_MIN_HISTORY)
 
         model: Any = self._model
         if model is not None and hasattr(model, "predict"):
-            po_arr = _normalize_covariates_array(past_covariates)
-            pf_arr = _normalize_covariates_array(future_covariates)
+            po_arr, pf_arr = _build_3p0_covariates_arrays(
+                len(history),
+                horizon,
+                past_covariates,
+                future_covariates,
+            )
             output = model.predict(
                 context=history.astype(np.float32),
                 horizon=horizon,
@@ -523,18 +790,34 @@ class TimesFMEngine:
                 return_quantiles=True,
             )
             mean_pred, q10, q90 = _extract_quantiles_from_predict(output, horizon)
-            return ForecastResult(
-                target_name=target_name,
-                history_length=len(history),
-                forecast_horizon=horizon,
-                mean_prediction=mean_pred,
-                quantile_10=q10,
-                quantile_90=q90,
-                model_used=self.metadata.model_id,
-                license_tier=self.metadata.license_tier.value,
-                intended_model=self.metadata.model_id,
-                weights_loaded=True,
+            return self._weight_forecast_result(target_name, len(history), horizon, mean_pred, q10, q90)
+
+        if (
+            model is not None
+            and hasattr(model, "forecast_with_covariates")
+            and (past_covariates is not None or future_covariates is not None)
+        ):
+            dyn_covs = _build_2p5_dynamic_covariates(
+                len(history),
+                horizon,
+                past_covariates,
+                future_covariates,
             )
+            if dyn_covs:
+                try:
+                    points, quantiles = model.forecast_with_covariates(
+                        inputs=[history.tolist()],
+                        dynamic_numerical_covariates=dyn_covs,
+                        xreg_mode="xreg + timesfm",
+                    )
+                    mean_pred, q10, q90 = _extract_quantiles_from_legacy_forecast([points[0]], [quantiles[0]], horizon)
+                    return self._weight_forecast_result(target_name, len(history), horizon, mean_pred, q10, q90)
+                except ImportError as exc:
+                    logger.debug(
+                        "timesfm[xreg] (jax) indisponivel (%s); executando xreg+timesfm via Ridge sklearn+residuals.",
+                        exc,
+                    )
+                    return self._forecast_xreg_ridge_2p5(model, history, horizon, dyn_covs, target_name)
 
         return self.forecast_univariate(series=history, horizon=horizon, target_name=target_name)
 

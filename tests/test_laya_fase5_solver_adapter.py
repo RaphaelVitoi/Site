@@ -7,6 +7,8 @@ Cubrem:
   - Comportamento robusto com fallback heuristico.
 """
 
+import pytest
+
 from llm.laya_solver_adapter import LayaSolverAdapter, LayaSolverBridgeResult
 
 
@@ -121,3 +123,55 @@ class TestLayaSolverAdapter:
         assert isinstance(p.units, list)
         assert len(p.assumptions) > 0
         assert res.framework_signals.get("cfr_regret_matching_plus") is True
+
+    def test_adapt_for_solver_cascade_usa_poker_preset_e_preserva_respostas(self, monkeypatch):
+        """use_cascade=True seleciona street_triage para poker solvers e preserva answers/probabilities."""
+        from llm.gemini_decisions import DecisionResult  # noqa: PLC0415
+        from llm.laya_bridge import Provenia  # noqa: PLC0415
+
+        captured: dict = {}
+
+        def fake_decide_s1(state, questions, **kwargs):
+            captured["questions"] = questions
+            captured["min_confidence"] = kwargs.get("min_confidence")
+            return DecisionResult(
+                answers={
+                    "board_texture": {
+                        "type": "choice",
+                        "choice": "wet",
+                        "confidence": 0.78,
+                        "probabilities": {"dry": 0.12, "wet": 0.78, "monotone": 0.10},
+                    },
+                    "bubble_danger": {"type": "noul", "noul": 0.82, "confidence": 0.82},
+                },
+                engine="gemini-decision-1",
+                model_used="gemini-decision-1",
+                latency_ms=140.0,
+                n_tokens=200,
+                provenia=Provenia(
+                    engine_id="gemini-decision-1",
+                    implementation_level="trained-model",
+                    runtime_used="google-genai v1beta (cloud)",
+                    model_used="gemini-decision-1",
+                    intended_model="gemini-decision-1",
+                    weights_loaded=True,
+                    fallback_used=False,
+                    assumptions=[],
+                    limitations=[],
+                    units=["probability"],
+                ),
+            )
+
+        monkeypatch.setattr("llm.gemini_decisions.decide_s1", fake_decide_s1)
+        res = LayaSolverAdapter.adapt_for_solver(
+            "pluribus",
+            "BTN raises 2.2bb, Hero BB AQs 18bb FT",
+            {"iterations": 500, "lambda_factor": 1.0},
+            use_cascade=True,
+        )
+        assert "board_texture" in captured["questions"]
+        assert "hero_perceived_line" in captured["questions"]
+        assert captured["min_confidence"] == pytest.approx(0.55)
+        assert res.adapted_parameters["iterations"] == 750  # 500 * 1.5 por wet + noul=0.82
+        assert "s1_answers" in res.framework_signals
+        assert res.framework_signals["s1_answers"]["board_texture"]["probabilities"]["wet"] == 0.78

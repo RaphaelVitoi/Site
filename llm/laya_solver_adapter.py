@@ -40,6 +40,69 @@ __all__ = [
     "LayaSolverBridgeResult",
 ]
 
+_POKER_SOLVER_PRESETS: dict[str, str] = {
+    "pluribus": "street_triage",
+    "deepstack": "street_triage",
+    "cfr-plus": "street_triage",
+    "monte-carlo": "street_triage",
+    "pmev-perspective": "icm_pressure",
+    "pmev-dream": "icm_pressure",
+    "prospect-theory": "icm_pressure",
+}
+
+
+def _select_cascade_questions(
+    solver_key: str,
+    custom_questions: dict[str, dict[str, Any]] | None,
+) -> dict[str, dict[str, Any]]:
+    """Seleciona preset semantico de poker por solver quando questions nao foi informado."""
+    if custom_questions:
+        return custom_questions
+    preset_name = _POKER_SOLVER_PRESETS.get(solver_key)
+    if preset_name and preset_name in LAYA_POKER_PRESETS:
+        return LAYA_POKER_PRESETS[preset_name]
+    from llm.laya_bridge import LAYA_DEFAULT_QUESTIONS  # noqa: PLC0415
+
+    return LAYA_DEFAULT_QUESTIONS
+
+
+def _extract_answer_scalars(answers: dict[str, Any]) -> tuple[float | None, str | None, float | None, float | None]:
+    """Extrai ``(noul, choice, score, min_confidence)`` de respostas Laya/GD1."""
+    noul: float | None = None
+    choice: str | None = None
+    score: float | None = None
+    confs: list[float] = []
+    for qdef in answers.values():
+        if not isinstance(qdef, dict):
+            continue
+        if qdef.get("noul") is not None:
+            noul = float(qdef["noul"])
+        if qdef.get("choice") is not None:
+            choice = str(qdef["choice"])
+        if qdef.get("score") is not None:
+            score = float(qdef["score"])
+        if qdef.get("confidence") is not None:
+            confs.append(float(qdef["confidence"]))
+    return noul, choice, score, (min(confs) if confs else None)
+
+
+def _decision_result_to_laya_prediction(res: Any) -> LayaPrediction:
+    """Converte DecisionResult (Laya ou Gemini Decision 1) em LayaPrediction preservando respostas e probabilidades."""
+    answers = getattr(res, "answers", {}) or {}
+    noul, choice, score, min_conf = _extract_answer_scalars(answers)
+    return LayaPrediction(
+        answers=answers,
+        model_used=str(getattr(res, "model_used", "") or ""),
+        device="cloud" if getattr(res, "engine", "") == "gemini-decision-1" else "local",
+        n_tokens=int(getattr(res, "n_tokens", 0) or 0),
+        latency_ms=float(getattr(res, "latency_ms", 0.0) or 0.0),
+        noul=noul,
+        choice=choice,
+        score=score,
+        provenia=res.provenia,
+        confidence=min_conf,
+    )
+
 
 @dataclass
 class LayaSolverBridgeResult:
@@ -55,10 +118,11 @@ class LayaSolverBridgeResult:
 
 def _modulate_pluribus(params: dict[str, Any], noul: float, choice: str, ruin_priority: float) -> dict[str, Any]:
     base_iters = int(params.get("iterations", 500))
-    if noul > 0.7 or choice == "complex":
+    high_complexity = choice in ("complex", "wet", "monotone", "bluff_pressure")
+    if noul > 0.7 or high_complexity:
         params["iterations"] = int(base_iters * 1.5)
         params["lambda_factor"] = round(float(params.get("lambda_factor", 1.2)) * ruin_priority, 4)
-    return {"pluribus_depth_multiplier": 1.2 if choice == "complex" else 1.0}
+    return {"pluribus_depth_multiplier": 1.2 if high_complexity else 1.0}
 
 
 def _modulate_deepstack(params: dict[str, Any], noul: float, _choice: str, _ruin_priority: float) -> dict[str, Any]:
@@ -82,7 +146,8 @@ def _modulate_cfr_plus(params: dict[str, Any], noul: float, _choice: str, _ruin_
 
 def _modulate_monte_carlo(params: dict[str, Any], noul: float, choice: str, ruin_priority: float) -> dict[str, Any]:
     base_samples = int(params.get("simulations_count", 10000))
-    if noul > 0.6 or choice == "complex":
+    high_complexity = choice in ("complex", "wet", "monotone", "bluff_pressure")
+    if noul > 0.6 or high_complexity:
         params["simulations_count"] = int(base_samples * 1.5)
     params["ruin_prior"] = ruin_priority
     base_conf = float(params.get("confidence_level", 0.95))
@@ -193,40 +258,18 @@ class LayaSolverAdapter:
         return params, signals
 
     @classmethod
-    def adapt_for_solver(
+    def _build_bridge_result(
         cls,
-        solver_name: str,
-        state_text_or_dict: str | dict[str, Any] | LayaPrediction,
-        base_parameters: dict[str, Any] | None = None,
+        solver_key: str,
+        state_desc: str | dict[str, Any],
+        pred: LayaPrediction,
+        base_parameters: dict[str, Any] | None,
+        *,
+        is_multiway: bool = False,
     ) -> LayaSolverBridgeResult:
-        """Traduz a entrada S1 (Laya) em parametros especificos para o solver requisitado.
-
-        Parameters
-        ----------
-        solver_name : str
-            Nome do solver ou framework-alvo (ex: 'pluribus', 'deepstack', 'pmev-perspective').
-        state_text_or_dict : str | dict | LayaPrediction
-            Estado do jogo, prompt, requisicao textual ou predicao Laya pre-calculada.
-        base_parameters : dict | None
-            Parametros base existentes que serao modulados pelo System-1.
-
-        Returns
-        -------
-        LayaSolverBridgeResult com parametros adaptados e proveniencia Secao 4.
-        """
-        solver_key = solver_name.lower().strip()
-        if solver_key not in cls.SOLVERS_SUPORTADOS:
-            solver_key = "universal-importer"
-
+        """Constroi LayaSolverBridgeResult unificado sem duplicar logica entre single/multiway."""
         params = dict(base_parameters or {})
-        if isinstance(state_text_or_dict, LayaPrediction):
-            pred = state_text_or_dict
-            state_desc = str(pred.answers or pred.choice or "")
-            intent = classificar_intencao(state_desc)
-        else:
-            pred = laya_predict(state_text_or_dict)
-            intent = classificar_intencao(state_text_or_dict)
-
+        intent = classificar_intencao(state_desc)
         nao_latin = intent.nao_latin_fraction_pct
         if not pred.provenia.fallback_used and (pred.noul is not None or pred.confidence is not None):
             ruin_priority = ruin_priority_from_laya_prediction(pred)
@@ -239,21 +282,24 @@ class LayaSolverAdapter:
 
         params, framework_signals = cls._modulate_solver_parameters(solver_key, params, noul, choice, ruin_priority)
         framework_signals["s1_confidence_score"] = s1_score
+        if isinstance(pred.answers, dict) and pred.answers:
+            framework_signals["s1_answers"] = pred.answers
 
         p = pred.provenia
+        suffix = "-multiway" if is_multiway else ""
+        extra_assumption = "multiway-table-batch" if is_multiway else "ruin-priority-injected"
         provenia = Provenia(
-            engine_id=f"laya-solver-adapter-{solver_key}",
+            engine_id=f"laya-solver-adapter-{solver_key}{suffix}",
             implementation_level=p.implementation_level,
             runtime_used=p.runtime_used,
             model_used=p.model_used,
             intended_model=p.intended_model,
             weights_loaded=p.weights_loaded,
             fallback_used=p.fallback_used,
-            assumptions=p.assumptions + [f"solver-adapted={solver_key}", "ruin-priority-injected"],
+            assumptions=p.assumptions + [f"solver-adapted={solver_key}", extra_assumption],
             limitations=p.limitations + ["adapter-modulation-is-advisory"],
             units=p.units + ["ruin_priority", "adaptation_factor"],
         )
-
         return LayaSolverBridgeResult(
             target_solver=solver_key,
             adapted_parameters=params,
@@ -264,58 +310,52 @@ class LayaSolverAdapter:
         )
 
     @classmethod
+    def adapt_for_solver(
+        cls,
+        solver_name: str,
+        state_text_or_dict: str | dict[str, Any] | LayaPrediction,
+        base_parameters: dict[str, Any] | None = None,
+        *,
+        questions: dict[str, dict[str, Any]] | None = None,
+        use_cascade: bool = False,
+        min_confidence: float | None = None,
+    ) -> LayaSolverBridgeResult:
+        """Traduz a entrada S1 (Laya / Gemini Decision 1) em parametros para o solver requisitado."""
+        solver_key = solver_name.lower().strip()
+        if solver_key not in cls.SOLVERS_SUPORTADOS:
+            solver_key = "universal-importer"
+
+        if isinstance(state_text_or_dict, LayaPrediction):
+            pred = state_text_or_dict
+            state_desc: str | dict[str, Any] = str(pred.answers or pred.choice or "")
+        elif use_cascade:
+            from llm.gemini_decisions import decide_s1, default_min_confidence  # noqa: PLC0415
+
+            qs = _select_cascade_questions(solver_key, questions)
+            eff_conf = default_min_confidence() if min_confidence is None else min_confidence
+            decision = decide_s1(state_text_or_dict, qs, min_confidence=eff_conf)
+            pred = _decision_result_to_laya_prediction(decision)
+            state_desc = state_text_or_dict
+        else:
+            pred = laya_predict(state_text_or_dict, questions=questions)
+            state_desc = state_text_or_dict
+
+        return cls._build_bridge_result(solver_key, state_desc, pred, base_parameters, is_multiway=False)
+
+    @classmethod
     def adapt_for_multiway_table(
         cls,
         solver_name: str,
         player_states: list[dict[str, Any] | str],
         base_parameters: dict[str, Any] | None = None,
     ) -> list[LayaSolverBridgeResult]:
-        """Processa lote heterogeneo de estados de multiplos jogadores (ex: 9-max FT).
-
-        Aproveita predict_batch() da Laya Multilingual para avaliar ate 9 jogadores
-        em ~72ms compartilhando o mesmo checkpoint mmBERT-base (322M).
-        """
+        """Processa lote heterogeneo de estados de multiplos jogadores (ex: 9-max FT)."""
+        solver_key = solver_name.lower().strip()
+        if solver_key not in cls.SOLVERS_SUPORTADOS:
+            solver_key = "universal-importer"
         requests = [{"state": s, "questions": LAYA_POKER_PRESETS["street_triage"]} for s in player_states]
         predictions = predict_batch(requests, batch_size=len(player_states), model_override=CANONICAL_LAYA_MODEL)
-        results: list[LayaSolverBridgeResult] = []
-        for i, pred in enumerate(predictions):
-            state = player_states[i]
-            params = dict(base_parameters or {})
-            intent = classificar_intencao(state)
-            nao_latin = intent.nao_latin_fraction_pct
-            if not pred.provenia.fallback_used and (pred.noul is not None or pred.confidence is not None):
-                ruin_priority = ruin_priority_from_laya_prediction(pred)
-            else:
-                ruin_priority = max(1.0, min(1.30, 1.0 + (nao_latin / 100.0) * 0.30))
-            noul = pred.noul if pred.noul is not None else 0.0
-            choice = pred.choice or "moderate"
-            s1_score = pred.score or 0.5
-            solver_key = solver_name.lower().strip()
-            if solver_key not in cls.SOLVERS_SUPORTADOS:
-                solver_key = "universal-importer"
-            params, framework_signals = cls._modulate_solver_parameters(solver_key, params, noul, choice, ruin_priority)
-            framework_signals["s1_confidence_score"] = s1_score
-            p = pred.provenia
-            provenia = Provenia(
-                engine_id=f"laya-solver-adapter-{solver_key}-multiway",
-                implementation_level=p.implementation_level,
-                runtime_used=p.runtime_used,
-                model_used=p.model_used,
-                intended_model=p.intended_model,
-                weights_loaded=p.weights_loaded,
-                fallback_used=p.fallback_used,
-                assumptions=p.assumptions + [f"solver-adapted={solver_key}", "multiway-table-batch"],
-                limitations=p.limitations + ["adapter-modulation-is-advisory"],
-                units=p.units + ["ruin_priority", "adaptation_factor"],
-            )
-            results.append(
-                LayaSolverBridgeResult(
-                    target_solver=solver_key,
-                    adapted_parameters=params,
-                    s1_prediction=pred,
-                    ruin_priority=ruin_priority,
-                    framework_signals=framework_signals,
-                    provenia=provenia,
-                )
-            )
-        return results
+        return [
+            cls._build_bridge_result(solver_key, player_states[i], pred, base_parameters, is_multiway=True)
+            for i, pred in enumerate(predictions)
+        ]

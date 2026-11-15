@@ -603,7 +603,10 @@ def criar_fastapi_app() -> FastAPI:
     @app.post("/solve", responses={500: {"description": "Erro interno durante solver bridge"}})
     def solve(req: Annotated[SolveRequest, Body()]):
         try:
-            pred: LayaPrediction = laya_predict(req.state, model_override=req.model)
+            from llm.laya_solver_adapter import _select_cascade_questions  # noqa: PLC0415
+
+            qs = _select_cascade_questions(req.solver_name.lower().strip(), None)
+            pred: LayaPrediction = laya_predict(req.state, questions=qs, model_override=req.model)
             tracker.record(pred.latency_ms)
             bridge = adapter.adapt_for_solver(req.solver_name, pred, req.base_parameters or {})
             bridge_payload = {

@@ -62,6 +62,7 @@ __all__ = [
     "get_laya_multilingual_revision",
     "has_abstained_or_low_confidence",
     "laya_multilingual_failover",
+    "normalize_state_with_translategemma",
 ]
 
 logger = logging.getLogger(__name__)
@@ -211,14 +212,73 @@ def _supported_kwargs(callable_obj: Any, candidate_names: tuple[str, ...]) -> se
     return set()
 
 
+def _default_calibration_path() -> str | None:
+    """Retorna o caminho de calibracao empirica da Laya no poker quando existente."""
+    from pathlib import Path  # noqa: PLC0415
+
+    env_path = os.environ.get("CHICO_LAYA_CALIBRATION_PATH")
+    if env_path and Path(env_path).is_file():
+        return str(Path(env_path))
+    default_path = Path(__file__).resolve().parent.parent / "data" / "laya_poker_calibration.json"
+    return str(default_path) if default_path.is_file() else None
+
+
+def _cached_bundle_revision() -> str | None:
+    """Retorna o commit SHA em cache local de convaiinnovations/laya quando existir."""
+    from pathlib import Path  # noqa: PLC0415
+
+    hub_dir = Path.home() / ".cache" / "huggingface" / "hub" / "models--convaiinnovations--laya"
+    ref_main = hub_dir / "refs" / "main"
+    if ref_main.is_file():
+        with contextlib.suppress(OSError):
+            sha = ref_main.read_text(encoding="utf-8").strip()
+            if sha and (hub_dir / "snapshots" / sha).is_dir():
+                return sha
+    snaps = hub_dir / "snapshots"
+    if snaps.is_dir():
+        for entry in sorted(snaps.iterdir()):
+            if entry.is_dir() and (entry / "multilingual").is_dir():
+                return entry.name
+    return None
+
+
+def _has_cached_laya_snapshot() -> bool:
+    """Detecta se o snapshot local da Laya ja existe em cache HF (bundle ou standalone)."""
+    from pathlib import Path  # noqa: PLC0415
+
+    if _cached_bundle_revision() is not None:
+        return True
+    hub_dir = Path.home() / ".cache" / "huggingface" / "hub"
+    standalone_snap = (
+        hub_dir / "models--convaiinnovations--laya-multilingual" / "snapshots" / LAYA_MULTILINGUAL_DEFAULT_REVISION
+    )
+    return standalone_snap.is_dir()
+
+
 def _build_laya_router(router_cls: Any) -> Any:
-    """Instancia Router com suporte a Vega (>8K tokens) quando aceito pela assinatura."""
+    """Instancia Router com suporte a Vega (>8K tokens), revisao compativel e calibracao quando aceitos."""
     kwargs: dict[str, Any] = {"default": CANONICAL_LAYA_MODEL}
-    supported = _supported_kwargs(router_cls, ("vega", "vega_over_tokens"))
+    supported = _supported_kwargs(
+        router_cls,
+        ("vega", "vega_over_tokens", "revisions", "agent_kwargs", "standalone_repos"),
+    )
     if "vega" in supported:
         kwargs["vega"] = "auto"
     if "vega_over_tokens" in supported:
         kwargs["vega_over_tokens"] = 8192
+    use_standalone = os.environ.get("CHICO_LAYA_STANDALONE_REPOS", "0") == "1"
+    if use_standalone and "standalone_repos" in supported:
+        kwargs["standalone_repos"] = True
+    if "revisions" in supported:
+        if use_standalone:
+            kwargs["revisions"] = {CANONICAL_LAYA_MODEL: LAYA_MULTILINGUAL_DEFAULT_REVISION}
+        else:
+            bundle_rev = _cached_bundle_revision()
+            if bundle_rev:
+                kwargs["revisions"] = {CANONICAL_LAYA_MODEL: bundle_rev}
+    cal_path = _default_calibration_path()
+    if cal_path and "agent_kwargs" in supported:
+        kwargs["agent_kwargs"] = {"calibration": cal_path}
     return router_cls(**kwargs)
 
 
@@ -633,15 +693,35 @@ def _invoke_router_predict(
     model_name: str,
     eff_max_len: int,
     min_confidence: float | None = None,
+    *,
+    head_max_len: int | None = None,
+    task: str | None = None,
+    lang: str | None = None,
 ) -> dict[str, Any]:
-    """Chama ``router.predict`` encaminhando ``max_len`` e ``min_confidence`` quando suportados."""
+    """Chama ``router.predict`` encaminhando parametros avancados e evitando ida a rede quando em cache."""
     predict_fn = router.predict
     kwargs: dict[str, Any] = {"model": model_name}
-    supported = _supported_kwargs(predict_fn, ("max_len", "min_confidence"))
+    supported = _supported_kwargs(predict_fn, ("max_len", "min_confidence", "head_max_len", "task", "lang"))
     if "max_len" in supported:
         kwargs["max_len"] = eff_max_len
     if min_confidence is not None and "min_confidence" in supported:
         kwargs["min_confidence"] = min_confidence
+    if head_max_len is not None and "head_max_len" in supported:
+        kwargs["head_max_len"] = head_max_len
+    if task is not None and "task" in supported:
+        kwargs["task"] = task
+    if lang is not None and "lang" in supported:
+        kwargs["lang"] = lang
+
+    use_offline_guard = _has_cached_laya_snapshot() and os.environ.get("HF_HUB_OFFLINE") is None
+    if use_offline_guard:
+        os.environ["HF_HUB_OFFLINE"] = "1"
+        try:
+            return predict_fn(state, qs, **kwargs)
+        except Exception:  # noqa: BLE001
+            os.environ.pop("HF_HUB_OFFLINE", None)
+        finally:
+            os.environ.pop("HF_HUB_OFFLINE", None)
     return predict_fn(state, qs, **kwargs)
 
 
@@ -653,6 +733,9 @@ def laya_predict(
     *,
     min_confidence: float | None = None,
     allow_cpu_failover: bool = False,
+    head_max_len: int | None = None,
+    task: str | None = None,
+    lang: str | None = None,
 ) -> LayaPrediction:
     """Executa laya.predict() (full System-1 forward pass com laya-multilingual).
 
@@ -696,6 +779,9 @@ def laya_predict(
             model_name,
             eff_max_len,
             min_confidence=min_confidence,
+            head_max_len=head_max_len,
+            task=task,
+            lang=lang,
         )
 
         latency_ms = (time.perf_counter() - inicio) * 1000.0
@@ -1016,6 +1102,7 @@ def _build_remote_predict_body(
     questions: dict[str, dict[str, Any]] | None,
     max_len: int | None,
     min_confidence: float | None = None,
+    model_override: str | None = None,
 ) -> tuple[bytes, int | None]:
     """Serializa payload JSON para ``/predict`` e retorna ``(body, eff_max_len)``."""
     qs = questions if questions is not None else LAYA_DEFAULT_QUESTIONS
@@ -1024,7 +1111,7 @@ def _build_remote_predict_body(
     req_payload: dict[str, Any] = {
         "state": payload_state,
         "questions": qs,
-        "model": CANONICAL_LAYA_MODEL,
+        "model": model_override or CANONICAL_LAYA_MODEL,
     }
     if eff_max_len is not None:
         req_payload["max_len"] = eff_max_len
@@ -1130,3 +1217,24 @@ def ruin_priority_from_laya_prediction(prediction: LayaPrediction | None) -> flo
         prior = 1.0 + (1.0 - conf) * 0.30
         return max(1.0, min(1.30, prior))
     return 1.0
+
+
+def normalize_state_with_translategemma(
+    state: str | dict[str, Any],
+    *,
+    prefer_local: bool = True,
+    allow_cloud_fallback: bool = False,
+) -> tuple[str | dict[str, Any], dict[str, Any]]:
+    """Normaliza estado S1 nao-ingles via TranslateGemma local antes de roteamento/solver."""
+    from llm.translategemma import normalize_for_reasoning  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    if isinstance(state, dict):
+        return state, {"normalized": False, "source_lang": "structured", "cost_usd": 0.0}
+    normalized, telemetry = normalize_for_reasoning(
+        state,
+        target_lang="en",
+        domain="poker",
+        prefer_local=prefer_local,
+        allow_cloud_fallback=allow_cloud_fallback,
+    )
+    return normalized, telemetry

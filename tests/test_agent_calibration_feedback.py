@@ -123,3 +123,44 @@ def test_feedback_ledger_records_conductor_model_and_supervision_mode(tmp_path: 
     assert rows[-1]["conductor_model"] == "gemini-3.8-flash"
     assert rows[-1]["conductor_vehicle"] == "antigravity"
     assert rows[-1]["supervision_mode"] == "assistida"
+
+
+@pytest.mark.skipif(shutil.which("pwsh") is None, reason="pwsh is required for the PowerShell ledger writer")
+def test_feedback_ledger_non_binary_decimal_verifies_hash_chain(tmp_path: Path) -> None:
+    """Scores decimais nao-binarios (ex: 9.3) devem manter roundtrip SHA-256 valido no validador."""
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    verifier = REPOSITORY_ROOT / "scripts" / "ops" / "Test-AgentCalibrationLedger.ps1"
+    subprocess.run(
+        [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            str(WRITER),
+            "-Score",
+            "9.3",
+            "-Feedback",
+            "score decimal nao-binario 9.3",
+            "-SessionId",
+            "fixture-decimal-93-session",
+            "-ConductorModel",
+            "gemini-4-hydrogen",
+            "-ConductorVehicle",
+            "antigravity",
+            "-SupervisionMode",
+            "assistida",
+            "-LedgerPath",
+            str(ledger),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    verify = subprocess.run(
+        ["pwsh", "-NoProfile", "-File", str(verifier), "-LedgerPath", str(ledger)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    payload = json.loads(verify.stdout)
+    assert payload["status"] == "valid"
+    assert payload["records"] == 2

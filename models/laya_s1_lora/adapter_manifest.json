@@ -1,0 +1,20 @@
+{
+  "base_model": "convaiinnovations/laya-multilingual",
+  "adapter_type": "laya-native-calibration+head-distill",
+  "samples_trained": 100,
+  "epochs": 0,
+  "learning_rate": 0.0002,
+  "initial_loss": 0.0,
+  "loss_final": 0.0,
+  "calibration_path": "data\\laya_poker_calibration.json",
+  "temperature": [
+    1.4930962324142456,
+    1.0,
+    5.0
+  ],
+  "temperature_by_options": {},
+  "ece_after": null,
+  "checkpoint_path": null,
+  "trained_at": "2026-11-15T18:23:18.480907+00:00",
+  "device_used": "cpu"
+}

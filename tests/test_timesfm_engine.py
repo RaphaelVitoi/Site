@@ -551,3 +551,64 @@ def test_timesfm_30_research_inference_and_governance():
     assert len(res.mean_prediction) == 3
     assert res.license_tier == LicenseTier.NON_COMMERCIAL_V1.value
     assert res.intended_model == "google/timesfm-3.0-pytorch"
+
+
+def test_timesfm_multivariate_executes_single_batched_forward_pass():
+    """Valida que forecast_multivariate agrupa todas as series em uma unica chamada model.forecast."""
+    calls: list[int] = []
+
+    class BatchedModel:
+        def forecast(self, horizon, inputs):
+            calls.append(len(inputs))
+            pts = [[float(idx + 1)] * horizon for idx in range(len(inputs))]
+            qs = [[[float(idx + 0.5)] * 10 for _ in range(horizon)] for idx in range(len(inputs))]
+            return pts, qs
+
+    engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
+    engine._model = BatchedModel()
+
+    results = engine.forecast_multivariate(
+        series_dict={
+            "Fator_Psi": [1.0, 1.1, 1.2, 1.3],
+            "Divida_RIO": [2.0, 2.2, 2.4, 2.6],
+            "Pressao_ICM": [3.0, 3.3, 3.6, 3.9],
+        },
+        horizon=4,
+    )
+    assert calls == [3]
+    assert set(results.keys()) == {"Fator_Psi", "Divida_RIO", "Pressao_ICM"}
+    assert results["Fator_Psi"].weights_loaded is True
+    assert results["Pressao_ICM"].mean_prediction == [3.0, 3.0, 3.0, 3.0]
+
+
+def test_timesfm_25_neural_covariates_xreg_and_config():
+    """Valida ForecastConfig (return_backcast/fix_quantile_crossing) e XReg real em TimesFM 2.5."""
+    engine = TimesFMEngine(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key="timesfm-2.5-200m")
+    try:
+        engine.load_pretrained_weights(local_files_only=True)
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Pesos locais nao disponiveis no ambiente de teste: {exc}")
+
+    cfg = engine.model.forecast_config
+    assert cfg.return_backcast is True
+    assert cfg.fix_quantile_crossing is True
+    assert cfg.force_flip_invariance is True
+    assert cfg.per_core_batch_size == 8
+
+    target = [100.0, 102.0, 104.0, 106.0, 108.0, 110.0, 112.0, 114.0]
+    past_cov = {"blinds": [10.0, 10.0, 15.0, 15.0, 20.0, 20.0, 30.0, 30.0]}
+    fut_cov = {"blinds": [40.0, 40.0, 60.0]}
+
+    res_cov = engine.forecast_with_covariates(
+        series=target,
+        past_covariates=past_cov,
+        future_covariates=fut_cov,
+        horizon=3,
+        target_name="bankroll_xreg",
+    )
+    res_uni = engine.forecast_univariate(series=target, horizon=3, target_name="bankroll_uni")
+    assert res_cov.weights_loaded is True
+    assert len(res_cov.mean_prediction) == 3
+    assert res_cov.mean_prediction != res_uni.mean_prediction
+    for q10, mean, q90 in zip(res_cov.quantile_10, res_cov.mean_prediction, res_cov.quantile_90, strict=True):
+        assert q10 <= mean <= q90

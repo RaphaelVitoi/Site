@@ -3799,6 +3799,11 @@ def agent_dream_optimize(
         "2.5", "--model", "-m", help="Modelo TimesFM: 2.5 (producao Apache 2.0) ou 3.0 (pesquisa academica)"
     ),
     research: bool = typer.Option(False, "--research", "-r", help="Ativar modo de pesquisa academica nao-comercial"),
+    use_weights: bool = typer.Option(
+        True,
+        "--weights/--no-weights",
+        help="Carrega pesos neurais locais TimesFM em cache quando disponiveis (padrao: ativado)",
+    ),
     json_output: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
 ) -> None:
     """Fase de Sonho do Dream-RSI sobre o historico real, com a politica preditiva TimesFM."""
@@ -3818,9 +3823,13 @@ def agent_dream_optimize(
 
     is_research = research or "3.0" in model or "330m" in model
     if is_research:
-        forecaster = DreamTimesFMForecaster.for_research(preferred_model_key=model)
+        forecaster = DreamTimesFMForecaster.for_research(preferred_model_key=model, auto_load_weights=use_weights)
     else:
-        forecaster = DreamTimesFMForecaster(mode=ExecutionMode.COMMERCIAL_PRODUCTION, preferred_model_key=model)
+        forecaster = DreamTimesFMForecaster(
+            mode=ExecutionMode.COMMERCIAL_PRODUCTION,
+            preferred_model_key=model,
+            auto_load_weights=use_weights,
+        )
 
     corrente = ParallelRefinePolicy()
     candidatas = [corrente, AdaptiveDreamPolicy(), TimesFMPredictivePolicy(forecaster=forecaster)]
@@ -3830,6 +3839,8 @@ def agent_dream_optimize(
         payload = {
             "arvores": len(historico),
             "vencedora": vencedora.name,
+            "timesfm_weights_loaded": forecaster.engine.weights_loaded,
+            "timesfm_model_used": forecaster.engine.procedencia,
             "avaliacoes": [
                 {"politica": a.policy_name, "score": a.total_score, "podados": a.pruned_nodes_count} for a in avaliacoes
             ],
@@ -4766,6 +4777,64 @@ def antigravity_run(
             console.print()
 
         asyncio.run(_run())
+
+
+@app.command("translate")
+def cli_translate(
+    text: str = typer.Argument("", help="Texto para traducao/normalizacao via TranslateGemma 4B"),
+    tgt: str = typer.Option("pt-BR", "--tgt", "-t", help="Idioma destino (ex: pt-BR, en, es, ja)"),
+    src: str = typer.Option("auto", "--src", "-s", help="Idioma origem (default: auto)"),
+    domain: str = typer.Option("poker", "--domain", "-d", help="Dominio semantico (poker, tech, general)"),
+    image: Path | None = typer.Option(None, "--image", "-i", help="Imagem/screenshot opcional para traducao visual"),
+    local_only: bool = typer.Option(False, "--local-only", help="Bloqueia failover cloud e usa apenas Ollama local"),
+    json_out: bool = typer.Option(False, "--json", help=HELP_JSON_OUTPUT),
+) -> None:
+    """Traduz texto ou captura de tela localmente via TranslateGemma 4B ($0.00 cloud)."""
+    from llm.translategemma import translate_image, translate_text
+
+    if domain not in ("general", "poker", "tech"):
+        console.print("[bold red]Dominio invalido. Use: general, poker ou tech.[/]")
+        raise typer.Exit(code=2)
+    if image is not None:
+        if not image.is_file():
+            console.print(f"[bold red]Arquivo de imagem nao encontrado:[/] {image}")
+            raise typer.Exit(code=2)
+        res = translate_image(
+            image,
+            target_lang=tgt,
+            source_lang="en" if src == "auto" else src,
+            domain=domain,  # type: ignore[arg-type]
+            allow_cloud_fallback=not local_only,
+        )
+    else:
+        if not text.strip():
+            console.print("[bold red]Informe um texto ou passe --image <caminho>.[/]")
+            raise typer.Exit(code=2)
+        res = translate_text(
+            text,
+            target_lang=tgt,
+            source_lang=src,
+            domain=domain,  # type: ignore[arg-type]
+            allow_cloud_fallback=not local_only,
+        )
+
+    if json_out:
+        print(json.dumps(res.to_dict(), ensure_ascii=False, indent=2))
+        if res.error:
+            raise typer.Exit(code=1)
+        return
+
+    if res.error:
+        console.print(f"[bold red]Erro TranslateGemma:[/] {escape(res.error)}")
+        raise typer.Exit(code=1)
+
+    console.print(
+        Panel(
+            escape(res.text),
+            title=f"TranslateGemma ({res.source_lang} -> {res.target_lang} | {res.latency_ms:.0f}ms)",
+            border_style="cyan",
+        )
+    )
 
 
 # ==========================================

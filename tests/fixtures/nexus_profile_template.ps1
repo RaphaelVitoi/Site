@@ -26,7 +26,7 @@ $Global:NexusPythonExe = if (Test-Path "$Global:NexusProjectRoot\.venv\Scripts\p
 $Global:NexusTyperCommands = @(
     'agent', 'antigravity', 'audit', 'autonomy', 'autopoiesis', 'calib-forecast', 'chat', 'clippy', 'dashboard', 'db', 'gate',
     'graph', 'handoff', 'homeostasis', 'index', 'list', 'ops', 'routine', 'scripts', 'search',
-    'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'timesfm', 'triad', 'voice', 'web'
+    'stats', 'status', 'sync-consciousness', 'task', 'task-audit', 'test', 'timesfm', 'translate', 'triad', 'voice', 'web'
 )
 
 function Invoke-Nexus {

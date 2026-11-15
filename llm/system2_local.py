@@ -73,6 +73,7 @@ SYSTEM2_TIERS: dict[str, str] = {
     "code": "qwen_code_surgical",
     "moe": "qwen3.6-35b-a3b-mtp",
     "edge": "12b",
+    "translate": "translategemma_4b",
 }
 
 _TIER_ENV: dict[str, str] = {
@@ -82,6 +83,7 @@ _TIER_ENV: dict[str, str] = {
     "code": "CHICO_S2_CODE_MODEL",
     "moe": "CHICO_S2_MOE_MODEL",
     "edge": "CHICO_S2_EDGE_MODEL",
+    "translate": "CHICO_S2_TRANSLATE_MODEL",
 }
 
 

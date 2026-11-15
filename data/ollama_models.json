@@ -251,7 +251,15 @@
       "required": false,
       "size_gb": 3.07,
       "role": "TranslateGemma 4B — traducao e normalizacao multilingue local.",
-      "consumers": []
+      "consumers": [
+        "llm/translategemma.py",
+        "llm/system2_local.py",
+        "llm/antigravity_sdk_bridge.py",
+        "llm/laya_bridge.py",
+        "memory_rag.py",
+        "api/v1/handlers.py",
+        "scripts/cli/nexus.py"
+      ]
     }
   ]
 }
