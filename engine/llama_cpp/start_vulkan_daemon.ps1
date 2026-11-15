@@ -1,4 +1,4 @@
-﻿# ==============================================================================
+# ==============================================================================
 # NEXUS CORE - LLAMA-SERVER 1.0 (b12387) HIGH-THROUGHPUT DAEMON
 # Arquivo: engine/llama_cpp/start_vulkan_daemon.ps1
 # Target: Vulkan0 (RX 570) - Chico SOTA v8.0 GOLD
@@ -14,7 +14,7 @@ param (
     [string]$KVCacheType = "q8_0", # Quantizacao de KV Cache K (q8_0 ou q4_0)
     [string]$KVCacheTypeV = "q4_0", # Quantizacao de KV Cache V (q4_0)
     [string]$Device = "Vulkan0",
-    [switch]$RouterMode = $true,
+    [bool]$RouterMode = $true,
     [switch]$UseMlock
 )
 

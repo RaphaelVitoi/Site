@@ -159,6 +159,8 @@
         "!**/skills/**"
     ],
     "files.associations": {
+        "**/LICENSE*": "plaintext",
+        "LICENSE*": "plaintext",
         "**/.devin/config.json": "jsonc",
         "**/.venv/**": "plaintext",
         "**/*.dist-info/METADATA": "plaintext",
