@@ -20,7 +20,7 @@ config_medida:
   branch: master
   data: '2026-11-15'
   session_id: dee6e961-2afd-455c-b785-0e2341aa78d9
-  event_id: bebeb80f-c163-4703-acc1-1852b2dffa3b
+  event_id: b1b57d40-dc84-415a-8e3c-3a16d9518346
   sequence: 94
   nota_sessao: 9.3/10
   conductor_model: gemini-4-hydrogen

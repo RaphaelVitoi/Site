@@ -5,82 +5,29 @@
   "gate_definition": "Sessao = do inicio ao fim de um trabalho; compactacao de contexto NAO encerra sessao. A metrica que autoriza avaliacao e o numero de SESSOES DISTINTAS com feedback, acumulado desde a ultima calibracao e sem prazo de validade. Densidade intra-sessao (varios feedbacks numa mesma sessao) e dado retido, nao gatilho.",
   "evaluated_at_policy": "Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.",
   "session_filter": "",
-  "ultima_calibracao": "2026-10-13T14:10:58.0000000-03:00",
+  "ultima_calibracao": "2026-11-15T16:46:50.0000000-03:00",
   "auto_calibracoes_no_ciclo_count": 0,
   "auto_calibracoes_no_ciclo": [],
   "retracted_calibration_ids": [
     "0fa6509e-06cd-4a03-b2b0-bceebbfce686"
   ],
   "timesfm_forecast": {
-    "status": "PROJECTION_ACTIVE",
-    "history_points": 4,
-    "horizon_sessions": 3,
-    "mean_trajectory": [
-      9.23,
-      9.17,
-      9.1
-    ],
-    "quantile_10": [
-      9.04,
-      8.9,
-      8.77
-    ],
-    "quantile_90": [
-      9.42,
-      9.44,
-      9.43
-    ],
-    "drift_per_session": -0.0667,
-    "drift_direction": "DOWNWARD_DRIFT",
-    "risk_of_degradation": 0.0,
-    "model_used": "analytic-linear-extrapolation (sem pesos de google/timesfm-2.5-200m-pytorch)",
-    "license_tier": "Apache 2.0 (Permissivo / Comercial)",
-    "intended_model": "google/timesfm-2.5-200m-pytorch",
-    "weights_loaded": false,
-    "conductor_model": null,
-    "notes": null
+    "status": "INSUFFICIENT_HISTORY",
+    "required_points": 4,
+    "available_points": 0,
+    "reason": "TimesFM exige ao menos 4 pontos historicos de feedback para projecao estocastica."
   },
-  "sessoes_com_feedback": [
-    "0549537c-118b-4fe9-82f4-fd4bfc4f6822",
-    "2d6c9a22-ade2-4ace-a61c-e4a4d3d04382",
-    "a3cc9ace-0729-4a58-b34f-62d3c7c5e658",
-    "dee6e961-2afd-455c-b785-0e2341aa78d9"
-  ],
-  "sessoes_com_feedback_count": 4,
-  "sessoes_faltantes": 0,
+  "sessoes_com_feedback": [],
+  "sessoes_com_feedback_count": 0,
+  "sessoes_faltantes": 3,
   "sessoes_com_inicio_inconsistente": [],
   "sessoes_com_densidade_relevante": [],
   "sessoes_ativas_no_dia": [
     "dee6e961-2afd-455c-b785-0e2341aa78d9"
   ],
-  "feedback_count_acumulado": 4,
-  "eligible_feedback_count": 4,
-  "eligible_feedback": [
-    {
-      "event_id": "aa805716-71db-4366-baf9-335fb7a6b563",
-      "session_id": "0549537c-118b-4fe9-82f4-fd4bfc4f6822",
-      "eligible": true,
-      "reasons": []
-    },
-    {
-      "event_id": "640a19d3-fc6a-4648-b009-f8cf4ead810e",
-      "session_id": "2d6c9a22-ade2-4ace-a61c-e4a4d3d04382",
-      "eligible": true,
-      "reasons": []
-    },
-    {
-      "event_id": "076c0ef9-bf61-4216-ba69-1aec5b86f2be",
-      "session_id": "a3cc9ace-0729-4a58-b34f-62d3c7c5e658",
-      "eligible": true,
-      "reasons": []
-    },
-    {
-      "event_id": "b1b57d40-dc84-415a-8e3c-3a16d9518346",
-      "session_id": "dee6e961-2afd-455c-b785-0e2341aa78d9",
-      "eligible": true,
-      "reasons": []
-    }
-  ],
+  "feedback_count_acumulado": 0,
+  "eligible_feedback_count": 0,
+  "eligible_feedback": [],
   "excluded_feedback_count": 0,
   "excluded_feedback": [],
   "historical_provenance_audit": [
@@ -424,102 +371,17 @@
   "correcoes_aplicadas": 42,
   "feedback_count_no_dia": 1,
   "feedback_sem_sessao": 0,
-  "por_sessao": [
-    {
-      "session_id": "0549537c-118b-4fe9-82f4-fd4bfc4f6822",
-      "feedback_count": 1,
-      "densidade_relevante": false,
-      "primeiro_feedback": "2026-10-20T09:29:53.0000000-03:00",
-      "ultimo_feedback": "2026-10-20T09:29:53.0000000-03:00",
-      "atravessa_meia_noite": false,
-      "session_started_at": [
-        "10/20/2026 06:47:34"
-      ],
-      "inicio_inconsistente": false,
-      "conductor_models": [
-        "gemini-3.8-flash"
-      ],
-      "conductor_vehicles": [
-        "antigravity"
-      ],
-      "supervision_modes": [
-        "assistida"
-      ]
-    },
-    {
-      "session_id": "2d6c9a22-ade2-4ace-a61c-e4a4d3d04382",
-      "feedback_count": 1,
-      "densidade_relevante": false,
-      "primeiro_feedback": "2026-11-14T06:15:25.0000000-03:00",
-      "ultimo_feedback": "2026-11-14T06:15:25.0000000-03:00",
-      "atravessa_meia_noite": false,
-      "session_started_at": [
-        "11/14/2026 04:24:21"
-      ],
-      "inicio_inconsistente": false,
-      "conductor_models": [
-        "gemini-4-hydrogen"
-      ],
-      "conductor_vehicles": [
-        "antigravity"
-      ],
-      "supervision_modes": [
-        "assistida"
-      ]
-    },
-    {
-      "session_id": "a3cc9ace-0729-4a58-b34f-62d3c7c5e658",
-      "feedback_count": 1,
-      "densidade_relevante": false,
-      "primeiro_feedback": "2026-11-14T07:08:26.0000000-03:00",
-      "ultimo_feedback": "2026-11-14T07:08:26.0000000-03:00",
-      "atravessa_meia_noite": false,
-      "session_started_at": [
-        "11/14/2026 06:29:40"
-      ],
-      "inicio_inconsistente": false,
-      "conductor_models": [
-        "gemini-4-hydrogen"
-      ],
-      "conductor_vehicles": [
-        "antigravity"
-      ],
-      "supervision_modes": [
-        "assistida"
-      ]
-    },
-    {
-      "session_id": "dee6e961-2afd-455c-b785-0e2341aa78d9",
-      "feedback_count": 1,
-      "densidade_relevante": false,
-      "primeiro_feedback": "2026-11-15T15:38:58.0000000-03:00",
-      "ultimo_feedback": "2026-11-15T15:38:58.0000000-03:00",
-      "atravessa_meia_noite": false,
-      "session_started_at": [
-        "11/15/2026 12:30:14"
-      ],
-      "inicio_inconsistente": false,
-      "conductor_models": [
-        "gemini-4-hydrogen"
-      ],
-      "conductor_vehicles": [
-        "antigravity"
-      ],
-      "supervision_modes": [
-        "assistida"
-      ]
-    }
-  ],
-  "score_mean": 9.45,
-  "score_min": 9.3,
-  "score_max": 9.5,
+  "por_sessao": [],
+  "score_mean": null,
+  "score_min": null,
+  "score_max": null,
   "score_mean_no_dia": 9.3,
   "evidence_gate": {
     "metric": "distinct_sessions_with_feedback",
     "minimum_distinct_sessions": 3,
     "minimum_feedback_records": 3,
-    "structural_gate_passed": true,
-    "reason": "4 sessoes com feedback (0549537c-118b-4fe9-82f4-fd4bfc4f6822, 2d6c9a22-ade2-4ace-a61c-e4a4d3d04382, a3cc9ace-0729-4a58-b34f-62d3c7c5e658, dee6e961-2afd-455c-b785-0e2341aa78d9) alcancam o minimo de 3. A recorrencia de padrao continua sendo obrigacao do auditor, e nao e medida aqui.",
+    "structural_gate_passed": false,
+    "reason": "0 de 3 sessoes com feedback; faltam 3. A contagem e acumulativa e NAO expira -- dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. Registro literal exigido enquanto isso: dados insuficientes -- nenhuma calibracao planejada.",
     "intra_session_density_is_data_not_trigger": "Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.",
     "accumulation_never_expires": "Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao formal registrada com Tier 0 presente.",
     "tier0_presence_required": "Auto-calibragem minima apos 3 sessoes gera auto_calibration e NAO reinicia a contagem. Calibracao formal exige presenca e confirmacao explicita do Tier 0 (-Tier0Present).",
@@ -527,77 +389,8 @@
     "split_session_not_counted": "session_id com mais de um session_started_at indica sessao partida. Sob contagem por sessao isso inflaria o portao, entao a sessao nao conta ate a origem ser reconciliada.",
     "pattern_confirmation_required": "At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency."
   },
-  "calibration_planning_permitted": true,
-  "records": [
-    {
-      "schema_version": "agent-calibration-ledger/v1",
-      "sequence": 90,
-      "record_type": "feedback",
-      "recorded_at": "2026-10-20T09:29:53.5319276-03:00",
-      "previous_hash": "8389a7c27ad19febe3576a1a60bfa1b03b77106651d6efbd14e307381a68f0bb",
-      "event_id": "aa805716-71db-4366-baf9-335fb7a6b563",
-      "session_id": "0549537c-118b-4fe9-82f4-fd4bfc4f6822",
-      "score": 9.5,
-      "scope": "handoff",
-      "feedback": "gostei como você foi minucioso e cuidadoso, separando cada parte e proposito e não saiu desembestado resolvendo tudo. isso sugere que seu modelo tbm evoluiu.",
-      "session_started_at": "2026-10-20T06:47:34-03:00",
-      "conductor_model": "gemini-3.8-flash",
-      "conductor_vehicle": "antigravity",
-      "supervision_mode": "assistida",
-      "record_hash": "bfb3307091224f5c4db2f1abdc4d74b34b9b6ad2960aa0e9386cf7e1a5e1e3ac"
-    },
-    {
-      "schema_version": "agent-calibration-ledger/v1",
-      "sequence": 91,
-      "record_type": "feedback",
-      "recorded_at": "2026-11-14T06:15:25.8896599-03:00",
-      "previous_hash": "bfb3307091224f5c4db2f1abdc4d74b34b9b6ad2960aa0e9386cf7e1a5e1e3ac",
-      "event_id": "640a19d3-fc6a-4648-b009-f8cf4ead810e",
-      "session_id": "2d6c9a22-ade2-4ace-a61c-e4a4d3d04382",
-      "score": 9.5,
-      "scope": "handoff",
-      "feedback": "Falta, talvez, uma calibração de proatividade, criatividade, brainstorming... Zoom out e olhar sistemico para o processo durante o processo. Talvez, adquirir um pouco caracteristicas e skills de Meta-Agente. Para além disso, primorosa.",
-      "session_started_at": "2026-11-14T04:24:21-03:00",
-      "conductor_model": "gemini-4-hydrogen",
-      "conductor_vehicle": "antigravity",
-      "supervision_mode": "assistida",
-      "record_hash": "25b27e554befdc2ffde6c856eeffb06e8025f5e5eb011b646e78e5856e519a0a"
-    },
-    {
-      "schema_version": "agent-calibration-ledger/v1",
-      "sequence": 92,
-      "record_type": "feedback",
-      "recorded_at": "2026-11-14T07:08:26.912069-03:00",
-      "previous_hash": "25b27e554befdc2ffde6c856eeffb06e8025f5e5eb011b646e78e5856e519a0a",
-      "event_id": "076c0ef9-bf61-4216-ba69-1aec5b86f2be",
-      "session_id": "a3cc9ace-0729-4a58-b34f-62d3c7c5e658",
-      "score": 9.5,
-      "scope": "handoff",
-      "feedback": "Bom, eu vou repetir a avaliação que eu dei na última sessão para o modelo seu, só que na IDE. É o feedback de que faltou 9.5. Foi uma ótima sessão, mas faltou ainda um zoom out para ter uma análise sistêmica, associativa e preditiva. Mas, sobretudo, faltou também alguns requintes de proatividade inteligente. O custo de oportunidade de alto ROI poderia ter sido introduzido. E, sobretudo, aspectos de meta-agência ou meta-agente, que eu acho que são características fundamentais a serem colocadas. A metacognição, pensar sobre o processo, pensar sobre o processo agêntico. Eu acho que é uma calibração que precisa ser feita.",
-      "session_started_at": "2026-11-14T06:29:40-03:00",
-      "conductor_model": "gemini-4-hydrogen",
-      "conductor_vehicle": "antigravity",
-      "supervision_mode": "assistida",
-      "record_hash": "45340275a13328500b38f3da18760a1cb63a7fd674b17d460fcbd2841309f4a0"
-    },
-    {
-      "schema_version": "agent-calibration-ledger/v1",
-      "sequence": 94,
-      "record_type": "feedback",
-      "recorded_at": "2026-11-15T15:38:58.1538731-03:00",
-      "previous_hash": "dd453b98159300d2348f6058b66dd68e8b130e56857ae0be0df626f1105a671e",
-      "event_id": "b1b57d40-dc84-415a-8e3c-3a16d9518346",
-      "session_id": "dee6e961-2afd-455c-b785-0e2341aa78d9",
-      "score": 9.3,
-      "scope": "handoff",
-      "feedback": "Feedback 9,3 = -0,7 pois no final da janela sinto que sua memória de contexto ficou meio ruim, embora seu modelo tenha 1 milhao de output e tenhamos uma arquitetura de memoria por aqui singular. De resto, otima sessão.",
-      "session_started_at": "2026-11-15T12:30:14-03:00",
-      "conductor_model": "gemini-4-hydrogen",
-      "conductor_vehicle": "antigravity",
-      "supervision_mode": "assistida",
-      "record_hash": "c1082803953cde0737c1113ab8daee6d8116e0369d2f133ba9dd7db73e1e1d26"
-    }
-  ],
+  "calibration_planning_permitted": false,
+  "records": [],
   "outlier_evidence": {
     "ledger_path": "C:\\Users\\rapha\\.gemini\\Site\\reports\\agent-calibration\\outlier-evidence-ledger.jsonl",
     "count": 0,
