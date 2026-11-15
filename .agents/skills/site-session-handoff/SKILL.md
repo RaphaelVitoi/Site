@@ -154,6 +154,25 @@ exact staged scope is clear.
    uncommitted/unpushed, preserve the working tree, and state the blocker and
    exact next action.
 
+## 4.5 Contrato de Handoff Tipado Claimed-Once & Deliverables
+
+Para coordenação multi-agente sem perda ou sobrescrita silenciosa entre
+condutores (Antigravity, Hermes, Claude Code, Codex, Devin), o handoff segue o
+contrato tipado *claimed-once* (`ai-memory` + `deepseek-harness` + `Agent-Standup`):
+
+1. **Transição de estado não destrutiva:** Um workstream em `handoff` transiciona
+   estritamente `ready -> claimed -> superseded` sem sobrescrever decisões ou
+   evidências históricas de sessões paralelas.
+2. **Bloco estruturado de entrega (`deliverables` + standup em 4 baldes):**
+   - `Completed`: artefatos entregues, hashes e paths exatos;
+   - `In Progress`: subtarefas abertas e próximo passo determinístico (`next_steps`);
+   - `Blocked / Failed`: falhas reais medidas (nunca mascaradas);
+   - `Key Decisions`: decisões arquiteturais ratificadas e `persistence-type-changes`
+     (alterações em schemas SQLite/DuckDB/Chroma/LanceDB, flags de config ou variáveis de ambiente).
+3. **Preservação de comando/saída verificada (`evidence_CommandOutput`):** Toda
+   alegação de sucesso exige registro literal do comando executado e seu código de
+   saída/contagem após a última edição.
+
 ## 5. Final response
 
 Lead with completion status. Link the official handoff and any distinct

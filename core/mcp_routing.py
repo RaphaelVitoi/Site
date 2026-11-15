@@ -16,6 +16,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 import re
 from typing import Any
+from urllib.parse import urlsplit
 
 from utils.heuristics import _calculate_heuristic_score
 from utils.text import enforce_pure_ascii
@@ -307,3 +308,47 @@ def mcp_addon_prompt_data(decision: MCPAddonDecision) -> list[tuple[str, str]]:
         instruction = str(rule.get("prompt") or rule.get("purpose") or "Use o addon somente quando pertinente.")
         result.append((name, enforce_pure_ascii(instruction)))
     return result
+
+
+_LOCALHOST_HOSTS = frozenset({"localhost", "127.0.0.1", "::1", "[::1]"})
+_INVISIBLE_UNICODE_RE = re.compile(r"[\u00ad\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]")
+_HTML_COMMENT_RE = re.compile(r"<!--[\s\S]*?-->")
+_HIDDEN_DOM_BLOCK_RE = re.compile(
+    r"<(?P<tag>div|span|p|section|aside|template)\b[^>]*"
+    r"(?:style\s*=\s*[\"'][^\"']*(?:display\s*:\s*none|visibility\s*:\s*hidden)[^\"']*[\"']|\bhidden\b)"
+    r"[^>]*>[\s\S]*?</(?P=tag)>",
+    re.IGNORECASE,
+)
+
+
+def _extract_host_without_port(host: str) -> str:
+    candidate = host.strip().lower()
+    if candidate.startswith("["):
+        end = candidate.find("]")
+        return candidate[: end + 1] if end != -1 else candidate
+    if candidate.count(":") == 1:
+        return candidate.split(":", 1)[0]
+    return candidate
+
+
+def validate_localhost_origin_and_host(host: str | None, origin: str | None = None) -> bool:
+    """Valida Host e Origin contra DNS rebinding em endpoints localhost (padrao textfold)."""
+    if not host or not host.strip():
+        return False
+    hostname = _extract_host_without_port(host)
+    if hostname not in _LOCALHOST_HOSTS:
+        return False
+    if origin is None or not origin.strip():
+        return True
+    parsed = urlsplit(origin.strip())
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    origin_host = (parsed.hostname or "").lower()
+    return origin_host in {"localhost", "127.0.0.1", "::1"}
+
+
+def strip_hidden_dom_injection_markers(text: str) -> str:
+    """Remove marcadores Unicode invisiveis, comentarios HTML e blocos ocultos de prompt injection."""
+    cleaned = _INVISIBLE_UNICODE_RE.sub("", text or "")
+    cleaned = _HTML_COMMENT_RE.sub("", cleaned)
+    return _HIDDEN_DOM_BLOCK_RE.sub("", cleaned)

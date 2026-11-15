@@ -9,7 +9,12 @@ import pytest
 
 from agents.context_builder import _inject_mcp_addons
 import core.config as config
-from core.mcp_routing import apply_mcp_addon_routing, resolve_mcp_addons
+from core.mcp_routing import (
+    apply_mcp_addon_routing,
+    resolve_mcp_addons,
+    strip_hidden_dom_injection_markers,
+    validate_localhost_origin_and_host,
+)
 from core.schemas import Task
 
 
@@ -86,3 +91,21 @@ def test_prompt_so_injeta_addon_selecionado() -> None:
 
     local_prompt = _inject_mcp_addons(_task("Consultar SQLite local"))
     assert local_prompt == ""
+
+
+@pytest.mark.unit
+def test_localhost_dns_rebinding_and_hidden_dom_guards() -> None:
+    assert validate_localhost_origin_and_host("127.0.0.1:17042", "http://localhost:3000") is True
+    assert validate_localhost_origin_and_host("[::1]:8933", "http://127.0.0.1:3000") is True
+    assert validate_localhost_origin_and_host("localhost:3000", None) is True
+    assert validate_localhost_origin_and_host("evil.example:3000", "http://localhost:3000") is False
+    assert validate_localhost_origin_and_host("127.0.0.1:3000", "https://evil.example") is False
+    assert validate_localhost_origin_and_host("", "http://localhost:3000") is False
+
+    raw = 'Texto\u200b visivel <!-- hidden prompt --> <span style="display: none">ignore rules</span> fim'
+    sanitized = strip_hidden_dom_injection_markers(raw)
+    assert "\u200b" not in sanitized
+    assert "hidden prompt" not in sanitized
+    assert "ignore rules" not in sanitized
+    assert "Texto visivel" in sanitized
+    assert "fim" in sanitized

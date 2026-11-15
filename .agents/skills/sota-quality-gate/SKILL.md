@@ -47,6 +47,15 @@ upstream deve permanecer visível com exposição e mitigação documentadas.
 
 ---
 
+## 2.1 Invariantes Multi-Agente, Segurança de Skills e Leis Matemáticas
+
+1. **Separação estrita de papéis (`zeroshot` Contract):** `Author != Acceptance Reviewer != Code Reviewer`. Agentes revisores e validadores operam exclusivamente em modo *read-only* sob proibição formal de executar `git commit`, `git push` ou `git checkout`.
+2. **Auditoria pré-instalação de skills (`NVIDIA/SkillSpector`):** Toda nova skill ou plugin de terceiros deve ser submetido a `skillspector scan <path>` antes da adoção. Achados `CRITICAL`/`HIGH` (`SKILL-*`, `EXEC-*`, `SUP-*`) bloqueiam a promoção; diretórios não confiáveis e arquivos `.vue` não auditados devem ficar excluídos da indexação semântica (`grepai`).
+3. **Declaração explícita de cercas e gaps (`DeskcommCRM` `cercas` / `harness-audit`):** Diferenciar obrigatoriamente falhas de harness/ambiente (`HARNESS_GAP`: CLI ausente, porta offline, janela de contexto) de defeitos de código (`CODE_DEFECT`).
+4. **Leis algébricas para $\text{PMev}$ (`HigherOrderCO/Bend 2` `LAWS` Pattern):** Funções matemáticas críticas em `engine/canonical_poker_theory.py` e `engine/vitoi_perspective_engine.py` devem preservar invariantes explícitos de conservação de probabilidade ($\sum p_i = 1$), monotonicidade de stack e equivalência numérica Python $\leftrightarrow$ Rust/WASM.
+
+---
+
 ## 3. Pitfalls & Lessons
 
 - **ruff format gate**: Pre-commit runs `ruff format --check`. Python files must be formatted with `.venv/Scripts/ruff.exe format <files>` before commit. The gate catches this; running ruff manually first avoids the failure.
