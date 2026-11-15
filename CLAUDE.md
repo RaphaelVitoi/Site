@@ -987,6 +987,12 @@ O gatilho primário é **proativo e sem hora marcada**: ao perceber que o limiar
 foi atingido, o agente **avisa** e propõe a calibração assistida, desde que
 **não haja tarefa em andamento** — calibração não interrompe trabalho.
 
+**Separação estrita entre coleta, auto-calibragem mínima e calibração formal (2026-11-15):**
+
+- **Coleta de feedback (`Register-AgentCalibrationFeedback.ps1`):** anexa a nota literal, proveniência e comentário ao ledger. Nunca conta nem substitui calibração.
+- **Auto-calibragem mínima (`Record-AgentCalibration.ps1 -AutoMinima`):** permitida autonomamente após $\ge 3$ sessões distintas elegíveis e $\ge 2$ corroborações independentes; grava `record_type: auto_calibration`, **não** fecha nem zera o ciclo formal e não exige presença do administrador.
+- **Calibração formal (`Record-AgentCalibration.ps1 -Tier0Present`):** **somente com presença e condução explícita do Tier 0 (Raphael Vitoi)**. É a única operação que grava `record_type: calibration` e reinicia o ciclo do portão. `Record-AgentCalibration.ps1` falha fechado sem `-Tier0Present` quando não estiver em `-AutoMinima`. Retratações exigem `calibration_retraction` append-only (`-RetractCalibrationId ... -Tier0Present`), nunca edição manual do ledger.
+
 A corrida diária das **23:59** (`Register-AgentCalibrationDailyTask.ps1`) é
 **lastro de auditoria**, não o gatilho: ela grava a evidência do dia inclusive
 quando insuficiente, para que exista trilha dos dias em que nada abriu.

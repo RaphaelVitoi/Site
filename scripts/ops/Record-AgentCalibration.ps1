@@ -38,36 +38,55 @@
     O ledger e append-only e tamper-evident, nao fisicamente imutavel.
     PowerShell 7+ e o runtime operacional; 5.1 permanece compativel.
 #>
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Calibrate')]
 param(
     # O padrao operacional confirmado. Nao e resumo da sessao: e a coisa que se
     # repetiu e que a calibracao pretende enderecar.
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, ParameterSetName = 'Calibrate')]
     [ValidateNotNullOrEmpty()]
-    [string]$Pattern,
+    [string]$Pattern = '',
 
     # event_id dos feedbacks que confirmam o padrao. Minimo dois, de sessoes
     # distintas. Aceita array ou lista separada por virgula.
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, ParameterSetName = 'Calibrate')]
     [ValidateNotNullOrEmpty()]
-    [string[]]$CorroboratingEventIds,
+    [string[]]$CorroboratingEventIds = @(),
 
     # Camada 1 da SS8.3: leitura da serie, dos outliers e do efeito da hipotese
     # anterior.
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, ParameterSetName = 'Calibrate')]
     [ValidateNotNullOrEmpty()]
-    [string]$ObservacaoRecursiva,
+    [string]$ObservacaoRecursiva = '',
 
     # Camada 2 da SS8.3: hipotese bayesiano-preditiva, em JSON, com os oito
     # componentes exigidos.
-    [Parameter(Mandatory)]
+    [Parameter(Mandatory, ParameterSetName = 'Calibrate')]
     [ValidateNotNullOrEmpty()]
-    [string]$HypothesisJson,
+    [string]$HypothesisJson = '',
 
     # Excecao ao limiar. So existe por instrucao explicita do administrador, e
     # consta do relatorio -- SS8.3. Preenchido, permite registrar com o portao
     # estrutural fechado, e o motivo fica no ledger.
+    [Parameter(ParameterSetName = 'Calibrate')]
     [string]$GateOverrideReason = '',
+
+    # Confirmacao obrigatoria de presenca e conducao explicita do Tier 0 para
+    # calibracao formal (`record_type: calibration`) ou retratacao append-only.
+    [switch]$Tier0Present,
+
+    # Auto-calibragem minima apos >= 3 sessoes distintas com feedback: grava
+    # `auto_calibration` sem zerar o ciclo formal nem substituir calibracao Tier 0.
+    [Parameter(ParameterSetName = 'Calibrate')]
+    [switch]$AutoMinima,
+
+    # Retratacao append-only de uma calibracao registrada sem presenca Tier 0.
+    [Parameter(Mandatory, ParameterSetName = 'Retract')]
+    [ValidateNotNullOrEmpty()]
+    [string]$RetractCalibrationId = '',
+
+    [Parameter(Mandatory, ParameterSetName = 'Retract')]
+    [ValidateNotNullOrEmpty()]
+    [string]$RetractionReason = '',
 
     [string]$Authority = 'Tier 0 - Raphael Vitoi',
 
@@ -122,6 +141,86 @@ function New-HashChainedRecord {
     return [pscustomobject]$payload
 }
 
+if ($AutoMinima -and $Tier0Present) {
+    throw 'Nao combine -AutoMinima e -Tier0Present. Auto-calibragem minima nao substitui nem zera o ciclo formal presencial.'
+}
+
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+if ([string]::IsNullOrWhiteSpace($LedgerPath)) {
+    $LedgerPath = Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl'
+}
+if (-not (Test-Path -LiteralPath $LedgerPath)) {
+    throw "Ledger nao encontrado: $LedgerPath. Calibracao exige serie existente."
+}
+$LedgerPath = (Resolve-Path -LiteralPath $LedgerPath).Path
+
+$lockPath = "$LedgerPath.lock"
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+if ($PSCmdlet.ParameterSetName -eq 'Retract') {
+    if (-not $Tier0Present) {
+        throw 'Retratacao append-only de calibracao exige presenca explicita do Tier 0 (-Tier0Present).'
+    }
+    if ($Authority -notmatch 'Tier\s*0') {
+        throw 'Retratacao append-only de calibracao exige autoridade Tier 0.'
+    }
+
+    $alvoId = $RetractCalibrationId.Trim()
+    $motivo = $RetractionReason.Trim()
+    $lockStream = $null
+    try {
+        $lockStream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+        & (Join-Path $PSScriptRoot 'Test-AgentCalibrationLedger.ps1') -LedgerPath $LedgerPath | Out-Null
+        $rows = @(Get-Content -LiteralPath $LedgerPath -Encoding UTF8 | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_ | ConvertFrom-Json })
+
+        $alvos = @($rows | Where-Object { $_.record_type -eq 'calibration' -and [string]$_.calibration_id -eq $alvoId })
+        if ($alvos.Count -eq 0) {
+            throw "Calibracao nao encontrada para retratacao: '$alvoId'."
+        }
+        if ($alvos.Count -gt 1) {
+            throw "calibration_id '$alvoId' aparece $($alvos.Count) vezes; ledger ambiguo."
+        }
+        $jaRetratada = @($rows | Where-Object { $_.record_type -eq 'calibration_retraction' -and [string]$_.retracted_calibration_id -eq $alvoId })
+        if ($jaRetratada.Count -gt 0) {
+            throw "Calibracao '$alvoId' ja foi retratada anteriormente (sequence $($jaRetratada[0].sequence))."
+        }
+
+        $tail = $rows[-1]
+        $camposRetratacao = [ordered]@{
+            retraction_id            = [guid]::NewGuid().ToString()
+            retracted_calibration_id = $alvoId
+            retracted_sequence       = [int]$alvos[0].sequence
+            reason                   = $motivo
+            tier0_presencial         = $true
+            authority                = $Authority.Trim()
+        }
+        $record = New-HashChainedRecord -Sequence ([int]$tail.sequence + 1) -RecordType 'calibration_retraction' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ([string]$tail.record_hash) -Fields $camposRetratacao
+        [System.IO.File]::AppendAllText($LedgerPath, (($record | ConvertTo-Json -Compress -Depth 8) + [Environment]::NewLine), $utf8NoBom)
+
+        [pscustomobject]@{
+            status                   = 'retracted'
+            retraction_id            = $record.retraction_id
+            retracted_calibration_id = $record.retracted_calibration_id
+            retracted_sequence       = $record.retracted_sequence
+            reason                   = $record.reason
+            sequence                 = $record.sequence
+            record_hash              = $record.record_hash
+            ledger_path              = $LedgerPath
+        } | ConvertTo-Json -Compress
+        return
+    }
+    finally {
+        if ($null -ne $lockStream) { $lockStream.Dispose() }
+    }
+}
+
+if (-not $AutoMinima -and -not $Tier0Present) {
+    throw 'Calibracao formal (record_type: calibration) exige presenca do administrador (-Tier0Present). Sem o Tier 0 presente, use -AutoMinima (auto_calibration, sem zerar o ciclo formal).'
+}
+if ($Tier0Present -and ($Authority -notmatch 'Tier\s*0')) {
+    throw 'Calibracao formal com -Tier0Present exige -Authority indicando Tier 0.'
+}
+
 # -Pattern e -ObservacaoRecursiva chegam de linha de comando, onde uma lista
 # separada por virgula e mais natural que um array. Normaliza os dois casos.
 $corroboracoes = @(
@@ -143,15 +242,6 @@ if ($faltantes.Count -gt 0) {
         ($faltantes -join ', '), ($COMPONENTES_DA_HIPOTESE -join ', '))
 }
 
-$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-if ([string]::IsNullOrWhiteSpace($LedgerPath)) {
-    $LedgerPath = Join-Path $repositoryRoot 'reports\agent-calibration\feedback-ledger.jsonl'
-}
-if (-not (Test-Path -LiteralPath $LedgerPath)) {
-    throw "Ledger nao encontrado: $LedgerPath. Calibracao exige serie existente."
-}
-$LedgerPath = (Resolve-Path -LiteralPath $LedgerPath).Path
-
 # O PORTAO E MEDIDO ANTES DO LOCK, e de proposito.
 #
 # `New-AgentCalibrationDailyEvidence.ps1` e a fonte unica da suficiencia --
@@ -169,11 +259,9 @@ if (-not $portaoAberto -and [string]::IsNullOrWhiteSpace($GateOverrideReason)) {
         $evidencia.evidence_gate.reason)
 }
 
-$lockPath = "$LedgerPath.lock"
 $lockStream = $null
 try {
     $lockStream = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
     & (Join-Path $PSScriptRoot 'Test-AgentCalibrationLedger.ps1') -LedgerPath $LedgerPath | Out-Null
     # Refresh the effective/corrected evidence under the writer lock.
@@ -214,33 +302,46 @@ try {
     }
 
     $tail = $rows[-1]
+    $recordType = if ($AutoMinima) { 'auto_calibration' } else { 'calibration' }
+    $calibrationLevel = if ($AutoMinima) { 'auto_minima' } else { 'tier0_presencial' }
+    $authorityGravada = if ($AutoMinima -and $Authority -eq 'Tier 0 - Raphael Vitoi') {
+        'Auto-calibragem minima (sem presenca Tier 0)'
+    } else {
+        $Authority.Trim()
+    }
     $campos = [ordered]@{
-        calibration_id           = [guid]::NewGuid().ToString()
-        pattern                  = $Pattern.Trim()
-        corroborating_event_ids  = $corroboracoes
-        corroborating_sessions   = $origensDistintas
-        observacao_recursiva     = $ObservacaoRecursiva.Trim()
-        hipotese                 = $hipotese
-        sessions_considered      = @($evidencia.sessoes_com_feedback)
+        calibration_id            = [guid]::NewGuid().ToString()
+        calibration_level         = $calibrationLevel
+        tier0_presencial          = [bool]$Tier0Present
+        pattern                   = $Pattern.Trim()
+        corroborating_event_ids   = $corroboracoes
+        corroborating_sessions    = $origensDistintas
+        observacao_recursiva      = $ObservacaoRecursiva.Trim()
+        hipotese                  = $hipotese
+        sessions_considered       = @($evidencia.sessoes_com_feedback)
         feedback_count_considered = [int]$evidencia.feedback_count_acumulado
-        structural_gate_passed   = $portaoAberto
-        authority                = $Authority.Trim()
+        structural_gate_passed    = $portaoAberto
+        authority                 = $authorityGravada
     }
     if (-not [string]::IsNullOrWhiteSpace($GateOverrideReason)) {
         $campos['gate_override_reason'] = $GateOverrideReason.Trim()
     }
 
-    $record = New-HashChainedRecord -Sequence ([int]$tail.sequence + 1) -RecordType 'calibration' -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ([string]$tail.record_hash) -Fields $campos
+    $record = New-HashChainedRecord -Sequence ([int]$tail.sequence + 1) -RecordType $recordType -RecordedAt ([DateTimeOffset]::Now.ToString('o')) -PreviousHash ([string]$tail.record_hash) -Fields $campos
     [System.IO.File]::AppendAllText($LedgerPath, (($record | ConvertTo-Json -Compress -Depth 8) + [Environment]::NewLine), $utf8NoBom)
 
     [pscustomobject]@{
-        status                  = 'calibrated'
+        status                  = if ($AutoMinima) { 'auto_calibrated' } else { 'calibrated' }
+        record_type             = $recordType
+        calibration_level       = $calibrationLevel
+        tier0_presencial        = [bool]$Tier0Present
+        cycle_reset             = (-not $AutoMinima)
         calibration_id          = $record.calibration_id
         pattern                 = $record.pattern
         corroborating_sessions  = $origensDistintas
         structural_gate_passed  = $portaoAberto
         gate_override_reason    = $GateOverrideReason.Trim()
-        sessions_reset          = @($evidencia.sessoes_com_feedback).Count
+        sessions_reset          = if ($AutoMinima) { 0 } else { @($evidencia.sessoes_com_feedback).Count }
         sequence                = $record.sequence
         record_hash             = $record.record_hash
         ledger_path             = $LedgerPath

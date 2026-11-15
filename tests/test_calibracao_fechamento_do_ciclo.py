@@ -150,6 +150,7 @@ def _calibrar(
     *,
     hipotese: dict | None = None,
     padrao: str = "Compromisso prematuro com um ramo.",
+    tier0_present: bool = True,
     extra: list[str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     argumentos = [
@@ -168,6 +169,8 @@ def _calibrar(
         "-HypothesisJson",
         json.dumps(hipotese if hipotese is not None else HIPOTESE_COMPLETA),
     ]
+    if tier0_present:
+        argumentos.append("-Tier0Present")
     if extra:
         argumentos += extra
     return subprocess.run(argumentos, capture_output=True, text=True, cwd=str(RAIZ), check=False)
@@ -356,3 +359,82 @@ def test_calibracao_preserva_a_cadeia(cenario) -> None:
     novo = json.loads(ledger.read_text(encoding="utf-8").strip().splitlines()[-1])
     assert novo["previous_hash"] == anterior_tail["record_hash"]
     assert novo["sequence"] == anterior_tail["sequence"] + 1
+
+
+def test_calibracao_formal_falha_fechado_sem_tier0_present(cenario) -> None:
+    """Calibracao formal sem -Tier0Present precisa ser recusada."""
+    dia, ledger, outliers = cenario
+    proc = _calibrar(ledger, ["evt-A", "evt-B"], tier0_present=False)
+    assert proc.returncode != 0
+    assert "tier0present" in (proc.stderr + proc.stdout).lower()
+
+    depois = _avaliar(ledger, outliers, dia)
+    assert depois["ultima_calibracao"] is None
+    assert depois["sessoes_com_feedback_count"] == 3
+
+
+def test_auto_calibragem_minima_nao_zera_o_ciclo_formal(cenario) -> None:
+    """Auto-calibragem minima apos 3 sessoes grava auto_calibration e preserva o portao."""
+    dia, ledger, outliers = cenario
+    proc = _calibrar(ledger, ["evt-A", "evt-B"], tier0_present=False, extra=["-AutoMinima"])
+    assert proc.returncode == 0, proc.stderr
+
+    payload = json.loads(proc.stdout)
+    assert payload["status"] == "auto_calibrated"
+    assert payload["record_type"] == "auto_calibration"
+    assert payload["tier0_presencial"] is False
+    assert payload["cycle_reset"] is False
+    assert payload["sessions_reset"] == 0
+
+    depois = _avaliar(ledger, outliers, dia)
+    assert depois["ultima_calibracao"] is None
+    assert depois["sessoes_com_feedback_count"] == 3
+    assert depois["calibration_planning_permitted"] is True
+    assert depois["auto_calibracoes_no_ciclo_count"] == 1
+
+
+def test_retratacao_append_only_reabre_o_ciclo_preservando_cadeia(cenario) -> None:
+    """Retratacao formal exclui calibracao sem Tier 0 do marco e preserva SHA-256."""
+    dia, ledger, outliers = cenario
+    proc = _calibrar(ledger, ["evt-A", "evt-B"], tier0_present=True)
+    assert proc.returncode == 0, proc.stderr
+    calibration_id = json.loads(proc.stdout)["calibration_id"]
+    assert _avaliar(ledger, outliers, dia)["sessoes_com_feedback_count"] == 0
+
+    retratacao = subprocess.run(
+        [
+            "pwsh",
+            "-NoProfile",
+            "-File",
+            str(CALIBRACAO),
+            "-LedgerPath",
+            str(ledger),
+            "-RetractCalibrationId",
+            calibration_id,
+            "-RetractionReason",
+            "Retratacao formal: fechamento ocorreu sem sessao presencial do Tier 0.",
+            "-Tier0Present",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(RAIZ),
+        check=False,
+    )
+    assert retratacao.returncode == 0, retratacao.stderr
+    assert json.loads(retratacao.stdout)["status"] == "retracted"
+
+    verificador = RAIZ / "scripts" / "ops" / "Test-AgentCalibrationLedger.ps1"
+    proc_verify = subprocess.run(
+        ["pwsh", "-NoProfile", "-File", str(verificador), "-LedgerPath", str(ledger)],
+        capture_output=True,
+        text=True,
+        check=True,
+        cwd=str(RAIZ),
+    )
+    assert json.loads(proc_verify.stdout)["status"] == "valid"
+
+    reaberto = _avaliar(ledger, outliers, dia)
+    assert reaberto["ultima_calibracao"] is None
+    assert reaberto["sessoes_com_feedback_count"] == 3
+    assert reaberto["calibration_planning_permitted"] is True
+    assert calibration_id in reaberto["retracted_calibration_ids"]

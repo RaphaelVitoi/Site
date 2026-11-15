@@ -124,6 +124,15 @@ comment. Then verify the canonical ledger path with
 `Test-AgentCalibrationLedger.ps1` and record its sequence/result in the handoff
 without exposing unnecessary private content.
 
+- Never confuse feedback collection (`Register-AgentCalibrationFeedback.ps1`),
+  minimal autonomous self-calibration after >= 3 eligible sessions
+  (`Record-AgentCalibration.ps1 -AutoMinima`, writes `auto_calibration` and does
+  **not** reset the cycle), and formal Tier 0 presential calibration
+  (`Record-AgentCalibration.ps1 -Tier0Present`, writes `calibration` and resets
+  the gate). Formal calibration without explicit Tier 0 presence is forbidden
+  and fails closed in `Record-AgentCalibration.ps1`; erroneous closures are
+  retracted append-only via `-RetractCalibrationId ... -Tier0Present`.
+
 ## 4. Publication gates and stop conditions
 
 Commit and push are separate externally visible actions. A prior authorization

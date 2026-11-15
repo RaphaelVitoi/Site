@@ -158,7 +158,19 @@ $sessoesAtivasNoDia = @($records |
 # `ultima_calibracao` continua reportando o INSTANTE, que e o que um humano le.
 # Medir por sequencia e reportar em tempo nao e inconsistencia: e usar, para
 # cada coisa, a fonte que a garante.
-$calibracoes = @($allRecords | Where-Object { $_.record_type -eq 'calibration' })
+$retractedCalibrationIds = @(
+    $allRecords |
+        Where-Object { $_.record_type -eq 'calibration_retraction' -and -not [string]::IsNullOrWhiteSpace([string]$_.retracted_calibration_id) } |
+        ForEach-Object { [string]$_.retracted_calibration_id } |
+        Sort-Object -Unique
+)
+$calibracoes = @(
+    $allRecords |
+        Where-Object {
+            $_.record_type -eq 'calibration' -and
+            ($retractedCalibrationIds -notcontains [string]$_.calibration_id)
+        }
+)
 $marcoSequencia = if ($calibracoes.Count -gt 0) {
     (@($calibracoes | ForEach-Object { [int]$_.sequence }) | Sort-Object)[-1]
 } else {
@@ -169,6 +181,23 @@ $marcoUltimaCalibracao = if ($calibracoes.Count -gt 0) {
 } else {
     [DateTimeOffset]::MinValue
 }
+$autoCalibracoesNoCiclo = @(
+    $allRecords |
+        Where-Object {
+            $_.record_type -eq 'auto_calibration' -and
+            [int]$_.sequence -gt $marcoSequencia
+        } |
+        ForEach-Object {
+            [pscustomobject]@{
+                sequence               = [int]$_.sequence
+                calibration_id         = [string]$_.calibration_id
+                recorded_at            = [string]$_.recorded_at
+                pattern                = [string]$_.pattern
+                corroborating_sessions = @($_.corroborating_sessions)
+                tier0_presencial       = [bool]$_.tier0_presencial
+            }
+        }
+)
 $universo = @($allFeedback | Where-Object { [int]$_.sequence -gt $marcoSequencia })
 
 $todasAsSessoes = @($universo |
@@ -355,9 +384,12 @@ print(fc.model_dump_json())
     gate_metric                    = 'distinct_sessions_with_feedback'
     gate_definition                = 'Sessao = do inicio ao fim de um trabalho; compactacao de contexto NAO encerra sessao. A metrica que autoriza avaliacao e o numero de SESSOES DISTINTAS com feedback, acumulado desde a ultima calibracao e sem prazo de validade. Densidade intra-sessao (varios feedbacks numa mesma sessao) e dado retido, nao gatilho.'
     evaluated_at_policy            = 'Gatilho primario: aviso proativo no instante em que o limiar e atingido, se nao houver tarefa em andamento. Lastro: corrida diaria as 23:59 (Register-AgentCalibrationDailyTask.ps1), que registra a evidencia do dia inclusive quando ela e insuficiente.'
-    session_filter                 = $SessionId
-    ultima_calibracao              = if ($marcoUltimaCalibracao -eq [DateTimeOffset]::MinValue) { $null } else { $marcoUltimaCalibracao.ToString('o') }
-    timesfm_forecast               = $timesfmForecast
+    session_filter                  = $SessionId
+    ultima_calibracao               = if ($marcoUltimaCalibracao -eq [DateTimeOffset]::MinValue) { $null } else { $marcoUltimaCalibracao.ToString('o') }
+    auto_calibracoes_no_ciclo_count = $autoCalibracoesNoCiclo.Count
+    auto_calibracoes_no_ciclo       = $autoCalibracoesNoCiclo
+    retracted_calibration_ids       = $retractedCalibrationIds
+    timesfm_forecast                = $timesfmForecast
     sessoes_com_feedback           = $sessoesValidas
     sessoes_com_feedback_count     = $sessoesValidas.Count
     sessoes_faltantes              = $faltam
@@ -388,7 +420,8 @@ print(fc.model_dump_json())
         structural_gate_passed       = $structuralEvidenceSufficient
         reason                       = $gateWindowReason
         intra_session_density_is_data_not_trigger = 'Tres feedbacks numa mesma sessao e evidencia forte e fica registrada, mas nao autoriza calibracao por si: a metrica e a contagem de sessoes distintas.'
-        accumulation_never_expires   = 'Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao registrada.'
+        accumulation_never_expires   = 'Dia sem sessao e dia sem avaliacao, nao dia que apaga evidencia. O ledger e append-only e a contagem so reinicia apos uma calibracao formal registrada com Tier 0 presente.'
+        tier0_presence_required      = 'Auto-calibragem minima apos 3 sessoes gera auto_calibration e NAO reinicia a contagem. Calibracao formal exige presenca e confirmacao explicita do Tier 0 (-Tier0Present).'
         unsessioned_feedback_ignored = 'Feedback sem session_id nao conta para nenhuma sessao: amostra sem origem identificada nao abre portao.'
         split_session_not_counted    = 'session_id com mais de um session_started_at indica sessao partida. Sob contagem por sessao isso inflaria o portao, entao a sessao nao conta ate a origem ser reconciliada.'
         pattern_confirmation_required = 'At least two independently corroborating feedback records must identify the same operational pattern. The reviewer must cite both records or report insufficiency.'

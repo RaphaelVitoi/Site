@@ -194,7 +194,8 @@ if ($pendente) {
         'padrao operacional (sessoes de origem distinta) e hipotese com os oito',
         'componentes da SS8.3. Nao e medicao de script -- e obrigacao do auditor.',
         '',
-        'Fechamento: `pwsh -File scripts/ops/Record-AgentCalibration.ps1`.',
+        'Fechamento formal (apenas com presenca Tier 0): `pwsh -File scripts/ops/Record-AgentCalibration.ps1 -Tier0Present ...`.',
+        'Auto-calibragem minima autonoma (nao zera ciclo): `pwsh -File scripts/ops/Record-AgentCalibration.ps1 -AutoMinima ...`.',
         '',
         'Este arquivo e removido automaticamente no primeiro ciclo diario apos o',
         'fechamento.'
