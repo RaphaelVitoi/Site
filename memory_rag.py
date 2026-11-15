@@ -7,8 +7,10 @@ import asyncio
 from collections.abc import Sequence
 import contextlib
 from datetime import UTC, date, datetime
+import http.client
 import json
 import logging
+import math
 import os
 from pathlib import Path
 import re
@@ -17,6 +19,7 @@ import sys
 import time
 from typing import Any
 import unicodedata
+import urllib.parse
 
 import aiofiles
 
@@ -42,8 +45,69 @@ RAIZ_DO_PROJETO = Path(__file__).resolve().parent
 # em vez de lista de caminhos: viaja junto com a arvore e vale para
 # supersessoes futuras sem tocar no codigo de ingestao.
 MARCADOR_SUPERADO = "SUPERSEDED.md"
-OLLAMA_BASE_URL = "http://127.0.0.1:11434"
-EMBEDDING_MODEL = "nomic-embed-text"  # Requer: ollama pull nomic-embed-text
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
+EMBEDDING_MODEL = os.environ.get("CHICO_EMBEDDING_MODEL", "embeddinggemma-2:270m")
+VALID_MRL_DIMS: tuple[int, ...] = (768, 512, 256, 128)
+DEFAULT_MRL_DIM: int = int(os.environ.get("CHICO_MRL_DIM", "512"))
+
+
+def truncate_and_l2_normalize(vector: Sequence[float], dim: int = DEFAULT_MRL_DIM) -> list[float]:
+    """Aplica truncamento Matryoshka (MRL) e renormalizacao L2 sobre EmbeddingGemma 2 (768d -> 512/256/128d)."""
+    if dim not in VALID_MRL_DIMS:
+        raise ValueError(f"Dimensao MRL invalida ({dim}); valores suportados: {VALID_MRL_DIMS}.")
+    if len(vector) < dim:
+        raise ValueError(f"Vetor com {len(vector)} dimensoes e menor que o alvo MRL ({dim}).")
+    sliced = [float(v) for v in vector[:dim]]
+    norm = math.sqrt(sum(v * v for v in sliced))
+    return [v / norm for v in sliced] if norm > 0.0 else sliced
+
+
+def _post_ollama_embed(base_url: str, model: str, inputs: list[str], timeout_s: float) -> list[list[float]]:
+    """Executa POST /api/embed no daemon Ollama local via http.client."""
+    parsed = urllib.parse.urlparse(base_url.rstrip("/"))
+    conn_cls = http.client.HTTPSConnection if parsed.scheme == "https" else http.client.HTTPConnection
+    port = parsed.port or (443 if parsed.scheme == "https" else 11434)
+    conn = conn_cls(parsed.hostname or "127.0.0.1", port, timeout=timeout_s)
+    try:
+        payload = json.dumps({"model": model, "input": inputs}).encode("utf-8")
+        conn.request("POST", "/api/embed", body=payload, headers={"Content-Type": "application/json"})
+        resp = conn.getresponse()
+        raw = resp.read().decode("utf-8")
+        if resp.status != 200:
+            raise RuntimeError(f"Ollama /api/embed HTTP {resp.status}: {raw}")
+        data = json.loads(raw)
+        embeddings = data.get("embeddings")
+        if not isinstance(embeddings, list):
+            raise RuntimeError("Ollama /api/embed retornou payload sem lista 'embeddings'.")
+        return embeddings
+    finally:
+        conn.close()
+
+
+def embed_with_ollama_mrl(
+    texts: Sequence[str],
+    *,
+    model: str | None = None,
+    mrl_dim: int = DEFAULT_MRL_DIM,
+    base_url: str = OLLAMA_BASE_URL,
+    fallback_model: str | None = "nomic-embed-text",
+    timeout_s: float = 15.0,
+) -> list[list[float]]:
+    """Gera embeddings locais via EmbeddingGemma 2 (Ollama) com truncamento MRL e normalizacao L2."""
+    if not texts:
+        return []
+    if mrl_dim not in VALID_MRL_DIMS:
+        raise ValueError(f"Dimensao MRL invalida ({mrl_dim}); valores suportados: {VALID_MRL_DIMS}.")
+    inputs = [str(t) for t in texts]
+    target_model = model or EMBEDDING_MODEL
+    try:
+        raw_vectors = _post_ollama_embed(base_url, target_model, inputs, timeout_s)
+    except Exception:
+        if not fallback_model or fallback_model == target_model:
+            raise
+        raw_vectors = _post_ollama_embed(base_url, fallback_model, inputs, timeout_s)
+    return [truncate_and_l2_normalize(vec, dim=mrl_dim) for vec in raw_vectors]
+
 
 # MED-06: Removido logging.basicConfig() para evitar sobrescrever a configuracao SOTA global.
 logger = logging.getLogger(__name__)
@@ -61,20 +125,31 @@ WORD_PATTERN = r"\b\w{3,}\b"  # Padrao regex para extracao de palavras com 3+ ca
 LANCEDB_DIR = "data/lancedb"
 LANCEDB_PATH = RAIZ_DO_PROJETO / LANCEDB_DIR
 LANCEDB_TABLE_NAME = "nexus_knowledge"
+LANCEDB_MRL_TABLE_NAME = "nexus_knowledge_mrl"
 RAG_HEALTH_DB_PATH = RAIZ_DO_PROJETO / "data" / "rag_health.sqlite3"
 
 
 class LanceDBBackend:
     """Backend de alta capacidade e busca hibrida (Vetorial + FTS/BM25) via LanceDB."""
 
-    def __init__(self, db_path: Path | None = None, emb_fn: Any = None):
+    def __init__(
+        self,
+        db_path: Path | None = None,
+        emb_fn: Any = None,
+        *,
+        vector_dim: int = 384,
+        table_name: str = LANCEDB_TABLE_NAME,
+    ):
         import lancedb  # noqa: PLC0415
 
+        if vector_dim < 1:
+            raise ValueError(f"vector_dim invalido ({vector_dim}); deve ser >= 1.")
         self.db_path = db_path or LANCEDB_PATH
         self.db_path.mkdir(parents=True, exist_ok=True)
         self.db = lancedb.connect(str(self.db_path))
         self.emb_fn = emb_fn
-        self.table_name = LANCEDB_TABLE_NAME
+        self.vector_dim = vector_dim
+        self.table_name = table_name
         self.table = self._get_or_create_table()
 
     def _get_or_create_table(self):
@@ -83,7 +158,7 @@ class LanceDBBackend:
         schema = pa.schema(
             [
                 pa.field("id", pa.string()),
-                pa.field("vector", pa.list_(pa.float32(), 384)),
+                pa.field("vector", pa.list_(pa.float32(), self.vector_dim)),
                 pa.field("text", pa.string()),
                 pa.field("agent", pa.string()),
                 pa.field("source", pa.string()),
@@ -91,9 +166,24 @@ class LanceDBBackend:
             ]
         )
         try:
-            return self.db.open_table(self.table_name)
+            table = self.db.open_table(self.table_name)
+            try:
+                vec_type = table.schema.field("vector").type
+                list_size = getattr(vec_type, "list_size", None)
+                if isinstance(list_size, int) and list_size > 0:
+                    self.vector_dim = list_size
+            except Exception as e:
+                logger.debug("[LANCEDB] Nao foi possivel inspecionar dimensao de %s: %s", self.table_name, e)
+            return table
         except Exception:
             return self.db.create_table(self.table_name, schema=schema)
+
+    def _validate_vector_dim(self, vec: Sequence[float] | Any, context: str) -> None:
+        if len(vec) != self.vector_dim:
+            raise ValueError(
+                f"Incompatibilidade dimensional em {context} ({self.table_name}): "
+                f"recebido {len(vec)}d, esperado {self.vector_dim}d."
+            )
 
     def upsert_records(
         self,
@@ -105,10 +195,12 @@ class LanceDBBackend:
         now = time.time()
         records = []
         for i, doc_id in enumerate(ids):
+            vec = vectors[i]
+            self._validate_vector_dim(vec, "upsert_records")
             records.append(
                 {
                     "id": doc_id,
-                    "vector": vectors[i],
+                    "vector": vec,
                     "text": texts[i],
                     "agent": metadatas[i].get("agent", "Unknown"),
                     "source": metadatas[i].get("source", "N/A"),
@@ -135,6 +227,7 @@ class LanceDBBackend:
         limit: int = 5,
     ) -> list[dict]:
         """Busca hibrida vetorial + lexical BM25 no LanceDB com reranking ponderado."""
+        self._validate_vector_dim(query_vector, "search_hybrid")
         # SOTA v8.0: Pool de candidatos expandido para garantir captura otima de termos lexicais
         candidate_limit = max(limit * 3, 20)
         vec_results = self.table.search(query_vector).limit(candidate_limit).to_list()

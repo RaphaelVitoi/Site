@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OLLAMA_MANIFEST = PROJECT_ROOT / "data" / "ollama_models.json"
 DEFAULT_OLLAMA_BASE = "http://127.0.0.1:11434"
-DEFAULT_LLAMA_BASE = "http://127.0.0.1:9931"  # llama.cpp 1.0 (b12375) Router Nativo (llama-swap legado em :8080)
+DEFAULT_LLAMA_BASE = "http://127.0.0.1:9931"  # llama.cpp (b12387) Router Nativo Vulkan (llama-swap legado em :8080)
 DEFAULT_GEMMA_PROXY_BASE = "http://127.0.0.1:17043"
 
 _LLAMA_ROUTER_ALIASES: dict[str, str] = {
@@ -56,7 +56,11 @@ _LLAMA_ROUTER_ALIASES: dict[str, str] = {
     "qwen3.6-35b-a3b-eagle3": "Qwen3.6-35B-A3B-Eagle3Draft-Q5_K_M",
     "gemma4:e4b": "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P",
     "gemma4:12b": "gemma-4-12b-it-Q5_K_S",
+    "gemma4:12b-qat": "gemma-4-12b-it-Q5_K_S",
     "qwen2.5-coder:1.5b": "qwen2.5-coder-1.5b-q8_0",
+    "gpt-oss:20b": "ggml-org/gpt-oss-20b-GGUF:MXFP4",
+    "minicpm5:1b": "MiniCPM5-1B-Q4_K_M",
+    "ling:3b": "Ling-3.0-tiny-Q4_K_M",
 }
 _LLAMA_MODEL_CACHE: dict[str, list[str]] = {}
 OLLAMA_TIMEOUT_S = float(os.environ.get("CHICO_S2_TIMEOUT_S", "120"))

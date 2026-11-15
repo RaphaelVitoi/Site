@@ -25,7 +25,7 @@ valor versionado (SS3): aponte para o enum, que e a fonte.
    Todos os modelos de fronteira podem cumprir todas as funcoes (Axioma de Capacidade
    Universal sem feudos). A distribuicao reflete preferencia estrategica por arquitetura,
    especialidade nativa e preco:
-   - Gemini (3.8 Flash & 3.5 Flash-Lite para orquestracao/fast operations; 3.1 Pro vigente; 4 Argon/Carbon no apice): Orquestracao do fluxo agentico e Fast Operations;
+   - Gemini (4 Hydrogen para orquestracao agentica media/alta; 3.8 Flash & 3.5 Flash-Lite para fluxo/fast operations; 3.1 Pro vigente; 4 Argon/Carbon no apice): Orquestracao do fluxo agentico e Fast Operations;
    - Claude 5 (Sonnet 5 / Opus 5): Engenharia de codigo cirurgica e modelagem matematica / PMev;
    - ChatGPT 6.0 (Terra / Sol / Luna) e 6 Astra: Raciocinio profundo, seguranca / AppSec, arquitetura macro e alta complexidade.
 
@@ -77,6 +77,7 @@ GPT_6_0_TERRA = "gpt-6.0-terra"
 GPT_6_0_LUNA = "gpt-6.0-luna"
 GEMINI_4_ARGON = "gemini-4-argon"
 GEMINI_4_CARBON = "gemini-4-carbon"
+GEMINI_4_HYDROGEN = "gemini-4-hydrogen"
 GEMINI_3_8_FLASH = "gemini-3.8-flash"
 GEMINI_3_5_FLASH_LITE = "gemini-3.5-flash-lite"
 CLAUDE_OPUS_55 = "claude-opus-5.5"

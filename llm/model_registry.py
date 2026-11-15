@@ -565,6 +565,30 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "Lancado e registrado pelo Tier 0 em 2026-11-10."
         ),
     ),
+    "gemini-4-hydrogen": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-4-hydrogen",
+        cota_por_assinatura=True,
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=1.00,
+        price_per_1m_out=5.00,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.NAO_VERIFICADO,
+        notas=(
+            "Google Gemini 4 Hydrogen: integrante Tier 1 / Coletivo CHICO da "
+            "familia Gemini 4 (registrado em data/agent_identities.json em "
+            "2026-11-14, veiculo antigravity). Especializacao: tarefas do dia a "
+            "dia de complexidade media/alta e orquestracao agentica de longa "
+            "duracao, com baixa latencia e bom custo antes do escalonamento "
+            "pontual para Argon/Carbon. Verificado ao vivo na v1beta em "
+            "2026-11-15 (displayName='Gemini 4 Hydrogen', input=1048576, "
+            "output=65536, thinking=True, generateContent HTTP 200; "
+            "cachedContents ainda retorna HTTP 400 em gemini-4-*). Preco "
+            "($1.00/$5.00) mantido como NAO_VERIFICADO ate card oficial de billing."
+        ),
+    ),
     "gemini-3.8-flash": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-3.8-flash",

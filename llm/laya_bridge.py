@@ -25,6 +25,7 @@ Invariantes:
 
 from __future__ import annotations
 
+# pylint: disable=too-many-lines
 import contextlib
 from dataclasses import dataclass
 import inspect
@@ -56,6 +57,11 @@ __all__ = [
     "predict_batch",
     "LAYA_DEFAULT_QUESTIONS",
     "LAYA_POKER_PRESETS",
+    "LAYA_MULTILINGUAL_DEFAULT_REVISION",
+    "LAYA_GATE_STATES",
+    "get_laya_multilingual_revision",
+    "has_abstained_or_low_confidence",
+    "laya_multilingual_failover",
 ]
 
 logger = logging.getLogger(__name__)
@@ -63,6 +69,28 @@ logger = logging.getLogger(__name__)
 # Versao Canonica e Unica de Producao SOTA: laya-multilingual (mmBERT-base, 322M).
 CANONICAL_LAYA_MODEL: str = "multilingual"
 CANONICAL_LAYA_REPO: str = "convaiinnovations/laya-multilingual"
+LAYA_MULTILINGUAL_DEFAULT_REVISION: str = "e4e9ddf21a7b1903b7acffd8814ad4307bf63a67"
+LAYA_GATE_STATES: tuple[str, str, str] = ("passed", "abstained", "unevaluated")
+
+
+def get_laya_multilingual_revision() -> str:
+    """Retorna a revisao pinned da laya-multilingual (laya 0.4.32) sem importar torch."""
+    try:
+        from laya import router as laya_router_mod  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+        pinned = getattr(laya_router_mod, "PINNED_REVISIONS", None)
+        if not isinstance(pinned, dict):
+            import laya  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+            pinned = getattr(laya, "PINNED_REVISIONS", None)
+        if isinstance(pinned, dict):
+            rev = pinned.get(CANONICAL_LAYA_REPO)
+            if isinstance(rev, str) and rev:
+                return rev
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.debug("[laya-s1] PINNED_REVISIONS indisponivel (%s); usando default.", exc)
+    return LAYA_MULTILINGUAL_DEFAULT_REVISION
+
 
 # laya.route().model -> familia de modelo Chico (llm/model_registry.py).
 # "english"  -> pequeno modelo local de lingua inglesa (Tier 6 Edge: qwen/gemma en)
@@ -173,6 +201,27 @@ class HeuristicRouter:
         )
 
 
+def _supported_kwargs(callable_obj: Any, candidate_names: tuple[str, ...]) -> set[str]:
+    """Retorna subconjunto de ``candidate_names`` aceito por ``callable_obj``."""
+    with contextlib.suppress(TypeError, ValueError):
+        params = inspect.signature(callable_obj).parameters
+        if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+            return set(candidate_names)
+        return {name for name in candidate_names if name in params}
+    return set()
+
+
+def _build_laya_router(router_cls: Any) -> Any:
+    """Instancia Router com suporte a Vega (>8K tokens) quando aceito pela assinatura."""
+    kwargs: dict[str, Any] = {"default": CANONICAL_LAYA_MODEL}
+    supported = _supported_kwargs(router_cls, ("vega", "vega_over_tokens"))
+    if "vega" in supported:
+        kwargs["vega"] = "auto"
+    if "vega_over_tokens" in supported:
+        kwargs["vega_over_tokens"] = 8192
+    return router_cls(**kwargs)
+
+
 class LayaRouter:
     """Adaptador System-1 da Laya (rote()) zero-download.
 
@@ -199,7 +248,7 @@ class LayaRouter:
                     # lazy: from laya.router evita importar laya/__init__ (torch).
                     from laya.router import Router as _Router  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
-                    cls._router = _Router(default=CANONICAL_LAYA_MODEL)
+                    cls._router = _build_laya_router(_Router)
                     logger.debug("[laya-s1] Router carregado (lazy, default=%s).", CANONICAL_LAYA_MODEL)
                 except Exception as e:  # pylint: disable=broad-except
                     logger.debug("[laya-s1] laya indisponivel (%s); fallback heuristico.", e)
@@ -209,6 +258,11 @@ class LayaRouter:
     @classmethod
     def disponivel(cls) -> bool:
         return cls._carregar_router() is not None
+
+    @classmethod
+    def obter_router_preditivo(cls) -> Any:
+        """Retorna o Router compartilhado, retentando se tentativa anterior falhou."""
+        return cls._carregar_router(retry=cls._tentado and cls._router is None)
 
     @classmethod
     def classificar_intencao(cls, state: str | dict[str, Any]) -> LayaIntent:
@@ -408,13 +462,13 @@ def _detect_device() -> str:
     return "cpu"
 
 
-def _allow_cpu_predict() -> bool:
+def _allow_cpu_predict(allow_cpu_failover: bool = False) -> bool:
     """Override Tier-0: permite tentar laya.predict() em host CPU.
 
-    Demoroso (download 322M + forward ~350ms/CPU). Apenas para validacao
-    ou quando o arbitro Tier 0 autoriza explicitamente.
+    Demoroso (download 322M + forward ~350ms/CPU). Apenas para validacao,
+    failover explicito ou quando o arbitro Tier 0 autoriza explicitamente.
     """
-    return os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
+    return allow_cpu_failover or os.environ.get("CHICO_LAYA_PREDICT_ALLOW_CPU", "0") == "1"
 
 
 def _parse_single_answer_dict(
@@ -539,7 +593,7 @@ def _obter_predict_router() -> Any:
     anterior falhou (``_tentado`` sem ``_router``), ``retry=True`` tenta o
     import novamente -- ex.: dependencia instalada apos o primeiro route().
     """
-    router = LayaRouter._carregar_router(retry=LayaRouter._tentado and LayaRouter._router is None)
+    router = LayaRouter.obter_router_preditivo()
     if router is None:
         raise RuntimeError("laya.router indisponivel")
     return router
@@ -578,17 +632,17 @@ def _invoke_router_predict(
     qs: dict[str, dict[str, Any]],
     model_name: str,
     eff_max_len: int,
+    min_confidence: float | None = None,
 ) -> dict[str, Any]:
-    """Chama ``router.predict`` encaminhando ``max_len`` quando suportado pelo router."""
+    """Chama ``router.predict`` encaminhando ``max_len`` e ``min_confidence`` quando suportados."""
     predict_fn = router.predict
-    try:
-        params = inspect.signature(predict_fn).parameters
-        accepts_max_len = "max_len" in params or any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values())
-    except (TypeError, ValueError):
-        accepts_max_len = False
-    if accepts_max_len:
-        return predict_fn(state, qs, model=model_name, max_len=eff_max_len)
-    return predict_fn(state, qs, model=model_name)
+    kwargs: dict[str, Any] = {"model": model_name}
+    supported = _supported_kwargs(predict_fn, ("max_len", "min_confidence"))
+    if "max_len" in supported:
+        kwargs["max_len"] = eff_max_len
+    if min_confidence is not None and "min_confidence" in supported:
+        kwargs["min_confidence"] = min_confidence
+    return predict_fn(state, qs, **kwargs)
 
 
 def laya_predict(
@@ -596,13 +650,16 @@ def laya_predict(
     questions: dict[str, dict[str, Any]] | None = None,
     model_override: str | None = None,
     max_len: int = 1024,
+    *,
+    min_confidence: float | None = None,
+    allow_cpu_failover: bool = False,
 ) -> LayaPrediction:
     """Executa laya.predict() (full System-1 forward pass com laya-multilingual).
 
     IMPORT LAZY: carrega torch apenas aqui. Respecta o device detectado --
     CPU host nunca tenta CUDA. Perguntas sobreescrevem os presets default.
     Target canonico SOTA: laya-multilingual (mmBERT-base, 322M). Suporta
-    contexto estendido ate 8192 tokens para Hand Histories completos.
+    contexto estendido ate 8192 tokens (Vega >8K na v0.4.32) para Hand Histories.
     """
     inicio = time.perf_counter()
     device_str = _detect_device()
@@ -612,7 +669,7 @@ def laya_predict(
     state_str = state if isinstance(state, str) else str(state)
     eff_max_len = 8192 if len(state_str.split()) > 400 or max_len > 1024 else max_len
 
-    cpu_force_block = device_str == "cpu" and not _allow_cpu_predict()
+    cpu_force_block = device_str == "cpu" and not _allow_cpu_predict(allow_cpu_failover)
     if cpu_force_block:
         logger.debug("[laya-s1] CPU only; predict() fallback heuristico (no checkpoint).")
         return _construir_fallback_prediction(
@@ -632,7 +689,14 @@ def laya_predict(
 
         # O modelo canonico e sempre 'multilingual', a menos que explicitamente sobrescrito
         model_name = model_override or CANONICAL_LAYA_MODEL
-        result = _invoke_router_predict(router, state, qs, model_name, eff_max_len)
+        result = _invoke_router_predict(
+            router,
+            state,
+            qs,
+            model_name,
+            eff_max_len,
+            min_confidence=min_confidence,
+        )
 
         latency_ms = (time.perf_counter() - inicio) * 1000.0
         noul, choice, score, conf = _extrair_grandes_dados(result, qs)
@@ -682,6 +746,84 @@ def laya_predict(
                 str(e),
                 "no-trained-checkpoint-loaded",
             ],
+        )
+
+
+def _answer_fails_confidence_gate(ans: Any, min_confidence: float | None) -> bool:
+    """Retorna True se uma resposta individual abstiver ou ficar abaixo do limiar."""
+    if not isinstance(ans, dict):
+        return False
+    if ans.get("gate") == "abstained" or ans.get("abstained") is True:
+        return True
+    if min_confidence is None:
+        return False
+    raw_conf = ans.get("confidence")
+    if raw_conf is None and ans.get("type") == "noul":
+        raw_conf = ans.get("noul")
+    if raw_conf is None:
+        return False
+    try:
+        return float(raw_conf) < min_confidence
+    except (TypeError, ValueError):
+        return False
+
+
+def has_abstained_or_low_confidence(
+    pred: LayaPrediction | None,
+    min_confidence: float | None = None,
+) -> bool:
+    """Inspeciona gate de abstencao (laya 0.4.32) ou confianca abaixo de ``min_confidence``."""
+    if pred is None:
+        return False
+    raw = getattr(pred, "answers", None)
+    inner = raw.get("answers", raw) if isinstance(raw, dict) else {}
+    if isinstance(inner, dict) and any(_answer_fails_confidence_gate(ans, min_confidence) for ans in inner.values()):
+        return True
+    pred_conf = getattr(pred, "confidence", None)
+    return min_confidence is not None and pred_conf is not None and float(pred_conf) < min_confidence
+
+
+def laya_multilingual_failover(
+    state: str | dict[str, Any],
+    questions: dict[str, dict[str, Any]] | None = None,
+    *,
+    max_len: int | None = None,
+    min_confidence: float | None = None,
+    allow_cpu_weights: bool = False,
+) -> LayaPrediction:
+    """Executa failover ordenado para laya-multilingual (:8192 -> in-process -> heuristico)."""
+    inicio = time.perf_counter()
+    remote = (
+        laya_predict_remote(state, questions=questions, max_len=max_len, min_confidence=min_confidence)
+        if min_confidence is not None
+        else laya_predict_remote(state, questions=questions, max_len=max_len)
+    )
+    if remote is not None and not getattr(remote.provenia, "fallback_used", True):
+        if "laya-multilingual-failover-active" not in remote.provenia.assumptions:
+            remote.provenia.assumptions.append("laya-multilingual-failover-active")
+        return remote
+
+    try:
+        eff_max_len = max_len if max_len is not None else 1024
+        pred = laya_predict(
+            state,
+            questions=questions,
+            model_override=CANONICAL_LAYA_MODEL,
+            max_len=eff_max_len,
+            min_confidence=min_confidence,
+            allow_cpu_failover=allow_cpu_weights,
+        )
+        if "laya-multilingual-failover-active" not in pred.provenia.assumptions:
+            pred.provenia.assumptions.append("laya-multilingual-failover-active")
+        return pred
+    except Exception as exc:  # pylint: disable=broad-except
+        logger.debug("[laya-s1] laya_multilingual_failover erro in-process (%s); heuristico.", exc)
+        return _construir_fallback_prediction(
+            state,
+            _detect_device(),
+            inicio,
+            assumption_tag="laya-multilingual-failover-active",
+            limitation_extras=[str(exc), "no-trained-checkpoint-loaded"],
         )
 
 
@@ -789,15 +931,15 @@ def predict_batch(
 
 DEFAULT_LAYA_SERVICE_URL: str = "http://127.0.0.1:8192"
 _LAYA_SERVICE_ENV_KEYS: tuple[str, ...] = ("CHICO_LAYA_SERVICE_URL", "LAYA_SERVICE_URL")
-# Calibrado sobre i9-9900K (CPU) onde Hand Histories >400 palavras atingem ~2.4s.
-_DEFAULT_SERVICE_TIMEOUT_MS: float = 4000.0
+# Calibrado sobre i9-9900K (CPU): cold JIT atinge ~3.1-4.5s e warm estabiliza em ~86 ms.
+_DEFAULT_SERVICE_TIMEOUT_MS: float = 6000.0
 _SERVICE_CIRCUIT_LOCK = threading.Lock()
 _SERVICE_COOLDOWN_UNTIL: float = 0.0
 
 
 def reset_laya_service_circuit() -> None:
     """Reinicia o cooldown de falha do microservico :8192 (uso em testes/ops)."""
-    global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603
+    global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603  # pylint: disable=global-statement
     with _SERVICE_CIRCUIT_LOCK:
         _SERVICE_COOLDOWN_UNTIL = 0.0
 
@@ -873,6 +1015,7 @@ def _build_remote_predict_body(
     state: str | dict[str, Any],
     questions: dict[str, dict[str, Any]] | None,
     max_len: int | None,
+    min_confidence: float | None = None,
 ) -> tuple[bytes, int | None]:
     """Serializa payload JSON para ``/predict`` e retorna ``(body, eff_max_len)``."""
     qs = questions if questions is not None else LAYA_DEFAULT_QUESTIONS
@@ -885,6 +1028,8 @@ def _build_remote_predict_body(
     }
     if eff_max_len is not None:
         req_payload["max_len"] = eff_max_len
+    if min_confidence is not None:
+        req_payload["min_confidence"] = min_confidence
     return json.dumps(req_payload).encode("utf-8"), eff_max_len
 
 
@@ -893,7 +1038,7 @@ def _record_service_failure_cooldown(allow_cooldown: bool) -> None:
     cooldown_s = _service_cooldown_seconds()
     if allow_cooldown and cooldown_s > 0.0:
         with _SERVICE_CIRCUIT_LOCK:
-            global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603
+            global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603  # pylint: disable=global-statement
             _SERVICE_COOLDOWN_UNTIL = time.monotonic() + cooldown_s
 
 
@@ -902,6 +1047,8 @@ def laya_predict_remote(
     questions: dict[str, dict[str, Any]] | None = None,
     timeout_s: float | None = None,
     max_len: int | None = None,
+    *,
+    min_confidence: float | None = None,
 ) -> LayaPrediction | None:
     """Executa ``laya_predict`` no microservico HTTP Laya (``:8192``).
 
@@ -910,7 +1057,7 @@ def laya_predict_remote(
     escalonamento nuvem). ``CHICO_LAYA_SERVICE_DISABLE=1`` desliga a sonda.
     Proveniencia do servico e preservada e marcada com ``laya-http-service``.
     """
-    global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603
+    global _SERVICE_COOLDOWN_UNTIL  # noqa: PLW0603  # pylint: disable=global-statement
     if os.environ.get("CHICO_LAYA_SERVICE_DISABLE", "0") == "1":
         return None
     if timeout_s is None:
@@ -918,7 +1065,7 @@ def laya_predict_remote(
             if time.monotonic() < _SERVICE_COOLDOWN_UNTIL:
                 return None
     base, default_timeout = _laya_service_config()
-    body, eff_max_len = _build_remote_predict_body(state, questions, max_len)
+    body, eff_max_len = _build_remote_predict_body(state, questions, max_len, min_confidence=min_confidence)
     timeout = timeout_s if timeout_s is not None else default_timeout
     if timeout_s is None and eff_max_len is not None and eff_max_len > 1024:
         timeout = max(timeout, 10.0)

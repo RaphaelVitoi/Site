@@ -58,6 +58,7 @@ PREFIX_GEMINI_35 = "gemini-3.5"
 PREFIX_GEMINI_36 = "gemini-3.6"
 PREFIX_GEMINI_37 = "gemini-3.7"
 PREFIX_GEMINI_38 = "gemini-3.8"
+PREFIX_GEMINI_4 = "gemini-4"
 
 #: Modelos de Tier 1: orquestram, nao sao candidatos a executar tarefa comum.
 #:
@@ -329,6 +330,48 @@ def _infer_provider_for_model(model: str) -> str | None:
     return None
 
 
+def _first_matching_value[T](m: str, rules: tuple[tuple[tuple[str, ...], T], ...]) -> T | None:
+    for tokens, value in rules:
+        if any(token in m for token in tokens):
+            return value
+    return None
+
+
+_LOCAL_PREFERENCE_TAIL_RULES: tuple[tuple[tuple[str, ...], int], ...] = (
+    ((PREFIX_GEMINI_35,), 2),
+    (("gemini-3.1",), 3),
+    ((PREFIX_GEMINI_36,), 4),
+    ((PREFIX_GEMINI_37,), 1000),  # retirado da rota vigente; manter apenas medicao historica
+    (("deepseek-r1",), 6),
+    (("flash",), 7),
+    (("gemini",), 8),
+)
+
+_STANDARD_PREFERENCE_TAIL_RULES: tuple[tuple[tuple[str, ...], int], ...] = (
+    ((PREFIX_GEMINI_36,), -2),  # Workhorse Flash
+    ((PREFIX_GEMINI_37,), 1000),  # retirado da rota vigente; manter apenas medicao historica
+    (("gemma-4", "gemma4"), 1),
+    (("deepseek-r1",), 1),
+    ((FREE_TIER_MARKER, "laguna"), 2),
+    (("flash",), 3),
+    (("gemini",), 4),
+)
+
+_COST_HEAD_RULES: tuple[tuple[tuple[str, ...], float], ...] = (
+    ((FREE_TIER_MARKER, "local", "ai9stars", "ling"), 0.0),
+    (("laguna", "space-bunny"), 0.0),  # familia laguna / condutor hermes free
+    (("120b", "glm"), 9.0),  # o maior da frota
+    (("31b", "gemma-4-31b"), 6.0),
+)
+
+_COST_TAIL_RULES: tuple[tuple[tuple[str, ...], float], ...] = (
+    ((PREFIX_GEMINI_35,), 1.0),  # o mais barato do cloud
+    ((PREFIX_GEMINI_36,), 2.0),
+    ((PREFIX_GEMINI_37,), 3.0),
+    ((PREFIX_GEMINI_38,), 3.5),
+)
+
+
 def _score_local_preference(m: str, domain: str | None = None) -> int:
     if FREE_TIER_MARKER in m or "local" in m or "ai9stars" in m:
         return 0
@@ -339,21 +382,10 @@ def _score_local_preference(m: str, domain: str | None = None) -> int:
 
     if "gemma-4" in m or "gemma4" in m:
         return 1
-    if PREFIX_GEMINI_35 in m:
-        return 2
-    if "gemini-3.1" in m:
-        return 3
-    if PREFIX_GEMINI_36 in m:
-        return 4
-    if PREFIX_GEMINI_37 in m:
-        return 1000  # retirado da rota vigente; manter apenas medicao historica
-    if "deepseek-r1" in m:
-        return 6
-    if "flash" in m:
-        return 7
-    if "gemini" in m:
-        return 8
-    return 10
+    if PREFIX_GEMINI_4 in m:
+        return 1 if "hydrogen" in m else 3
+    matched = _first_matching_value(m, _LOCAL_PREFERENCE_TAIL_RULES)
+    return matched if matched is not None else 10
 
 
 def _score_standard_preference(m: str, model: str, domain: str | None = None) -> int:
@@ -368,25 +400,12 @@ def _score_standard_preference(m: str, model: str, domain: str | None = None) ->
         return -4  # Mais barato da familia; especialista em TRIAGE
     if PREFIX_GEMINI_38 in m:
         return 0  # Raciocinio mais forte da familia; especialista em RAZONIO
-    if PREFIX_GEMINI_36 in m:
-        return -2  # Workhorse Flash
-    if PREFIX_GEMINI_37 in m:
-        return 1000  # retirado da rota vigente; manter apenas medicao historica
-    if "gemma-4" in m or "gemma4" in m:
-        return 1
-    if "deepseek-r1" in m:
-        return 1
-    if FREE_TIER_MARKER in m or "laguna" in m:
-        return 2
-    if "flash" in m:
-        return 3
-    if "gemini" in m:
-        return 4
-
-    p = _infer_provider_for_model(model)
-    if p == "openrouter":
-        return 8
-    return 9
+    if PREFIX_GEMINI_4 in m:
+        return 0 if "hydrogen" in m else 2  # Hydrogen para orquestracao longa; Argon/Carbon preservados para apice
+    matched = _first_matching_value(m, _STANDARD_PREFERENCE_TAIL_RULES)
+    if matched is not None:
+        return matched
+    return 8 if _infer_provider_for_model(model) == "openrouter" else 9
 
 
 def _custo_relativo(m: str, model: str) -> float:
@@ -396,25 +415,17 @@ def _custo_relativo(m: str, model: str) -> float:
     modelos da frota, nao o preco absoluto. Mudanca de preco nao muda a ordem,
     entao um desconto no 3.5-lite nao embaralha o roteamento inteiro.
     """
-    if FREE_TIER_MARKER in m or "local" in m or "ai9stars" in m or "ling" in m:
-        return 0.0
-    if "laguna" in m or "space-bunny" in m:
-        return 0.0  # familia laguna / condutor hermes free
-    if "120b" in m or "glm" in m:
-        return 9.0  # o maior da frota
-    if "31b" in m or "gemma-4-31b" in m:
-        return 6.0
+    head_cost = _first_matching_value(m, _COST_HEAD_RULES)
+    if head_cost is not None:
+        return head_cost
     p = _infer_provider_for_model(model)
     if p == "local":
         return 0.0
-    if PREFIX_GEMINI_35 in m:
-        return 1.0  # o mais barato do cloud
-    if PREFIX_GEMINI_36 in m:
-        return 2.0
-    if PREFIX_GEMINI_37 in m:
-        return 3.0
-    if PREFIX_GEMINI_38 in m:
-        return 3.5
+    tail_cost = _first_matching_value(m, _COST_TAIL_RULES)
+    if tail_cost is not None:
+        return tail_cost
+    if PREFIX_GEMINI_4 in m:
+        return 3.8 if "hydrogen" in m else 5.0
     if "deepseek" in m:
         return 0.5
     return 5.0 if p == "openrouter" else 4.0

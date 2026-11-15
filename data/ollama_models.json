@@ -201,6 +201,57 @@
       "size_gb": 4.7,
       "role": "Gemma base 9B local (nao e a linha Gemma 4). Medido via ollama list em 2026-11-10; sem consumidor declarado.",
       "consumers": []
+    },
+    {
+      "alias": "embedding_gemma2_270m",
+      "tag": "embeddinggemma-2:270m",
+      "tier": "local",
+      "required": true,
+      "size_gb": 0.28,
+      "role": "EmbeddingGemma 2 (270M) — 768d nativos com truncamento MRL dinamico (512d/256d/128d) para LanceDB e SQLite FTS5.",
+      "consumers": [
+        "memory_rag.py"
+      ]
+    },
+    {
+      "alias": "embedding_gemma2_440m",
+      "tag": "embeddinggemma-2:440m",
+      "tier": "local",
+      "required": false,
+      "size_gb": 0.62,
+      "role": "EmbeddingGemma 2 (440M) — 768d MRL intermediario de alta precisao para busca assimetrica.",
+      "consumers": [
+        "memory_rag.py"
+      ]
+    },
+    {
+      "alias": "embedding_gemma2_740m",
+      "tag": "embeddinggemma-2:740m",
+      "tier": "local",
+      "required": false,
+      "size_gb": 1.2,
+      "role": "EmbeddingGemma 2 (740M) — 768d MRL maximo para corpus denso tecnico e PMev.",
+      "consumers": [
+        "memory_rag.py"
+      ]
+    },
+    {
+      "alias": "functiongemma_270m",
+      "tag": "functiongemma:270m",
+      "tier": "local",
+      "required": false,
+      "size_gb": 0.28,
+      "role": "FunctionGemma 270M — despacho rapido local de tool-calling estruturado.",
+      "consumers": []
+    },
+    {
+      "alias": "translategemma_4b",
+      "tag": "translategemma:4b",
+      "tier": "local",
+      "required": false,
+      "size_gb": 3.07,
+      "role": "TranslateGemma 4B — traducao e normalizacao multilingue local.",
+      "consumers": []
     }
   ]
 }

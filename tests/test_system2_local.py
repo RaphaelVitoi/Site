@@ -279,3 +279,35 @@ def test_homologar_laya_fastapi_metrics_e_max_len(monkeypatch: pytest.MonkeyPatc
     assert r_health.status_code == 200
     assert r_health.json()["metrics"]["requests_total"] == 1
     assert r_health.json()["metrics"]["last_latency_ms"] is not None
+
+
+def test_laya_service_e_remote_encaminham_min_confidence(monkeypatch: pytest.MonkeyPatch) -> None:
+    from fastapi.testclient import TestClient
+
+    from llm.laya_bridge import _build_remote_predict_body
+    from scripts.ops.homologar_laya_gpu import criar_fastapi_app
+
+    body_none, _ = _build_remote_predict_body("Hero BTN", None, 1024)
+    assert b"min_confidence" not in body_none
+    body_gate, _ = _build_remote_predict_body("Hero BTN", None, 1024, min_confidence=0.82)
+    assert json.loads(body_gate.decode("utf-8"))["min_confidence"] == pytest.approx(0.82)
+
+    monkeypatch.setenv("CHICO_LAYA_PREDICT_ALLOW_CPU", "0")
+    captured: dict[str, object] = {}
+
+    import llm.laya_bridge as _laya_bridge_mod
+
+    real_predict = _laya_bridge_mod.laya_predict
+
+    def spy_predict(state: str, questions=None, *, model_override=None, max_len: int = 1024, min_confidence=None):
+        captured["min_confidence"] = min_confidence
+        return real_predict(
+            state, questions, model_override=model_override, max_len=max_len, min_confidence=min_confidence
+        )
+
+    monkeypatch.setattr("llm.laya_bridge.laya_predict", spy_predict)
+    app = criar_fastapi_app()
+    client = TestClient(app)
+    resp = client.post("/predict", json={"state": "Hero BTN AKo", "min_confidence": 0.85})
+    assert resp.status_code == 200
+    assert captured["min_confidence"] == pytest.approx(0.85)

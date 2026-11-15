@@ -6,6 +6,7 @@ import asyncio
 import functools
 import json
 import logging
+import re
 import time
 from typing import Any
 
@@ -26,8 +27,11 @@ def _normalize_gemini_model(model: str) -> str:
     """Helper SOTA: Normaliza modelos legados e experimentais Gemini para a linha estavel."""
     model_l = model.lower()
 
-    # Suporte nativo para a serie 3.x (Gemini 3.8 Flash / 3.7 Flash / 3.6 Flash / 3.5 Flash-Lite / 3.1 Flash-Lite)
-    if any(v in model_l for v in ("3.8", "3.7", "3.6", "3.5", "3.1", "3.0")):
+    # Suporte nativo para Gemini 4 e serie 3.x (3.8 Flash / 3.5 Flash-Lite / 3.1 Pro / pro-latest)
+    if any(
+        v in model_l
+        for v in ("gemini-4", "argon", "carbon", "hydrogen", "3.8", "3.7", "3.6", "3.5", "3.1", "3.0", "pro-latest")
+    ):
         return model
 
     # Suporte nativo para a serie 2.x
@@ -41,17 +45,24 @@ def _normalize_gemini_model(model: str) -> str:
 
 
 def _is_gemini_3x(model_str: str) -> bool:
-    """Verifica se o modelo pertence a serie Gemini 3.x."""
-    return any(v in model_str for v in ("3.8", "3.7", "3.6", "3.5"))
+    """Verifica se o modelo pertence as geracoes modernas (3.x / 4.x) que rejeitam sampling legado."""
+    model_l = model_str.lower()
+    return any(
+        v in model_l
+        for v in ("gemini-4", "argon", "carbon", "hydrogen", "3.8", "3.7", "3.6", "3.5", "3.1", "3.0", "pro-latest")
+    )
 
 
 def _is_thinking_capable(model_str: str, thinking_kwarg: bool) -> bool:
-    """Verifica se o modelo suporta Dynamic Thinking."""
-    return any(v in model_str for v in ("3.8", "3.7")) or thinking_kwarg
+    """Verifica se o modelo suporta Dynamic / Extended Thinking."""
+    model_l = model_str.lower()
+    return thinking_kwarg or any(
+        v in model_l for v in ("3.8", "3.7", "3.1", "pro-latest", "gemini-4", "argon", "carbon", "hydrogen")
+    )
 
 
 def _build_thinking_config(kwargs: dict[str, Any], model_str: str) -> dict[str, Any]:
-    """Constroi configuracao de Extended Thinking."""
+    """Constroi configuracao de Extended Thinking validada para a API REST Google."""
     budget = kwargs.get("thinking_budget")
     if budget is None and _is_thinking_capable(model_str, kwargs.get("thinking", False)):
         budget = 4096
@@ -60,7 +71,12 @@ def _build_thinking_config(kwargs: dict[str, Any], model_str: str) -> dict[str, 
     if budget:
         thinking_config["thinkingBudget"] = budget
     if thinking_level:
-        thinking_config["thinkingLevel"] = str(thinking_level).upper()
+        level_u = str(thinking_level).strip().upper()
+        if level_u not in ("MINIMAL", "LOW", "MEDIUM", "HIGH"):
+            raise ValueError(
+                f"Gemini thinking_level invalido: '{thinking_level}'. Use 'minimal', 'low', 'medium' ou 'high'."
+            )
+        thinking_config["thinkingLevel"] = level_u
     return thinking_config
 
 
@@ -77,14 +93,14 @@ def _extract_text_from_parts(parts: list[dict[str, Any]]) -> str:
 def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bool, **kwargs: Any) -> dict[str, Any]:
     """Constroi a carga util da API absorvendo a prevencao de falhas de chaves Free-Tier e suporte a Thinking."""
     final_user_prompt = f"{system_prompt}\n\n---\n\n{user_prompt}" if system_prompt else user_prompt
-    model_str = str(kwargs.get("model", "")).lower()
+    model_str = str(kwargs.get("_model") or kwargs.get("model") or "").lower()
     is_gemini_3x = _is_gemini_3x(model_str)
 
     gen_config: dict[str, Any] = {
         "maxOutputTokens": kwargs.get("max_tokens", 8192),
     }
 
-    # Gemini 3.x descontinuou amostragem estocastica tradicional (temperature, top_p, top_k).
+    # Gemini 3.x/4.x descontinuaram amostragem estocastica tradicional (temperature, top_p, top_k).
     # Parametros de amostragem somente sao injetados em modelos legados.
     if not is_gemini_3x:
         gen_config["temperature"] = kwargs.get("temperature", 0.2)
@@ -92,7 +108,7 @@ def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bo
     if require_json:
         gen_config["responseMimeType"] = APP_JSON
 
-    # SOTA: Habilita Dynamic Thinking / Test-Time Compute para Gemini 3.8 Flash e 3.7 Flash
+    # SOTA: Habilita Dynamic Thinking / Test-Time Compute para Gemini 3.1/3.8/4.x
     if _is_thinking_capable(model_str, kwargs.get("thinking", False)):
         thinking_config = _build_thinking_config(kwargs, model_str)
         if thinking_config:
@@ -111,10 +127,14 @@ def _build_gemini_payload(system_prompt: str, user_prompt: str, require_json: bo
                 "sao ativamente rejeitadas com erro HTTP 400. O ultimo turno deve ser do usuario."
             )
 
-    return {
+    payload: dict[str, Any] = {
         "contents": contents,
         "generationConfig": gen_config,
     }
+    cached_content = kwargs.get("cached_content") or kwargs.get("cachedContent")
+    if cached_content:
+        payload["cachedContent"] = str(cached_content)
+    return payload
 
 
 async def _execute_native_fallback(
@@ -169,8 +189,6 @@ async def _execute_primary_request(
 
 def _parse_gemini_error_info(err_str: str) -> tuple[int, float]:
     """Extrai status_code HTTP e retry_after de mensagem de erro da API Gemini."""
-    import re  # noqa: PLC0415
-
     status_code = 500
     retry_after = 0.0
     match = re.search(r"\bHTTP\s+(\d{3})\b", err_str)
@@ -217,7 +235,7 @@ async def call_gemini(
     # O header e o canal documentado pelo Google para a mesma autenticacao.
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     headers = {"Content-Type": APP_JSON, GEMINI_API_KEY_HEADER: active_key}
-    data = _build_gemini_payload(system_prompt, user_prompt, require_json, **kwargs)
+    data = _build_gemini_payload(system_prompt, user_prompt, require_json, _model=model, **kwargs)
     request_kwargs: dict = {"timeout": client_timeout} if client_timeout is not None else {}
     timeout_val = client_timeout.total if client_timeout and client_timeout.total else 60.0
 

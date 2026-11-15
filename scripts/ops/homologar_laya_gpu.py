@@ -461,6 +461,7 @@ class PredictRequest(BaseModel):
     model: str = Field(default=CANONICAL_MODEL, description="Modelo Laya canonico")
     questions: dict[str, dict[str, Any]] | None = None
     max_len: int | None = Field(default=None, ge=64, le=8192)
+    min_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
 
 
 class SolveRequest(BaseModel):
@@ -588,6 +589,7 @@ def criar_fastapi_app() -> FastAPI:
                 req.questions,
                 model_override=req.model,
                 max_len=req.max_len or 1024,
+                min_confidence=req.min_confidence,
             )
             tracker.record(pred.latency_ms)
             return {

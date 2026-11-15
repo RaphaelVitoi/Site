@@ -32,7 +32,13 @@ import time
 from typing import Any
 
 from llm.decision_pool import DECISION_POOL_NAME, _sha8, decision_pool_manager
-from llm.laya_bridge import Provenia, laya_predict, laya_predict_remote
+from llm.laya_bridge import (
+    Provenia,
+    has_abstained_or_low_confidence,
+    laya_multilingual_failover,
+    laya_predict,
+    laya_predict_remote,
+)
 
 __all__ = [
     "DECISIONS_API_VERSION",
@@ -219,7 +225,7 @@ def _norm_noul_criteria(qid: str, criteria: Any) -> dict[str, str] | None:
 
 
 def _norm_choice_criteria(qid: str, criteria: Any) -> dict[str, str]:
-    if not isinstance(criteria, dict) or not (MIN_CHOICE_OPTIONS <= len(criteria) <= MAX_CHOICE_OPTIONS):
+    if not isinstance(criteria, dict) or not MIN_CHOICE_OPTIONS <= len(criteria) <= MAX_CHOICE_OPTIONS:
         raise ValueError(
             f"questions[{qid!r}].criteria (choice) deve ser mapa com {MIN_CHOICE_OPTIONS}..{MAX_CHOICE_OPTIONS} opcoes."
         )
@@ -227,7 +233,7 @@ def _norm_choice_criteria(qid: str, criteria: Any) -> dict[str, str]:
 
 
 def _norm_score_criteria(qid: str, criteria: Any) -> list[str]:
-    if not isinstance(criteria, list) or not (2 <= len(criteria) <= MAX_SCORE_LEVELS):
+    if not isinstance(criteria, list) or not 2 <= len(criteria) <= MAX_SCORE_LEVELS:
         raise ValueError(
             f"questions[{qid!r}].criteria (score) deve ser lista ordenada com 2..{MAX_SCORE_LEVELS} niveis (rubrica)."
         )
@@ -741,55 +747,144 @@ def _laya_predict_com_servico(
     return pred
 
 
+def _laya_tem_respostas_completas(pred: Any, normalized: dict[str, dict[str, Any]]) -> bool:
+    """True quando ``pred`` responde todos os qids de ``normalized``."""
+    answers = _laya_answers(pred, normalized)
+    return not _laya_missing(answers, normalized)
+
+
+def _failover_para_laya_apos_erro_nuvem(
+    state: Any,
+    questions: dict[str, dict[str, Any]],
+    normalized: dict[str, dict[str, Any]],
+    pred_existente: Any,
+    cloud_error: Exception,
+) -> DecisionResult | None:
+    """Degrada graciosamente para laya-multilingual (ou heuristico) quando a nuvem falha."""
+    pred = pred_existente if pred_existente is not None else _laya_predict_com_servico(state, questions)
+    allow_cpu_env = os.environ.get("CHICO_LAYA_CPU_ON_CLOUD_FAILOVER", "0") == "1"
+    pred_in_fallback = getattr(getattr(pred, "provenia", None), "fallback_used", True)
+    if pred is None or (pred_in_fallback and allow_cpu_env):
+        pred = laya_multilingual_failover(
+            state,
+            questions=dict(questions),
+            allow_cpu_weights=allow_cpu_env,
+        )
+    if pred is None or not _laya_tem_respostas_completas(pred, normalized):
+        return None
+    engine = (
+        "laya-s1-trained" if not getattr(getattr(pred, "provenia", None), "fallback_used", True) else "laya-s1-fallback"
+    )
+    res = _laya_decision_result(pred, normalized, engine=engine)
+    res.provenia.fallback_used = True
+    if "failover-from-gemini-decision-1" not in res.provenia.assumptions:
+        res.provenia.assumptions.append("failover-from-gemini-decision-1")
+    logger.warning("[gemini-decisions] gemini-decision-1 indisponivel (%s); failover para %s.", cloud_error, engine)
+    return res
+
+
+def _tentar_decide_com_failover(
+    state: Any,
+    questions: dict[str, dict[str, Any]],
+    normalized: dict[str, dict[str, Any]],
+    cli: GeminiDecisionsClient,
+    pred_existente: Any,
+    *,
+    allow_laya_failover: bool,
+) -> DecisionResult:
+    """Executa ``decide()`` com failover automatico para Laya Multilingual se permitido."""
+    try:
+        return decide(state, normalized, client=cli)
+    except Exception as cloud_err:  # pylint: disable=broad-except
+        if allow_laya_failover:
+            failover_res = _failover_para_laya_apos_erro_nuvem(state, questions, normalized, pred_existente, cloud_err)
+            if failover_res is not None:
+                return failover_res
+        raise
+
+
+def _avaliar_predicao_laya_ou_escalonar(
+    state: Any,
+    questions: dict[str, dict[str, Any]],
+    normalized: dict[str, dict[str, Any]],
+    cli: GeminiDecisionsClient,
+    pred: Any,
+    *,
+    min_confidence: float | None,
+    allow_laya_failover: bool,
+) -> DecisionResult | None:
+    """Retorna DecisionResult treinado/escalonado quando ``pred`` nao esta em fallback."""
+    if pred is None or getattr(getattr(pred, "provenia", None), "fallback_used", True):
+        return None
+    answers = _laya_answers(pred, normalized)
+    missing = _laya_missing(answers, normalized)
+    if missing:
+        logger.debug("[gemini-decisions] laya sem answers para %s; escalando/falhando.", missing)
+        if cli.is_configured:
+            return _tentar_decide_com_failover(
+                state, questions, normalized, cli, pred, allow_laya_failover=allow_laya_failover
+            )
+        raise RuntimeError(f"[gemini-decisions] Laya sem respostas para {missing} e GeminiDecisionsClient sem chave.")
+    if min_confidence is not None and has_abstained_or_low_confidence(pred, min_confidence):
+        if cli.is_configured:
+            return _tentar_decide_com_failover(
+                state, questions, normalized, cli, pred, allow_laya_failover=allow_laya_failover
+            )
+        res = _laya_decision_result(pred, normalized, engine="laya-s1-trained")
+        res.provenia.assumptions.append("min-confidence-gate-unmet-no-cloud")
+        return res
+    return _laya_decision_result(pred, normalized, engine="laya-s1-trained")
+
+
 def decide_s1(
     state: Any,
     questions: dict[str, dict[str, Any]],
     client: GeminiDecisionsClient | None = None,
     prefer_cloud: bool = False,
+    *,
+    min_confidence: float | None = None,
+    allow_laya_failover: bool = True,
 ) -> DecisionResult:
-    """Cascata System-1: Laya local primeiro, Gemini Decision 1 como escalonamento.
+    """Cascata System-1 bidirecional: Laya local <-> Gemini Decision 1.
 
     Regras medidas:
-      - input multimodal (lista de blocos / dict com marcador de midia) ->
-        Gemini direto (a Laya so processa texto);
-      - ``prefer_cloud=True`` -> Gemini direto (benchmark/validacao);
-      - ``questions`` e validada/normalizada uma unica vez no topo
-        (``normalize_questions``) -- formato invalido falha antes de qualquer
-        motor ser acionado;
-      - texto-only -> ``laya_predict`` in-process, com degrau de microservico
-        HTTP :8192 quando o caminho local esta em fallback; se a provenia
-        marcar ``fallback_used``, escala para a Decisions API quando
-        configurada; caso contrario devolve o resultado heuristico da Laya com
-        proveniencia explicita.
+      - input multimodal -> Gemini direto (a Laya so processa texto);
+      - ``prefer_cloud=True`` -> Gemini primeiro, com failover automatico para
+        ``laya-multilingual`` se ``allow_laya_failover=True``;
+      - ``questions`` validada uma unica vez no topo (``normalize_questions``);
+      - texto-only -> ``laya_predict`` in-process / microservico HTTP :8192;
+        se o gate ``min_confidence`` nao for atingido ou Laya estiver em fallback,
+        escalona para a Decisions API com failover de volta a Laya em caso de falha.
     """
     cli = client or GeminiDecisionsClient()
     normalized = normalize_questions(questions)
-    multimodal = is_multimodal_input(state)
 
-    if multimodal or prefer_cloud:
+    if is_multimodal_input(state):
         return decide(state, normalized, client=cli)
+    if prefer_cloud:
+        return _tentar_decide_com_failover(
+            state, questions, normalized, cli, None, allow_laya_failover=allow_laya_failover
+        )
 
     pred = _laya_predict_com_servico(state, questions)
+    trained_res = _avaliar_predicao_laya_ou_escalonar(
+        state,
+        questions,
+        normalized,
+        cli,
+        pred,
+        min_confidence=min_confidence,
+        allow_laya_failover=allow_laya_failover,
+    )
+    if trained_res is not None:
+        return trained_res
 
-    if pred is not None and not getattr(getattr(pred, "provenia", None), "fallback_used", True):
-        answers = _laya_answers(pred, normalized)
-        missing = _laya_missing(answers, normalized)
-        if not missing:
-            return _laya_decision_result(pred, normalized, engine="laya-s1-trained")
-        # Answers ausentes/ambiguos nao sustentam uma decisao: escala para a
-        # nuvem quando configurada; sem nuvem, falha explicita em vez de
-        # devolver um laya-s1-trained incompleto.
-        logger.debug("[gemini-decisions] laya sem answers para %s; escalando/falhando.", missing)
-        if cli.is_configured:
-            return decide(state, normalized, client=cli)
-        raise RuntimeError(f"[gemini-decisions] Laya sem respostas para {missing} e GeminiDecisionsClient sem chave.")
-
-    # Laya indisponivel/gated: escalona para a nuvem se configurada.
     if cli.is_configured:
         logger.debug("[gemini-decisions] laya em fallback; escalando para %s.", cli.model)
-        return decide(state, normalized, client=cli)
+        return _tentar_decide_com_failover(
+            state, questions, normalized, cli, pred, allow_laya_failover=allow_laya_failover
+        )
 
-    # Sem nuvem: devolve o resultado Laya (mesmo heuristico) com proveniencia honesta.
     if pred is not None:
         return _laya_decision_result(pred, normalized, engine="laya-s1-fallback")
     raise RuntimeError("Nenhum motor de decisao disponivel: Laya falhou e GeminiDecisionsClient sem chave.")

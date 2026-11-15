@@ -162,3 +162,42 @@ def test_extrair_texto_ignora_thought_block() -> None:
     texto = GoogleGenAIAdapter.extrair_texto(resposta)
     assert texto == "Resposta final ao usuario."
     assert "Tokens de reflexao interna" not in texto
+
+
+@pytest.mark.parametrize(
+    "modelo",
+    ["gemini-4-argon", "gemini-4-carbon", "gemini-4-hydrogen", "gemini-3.1-pro-preview", "gemini-pro-latest"],
+)
+def test_build_gemini_payload_modernos_omitem_temperature_e_ativam_thinking(modelo: str) -> None:
+    payload = _build_gemini_payload(
+        "sys",
+        "prompt",
+        False,
+        _model=modelo,
+        temperature=0.7,
+        cached_content="cachedContents/pmev-corpus-v1",
+    )
+    gen = payload["generationConfig"]
+    assert "temperature" not in gen
+    assert gen["thinkingConfig"]["thinkingBudget"] == 4096
+    assert payload["cachedContent"] == "cachedContents/pmev-corpus-v1"
+
+
+def test_build_gemini_payload_rejeita_thinking_level_invalido() -> None:
+    with pytest.raises(ValueError, match="thinking_level invalido"):
+        _build_gemini_payload("sys", "prompt", False, _model="gemini-4-argon", thinking_level="xhigh")
+
+
+def test_google_adapter_carbon_rejeita_thinking_especulativo_e_suporta_cache() -> None:
+    with pytest.raises(ParametroRejeitadoError, match="minimal"):
+        GoogleGenAIAdapter.build_http("gemini-4-carbon", USUARIO, thinking_level="minimal")
+    with pytest.raises(ParametroRejeitadoError, match="nao existe"):
+        GoogleGenAIAdapter.build_http("gemini-4-argon", USUARIO, thinking_level="xhigh")
+    payload = GoogleGenAIAdapter.build_http(
+        "gemini-4-carbon",
+        USUARIO,
+        thinking_level="high",
+        cached_content="cachedContents/pmev-axioms",
+    )
+    assert payload["cachedContent"] == "cachedContents/pmev-axioms"
+    assert payload["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "HIGH"

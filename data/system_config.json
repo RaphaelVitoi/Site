@@ -308,6 +308,7 @@
     "protect_models": [
       "gemini-4-argon",
       "gemini-4-carbon",
+      "gemini-4-hydrogen",
       "gemini-3.8-flash",
       "gemini-pro-latest",
       "gemini-3.1-pro-preview-customtools",
@@ -325,6 +326,7 @@
       "gemini-pro-latest",
       "gemini-3.1-pro-preview-customtools",
       "gemini-3.1-pro-preview",
+      "gemini-4-hydrogen",
       "gemini-3.8-flash",
       "poolside/laguna-s-2.1:free",
       "meta-llama/llama-3.3-70b-instruct:free",
@@ -341,6 +343,7 @@
       "gemma4:e4b"
     ],
     "coding": [
+      "gemini-4-hydrogen",
       "gemini-3.8-flash",
       "gemini-3.5-flash-lite",
       "qwen/qwen-2.5-coder-32b-instruct:free",
@@ -352,6 +355,7 @@
       "gemini-pro-latest",
       "gemini-3.1-pro-preview-customtools",
       "gemini-3.1-pro-preview",
+      "gemini-4-hydrogen",
       "gemini-3.8-flash",
       "gemini-3.5-flash-lite",
       "meta-llama/llama-3.3-70b-instruct:free",

@@ -274,6 +274,23 @@ def test_gemini_4_argon_tier_1_status_verificado():
     assert g4.autorizado is True
 
 
+def test_gemini_4_hydrogen_tier_1_registrado_e_adaptador():
+    """Hydrogen e Tier 1 Google para orquestracao media/alta, com thinking validado."""
+    from llm.routing_policy import GEMINI_4_HYDROGEN
+
+    h4 = get(GEMINI_4_HYDROGEN)
+    assert h4.verification == VerificationStatus.NAO_VERIFICADO
+    assert h4.cota_por_assinatura is True
+    assert h4.context_window_in == 1_048_576
+    assert h4.max_output_tokens == 65_536
+    assert h4.autorizado is True
+    req = GoogleGenAIAdapter.build("gemini-4-hydrogen", USUARIO)
+    assert req["model"] == "gemini-4-hydrogen"
+    assert req["generation_config"]["thinking_level"] == "high"
+    with pytest.raises(ParametroRejeitadoError, match="minimal"):
+        GoogleGenAIAdapter.build_http("gemini-4-hydrogen", USUARIO, thinking_level="minimal")
+
+
 def test_claude_55_opus_e_sonnet_tier_1():
     """Claude Opus 5.5 e Sonnet 5.5 sao os modelos atualizados Tier 1 Anthropic."""
     op55 = get("claude-opus-5.5")

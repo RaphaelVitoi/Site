@@ -220,3 +220,65 @@ def test_lancedb_upsert_handles_single_quotes(temp_lance_dir: Path):
 
     results = backend.search_hybrid(query_vector=vectors[0], query_text="apostrofo", limit=2)
     assert len(results) > 0
+
+
+def test_embeddinggemma2_mrl_truncamento_e_norma_l2():
+    """Valida MRL EmbeddingGemma 2 (768d -> 512d/256d/128d) com renormalizacao L2."""
+    import math
+
+    from memory_rag import embed_with_ollama_mrl, truncate_and_l2_normalize
+
+    vec_768 = [float((i % 7) + 1) for i in range(768)]
+    for target_dim in (768, 512, 256, 128):
+        out = truncate_and_l2_normalize(vec_768, dim=target_dim)
+        assert len(out) == target_dim
+        assert math.isclose(math.sqrt(sum(x * x for x in out)), 1.0, rel_tol=1e-6)
+
+    with pytest.raises(ValueError, match="1024"):
+        truncate_and_l2_normalize(vec_768, dim=1024)
+
+    with pytest.MonkeyPatch.context() as mp:
+        calls: list[str] = []
+
+        def fake_post(_base: str, model: str, inputs: list[str], _timeout: float) -> list[list[float]]:
+            calls.append(model)
+            if len(calls) == 1:
+                raise RuntimeError("offline primary")
+            return [vec_768 for _ in inputs]
+
+        mp.setattr("memory_rag._post_ollama_embed", fake_post)
+        res = embed_with_ollama_mrl(["axioma PMev"], model="embeddinggemma-2:440m", mrl_dim=256)
+        assert calls == ["embeddinggemma-2:440m", "nomic-embed-text"]
+        assert len(res) == 1
+        assert len(res[0]) == 256
+
+
+def test_lancedb_mrl_tabela_dedicada_e_guarda_dimensional(temp_lance_dir: Path):
+    """Garante isolamento de dimensao (384d legado vs 512d MRL) sem colisao silenciosa."""
+    from memory_rag import LANCEDB_MRL_TABLE_NAME, truncate_and_l2_normalize
+
+    mrl_backend = LanceDBBackend(
+        db_path=temp_lance_dir,
+        vector_dim=512,
+        table_name=LANCEDB_MRL_TABLE_NAME,
+    )
+    vec_512 = truncate_and_l2_normalize([float((i % 5) + 1) for i in range(768)], dim=512)
+    mrl_backend.upsert_records(
+        ids=["pmev/mrl#0"],
+        texts=["Teorema PMev em 512 dimensoes MRL."],
+        vectors=[vec_512],
+        metadatas=[{"agent": "chico", "source": "test"}],
+    )
+    hits = mrl_backend.search_hybrid(query_vector=vec_512, query_text="Teorema PMev", limit=1)
+    assert len(hits) == 1
+
+    # Vetor 384d (ONNX legado) nao deve entrar nem consultar tabela 512d MRL
+    with pytest.raises(ValueError, match="Incompatibilidade dimensional"):
+        mrl_backend.upsert_records(
+            ids=["pmev/legacy#0"],
+            texts=["Vetor 384d legado"],
+            vectors=[[0.1] * 384],
+            metadatas=[{"agent": "chico", "source": "test"}],
+        )
+    with pytest.raises(ValueError, match="Incompatibilidade dimensional"):
+        mrl_backend.search_hybrid(query_vector=[0.1] * 384, query_text="legado", limit=1)

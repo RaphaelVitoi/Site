@@ -373,6 +373,11 @@ class GoogleGenAIAdapter:
         if not thinking_level:
             return
         level_l = thinking_level.lower()
+        if level_l not in ("minimal", "low", "medium", "high"):
+            raise ParametroRejeitadoError(
+                f"{alias}: thinking_level '{thinking_level}' nao existe na API Google. "
+                "Use 'minimal', 'low', 'medium' ou 'high'."
+            )
         if (
             alias
             in (
@@ -382,6 +387,8 @@ class GoogleGenAIAdapter:
                 "gemini-3.1-pro-preview-customtools",
                 "gemini-3.1-pro-preview",
                 "gemini-4-argon",
+                "gemini-4-carbon",
+                "gemini-4-hydrogen",
             )
             and level_l == "minimal"
         ):
@@ -494,6 +501,9 @@ class GoogleGenAIAdapter:
         }
         if system_instruction:
             payload["system_instruction"] = {"parts": [{"text": system_instruction}]}
+        cached_content = kwargs.get("cached_content") or kwargs.get("cachedContent") or req.get("cached_content")
+        if cached_content:
+            payload["cachedContent"] = str(cached_content)
         return payload
 
     @staticmethod

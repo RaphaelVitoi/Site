@@ -15,7 +15,13 @@ from llm.gemini_decisions import (
     is_multimodal_input,
     normalize_questions,
 )
-from llm.laya_bridge import LayaPrediction, Provenia
+from llm.laya_bridge import (
+    LayaPrediction,
+    Provenia,
+    get_laya_multilingual_revision,
+    has_abstained_or_low_confidence,
+    laya_multilingual_failover,
+)
 
 
 def _pergunta_basica() -> dict[str, dict[str, Any]]:
@@ -418,3 +424,95 @@ def test_decide_s1_prefer_service_nao_duplica_sonda_quando_offline(monkeypatch: 
         result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
     assert mock_remote.call_count == 1
     assert result.engine == "laya-s1-fallback"
+
+
+# ---------------------------------------------------------------------------
+# Failover bidirecional Gemini Decision 1 <-> laya-multilingual (0.4.32)
+# ---------------------------------------------------------------------------
+
+
+def test_decide_s1_prefer_cloud_falha_faz_failover_para_laya_multilingual() -> None:
+    """prefer_cloud=True: se Gemini Decision 1 falha (503), degrada para laya-multilingual."""
+    cli = GeminiDecisionsClient(api_key="fake")
+    with (
+        patch.object(cli, "create", side_effect=RuntimeError("503 Unavailable")),
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_treinada()),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None),
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli, prefer_cloud=True)
+    assert result.engine == "laya-s1-trained"
+    assert result.provenia.fallback_used is True
+    assert "failover-from-gemini-decision-1" in result.provenia.assumptions
+    acao = result.answer("acao")
+    assert acao is not None
+    assert acao["choice"] == "gerar"
+
+
+def test_decide_s1_escalonamento_nuvem_falha_degrada_para_laya_fallback() -> None:
+    """Laya em fallback escalona para Gemini; se 429 Quota falha, devolve laya-s1-fallback."""
+    cli = GeminiDecisionsClient(api_key="fake")
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_fallback()),
+        patch("llm.gemini_decisions.laya_predict_remote", return_value=None),
+        patch.object(cli, "create", side_effect=RuntimeError("429 Quota")),
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli)
+    assert result.engine == "laya-s1-fallback"
+    assert result.provenia.fallback_used is True
+    assert "failover-from-gemini-decision-1" in result.provenia.assumptions
+
+
+def test_decide_s1_min_confidence_abaixo_escalona_para_nuvem() -> None:
+    """Predicao Laya treinada com confidence=0.55 < min_confidence=0.80 escalona para nuvem."""
+    cli = GeminiDecisionsClient(api_key="fake")
+    pred = _predicao_laya_treinada()
+    pred.confidence = 0.55
+    pred.answers = {"acao": {"choice": "gerar", "confidence": 0.55}}
+    fake_resp = _resposta_fake_gemini(_pergunta_basica())
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=pred),
+        patch.object(cli, "create", return_value=fake_resp) as mock_create,
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli, min_confidence=0.80)
+    mock_create.assert_called_once()
+    assert result.engine == "gemini-decision-1"
+
+
+def test_decide_s1_min_confidence_abaixo_e_nuvem_falha_mantem_laya() -> None:
+    """Se gate min_confidence escalona e a nuvem falha, faz failover de volta a laya-s1-trained."""
+    cli = GeminiDecisionsClient(api_key="fake")
+    pred = _predicao_laya_treinada()
+    pred.confidence = 0.55
+    pred.answers = {"acao": {"choice": "gerar", "confidence": 0.55}}
+    with (
+        patch("llm.gemini_decisions.laya_predict", return_value=pred),
+        patch.object(cli, "create", side_effect=RuntimeError("503 Unavailable")),
+    ):
+        result = decide_s1("crie uma tela", _pergunta_basica(), client=cli, min_confidence=0.80)
+    assert result.engine == "laya-s1-trained"
+    assert result.provenia.fallback_used is True
+    assert "failover-from-gemini-decision-1" in result.provenia.assumptions
+
+
+def test_laya_0_4_32_revision_e_failover_helper() -> None:
+    """Valida revisao pinned 0.4.32, deteccao de abstencao e laya_multilingual_failover."""
+    assert get_laya_multilingual_revision() == "e4e9ddf21a7b1903b7acffd8814ad4307bf63a67"
+
+    pred_abstained = _predicao_laya_treinada()
+    pred_abstained.answers = {"acao": {"choice": None, "gate": "abstained", "confidence": 0.4}}
+    assert has_abstained_or_low_confidence(pred_abstained) is True
+
+    pred_ok = _predicao_laya_treinada()
+    pred_ok.confidence = 0.9
+    pred_ok.answers = {"acao": {"choice": "gerar", "gate": "passed", "confidence": 0.9}}
+    assert has_abstained_or_low_confidence(pred_ok, min_confidence=0.80) is False
+    assert has_abstained_or_low_confidence(pred_ok, min_confidence=0.95) is True
+
+    with (
+        patch("llm.laya_bridge.laya_predict_remote", return_value=None),
+        patch("llm.laya_bridge.laya_predict", return_value=pred_ok) as mock_laya,
+    ):
+        res = laya_multilingual_failover("estado", _pergunta_basica(), allow_cpu_weights=True)
+    mock_laya.assert_called_once()
+    assert "laya-multilingual-failover-active" in res.provenia.assumptions
+    assert res.choice == "gerar"

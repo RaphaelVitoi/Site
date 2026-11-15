@@ -5,6 +5,7 @@
     "gemini-pro-latest",
     "gemini-3.1-pro-preview-customtools",
     "gemini-3.1-pro-preview",
+    "gemini-4-hydrogen",
     "gemini-3.8-flash",
     "poolside/laguna-s-2.1:free",
     "meta-llama/llama-3.3-70b-instruct:free",
