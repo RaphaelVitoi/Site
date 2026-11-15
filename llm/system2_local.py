@@ -358,6 +358,27 @@ def _llama_base() -> str:
     return DEFAULT_LLAMA_BASE
 
 
+def _match_cached_llama_model(cached: list[str], cleaned: str) -> str | None:
+    """Faz correspondencia exata, case-insensitive, por alias ou normalizada no cache local."""
+    if cleaned in cached:
+        return cleaned
+    cleaned_lower = cleaned.lower()
+    for candidate in cached:
+        if candidate.lower() == cleaned_lower:
+            return candidate
+    alias_target = _LLAMA_ROUTER_ALIASES.get(cleaned)
+    if alias_target and alias_target in cached:
+        return alias_target
+    norm_req = cleaned_lower.replace("-", "").replace("_", "").replace(":", "")
+    if not norm_req:
+        return None
+    for candidate in cached:
+        norm_cand = candidate.lower().replace("-", "").replace("_", "").replace(":", "")
+        if norm_req in norm_cand:
+            return candidate
+    return None
+
+
 def _resolve_llama_router_model(base: str, requested_model: str) -> str:
     """Resolve alias System-2 para o ID concreto exposto pelo router llama.cpp (:9931)."""
     cleaned = (requested_model or "").strip()
@@ -365,19 +386,9 @@ def _resolve_llama_router_model(base: str, requested_model: str) -> str:
         return cleaned
     cached = _LLAMA_MODEL_CACHE.get(base)
     if cached:
-        if cleaned in cached:
-            return cleaned
-        norm_req = cleaned.lower().replace("-", "").replace("_", "").replace(":", "")
-        for candidate in cached:
-            if candidate.lower() == cleaned.lower():
-                return candidate
-        alias_target = _LLAMA_ROUTER_ALIASES.get(cleaned)
-        if alias_target and alias_target in cached:
-            return alias_target
-        for candidate in cached:
-            norm_cand = candidate.lower().replace("-", "").replace("_", "")
-            if norm_req and norm_req in norm_cand:
-                return candidate
+        matched = _match_cached_llama_model(cached, cleaned)
+        if matched is not None:
+            return matched
     if ":9931" in base or base == DEFAULT_LLAMA_BASE:
         return _LLAMA_ROUTER_ALIASES.get(cleaned, cleaned)
     return cleaned

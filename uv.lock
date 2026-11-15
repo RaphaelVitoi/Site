@@ -2285,7 +2285,7 @@ wheels = [
 
 [[package]]
 name = "laya"
-version = "0.4.31"
+version = "0.4.32"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -2296,9 +2296,9 @@ dependencies = [
     { name = "transformers" },
     { name = "vegaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/97/bf/5d307d1fd0b5a742b461f677f8cc489e429c149b543ba6f37614515c9ece/laya-0.4.31.tar.gz", hash = "sha256:aa3d25996d0d61eccb3143702702ee3116e159a5e374e138209bd331c8f67d0a", size = 1479427, upload-time = "2026-11-10T19:23:54.779Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/77/a51a6d5fae52fbd8cb558a7c1cc77bdf51b367bddad4ba9d9f63c698fff0/laya-0.4.32.tar.gz", hash = "sha256:db783aeacc2cb2eda73b954fd9b5e1a77396e19a3895b3452405fed60a7780b3", size = 1482817, upload-time = "2026-11-14T18:49:00.132Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/be/f9/83ec30c118df9e5d1a492b2405cef4875aaa5cae9a1bb7d1b2e8820d426b/laya-0.4.31-py3-none-any.whl", hash = "sha256:65a51283c7d63f1126df65739bfcf47151c98ca8ef98f987d10dcfab201b87f9", size = 504532, upload-time = "2026-11-10T19:23:53.156Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/dd/d85703e204917e099eb94b80ba4088015379e9250faa6df4d48d588405c0/laya-0.4.32-py3-none-any.whl", hash = "sha256:05936a2716cedbb9cc72e19fbbbfe0e6c76f0c7fd2aa35e593773de9127ec6d2", size = 505330, upload-time = "2026-11-14T18:48:58.432Z" },
 ]
 
 [[package]]
@@ -3159,7 +3159,7 @@ requires-dist = [
     { name = "google-genai", specifier = ">=3.3.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "lancedb", specifier = ">=0.41.0,<1.0.0" },
-    { name = "laya", specifier = ">=0.4.31" },
+    { name = "laya", specifier = ">=0.4.32" },
     { name = "locust", marker = "extra == 'dev'", specifier = ">=2.47.0" },
     { name = "loguru", specifier = ">=0.8.0" },
     { name = "matplotlib", specifier = ">=3.11.2" },
@@ -3194,7 +3194,7 @@ requires-dist = [
     { name = "pyautogui", specifier = ">=0.9.54" },
     { name = "pydantic", specifier = ">=2.14.3" },
     { name = "pydantic-settings", specifier = ">=2.16.3" },
-    { name = "pylint", marker = "extra == 'dev'", specifier = ">=4.1.3" },
+    { name = "pylint", marker = "extra == 'dev'", specifier = ">=4.1.4" },
     { name = "pypdf", specifier = ">=7.0.1,<8.0.0" },
     { name = "pyperclip", specifier = ">=1.11.0" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.414" },
@@ -3240,7 +3240,7 @@ dev = [
     { name = "locust", specifier = ">=2.47.0" },
     { name = "ninja", specifier = ">=1.13.2" },
     { name = "pip-audit", specifier = ">=2.10.1" },
-    { name = "pylint", specifier = ">=4.1.3" },
+    { name = "pylint", specifier = ">=4.1.4" },
     { name = "pyright", specifier = ">=1.1.414" },
     { name = "pytest", specifier = ">=9.2.0" },
     { name = "pytest-asyncio", specifier = ">=1.5.0" },
@@ -4671,7 +4671,7 @@ crypto = [
 
 [[package]]
 name = "pylint"
-version = "4.1.3"
+version = "4.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astroid" },
@@ -4682,9 +4682,9 @@ dependencies = [
     { name = "platformdirs" },
     { name = "tomlkit" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/38/c9/0bde4152a05a7686b431ce216fe3f3698b0c0d94c20bfa256dd935b608f6/pylint-4.1.3.tar.gz", hash = "sha256:9928603068edfa0d1a3c167f174b099d4b97c3db75d32d0fcdd029770b4713a9", size = 1756180, upload-time = "2026-10-11T07:49:10.69Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/d7/bfea980ba1ea5666c7f774627f3a7159b98a21426a081dd2f05db8eb93b3/pylint-4.1.4.tar.gz", hash = "sha256:4c9176dc6c9f1b98b742195f01899b290369d5a27b4b41d1014c17f2f96b26f1", size = 1768302, upload-time = "2026-11-14T21:41:51.625Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/ba/62b18e2e157d05f976bd490b349b55d8850c2a454a5c313c91af9d2e0baf/pylint-4.1.3-py3-none-any.whl", hash = "sha256:a85357cae24f33ad8d86c8f3daaa92c600ae4012b54a57299cee76000e9364cf", size = 588959, upload-time = "2026-10-11T07:49:08.272Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/89/5235509abac00f5c470d5d8edae908bcec79d1c09803485ce57c25ccbed1/pylint-4.1.4-py3-none-any.whl", hash = "sha256:b39fcc762ec4a7fe385d01b8e170fd996847297cdc0e3850bdda1435c74cfd95", size = 591735, upload-time = "2026-11-14T21:41:49.56Z" },
 ]
 
 [[package]]

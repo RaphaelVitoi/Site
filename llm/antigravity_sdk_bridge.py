@@ -79,6 +79,7 @@ REF_RE = re.compile(r"\$\{([A-Z0-9_]+)\}")
 # Catalogo canonico de modelos locais otimizados servidos no daemon Ollama (:11434) e llama.cpp 1.0 (:9931)
 ANTIGRAVITY_BRIDGE_USER_AGENT: Final[str] = "Antigravity-Bridge/1.0"
 DEFAULT_LLAMA_CPP_BASE_URL: Final[str] = "http://127.0.0.1:9931"
+ALLOWED_HTTP_SCHEMES: Final[frozenset[str]] = frozenset({"http", "https"})
 
 LLAMA_CPP_MODEL_ALIASES: Final[dict[str, str]] = {
     "coder-fast": "qwen2.5-coder-1.5b-q8_0.gguf",
@@ -142,7 +143,7 @@ def fetch_ollama_runtime_status(base_url: str = "http://127.0.0.1:11434") -> dic
         "active_in_memory": [],
         "error": None,
     }
-    if not base_url.startswith(("http://", "https://")):
+    if not _has_valid_http_scheme(base_url):
         status["error"] = f"Esquema de URL invalido para Ollama: {base_url}"
         return status
 
@@ -189,10 +190,16 @@ def fetch_ollama_runtime_status(base_url: str = "http://127.0.0.1:11434") -> dic
     return status
 
 
+def _has_valid_http_scheme(url: str) -> bool:
+    """Valida se a URL usa esquema http/https com host nao vazio."""
+    parsed = urlsplit(url)
+    return parsed.scheme in ALLOWED_HTTP_SCHEMES and bool(parsed.netloc)
+
+
 def _fetch_json_http(url: str, timeout: float = 1.5) -> object:
     """Executa GET JSON local via http.client com esquema validado (evita S310)."""
     parsed = urlsplit(url)
-    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+    if parsed.scheme not in ALLOWED_HTTP_SCHEMES or not parsed.netloc:
         raise ValueError(f"URL HTTP invalida: {url}")
     path = parsed.path or "/"
     if parsed.query:
@@ -207,6 +214,47 @@ def _fetch_json_http(url: str, timeout: float = 1.5) -> object:
         return json.loads(resp.read().decode("utf-8"))
     finally:
         conn.close()
+
+
+def _parse_llama_cpp_models(payload: object) -> tuple[list[dict[str, object]], list[str]]:
+    """Normaliza lista de modelos e modelos carregados a partir do endpoint /v1/models."""
+    raw_models = payload.get("data", []) if isinstance(payload, dict) else []
+    models_list: list[dict[str, object]] = []
+    loaded_models: list[str] = []
+    for item in raw_models:
+        if not isinstance(item, dict) or not item.get("id"):
+            continue
+        model_id = str(item["id"])
+        raw_status = item.get("status")
+        status_value = str(raw_status.get("value", "unknown")) if isinstance(raw_status, dict) else "loaded"
+        is_loaded = status_value == "loaded"
+        if is_loaded:
+            loaded_models.append(model_id)
+        models_list.append(
+            {
+                "id": model_id,
+                "status": status_value,
+                "loaded": is_loaded,
+            }
+        )
+    return models_list, loaded_models
+
+
+def _populate_llama_cpp_props(clean_base: str, status: dict[str, object], timeout: float) -> None:
+    """Enriquece o status runtime do llama.cpp consultando /props quando disponivel."""
+    try:
+        props = _fetch_json_http(f"{clean_base}/props", timeout=timeout)
+    except Exception as e:
+        logger.debug(f"Aviso ao consultar /props do llama.cpp: {e}")
+        return
+    if not isinstance(props, dict):
+        return
+    gen_settings = props.get("default_generation_settings")
+    if isinstance(gen_settings, dict) and "n_ctx" in gen_settings:
+        status["n_ctx"] = gen_settings.get("n_ctx")
+    for key in ("total_slots", "build_info"):
+        if key in props:
+            status[key] = props.get(key)
 
 
 def fetch_llama_cpp_runtime_status(
@@ -225,31 +273,13 @@ def fetch_llama_cpp_runtime_status(
         "build_info": None,
         "error": None,
     }
-    if not clean_base.startswith(("http://", "https://")):
+    if not _has_valid_http_scheme(clean_base):
         status["error"] = f"Esquema de URL invalido para llama.cpp: {base_url}"
         return status
 
-    models_list: list[dict[str, object]] = []
-    loaded_models: list[str] = []
     try:
         payload = _fetch_json_http(f"{clean_base}/v1/models", timeout=timeout)
-        raw_models = payload.get("data", []) if isinstance(payload, dict) else []
-        for item in raw_models:
-            if not isinstance(item, dict) or not item.get("id"):
-                continue
-            model_id = str(item["id"])
-            raw_status = item.get("status")
-            status_value = str(raw_status.get("value", "unknown")) if isinstance(raw_status, dict) else "loaded"
-            is_loaded = status_value == "loaded"
-            if is_loaded:
-                loaded_models.append(model_id)
-            models_list.append(
-                {
-                    "id": model_id,
-                    "status": status_value,
-                    "loaded": is_loaded,
-                }
-            )
+        models_list, loaded_models = _parse_llama_cpp_models(payload)
         status["models"] = models_list
         status["loaded_models"] = loaded_models
         status["online"] = True
@@ -260,19 +290,7 @@ def fetch_llama_cpp_runtime_status(
         status["error"] = f"Erro ao processar /v1/models: {e}"
         return status
 
-    try:
-        props = _fetch_json_http(f"{clean_base}/props", timeout=timeout)
-        if isinstance(props, dict):
-            gen_settings = props.get("default_generation_settings")
-            if isinstance(gen_settings, dict) and "n_ctx" in gen_settings:
-                status["n_ctx"] = gen_settings.get("n_ctx")
-            if "total_slots" in props:
-                status["total_slots"] = props.get("total_slots")
-            if "build_info" in props:
-                status["build_info"] = props.get("build_info")
-    except Exception as e:
-        logger.debug(f"Aviso ao consultar /props do llama.cpp: {e}")
-
+    _populate_llama_cpp_props(clean_base, status, timeout)
     return status
 
 
@@ -284,7 +302,7 @@ def warmup_local_model(
 ) -> dict[str, Any]:
     """Pre-carrega o modelo local na RAM/VRAM do Ollama com keep_alive para eliminar latencia no primeiro token."""
     tag = resolve_local_model_tag(model)
-    if not base_url.startswith(("http://", "https://")):
+    if not _has_valid_http_scheme(base_url):
         return {
             "success": False,
             "model": tag,
@@ -898,8 +916,25 @@ class AntigravityAgentBridge:
 default_bridge = AntigravityAgentBridge()
 
 
-if __name__ == "__main__":
-    import argparse
+async def _execute_cli_prompt(prompt: str, local_model: str | None, stream: bool) -> None:
+    """Executa prompt CLI via bridge em modo streaming ou resposta unica."""
+    cfg = (
+        default_bridge.build_local_ollama_config(model=local_model)
+        if local_model
+        else default_bridge.build_hosted_config()
+    )
+    if not stream:
+        res = await default_bridge.run_prompt(prompt, config=cfg)
+        print(res.text)
+        return
+    async for token in default_bridge.stream_prompt(prompt, config=cfg):
+        print(token, end="", flush=True)
+    print()
+
+
+def _main() -> None:
+    """Ponto de entrada CLI do bridge Antigravity SDK."""
+    import argparse  # noqa: PLC0415
 
     parser = argparse.ArgumentParser(description="Google Antigravity SDK SOTA Bridge")
     parser.add_argument("--audit", action="store_true", help="Auditoria completa do ecossistema")
@@ -927,23 +962,8 @@ if __name__ == "__main__":
         sys.exit(0)
 
     if args.prompt:
-        if args.local:
-            cfg = default_bridge.build_local_ollama_config(model=args.local)
-        else:
-            cfg = default_bridge.build_hosted_config()
+        asyncio.run(_execute_cli_prompt(args.prompt, args.local, args.stream))
 
-        if args.stream:
 
-            async def _stream() -> None:
-                async for token in default_bridge.stream_prompt(args.prompt, config=cfg):
-                    print(token, end="", flush=True)
-                print()
-
-            asyncio.run(_stream())
-        else:
-
-            async def _run() -> None:
-                res = await default_bridge.run_prompt(args.prompt, config=cfg)
-                print(res.text)
-
-            asyncio.run(_run())
+if __name__ == "__main__":
+    _main()

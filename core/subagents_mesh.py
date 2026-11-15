@@ -134,29 +134,31 @@ def resolve_subagent_tier(value: Any) -> SubagentTier | None:
 
 MODEL_QWEN_CODE_SURGICAL = "qwen-code-surgical:latest"
 MODEL_QWEN_7B_INSTRUCT = "qwen2.5-coder:7b-instruct-q5_K_M"
+MODEL_QWEN_PMEV_MATH = "qwen-pmev-math:latest"
 MODEL_GEMMA4_E4B = "gemma4:e4b"
+LLAMA_CPP_CODER_1_5B = "qwen2.5-coder-1.5b-q8_0"
 
 LLAMA_CPP_FALLBACK_MAP: dict[str, str] = {
-    MODEL_QWEN_CODE_SURGICAL: "qwen2.5-coder-1.5b-q8_0",
-    MODEL_QWEN_7B_INSTRUCT: "qwen2.5-coder-1.5b-q8_0",
-    "qwen2.5-coder:7b": "qwen2.5-coder-1.5b-q8_0",
-    "qwen2.5-coder:1.5b": "qwen2.5-coder-1.5b-q8_0",
+    MODEL_QWEN_CODE_SURGICAL: LLAMA_CPP_CODER_1_5B,
+    MODEL_QWEN_7B_INSTRUCT: LLAMA_CPP_CODER_1_5B,
+    "qwen2.5-coder:7b": LLAMA_CPP_CODER_1_5B,
+    "qwen2.5-coder:1.5b": LLAMA_CPP_CODER_1_5B,
     "qwen2.5-coder:0.5b": "Ling-3.0-tiny-Q4_K_M",
-    "qwen-pmev-math:latest": "Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL",
+    MODEL_QWEN_PMEV_MATH: "Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL",
     "qwen-poetics:latest": "gemma-4-12b-it-Q5_K_S",
     MODEL_GEMMA4_E4B: "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P",
 }
 
 SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.APPSEC: MODEL_QWEN_CODE_SURGICAL,
-    SubagentTier.MATH: "qwen-pmev-math:latest",
+    SubagentTier.MATH: MODEL_QWEN_PMEV_MATH,
     SubagentTier.WASM: MODEL_QWEN_7B_INSTRUCT,
     SubagentTier.POETICS: "qwen-poetics:latest",
     SubagentTier.NANO_ROUTER: "qwen2.5-coder:0.5b",
     SubagentTier.STREAMING_FIM: "qwen2.5-coder:1.5b",
     SubagentTier.UI: MODEL_QWEN_7B_INSTRUCT,
     SubagentTier.RESEARCH: MODEL_GEMMA4_E4B,
-    SubagentTier.VALIDADOR: "qwen-pmev-math:latest",
+    SubagentTier.VALIDADOR: MODEL_QWEN_PMEV_MATH,
     SubagentTier.IMPLEMENTOR: "qwen2.5-coder:7b",
     SubagentTier.CURATOR: MODEL_QWEN_7B_INSTRUCT,
     SubagentTier.ARCHITECT: MODEL_GEMMA4_E4B,
@@ -305,6 +307,41 @@ class SubagentMeshController:
         return None, {}
 
     @staticmethod
+    def _parse_ollama_success_response(data: dict[str, Any]) -> tuple[str | None, dict[str, Any]]:
+        """Extrai resposta final, canal de pensamento e telemetria de payload Ollama."""
+        metadata: dict[str, Any] = {
+            "inference_mode": "real_ollama",
+            "prompt_eval_count": data.get("prompt_eval_count", 0),
+            "eval_count": data.get("eval_count", 0),
+        }
+        raw_content = data.get("message", {}).get("content", "").strip()
+        if not raw_content:
+            return None, metadata
+        thought_channel, final_answer = parse_gemma4_channel_output(raw_content)
+        if thought_channel:
+            metadata["thought_channel"] = thought_channel
+        return final_answer, metadata
+
+    @staticmethod
+    async def _fallback_to_llama_cpp(
+        assigned_model: str,
+        system_instruction: str,
+        prompt: str,
+        timeout_seconds: int,
+        fallback_reason: str,
+    ) -> tuple[str | None, dict[str, Any]]:
+        """Tenta fallback para llama.cpp local antes de retornar sinal de fallback deterministico."""
+        llama_content, llama_meta = await SubagentMeshController._call_llama_cpp_inference(
+            assigned_model, system_instruction, prompt, timeout_seconds
+        )
+        if llama_content:
+            return llama_content, llama_meta
+        return None, {
+            "inference_mode": "fallback_deterministic",
+            "fallback_reason": fallback_reason,
+        }
+
+    @staticmethod
     async def _call_ollama_inference(
         assigned_model: str,
         tier_value: str,
@@ -333,8 +370,6 @@ class SubagentMeshController:
             },
         }
 
-        metadata: dict[str, Any] = {}
-        response_content: str | None = None
         default_timeout = 2.0 if "pytest" in sys.modules else 45.0
         sock_timeout = 1.0 if "pytest" in sys.modules else 2.0
         ollama_timeout = float(
@@ -342,26 +377,15 @@ class SubagentMeshController:
         )
         timeout = aiohttp.ClientTimeout(total=ollama_timeout, sock_connect=sock_timeout)
 
+        result: tuple[str | None, dict[str, Any]] | None = None
+        fallback_reason = "unknown_error"
         try:
             async with (
                 aiohttp.ClientSession(timeout=timeout) as session,
                 session.post(ollama_url, json=payload) as resp,
             ):
                 if resp.status == 200:
-                    data = await resp.json()
-                    raw_content = data.get("message", {}).get("content", "").strip()
-                    if raw_content:
-                        thought_channel, final_answer = parse_gemma4_channel_output(raw_content)
-                        response_content = final_answer
-                        if thought_channel:
-                            metadata["thought_channel"] = thought_channel
-                    metadata.update(
-                        {
-                            "inference_mode": "real_ollama",
-                            "prompt_eval_count": data.get("prompt_eval_count", 0),
-                            "eval_count": data.get("eval_count", 0),
-                        }
-                    )
+                    result = SubagentMeshController._parse_ollama_success_response(await resp.json())
                 else:
                     err_body = await resp.text()
                     logger.warning(
@@ -370,17 +394,7 @@ class SubagentMeshController:
                         assigned_model,
                         err_body[:200],
                     )
-                    llama_content, llama_meta = await SubagentMeshController._call_llama_cpp_inference(
-                        assigned_model, system_instruction, prompt, timeout_seconds
-                    )
-                    if llama_content:
-                        return llama_content, llama_meta
-                    metadata.update(
-                        {
-                            "inference_mode": "fallback_deterministic",
-                            "fallback_reason": f"HTTP {resp.status}",
-                        }
-                    )
+                    fallback_reason = f"HTTP {resp.status}"
         except Exception as e_ollama:
             err_detail = str(e_ollama).strip() or type(e_ollama).__name__
             logger.warning(
@@ -388,19 +402,13 @@ class SubagentMeshController:
                 assigned_model,
                 err_detail,
             )
-            llama_content, llama_meta = await SubagentMeshController._call_llama_cpp_inference(
-                assigned_model, system_instruction, prompt, timeout_seconds
-            )
-            if llama_content:
-                return llama_content, llama_meta
-            metadata.update(
-                {
-                    "inference_mode": "fallback_deterministic",
-                    "fallback_reason": err_detail,
-                }
-            )
+            fallback_reason = err_detail
 
-        return response_content, metadata
+        if result is not None:
+            return result
+        return await SubagentMeshController._fallback_to_llama_cpp(
+            assigned_model, system_instruction, prompt, timeout_seconds, fallback_reason
+        )
 
     async def execute_subagent_pipeline(self, request: SubagentMissionRequest) -> SubagentMissionResult:
         """

@@ -532,6 +532,29 @@ def _classe_de(alvo: str) -> ClasseTarefa:
     )
 
 
+def _resolve_local_model_port(model: str) -> int:
+    """Resolve a porta local esperada para um identificador de modelo llama.cpp."""
+    model_l = model.lower()
+    if "qwen" in model_l or "coder" in model_l:
+        return 8083
+    if "ling" in model_l:
+        return 8082
+    if "g9" in model_l:
+        return 8081
+    return 9931
+
+
+def _check_local_provider_health(model: str) -> bool:
+    """Verifica saude de endpoint local llama.cpp correspondente ao modelo."""
+    try:
+        from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
+
+        client = LocalLlamaClient(port=_resolve_local_model_port(model), timeout=1.0)
+        return client.is_healthy()
+    except Exception:
+        return False
+
+
 def _check_provider_availability_sync(provider: str, model: str) -> bool:
     """Versao sincrona de _check_provider_availability para uso em decidir().
 
@@ -553,23 +576,7 @@ def _check_provider_availability_sync(provider: str, model: str) -> bool:
 
     # Para providers locais, verifica health check
     if provider == "local":
-        try:
-            from llm.local_llama_client import LocalLlamaClient  # noqa: PLC0415
-
-            model_l = model.lower()
-            if "qwen" in model_l or "coder" in model_l:
-                port = 8083
-            elif "ling" in model_l:
-                port = 8082
-            elif "g9" in model_l:
-                port = 8081
-            else:
-                port = 9931
-
-            client = LocalLlamaClient(port=port, timeout=1.0)
-            return client.is_healthy()
-        except Exception:
-            return False
+        return _check_local_provider_health(model)
 
     # SOTA GOLD: Verifica API key para qualquer modelo GPT/OpenAI
     if "gpt" in model.lower():
