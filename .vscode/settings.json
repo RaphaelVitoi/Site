@@ -213,7 +213,7 @@
         "-Dnanobind_DIR=${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
     ],
     "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/core/tensor_engine/build",
+        "--compile-commands-dir=${workspaceFolder}/core/tensor_engine",
         "--header-insertion=never",
         "-j=4",
         "--background-index"
