@@ -136,35 +136,65 @@ MODEL_QWEN_CODE_SURGICAL = "qwen-code-surgical:latest"
 MODEL_QWEN_7B_INSTRUCT = "qwen2.5-coder:7b-instruct-q5_K_M"
 MODEL_QWEN_PMEV_MATH = "qwen-pmev-math:latest"
 MODEL_GEMMA4_E4B = "gemma4:e4b"
+MODEL_GEMMA4_E2B = "gemma4:e2b"
+MODEL_QWEN3_5_4B = "qwen3.5:4b"
+MODEL_QWEN_1_5B = "qwen2.5-coder:1.5b"
+MODEL_QWEN_0_5B = "qwen2.5-coder:0.5b"
+MODEL_FUNCTIONGEMMA_270M = "functiongemma:270m"
 LLAMA_CPP_CODER_1_5B = "qwen2.5-coder-1.5b-q8_0"
+LLAMA_CPP_TINY_FALLBACK = "Ling-3.0-tiny-Q4_K_M"
+LLAMA_CPP_FAST_3B = "ai9stars_G9v3-3B-Q4_K_M"
 
 LLAMA_CPP_FALLBACK_MAP: dict[str, str] = {
     MODEL_QWEN_CODE_SURGICAL: LLAMA_CPP_CODER_1_5B,
     MODEL_QWEN_7B_INSTRUCT: LLAMA_CPP_CODER_1_5B,
+    MODEL_QWEN3_5_4B: LLAMA_CPP_FAST_3B,
     "qwen2.5-coder:7b": LLAMA_CPP_CODER_1_5B,
-    "qwen2.5-coder:1.5b": LLAMA_CPP_CODER_1_5B,
-    "qwen2.5-coder:0.5b": "Ling-3.0-tiny-Q4_K_M",
-    MODEL_QWEN_PMEV_MATH: "Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL",
-    "qwen-poetics:latest": "gemma-4-12b-it-Q5_K_S",
-    MODEL_GEMMA4_E4B: "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P",
+    MODEL_QWEN_1_5B: LLAMA_CPP_CODER_1_5B,
+    MODEL_QWEN_0_5B: LLAMA_CPP_TINY_FALLBACK,
+    MODEL_FUNCTIONGEMMA_270M: LLAMA_CPP_TINY_FALLBACK,
+    MODEL_QWEN_PMEV_MATH: LLAMA_CPP_FAST_3B,
+    "qwen-poetics:latest": LLAMA_CPP_FAST_3B,
+    MODEL_GEMMA4_E2B: LLAMA_CPP_FAST_3B,
+    MODEL_GEMMA4_E4B: LLAMA_CPP_FAST_3B,
 }
 
+# Prioridade de subagentes: modelos locais rapidos/pequenos especialistas (custo $0.00)
 SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.APPSEC: MODEL_QWEN_CODE_SURGICAL,
     SubagentTier.MATH: MODEL_QWEN_PMEV_MATH,
-    SubagentTier.WASM: MODEL_QWEN_7B_INSTRUCT,
+    SubagentTier.WASM: MODEL_QWEN3_5_4B,
     SubagentTier.POETICS: "qwen-poetics:latest",
-    SubagentTier.NANO_ROUTER: "qwen2.5-coder:0.5b",
-    SubagentTier.STREAMING_FIM: "qwen2.5-coder:1.5b",
-    SubagentTier.UI: MODEL_QWEN_7B_INSTRUCT,
-    SubagentTier.RESEARCH: MODEL_GEMMA4_E4B,
-    SubagentTier.VALIDADOR: MODEL_QWEN_PMEV_MATH,
-    SubagentTier.IMPLEMENTOR: "qwen2.5-coder:7b",
-    SubagentTier.CURATOR: MODEL_QWEN_7B_INSTRUCT,
-    SubagentTier.ARCHITECT: MODEL_GEMMA4_E4B,
-    SubagentTier.GENERALIST: MODEL_GEMMA4_E4B,
-    SubagentTier.SELF: MODEL_QWEN_CODE_SURGICAL,
-    SubagentTier.FLUTTER_A11Y: MODEL_QWEN_CODE_SURGICAL,
+    SubagentTier.NANO_ROUTER: MODEL_QWEN_0_5B,
+    SubagentTier.STREAMING_FIM: MODEL_QWEN_1_5B,
+    SubagentTier.UI: MODEL_QWEN3_5_4B,
+    SubagentTier.RESEARCH: MODEL_GEMMA4_E2B,
+    SubagentTier.VALIDADOR: MODEL_QWEN3_5_4B,
+    SubagentTier.IMPLEMENTOR: MODEL_QWEN_1_5B,
+    SubagentTier.CURATOR: MODEL_QWEN3_5_4B,
+    SubagentTier.ARCHITECT: MODEL_GEMMA4_E2B,
+    SubagentTier.GENERALIST: MODEL_GEMMA4_E2B,
+    SubagentTier.SELF: MODEL_QWEN_1_5B,
+    SubagentTier.FLUTTER_A11Y: MODEL_QWEN_1_5B,
+}
+
+# Contingencia cloud zero-custo (:free) quando daemons locais estiverem indisponiveis
+FREE_CLOUD_FALLBACK_MAP: dict[SubagentTier, tuple[str, ...]] = {
+    SubagentTier.APPSEC: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
+    SubagentTier.MATH: ("poolside/laguna-s-2.1:free", "meta-llama/llama-3.3-70b-instruct:free"),
+    SubagentTier.WASM: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
+    SubagentTier.POETICS: ("poolside/laguna-s-2.1:free", "poolside/laguna-xs-2.1:free"),
+    SubagentTier.NANO_ROUTER: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
+    SubagentTier.STREAMING_FIM: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
+    SubagentTier.UI: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
+    SubagentTier.RESEARCH: ("poolside/laguna-s-2.1:free", "meta-llama/llama-3.3-70b-instruct:free"),
+    SubagentTier.VALIDADOR: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
+    SubagentTier.IMPLEMENTOR: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
+    SubagentTier.CURATOR: ("poolside/laguna-s-2.1:free", "poolside/laguna-xs-2.1:free"),
+    SubagentTier.ARCHITECT: ("poolside/laguna-s-2.1:free", "meta-llama/llama-3.3-70b-instruct:free"),
+    SubagentTier.GENERALIST: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
+    SubagentTier.SELF: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
+    SubagentTier.FLUTTER_A11Y: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
 }
 
 
@@ -178,6 +208,12 @@ class SubagentMissionRequest(BaseModel):
     prompt: str = Field(..., min_length=10, description="Instrucao densa e acionavel")
     target_files: list[str] = Field(default_factory=list, description="Arquivos sob escopo")
     timeout_seconds: int = Field(default=300, ge=10, le=3600)
+    use_ragflow: bool = False
+    ragflow_dataset_ids: list[str] = Field(default_factory=list)
+    use_neo4j: bool = False
+    thinking_depth: str = Field(default="medium", pattern=r"^(low|medium|high|ultra)$")
+    n8n_webhook_path: str | None = None
+    n8n_workflow_id: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
@@ -235,8 +271,24 @@ class SubagentMeshController:
         if any(term in desc_lower for term in ("css", "hsl", "design", "ui", "ux", "layout", "component", "tailwind")):
             return SubagentTier.UI
 
-        # 6. Heuristica de Pesquisa & OSINT
-        if any(term in desc_lower for term in ("pesquisa", "research", "investigate", "doc", "artigo", "tavily")):
+        # 6. Heuristica de Pesquisa, OSINT, RAGFlow DeepDoc & Neo4j L4 Graph
+        if any(
+            term in desc_lower
+            for term in (
+                "pesquisa",
+                "research",
+                "investigate",
+                "doc",
+                "artigo",
+                "tavily",
+                "ragflow",
+                "deepdoc",
+                "neo4j",
+                "cypher",
+                "knowledge graph",
+                "grafo",
+            )
+        ):
             return SubagentTier.RESEARCH
 
         # 7. Heuristica de Autocompletion / FIM
@@ -250,6 +302,10 @@ class SubagentMeshController:
         ):
             return SubagentTier.FLUTTER_A11Y
 
+        # 9. Heuristica de Orquestracao / Webhooks n8n
+        if any(term in desc_lower for term in ("n8n", "webhook", "automacao")):
+            return SubagentTier.NANO_ROUTER
+
         return SubagentTier.SELF
 
     @staticmethod
@@ -259,51 +315,73 @@ class SubagentMeshController:
         prompt: str,
         timeout_seconds: int,
     ) -> tuple[str | None, dict[str, Any]]:
-        """Fallback local via router llama.cpp 1.0 (:9931 / OpenAI-compatible)."""
+        """Fallback local via router llama.cpp 1.0 (:9931) e llama-swap (:8080) OpenAI-compatible."""
         llama_base = os.environ.get("CHICO_LLAMA_API_BASE", "http://127.0.0.1:9931").rstrip("/")
+        swap_base = os.environ.get("CHICO_LLAMA_SWAP_BASE", "http://127.0.0.1:8080").rstrip("/")
         router_model = LLAMA_CPP_FALLBACK_MAP.get(assigned_model, "ai9stars_G9v3-3B-Q4_K_M")
-        payload = {
-            "model": router_model,
-            "messages": [
-                {"role": "system", "content": system_instruction},
-                {"role": "user", "content": prompt},
-            ],
-            "stream": False,
-            "temperature": 0.2,
-            "max_tokens": 1024,
-        }
+        swap_fallback_model = os.environ.get("CHICO_LLAMA_SWAP_MODEL", "qwen-moe")
+        base_messages = [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": prompt},
+        ]
         default_timeout = 2.0 if "pytest" in sys.modules else 45.0
         sock_timeout = 1.0 if "pytest" in sys.modules else 2.0
         req_timeout = float(
             os.environ.get("LLAMA_CPP_TIMEOUT_SECONDS", str(min(float(timeout_seconds), default_timeout)))
         )
         timeout = aiohttp.ClientTimeout(total=req_timeout, sock_connect=sock_timeout)
-        try:
-            async with (
-                aiohttp.ClientSession(timeout=timeout) as session,
-                session.post(f"{llama_base}/v1/chat/completions", json=payload) as resp,
-            ):
-                if resp.status == 200:
-                    data = await resp.json()
-                    choices = data.get("choices") or []
-                    raw_content = str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
-                    thought_channel, final_answer = (
-                        parse_gemma4_channel_output(raw_content) if raw_content else (None, "")
-                    )
-                    usage = data.get("usage") or {}
-                    meta: dict[str, Any] = {
-                        "inference_mode": "real_llama_cpp",
-                        "llama_cpp_model": router_model,
-                        "prompt_eval_count": usage.get("prompt_tokens", 0),
-                        "eval_count": usage.get("completion_tokens", 0),
+
+        candidates: list[tuple[str, str, str]] = [(llama_base, router_model, "real_llama_cpp")]
+        if swap_base and swap_base != llama_base:
+            candidates.append((swap_base, router_model, "real_llama_swap"))
+
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            for endpoint_base, candidate_model, mode_tag in candidates:
+                models_to_try = [candidate_model]
+                if mode_tag == "real_llama_swap" and swap_fallback_model and swap_fallback_model != candidate_model:
+                    models_to_try.append(swap_fallback_model)
+
+                for model_name in models_to_try:
+                    payload = {
+                        "model": model_name,
+                        "messages": base_messages,
+                        "stream": False,
+                        "temperature": 0.2,
+                        "max_tokens": 1024,
                     }
-                    if thought_channel:
-                        meta["thought_channel"] = thought_channel
-                    return (final_answer or None), meta
-        except Exception as e_llama:
-            logger.debug(
-                "[SUBAGENTS MESH] Fallback llama.cpp (:9931) indisponivel para '%s': %s", router_model, e_llama
-            )
+                    try:
+                        async with session.post(f"{endpoint_base}/v1/chat/completions", json=payload) as resp:
+                            if resp.status == 200:
+                                data = await resp.json()
+                                choices = data.get("choices") or []
+                                raw_content = (
+                                    str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
+                                )
+                                thought_channel, final_answer = (
+                                    parse_gemma4_channel_output(raw_content) if raw_content else (None, "")
+                                )
+                                usage = data.get("usage") or {}
+                                meta: dict[str, Any] = {
+                                    "inference_mode": mode_tag,
+                                    "llama_cpp_model": model_name,
+                                    "llama_cpp_endpoint": endpoint_base,
+                                    "prompt_eval_count": usage.get("prompt_tokens", 0),
+                                    "eval_count": usage.get("completion_tokens", 0),
+                                }
+                                if thought_channel:
+                                    meta["thought_channel"] = thought_channel
+                                return (final_answer or None), meta
+                            if resp.status not in (400, 404):
+                                break
+                    except Exception as e_llama:
+                        logger.debug(
+                            "[SUBAGENTS MESH] Fallback %s (%s) indisponivel para '%s': %s",
+                            mode_tag,
+                            endpoint_base,
+                            model_name,
+                            e_llama,
+                        )
+                        break
         return None, {}
 
     @staticmethod
@@ -323,19 +401,96 @@ class SubagentMeshController:
         return final_answer, metadata
 
     @staticmethod
+    async def _call_free_cloud_inference(
+        tier: SubagentTier | None,
+        system_instruction: str,
+        prompt: str,
+        timeout_seconds: int,
+    ) -> tuple[str | None, dict[str, Any]]:
+        """Contingencia cloud gratuita (:free) para subagentes quando daemons locais falham."""
+        if tier is None:
+            return None, {}
+        if "pytest" in sys.modules and os.environ.get("CHICO_SUBAGENT_ALLOW_TEST_CLOUD") != "1":
+            return None, {}
+
+        candidates = FREE_CLOUD_FALLBACK_MAP.get(tier, ("poolside/laguna-xs-2.1:free",))
+        free_candidates = [m for m in candidates if ":free" in m.lower()]
+        if not free_candidates:
+            return None, {}
+
+        from llm.openrouter import call_openrouter  # noqa: PLC0415
+        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+        api_key, key_tier = await openrouter_pool_manager.get_key_for_tier(4)
+        if not api_key:
+            return None, {}
+
+        req_timeout = min(float(timeout_seconds), 20.0)
+        client_timeout = aiohttp.ClientTimeout(total=req_timeout, sock_connect=2.0)
+        loop = asyncio.get_running_loop()
+
+        async with aiohttp.ClientSession(timeout=client_timeout) as session:
+            for free_model in free_candidates:
+                t0 = loop.time()
+                try:
+                    raw_text, usage = await call_openrouter(
+                        session=session,
+                        model=free_model,
+                        system_prompt=system_instruction,
+                        user_prompt=prompt,
+                        api_key=api_key,
+                        client_timeout=client_timeout,
+                        temperature=0.2,
+                        max_tokens=1024,
+                    )
+                    cleaned = (raw_text or "").strip()
+                    if not cleaned:
+                        continue
+                    latency_ms = max(1.0, (loop.time() - t0) * 1000.0)
+                    await openrouter_pool_manager.mark_success(api_key, latency_ms)
+                    thought_channel, final_answer = parse_gemma4_channel_output(cleaned)
+                    meta: dict[str, Any] = {
+                        "inference_mode": "real_openrouter_free",
+                        "cloud_free_model": free_model,
+                        "key_tier": key_tier,
+                        "prompt_eval_count": (usage or {}).get("prompt_tokens", 0),
+                        "eval_count": (usage or {}).get("completion_tokens", 0),
+                    }
+                    if thought_channel:
+                        meta["thought_channel"] = thought_channel
+                    return (final_answer or cleaned), meta
+                except Exception as exc:
+                    err_s = str(exc)
+                    status_code = 429 if "429" in err_s else 500
+                    await openrouter_pool_manager.mark_failure(api_key, status_code=status_code)
+                    logger.debug(
+                        "[SUBAGENTS MESH] Fallback :free '%s' indisponivel para '%s': %s",
+                        free_model,
+                        tier.value,
+                        err_s,
+                    )
+        return None, {}
+
+    @staticmethod
     async def _fallback_to_llama_cpp(
         assigned_model: str,
         system_instruction: str,
         prompt: str,
         timeout_seconds: int,
         fallback_reason: str,
+        tier: SubagentTier | None = None,
     ) -> tuple[str | None, dict[str, Any]]:
-        """Tenta fallback para llama.cpp local antes de retornar sinal de fallback deterministico."""
+        """Tenta fallback para llama.cpp local e depois :free cloud antes de fallback deterministico."""
         llama_content, llama_meta = await SubagentMeshController._call_llama_cpp_inference(
             assigned_model, system_instruction, prompt, timeout_seconds
         )
         if llama_content:
             return llama_content, llama_meta
+        free_content, free_meta = await SubagentMeshController._call_free_cloud_inference(
+            tier, system_instruction, prompt, timeout_seconds
+        )
+        if free_content:
+            return free_content, free_meta
         return None, {
             "inference_mode": "fallback_deterministic",
             "fallback_reason": fallback_reason,
@@ -407,7 +562,12 @@ class SubagentMeshController:
         if result is not None:
             return result
         return await SubagentMeshController._fallback_to_llama_cpp(
-            assigned_model, system_instruction, prompt, timeout_seconds, fallback_reason
+            assigned_model,
+            system_instruction,
+            prompt,
+            timeout_seconds,
+            fallback_reason,
+            tier=resolve_subagent_tier(tier_value),
         )
 
     async def execute_subagent_pipeline(self, request: SubagentMissionRequest) -> SubagentMissionResult:
@@ -448,23 +608,76 @@ class SubagentMeshController:
             )
 
         try:
+            from core.mesh_integrations import N8NBridge, Neo4jAuraBridge, RAGFlowBridge  # noqa: PLC0415
+
+            knowledge_tiers = {
+                SubagentTier.RESEARCH,
+                SubagentTier.ARCHITECT,
+                SubagentTier.CURATOR,
+                SubagentTier.VALIDADOR,
+                SubagentTier.MATH,
+            }
+            use_rf = RAGFlowBridge.is_configured(request.ragflow_dataset_ids) and (
+                request.use_ragflow or request.tier in knowledge_tiers
+            )
+            use_n4j = Neo4jAuraBridge.is_configured() and (request.use_neo4j or request.tier in knowledge_tiers)
+
+            async def _noop_rf():
+                return None
+
+            async def _noop_n4j():
+                return None
+
+            rag_res, n4j_res = await asyncio.gather(
+                RAGFlowBridge.retrieve_grounded_context(
+                    request.prompt,
+                    dataset_ids=request.ragflow_dataset_ids or None,
+                    thinking_depth=request.thinking_depth,
+                )
+                if use_rf
+                else _noop_rf(),
+                Neo4jAuraBridge.query_graph_context(request.prompt, limit=5) if use_n4j else _noop_n4j(),
+            )
+
+            prefix_blocks: list[str] = []
+            ragflow_citations_count = 0
+            neo4j_graph_rows = 0
+            if rag_res is not None:
+                citations_block = rag_res.format_context_block()
+                if citations_block:
+                    ragflow_citations_count = len(rag_res.citations)
+                    prefix_blocks.append(citations_block)
+            if n4j_res is not None:
+                graph_block = n4j_res.format_context_block()
+                if graph_block:
+                    neo4j_graph_rows = len(n4j_res.rows)
+                    prefix_blocks.append(graph_block)
+
+            enriched_prompt = (
+                f"{chr(10).join(prefix_blocks)}\n\n[MISSAO DO SUBAGENTE]\n{request.prompt}"
+                if prefix_blocks
+                else request.prompt
+            )
+
             # Context Caching: Cache do prompt da missao
             bucket = context_cache.get_or_create_bucket(
                 bucket_id=f"mission_{request.mission_id}",
-                content=request.prompt,
+                content=enriched_prompt,
                 ttl_seconds=request.timeout_seconds,
             )
 
             response_content, inference_metadata = await self._call_ollama_inference(
                 assigned_model=assigned_model,
                 tier_value=request.tier.value,
-                prompt=request.prompt,
+                prompt=enriched_prompt,
                 timeout_seconds=request.timeout_seconds,
             )
 
             metadata: dict[str, Any] = {
                 "agent_source": cfg.AGENT_SOURCE or "antigravity_core",
                 "cache_signature": bucket.hash_signature,
+                "ragflow_citations": ragflow_citations_count,
+                "neo4j_graph_rows": neo4j_graph_rows,
             }
             metadata.update(inference_metadata)
 
@@ -473,6 +686,25 @@ class SubagentMeshController:
             report = response_content or (
                 f"Missao '{request.mission_id}' concluida com exito pelo subagente '{request.tier.value}' usando '{assigned_model}'."
             )
+
+            if N8NBridge.is_configured() and (request.n8n_webhook_path or request.n8n_workflow_id):
+                n8n_res = await N8NBridge.dispatch_event(
+                    {
+                        "event_type": "subagent_mission_completed",
+                        "mission_id": request.mission_id,
+                        "tier": request.tier.value,
+                        "assigned_model": assigned_model,
+                        "files_modified": request.target_files,
+                        "ragflow_citations": ragflow_citations_count,
+                        "neo4j_graph_rows": neo4j_graph_rows,
+                        "summary": report[:800],
+                    },
+                    webhook_path=request.n8n_webhook_path,
+                    workflow_id=request.n8n_workflow_id,
+                )
+                metadata["n8n_dispatched"] = n8n_res.dispatched
+                if n8n_res.status_code:
+                    metadata["n8n_status_code"] = n8n_res.status_code
 
             result = SubagentMissionResult(
                 mission_id=request.mission_id,

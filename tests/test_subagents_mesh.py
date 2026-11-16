@@ -196,3 +196,68 @@ def test_gemma4_protocols_and_formatting():
     # Clamping / Nearest neighbor for non-standard budgets
     assert validate_visual_token_budget(100) == 70 or validate_visual_token_budget(100) == 140
     assert validate_visual_token_budget(2000) == 1120
+
+
+def test_subagents_prefer_fast_small_local_and_only_free_cloud_fallbacks():
+    """Garante modelos locais leves/especialistas no primario e fallback cloud estritamente :free."""
+    import json
+    from pathlib import Path
+
+    from core.subagents_mesh import FREE_CLOUD_FALLBACK_MAP
+    from llm import routing_policy as rp
+
+    manifest_path = Path(__file__).resolve().parents[1] / "data" / "ollama_models.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    size_by_tag = {m["tag"]: float(m["size_gb"]) for m in manifest.get("models", [])}
+
+    for tier, model in SUBAGENT_MODEL_MAP.items():
+        assert rp.e_local(model), f"{tier} -> {model} deve pertencer a frota local"
+        assert rp.custo(model, 10_000, 2_000) == 0.0
+        if model in size_by_tag:
+            assert size_by_tag[model] <= 7.2, (
+                f"{tier} -> {model} ({size_by_tag[model]} GB) pesado demais para subagente"
+            )
+
+    for tier in SubagentTier:
+        candidates = FREE_CLOUD_FALLBACK_MAP[tier]
+        assert len(candidates) >= 1
+        assert all(":free" in m.lower() for m in candidates)
+
+
+@pytest.mark.asyncio
+async def test_subagent_falls_back_to_free_cloud_when_local_daemons_fail(monkeypatch):
+    """Quando Ollama e llama.cpp locais falham, aciona modelo :free via OpenRouter Tier 4."""
+    from unittest.mock import AsyncMock, patch
+
+    from core.subagents_mesh import FREE_CLOUD_FALLBACK_MAP
+
+    monkeypatch.setenv("CHICO_SUBAGENT_ALLOW_TEST_CLOUD", "1")
+    called_models: list[str] = []
+
+    async def fake_call_openrouter(**kwargs):
+        called_models.append(kwargs["model"])
+        return "Resultado ok via :free", {"prompt_tokens": 12, "completion_tokens": 7}
+
+    with (
+        patch.object(SubagentMeshController, "_call_llama_cpp_inference", new=AsyncMock(return_value=(None, {}))),
+        patch(
+            "llm.openrouter_pool.openrouter_pool_manager.get_key_for_tier",
+            new=AsyncMock(return_value=("sk-or-test", 4)),
+        ),
+        patch("llm.openrouter_pool.openrouter_pool_manager.mark_success", new=AsyncMock()),
+        patch("llm.openrouter.call_openrouter", new=fake_call_openrouter),
+    ):
+        content, meta = await SubagentMeshController._fallback_to_llama_cpp(
+            assigned_model=SUBAGENT_MODEL_MAP[SubagentTier.IMPLEMENTOR],
+            system_instruction="sys",
+            prompt="hello",
+            timeout_seconds=10,
+            fallback_reason="connection refused",
+            tier=SubagentTier.IMPLEMENTOR,
+        )
+
+    assert content == "Resultado ok via :free"
+    assert meta["inference_mode"] == "real_openrouter_free"
+    assert meta["cloud_free_model"] == FREE_CLOUD_FALLBACK_MAP[SubagentTier.IMPLEMENTOR][0]
+    assert called_models == [FREE_CLOUD_FALLBACK_MAP[SubagentTier.IMPLEMENTOR][0]]
+    assert all(":free" in m for m in called_models)

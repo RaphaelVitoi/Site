@@ -274,7 +274,11 @@ class SOTAUnifiedFreeRouter:
 
         # NIVEL 4: Contingencia Externa (OpenRouter Free Tier)
         if self.openrouter_keys:
-            res_op = await self._call_openrouter(prompt, system_instruction)
+            res_op = await self._call_openrouter(
+                prompt,
+                system_instruction,
+                complexity_score=complexity_score,
+            )
             return await self._store_cache(ckey, res_op)
 
         return {
@@ -337,35 +341,57 @@ class SOTAUnifiedFreeRouter:
         score = 4 if task_tier == "SYNTHESIS" else 1
         return await self.execute_by_complexity(prompt, system_instruction, complexity_score=score)
 
-    async def _call_openrouter(self, prompt: str, system_instruction: str | None = None) -> dict[str, str]:
+    async def _call_openrouter(
+        self,
+        prompt: str,
+        system_instruction: str | None = None,
+        complexity_score: int = 1,
+    ) -> dict[str, str]:
         url = "https://openrouter.ai/api/v1/chat/completions"
-        key = self.openrouter_keys[0]
-        headers = {
-            "Authorization": f"Bearer {key}",
-            "HTTP-Referer": "https://antigravity.engine",
-            "X-Title": "Antigravity Fallback",
-            "Content-Type": "application/json",
-        }
         messages: list[dict[str, str]] = []
         if system_instruction:
             messages.append({"role": "system", "content": system_instruction})
         messages.append({"role": "user", "content": prompt})
 
-        payload = {
-            "model": "poolside/laguna-xs-2.1:free",
-            "messages": messages,
-            "max_tokens": 2048,
-        }
+        if complexity_score <= 2:
+            free_models = (
+                "poolside/laguna-xs-2.1:free",
+                "poolside/laguna-s-2.1:free",
+                "qwen/qwen-2.5-coder-32b-instruct:free",
+            )
+        else:
+            free_models = (
+                "poolside/laguna-s-2.1:free",
+                "qwen/qwen-2.5-coder-32b-instruct:free",
+                "meta-llama/llama-3.3-70b-instruct:free",
+                "poolside/laguna-xs-2.1:free",
+            )
+
+        last_err = "no_openrouter_keys"
         async with httpx.AsyncClient(timeout=25.0) as client:
-            try:
-                res = await client.post(url, headers=headers, json=payload)
-                res.raise_for_status()
-                data = res.json()
-                content = data["choices"][0]["message"]["content"]
-                return {
-                    "provider": "openrouter-free",
-                    "model": "poolside/laguna-xs-2.1:free",
-                    "output": content or "",
+            for key in self.openrouter_keys:
+                headers = {
+                    "Authorization": f"Bearer {key}",
+                    "HTTP-Referer": "https://antigravity.engine",
+                    "X-Title": "Antigravity Fallback",
+                    "Content-Type": "application/json",
                 }
-            except Exception as exc:
-                return {"provider": "circuit_breaker", "status": "FAILOVER_FAILED", "output": str(exc)}
+                for free_model in free_models:
+                    payload = {
+                        "model": free_model,
+                        "messages": messages,
+                        "max_tokens": 2048,
+                    }
+                    try:
+                        res = await client.post(url, headers=headers, json=payload)
+                        res.raise_for_status()
+                        data = res.json()
+                        content = data["choices"][0]["message"]["content"]
+                        return {
+                            "provider": "openrouter-free",
+                            "model": free_model,
+                            "output": content or "",
+                        }
+                    except Exception as exc:
+                        last_err = str(exc)
+        return {"provider": "circuit_breaker", "status": "FAILOVER_FAILED", "output": last_err}

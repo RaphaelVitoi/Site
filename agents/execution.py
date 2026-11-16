@@ -517,6 +517,27 @@ async def _finish_task_success(
     }
     if modified_files:
         final_metadata["files_changed"] = modified_files
+    meta = task.metadata if isinstance(task.metadata, dict) else {}
+    n8n_webhook = str(meta.get("n8n_webhook_path") or "").strip() or None
+    n8n_workflow = str(meta.get("n8n_workflow_id") or "").strip() or None
+    if n8n_webhook or n8n_workflow:
+        from core.mesh_integrations import N8NBridge  # noqa: PLC0415
+
+        if N8NBridge.is_configured():
+            n8n_res = await N8NBridge.dispatch_event(
+                {
+                    "event_type": "custom_agent_task_completed",
+                    "task_id": task.id,
+                    "agent": task.agent,
+                    "files_changed": modified_files,
+                    "workflow_duration_ms": final_metadata["workflow_duration_ms"],
+                },
+                webhook_path=n8n_webhook,
+                workflow_id=n8n_workflow,
+            )
+            final_metadata["n8n_dispatched"] = n8n_res.dispatched
+            if n8n_res.status_code:
+                final_metadata["n8n_status_code"] = n8n_res.status_code
     final_metadata.update(timing_metrics)
     await manager.update_task_metadata(task.id, final_metadata, merge=True)
     write_economic_log(task, duration, "COMPLETED")
@@ -583,15 +604,24 @@ async def _try_delegate_subagent_task(task: Task, manager: QueueManager) -> bool
     )
     try:
         start_time = time.monotonic()
-        tier_val = (task.metadata or {}).get("subagent_tier")
+        meta = task.metadata if isinstance(task.metadata, dict) else {}
+        tier_val = meta.get("subagent_tier")
         tier = resolve_subagent_tier(tier_val) or subagents_mesh.route_task_to_subagent(task)
-        target_files = (task.metadata or {}).get("target_files", [])
+        target_files = meta.get("target_files", [])
+        raw_datasets = meta.get("ragflow_dataset_ids")
+        dataset_ids = [str(d) for d in raw_datasets] if isinstance(raw_datasets, (list, tuple)) else []
         prompt_text = task.description if len(task.description) >= 10 else f"{task.description} (subagent execution)"
         mission_req = SubagentMissionRequest(
             mission_id=f"MISSION-{task.id}",
             tier=tier,
             prompt=prompt_text,
             target_files=target_files if isinstance(target_files, list) else [],
+            use_ragflow=bool(meta.get("use_ragflow", False)),
+            ragflow_dataset_ids=dataset_ids,
+            use_neo4j=bool(meta.get("use_neo4j", False)),
+            thinking_depth=str(meta.get("thinking_depth") or "medium"),
+            n8n_webhook_path=str(meta["n8n_webhook_path"]) if meta.get("n8n_webhook_path") else None,
+            n8n_workflow_id=str(meta["n8n_workflow_id"]) if meta.get("n8n_workflow_id") else None,
         )
         mission_res = await subagents_mesh.execute_subagent_pipeline(mission_req)
         if mission_res.status == "SUCCESS":

@@ -57,6 +57,20 @@ def _env_or_reg(name: str, default: str = "") -> str:
     return default
 
 
+def _resolve_devin_tokens() -> list[str]:
+    """Resolve pool rotacional de tokens Devin (DEVIN_API_TOKEN / DEVIN_API_KEY + slots _1..20)."""
+    seen: set[str] = set()
+    tokens: list[str] = []
+    for base_name in ("DEVIN_API_TOKEN", "DEVIN_API_KEY"):
+        candidates = [base_name, *[f"{base_name}_{i}" for i in range(1, 21)]]
+        for var_name in candidates:
+            val = _env_or_reg(var_name)
+            if val and val not in seen:
+                seen.add(val)
+                tokens.append(val)
+    return tokens
+
+
 def _normalizar_devin_id(raw: str) -> str:
     raw = raw.strip()
     if "/sessions/" in raw:
@@ -66,21 +80,39 @@ def _normalizar_devin_id(raw: str) -> str:
     return raw
 
 
-def _request(method: str, url: str, token: str, payload: dict[str, object] | None = None) -> dict[str, object]:
+def _request(
+    method: str,
+    url: str,
+    token: str | list[str],
+    payload: dict[str, object] | None = None,
+) -> dict[str, object]:
+    tokens = [token] if isinstance(token, str) else list(token)
+    if not tokens:
+        raise RuntimeError("Nenhum token Devin disponivel para requisicao.")
     data = json.dumps(payload).encode("utf-8") if payload is not None else None
-    req = urllib.request.Request(url, data=data, method=method)
-    req.add_header("Authorization", f"Bearer {token}")
-    req.add_header("Accept", "application/json")
-    if data is not None:
-        req.add_header("Content-Type", "application/json")
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            body = resp.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")[:500]
-        raise RuntimeError(f"HTTP {exc.code} em {method} {url}: {detail}") from exc
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"Falha de rede em {method} {url}: {exc.reason}") from exc
+    last_error: RuntimeError | None = None
+    body = ""
+    for candidate in tokens:
+        req = urllib.request.Request(url, data=data, method=method)
+        req.add_header("Authorization", f"Bearer {candidate}")
+        req.add_header("Accept", "application/json")
+        if data is not None:
+            req.add_header("Content-Type", "application/json")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = resp.read().decode("utf-8")
+            break
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:500]
+            last_error = RuntimeError(f"HTTP {exc.code} em {method} {url}: {detail}")
+            if exc.code in (401, 403, 429):
+                continue
+            raise last_error from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"Falha de rede em {method} {url}: {exc.reason}") from exc
+    else:
+        assert last_error is not None
+        raise last_error
     parsed = json.loads(body) if body.strip() else {}
     if not isinstance(parsed, dict):
         raise RuntimeError(f"Resposta inesperada (nao-JSON objeto) de {url}")
@@ -91,13 +123,13 @@ def _insights_url(base: str, org_id: str, devin_id: str, suffix: str = "") -> st
     return f"{base.rstrip('/')}/v3/organizations/{org_id}/sessions/{devin_id}/insights{suffix}"
 
 
-def gerar_insights(base: str, org_id: str, devin_id: str, token: str) -> dict[str, object]:
+def gerar_insights(base: str, org_id: str, devin_id: str, token: str | list[str]) -> dict[str, object]:
     """Dispara geracao under demand e retorna o payload inicial."""
     url = _insights_url(base, org_id, devin_id, "/generate")
     return _request("POST", url, token, payload={})
 
 
-def obter_insights(base: str, org_id: str, devin_id: str, token: str) -> dict[str, object]:
+def obter_insights(base: str, org_id: str, devin_id: str, token: str | list[str]) -> dict[str, object]:
     url = _insights_url(base, org_id, devin_id)
     return _request("GET", url, token)
 
@@ -106,7 +138,7 @@ def aguardar_analise(
     base: str,
     org_id: str,
     devin_id: str,
-    token: str,
+    token: str | list[str],
     timeout_s: float,
     intervalo_s: float,
 ) -> dict[str, object]:
@@ -222,15 +254,15 @@ def main() -> int:
     parser.add_argument("--json", action="store_true", help="Imprime o payload JSON completo")
     args = parser.parse_args()
 
-    token = _env_or_reg("DEVIN_API_TOKEN")
+    tokens = _resolve_devin_tokens()
     org_id = _env_or_reg("DEVIN_ORG_ID")
     base = _env_or_reg("DEVIN_API_BASE", DEVIN_API_BASE_DEFAULT)
     if not base.startswith("https://"):
         print("ERRO: DEVIN_API_BASE deve usar https://", file=sys.stderr)
         return 1
 
-    if not token:
-        print("ERRO: DEVIN_API_TOKEN ausente (env ou HKCU/HKLM Environment).", file=sys.stderr)
+    if not tokens:
+        print("ERRO: DEVIN_API_TOKEN/DEVIN_API_KEY ausente (env ou HKCU/HKLM Environment).", file=sys.stderr)
         print("      Use scripts/ops/Set-EcosystemCredential.ps1 -Nome DEVIN_API_TOKEN", file=sys.stderr)
         return 1
     if not org_id:
@@ -241,10 +273,10 @@ def main() -> int:
 
     try:
         if args.generate:
-            resp = gerar_insights(base, org_id, devin_id, token)
+            resp = gerar_insights(base, org_id, devin_id, tokens)
             print(f"[generate] status={resp.get('status')}", file=sys.stderr)
 
-        dados = aguardar_analise(base, org_id, devin_id, token, args.poll_timeout, args.poll_interval)
+        dados = aguardar_analise(base, org_id, devin_id, tokens, args.poll_timeout, args.poll_interval)
     except RuntimeError as exc:
         print(f"ERRO: {exc}", file=sys.stderr)
         return 1

@@ -265,10 +265,41 @@ async def _execute_web_search(task: Task, manager: QueueManager) -> tuple[str, i
 
 async def _query_collective_memory(task: Task, n_rag_results: int) -> tuple[str, int]:
     try:
+        from core.mesh_integrations import Neo4jAuraBridge, RAGFlowBridge  # noqa: PLC0415
+
         t0 = time.monotonic()
         rag = te.get_rag()
-        collective_memory = await rag.query_memory(task.description, n_results=n_rag_results, local_only=True)
-        return collective_memory, int((time.monotonic() - t0) * 1000)
+        meta = task.metadata if isinstance(task.metadata, dict) else {}
+        raw_datasets = meta.get("ragflow_dataset_ids")
+        dataset_ids = [str(d) for d in raw_datasets] if isinstance(raw_datasets, (list, tuple)) else None
+        strategic = {AGENT_MAVERICK, AGENT_PESQUISADOR, AGENT_ARCHITECT, AGENT_AUDITOR, AGENT_VERIFIER}
+
+        async def _fetch_ragflow() -> str:
+            if not RAGFlowBridge.is_configured(dataset_ids):
+                return ""
+            depth = str(meta.get("thinking_depth") or ("high" if task.agent in strategic else "medium"))
+            res = await RAGFlowBridge.retrieve_grounded_context(
+                task.description,
+                dataset_ids=dataset_ids,
+                thinking_depth=depth,
+            )
+            return res.format_context_block()
+
+        async def _fetch_neo4j() -> str:
+            if not Neo4jAuraBridge.is_configured():
+                return ""
+            if not (meta.get("use_neo4j") or task.agent in strategic):
+                return ""
+            res = await Neo4jAuraBridge.query_graph_context(task.description, limit=5)
+            return res.format_context_block()
+
+        local_mem, ragflow_mem, neo4j_mem = await asyncio.gather(
+            rag.query_memory(task.description, n_results=n_rag_results, local_only=True),
+            _fetch_ragflow(),
+            _fetch_neo4j(),
+        )
+        combined = "\n\n".join(part for part in (local_mem, ragflow_mem, neo4j_mem) if part)
+        return combined, int((time.monotonic() - t0) * 1000)
     except Exception:  # pylint: disable=broad-exception-caught
         logger.exception("Falha ao consultar RAG")
         return "", -1
@@ -498,6 +529,14 @@ async def _assemble_prompt(
         user_prompt += _inject_domain_skills(task)
 
     user_prompt += _inject_mcp_addons(task)
+    from core.mesh_integrations import build_agent_integrations_block  # noqa: PLC0415
+
+    user_prompt += build_agent_integrations_block(
+        task.description,
+        task.metadata,
+        ragflow_citations_count=collective_memory.count("[RF-"),
+        neo4j_rows_count=collective_memory.count("[G-"),
+    )
 
     user_prompt = _add_autonomy_and_guidelines(user_prompt, task, agent_clean, autonomy_mode)
     return system_prompt, user_prompt

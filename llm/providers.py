@@ -168,7 +168,7 @@ class GeminiStrategy(LLMProviderStrategy):
             from llm.gemini_pool import _key_sha8, gemini_pool_manager  # noqa: PLC0415
 
             stats = gemini_pool_manager._stats.get(_key_sha8(key))
-            if stats is not None and not stats.is_available():
+            if stats is not None and not stats.is_available(model=model):
                 return True
         return False
 
@@ -266,6 +266,73 @@ class OllamaCloudStrategy(LLMProviderStrategy):
         )
 
 
+async def _call_local_openai_router_fallback(
+    session: aiohttp.ClientSession,
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    client_timeout: aiohttp.ClientTimeout | None = None,
+    require_json: bool = False,
+    **kwargs: Any,
+) -> tuple[str, dict[str, Any]] | None:
+    """Fallback OpenAI-compatible para llama.cpp (:9931) e llama-swap (:8080) quando :17043 estiver offline."""
+    llama_base = os.environ.get("CHICO_LLAMA_API_BASE", "http://127.0.0.1:9931").rstrip("/")
+    swap_base = os.environ.get("CHICO_LLAMA_SWAP_BASE", "http://127.0.0.1:8080").rstrip("/")
+    swap_model = os.environ.get("CHICO_LLAMA_SWAP_MODEL", "qwen-moe")
+    messages = list(kwargs.get("messages") or [])
+    if not messages:
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": user_prompt})
+
+    timeout = client_timeout or aiohttp.ClientTimeout(total=15.0, sock_connect=1.0)
+    endpoints: list[tuple[str, list[str]]] = [
+        (llama_base, [model]),
+    ]
+    if swap_base and swap_base != llama_base:
+        swap_models = [model]
+        if swap_model and swap_model != model:
+            swap_models.append(swap_model)
+        endpoints.append((swap_base, swap_models))
+
+    for base_url, model_candidates in endpoints:
+        if not base_url:
+            continue
+        for candidate_model in model_candidates:
+            payload: dict[str, Any] = {
+                "model": candidate_model,
+                "messages": messages,
+                "stream": False,
+                "max_tokens": kwargs.get("max_tokens", 2048),
+            }
+            if kwargs.get("temperature") is not None:
+                payload["temperature"] = kwargs["temperature"]
+            if require_json:
+                payload["response_format"] = {"type": "json_object"}
+            try:
+                async with session.post(f"{base_url}/v1/chat/completions", json=payload, timeout=timeout) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        choices = data.get("choices") or []
+                        content = str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
+                        if content:
+                            raw_usage = data.get("usage") or {}
+                            usage = {
+                                "promptTokenCount": raw_usage.get("prompt_tokens", len(user_prompt) // 4),
+                                "candidatesTokenCount": raw_usage.get("completion_tokens", len(content) // 4),
+                                "local_fallback_endpoint": base_url,
+                                "local_fallback_model": candidate_model,
+                            }
+                            return content, usage
+                    if resp.status not in (400, 404):
+                        break
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("[GEMMA-LOCAL] Fallback local (%s/%s) indisponivel: %s", base_url, candidate_model, exc)
+                break
+    return None
+
+
 class GemmaLocalStrategy(LLMProviderStrategy):
     """Strategy implementation for local Gemma instances."""
 
@@ -288,17 +355,31 @@ class GemmaLocalStrategy(LLMProviderStrategy):
         require_json: bool,
         **kwargs: Any,
     ) -> tuple[str, dict[str, Any]]:
-        """Executes local Gemma API call."""
-        return await call_gemma_local(
-            session,
-            model,
-            system_prompt,
-            user_prompt,
-            key,
-            timeout=client_timeout,
-            require_json=require_json,
-            **kwargs,
-        )
+        """Executes local Gemma API call with fallback to llama.cpp (:9931) and llama-swap (:8080)."""
+        try:
+            return await call_gemma_local(
+                session,
+                model,
+                system_prompt,
+                user_prompt,
+                key,
+                timeout=client_timeout,
+                require_json=require_json,
+                **kwargs,
+            )
+        except (ConnectionError, aiohttp.ClientError, TimeoutError) as local_exc:
+            fallback_result = await _call_local_openai_router_fallback(
+                session,
+                model,
+                system_prompt,
+                user_prompt,
+                client_timeout=client_timeout,
+                require_json=require_json,
+                **kwargs,
+            )
+            if fallback_result is not None:
+                return fallback_result
+            raise local_exc
 
 
 class SplashStrategy(LLMProviderStrategy):
@@ -401,7 +482,7 @@ def _get_provider_strategy(provider: str) -> LLMProviderStrategy | None:
 
 
 def _check_local_llama_availability(model: str) -> bool:
-    """Check local S2 availability: Gemma Edge Proxy (:17043) first, then llama.cpp (:9931) / legacy (:8081..8083)."""
+    """Check local S2 availability: Gemma (:17043), llama.cpp (:9931), legacy (:8081..8083), or llama-swap (:8080)."""
     try:
         from llm.system2_local import edge_proxy_online  # noqa: PLC0415
 
@@ -756,7 +837,12 @@ async def _handle_general_error(
         )
 
     if "429" in error_msg:
-        return await _handle_429_error(error_msg, strategy, ctx, general_retries_left, rate_limit_retries_left)
+        should_retry, g_left, r_left = await _handle_429_error(
+            error_msg, strategy, ctx, general_retries_left, rate_limit_retries_left
+        )
+        if not should_retry and ctx.provider == "gemini":
+            await _block_gemini_model_key(ctx.model, key)
+        return should_retry, g_left, r_left
 
     if general_retries_left >= 0:
         logger.warning(

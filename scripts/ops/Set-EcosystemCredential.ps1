@@ -1,49 +1,20 @@
 ﻿<#
 .SYNOPSIS
-    Grava uma credencial do ecossistema em HKCU:\Environment sem passar por disco.
+    Grava uma credencial do ecossistema em HKCU:\Environment e HKLM (se Admin) sem passar por disco.
 
 .DESCRIPTION
     A secao 3 do CLAUDE.md da raiz proibe credencial em texto claro, e a secao 6.4
-    fixa onde elas moram: variavel de ambiente de USUARIO (HKCU:\Environment).
-    Este script e o caminho unico para inserir ou renovar uma delas.
-
-    O QUE ELE EVITA, E POR QUE CADA UM IMPORTA:
-
-      - Arquivo. A chave nunca toca o disco, entao nao ha o que esquecer de
-        apagar nem o que um `git add -A` possa capturar por acidente.
-      - Historico do shell. Uma chave passada como ARGUMENTO fica em
-        PSReadLine (ConsoleHost_history.txt) e sobrevive ao fechamento do
-        terminal. Aqui ela entra por Read-Host -AsSecureString, que nao ecoa e
-        nao registra.
-      - Log e telemetria. O valor nunca e impresso, nem em erro. A saida confirma
-        apenas o COMPRIMENTO, que basta para verificar que colou inteira.
-
-    MOTIVO IMEDIATO (2026-09-04): tres credenciais foram encontradas em texto
-    claro em arquivos versionados e ja empurrados -- uma literal em
-    engine/stitch_bridge.py e duas republicadas em reports/integrations/JULES_REPORT.md a partir do
-    prompt de uma sessao do Jules. As tres exigem revogacao; este script existe
-    para que a substituta nao repita o caminho.
-
-.PARAMETER Nome
-    Nome da variavel de ambiente (ex.: STITCH_API_KEY).
-
-.PARAMETER Verificar
-    Nao grava nada: apenas informa se a variavel existe e qual o comprimento.
-
-.EXAMPLE
-    .\scripts\ops\Set-EcosystemCredential.ps1 -Nome STITCH_API_KEY
-
-.EXAMPLE
-    .\scripts\ops\Set-EcosystemCredential.ps1 -Verificar
-
-.NOTES
-    Compativel com Windows PowerShell 5.1 e PowerShell 7+.
-    Encoding UTF-8 com BOM, exigencia da secao 6.4 do CLAUDE.md do projeto.
+    fixa onde elas moram: variaveis de ambiente de USUARIO (HKCU:\Environment) e
+    MAQUINA (HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment).
+    Este script e o caminho unico para inserir ou renovar uma delas, inclusive em
+    slots rotacionais (-Slot 1..N -> NOME_1..NOME_N).
 #>
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
     [string] $Nome,
+
+    [int] $Slot = 0,
 
     [switch] $Verificar
 )
@@ -51,8 +22,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# Credenciais que este ecossistema usa. Serve de referencia ao operador e de
-# lista para o modo -Verificar; nomes fora dela continuam aceitos.
+# Credenciais que este ecossistema usa (incluindo bridges e slots rotacionais).
 $CredenciaisConhecidas = @(
     'JULES_API_KEY',
     'STITCH_API_KEY',
@@ -61,35 +31,39 @@ $CredenciaisConhecidas = @(
     'RENDER_API_KEY',
     'GOOGLE_CLOUD_PROJECT',
     'DEVIN_API_TOKEN',
-    'DEVIN_ORG_ID'
+    'DEVIN_API_KEY',
+    'DEVIN_ORG_ID',
+    'VERCEL_TOKEN',
+    'VERCEL_USER_ID',
+    'RAGFLOW_API_KEY',
+    'RAGFLOW_API_BASE',
+    'N8N_API_KEY',
+    'NEO4J_AURA_API_KEY',
+    'NEO4J_AURA_CLIENT_ID',
+    'NEO4J_AURA_CLIENT_SECRET',
+    'NEO4J_AURA_AGENT_CLIENT_ID',
+    'NEO4J_AURA_AGENT_CLIENT_SECRET',
+    'NEO4J_AURA_INSTANCE_ID',
+    'DOCKER_PAT'
 )
 
 function Show-Estado {
     param([string[]] $Nomes)
 
     Write-Host ''
-    Write-Host 'Credencial              Escopo Usuario   Sessao atual' -ForegroundColor Cyan
-    Write-Host '----------------------  ---------------  ------------' -ForegroundColor Cyan
+    Write-Host 'Credencial                      HKCU (User)      HKLM (Machine)   Sessao' -ForegroundColor Cyan
+    Write-Host '------------------------------  ---------------  ---------------  ------------' -ForegroundColor Cyan
 
     foreach ($n in $Nomes) {
-        $persistida = [Environment]::GetEnvironmentVariable($n, 'User')
-        $naSessao = [Environment]::GetEnvironmentVariable($n, 'Process')
+        $hkcu = [Environment]::GetEnvironmentVariable($n, 'User')
+        $hklm = [Environment]::GetEnvironmentVariable($n, 'Machine')
+        $proc = [Environment]::GetEnvironmentVariable($n, 'Process')
 
-        if ([string]::IsNullOrEmpty($persistida)) {
-            $colunaPersistida = 'AUSENTE'
-        }
-        else {
-            $colunaPersistida = "{0} chars" -f $persistida.Length
-        }
+        $colHkcu = if ([string]::IsNullOrEmpty($hkcu)) { 'AUSENTE' } else { "{0} chars" -f $hkcu.Length }
+        $colHklm = if ([string]::IsNullOrEmpty($hklm)) { 'AUSENTE' } else { "{0} chars" -f $hklm.Length }
+        $colProc = if ([string]::IsNullOrEmpty($proc)) { 'ausente' } else { "{0} chars" -f $proc.Length }
 
-        if ([string]::IsNullOrEmpty($naSessao)) {
-            $colunaSessao = 'ausente'
-        }
-        else {
-            $colunaSessao = "{0} chars" -f $naSessao.Length
-        }
-
-        Write-Host ("{0,-22}  {1,-15}  {2}" -f $n, $colunaPersistida, $colunaSessao)
+        Write-Host ("{0,-30}  {1,-15}  {2,-15}  {3}" -f $n, $colHkcu, $colHklm, $colProc)
     }
     Write-Host ''
 }
@@ -104,26 +78,39 @@ if ([string]::IsNullOrWhiteSpace($Nome)) {
     Write-Host 'Informe o nome da credencial. Conhecidas neste ecossistema:' -ForegroundColor Yellow
     foreach ($c in $CredenciaisConhecidas) { Write-Host "  - $c" }
     Write-Host ''
-    Write-Host 'Uso: .\scripts\ops\Set-EcosystemCredential.ps1 -Nome STITCH_API_KEY' -ForegroundColor DarkGray
+    Write-Host 'Uso: .\scripts\ops\Set-EcosystemCredential.ps1 -Nome VERCEL_TOKEN [-Slot 1]' -ForegroundColor DarkGray
     Write-Host 'Ou:  .\scripts\ops\Set-EcosystemCredential.ps1 -Verificar' -ForegroundColor DarkGray
     exit 1
 }
 
-$anterior = [Environment]::GetEnvironmentVariable($Nome, 'User')
-if ([string]::IsNullOrEmpty($anterior)) {
-    Write-Host "$Nome ainda nao existe no escopo de usuario. Sera criada." -ForegroundColor Yellow
+$targetNames = @()
+if ($Slot -gt 0) {
+    $slotName = "${Nome}_${Slot}"
+    $targetNames += $slotName
+    if ($Slot -eq 1 -or [string]::IsNullOrEmpty([Environment]::GetEnvironmentVariable($Nome, 'User'))) {
+        $targetNames += $Nome
+    }
 }
 else {
-    Write-Host "$Nome ja existe ($($anterior.Length) chars) e sera SUBSTITUIDA." -ForegroundColor Yellow
+    $targetNames += $Nome
+}
+
+$primaryTarget = $targetNames[0]
+$anterior = [Environment]::GetEnvironmentVariable($primaryTarget, 'User')
+if ([string]::IsNullOrEmpty($anterior)) {
+    Write-Host "$primaryTarget ainda nao existe no escopo de usuario. Sera criada." -ForegroundColor Yellow
+}
+else {
+    Write-Host "$primaryTarget ja existe ($($anterior.Length) chars) e sera SUBSTITUIDA." -ForegroundColor Yellow
     Write-Host 'A credencial anterior deve ser revogada no provedor.' -ForegroundColor Yellow
 }
 
 Write-Host ''
 Write-Host 'Cole o valor. Ele nao aparece na tela e nao entra no historico.' -ForegroundColor Cyan
-$segura = Read-Host -Prompt "  $Nome" -AsSecureString
+$segura = Read-Host -Prompt "  $primaryTarget" -AsSecureString
 
-# Conversao em bloco protegido: o texto claro existe pelo menor tempo possivel e
-# o buffer nao gerenciado e liberado mesmo se algo falhar no meio.
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$hklmGravado = $false
 $ptr = [IntPtr]::Zero
 try {
     $ptr = [Runtime.InteropServices.Marshal]::SecureStringToGlobalAllocUnicode($segura)
@@ -135,12 +122,19 @@ try {
     }
 
     $claro = $claro.Trim()
-
-    # Persistente, para toda sessao futura.
-    [Environment]::SetEnvironmentVariable($Nome, $claro, 'User')
-    # E na sessao corrente, para nao exigir reabrir o terminal agora.
-    [Environment]::SetEnvironmentVariable($Nome, $claro, 'Process')
-
+    foreach ($t in $targetNames) {
+        [Environment]::SetEnvironmentVariable($t, $claro, 'User')
+        [Environment]::SetEnvironmentVariable($t, $claro, 'Process')
+        if ($isAdmin) {
+            try {
+                [Environment]::SetEnvironmentVariable($t, $claro, 'Machine')
+                $hklmGravado = $true
+            }
+            catch {
+                Write-Warning "Falha ao gravar $t em HKLM: $_"
+            }
+        }
+    }
     $comprimento = $claro.Length
 }
 finally {
@@ -150,15 +144,15 @@ finally {
     Remove-Variable -Name claro -ErrorAction SilentlyContinue
 }
 
-$confirmacao = [Environment]::GetEnvironmentVariable($Nome, 'User')
+$confirmacao = [Environment]::GetEnvironmentVariable($primaryTarget, 'User')
 if ($confirmacao.Length -ne $comprimento) {
     Write-Host 'Gravacao nao confere. Verifique manualmente.' -ForegroundColor Red
     exit 1
 }
 
 Write-Host ''
-Write-Host "OK. $Nome gravada com $comprimento caracteres." -ForegroundColor Green
-Write-Host 'Persistida em HKCU:\Environment e ativa nesta sessao.' -ForegroundColor Green
+Write-Host ("OK. {0} gravada com {1} caracteres." -f ($targetNames -join ', '), $comprimento) -ForegroundColor Green
+Write-Host ("HKCU: GRAVADO | HKLM: {0}" -f ($(if ($hklmGravado) { 'GRAVADO' } else { 'IGNORADO (Sem Admin)' }))) -ForegroundColor Green
 Write-Host 'Processos ja abertos (IDE, servidores) so a herdam apos reinicio.' -ForegroundColor DarkGray
 Write-Host ''
 Write-Host 'A credencial NAO foi escrita em arquivo nenhum, por desenho.' -ForegroundColor DarkGray

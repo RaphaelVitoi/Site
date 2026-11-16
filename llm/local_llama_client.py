@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import time
 from typing import Any
@@ -38,6 +39,8 @@ DEFAULT_G9_PORT = 8081
 DEFAULT_LING_PORT = 8082
 DEFAULT_QWEN_PORT = 8083
 DEFAULT_ROUTER_PORT = 9931
+DEFAULT_LLAMA_SWAP_PORT = 8080
+DEFAULT_LLAMA_SWAP_MODEL = "qwen-moe"
 
 PORT_TO_ROUTER_MODEL: dict[int, str] = {
     DEFAULT_G9_PORT: "ai9stars_G9v3-3B-Q4_K_M",
@@ -117,16 +120,21 @@ class LocalLlamaClient:
 
     def _probe_port_health(self, target_port: int, timeout_s: float = 1.0) -> bool:
         try:
-            url = f"http://{self.host}:{target_port}/health"  # NOSONAR
+            endpoint = "/v1/models" if target_port == DEFAULT_LLAMA_SWAP_PORT else "/health"
+            url = f"http://{self.host}:{target_port}{endpoint}"  # NOSONAR
             req = urllib.request.Request(url, method="GET")  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
             with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310  # Record-Id: registro-2026-09-29-saneamento-lint-e-calibracao
+                if resp.status != 200:
+                    return False
+                if target_port == DEFAULT_LLAMA_SWAP_PORT:
+                    return True
                 data = json.loads(resp.read().decode("utf-8"))
                 return data.get("status") in ("ok", "loaded", "loading model")
         except Exception:
             return False
 
     def is_healthy(self) -> bool:
-        """Verifica se o router unificado (:9931) ou instancia dedicada esta ativa e respondendo."""
+        """Verifica se o router unificado (:9931), instancia dedicada ou fallback llama-swap (:8080) esta ativo."""
         if self.port != DEFAULT_ROUTER_PORT and self.port in PORT_TO_ROUTER_MODEL:
             # Sonde o router nativo (:9931) primeiro para evitar retry TCP em portas legadas fechadas no Windows.
             if self._probe_port_health(DEFAULT_ROUTER_PORT, timeout_s=min(self.timeout, 1.0)):
@@ -135,9 +143,17 @@ class LocalLlamaClient:
             if self._probe_port_health(self.port, timeout_s=min(self.timeout, 0.5)):
                 self._effective_port = self.port
                 return True
+            if self._probe_port_health(DEFAULT_LLAMA_SWAP_PORT, timeout_s=min(self.timeout, 0.5)):
+                self._effective_port = DEFAULT_LLAMA_SWAP_PORT
+                return True
             return False
         if self._probe_port_health(self.port, timeout_s=min(self.timeout, 1.5)):
             self._effective_port = self.port
+            return True
+        if self.port == DEFAULT_ROUTER_PORT and self._probe_port_health(
+            DEFAULT_LLAMA_SWAP_PORT, timeout_s=min(self.timeout, 1.0)
+        ):
+            self._effective_port = DEFAULT_LLAMA_SWAP_PORT
             return True
         return False
 
@@ -216,6 +232,23 @@ class LocalLlamaClient:
                     return result
                 except urllib.error.URLError:
                     pass
+            if target_port != DEFAULT_LLAMA_SWAP_PORT:
+                swap_fallback_model = os.environ.get("CHICO_LLAMA_SWAP_MODEL", DEFAULT_LLAMA_SWAP_MODEL)
+                swap_models = [self.router_model_id]
+                if swap_fallback_model and swap_fallback_model != self.router_model_id:
+                    swap_models.append(swap_fallback_model)
+                for idx, swap_model in enumerate(swap_models):
+                    try:
+                        swap_payload = {**payload, "model": swap_model}
+                        result = self._post_chat(DEFAULT_LLAMA_SWAP_PORT, swap_payload)
+                        self._effective_port = DEFAULT_LLAMA_SWAP_PORT
+                        return result
+                    except urllib.error.HTTPError as http_err:
+                        if http_err.code in (400, 404) and idx + 1 < len(swap_models):
+                            continue
+                        break
+                    except urllib.error.URLError:
+                        break
             logger.exception("Falha de conexao com o llama-server na porta %d", target_port)
             raise ConnectionError(
                 f"llama-server offline na porta {target_port}. Inicie via scripts/ops/Start-LlamaServer.ps1 -Port 9931"

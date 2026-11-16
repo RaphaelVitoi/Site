@@ -1,0 +1,87 @@
+# Unified Docker Compose for Site / CHICO Mesh Integrations
+# Usage:
+#   1. Copy infra/.env.example -> infra/.env and fill secrets securely (NEVER commit .env)
+#   2. n8n + Cloud RAGFlow:   docker compose -f infra/docker-compose.yml up -d
+#   3. n8n + Local RAGFlow:   docker compose -f infra/docker-compose.yml --profile ragflow-local up -d
+#
+# Pre-wired host endpoints (reachable from containers via host.docker.internal):
+#   - Ollama:     http://host.docker.internal:11434
+#   - llama.cpp:  http://host.docker.internal:9931/v1
+#   - llama-swap: http://host.docker.internal:8080/v1
+
+name: chico-mesh-infra
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: chico-n8n
+    restart: unless-stopped
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      N8N_HOST: "${N8N_HOST:-127.0.0.1}"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "${N8N_PROTOCOL:-http}"
+      WEBHOOK_URL: "${N8N_WEBHOOK_URL:-http://127.0.0.1:5678/}"
+      N8N_ENCRYPTION_KEY: "${N8N_ENCRYPTION_KEY}"
+      N8N_BASIC_AUTH_ACTIVE: "${N8N_BASIC_AUTH_ACTIVE:-false}"
+      N8N_USER_MANAGEMENT_DISABLED: "${N8N_USER_MANAGEMENT_DISABLED:-false}"
+      GENERIC_TIMEZONE: "${TZ:-America/Sao_Paulo}"
+      TZ: "${TZ:-America/Sao_Paulo}"
+      # LLM / Mesh endpoints for n8n workflows & HTTP/AI Agent nodes
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      OPENROUTER_BASE_URL: "https://openrouter.ai/api/v1"
+      OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+      LLAMA_CPP_BASE_URL: "http://host.docker.internal:9931/v1"
+      LLAMA_SWAP_BASE_URL: "http://host.docker.internal:8080/v1"
+      # RAGFlow (defaults to cloud.ragflow.io unless ragflow-local profile overrides RAGFLOW_API_BASE)
+      RAGFLOW_API_BASE: "${RAGFLOW_API_BASE:-https://cloud.ragflow.io}"
+      RAGFLOW_API_KEY: "${RAGFLOW_API_KEY:-}"
+      # Neo4j Aura L4 Graph Bridge
+      NEO4J_AURA_URI: "${NEO4J_AURA_URI:-}"
+      NEO4J_AURA_QUERY_URL: "${NEO4J_AURA_QUERY_URL:-}"
+      NEO4J_AURA_USERNAME: "${NEO4J_AURA_USERNAME:-neo4j}"
+      NEO4J_AURA_PASSWORD: "${NEO4J_AURA_PASSWORD:-}"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5678/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  ragflow:
+    profiles:
+      - ragflow-local
+    image: infiniflow/ragflow:v1.0.0
+    container_name: chico-ragflow
+    restart: unless-stopped
+    ports:
+      - "${RAGFLOW_HTTP_PORT:-9382}:80"
+      - "${RAGFLOW_API_PORT:-9380}:9380"
+      - "${RAGFLOW_GRPC_PORT:-9381}:9381"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      TZ: "${TZ:-America/Sao_Paulo}"
+      # Default model providers wired to OpenRouter + host local engines
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      OPENAI_API_BASE: "https://openrouter.ai/api/v1"
+      OLLAMA_API_BASE: "http://host.docker.internal:11434"
+      LLAMA_CPP_API_BASE: "http://host.docker.internal:9931/v1"
+      LLAMA_SWAP_API_BASE: "http://host.docker.internal:8080/v1"
+    volumes:
+      - ragflow_data:/ragflow/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9380/v1/system/healthz >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
+
+volumes:
+  n8n_data:
+  ragflow_data:
