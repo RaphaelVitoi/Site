@@ -41,7 +41,7 @@ wheels = [
 
 [[package]]
 name = "accelerate"
-version = "1.15.0"
+version = "1.16.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "huggingface-hub" },
@@ -52,9 +52,9 @@ dependencies = [
     { name = "safetensors" },
     { name = "torch" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/b5/1d3ed029ac71d3f2961346829a268da923698e9fd63f218f78841f216bfd/accelerate-1.15.0.tar.gz", hash = "sha256:5654f8c5eaa0d4fa68b33e287a97765da6849bf6d51dcac874e73fbbddfb6134", size = 422615, upload-time = "2026-09-09T13:04:49.078Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/dd/14c28a3918ae4d3e40d87e2edcb8737731e52c57f28f0980bb780f50dad6/accelerate-1.16.0.tar.gz", hash = "sha256:43c446b9affb145220946a63fe32e14e968fcfca645d25b5f1f3fdbc375657ae", size = 424969, upload-time = "2026-11-16T21:00:38.494Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/4c/34f0450479d01195027260da68d8a3880683f1640c3ca5adf64acb3185f1/accelerate-1.15.0-py3-none-any.whl", hash = "sha256:97eacca0b73e45cb867dbf8c5d5d4dc32219544300e0c8992c7334dc2ef33cec", size = 394295, upload-time = "2026-09-09T13:04:47.331Z" },
+    { url = "https://files.pythonhosted.org/packages/29/8e/d77aa769cf76472ede10e73e5c27ed22587ff12091fdd7408bc390f41af7/accelerate-1.16.0-py3-none-any.whl", hash = "sha256:180885b6d7b05a19dc2dd6f722c5ce930f615e81e9e5f79d3ca910ddb9e6859e", size = 389390, upload-time = "2026-11-16T21:00:36.979Z" },
 ]
 
 [[package]]
@@ -259,7 +259,7 @@ wheels = [
 
 [[package]]
 name = "anthropic"
-version = "2.8.0"
+version = "2.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio", version = "4.14.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
@@ -272,9 +272,9 @@ dependencies = [
     { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/e6/aabc3c266a0aaf38fa542648585741fce9616ba4cd034ddde74548f790a0/anthropic-2.8.0.tar.gz", hash = "sha256:d34e389ba0544cd64e033eb7475f46cc1ac6f2a388cdcd472b33ad4ac29ef40c", size = 1976933, upload-time = "2026-11-10T16:33:19.38Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ac/ab/53ca7d25bc5fa3fa3db2694e9dec5d060c6b24172976dbcabe0d947e2d03/anthropic-2.9.0.tar.gz", hash = "sha256:0a3379add94953db2dc736839bbafb0c624f6bec69caf13e44353d906c253981", size = 1993336, upload-time = "2026-11-16T16:47:55.069Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/8e/f8ef271dcbe3b187879b660c129ee36ef655c7b878f6878460891d9b2a26/anthropic-2.8.0-py3-none-any.whl", hash = "sha256:76ad332e2d500fc54d0112cf100544ad1a7605e71e092b98d9eb664d2b66e283", size = 2456925, upload-time = "2026-11-10T16:33:21.388Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/f1/bd9e6c33eaee316ed2dd283e88eb37160fcd66ffc79325118aed2a7f96b4/anthropic-2.9.0-py3-none-any.whl", hash = "sha256:410281f4b9fa6422ccc465e5e531a00d69c6f589c743134e77c23fefc3e5cb4f", size = 2468706, upload-time = "2026-11-16T16:47:53.501Z" },
 ]
 
 [[package]]
@@ -2285,7 +2285,7 @@ wheels = [
 
 [[package]]
 name = "laya"
-version = "0.4.34"
+version = "0.4.35"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -2296,9 +2296,9 @@ dependencies = [
     { name = "transformers" },
     { name = "vegaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/e5/364b759c8abbe6b56f1be82399b1bbc48a003b1ed03610c03eaccb5e06bf/laya-0.4.34.tar.gz", hash = "sha256:c9903900f0ad9590f4e8ab844deb6e44719f35e797f2e63a29c9f9e0cdc8d846", size = 1483539, upload-time = "2026-11-15T18:06:39.336Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/e3/83e5bc5a35079b002bc55fbede2aacc40611a9eee6ddf4572115b2e60262/laya-0.4.35.tar.gz", hash = "sha256:4402c1888158d838822a834fa43c2625346ac8c9faf9f47cbb5b894936675453", size = 1482949, upload-time = "2026-11-16T12:50:12.416Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/02/9a/a253b3181986caa4edeb2080f3029b9ddc37b2988e83bb789074f46adae0/laya-0.4.34-py3-none-any.whl", hash = "sha256:5f33077aa17dc228979937273be04c77bac61915c4e2266b07b47f6fab1badc9", size = 505536, upload-time = "2026-11-15T18:06:37.502Z" },
+    { url = "https://files.pythonhosted.org/packages/76/b9/909c9be2d6c3866f649c9f8d1b3046f40ef5fbbb5c88c6368e8c73883bd1/laya-0.4.35-py3-none-any.whl", hash = "sha256:2bb201032a83aee0aee07fa0dd76904753de1f35fec26c7e78640229dd5eb791", size = 505341, upload-time = "2026-11-16T12:50:10.301Z" },
 ]
 
 [[package]]
@@ -3143,11 +3143,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "accelerate", specifier = ">=1.15.0" },
+    { name = "accelerate", specifier = ">=1.16.0" },
     { name = "aiofiles", specifier = ">=25.1.0" },
     { name = "aiohttp", specifier = ">=3.14.5" },
     { name = "aiosqlite", specifier = ">=0.22.1" },
-    { name = "anthropic", specifier = ">=2.8.0" },
+    { name = "anthropic", specifier = ">=2.9.0" },
     { name = "chromadb", specifier = ">=1.5.9" },
     { name = "cloudpathlib", specifier = ">=0.26.0,<1.0.0" },
     { name = "cmake", marker = "extra == 'dev'", specifier = ">=4.4.5" },
@@ -3159,7 +3159,7 @@ requires-dist = [
     { name = "google-genai", specifier = ">=3.3.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "lancedb", specifier = ">=0.41.0,<1.0.0" },
-    { name = "laya", specifier = ">=0.4.34" },
+    { name = "laya", specifier = ">=0.4.35" },
     { name = "locust", marker = "extra == 'dev'", specifier = ">=2.47.0" },
     { name = "loguru", specifier = ">=0.8.0" },
     { name = "matplotlib", specifier = ">=3.11.2" },

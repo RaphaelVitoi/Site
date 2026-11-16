@@ -27,7 +27,7 @@
     "format:all": "npm run format && npm run python:format",
     "clean": "rimraf frontend/.next frontend/.turbo node_modules/.cache",
     "clean:all": "rimraf frontend/.next frontend/.turbo node_modules/.cache .pytest_cache",
-    "deps:sync": "uv sync --all-groups",
+    "deps:sync": "uv sync --all-groups --all-extras",
     "deps:check": "uv pip check",
     "deps:lock": "uv lock",
     "python:test:fast": "uv run --no-sync python -m pytest -n auto tests/",
