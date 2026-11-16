@@ -485,6 +485,57 @@ async def _registrar_desfecho_no_dream_rsi(task: Task, status: str, duration_s: 
         logger.warning("[DREAM-RSI] desfecho de %s nao gravado: %s", task.id, exc)
 
 
+def _maybe_sync_consciousness(task: Task, modified_files: list) -> None:
+    """Dispara o pulso de sincronizacao de RAG em background quando a feature esta ativa."""
+    if not (te.feature_enabled("enable_auto_sync_consciousness") and modified_files):
+        return
+    logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] [bold cyan]SYNC[/]: Pulso de Consciencia disparado.")
+    sync_bg_task = asyncio.create_task(_trigger_sync_consciousness(task))
+    _BACKGROUND_TASKS.add(sync_bg_task)
+    sync_bg_task.add_done_callback(_BACKGROUND_TASKS.discard)
+
+
+async def _dispatch_task_completed_event(
+    task: Task,
+    modified_files: list,
+    final_metadata: TaskMetadata,
+) -> None:
+    """Despacha o evento n8n de tarefa concluida quando configurado."""
+    meta = task.metadata if isinstance(task.metadata, dict) else {}
+    n8n_webhook = str(meta.get("n8n_webhook_path") or "").strip() or None
+    n8n_workflow = str(meta.get("n8n_workflow_id") or "").strip() or None
+    if not (n8n_webhook or n8n_workflow):
+        return
+    from core.mesh_integrations import N8NBridge  # noqa: PLC0415
+
+    if not N8NBridge.is_configured():
+        return
+    n8n_res = await N8NBridge.dispatch_event(
+        {
+            "event_type": "custom_agent_task_completed",
+            "task_id": task.id,
+            "agent": task.agent,
+            "files_changed": modified_files,
+            "workflow_duration_ms": final_metadata["workflow_duration_ms"],
+        },
+        webhook_path=n8n_webhook,
+        workflow_id=n8n_workflow,
+    )
+    final_metadata["n8n_dispatched"] = n8n_res.dispatched
+    if n8n_res.status_code:
+        final_metadata["n8n_status_code"] = n8n_res.status_code
+
+
+def _notify_task_completed_toast(task: Task) -> None:
+    priority = task.metadata.get("priority", "medium") if task.metadata else "medium"
+    if priority in ["high", "critical"]:
+        send_toast(
+            f"Simetria ({priority.upper()})",
+            f"A tarefa critica foi concluida pelo {task.agent}.",
+            "success",
+        )
+
+
 async def _finish_task_success(
     task: Task,
     manager: QueueManager,
@@ -502,12 +553,7 @@ async def _finish_task_success(
         f"[bold green][OK] SIMETRIA ALCANCADA[/] [cyan]{task.id}[/] concluida por [{te._c(task.agent)}]{task.agent}[/]"
     )
 
-    # SOTA: Sincronizacao de Consciencia Automatica (Loop de Feedback RAG)
-    if te.feature_enabled("enable_auto_sync_consciousness") and modified_files:
-        logger.info(f"[[{te._c(task.agent)}]{task.agent}[/]] [bold cyan]SYNC[/]: Pulso de Consciencia disparado.")
-        sync_bg_task = asyncio.create_task(_trigger_sync_consciousness(task))
-        _BACKGROUND_TASKS.add(sync_bg_task)
-        sync_bg_task.add_done_callback(_BACKGROUND_TASKS.discard)
+    _maybe_sync_consciousness(task, modified_files)
 
     duration = time.monotonic() - start_time
     await _registrar_desfecho_no_dream_rsi(task, "completed", duration)
@@ -517,38 +563,11 @@ async def _finish_task_success(
     }
     if modified_files:
         final_metadata["files_changed"] = modified_files
-    meta = task.metadata if isinstance(task.metadata, dict) else {}
-    n8n_webhook = str(meta.get("n8n_webhook_path") or "").strip() or None
-    n8n_workflow = str(meta.get("n8n_workflow_id") or "").strip() or None
-    if n8n_webhook or n8n_workflow:
-        from core.mesh_integrations import N8NBridge  # noqa: PLC0415
-
-        if N8NBridge.is_configured():
-            n8n_res = await N8NBridge.dispatch_event(
-                {
-                    "event_type": "custom_agent_task_completed",
-                    "task_id": task.id,
-                    "agent": task.agent,
-                    "files_changed": modified_files,
-                    "workflow_duration_ms": final_metadata["workflow_duration_ms"],
-                },
-                webhook_path=n8n_webhook,
-                workflow_id=n8n_workflow,
-            )
-            final_metadata["n8n_dispatched"] = n8n_res.dispatched
-            if n8n_res.status_code:
-                final_metadata["n8n_status_code"] = n8n_res.status_code
+    await _dispatch_task_completed_event(task, modified_files, final_metadata)
     final_metadata.update(timing_metrics)
     await manager.update_task_metadata(task.id, final_metadata, merge=True)
     write_economic_log(task, duration, "COMPLETED")
-
-    priority = task.metadata.get("priority", "medium") if task.metadata else "medium"
-    if priority in ["high", "critical"]:
-        send_toast(
-            f"Simetria ({priority.upper()})",
-            f"A tarefa critica foi concluida pelo {task.agent}.",
-            "success",
-        )
+    _notify_task_completed_toast(task)
 
 
 async def _try_delegate_gemma_task(task: Task, manager: QueueManager) -> bool:

@@ -178,3 +178,87 @@ async def test_call_gemini_flash_lite_automatic_failover(mock_pool_keys):
         assert "Edi\u00e7\u00e3o at\u00f4mica executada com sucesso" in text
         assert usage["totalTokenCount"] == 42
         assert call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_gemini_pool_429_isolation_is_per_model(mock_pool_keys):
+    """429 em gemini-pro-latest nao pode quarentenar a chave para gemini-3.5-flash-lite nem 3.8-flash."""
+    manager = GeminiPoolManager(read_registry=False)
+    for k in mock_pool_keys:
+        manager.mark_failure(k, status_code=429, retry_after_s=37000.0, model="gemini-pro-latest")
+
+    assert manager.available_keys_count(model="gemini-pro-latest") == 0
+    assert manager.available_keys_count(model="gemini-3.5-flash-lite") == 5
+    assert manager.available_keys_count(model="gemini-3.8-flash") == 5
+
+    key_lite, _ = manager.get_key_for_workload(GeminiWorkload.TRIAGEM, model="gemini-3.5-flash-lite")
+    assert key_lite in mock_pool_keys
+
+
+@pytest.mark.asyncio
+async def test_gemini_pool_ensure_keys_tracks_extra_keys(mock_pool_keys):
+    """Chaves extras fora do prefixo numerado 1..20 passam a ser rastreadas no pool."""
+    manager = GeminiPoolManager(read_registry=False)
+    extra_key = "CHAVE_SINTETICA_EXTRA_KEY_9999999999999999999999999999"
+    manager.ensure_keys([*mock_pool_keys, extra_key])
+
+    assert manager.total_keys() == 6
+    manager.mark_failure(extra_key, status_code=429, retry_after_s=120.0, model="gemini-pro-latest")
+    assert manager.available_keys_count(model="gemini-pro-latest") == 5
+    assert manager.available_keys_count(model="gemini-3.5-flash-lite") == 6
+
+
+@pytest.mark.asyncio
+async def test_custom_agents_routing_hierarchy_in_runtime(monkeypatch):
+    """Custom agents privilegiam especialistas locais/free, 3.5-flash-lite em fast_operations e 3.8-flash em reasoning."""
+    from datetime import UTC, datetime
+
+    import core.runtime as te
+    from core.schemas import Task
+    from llm.orchestrator import _prepare_routing_pipeline
+
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    te._maybe_reload_config()
+
+    async def _passthrough_gate(models, _manager, _task):
+        return models
+
+    with patch("llm.orchestrator._apply_model_health_gate", new=_passthrough_gate):
+        # Fast operations / Triagem: gemini-3.5-flash-lite primeiro
+        t_disp = Task(
+            id="T-disp",
+            description="triagem e encaminhamento",
+            agent="@dispatcher",
+            status="running",
+            timestamp=datetime.now(UTC).isoformat(),
+        )
+        m_disp, _, _ = await _prepare_routing_pipeline(t_disp, MagicMock())
+        assert m_disp[0] == "gemini-3.5-flash-lite"
+
+        # Fast operations / Codigo (@implementor / @verifier): coder local e free especializados na frente,
+        # seguido de gemini-3.5-flash-lite antes de gemini-3.8-flash
+        for agent in ("@implementor", "@verifier"):
+            t_code = Task(
+                id=f"T-{agent}",
+                description="linting e patch",
+                agent=agent,
+                status="running",
+                timestamp=datetime.now(UTC).isoformat(),
+            )
+            m_code, _, _ = await _prepare_routing_pipeline(t_code, MagicMock())
+            assert m_code[0] == "qwen2.5-coder:7b-instruct-q5_K_M"
+            assert m_code.index("gemini-3.5-flash-lite") < m_code.index("gemini-3.8-flash")
+
+        # Deep thinking / Reasoning (@chico, @maverick, @architect, @auditor): gemini-3.8-flash primeiro,
+        # com laguna/3.5-flash-lite antes de gemini-pro-latest
+        for agent in ("@chico", "@maverick", "@architect", "@auditor"):
+            t_reason = Task(
+                id=f"T-{agent}",
+                description="raciocinio sistemico",
+                agent=agent,
+                status="running",
+                timestamp=datetime.now(UTC).isoformat(),
+            )
+            m_reason, _, _ = await _prepare_routing_pipeline(t_reason, MagicMock())
+            assert m_reason[0] == "gemini-3.8-flash", f"{agent} selecionou {m_reason}"
+            assert m_reason.index("gemini-3.5-flash-lite") < m_reason.index("gemini-pro-latest")

@@ -4,40 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Geometria do Risco | Architecture v2</title>
-    
-    <!-- CSS Global -->
-    <link rel="stylesheet" href="../../../style.css">
-    <link rel="stylesheet" href="style-overrides.css">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap">
+
+    <!-- CSS Local e Utilitarios -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style-overrides.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+
     <!-- Engine Dependencies (ApexCharts & html2pdf) -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    
-    <!-- Fonts -->
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
-    </style>
 
     <!-- Modules -->
-    <script type="module" src="main.js"></script>
+    <script type="module" src="./main.js"></script>
 </head>
 <body class="flex flex-col items-center min-h-screen p-0 md:p-8 antialiased">
 
-    <nav class="fixed top-0 left-0 w-full z-50 bg-[#020617]/90 backdrop-blur-md border-b border-white/5">
+    <nav aria-label="Axiomas ICM" class="fixed top-0 left-0 w-full z-50 bg-[#020617]/90 backdrop-blur-md border-b border-white/5">
         <div class="ticker-container py-2">
             <div class="ticker-content text-[10px] uppercase font-bold tracking-[0.2em] text-indigo-400">
-                <span><i class="fa-solid fa-microchip mr-2"></i>ICM é sobre EV monetário.</span>
-                <span class="mx-8"><i class="fa-solid fa-database mr-2"></i>Risk Premium define a distância entre o topo e o fundo.</span>
+                <span><i class="fa-solid fa-microchip mr-2" aria-hidden="true"></i>ICM é sobre EV monetário.</span>
+                <span class="mx-8"><i class="fa-solid fa-database mr-2" aria-hidden="true"></i>Risk Premium define a distância entre o topo e o fundo.</span>
             </div>
         </div>
     </nav>
 
     <div class="w-full max-w-[1400px] flex flex-col gap-6 mt-16 relative z-10">
-        
-        <header class="text-center py-8 relative">
-            <div class="glow-bg"></div>
+
+        <header class="text-center py-8 relative px-4">
+            <div class="glow-bg" aria-hidden="true"></div>
             <h1 class="text-5xl md:text-7xl font-black tracking-tighter mb-4 text-white">
                 Geometria do <span class="text-gradient">Risco</span>
             </h1>
@@ -45,13 +45,16 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start px-4">
-            
+
             <!-- Sidebar -->
-            <aside class="lg:col-span-4 flex flex-col gap-4 sticky top-24">
-                <div class="glass-panel p-4">
-                    <span class="text-xs font-black text-slate-500 uppercase tracking-widest">Matrizes</span>
+            <aside aria-label="Seleção de cenários" class="lg:col-span-4 flex flex-col gap-4 lg:sticky lg:top-24">
+                <div class="glass-panel p-4 flex items-center justify-between">
+                    <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Matrizes</span>
+                    <button type="button" id="btn-mode-compare" aria-pressed="false" class="btn-interactive bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 hover:text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <i class="fa-solid fa-code-compare" aria-hidden="true"></i> Comparar
+                    </button>
                 </div>
-                
+
                 <!-- Custom Component: Lista de Cenários -->
                 <scenario-list id="main-scenario-list" class="glass-panel p-2 max-h-[70vh] overflow-y-auto block"></scenario-list>
             </aside>
@@ -62,19 +65,27 @@
                     <div class="flex justify-between items-end border-b border-white/5 pb-6 mb-8">
                         <div>
                             <span id="stage-context" class="badge">Contexto</span>
-                            <h2 id="stage-title" class="text-3xl font-editorial font-bold text-white mt-2">Selecione</h2>
+                            <h2 id="stage-title" class="text-3xl font-editorial font-bold text-white mt-2" aria-live="polite">Selecione</h2>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-8">
-                        <!-- Custom Component: Gauges -->
-                        <risk-gauge id="gauge-ip" label="Agressor" color="indigo"></risk-gauge>
-                        <risk-gauge id="gauge-oop" label="Defensor" color="pink"></risk-gauge>
+                    <div id="single-scenario-view">
+                        <div class="grid grid-cols-2 gap-8">
+                            <!-- Custom Component: Gauges -->
+                            <risk-gauge id="gauge-ip" label="Agressor" color="indigo"></risk-gauge>
+                            <risk-gauge id="gauge-oop" label="Defensor" color="pink"></risk-gauge>
+                        </div>
                     </div>
+
+                    <div id="compare-area" class="hidden"></div>
                 </section>
 
                 <!-- Conteúdo Dinâmico -->
                 <div id="content-area" class="glass-panel p-8 min-h-[300px]"></div>
+
+                <footer class="text-center text-[11px] text-slate-500 px-4 pb-6">
+                    Protótipo didático baseado em aproximação heurística linear (<code class="text-slate-400">NashSolver.js</code>). Não substitui solver GTO ou cálculo Malmuth-Harville completo.
+                </footer>
             </main>
         </div>
     </div>

@@ -308,7 +308,9 @@ def _gemini_key_pool_for_model(model: str) -> list[str]:
         extra = GEMINI_FLASH_KEYS + GEMINI_KEYS + GEMINI_PRO_KEYS
     else:
         extra = GEMINI_KEYS + GEMINI_PRO_KEYS + GEMINI_FLASH_KEYS
-    return list(dict.fromkeys(pool_keys + extra))
+    combined = list(dict.fromkeys(pool_keys + extra))
+    gemini_pool_manager.ensure_keys(combined)
+    return combined
 
 
 def _is_semantic_gemini_error(err: Exception) -> bool:

@@ -224,35 +224,49 @@ class LocalLlamaClient:
         try:
             return self._post_chat(target_port, payload)
         except urllib.error.URLError as e:
-            if target_port != DEFAULT_ROUTER_PORT and self.port in PORT_TO_ROUTER_MODEL:
-                try:
-                    router_payload = {**payload, "model": self.router_model_id}
-                    result = self._post_chat(DEFAULT_ROUTER_PORT, router_payload)
-                    self._effective_port = DEFAULT_ROUTER_PORT
-                    return result
-                except urllib.error.URLError:
-                    pass
-            if target_port != DEFAULT_LLAMA_SWAP_PORT:
-                swap_fallback_model = os.environ.get("CHICO_LLAMA_SWAP_MODEL", DEFAULT_LLAMA_SWAP_MODEL)
-                swap_models = [self.router_model_id]
-                if swap_fallback_model and swap_fallback_model != self.router_model_id:
-                    swap_models.append(swap_fallback_model)
-                for idx, swap_model in enumerate(swap_models):
-                    try:
-                        swap_payload = {**payload, "model": swap_model}
-                        result = self._post_chat(DEFAULT_LLAMA_SWAP_PORT, swap_payload)
-                        self._effective_port = DEFAULT_LLAMA_SWAP_PORT
-                        return result
-                    except urllib.error.HTTPError as http_err:
-                        if http_err.code in (400, 404) and idx + 1 < len(swap_models):
-                            continue
-                        break
-                    except urllib.error.URLError:
-                        break
+            result = self._try_router_fallback(target_port, payload)
+            if result is None:
+                result = self._try_swap_fallback(target_port, payload)
+            if result is not None:
+                return result
             logger.exception("Falha de conexao com o llama-server na porta %d", target_port)
             raise ConnectionError(
                 f"llama-server offline na porta {target_port}. Inicie via scripts/ops/Start-LlamaServer.ps1 -Port 9931"
             ) from e
+
+    def _try_router_fallback(self, target_port: int, payload: dict[str, Any]) -> dict[str, Any] | None:
+        """Redireciona portas legadas (8081-8083) para o router nativo (:9931)."""
+        if target_port == DEFAULT_ROUTER_PORT or self.port not in PORT_TO_ROUTER_MODEL:
+            return None
+        try:
+            router_payload = {**payload, "model": self.router_model_id}
+            result = self._post_chat(DEFAULT_ROUTER_PORT, router_payload)
+        except urllib.error.URLError:
+            return None
+        self._effective_port = DEFAULT_ROUTER_PORT
+        return result
+
+    def _try_swap_fallback(self, target_port: int, payload: dict[str, Any]) -> dict[str, Any] | None:
+        """Tenta o llama-swap (:8080) com os modelos candidatos em sequencia."""
+        if target_port == DEFAULT_LLAMA_SWAP_PORT:
+            return None
+        swap_fallback_model = os.environ.get("CHICO_LLAMA_SWAP_MODEL", DEFAULT_LLAMA_SWAP_MODEL)
+        swap_models = [self.router_model_id]
+        if swap_fallback_model and swap_fallback_model != self.router_model_id:
+            swap_models.append(swap_fallback_model)
+        for idx, swap_model in enumerate(swap_models):
+            try:
+                swap_payload = {**payload, "model": swap_model}
+                result = self._post_chat(DEFAULT_LLAMA_SWAP_PORT, swap_payload)
+            except urllib.error.HTTPError as http_err:
+                if http_err.code in (400, 404) and idx + 1 < len(swap_models):
+                    continue
+                return None
+            except urllib.error.URLError:
+                return None
+            self._effective_port = DEFAULT_LLAMA_SWAP_PORT
+            return result
+        return None
 
 
 def get_local_tool_caller() -> LocalLlamaClient:

@@ -159,21 +159,37 @@ def _aplicar_reordenacao_laya_s1(models_to_try: list[str], intencao_s1: dict) ->
     return models_to_try
 
 
-def _resolve_designated_model(agent_clean: str, task: Task, models_to_try: list[str]) -> str | None:
+def _resolve_designated_model(agent_clean: str, task: Task) -> str | None:
     # A politica de roteamento e a autoridade aqui desde 2026-08-28. Antes esta
     # linha lia `primary_model` do manifesto direto, e `AGENT_MODEL_MAP` --
     # resolvido pela politica em core/config -- nao tinha consumidor de
     # producao: 19 dos 19 agentes rodavam num modelo que a politica nao havia
     # escolhido. `modelo_do_agente` e a fonte unica dos quatro leitores.
-    raw_model = te.modelo_do_agente(agent_clean, override=(task.metadata or {}).get("model_override"))
+    model_override = (task.metadata or {}).get("model_override")
+    raw_model = te.modelo_do_agente(agent_clean, override=model_override)
     designated_model = str(raw_model) if raw_model else None
     if not designated_model or "PYTEST_CURRENT_TEST" in os.environ:
         return designated_model
 
+    if model_override:
+        return designated_model
+
     designated_provider = _infer_provider_for_model(designated_model)
     missing_openai_key = designated_provider == "openai" and not os.environ.get("OPENAI_API_KEY", "").strip()
+    # Quando a credencial da politica nao esta ativa ou prefer_cost_saving_mode
+    # direciona custom agents para a malha local/free/flash, devolve None para
+    # deixar _reorder_models_for_economy aplicar especialidade:
+    # locais/free -> 3.5-flash-lite (fast_operations) / 3.8-flash (reasoning).
     if designated_provider == "anthropic" or missing_openai_key:
-        return models_to_try[0] if models_to_try else None
+        return None
+    if designated_provider == "openai" and te._feature_enabled("prefer_cost_saving_mode"):
+        return None
+    if (
+        designated_model == "gemini-3.8-flash"
+        and te.AGENT_ROUTING_MAP.get(task.agent, "fast_operations") == "fast_operations"
+        and te._feature_enabled("prefer_cost_saving_mode")
+    ):
+        return None
     return designated_model
 
 
@@ -190,7 +206,7 @@ async def _prepare_routing_pipeline(task: Task, manager: QueueManager) -> tuple[
     models_to_try = list(te.DEEP_THINKING_MODELS) if agent_type == "deep_thinking" else list(te.FAST_OPERATIONS_MODELS)
 
     agent_clean = task.agent.replace("@", "")
-    designated_model = _resolve_designated_model(agent_clean, task, models_to_try)
+    designated_model = _resolve_designated_model(agent_clean, task)
     _prioritize_model(models_to_try, designated_model)
 
     recent_failure = (time.time() - COMPRESSION_CIRCUIT_BREAKER["last_failure"]) < 900

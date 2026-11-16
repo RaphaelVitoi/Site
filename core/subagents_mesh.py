@@ -179,22 +179,27 @@ SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
 }
 
 # Contingencia cloud zero-custo (:free) quando daemons locais estiverem indisponiveis
+FREE_MODEL_LAGUNA_XS = "poolside/laguna-xs-2.1:free"
+FREE_MODEL_LAGUNA_S = "poolside/laguna-s-2.1:free"
+FREE_MODEL_QWEN_CODER_32B = "qwen/qwen-2.5-coder-32b-instruct:free"
+FREE_MODEL_LLAMA_33_70B = "meta-llama/llama-3.3-70b-instruct:free"
+
 FREE_CLOUD_FALLBACK_MAP: dict[SubagentTier, tuple[str, ...]] = {
-    SubagentTier.APPSEC: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
-    SubagentTier.MATH: ("poolside/laguna-s-2.1:free", "meta-llama/llama-3.3-70b-instruct:free"),
-    SubagentTier.WASM: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
-    SubagentTier.POETICS: ("poolside/laguna-s-2.1:free", "poolside/laguna-xs-2.1:free"),
-    SubagentTier.NANO_ROUTER: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
-    SubagentTier.STREAMING_FIM: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
-    SubagentTier.UI: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
-    SubagentTier.RESEARCH: ("poolside/laguna-s-2.1:free", "meta-llama/llama-3.3-70b-instruct:free"),
-    SubagentTier.VALIDADOR: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
-    SubagentTier.IMPLEMENTOR: ("poolside/laguna-xs-2.1:free", "qwen/qwen-2.5-coder-32b-instruct:free"),
-    SubagentTier.CURATOR: ("poolside/laguna-s-2.1:free", "poolside/laguna-xs-2.1:free"),
-    SubagentTier.ARCHITECT: ("poolside/laguna-s-2.1:free", "meta-llama/llama-3.3-70b-instruct:free"),
-    SubagentTier.GENERALIST: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
-    SubagentTier.SELF: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
-    SubagentTier.FLUTTER_A11Y: ("poolside/laguna-xs-2.1:free", "poolside/laguna-s-2.1:free"),
+    SubagentTier.APPSEC: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_QWEN_CODER_32B),
+    SubagentTier.MATH: (FREE_MODEL_LAGUNA_S, FREE_MODEL_LLAMA_33_70B),
+    SubagentTier.WASM: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_QWEN_CODER_32B),
+    SubagentTier.POETICS: (FREE_MODEL_LAGUNA_S, FREE_MODEL_LAGUNA_XS),
+    SubagentTier.NANO_ROUTER: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
+    SubagentTier.STREAMING_FIM: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_QWEN_CODER_32B),
+    SubagentTier.UI: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
+    SubagentTier.RESEARCH: (FREE_MODEL_LAGUNA_S, FREE_MODEL_LLAMA_33_70B),
+    SubagentTier.VALIDADOR: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
+    SubagentTier.IMPLEMENTOR: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_QWEN_CODER_32B),
+    SubagentTier.CURATOR: (FREE_MODEL_LAGUNA_S, FREE_MODEL_LAGUNA_XS),
+    SubagentTier.ARCHITECT: (FREE_MODEL_LAGUNA_S, FREE_MODEL_LLAMA_33_70B),
+    SubagentTier.GENERALIST: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
+    SubagentTier.SELF: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
+    SubagentTier.FLUTTER_A11Y: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
 }
 
 
@@ -309,6 +314,82 @@ class SubagentMeshController:
         return SubagentTier.SELF
 
     @staticmethod
+    def _llama_cpp_endpoints(
+        llama_base: str,
+        swap_base: str,
+        router_model: str,
+        swap_fallback_model: str,
+    ) -> list[tuple[str, list[str], str]]:
+        """Monta a lista ordenada de (endpoint, modelos, mode_tag) para o fallback llama.cpp."""
+        endpoints: list[tuple[str, list[str], str]] = [(llama_base, [router_model], "real_llama_cpp")]
+        if swap_base and swap_base != llama_base:
+            swap_models = [router_model]
+            if swap_fallback_model and swap_fallback_model != router_model:
+                swap_models.append(swap_fallback_model)
+            endpoints.append((swap_base, swap_models, "real_llama_swap"))
+        return endpoints
+
+    @staticmethod
+    def _parse_llama_cpp_response(
+        data: dict[str, Any],
+        mode_tag: str,
+        model_name: str,
+        endpoint_base: str,
+    ) -> tuple[str | None, dict[str, Any]]:
+        """Extrai resposta final, canal de pensamento e telemetria de payload llama.cpp."""
+        usage = data.get("usage") or {}
+        metadata: dict[str, Any] = {
+            "inference_mode": mode_tag,
+            "llama_cpp_model": model_name,
+            "llama_cpp_endpoint": endpoint_base,
+            "prompt_eval_count": usage.get("prompt_tokens", 0),
+            "eval_count": usage.get("completion_tokens", 0),
+        }
+        choices = data.get("choices") or []
+        raw_content = str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
+        thought_channel, final_answer = parse_gemma4_channel_output(raw_content) if raw_content else (None, "")
+        if thought_channel:
+            metadata["thought_channel"] = thought_channel
+        return final_answer or None, metadata
+
+    @staticmethod
+    async def _request_llama_cpp_model(
+        session: aiohttp.ClientSession,
+        endpoint_base: str,
+        model_name: str,
+        mode_tag: str,
+        base_messages: list[dict[str, str]],
+    ) -> tuple[tuple[str | None, dict[str, Any]] | None, bool]:
+        """Dispara uma tentativa e retorna (resposta_ou_None, tentar_proximo_modelo)."""
+        payload = {
+            "model": model_name,
+            "messages": base_messages,
+            "stream": False,
+            "temperature": 0.2,
+            "max_tokens": 1024,
+        }
+        try:
+            async with session.post(f"{endpoint_base}/v1/chat/completions", json=payload) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    response = SubagentMeshController._parse_llama_cpp_response(
+                        data, mode_tag, model_name, endpoint_base
+                    )
+                    return response, False
+                if resp.status in (400, 404):
+                    return None, True
+                return None, False
+        except Exception as e_llama:
+            logger.debug(
+                "[SUBAGENTS MESH] Fallback %s (%s) indisponivel para '%s': %s",
+                mode_tag,
+                endpoint_base,
+                model_name,
+                e_llama,
+            )
+            return None, False
+
+    @staticmethod
     async def _call_llama_cpp_inference(
         assigned_model: str,
         system_instruction: str,
@@ -331,56 +412,18 @@ class SubagentMeshController:
         )
         timeout = aiohttp.ClientTimeout(total=req_timeout, sock_connect=sock_timeout)
 
-        candidates: list[tuple[str, str, str]] = [(llama_base, router_model, "real_llama_cpp")]
-        if swap_base and swap_base != llama_base:
-            candidates.append((swap_base, router_model, "real_llama_swap"))
-
+        endpoints = SubagentMeshController._llama_cpp_endpoints(
+            llama_base, swap_base, router_model, swap_fallback_model
+        )
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            for endpoint_base, candidate_model, mode_tag in candidates:
-                models_to_try = [candidate_model]
-                if mode_tag == "real_llama_swap" and swap_fallback_model and swap_fallback_model != candidate_model:
-                    models_to_try.append(swap_fallback_model)
-
-                for model_name in models_to_try:
-                    payload = {
-                        "model": model_name,
-                        "messages": base_messages,
-                        "stream": False,
-                        "temperature": 0.2,
-                        "max_tokens": 1024,
-                    }
-                    try:
-                        async with session.post(f"{endpoint_base}/v1/chat/completions", json=payload) as resp:
-                            if resp.status == 200:
-                                data = await resp.json()
-                                choices = data.get("choices") or []
-                                raw_content = (
-                                    str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
-                                )
-                                thought_channel, final_answer = (
-                                    parse_gemma4_channel_output(raw_content) if raw_content else (None, "")
-                                )
-                                usage = data.get("usage") or {}
-                                meta: dict[str, Any] = {
-                                    "inference_mode": mode_tag,
-                                    "llama_cpp_model": model_name,
-                                    "llama_cpp_endpoint": endpoint_base,
-                                    "prompt_eval_count": usage.get("prompt_tokens", 0),
-                                    "eval_count": usage.get("completion_tokens", 0),
-                                }
-                                if thought_channel:
-                                    meta["thought_channel"] = thought_channel
-                                return (final_answer or None), meta
-                            if resp.status not in (400, 404):
-                                break
-                    except Exception as e_llama:
-                        logger.debug(
-                            "[SUBAGENTS MESH] Fallback %s (%s) indisponivel para '%s': %s",
-                            mode_tag,
-                            endpoint_base,
-                            model_name,
-                            e_llama,
-                        )
+            for endpoint_base, model_names, mode_tag in endpoints:
+                for model_name in model_names:
+                    response, try_next = await SubagentMeshController._request_llama_cpp_model(
+                        session, endpoint_base, model_name, mode_tag, base_messages
+                    )
+                    if response is not None:
+                        return response
+                    if not try_next:
                         break
         return None, {}
 
@@ -401,6 +444,62 @@ class SubagentMeshController:
         return final_answer, metadata
 
     @staticmethod
+    async def _try_free_cloud_model(
+        session: aiohttp.ClientSession,
+        free_model: str,
+        tier_value: str,
+        system_instruction: str,
+        prompt: str,
+        api_key: str,
+        key_tier: int,
+        client_timeout: aiohttp.ClientTimeout,
+    ) -> tuple[str | None, dict[str, Any]] | None:
+        """Tenta um unico modelo :free e retorna (resposta, meta) ou None para o proximo candidato."""
+        from llm.openrouter import call_openrouter  # noqa: PLC0415
+        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+        loop = asyncio.get_running_loop()
+        t0 = loop.time()
+        try:
+            raw_text, usage = await call_openrouter(
+                session=session,
+                model=free_model,
+                system_prompt=system_instruction,
+                user_prompt=prompt,
+                api_key=api_key,
+                client_timeout=client_timeout,
+                temperature=0.2,
+                max_tokens=1024,
+            )
+            cleaned = (raw_text or "").strip()
+            if not cleaned:
+                return None
+            latency_ms = max(1.0, (loop.time() - t0) * 1000.0)
+            await openrouter_pool_manager.mark_success(api_key, latency_ms)
+            thought_channel, final_answer = parse_gemma4_channel_output(cleaned)
+            meta: dict[str, Any] = {
+                "inference_mode": "real_openrouter_free",
+                "cloud_free_model": free_model,
+                "key_tier": key_tier,
+                "prompt_eval_count": (usage or {}).get("prompt_tokens", 0),
+                "eval_count": (usage or {}).get("completion_tokens", 0),
+            }
+            if thought_channel:
+                meta["thought_channel"] = thought_channel
+            return (final_answer or cleaned), meta
+        except Exception as exc:
+            err_s = str(exc)
+            status_code = 429 if "429" in err_s else 500
+            await openrouter_pool_manager.mark_failure(api_key, status_code=status_code)
+            logger.debug(
+                "[SUBAGENTS MESH] Fallback :free '%s' indisponivel para '%s': %s",
+                free_model,
+                tier_value,
+                err_s,
+            )
+            return None
+
+    @staticmethod
     async def _call_free_cloud_inference(
         tier: SubagentTier | None,
         system_instruction: str,
@@ -413,12 +512,11 @@ class SubagentMeshController:
         if "pytest" in sys.modules and os.environ.get("CHICO_SUBAGENT_ALLOW_TEST_CLOUD") != "1":
             return None, {}
 
-        candidates = FREE_CLOUD_FALLBACK_MAP.get(tier, ("poolside/laguna-xs-2.1:free",))
+        candidates = FREE_CLOUD_FALLBACK_MAP.get(tier, (FREE_MODEL_LAGUNA_XS,))
         free_candidates = [m for m in candidates if ":free" in m.lower()]
         if not free_candidates:
             return None, {}
 
-        from llm.openrouter import call_openrouter  # noqa: PLC0415
         from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
 
         api_key, key_tier = await openrouter_pool_manager.get_key_for_tier(4)
@@ -427,48 +525,21 @@ class SubagentMeshController:
 
         req_timeout = min(float(timeout_seconds), 20.0)
         client_timeout = aiohttp.ClientTimeout(total=req_timeout, sock_connect=2.0)
-        loop = asyncio.get_running_loop()
 
         async with aiohttp.ClientSession(timeout=client_timeout) as session:
             for free_model in free_candidates:
-                t0 = loop.time()
-                try:
-                    raw_text, usage = await call_openrouter(
-                        session=session,
-                        model=free_model,
-                        system_prompt=system_instruction,
-                        user_prompt=prompt,
-                        api_key=api_key,
-                        client_timeout=client_timeout,
-                        temperature=0.2,
-                        max_tokens=1024,
-                    )
-                    cleaned = (raw_text or "").strip()
-                    if not cleaned:
-                        continue
-                    latency_ms = max(1.0, (loop.time() - t0) * 1000.0)
-                    await openrouter_pool_manager.mark_success(api_key, latency_ms)
-                    thought_channel, final_answer = parse_gemma4_channel_output(cleaned)
-                    meta: dict[str, Any] = {
-                        "inference_mode": "real_openrouter_free",
-                        "cloud_free_model": free_model,
-                        "key_tier": key_tier,
-                        "prompt_eval_count": (usage or {}).get("prompt_tokens", 0),
-                        "eval_count": (usage or {}).get("completion_tokens", 0),
-                    }
-                    if thought_channel:
-                        meta["thought_channel"] = thought_channel
-                    return (final_answer or cleaned), meta
-                except Exception as exc:
-                    err_s = str(exc)
-                    status_code = 429 if "429" in err_s else 500
-                    await openrouter_pool_manager.mark_failure(api_key, status_code=status_code)
-                    logger.debug(
-                        "[SUBAGENTS MESH] Fallback :free '%s' indisponivel para '%s': %s",
-                        free_model,
-                        tier.value,
-                        err_s,
-                    )
+                result = await SubagentMeshController._try_free_cloud_model(
+                    session,
+                    free_model,
+                    tier.value,
+                    system_instruction,
+                    prompt,
+                    api_key,
+                    key_tier,
+                    client_timeout,
+                )
+                if result is not None:
+                    return result
         return None, {}
 
     @staticmethod
@@ -570,6 +641,108 @@ class SubagentMeshController:
             tier=resolve_subagent_tier(tier_value),
         )
 
+    @staticmethod
+    async def _resolve_mission_context(request: SubagentMissionRequest) -> tuple[str, int, int]:
+        """Coleta contexto RAGFlow/Neo4j e retorna (prompt enriquecido, citacoes, linhas de grafo)."""
+        from core.mesh_integrations import Neo4jAuraBridge, RAGFlowBridge  # noqa: PLC0415
+
+        knowledge_tiers = {
+            SubagentTier.RESEARCH,
+            SubagentTier.ARCHITECT,
+            SubagentTier.CURATOR,
+            SubagentTier.VALIDADOR,
+            SubagentTier.MATH,
+        }
+        use_rf = RAGFlowBridge.is_configured(request.ragflow_dataset_ids) and (
+            request.use_ragflow or request.tier in knowledge_tiers
+        )
+        use_n4j = Neo4jAuraBridge.is_configured() and (request.use_neo4j or request.tier in knowledge_tiers)
+
+        async def _noop_context():
+            await asyncio.sleep(0)
+
+        rag_res, n4j_res = await asyncio.gather(
+            RAGFlowBridge.retrieve_grounded_context(
+                request.prompt,
+                dataset_ids=request.ragflow_dataset_ids or None,
+                thinking_depth=request.thinking_depth,
+            )
+            if use_rf
+            else _noop_context(),
+            Neo4jAuraBridge.query_graph_context(request.prompt, limit=5) if use_n4j else _noop_context(),
+        )
+
+        prefix_blocks: list[str] = []
+        ragflow_citations_count = 0
+        neo4j_graph_rows = 0
+        if rag_res is not None:
+            citations_block = rag_res.format_context_block()
+            if citations_block:
+                ragflow_citations_count = len(rag_res.citations)
+                prefix_blocks.append(citations_block)
+        if n4j_res is not None:
+            graph_block = n4j_res.format_context_block()
+            if graph_block:
+                neo4j_graph_rows = len(n4j_res.rows)
+                prefix_blocks.append(graph_block)
+
+        enriched_prompt = (
+            f"{chr(10).join(prefix_blocks)}\n\n[MISSAO DO SUBAGENTE]\n{request.prompt}"
+            if prefix_blocks
+            else request.prompt
+        )
+        return enriched_prompt, ragflow_citations_count, neo4j_graph_rows
+
+    @staticmethod
+    async def _dispatch_n8n_event(
+        request: SubagentMissionRequest,
+        assigned_model: str,
+        report: str,
+        ragflow_citations_count: int,
+        neo4j_graph_rows: int,
+        metadata: dict[str, Any],
+    ) -> None:
+        """Despacha o evento de missao concluida para o n8n quando configurado."""
+        from core.mesh_integrations import N8NBridge  # noqa: PLC0415
+
+        if not N8NBridge.is_configured() or not (request.n8n_webhook_path or request.n8n_workflow_id):
+            return
+        n8n_res = await N8NBridge.dispatch_event(
+            {
+                "event_type": "subagent_mission_completed",
+                "mission_id": request.mission_id,
+                "tier": request.tier.value,
+                "assigned_model": assigned_model,
+                "files_modified": request.target_files,
+                "ragflow_citations": ragflow_citations_count,
+                "neo4j_graph_rows": neo4j_graph_rows,
+                "summary": report[:800],
+            },
+            webhook_path=request.n8n_webhook_path,
+            workflow_id=request.n8n_workflow_id,
+        )
+        metadata["n8n_dispatched"] = n8n_res.dispatched
+        if n8n_res.status_code:
+            metadata["n8n_status_code"] = n8n_res.status_code
+
+    @staticmethod
+    def _blocked_mission_result(
+        request: SubagentMissionRequest,
+        assigned_model: str,
+        start_time: float,
+    ) -> SubagentMissionResult:
+        duration_ms = (asyncio.get_event_loop().time() - start_time) * 1000
+        return SubagentMissionResult(
+            mission_id=request.mission_id,
+            tier=request.tier,
+            assigned_model=assigned_model,
+            status="FAILED",
+            report=f"Missao '{request.mission_id}' bloqueada por barreira de seguranca (Hook DECIDE).",
+            execution_time_ms=round(duration_ms, 3),
+            files_modified=[],
+            metadata={"blocked": True},
+        )
+
     async def execute_subagent_pipeline(self, request: SubagentMissionRequest) -> SubagentMissionResult:
         """
         Executa o pipeline assincrono do subagente com medicao precisa de latencia e hooks.
@@ -595,69 +768,14 @@ class SubagentMeshController:
         )
 
         if not allowed:
-            duration_ms = (asyncio.get_event_loop().time() - start_time) * 1000
-            return SubagentMissionResult(
-                mission_id=request.mission_id,
-                tier=request.tier,
-                assigned_model=assigned_model,
-                status="FAILED",
-                report=f"Missao '{request.mission_id}' bloqueada por barreira de seguranca (Hook DECIDE).",
-                execution_time_ms=round(duration_ms, 3),
-                files_modified=[],
-                metadata={"blocked": True},
-            )
+            return SubagentMeshController._blocked_mission_result(request, assigned_model, start_time)
 
         try:
-            from core.mesh_integrations import N8NBridge, Neo4jAuraBridge, RAGFlowBridge  # noqa: PLC0415
-
-            knowledge_tiers = {
-                SubagentTier.RESEARCH,
-                SubagentTier.ARCHITECT,
-                SubagentTier.CURATOR,
-                SubagentTier.VALIDADOR,
-                SubagentTier.MATH,
-            }
-            use_rf = RAGFlowBridge.is_configured(request.ragflow_dataset_ids) and (
-                request.use_ragflow or request.tier in knowledge_tiers
-            )
-            use_n4j = Neo4jAuraBridge.is_configured() and (request.use_neo4j or request.tier in knowledge_tiers)
-
-            async def _noop_rf():
-                return None
-
-            async def _noop_n4j():
-                return None
-
-            rag_res, n4j_res = await asyncio.gather(
-                RAGFlowBridge.retrieve_grounded_context(
-                    request.prompt,
-                    dataset_ids=request.ragflow_dataset_ids or None,
-                    thinking_depth=request.thinking_depth,
-                )
-                if use_rf
-                else _noop_rf(),
-                Neo4jAuraBridge.query_graph_context(request.prompt, limit=5) if use_n4j else _noop_n4j(),
-            )
-
-            prefix_blocks: list[str] = []
-            ragflow_citations_count = 0
-            neo4j_graph_rows = 0
-            if rag_res is not None:
-                citations_block = rag_res.format_context_block()
-                if citations_block:
-                    ragflow_citations_count = len(rag_res.citations)
-                    prefix_blocks.append(citations_block)
-            if n4j_res is not None:
-                graph_block = n4j_res.format_context_block()
-                if graph_block:
-                    neo4j_graph_rows = len(n4j_res.rows)
-                    prefix_blocks.append(graph_block)
-
-            enriched_prompt = (
-                f"{chr(10).join(prefix_blocks)}\n\n[MISSAO DO SUBAGENTE]\n{request.prompt}"
-                if prefix_blocks
-                else request.prompt
-            )
+            (
+                enriched_prompt,
+                ragflow_citations_count,
+                neo4j_graph_rows,
+            ) = await SubagentMeshController._resolve_mission_context(request)
 
             # Context Caching: Cache do prompt da missao
             bucket = context_cache.get_or_create_bucket(
@@ -687,24 +805,14 @@ class SubagentMeshController:
                 f"Missao '{request.mission_id}' concluida com exito pelo subagente '{request.tier.value}' usando '{assigned_model}'."
             )
 
-            if N8NBridge.is_configured() and (request.n8n_webhook_path or request.n8n_workflow_id):
-                n8n_res = await N8NBridge.dispatch_event(
-                    {
-                        "event_type": "subagent_mission_completed",
-                        "mission_id": request.mission_id,
-                        "tier": request.tier.value,
-                        "assigned_model": assigned_model,
-                        "files_modified": request.target_files,
-                        "ragflow_citations": ragflow_citations_count,
-                        "neo4j_graph_rows": neo4j_graph_rows,
-                        "summary": report[:800],
-                    },
-                    webhook_path=request.n8n_webhook_path,
-                    workflow_id=request.n8n_workflow_id,
-                )
-                metadata["n8n_dispatched"] = n8n_res.dispatched
-                if n8n_res.status_code:
-                    metadata["n8n_status_code"] = n8n_res.status_code
+            await SubagentMeshController._dispatch_n8n_event(
+                request,
+                assigned_model,
+                report,
+                ragflow_citations_count,
+                neo4j_graph_rows,
+                metadata,
+            )
 
             result = SubagentMissionResult(
                 mission_id=request.mission_id,

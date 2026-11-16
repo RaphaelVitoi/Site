@@ -216,9 +216,10 @@ async def call_gemini(
     from llm.laya_bridge import compor_advisory_s1  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
     workload = kwargs.pop("workload", GeminiWorkload.TRIAGEM)
+    model = _normalize_gemini_model(model)
     active_key = api_key
     if not active_key:
-        active_key, _ = gemini_pool_manager.get_key_for_workload(workload)
+        active_key, _ = gemini_pool_manager.get_key_for_workload(workload, model=model)
 
     system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     # SOTA: Multi-Bucket Rate Limiter (Lei de Shannon). Respeita as cotas individuais (Pro vs Flash).
@@ -228,7 +229,6 @@ async def call_gemini(
             f"[GEMINI] Cota local exaurida para o modelo {model}. Aguardando reabastecimento do Token Bucket..."
         )
     await rate_limiter.consume()
-    model = _normalize_gemini_model(model)
 
     # BK-21 (auditoria 2026-09-16): a chave ia na query string. URL aparece em log
     # de proxy e em `str(aiohttp.ClientResponseError)` -- medido: `url=...?key=...`.
@@ -247,24 +247,24 @@ async def call_gemini(
                 timeout=timeout_val + 5.0,
             )
             lat_ms = (time.perf_counter() - start_t) * 1000.0
-            gemini_pool_manager.mark_success(active_key, lat_ms)
+            gemini_pool_manager.mark_success(active_key, lat_ms, model=model)
             return res_text, res_usage
         except RuntimeError as err:
             status_code, retry_after = _parse_gemini_error_info(str(err))
-            gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(err))
+            gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(err), model=model)
             raise
         except (aiohttp.ClientError, TimeoutError, ConnectionResetError) as net_err:
             try:
                 res_text, res_usage = await _execute_native_fallback(url, data, client_timeout, active_key)
                 lat_ms = (time.perf_counter() - start_t) * 1000.0
-                gemini_pool_manager.mark_success(active_key, lat_ms)
+                gemini_pool_manager.mark_success(active_key, lat_ms, model=model)
                 return res_text, res_usage
             except RuntimeError as fb_err:
                 status_code, retry_after = _parse_gemini_error_info(str(fb_err))
-                gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(fb_err))
+                gemini_pool_manager.mark_failure(active_key, status_code, retry_after, str(fb_err), model=model)
                 raise
             except Exception:
-                gemini_pool_manager.mark_failure(active_key, 503, 10.0, str(net_err))
+                gemini_pool_manager.mark_failure(active_key, 503, 10.0, str(net_err), model=model)
                 raise
 
 

@@ -41,10 +41,14 @@ export class RiskGauge extends HTMLElement {
         if ( !isDeathZone ) return '';
         return `
             .circle-val {
-                animation: death-pulse 2s infinite;
                 filter: drop-shadow(0 0 15px ${color});
             }
             .val { text-shadow: 0 0 10px ${color}; }
+            @media (prefers-reduced-motion: no-preference) {
+                .circle-val {
+                    animation: death-pulse 2s infinite;
+                }
+            }
             @keyframes death-pulse {
                 0% { stroke-opacity: 1; stroke-width: 2.5; }
                 50% { stroke-opacity: 0.6; stroke-width: 4.5; }
@@ -57,10 +61,14 @@ export class RiskGauge extends HTMLElement {
         if ( !isPredatorZone ) return '';
         return `
             .circle-val {
-                animation: predator-pulse 3s infinite;
                 filter: drop-shadow(0 0 10px ${color});
             }
             .val { text-shadow: 0 0 15px ${color}; }
+            @media (prefers-reduced-motion: no-preference) {
+                .circle-val {
+                    animation: predator-pulse 3s infinite;
+                }
+            }
             @keyframes predator-pulse {
                 0% { stroke-opacity: 0.8; }
                 50% { stroke-opacity: 1; stroke-width: 3; }
@@ -147,8 +155,8 @@ export class RiskGauge extends HTMLElement {
                 ${this._getPredatorStyle( isPredatorZone, color )}
             </style>
 
-            <div class="gauge-wrap">
-                <svg viewBox="0 0 36 36">
+            <div class="gauge-wrap" role="img" aria-label="${label}: ${safeValue.toFixed( 1 )}% Risk Premium (${pos}, ${stack})">
+                <svg viewBox="0 0 36 36" aria-hidden="true">
                     <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     <path class="circle-val" stroke-dasharray="${clampDash}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                 </svg>
@@ -193,6 +201,7 @@ export class RiskGauge extends HTMLElement {
                 gain.gain.exponentialRampToValueAtTime( 0.001, ctx.currentTime + 0.15 );
                 osc.start( ctx.currentTime );
                 osc.stop( ctx.currentTime + 0.15 );
+                osc.onended = () => ctx.close().catch( () => {} );
             } else if ( type === 'death' ) {
                 // Radiation Hazard (Baixa frequência, "sujo", alerta)
                 // Modulação: Quanto maior o RP, mais grave e instável ("Geiger" pesado) (40% -> 80Hz, 80% -> 40Hz)
@@ -204,6 +213,7 @@ export class RiskGauge extends HTMLElement {
                 gain.gain.linearRampToValueAtTime( 0.001, ctx.currentTime + 0.4 );
                 osc.start( ctx.currentTime );
                 osc.stop( ctx.currentTime + 0.4 );
+                osc.onended = () => ctx.close().catch( () => {} );
             }
         } catch ( e ) {
             console.warn( "Autoplay audio blocked or not supported.", e );

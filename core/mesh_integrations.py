@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 _KEYRING_SALT: bytes = b"chico_sota_mesh_keyring_v1"
 _SAFE_PATH_RE = re.compile(r"^[A-Za-z0-9_/-]+$")
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+_JSON_CONTENT_TYPE = "application/json"
 _RAGFLOW_DEPTH_PRESETS: dict[str, tuple[int, float]] = {
     "low": (3, 0.35),
     "medium": (5, 0.25),
@@ -250,6 +251,61 @@ class RAGFlowRetrievalResult:
         return "\n".join(lines) if len(lines) > 1 else ""
 
 
+async def _ragflow_retrieval_attempt(
+    session: aiohttp.ClientSession,
+    url: str,
+    payload: dict[str, Any],
+    api_key: str,
+) -> tuple[Any, str]:
+    """Uma tentativa de retrieval; (body, "") em sucesso ou (None, erro) para rotacionar."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": _JSON_CONTENT_TYPE,
+    }
+    async with session.post(url, json=payload, headers=headers) as resp:
+        if resp.status in (401, 403):
+            _RAGFLOW_RING.mark_unauthorized(api_key)
+            return None, f"HTTP {resp.status}"
+        if resp.status == 429:
+            _RAGFLOW_RING.mark_rate_limited(api_key)
+            return None, "HTTP 429"
+        if resp.status != 200:
+            _RAGFLOW_RING.mark_transient_error(api_key)
+            return None, f"HTTP {resp.status}"
+        body = await resp.json()
+        json_code = body.get("code") if isinstance(body, Mapping) else None
+        if json_code == 403:
+            _RAGFLOW_RING.mark_rate_limited(api_key, cooldown_s=300.0)
+            return None, "plan_upgrade_required (code=403)"
+        _RAGFLOW_RING.mark_success(api_key)
+        return body, ""
+
+
+def _ragflow_citations_from_body(body: Any, top_k: int) -> tuple[RAGFlowCitation, ...]:
+    """Converte os chunks brutos do retrieval em citacoes tipadas."""
+    raw_chunks = ((body.get("data") or {}).get("chunks") or []) if isinstance(body, Mapping) else []
+    citations: list[RAGFlowCitation] = []
+    for chunk in raw_chunks[:top_k]:
+        if not isinstance(chunk, Mapping):
+            continue
+        text = str(chunk.get("content") or chunk.get("content_with_weight") or "").strip()
+        if not text:
+            continue
+        try:
+            score = float(chunk.get("similarity") or chunk.get("vector_similarity") or 0.0)
+        except (TypeError, ValueError):
+            score = 0.0
+        citations.append(
+            RAGFlowCitation(
+                doc_id=str(chunk.get("document_id") or chunk.get("doc_id") or ""),
+                document_name=str(chunk.get("document_keyword") or chunk.get("docnm_kwd") or "dataset"),
+                similarity=score,
+                content=text,
+            )
+        )
+    return tuple(citations)
+
+
 class RAGFlowBridge:
     """Cliente assincrono fino para Agentic Retrieval do RAGFlow (local ou cloud)."""
 
@@ -281,7 +337,7 @@ class RAGFlowBridge:
         timeout_seconds: float = 4.0,
     ) -> RAGFlowRetrievalResult:
         """Consulta /api/v1/retrieval com rotacao de chaves e profundidade ajustavel."""
-        resolved_ids = tuple(str(d).strip() for d in (dataset_ids or cls.default_dataset_ids()) if str(d).strip())
+        resolved_ids = tuple(s for d in (dataset_ids or cls.default_dataset_ids()) if (s := d.strip()))
         candidate_keys = _RAGFLOW_RING.active_keys()
         if not candidate_keys or not resolved_ids or not query.strip():
             return RAGFlowRetrievalResult(configured=False, ok=False)
@@ -307,31 +363,10 @@ class RAGFlowBridge:
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 for api_key in candidate_keys:
-                    headers = {
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json",
-                    }
-                    async with session.post(f"{base}/api/v1/retrieval", json=payload, headers=headers) as resp:
-                        if resp.status in (401, 403):
-                            _RAGFLOW_RING.mark_unauthorized(api_key)
-                            last_error = f"HTTP {resp.status}"
-                            continue
-                        if resp.status == 429:
-                            _RAGFLOW_RING.mark_rate_limited(api_key)
-                            last_error = "HTTP 429"
-                            continue
-                        if resp.status != 200:
-                            _RAGFLOW_RING.mark_transient_error(api_key)
-                            last_error = f"HTTP {resp.status}"
-                            continue
-                        body = await resp.json()
-                        json_code = body.get("code") if isinstance(body, Mapping) else None
-                        if json_code == 403:
-                            _RAGFLOW_RING.mark_rate_limited(api_key, cooldown_s=300.0)
-                            last_error = "plan_upgrade_required (code=403)"
-                            body = None
-                            continue
-                        _RAGFLOW_RING.mark_success(api_key)
+                    body, last_error = await _ragflow_retrieval_attempt(
+                        session, f"{base}/api/v1/retrieval", payload, api_key
+                    )
+                    if body is not None:
                         break
         except Exception as exc:  # noqa: BLE001
             logger.debug("[RAGFLOW BRIDGE] Falha na consulta de retrieval: %s", exc)
@@ -340,27 +375,11 @@ class RAGFlowBridge:
         if body is None:
             return RAGFlowRetrievalResult(configured=True, ok=False, error=last_error or "retrieval_failed")
 
-        raw_chunks = ((body.get("data") or {}).get("chunks") or []) if isinstance(body, Mapping) else []
-        citations: list[RAGFlowCitation] = []
-        for chunk in raw_chunks[:top_k]:
-            if not isinstance(chunk, Mapping):
-                continue
-            text = str(chunk.get("content") or chunk.get("content_with_weight") or "").strip()
-            if not text:
-                continue
-            try:
-                score = float(chunk.get("similarity") or chunk.get("vector_similarity") or 0.0)
-            except (TypeError, ValueError):
-                score = 0.0
-            citations.append(
-                RAGFlowCitation(
-                    doc_id=str(chunk.get("document_id") or chunk.get("doc_id") or ""),
-                    document_name=str(chunk.get("document_keyword") or chunk.get("docnm_kwd") or "dataset"),
-                    similarity=score,
-                    content=text,
-                )
-            )
-        return RAGFlowRetrievalResult(configured=True, ok=True, citations=tuple(citations))
+        return RAGFlowRetrievalResult(
+            configured=True,
+            ok=True,
+            citations=_ragflow_citations_from_body(body, top_k),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -372,6 +391,45 @@ class N8NDispatchResult:
     target: str = ""
     status_code: int = 0
     error: str = ""
+
+
+async def _post_n8n_with_key_rotation(
+    session: aiohttp.ClientSession,
+    target_url: str,
+    payload: dict[str, Any],
+    keys_to_try: list[str],
+) -> N8NDispatchResult:
+    """POST com rotacao de X-N8N-API-KEY; para no primeiro 2xx ou erro irrecuperavel."""
+    last_status = 0
+    for key_cand in keys_to_try:
+        headers: dict[str, str] = {"Content-Type": _JSON_CONTENT_TYPE}
+        if key_cand:
+            headers["X-N8N-API-KEY"] = key_cand
+        async with session.post(target_url, json=payload, headers=headers) as resp:
+            last_status = resp.status
+            if 200 <= resp.status < 300:
+                if key_cand:
+                    _N8N_RING.mark_success(key_cand)
+                return N8NDispatchResult(
+                    configured=True,
+                    dispatched=True,
+                    target=target_url,
+                    status_code=resp.status,
+                )
+            if key_cand and resp.status in (401, 403):
+                _N8N_RING.mark_unauthorized(key_cand)
+                continue
+            if key_cand and resp.status == 429:
+                _N8N_RING.mark_rate_limited(key_cand)
+                continue
+            break
+    return N8NDispatchResult(
+        configured=True,
+        dispatched=False,
+        target=target_url,
+        status_code=last_status,
+        error=f"HTTP {last_status}",
+    )
 
 
 class N8NBridge:
@@ -413,23 +471,9 @@ class N8NBridge:
         resolved_webhook = (webhook_path or _env_or_reg("N8N_DEFAULT_WEBHOOK_PATH")).lstrip("/")
         resolved_workflow = (workflow_id or "").strip()
 
-        target_url = ""
-        if resolved_webhook:
-            base = cls.webhook_base()
-            if not base or not _is_safe_service_url(base):
-                return N8NDispatchResult(configured=False, dispatched=False)
-            if ".." in resolved_webhook or not _SAFE_PATH_RE.fullmatch(resolved_webhook):
-                return N8NDispatchResult(configured=True, dispatched=False, error="invalid_webhook_path")
-            target_url = f"{base}/{resolved_webhook}"
-        elif resolved_workflow:
-            base = cls.api_base()
-            if not cls.api_key() or not _is_safe_service_url(base):
-                return N8NDispatchResult(configured=False, dispatched=False)
-            if not _SAFE_ID_RE.fullmatch(resolved_workflow):
-                return N8NDispatchResult(configured=True, dispatched=False, error="invalid_workflow_id")
-            target_url = f"{base}/api/v1/workflows/{resolved_workflow}/execute"
-        else:
-            return N8NDispatchResult(configured=cls.is_configured(), dispatched=False)
+        target_url, early_result = cls._resolve_dispatch_target(resolved_webhook, resolved_workflow)
+        if early_result is not None:
+            return early_result
 
         enriched_payload = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -440,36 +484,7 @@ class N8NBridge:
         timeout = aiohttp.ClientTimeout(total=max(0.5, float(timeout_seconds)), sock_connect=1.5)
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                last_status = 0
-                for key_cand in keys_to_try:
-                    headers: dict[str, str] = {"Content-Type": "application/json"}
-                    if key_cand:
-                        headers["X-N8N-API-KEY"] = key_cand
-                    async with session.post(target_url, json=enriched_payload, headers=headers) as resp:
-                        last_status = resp.status
-                        if 200 <= resp.status < 300:
-                            if key_cand:
-                                _N8N_RING.mark_success(key_cand)
-                            return N8NDispatchResult(
-                                configured=True,
-                                dispatched=True,
-                                target=target_url,
-                                status_code=resp.status,
-                            )
-                        if key_cand and resp.status in (401, 403):
-                            _N8N_RING.mark_unauthorized(key_cand)
-                            continue
-                        if key_cand and resp.status == 429:
-                            _N8N_RING.mark_rate_limited(key_cand)
-                            continue
-                        break
-                return N8NDispatchResult(
-                    configured=True,
-                    dispatched=False,
-                    target=target_url,
-                    status_code=last_status,
-                    error=f"HTTP {last_status}",
-                )
+                return await _post_n8n_with_key_rotation(session, target_url, enriched_payload, keys_to_try)
         except Exception as exc:  # noqa: BLE001
             logger.debug("[N8N BRIDGE] Falha no disparo para '%s': %s", target_url, exc)
             return N8NDispatchResult(
@@ -478,6 +493,27 @@ class N8NBridge:
                 target=target_url,
                 error=type(exc).__name__,
             )
+
+    @classmethod
+    def _resolve_dispatch_target(
+        cls, resolved_webhook: str, resolved_workflow: str
+    ) -> tuple[str, N8NDispatchResult | None]:
+        """Resolve webhook (prioritario) ou workflow para URL; result != None indica saida antecipada."""
+        if resolved_webhook:
+            base = cls.webhook_base()
+            if not base or not _is_safe_service_url(base):
+                return "", N8NDispatchResult(configured=False, dispatched=False)
+            if ".." in resolved_webhook or not _SAFE_PATH_RE.fullmatch(resolved_webhook):
+                return "", N8NDispatchResult(configured=True, dispatched=False, error="invalid_webhook_path")
+            return f"{base}/{resolved_webhook}", None
+        if resolved_workflow:
+            base = cls.api_base()
+            if not cls.api_key() or not _is_safe_service_url(base):
+                return "", N8NDispatchResult(configured=False, dispatched=False)
+            if not _SAFE_ID_RE.fullmatch(resolved_workflow):
+                return "", N8NDispatchResult(configured=True, dispatched=False, error="invalid_workflow_id")
+            return f"{base}/api/v1/workflows/{resolved_workflow}/execute", None
+        return "", N8NDispatchResult(configured=cls.is_configured(), dispatched=False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -615,8 +651,8 @@ class Neo4jAuraBridge:
                     return Neo4jQueryResult(configured=True, ok=False, error="auth_failed")
                 headers = {
                     "Authorization": auth_header,
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
+                    "Content-Type": _JSON_CONTENT_TYPE,
+                    "Accept": _JSON_CONTENT_TYPE,
                 }
                 payload = {"statement": statement, "parameters": dict(parameters or {})}
                 async with session.post(url, json=payload, headers=headers) as resp:
@@ -659,7 +695,7 @@ class Neo4jAuraBridge:
         )
         return await cls.execute_cypher(
             cypher,
-            parameters={"q": term, "limit": max(1, min(15, int(limit)))},
+            parameters={"q": term, "limit": max(1, min(15, limit))},
             timeout_seconds=timeout_seconds,
         )
 
@@ -691,7 +727,7 @@ class DevinBridge:
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 for token in keys:
-                    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+                    headers = {"Authorization": f"Bearer {token}", "Accept": _JSON_CONTENT_TYPE}
                     async with session.get(f"{base}/v3/self", headers=headers) as resp:
                         last_status = resp.status
                         if resp.status == 200:
@@ -747,7 +783,7 @@ class VercelBridge:
         try:
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 for token in keys:
-                    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+                    headers = {"Authorization": f"Bearer {token}", "Accept": _JSON_CONTENT_TYPE}
                     async with session.get(f"{base}/v2/user", headers=headers) as resp:
                         last_status = resp.status
                         if resp.status == 200:
@@ -796,6 +832,75 @@ def get_mesh_capability_snapshot() -> dict[str, Any]:
     }
 
 
+_N8N_INTEGRATION_LINE = (
+    "- n8n Automation Bridge ativo; entregue resumo objetivo e estruturado para consumo via webhook/workflow."
+)
+
+
+def _desc_wants_integrations(desc_l: str) -> dict[str, bool]:
+    """Classifica a descricao normalizada em intencoes de integracao (qualquer-match)."""
+    return {
+        "workflow": any(k in desc_l for k in ("n8n", "webhook", "workflow", "automacao")),
+        "graph": any(k in desc_l for k in ("neo4j", "cypher", "aura", "grafo", "knowledge graph")),
+        "devin": any(k in desc_l for k in ("devin", "acu", "session insight")),
+        "vercel": any(k in desc_l for k in ("vercel", "deploy", "preview")),
+    }
+
+
+def _explicit_integration_requests(meta: Mapping[str, Any]) -> dict[str, bool]:
+    """Flags explicitas de integracao vindas dos metadados da missao."""
+    return {
+        "n8n": bool(meta.get("n8n_webhook_path") or meta.get("n8n_workflow_id")),
+        "ragflow": bool(meta.get("use_ragflow") or meta.get("ragflow_dataset_ids")),
+        "neo4j": bool(meta.get("use_neo4j")),
+    }
+
+
+def _integration_usage(
+    explicit: Mapping[str, bool],
+    wants: Mapping[str, bool],
+    ragflow_citations_count: int,
+    neo4j_rows_count: int,
+) -> dict[str, bool]:
+    """Resolve quais integracoes entram no bloco (ativo E pedido ou evidenciado)."""
+    return {
+        "ragflow": RAGFlowBridge.is_configured() and (explicit["ragflow"] or ragflow_citations_count > 0),
+        "neo4j": Neo4jAuraBridge.is_configured() and (explicit["neo4j"] or wants["graph"] or neo4j_rows_count > 0),
+        "n8n": N8NBridge.is_configured() and (explicit["n8n"] or wants["workflow"]),
+        "devin": DevinBridge.is_configured() and wants["devin"],
+        "vercel": VercelBridge.is_configured() and wants["vercel"],
+    }
+
+
+def _ragflow_integration_line(citations_count: int) -> str:
+    return (
+        f"- RAGFlow Agentic Retrieval ativo ({citations_count} citacoes carregadas); "
+        "ancore afirmacoes em [RF-N] quando aplicavel."
+    )
+
+
+def _neo4j_integration_line(rows_count: int) -> str:
+    mcp_hint = f" | MCP={Neo4jAuraBridge.mcp_url()}" if Neo4jAuraBridge.mcp_url() else ""
+    return (
+        f"- Neo4j Aura L4 Graph ativo ({rows_count} relacoes carregadas{mcp_hint}); "
+        "cite [G-N] para raciocinio multi-hop."
+    )
+
+
+def _devin_integration_line() -> str:
+    return (
+        f"- Devin API v3 Bridge ativo (pool={_DEVIN_RING.telemetry()['active']} chaves, "
+        f"org={DevinBridge.org_id() or 'auto'})."
+    )
+
+
+def _vercel_integration_line() -> str:
+    return (
+        f"- Vercel REST Bridge ativo (pool={_VERCEL_RING.telemetry()['active']} tokens, "
+        f"user={VercelBridge.username() or VercelBridge.user_id()})."
+    )
+
+
 def build_agent_integrations_block(
     description: str,
     metadata: Mapping[str, Any] | None = None,
@@ -805,54 +910,24 @@ def build_agent_integrations_block(
 ) -> str:
     """Injeta contexto enxuto de integracoes ativas apenas quando configuradas ou solicitadas."""
     meta = metadata if isinstance(metadata, Mapping) else {}
-    n8n_active = N8NBridge.is_configured()
-    ragflow_active = RAGFlowBridge.is_configured()
-    neo4j_active = Neo4jAuraBridge.is_configured()
-    devin_active = DevinBridge.is_configured()
-    vercel_active = VercelBridge.is_configured()
-    explicit_n8n = bool(meta.get("n8n_webhook_path") or meta.get("n8n_workflow_id"))
-    explicit_ragflow = bool(meta.get("use_ragflow") or meta.get("ragflow_dataset_ids"))
-    explicit_neo4j = bool(meta.get("use_neo4j"))
+    wants = _desc_wants_integrations(enforce_pure_ascii(description or "").lower())
+    explicit = _explicit_integration_requests(meta)
+    usage = _integration_usage(explicit, wants, ragflow_citations_count, neo4j_rows_count)
 
-    desc_l = enforce_pure_ascii(description or "").lower()
-    wants_workflow = any(k in desc_l for k in ("n8n", "webhook", "workflow", "automacao"))
-    wants_graph = any(k in desc_l for k in ("neo4j", "cypher", "aura", "grafo", "knowledge graph"))
-    wants_devin = any(k in desc_l for k in ("devin", "acu", "session insight"))
-    wants_vercel = any(k in desc_l for k in ("vercel", "deploy", "preview"))
-
-    if (
-        not (n8n_active and (explicit_n8n or wants_workflow))
-        and not (ragflow_active and (explicit_ragflow or ragflow_citations_count > 0))
-        and not (neo4j_active and (explicit_neo4j or wants_graph or neo4j_rows_count > 0))
-        and not (devin_active and wants_devin)
-        and not (vercel_active and wants_vercel)
-    ):
+    if not any(usage.values()):
         return ""
 
     lines = ["\n\n[INTEGRACOES DA MALHA SOTA ATIVAS]"]
-    if ragflow_active and (explicit_ragflow or ragflow_citations_count > 0):
-        lines.append(
-            f"- RAGFlow Agentic Retrieval ativo ({ragflow_citations_count} citacoes carregadas); "
-            "ancore afirmacoes em [RF-N] quando aplicavel."
-        )
-    if neo4j_active and (explicit_neo4j or wants_graph or neo4j_rows_count > 0):
-        mcp_hint = f" | MCP={Neo4jAuraBridge.mcp_url()}" if Neo4jAuraBridge.mcp_url() else ""
-        lines.append(
-            f"- Neo4j Aura L4 Graph ativo ({neo4j_rows_count} relacoes carregadas{mcp_hint}); "
-            "cite [G-N] para raciocinio multi-hop."
-        )
-    if n8n_active and (explicit_n8n or wants_workflow):
-        lines.append(
-            "- n8n Automation Bridge ativo; entregue resumo objetivo e estruturado para consumo via webhook/workflow."
-        )
-    if devin_active and wants_devin:
-        lines.append(
-            f"- Devin API v3 Bridge ativo (pool={_DEVIN_RING.telemetry()['active']} chaves, org={DevinBridge.org_id() or 'auto'})."
-        )
-    if vercel_active and wants_vercel:
-        lines.append(
-            f"- Vercel REST Bridge ativo (pool={_VERCEL_RING.telemetry()['active']} tokens, user={VercelBridge.username() or VercelBridge.user_id()})."
-        )
+    if usage["ragflow"]:
+        lines.append(_ragflow_integration_line(ragflow_citations_count))
+    if usage["neo4j"]:
+        lines.append(_neo4j_integration_line(neo4j_rows_count))
+    if usage["n8n"]:
+        lines.append(_N8N_INTEGRATION_LINE)
+    if usage["devin"]:
+        lines.append(_devin_integration_line())
+    if usage["vercel"]:
+        lines.append(_vercel_integration_line())
     if shutil.which("hermes"):
         lines.append("- Hermes-Agent CLI disponivel no host para handoff de execucao autonoma.")
     return enforce_pure_ascii("\n".join(lines))

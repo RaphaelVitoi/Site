@@ -38,6 +38,13 @@ def _key_sha8(key: str) -> str:
     return hmac.new(_HMAC_SALT, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
 
 
+def _normalize_model_key(model: str | None) -> str:
+    """Normaliza o identificador do modelo Gemini para isolamento de cota por modelo."""
+    if not model:
+        return ""
+    return model.strip().lower().removeprefix("models/")
+
+
 class GeminiWorkload(StrEnum):
     """Dominios de carga de trabalho designados para Gemini 3.5 Flash-Lite."""
 
@@ -60,6 +67,7 @@ class KeyStats:
         self.consecutive_failures: int = 0
         self.avg_latency_ms: float = 250.0
         self.blocked_until: datetime | None = None
+        self.model_blocked_until: dict[str, datetime] = {}
         self.is_revoked: bool = False
         self.workload_counts: dict[str, int] = {
             GeminiWorkload.ATOMIC_EDITS: 0,
@@ -69,17 +77,29 @@ class KeyStats:
         }
         self.last_used: datetime | None = None
 
-    def is_available(self) -> bool:
-        """Verifica se a chave esta apta para uso (nao revogada e fora de cooldown)."""
+    def is_available(self, model: str | None = None) -> bool:
+        """Verifica se a chave esta apta para uso (nao revogada e fora de cooldown global ou por modelo)."""
         if self.is_revoked:
             return False
-        return not (self.blocked_until and datetime.now(UTC) < self.blocked_until)
+        now = datetime.now(UTC)
+        if self.blocked_until:
+            if now < self.blocked_until:
+                return False
+            self.blocked_until = None
+        norm_model = _normalize_model_key(model)
+        if norm_model:
+            model_expiry = self.model_blocked_until.get(norm_model)
+            if model_expiry:
+                if now < model_expiry:
+                    return False
+                self.model_blocked_until.pop(norm_model, None)
+        return True
 
-    def calculate_health_score(self) -> float:
+    def calculate_health_score(self, model: str | None = None) -> float:
         """Calcula o score de saude da chave (0 a 100)."""
         if self.is_revoked:
             return 0.0
-        if self.blocked_until and datetime.now(UTC) < self.blocked_until:
+        if not self.is_available(model=model):
             return -500.0
 
         if self.attempts == 0:
@@ -199,20 +219,36 @@ class GeminiPoolManager:
             self._project_name,
         )
 
+    def ensure_keys(self, keys: list[str]) -> None:
+        """Registra chaves adicionais do ambiente no pool caso ainda nao estejam indexadas."""
+        with self._lock:
+            for key in keys:
+                val = (key or "").strip()
+                if len(val) < 12:
+                    continue
+                sha = _key_sha8(val)
+                if val not in self._keys:
+                    self._keys.append(val)
+                if sha not in self._stats:
+                    self._stats[sha] = KeyStats(key=val, index=len(self._stats) + 1)
+
     def total_keys(self) -> int:
         """Retorna o numero total de chaves registradas."""
         return len(self._keys)
 
-    def available_keys_count(self) -> int:
-        """Retorna quantas chaves estao aptas a responder no momento."""
-        return sum(1 for st in self._stats.values() if st.is_available())
+    def available_keys_count(self, model: str | None = None) -> int:
+        """Retorna quantas chaves estao aptas a responder no momento (opcionalmente para um modelo)."""
+        return sum(1 for st in self._stats.values() if st.is_available(model=model))
 
-    def get_key_for_workload(self, workload: GeminiWorkload | str = GeminiWorkload.TRIAGEM) -> tuple[str, str]:
+    def get_key_for_workload(
+        self, workload: GeminiWorkload | str = GeminiWorkload.TRIAGEM, model: str | None = None
+    ) -> tuple[str, str]:
         """
         Seleciona a melhor chave do pool para a carga de trabalho informada.
         Retorna (raw_key, sha8).
         Gera RuntimeError se todas as chaves estiverem em cooldown ou revogadas.
         """
+        norm_model = _normalize_model_key(model)
         with self._lock:
             if not self._keys:
                 raise RuntimeError(
@@ -220,19 +256,23 @@ class GeminiPoolManager:
                     "Execute pwsh scripts/ops/Set-GeminiKeyPool.ps1 para provisionar."
                 )
 
-            # Filtra chaves disponiveis
-            available_stats = [st for st in self._stats.values() if st.is_available()]
+            # Filtra chaves disponiveis (isoladas por modelo quando model != None)
+            available_stats = [st for st in self._stats.values() if st.is_available(model=model)]
 
             if not available_stats:
                 # Todas em cooldown: busca a que libera primeiro
-                soonest_key = min(
-                    (st for st in self._stats.values() if not st.is_revoked and st.blocked_until),
-                    key=lambda st: st.blocked_until or datetime.max.replace(tzinfo=UTC),
-                    default=None,
-                )
+                soonest_expiries: list[datetime] = []
+                for st in self._stats.values():
+                    if st.is_revoked:
+                        continue
+                    expiries = [dt for dt in (st.blocked_until, st.model_blocked_until.get(norm_model)) if dt]
+                    if expiries:
+                        soonest_expiries.append(max(expiries))
+
                 wait_sec = 0.0
-                if soonest_key and soonest_key.blocked_until:
-                    wait_sec = max(0.0, (soonest_key.blocked_until - datetime.now(UTC)).total_seconds())
+                if soonest_expiries:
+                    soonest_dt = min(soonest_expiries)
+                    wait_sec = max(0.0, (soonest_dt - datetime.now(UTC)).total_seconds())
 
                 raise RuntimeError(
                     f"[GEMINI POOL] Todas as {len(self._keys)} chaves estao temporariamente em cooldown "
@@ -240,7 +280,7 @@ class GeminiPoolManager:
                 )
 
             # Filtra chaves saudaveis (score >= 60.0)
-            healthy = [st for st in available_stats if st.calculate_health_score() >= 60.0]
+            healthy = [st for st in available_stats if st.calculate_health_score(model=model) >= 60.0]
             candidates = healthy if healthy else available_stats
 
             # Ordena candidatos por indice estavel para que o round-robin distribua a carga uniformemente
@@ -259,9 +299,10 @@ class GeminiPoolManager:
 
             return chosen.key, chosen.sha8
 
-    def mark_success(self, key: str, latency_ms: float) -> None:
+    def mark_success(self, key: str, latency_ms: float, model: str | None = None) -> None:
         """Registra sucesso na requisicao, refinando a media de latencia."""
         sha = _key_sha8(key)
+        norm_model = _normalize_model_key(model)
         with self._lock:
             if sha not in self._stats:
                 return
@@ -270,6 +311,8 @@ class GeminiPoolManager:
             st.successes += 1
             st.consecutive_failures = 0
             st.blocked_until = None
+            if norm_model:
+                st.model_blocked_until.pop(norm_model, None)
             # Media movel exponencial (70% anterior, 30% recente)
             st.avg_latency_ms = (st.avg_latency_ms * 0.7) + (latency_ms * 0.3)
 
@@ -279,9 +322,11 @@ class GeminiPoolManager:
         status_code: int = 500,
         retry_after_s: float = 0.0,
         error_msg: str = "",
+        model: str | None = None,
     ) -> None:
-        """Aciona o circuit breaker com base no status HTTP retornado."""
+        """Aciona o circuit breaker com base no status HTTP retornado (escopo por modelo para 429)."""
         sha = _key_sha8(key)
+        norm_model = _normalize_model_key(model)
         now = datetime.now(UTC)
         with self._lock:
             if sha not in self._stats:
@@ -302,13 +347,23 @@ class GeminiPoolManager:
                 )
             elif status_code == 429:
                 cooldown = timedelta(seconds=retry_after_s) if retry_after_s > 0 else DEFAULT_COOLDOWN_429
-                st.blocked_until = now + cooldown
-                logger.warning(
-                    "[GEMINI POOL] Chave sha8=%s atingiu limite de cota (HTTP 429). "
-                    "Circuit breaker ativado por %.1fs. Rotacionando para pr\u00f3xima chave.",
-                    sha,
-                    cooldown.total_seconds(),
-                )
+                if norm_model:
+                    st.model_blocked_until[norm_model] = now + cooldown
+                    logger.warning(
+                        "[GEMINI POOL] Chave sha8=%s atingiu limite de cota (HTTP 429) para %s. "
+                        "Circuit breaker por modelo ativado por %.1fs. Rotacionando para pr\u00f3xima chave.",
+                        sha,
+                        norm_model,
+                        cooldown.total_seconds(),
+                    )
+                else:
+                    st.blocked_until = now + cooldown
+                    logger.warning(
+                        "[GEMINI POOL] Chave sha8=%s atingiu limite de cota (HTTP 429). "
+                        "Circuit breaker ativado por %.1fs. Rotacionando para pr\u00f3xima chave.",
+                        sha,
+                        cooldown.total_seconds(),
+                    )
             elif status_code >= 500:
                 st.blocked_until = now + DEFAULT_COOLDOWN_SERVER_ERROR
                 logger.info(
@@ -317,16 +372,27 @@ class GeminiPoolManager:
                     sha,
                 )
 
-    def get_telemetry_summary(self) -> list[dict[str, Any]]:
+    def get_telemetry_summary(self, model: str | None = None) -> list[dict[str, Any]]:
         """Gera sumario detalhado de telemetria sem expor nenhuma chave em claro."""
         now = datetime.now(UTC)
+        norm_model = _normalize_model_key(model)
         summary: list[dict[str, Any]] = []
         for sha, st in sorted(self._stats.items(), key=lambda item: item[1].index):
             blocked = False
             remaining_cooldown_s = 0.0
+            active_expiries: list[datetime] = []
             if st.blocked_until and st.blocked_until > now:
+                active_expiries.append(st.blocked_until)
+            if norm_model:
+                model_exp = st.model_blocked_until.get(norm_model)
+                if model_exp and model_exp > now:
+                    active_expiries.append(model_exp)
+            elif st.model_blocked_until:
+                active_expiries.extend(exp for exp in st.model_blocked_until.values() if exp > now)
+
+            if active_expiries:
                 blocked = True
-                remaining_cooldown_s = round((st.blocked_until - now).total_seconds(), 1)
+                remaining_cooldown_s = round((max(active_expiries) - now).total_seconds(), 1)
 
             summary.append(
                 {
@@ -339,7 +405,7 @@ class GeminiPoolManager:
                     "is_blocked": blocked,
                     "cooldown_s": remaining_cooldown_s,
                     "is_revoked": st.is_revoked,
-                    "health_score": round(st.calculate_health_score(), 1),
+                    "health_score": round(st.calculate_health_score(model=model), 1),
                     "atomic_edits": st.workload_counts[GeminiWorkload.ATOMIC_EDITS],
                     "triagem": st.workload_counts[GeminiWorkload.TRIAGEM],
                     "linting": st.workload_counts[GeminiWorkload.LINTING],

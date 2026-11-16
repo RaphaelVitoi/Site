@@ -287,7 +287,7 @@ async def test_neo4j_aura_bridge_oauth_and_query_v2(monkeypatch):
     monkeypatch.setenv("NEO4J_AURA_INSTANCE_ID", "demo1234")
     monkeypatch.setenv("NEO4J_AURA_CLIENT_ID", "cid-demo")
     monkeypatch.setenv("NEO4J_AURA_CLIENT_SECRET", "csec-demo")
-    Neo4jAuraBridge._token_cache = ("", 0.0)
+    monkeypatch.setattr(Neo4jAuraBridge, "_token_cache", ("", 0.0))
 
     assert Neo4jAuraBridge.is_configured() is True
     assert Neo4jAuraBridge.query_url() == "https://demo1234.databases.neo4j.io/db/neo4j/query/v2"

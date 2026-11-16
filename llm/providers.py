@@ -266,6 +266,100 @@ class OllamaCloudStrategy(LLMProviderStrategy):
         )
 
 
+def _local_fallback_messages(
+    system_prompt: str,
+    user_prompt: str,
+    kwargs: dict[str, Any],
+) -> list[dict[str, str]]:
+    messages = list(kwargs.get("messages") or [])
+    if not messages:
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": user_prompt})
+    return messages
+
+
+def _local_fallback_endpoints(
+    llama_base: str,
+    swap_base: str,
+    swap_model: str,
+    model: str,
+) -> list[tuple[str, list[str]]]:
+    endpoints: list[tuple[str, list[str]]] = [(llama_base, [model])]
+    if swap_base and swap_base != llama_base:
+        swap_models = [model]
+        if swap_model and swap_model != model:
+            swap_models.append(swap_model)
+        endpoints.append((swap_base, swap_models))
+    return endpoints
+
+
+def _local_fallback_payload(
+    candidate_model: str,
+    messages: list[dict[str, str]],
+    kwargs: dict[str, Any],
+    require_json: bool,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "model": candidate_model,
+        "messages": messages,
+        "stream": False,
+        "max_tokens": kwargs.get("max_tokens", 2048),
+    }
+    if kwargs.get("temperature") is not None:
+        payload["temperature"] = kwargs["temperature"]
+    if require_json:
+        payload["response_format"] = {"type": "json_object"}
+    return payload
+
+
+async def _extract_local_fallback_result(
+    resp: aiohttp.ClientResponse,
+    base_url: str,
+    candidate_model: str,
+    user_prompt: str,
+) -> tuple[str, dict[str, Any]] | None:
+    data = await resp.json()
+    choices = data.get("choices") or []
+    content = str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
+    if not content:
+        return None
+    raw_usage = data.get("usage") or {}
+    usage = {
+        "promptTokenCount": raw_usage.get("prompt_tokens", len(user_prompt) // 4),
+        "candidatesTokenCount": raw_usage.get("completion_tokens", len(content) // 4),
+        "local_fallback_endpoint": base_url,
+        "local_fallback_model": candidate_model,
+    }
+    return content, usage
+
+
+async def _try_local_endpoint(
+    session: aiohttp.ClientSession,
+    base_url: str,
+    model_candidates: list[str],
+    messages: list[dict[str, str]],
+    user_prompt: str,
+    require_json: bool,
+    kwargs: dict[str, Any],
+    req_timeout: aiohttp.ClientTimeout,
+) -> tuple[str, dict[str, Any]] | None:
+    for candidate_model in model_candidates:
+        payload = _local_fallback_payload(candidate_model, messages, kwargs, require_json)
+        try:
+            async with session.post(f"{base_url}/v1/chat/completions", json=payload, timeout=req_timeout) as resp:
+                if resp.status == 200:
+                    result = await _extract_local_fallback_result(resp, base_url, candidate_model, user_prompt)
+                    if result is not None:
+                        return result
+                if resp.status not in (400, 404):
+                    return None
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("[GEMMA-LOCAL] Fallback local (%s/%s) indisponivel: %s", base_url, candidate_model, exc)
+            return None
+    return None
+
+
 async def _call_local_openai_router_fallback(
     session: aiohttp.ClientSession,
     model: str,
@@ -280,56 +374,24 @@ async def _call_local_openai_router_fallback(
     llama_base = os.environ.get("CHICO_LLAMA_API_BASE", "http://127.0.0.1:9931").rstrip("/")
     swap_base = os.environ.get("CHICO_LLAMA_SWAP_BASE", "http://127.0.0.1:8080").rstrip("/")
     swap_model = os.environ.get("CHICO_LLAMA_SWAP_MODEL", "qwen-moe")
-    messages = list(kwargs.get("messages") or [])
-    if not messages:
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": user_prompt})
-
+    messages = _local_fallback_messages(system_prompt, user_prompt, kwargs)
     timeout = client_timeout or aiohttp.ClientTimeout(total=15.0, sock_connect=1.0)
-    endpoints: list[tuple[str, list[str]]] = [
-        (llama_base, [model]),
-    ]
-    if swap_base and swap_base != llama_base:
-        swap_models = [model]
-        if swap_model and swap_model != model:
-            swap_models.append(swap_model)
-        endpoints.append((swap_base, swap_models))
 
-    for base_url, model_candidates in endpoints:
+    for base_url, model_candidates in _local_fallback_endpoints(llama_base, swap_base, swap_model, model):
         if not base_url:
             continue
-        for candidate_model in model_candidates:
-            payload: dict[str, Any] = {
-                "model": candidate_model,
-                "messages": messages,
-                "stream": False,
-                "max_tokens": kwargs.get("max_tokens", 2048),
-            }
-            if kwargs.get("temperature") is not None:
-                payload["temperature"] = kwargs["temperature"]
-            if require_json:
-                payload["response_format"] = {"type": "json_object"}
-            try:
-                async with session.post(f"{base_url}/v1/chat/completions", json=payload, timeout=timeout) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        choices = data.get("choices") or []
-                        content = str((choices[0].get("message") or {}).get("content", "")).strip() if choices else ""
-                        if content:
-                            raw_usage = data.get("usage") or {}
-                            usage = {
-                                "promptTokenCount": raw_usage.get("prompt_tokens", len(user_prompt) // 4),
-                                "candidatesTokenCount": raw_usage.get("completion_tokens", len(content) // 4),
-                                "local_fallback_endpoint": base_url,
-                                "local_fallback_model": candidate_model,
-                            }
-                            return content, usage
-                    if resp.status not in (400, 404):
-                        break
-            except Exception as exc:  # noqa: BLE001
-                logger.debug("[GEMMA-LOCAL] Fallback local (%s/%s) indisponivel: %s", base_url, candidate_model, exc)
-                break
+        result = await _try_local_endpoint(
+            session,
+            base_url,
+            model_candidates,
+            messages,
+            user_prompt,
+            require_json,
+            kwargs,
+            timeout,
+        )
+        if result is not None:
+            return result
     return None
 
 
@@ -804,7 +866,16 @@ async def _handle_429_error(
     return False, general_retries_left, rate_limit_retries_left
 
 
-async def _handle_general_error(
+def _extract_error_status(e: Exception, error_msg: str) -> int:
+    status_code = getattr(e, "status", 0) if isinstance(e, aiohttp.ClientResponseError) else 0
+    if status_code == 0:
+        match_http = re.search(r"\bHTTP\s+(\d{3})\b", error_msg)
+        if match_http:
+            status_code = int(match_http.group(1))
+    return status_code
+
+
+async def _record_general_failure(
     e: Exception,
     strategy: LLMProviderStrategy,
     key: str,
@@ -813,49 +884,12 @@ async def _handle_general_error(
     key_hash: str,
     route_key: str,
     provider_key: str,
+    error_msg: str,
+    status_code: int,
     general_retries_left: int,
     rate_limit_retries_left: int,
 ) -> tuple[bool, int, int]:
-    # SOTA: Purificacao ASCII e truncamento para evitar explosao de logs
-    # em respostas HTML macicas de erro (ex: 503 Cloudflare)
-    error_msg = str(e).encode("ascii", "backslashreplace").decode("ascii")
     latency_ms = int((time.monotonic() - start_time) * 1000)
-    status_code = getattr(e, "status", 0) if isinstance(e, aiohttp.ClientResponseError) else 0
-    if status_code == 0:
-        match_http = re.search(r"\bHTTP\s+(\d{3})\b", error_msg)
-        if match_http:
-            status_code = int(match_http.group(1))
-
-    if (status_code >= 500) or "chaoscore: 503" in error_msg.lower():
-        return await _handle_5xx_error(
-            status_code,
-            strategy,
-            ctx,
-            route_key,
-            general_retries_left,
-            rate_limit_retries_left,
-        )
-
-    if "429" in error_msg:
-        should_retry, g_left, r_left = await _handle_429_error(
-            error_msg, strategy, ctx, general_retries_left, rate_limit_retries_left
-        )
-        if not should_retry and ctx.provider == "gemini":
-            await _block_gemini_model_key(ctx.model, key)
-        return should_retry, g_left, r_left
-
-    if general_retries_left >= 0:
-        logger.warning(
-            "[[%s]%s[/]] Erro geral em %s (%s). Retentando... (%d restantes)",
-            ctx.c_func(ctx.task.agent),
-            ctx.task.agent,
-            strategy.name,
-            type(e).__name__,
-            general_retries_left + 1,
-        )
-        await asyncio.sleep(1.0)
-        return True, general_retries_left, rate_limit_retries_left
-
     logger.warning(
         "[[%s]%s[/]] Falha na chave %s (%s): %s...",
         ctx.c_func(ctx.task.agent),
@@ -887,6 +921,69 @@ async def _handle_general_error(
 
     await strategy.handle_semantic_error(e, ctx.model, key)
     return False, general_retries_left, rate_limit_retries_left
+
+
+async def _handle_general_error(
+    e: Exception,
+    strategy: LLMProviderStrategy,
+    key: str,
+    ctx: ProviderContext,
+    start_time: float,
+    key_hash: str,
+    route_key: str,
+    provider_key: str,
+    general_retries_left: int,
+    rate_limit_retries_left: int,
+) -> tuple[bool, int, int]:
+    # SOTA: Purificacao ASCII e truncamento para evitar explosao de logs
+    # em respostas HTML macicas de erro (ex: 503 Cloudflare)
+    error_msg = str(e).encode("ascii", "backslashreplace").decode("ascii")
+    status_code = _extract_error_status(e, error_msg)
+
+    if (status_code >= 500) or "chaoscore: 503" in error_msg.lower():
+        return await _handle_5xx_error(
+            status_code,
+            strategy,
+            ctx,
+            route_key,
+            general_retries_left,
+            rate_limit_retries_left,
+        )
+
+    if "429" in error_msg:
+        should_retry, g_left, r_left = await _handle_429_error(
+            error_msg, strategy, ctx, general_retries_left, rate_limit_retries_left
+        )
+        if not should_retry and ctx.provider == "gemini":
+            await _block_gemini_model_key(ctx.model, key)
+        return should_retry, g_left, r_left
+
+    if general_retries_left >= 0:
+        logger.warning(
+            "[[%s]%s[/]] Erro geral em %s (%s). Retentando... (%d restantes)",
+            ctx.c_func(ctx.task.agent),
+            ctx.task.agent,
+            strategy.name,
+            type(e).__name__,
+            general_retries_left + 1,
+        )
+        await asyncio.sleep(1.0)
+        return True, general_retries_left, rate_limit_retries_left
+
+    return await _record_general_failure(
+        e,
+        strategy,
+        key,
+        ctx,
+        start_time,
+        key_hash,
+        route_key,
+        provider_key,
+        error_msg,
+        status_code,
+        general_retries_left,
+        rate_limit_retries_left,
+    )
 
 
 async def _attempt_key_execution(

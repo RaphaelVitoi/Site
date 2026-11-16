@@ -157,10 +157,10 @@ class CDPBrowserBridge:
                 title_match = re.search(r"<title>(.*?)</title>", content, re.IGNORECASE | re.DOTALL)
                 title = title_match.group(1).strip() if title_match else url
                 clean_text = re.sub(
-                    r"<script(?=[\s/>])[^>]*>.*?</script\s*>", "", content, flags=re.DOTALL | re.IGNORECASE
+                    r"<script(?=[\s/>])[^>]*>.*?</script\b[^>]*>", "", content, flags=re.DOTALL | re.IGNORECASE
                 )
                 clean_text = re.sub(
-                    r"<style(?=[\s/>])[^>]*>.*?</style\s*>", "", clean_text, flags=re.DOTALL | re.IGNORECASE
+                    r"<style(?=[\s/>])[^>]*>.*?</style\b[^>]*>", "", clean_text, flags=re.DOTALL | re.IGNORECASE
                 )
                 clean_text = re.sub(r"<[^>]+>", " ", clean_text)
                 clean_text = re.sub(r"\s+", " ", clean_text).strip()

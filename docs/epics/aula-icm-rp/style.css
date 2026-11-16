@@ -103,7 +103,12 @@ body {
 
 .ticker-content {
     display: inline-block;
-    animation: ticker 30s linear infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .ticker-content {
+        animation: ticker 30s linear infinite;
+    }
 }
 
 @keyframes ticker {
@@ -113,12 +118,6 @@ body {
 
     100% {
         transform: translateX(-50%);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .ticker-content {
-        animation: none;
     }
 }
 

@@ -19,7 +19,14 @@ import socket
 import aiohttp
 import pytest
 
-pytestmark = [pytest.mark.integration, pytest.mark.unit]
+# xdist_group concentra os 5 testes num unico worker: o daemon Ollama atende
+# uma inferencia por vez e requests concorrentes de workers distintos entram
+# em fila, estourando o timeout total sob a suite paralela (-n 3).
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.unit,
+    pytest.mark.xdist_group("ollama-daemon-real"),
+]
 
 OLLAMA_URL = os.environ.get("OLLAMA_API_BASE", "http://127.0.0.1:11434")
 
@@ -48,7 +55,7 @@ def _modelos_instalados() -> set[str]:
         import urllib.request
 
         # OLLAMA_URL e loopback http fixo (nao controlado por entrada externa).
-        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=10) as resp:  # noqa: S310
+        with urllib.request.urlopen(f"{OLLAMA_URL}/api/tags", timeout=30) as resp:  # noqa: S310  # Record-Id: registro-2026-11-15-saneamento-sonarlint-codeql-e-portoes
             data = json.loads(resp.read().decode("utf-8"))
             return {m["name"] for m in data.get("models", [])}
     except Exception:  # noqa: S110 - fallback assincrono logo abaixo
@@ -64,7 +71,7 @@ def _modelos_instalados() -> set[str]:
 
 
 async def _tags_async() -> str:
-    timeout = aiohttp.ClientTimeout(total=30)
+    timeout = aiohttp.ClientTimeout(total=60)
     async with aiohttp.ClientSession(timeout=timeout) as sessao:
         async with sessao.get(f"{OLLAMA_URL}/api/tags") as resposta:
             resposta.raise_for_status()
@@ -96,7 +103,7 @@ async def _inferir(session: aiohttp.ClientSession, modelo: str, fmt: dict | None
         "Responda apenas com o valor pedido.",
         "Retorne o numero 42.",
         response_format=fmt,
-        timeout_seconds=180.0,
+        timeout_seconds=300.0,
     )
 
 

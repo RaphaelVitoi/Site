@@ -80,6 +80,16 @@ def _normalizar_devin_id(raw: str) -> str:
     return raw
 
 
+def _request_with_token(method: str, url: str, token: str, data: bytes | None) -> str:
+    req = urllib.request.Request(url, data=data, method=method)
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Accept", "application/json")
+    if data is not None:
+        req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return resp.read().decode("utf-8")
+
+
 def _request(
     method: str,
     url: str,
@@ -93,14 +103,8 @@ def _request(
     last_error: RuntimeError | None = None
     body = ""
     for candidate in tokens:
-        req = urllib.request.Request(url, data=data, method=method)
-        req.add_header("Authorization", f"Bearer {candidate}")
-        req.add_header("Accept", "application/json")
-        if data is not None:
-            req.add_header("Content-Type", "application/json")
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                body = resp.read().decode("utf-8")
+            body = _request_with_token(method, url, candidate, data)
             break
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")[:500]

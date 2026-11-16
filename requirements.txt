@@ -17,7 +17,7 @@ pydantic>=2.14.3
 pydantic-settings>=2.16.2
 
 # ── MOTOR MATEMATICO, GRAFOS & ANALYTICS ─────────────────────────────────────
-numpy>=2.5.4
+numpy>=2.5.5
 pandas>=3.1.1
 networkx>=3.7
 scikit-learn>=1.9.1
