@@ -97,6 +97,10 @@ stress_test_results*.log
 gemini_media_gen.log
 appmap.log
 data/mcp_tool_telemetry.jsonl
+# Quarentenas de dados saneados (ex.: mcp_tool_telemetry.synthetic-quarentena-*.jsonl).
+# Mesmo criterio do .chroma_db*/ acima: fora do padrao, um `git add -A` commita
+# o backup para sempre.
+*quarentena*
 reports/coverage/
 .coverage
 htmlcov/
@@ -136,6 +140,7 @@ _backups/
 .backups/
 .backups_sota/
 archive/
+archived/
 NEXUS_SOTA_BACKUP_*/
 .claude/logs/
 .claude/task_results/
