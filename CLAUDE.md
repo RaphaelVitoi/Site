@@ -295,9 +295,18 @@ Toda alteração passa por `scripts/ops/cwv_gate.ps1`, disparado pelo hook
 | 4 | **SRI** | Falha de integridade ou hash SHA-512 |
 | 5 | **Higiene de repositório** | Caminho de perfil de ferramenta versionado · blob >5 MB fora do LFS · binário sem `filter=lfs` |
 
-**Nunca use `--no-verify` nem `SKIP_CWV_GATE=1`.** Este portão já barrou três
-CVEs altos invisíveis na branch de trabalho, e uma inconsistência de roteamento
-LFS introduzida na própria sessão que criou a fase 5.
+**Nunca use `--no-verify` nem `SKIP_CWV_GATE=1` — exceto por arbitragem do
+Tier 0.** Este portão já barrou três CVEs altos invisíveis na branch de trabalho,
+e uma inconsistência de roteamento LFS introduzida na própria sessão que criou
+a fase 5.
+
+**Cláusula de arbitragem soberana (Tier 0, 2026-11-17):** a proibição de bypass
+é regra da malha, não limite do soberano. Toda arbitragem de Raphael Vitoi
+(Tier 0) tem valor máximo e pode autorizar `--no-verify`/`SKIP_CWV_GATE`
+expressamente. A arbitragem **deve ser declarada no corpo do commit** que a
+exercita — bypass silencioso continua proibido a qualquer outro agente e em
+qualquer hipótese de omissão. Revogar esta cláusula exige nova palavra do
+Tier 0.
 
 Se ele reprovar, "a regra está errada" é a hipótese **menos** provável.
 
