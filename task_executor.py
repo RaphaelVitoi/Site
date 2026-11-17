@@ -689,45 +689,46 @@ def _cli_db_vacuum() -> None:
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    # SOTA: Mapeamento local dos handlers para extirpar complexidade (S3776)
-    _local_handlers = {
-        "train-predictive": _cli_train_predictive,
-        "predictive-profile": _cli_predictive_profile,
-        "historian-reports": _cli_historian_reports,
-        "daily-stats": _cli_daily_stats,
-        "db-audit-dag": _cli_db_audit_dag,
-        "db-purge-orphans": _cli_db_purge_orphans,
-        "db-vacuum": _cli_db_vacuum,
-    }
+# Tabelas de dispatch no nivel do modulo: o contrato
+# tests/test_task_dispatch_contract.py verifica que todo comando invocado
+# por do.ps1 resolve numa destas camadas — antes eram literais locais do
+# __main__, invisiveis para verificacao, e _nexus_cmds acumulou 15 aliases
+# zumbis da CLI plana anterior ao typer (Fase 5 da auditoria SOTA).
+_LOCAL_HANDLERS = {
+    "train-predictive": _cli_train_predictive,
+    "predictive-profile": _cli_predictive_profile,
+    "historian-reports": _cli_historian_reports,
+    "daily-stats": _cli_daily_stats,
+    "db-audit-dag": _cli_db_audit_dag,
+    "db-purge-orphans": _cli_db_purge_orphans,
+    "db-vacuum": _cli_db_vacuum,
+}
 
+# Comandos que existem como top-level no nexus (typer app).
+_NEXUS_CMDS = {"dashboard", "status", "autonomy"}
+
+# Aliases planos da CLI anterior a reorganizacao em sub-apps typer:
+# nome legado aceito pelo task_executor -> argv real repassado ao nexus.
+# Nomes sem equivalente no nexus v8 (optimize-ide, purge-ext, scan,
+# audit-routing, audit-api, monitor, test-breaker, visualize-map, purge-rag,
+# ingest-rag, refactor, stop-worker) foram removidos: o typer ja os
+# rejeitava com "No such command" — eram zumbis que so mascaravam o exit 2.
+_NEXUS_LEGACY_MAP = {
+    "sanitize": ("ops", "sanitize"),
+    "watch": ("ops", "watch"),
+    "start-worker": ("ops", "worker"),
+}
+
+_NEXUS_DISPATCH = _NEXUS_CMDS | set(_NEXUS_LEGACY_MAP)
+
+
+if __name__ == "__main__":
     if len(sys.argv) >= 2:
         command = sys.argv[1].lower()
         if command == "route-task" and len(sys.argv) >= 3:
             _cli_route_task(sys.argv)
-        elif command in _local_handlers:
-            _local_handlers[command]()
-
-    _nexus_cmds = {
-        "dashboard",
-        "start-worker",
-        "stop-worker",
-        "status",
-        "sanitize",
-        "optimize-ide",
-        "purge-ext",
-        "scan",
-        "audit-routing",
-        "audit-api",
-        "monitor",
-        "test-breaker",
-        "watch",
-        "visualize-map",
-        "purge-rag",
-        "ingest-rag",
-        "autonomy",
-        "refactor",
-    }
+        elif command in _LOCAL_HANDLERS:
+            _LOCAL_HANDLERS[command]()
 
     if len(sys.argv) == 1:
         from scripts.cli.nexus import app as run_nexus
@@ -736,10 +737,15 @@ if __name__ == "__main__":
         run_nexus()
         sys.exit(0)
 
-    if len(sys.argv) >= 2 and sys.argv[1].lower() in _nexus_cmds:
+    if len(sys.argv) >= 2 and sys.argv[1].lower() in _NEXUS_DISPATCH:
         from scripts.cli.nexus import app as run_nexus
 
-        sys.argv = [sys.argv[0]] + sys.argv[1:]
+        cmd = sys.argv[1].lower()
+        if cmd in _NEXUS_LEGACY_MAP:
+            prefix = list(_NEXUS_LEGACY_MAP[cmd])
+            sys.argv = [sys.argv[0], *prefix, *sys.argv[2:]]
+        else:
+            sys.argv = [sys.argv[0]] + sys.argv[1:]
         run_nexus()
         sys.exit(0)
 

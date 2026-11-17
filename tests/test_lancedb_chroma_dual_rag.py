@@ -282,3 +282,62 @@ def test_lancedb_mrl_tabela_dedicada_e_guarda_dimensional(temp_lance_dir: Path):
         )
     with pytest.raises(ValueError, match="Incompatibilidade dimensional"):
         mrl_backend.search_hybrid(query_vector=[0.1] * 384, query_text="legado", limit=1)
+
+
+@pytest.mark.asyncio
+async def test_ingest_all_memories_sem_manifest_e_noop(monkeypatch: pytest.MonkeyPatch):
+    """Caracterizacao F5.3d: manifesto vazio/ausente interrompe a ingestao
+    antes de qualquer coleta — o pipeline nao varre a arvore a toa."""
+    rag = MemoryRAG()
+
+    async def fake_read(_path):
+        return {}
+
+    coleta_chamada = False
+
+    async def spy_collect(*_a, **_k):
+        nonlocal coleta_chamada
+        coleta_chamada = True
+        return iter(())
+
+    monkeypatch.setattr(rag, "_read_manifest", fake_read)
+    monkeypatch.setattr(rag, "_collect_target_files_async", spy_collect)
+
+    await rag.ingest_all_memories()
+    assert coleta_chamada is False
+
+
+@pytest.mark.asyncio
+async def test_ingest_all_memories_agrega_ids_e_purga_obsoletos(monkeypatch: pytest.MonkeyPatch):
+    """Caracterizacao F5.3d: o orquestrador processa cada arquivo alvo e
+    entrega a UNIAO dos ids gerados ao purge — contrato do ciclo de vida
+    das memorias (o que sumiu do manifesto precisa ser expurgado)."""
+    rag = MemoryRAG()
+    alvos = [Path("docs/a.md"), Path("docs/b.md")]
+
+    async def fake_read(_path):
+        return {"files": ["docs/a.md", "docs/b.md"]}
+
+    async def fake_collect(_manifest, _base):
+        return iter(alvos)
+
+    processados: list[str] = []
+
+    async def fake_process(file_path, _info):
+        processados.append(file_path.name)
+        return {f"id-{file_path.name}"}
+
+    purgados: list[set[str]] = []
+
+    async def fake_purge(ids):
+        purgados.append(set(ids))
+
+    monkeypatch.setattr(rag, "_read_manifest", fake_read)
+    monkeypatch.setattr(rag, "_collect_target_files_async", fake_collect)
+    monkeypatch.setattr(rag, "_process_single_file", fake_process)
+    monkeypatch.setattr(rag, "_purge_obsolete_memories", fake_purge)
+
+    await rag.ingest_all_memories()
+
+    assert processados == ["a.md", "b.md"]
+    assert purgados == [{"id-a.md", "id-b.md"}]

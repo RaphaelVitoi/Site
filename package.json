@@ -37,7 +37,7 @@
     "python:watch": "uv run --no-sync ruff check --watch .",
     "python:format": "uv run --no-sync ruff format .",
     "python:typecheck": "uv run --no-sync pyright --project pyproject.toml",
-    "python:coverage": "uv run --no-sync python -m pytest --cov=engine tests/",
+    "python:coverage": "uv run --no-sync python -m pytest --cov tests/",
     "python:audit": "uv run --no-sync python -m pip_audit --ignore-vuln PYSEC-2026-311 --ignore-vuln PYSEC-2026-3814 --ignore-vuln PYSEC-2026-3815 --ignore-vuln PYSEC-2026-3813",
     "audit:entropy": "knip --directory frontend",
     "sota:audit": "pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/ops/cwv_gate.ps1",

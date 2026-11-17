@@ -379,10 +379,38 @@ filterwarnings = [
 # ==============================================================================
 [tool.coverage.run]
 branch = true
-source = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker"]
+# Superficie medida = caminho de runtime de producao. Entrypoints da raiz
+# (main/memory_rag/task_executor/predictive_forest) e pacotes antes fora do
+# radar (cli, conductor, memory, monitoring, mcp-bridge) entraram na Fase 5
+# da auditoria SOTA — medido antes de declarar. tools/ e locustfile ficam
+# fora: ferramenta autocontida de benchmark, nao caminho de runtime.
+source = [
+    "core",
+    "database",
+    "engine",
+    "utils",
+    "api",
+    "agents",
+    "llm",
+    "worker",
+    "cli",
+    "conductor",
+    "memory",
+    "monitoring",
+    "mcp-bridge",
+    "main",
+    "memory_rag",
+    "task_executor",
+    "predictive_forest",
+]
 omit = ["*/tests/*", "*/__pycache__/*", "*/migrations/*"]
 
 [tool.coverage.report]
+# Piso medido na Fase 5 (2026-11-17): 64,50% com a superficie expandida
+# (25.154 stmts), subestimado porque 276 testes de infra/git abortaram por
+# edicoes concorrentes na mesma arvore. O piso fica ~4,5 pts abaixo do
+# medido para nao reprovar ruido; subir quando a cobertura real subir.
+fail_under = 60
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",

@@ -319,7 +319,13 @@ def rodar_suite(extra: list[str]) -> int:
     # so -- serializa os write-tree sem mudar o paralelismo entre arquivos.
     if _tem_xdist() and _xdist_com_workers(args) and not any(a == "--dist" or a.startswith("--dist=") for a in args):
         args += ["--dist", "loadfile"]
-    cmd = [sys.executable, "-m", "pytest", "-q", *args]
+    # `--cov` mede a superficie declarada em pyproject [tool.coverage.run] e
+    # o fail_under=60 de [tool.coverage.report] reprova regressao — Fase 5 da
+    # auditoria: antes o relatorio era gerado sem nunca reprovar nada, e o CI
+    # media so engine com piso simbolico de 10%. O custo so e pago quando a
+    # arvore de conteudo muda de verdade (o marcador `ensure` pula a suite
+    # inteira em arvore ja medida).
+    cmd = [sys.executable, "-m", "pytest", "-q", "--cov", *args]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)
     if r.returncode != 0:

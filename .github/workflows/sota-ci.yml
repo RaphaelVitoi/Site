@@ -101,7 +101,10 @@ jobs:
 
       - name: 🧪 Execute Pytest Suite (239+ Tests)
         run: |
-          uv run --python "${{ matrix.python-version }}" pytest --cov=engine --cov-fail-under=10
+          # Superficie completa declarada em pyproject [tool.coverage.run] e
+          # piso fail_under=60 de [tool.coverage.report] — Fase 5: o piso
+          # anterior (engine-only, 10%) era simbolico e nunca media o runtime.
+          uv run --python "${{ matrix.python-version }}" pytest --cov
 
   frontend-build-and-typecheck:
     name: ⚛️ Frontend Quality, Accessibility & Performance

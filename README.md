@@ -55,8 +55,10 @@ C:\Users\rapha\.gemini\Site\
 - **Equação da Perspectiva Matemática (PMev):**
   $$PM = [(Equity \times R) \times Valuation] - [EV_{fold}(t, d_{pj}, pos) + RIO_{mw}]$$
 - **Validação Automatizada:** `tests/test_vitoi_perspective_engine.py`;
-  cobertura medida via `pytest --cov` com gate `--cov-fail-under=10` no CI
-  (`sota-ci.yml`).
+  cobertura medida via `pytest --cov` na superfície de runtime declarada em
+  `pyproject.toml` (`[tool.coverage.run]`), com piso `fail_under=60` aplicado
+  pelo portão local (`suite_verde.py`), pelo CI (`sota-ci.yml`) e pelo deploy
+  (`cloudbuild.backend.yaml`).
 - **Processamento Distribuído:** Apache Spark (>=4.3) + Apache Arrow (>=26);
   throughput de 54.7k registros/segundo é medição histórica do checkpoint
   [`reports/CHECKPOINT-2026-06-14-infrastructure-hardening.md`](reports/CHECKPOINT-2026-06-14-infrastructure-hardening.md),

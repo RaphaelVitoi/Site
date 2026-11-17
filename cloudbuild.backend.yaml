@@ -52,13 +52,14 @@ steps:
     name: node:22
     waitFor: [quality-gate]
 
-  # 0d. Suite Pytest — espelha o comando do CI do GitHub
-  # (pytest --cov=engine --cov-fail-under=10). So roda depois de npm ci
-  # porque ha testes que invocam node (extrator Lighthouse do cwv_gate).
+  # 0d. Suite Pytest — espelha o comando do CI do GitHub e do portao local
+  # (pytest --cov, superficie completa + fail_under=60 do pyproject — Fase 5).
+  # So roda depois de npm ci porque ha testes que invocam node (extrator
+  # Lighthouse do cwv_gate).
   - args:
       - -c
       - |
-        uv run --no-sync pytest --cov=engine --cov-fail-under=10
+        uv run --no-sync pytest --cov
         echo "Pytest Gate: PASS"
     entrypoint: sh
     env:

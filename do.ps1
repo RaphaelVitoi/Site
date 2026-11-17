@@ -842,7 +842,10 @@ if ($Ingest) {
     $IngestDropzone = Join-Path $TempDir "dropzone.md"
     [System.IO.File]::WriteAllText($IngestDropzone, $ClipText, [System.Text.Encoding]::UTF8)
 
-    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') apply-god-mode $IngestDropzone
+    # `ingest` e o handler atual de cli/commands.py (_cli_ingest -> apply_god_mode).
+    # O nome antigo `apply-god-mode` ficou zumbi apos a reorganizacao do CLI e
+    # caia no exit 2 "Comando desconhecido" - drift medido na Fase 5 (2026-11-17).
+    & $PythonCmd (Join-Path $ScriptDirectory 'task_executor.py') ingest $IngestDropzone
     if (Test-Path $IngestDropzone) { Remove-Item $IngestDropzone -Force -ErrorAction SilentlyContinue }
     Write-Host "[INGEST] Ciclo de assimilacao concluido com sucesso." -ForegroundColor Green
     exit 0
@@ -850,7 +853,7 @@ if ($Ingest) {
 
 if ($PSBoundParameters.Count -eq 0) {
     Write-Host "=== CHICO SMART CLI v2.0 - A MEMBRANA INTELIGENTE ===" -ForegroundColor Cyan
-    
+
     # Easter Egg: 10% de chance de aforismo do Maverick
     $RandomVal = Get-Random -Minimum 1 -Maximum 101
     $AphorismsFile = Join-Path $ScriptDirectory "data\aphorisms.json"
