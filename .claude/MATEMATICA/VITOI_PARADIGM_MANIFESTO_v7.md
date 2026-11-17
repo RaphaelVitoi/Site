@@ -24,7 +24,7 @@ Este arquivo é um **ponteiro canônico** para o manifesto central do Paradigma 
 ## 🧭 Acesso Rápido
 
 - **Manifesto Completo:** [`../../frontend/src/content/research-raw/vitoi-perspective-paradigm.md`](../../frontend/src/content/research-raw/vitoi-perspective-paradigm.md)
-- **Bíblia Técnica:** [`BIBLIA_TECNICA_SOTA_v6_2.md`](BIBLIA_TECNICA_SOTA_v6_2.md)
+- **Bíblia Técnica:** [`BIBLIA_TECNICA.md`](BIBLIA_TECNICA.md)
 - **Plano de Validação:** [`PLANO_VALIDACAO_COEFICIENTES.md`](PLANO_VALIDACAO_COEFICIENTES.md)
 - **Frameworks de Validação:** [`VALIDATION_FRAMEWORKS.md`](VALIDATION_FRAMEWORKS.md)
 

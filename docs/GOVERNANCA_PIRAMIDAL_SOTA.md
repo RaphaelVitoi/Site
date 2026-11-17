@@ -3,7 +3,7 @@ title: "MATRIZ DE GOVERNANÇA PIRAMIDAL SOTA v8.0 GOLD"
 type: governance
 status: active
 owner: site-governance
-updated_at: 2026-10-30
+updated_at: 2026-11-17
 id: governanca-piramidal-sota
 tipo: governance
 escopo: site
@@ -11,6 +11,7 @@ autor: site-governance
 criado_em: 2026-08-01
 verificado:
   - "Hierarquia de tiers conferida contra Site/CLAUDE.md secao 0 em 2026-11-10"
+  - "Roster reconciliado com data/model_catalog.json em 2026-11-17 (Fase 4 auditoria SOTA): nomes de agentes corrigidos, contagens versionadas removidas, tag Ollama nao inventariada marcada pendente"
 nao_verificado:
   - "Documento declarativo; nao mede comportamento de runtime"
 ---
@@ -24,6 +25,11 @@ nao_verificado:
 ---
 
 ## 1. A Pirâmide Canônica de Governança (8 Tiers)
+
+> O roster vigente de membros por tier — modelos, frota local, agentes, bots
+> e infra — vive em `data/model_catalog.json` (fonte única, validada por
+> `tests/test_model_catalog.py`). Este documento é a **matriz de
+> especialidades e mitigações**; a lista de membros não se repete aqui.
 
 ```mermaid
 flowchart TB
@@ -44,7 +50,8 @@ flowchart TB
     end
 
     subgraph T3["💼 TIER 3: FROTA ESPECIALISTA & MODELOS QWEN"]
-        FLEET["Frota de 19 Custom Agents (@arquiteto, @cientista, @guardiao, @redator...)"]
+        FLEET["Frota de 19 Agentes Especialistas
+(roster em data/agents_manifest.json)"]
         QWEN_MODELS["Modelos Especialistas Qwen Ollama\n(qwen2.5-coder:7b-q5, qwen-pmev-math, qwen-code-surgical, qwen-poetics, qwen 1.5b/0.5b)"]
     end
 
@@ -54,7 +61,8 @@ flowchart TB
 
     subgraph T5["🤖 TIER 5: BOTS DE INTEGRAÇÃO & CVE SCANNERS"]
         DEPENDABOT["Dependabot (Security Bumps / CVE Scanning)"]
-        INTEGRATORS["Integradores de Workflow (Linear, Atlassian, Tactiq, YouTube Intelligence)"]
+        INTEGRATORS["Integradores de Workflow (Linear, Atlassian, Tactiq, YouTube Intelligence)
+(modelo de respaldo pendente de validacao no inventario Ollama)"]
     end
 
     subgraph T6["🖥️ TIER 6: MODELOS LOCAIS, EDGE AI & ACELERAÇÃO NUMÉRICA"]
@@ -66,7 +74,7 @@ flowchart TB
     subgraph T7["⚙️ TIER 7: BARRAMENTO DE AUTOMAÇÃO, APIS & QUALITY GATE"]
         APIS["FastAPI & aiohttp Async Pipeline (Rate Limiter / Anti-Starvation / DAL SQLite)"]
         MCP["FastMCP & MCPServer Mesh (50+ Provedores Unificados)"]
-        GATE["Quality Gate M.O. 13.F (651 Pytest / Turbopack 55 Rotas / SHA-512 SRI)"]
+        GATE["Quality Gate M.O. 13.F (contagens vivem no portão que as executa — documento não repete valor versionado)"]
     end
 
     T0 --> T1
@@ -105,13 +113,13 @@ flowchart TB
 | **Tier 0: Raphael Vitoi (Soberania & Liderança)**                                                                                                                                                                                                                                     | Direcionamento estratégico, formulação conceitual PMev, CEO e desenvolvedor de projetos multidisciplinares, veto e validação final de produto.                                                                                                                                                      | Tempo e largura de banda de digitação manual.                                             | Orquestração autônoma em background com apresentação condensada do produto final.                                                 |
 | **Tier 1: Núcleo Cognitivo Mestre / Coletivo CHICO (Claude Opus/Sonnet/Haiku 5.5+ · ChatGPT 6.0 Sol/Terra/Luna+ · ChatGPT 6 Astra+ · Gemini 4 Argon+/Carbon+ · Gemini 3.8 Flash+ · Gemini 3.5 Flash-Lite+ · Gemini 3.1 Pro · Devin swe-2-flash · Codex · Antigravity IDE / VS Code)** | Raciocínio profundo, integridade arquitetural multi-arquivo e aplicação do Quality Gate.                                                                                                                                                                                                            | Custo computacional e latência em tarefas triviais repetitivas.                           | Delegação de tarefas pontuais para Tiers inferiores (2 a 6), retendo apenas a validação.                                          |
 | **Tier 2: Google Jules**                                                                                                                                                                                                                                                              | Refatorações assíncronas em larga escala em VMs Linux na nuvem com isolamento total.                                                                                                                                                                                                                | Dificuldade com subárvores locais do Windows e dependências C++ não-rasas.                | `jules_bridge.py` gerencia clone raso com `core/vendor/eigen` fixado e aterrissagem inspecionada.                                 |
-| **Tier 2: Exa AI**                                                                                                                                                                                                                                                                    | Busca semântica de papers acadêmicos em Teoria dos Jogos e documentações atualizadas.                                                                                                                                                                                                               | Não executa código nem gera arquitetura de projeto.                                       | `ExaKnowledgeBridge` sintetiza fórmulas LaTeX e alimenta o `@cientista` e o Stitch.                                               |
+| **Tier 2: Exa AI**                                                                                                                                                                                                                                                                    | Busca semântica de papers acadêmicos em Teoria dos Jogos e documentações atualizadas.                                                                                                                                                                                                               | Não executa código nem gera arquitetura de projeto.                                       | `ExaKnowledgeBridge` sintetiza fórmulas LaTeX e alimenta o `@pesquisador` e o Stitch.                                               |
 | **Tier 2: Stitch MCP**                                                                                                                                                                                                                                                                | Prototipagem generativa de telas e congelamento do Design System Dark Gold (`#090D16`, `#D4AF37`).                                                                                                                                                                                                  | Não implementa a lógica do backend nem valida contratos de API.                           | `StitchDesignBridge` converte designs em tokens Tailwind para implementação no Next.js.                                           |
 | **Tier 1: Devin (SWE-2 Flash, Devin Desktop Harness — CHICO, promovido 2026-11-10)**                                                                                                                                                                                                  | Resolução avançada de CI/CD, gerenciamento de dependências e automação DevOps — identidade própria dentro do coletivo CHICO.                                                                                                                                                                        | Risco de modificar lockfiles sem respeitar a topologia do monorepo.                       | Portão M.O. 13.F exige lockfile raiz único e compilação limpa do Turbopack.                                                       |
-| **Tier 3: Frota de 19 Agentes & Modelos Especialistas Qwen**                                                                                                                                                                                                                          | Especialização temática cirúrgica (`@arquiteto`, `@cientista`, `@guardiao`, etc.) e execução de tarefas especializadas locais via modelos Qwen (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`).                             | Janela menor que modelos de fronteira do Tier 1; desalinhamento se manifestos divergirem. | Escopo limitado (Target Lock), diffs atômicos de 120-150 linhas e orquestração local/Vulkan via `Ensure-OllamaModels.ps1`.        |
+| **Tier 3: Frota de 19 Agentes & Modelos Especialistas Qwen**                                                                                                                                                                                                                          | Especialização temática cirúrgica — roster completo em `data/agents_manifest.json` (19 agentes: @architect a @chico) e execução de tarefas especializadas locais via modelos Qwen (`qwen2.5-coder:7b-instruct-q5_K_M`, `qwen-code-surgical`, `qwen-pmev-math`, `qwen-poetics`, `qwen2.5-coder:1.5b/0.5b`).                             | Janela menor que modelos de fronteira do Tier 1; desalinhamento se manifestos divergirem. | Escopo limitado (Target Lock), diffs atômicos de 120-150 linhas e orquestração local/Vulkan via `Ensure-OllamaModels.ps1`.        |
 | **Tier 0 Companion: Microsoft 365 Copilot (Assistente Pessoal)**                                                                                                                                                                                                                      | Assistente pessoal direta de Raphael Vitoi (Tier 0 Companion, plano pago Microsoft 365). Conhecimento generalista ("entende um pouco de tudo"), apoio à rotina diária, produtividade pessoal e suporte contínuo ao fluxo de trabalho, podendo operar pontualmente no sistema sob supervisão direta. | Não opera como agente autônomo de backend da frota Tier 3 nem possui autonomia W3.        | Opera estritamente sob comando e acompanhamento direto do Tier 0, dedicada à otimização da rotina e demandas pessoais do usuário. |
-| **Tier 4: Subagents Dedicados**                                                                                                                                                                                                                                                       | Execução paralela e isolada de subtarefas (`generalist` via `gemma4:e4b` / `12b`, `research`/`architect` via `gemma4:e4b` — substitutos locais medidos após descontinuação do `gemma4:31b-cloud` em 2026-11-10, `flutter_a11y_agent`, `self`). Suporte a Thinking Mode `<                           | think                                                                                     | >` e isolamento de canais.                                                                                                        | Contexto isolado e sem visão holística do monorepo. | Recebem escopo limitado estrito, orçamentos visuais dinâmicos (70 a 1120 tokens) e herdam auto-grounding via `TierPolicyEngine`. |
-| **Tier 5: Dependabot / Bots**                                                                                                                                                                                                                                                         | Detecção automatizada de CVEs e integrações de tickets (Linear, Tactiq, YouTube Intelligence via `gemma4:12b-unified-it` Encoder-Free).                                                                                                                                                             | Cria PRs isolados em subpastas que quebram o lockfile raiz.                               | Revisão humana/Tier 1; aplicação centralizada no `package.json` raiz via `overrides`.                                             |
+| **Tier 4: Subagents Dedicados**                                                                                                                                                                                                                                                       | Execução paralela e isolada de subtarefas (`generalist` via `gemma4:e4b` / `12b`, `research`/`architect` via `gemma4:e4b` — substitutos locais medidos após descontinuação do `gemma4:31b-cloud` em 2026-11-10, `flutter_a11y_agent`, `self`). Suporte a Thinking Mode `<|think|>` e isolamento de canais.                                                                                                        | Contexto isolado e sem visão holística do monorepo. | Recebem escopo limitado estrito, orçamentos visuais dinâmicos (70 a 1120 tokens) e herdam auto-grounding via `TierPolicyEngine`. |
+| **Tier 5: Dependabot / Bots**                                                                                                                                                                                                                                                         | Detecção automatizada de CVEs e integrações de tickets (Linear, Tactiq, YouTube Intelligence (modelo de respaldo pendente de validação no inventário Ollama medido)).                                                                                                                                                             | Cria PRs isolados em subpastas que quebram o lockfile raiz.                               | Revisão humana/Tier 1; aplicação centralizada no `package.json` raiz via `overrides`.                                             |
 | **Tier 6: Modelos Locais & Edge AI (Ollama (somente local): gemma4:12b, gemma4:e4b/e2b, família Qwen quantizada · llama.cpp GGUF · Gemini Nano · C++ SIMD)**                                                                                                                          | Soberania de dados local e inferência 100% on-device; todos os modelos Ollama :cloud descontinuados em 2026-11-10.                                                                                                                                                                                  | Menor capacidade que modelos proprietários de mais de 1 trilhão de parâmetros.            | Utilizado como motor de provas matemáticas PMev, validador de invariantes e execução contínua de subagentes.                      |
 | **Tier 6: Gemini Nano**                                                                                                                                                                                                                                                               | Inferência ultrarrápida no navegador (CDP 9222/9223) sem chamada de rede externa.                                                                                                                                                                                                                   | Capacidade limitada a tarefas de Prompt API e sumarizações curtas.                        | Usado no DevTools MCP para diagnósticos em tempo real de Core Web Vitals e LoAF.                                                  |
 | **Tier 7: FastAPI / aiohttp / MCP**                                                                                                                                                                                                                                                   | Barramento transacional, rate limiting, proteção anti-starvation e bridge para 50+ ferramentas.                                                                                                                                                                                                     | Sem autonomia decisória.                                                                  | Monitorado continuamente pelo `task_executor.py` e auditado pelo `record_gate.py`.                                                |
@@ -175,8 +183,10 @@ Toda mutação no código fonte, artefatos ou registros deve conter
 obrigatoriamente:
 
 1. **SHA:** Identificador criptográfico Git do commit correspondente.
-2. **Assinatura:** Autor institucional e Tier hierárquico (ex:
-   `Chico v8.0 GOLD [Tier 1.B]`, `Subagent-Research [Tier 4]`).
+2. **Assinatura:** Autor individual e Tier hierárquico, na anatomia de 5
+   campos do CLAUDE.md §0 (ex: `Devin (SWE-2 Flash) [Tier 1] -- modelo=...
+   condutor=... ts=... sha=... supervisao=...`). O grupo nunca ocupa o
+   campo do autor.
 3. **Propósito:** Justificativa funcional explícita, identificando o impacto e
    os arquivos sob Target Lock.
 

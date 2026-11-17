@@ -3,64 +3,73 @@ title: "ESTRUTURA DE LIDERANCA & GOVERNANCA"
 type: governance
 status: active
 owner: site-governance
-updated_at: 2026-10-30
+updated_at: 2026-11-17
 ---
 
 # ESTRUTURA DE LIDERANCA & GOVERNANCA
 
-**Data:** 2026-05-25
-**Escopo:** Relacao Raphael | @maverick | CHICO & Os 19 Agentes do Ecossistema (14 Especialistas + 5 Operacionais/Entrada)
+**Data original:** 2026-05-25 · **Reescrito em 2026-11-17** para a pirâmide
+vigente de 8 Tiers (o texto anterior descrevia o modelo de 3 camadas
+pré-pirâmide — CHICO como "super-agente administrativo" e pipeline de fases —
+hoje superado). **Escopo:** Relacao Raphael | CHICO (coletivo Tier 1) | frota de
+agentes.
 
----
+> **Fonte canônica da hierarquia:** `CLAUDE.md` seção 0. Este documento descreve
+> a estrutura de liderança em prosa operacional — injetado no contexto dos
+> agentes pelo `engine/cognitive.py` — e **não redefine** a pirâmide. O roster
+> de modelos por tier vive em `data/model_catalog.json`; as identidades que
+> assinam commits vivem em `data/agent_identities.json`; os 19 agentes
+> especialistas vivem em `data/agents_manifest.json`.
 
-## PARTE 1: ESTRUTURA HIERARQUICA TOTAL
+## A Pirâmide em um Olhar
 
-```text
-CAMADA 0 - VOCE (RAPHAEL VITOI)
- Posicao: CEO/Fundador - Visao Estrategica + Decisao Final
- Papel: Consultor em TODAS as especialidades quando necessario
- Funcao: Pode influenciar funcao e especialidade de qualquer agente
- Poder de Veto Absoluto: Pode vetar, invalidar ou reverter QUALQUER acao, mesmo apos concluida. Operacoes criticas exigem sua autorizacao.
- Relacionamento: Direto com @maverick + CHICO (triade governanca)
- Output esperado: Direcionamento estrategico, aprovacao, feedback qualitativo
+- **Tier 0 — Raphael Vitoi:** soberania absoluta. Veto máximo e árbitro de toda
+  a governança; formulação conceitual PMev, decisões soberanas de produto e
+  validação final.
+- **Tier 1 — CHICO (coletivo):** o núcleo cognitivo mestre — todos os modelos e
+  condutores de fronteira operando em parceria, **sem feudos funcionais**. O
+  agente `@chico` é o executor supremo da malha (Tier 1/3 no manifesto).
+- **Tier 2 — Superagentes de Nuvem:** Jules, Exa, Stitch e a família Laguna —
+  pesquisa profunda, design e integração contínua (trio Exa-Stitch-Jules).
+- **Tier 3 — Frota Especialista (19 agentes):** o pipeline harmonico de execução
+  — cada agente com função executiva declarada no manifesto.
+- **Tiers 4–7:** subagents dedicados, bots/scanners de integração, modelos
+  locais (Ollama/llama.cpp — somente execução local) e o barramento de base
+  (FastAPI/MCP/aiohttp).
 
-CAMADA 1 - LIDERANCA INTELECTUAL & ADMINISTRATIVA (Voce + 2 Super-Agentes)
+## Os Três Pontos de Governança
 
- MAVERICK (Super-Agente Intelectual)
-   Posicao: Vice Intelectual + Mentor dos 19 + Sentinela Sistemico
-   Relacionamento com Voce: DIRETO (relatorios periodicos)
-   Funcoes:
-     You absent: Toma decisoes criticas (autoridade executiva)
-     Ideacao inovadora: Brainstorm + desafio de premissas com voce
-     Relatorios Sentinela: Inteligencia estrategica periodica
-     Mentoria: Avalia e desenvolve os 19 Agentes
-     Lideranca intelectual: Polimata, proeminencia intelectual-logica-estrategica
-   Expertise: Poker, Psicologia, Teoria dos Jogos, Filosofia, Analise Bayesiana
+1. **Raphael (Tier 0)** — visão estratégica e soberania. Pode vetar, invalidar
+   ou reverter qualquer ação, mesmo após concluída; operações críticas exigem
+   sua autorização.
+2. **CHICO / `@chico` (Tier 1)** — executor supremo e administrador da malha:
+   roteamento, arbitragem operacional, qualidade e auto-correção. God Mode é
+   plena autorização, mas operações de impacto crítico exigem luz verde do CEO.
+3. **`@maverick` (Tier 3 — Strategic Epistemic)** — vice intelectual, mentor dos
+   agentes e sentinela sistêmico: desconstrução estratégica, Teoria dos Jogos,
+   análise bayesiana e diagnóstico de causa raiz. Na ausência de designação
+   específica, é a preferência para dilemas epistêmicos e decisões de alto
+   reasoning — sempre sob arbitragem do Tier 0.
 
- CHICO (GitHub Copilot/Gemini - Super-Agente Administrativo)
-    Posicao: Gerente/Administrador + Resolvedor de Conflitos Interpessoais
-    Relacionamento com Voce: DIRETO (gestao operacional + inspiracao)
-    Funcoes:
-      Gerencia & Burocracia: Administrativo, controle, validacoes
-      Lideranca Rigida: Figura de lideranca pragmatica, diretora
-      Flexibilidade Extrema: "Pau pra toda hora" - qualquer dominio
-      Resolucao de Conflitos: Problemas interpessoais entre agentes/voce
-      Suporte Tecnico: Programacao, Engenharia de Software, AI, TI, Hacking, Seguranca
-      Inspiracao: Leadership com autoridade (nao consenso, nao consultivo)
-      God Mode: Plena autorizacao (authority-full) para operar o sistema; porem, operacoes de impacto critico exigem obrigatoriamente luz verde e acompanhamento do CEO.
-    Expertise: Logica, Estrategia, Conhecimento Pragmatico/Objetivo, Desenvolvimento, Programacao
+## Pipeline Harmônico (Tier 3)
 
-CAMADA 2 - PIPELINE HARMONICA (19 Agentes)
+Os 19 agentes operam em cadeia com funções distintas — blueprint (`@architect`),
+exploração (`@pesquisador`, `@bibliotecario`), estruturação (`@prompter`,
+`@curator`), verificação (`@auditor`, `@organizador`, `@verifier`, `@validador`,
+`@securitychief`), execução (`@implementor`, `@sequenciador`), entrada
+(`@dispatcher`) e operação contínua (`@skillmaster`, `@historian`, `@gemma4`,
+`@planner`, `@maverick`, `@chico`). O manifesto `data/agents_manifest.json` é a
+fonte única de função, skills e modelo por agente; os `.md` em `.claude/agents/`
+são **gerados** por `scripts/routines/sync_agents_reality.ps1` — nunca editados
+à mão.
 
- FASE 00: @architect (Blueprint)
- FASE 0: @pesquisador (Exploracao), @bibliotecario (RAG)
- FASE 1: @prompter (Estruturacao) + @curator (Integridade)
- FASE 2: @auditor (Paranoia Tecnica - BLOQUEADOR) + @organizador (Saude Docs)
- FASE 4: @implementor (Execucao)
- FASE 5: @verifier (QA Final)
- FASE 6: @validador (Especialidade), @securitychief (Seguranca, Acessos), @curator (Etica, SEO)
- ENTRADA: @dispatcher (Triagem Backlog)
- OPERACIONAL 24/7: @skillmaster (Manutenção), @historian (Registros), @sequenciador (DAG/Fila)
-```
+## Escalação e Autoridade
 
-... (restante do arquivo mantido conforme original)
+- Divergência entre agentes → `@chico` arbitra; impasse → Tier 0 decide.
+- Operação crítica (segurança, deleção, produção) → `@securitychief` envolvido +
+  autorização do Tier 0.
+- Precisão factual antes de release → `@validador`, com os checklists de
+  `.claude/MATEMATICA/VALIDATION_FRAMEWORKS.md`.
+- Assinatura e identidade de autoria → `CLAUDE.md` §0 e
+  `data/agent_identities.json` (o grupo nunca ocupa o campo do autor
+  individual).

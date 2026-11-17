@@ -18,7 +18,7 @@ updated_at: 2026-10-30
 
 ## 1. A ONTOLOGIA DA PERSPECTIVA (A EQUAÇÃO SOBERANA)
 
-O ecossistema SOTA v6 rompe com a medição linear de EV (ChipEV/ICMev puro) e introduz a **Física Dimensional de Torneios**. O núcleo da decisão reside na Equação Unificada:
+O ecossistema SOTA v8.0 GOLD rompe com a medição linear de EV (ChipEV/ICMev puro) e introduz a **Física Dimensional de Torneios**. O núcleo da decisão reside na Equação Unificada:
 
 $$PM = [(Equity \times R) \times Valuation] - [EV_{fold}(t, dpj, pos) + RIO_{mw}]$$
 
@@ -79,6 +79,6 @@ A habilidade técnica é tratada como uma variável da profundidade de stack: $E
 
 ### VEREDITO FINAL
 
-O SOTA v6.2 GOLD é a materialização fidedigna da mesa como um organismo vivo. Ele não ensina a jogar cartas; ele ensina a navegar na física do risco inflacionário.
+O SOTA v8.0 GOLD é a materialização fidedigna da mesa como um organismo vivo. Ele não ensina a jogar cartas; ele ensina a navegar na física do risco inflacionário.
 
-*Assinado: Chico (Super-Admin SOTA v6)*
+*Assinado: Chico (Super-Admin SOTA v8.0 GOLD)*
