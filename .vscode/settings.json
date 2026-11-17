@@ -1,725 +1,679 @@
 {
-    "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "python.languageServer": "Default",
-    "pylint.enabled": false,
-    "python.terminal.activateEnvironment": true,
-    "python.analysis.diagnosticMode": "openFilesOnly",
-    "python.analysis.inlayHints.functionReturnTypes": true,
-    "python.analysis.inlayHints.variableTypes": true,
-    "python.analysis.inlayHints.parameterNames": true,
-    "python.analysis.autoImportCompletions": true,
-    "python.analysis.indexing": true,
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/../extensions/sota-chrome-cockpit/python-backend"
-    ],
-    "python.envFile": "${workspaceFolder}/.env",
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": true,
-    "python.testing.autoTestDiscoverOnSaveEnabled": false,
+  "lldb-dap.executable-path": "C:/Program Files/LLVM/bin/lldb-dap.exe",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.languageServer": "None",
+  "pylint.enabled": false,
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.inlayHints.parameterNames": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.indexing": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}/../extensions/sota-chrome-cockpit/python-backend"],
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": true,
+  "python.testing.autoTestDiscoverOnSaveEnabled": false,
+  "editor.formatOnSave": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.venv": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/reports/coverage": true,
+    "**/.pytest_cache": true,
+    "**/.pytest_tmp": true
+  },
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.husky/**": true,
+    "**/node_modules/**": true,
+    "**/.venv/**": true,
+    "**/.next/**": true,
+    "**/.turbo/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/.pytest_tmp/**": true,
+    "**/.ruff_cache/**": true,
+    "**/dist/**": true,
+    "**/dist-workers/**": true,
+    "**/build/**": true,
+    "**/wasm-equity/target/**": true,
+    "**/core/vendor/**": true,
+    "**/worker/Java/**": true,
+    "**/reports/**": true,
+    "**/coverage/**": true
+  },
+  "git.repositoryScanIgnoredFolders": [
+    "node_modules",
+    ".venv",
+    ".next",
+    ".pytest_cache",
+    ".pytest_tmp",
+    ".ruff_cache",
+    "target"
+  ],
+  "tailwindCSS.files.exclude": [
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/.hg/**",
+    "**/.svn/**",
+    "**/.venv/**",
+    "**/.next/**",
+    "**/target/**",
+    "**/core/vendor/**",
+    "**/worker/Java/**",
+    "**/reports/**",
+    "**/docs/**",
+    "**/.trunk/**",
+    "skills/**"
+  ],
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.pytest_tmp": true,
+    "**/.ruff_cache": true,
+    "**/reports/coverage": true,
+    "**/coverage/lcov-report": true,
+    "**/dist-workers": true,
+    "**/core/vendor": true,
+    "**/worker/Java": true
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
-    "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
-    "search.exclude": {
-        "**/node_modules": true,
-        "**/.next": true,
-        "**/.venv": true,
-        "**/dist": true,
-        "**/build": true,
-        "**/reports/coverage": true,
-        "**/.pytest_cache": true,
-        "**/.pytest_tmp": true
+    "editor.wordWrap": "on"
+  },
+  "markdownlint.lintWorkspaceGlobs": [
+    "**/*.md",
+    "!node_modules/**",
+    "!**/node_modules/**",
+    "!.next/**",
+    "!**/.next/**",
+    "!.venv/**",
+    "!**/.venv/**",
+    "!dist/**",
+    "!**/dist/**",
+    "!build/**",
+    "!**/build/**",
+    "!coverage/**",
+    "!**/coverage/**",
+    "!core/vendor/**",
+    "!**/core/vendor/**",
+    "!worker/Java/**",
+    "!**/worker/Java/**",
+    "!wasm-equity/target/**",
+    "!**/wasm-equity/target/**",
+    "!reports/**",
+    "!**/reports/**",
+    "!docs/reports/**",
+    "!**/docs/reports/**",
+    "!skills/**",
+    "!**/skills/**"
+  ],
+  "files.associations": {
+    "**/LICENSE*": "plaintext",
+    "LICENSE*": "plaintext",
+    "**/.devin/config.json": "jsonc",
+    "**/.venv/**": "plaintext",
+    "**/*.dist-info/METADATA": "plaintext",
+    "**/.remember/tmp/*.ts": "plaintext",
+    ".markdownlintignore": "ignore",
+    ".prettierignore": "ignore",
+    ".geminiignore": "ignore",
+    ".ragignore": "ignore",
+    "skills/**/.github/workflows/*.yml": "yaml",
+    "skills/**/.github/workflows/*.yaml": "yaml",
+    "**/skills/**/.github/workflows/*.yml": "yaml",
+    "**/skills/**/.github/workflows/*.yaml": "yaml",
+    "**/.github/workflows/publish-agentcore.yml": "yaml"
+  },
+  "prettier.logLevel": "warn",
+  "prettier.requireConfig": true,
+  "[rust]": {
+    "editor.wordBasedSuggestions": "matchingDocuments",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true
+  },
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+  "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
+  "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
+  "cmake.generator": "Visual Studio 18 2026",
+  "cmake.preferredAccelerators": ["vs", "ninja"],
+  "cmake.configureSettings": {
+    "CMAKE_GENERATOR_INSTANCE": "C:/Program Files/Microsoft Visual Studio/18/Insiders",
+    "CMAKE_GENERATOR_PLATFORM": "x64",
+    "Python_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "Python3_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "nanobind_DIR": "${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+  },
+  "cmake.configureArgs": [
+    "-DCMAKE_GENERATOR_INSTANCE=C:/Program Files/Microsoft Visual Studio/18/Insiders",
+    "-DPython_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
+    "-DPython3_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
+    "-Dnanobind_DIR=${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+  ],
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/core/tensor_engine",
+    "--header-insertion=never",
+    "-j=4",
+    "--background-index"
+  ],
+  "claude.customPrompts": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "anthropic.claudeCode.customCommands": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "chatgpt.customPrompts": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "openai.customPrompts": {
+    "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
+    "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
+    "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
+    "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
+    "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
+    "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
+    "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+  },
+  "editor.inlineSuggest.enabled": true,
+  "editor.suggest.preview": true,
+  "gitlens.telemetry.enabled": false,
+  "gitlens.currentLine.enabled": true,
+  "gitlens.codeLens.scopes": ["document"],
+  "jupyter.interactiveWindow.textEditor.executeSelection": true,
+  "jupyter.askForKernelRestart": false,
+  "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+  "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
+  "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
+  "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "vitest.rootConfig": "vitest.config.mjs",
+  "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+  "sonarlint.disableTelemetry": true,
+  "vscode-edge-devtools.webhint": false,
+  "sonarlint.rules": {
+    "css:S9423": {
+      "level": "off"
     },
-    "files.watcherExclude": {
-        "**/.git/objects/**": true,
-        "**/.git/subtree-cache/**": true,
-        "**/.husky/**": true,
-        "**/node_modules/**": true,
-        "**/.venv/**": true,
-        "**/.next/**": true,
-        "**/.turbo/**": true,
-        "**/__pycache__/**": true,
-        "**/.pytest_cache/**": true,
-        "**/.pytest_tmp/**": true,
-        "**/.ruff_cache/**": true,
-        "**/dist/**": true,
-        "**/dist-workers/**": true,
-        "**/build/**": true,
-        "**/wasm-equity/target/**": true,
-        "**/core/vendor/**": true,
-        "**/worker/Java/**": true,
-        "**/reports/**": true,
-        "**/coverage/**": true
+    "css:S4666": {
+      "level": "off"
     },
-    "git.repositoryScanIgnoredFolders": [
-        "node_modules",
-        ".venv",
-        ".next",
-        ".pytest_cache",
-        ".pytest_tmp",
-        ".ruff_cache",
-        "target"
-    ],
-    "tailwindCSS.files.exclude": [
-        "**/.git/**",
-        "**/node_modules/**",
-        "**/.hg/**",
-        "**/.svn/**",
-        "**/.venv/**",
-        "**/.next/**",
-        "**/target/**",
-        "**/core/vendor/**",
-        "**/worker/Java/**",
-        "**/reports/**",
-        "**/docs/**",
-        "**/.trunk/**",
-        "skills/**"
-    ],
-    "files.exclude": {
-        "**/__pycache__": true,
-        "**/.pytest_cache": true,
-        "**/.pytest_tmp": true,
-        "**/.ruff_cache": true,
-        "**/reports/coverage": true,
-        "**/coverage/lcov-report": true,
-        "**/dist-workers": true,
-        "**/core/vendor": true,
-        "**/worker/Java": true
+    "css:S4667": {
+      "level": "off"
     },
-    "[python]": {
-        "editor.defaultFormatter": "charliermarsh.ruff",
-        "editor.codeActionsOnSave": {
-            "source.fixAll.ruff": "explicit",
-            "source.organizeImports.ruff": "explicit"
-        }
+    "javascript:S6853": {
+      "level": "off"
     },
-    "[javascript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "typescript:S6853": {
+      "level": "off"
     },
-    "[javascriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "javascript:S4790": {
+      "level": "off"
     },
-    "[typescript]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "typescript:S4790": {
+      "level": "off"
     },
-    "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "javascript:S5332": {
+      "level": "off"
     },
-    "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
+    "typescript:S5332": {
+      "level": "off"
     },
-    "[jsonc]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
+    "python:S5332": {
+      "level": "off"
     },
-    "[yaml]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "python:S3776": {
+      "level": "off"
     },
-    "[html]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "css:S5404": {
+      "level": "off"
     },
-    "[css]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "javascript:S2999": {
+      "level": "off"
     },
-    "[scss]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "typescript:S2999": {
+      "level": "off"
     },
-    "[markdown]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true,
-        "editor.wordWrap": "on"
+    "javascript:S6842": {
+      "level": "off"
     },
-    "markdownlint.lintWorkspaceGlobs": [
-        "**/*.md",
-        "!node_modules/**",
-        "!**/node_modules/**",
-        "!.next/**",
-        "!**/.next/**",
-        "!.venv/**",
-        "!**/.venv/**",
-        "!dist/**",
-        "!**/dist/**",
-        "!build/**",
-        "!**/build/**",
-        "!coverage/**",
-        "!**/coverage/**",
-        "!core/vendor/**",
-        "!**/core/vendor/**",
-        "!worker/Java/**",
-        "!**/worker/Java/**",
-        "!wasm-equity/target/**",
-        "!**/wasm-equity/target/**",
-        "!reports/**",
-        "!**/reports/**",
-        "!docs/reports/**",
-        "!**/docs/reports/**",
-        "!skills/**",
-        "!**/skills/**"
-    ],
-    "files.associations": {
-        "**/LICENSE*": "plaintext",
-        "LICENSE*": "plaintext",
-        "**/.devin/config.json": "jsonc",
-        "**/.venv/**": "plaintext",
-        "**/*.dist-info/METADATA": "plaintext",
-        "**/.remember/tmp/*.ts": "plaintext",
-        ".markdownlintignore": "ignore",
-        ".prettierignore": "ignore",
-        ".geminiignore": "ignore",
-        ".ragignore": "ignore",
-        "skills/**/.github/workflows/*.yml": "yaml",
-        "skills/**/.github/workflows/*.yaml": "yaml",
-        "**/skills/**/.github/workflows/*.yml": "yaml",
-        "**/skills/**/.github/workflows/*.yaml": "yaml",
-        "**/.github/workflows/publish-agentcore.yml": "yaml"
+    "typescript:S6842": {
+      "level": "off"
     },
-    "prettier.logLevel": "warn",
-    "prettier.requireConfig": true,
-    "[rust]": {
-        "editor.wordBasedSuggestions": "matchingDocuments",
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true,
-        "editor.formatOnSave": true
+    "javascript:S9362": {
+      "level": "off"
     },
-    "eslint.workingDirectories": [
-        {
-            "mode": "auto"
-        }
-    ],
-    "eslint.validate": [
-        "javascript",
-        "javascriptreact",
-        "typescript",
-        "typescriptreact"
-    ],
-    "cmake.sourceDirectory": "${workspaceFolder}/core/tensor_engine",
-    "cmake.buildDirectory": "${workspaceFolder}/core/tensor_engine/build",
-    "cmake.generator": "Visual Studio 18 2026",
-    "cmake.preferredAccelerators": [
-        "vs",
-        "ninja"
-    ],
-    "cmake.configureSettings": {
-        "CMAKE_GENERATOR_INSTANCE": "C:/Program Files/Microsoft Visual Studio/18/Insiders",
-        "CMAKE_GENERATOR_PLATFORM": "x64",
-        "Python_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
-        "Python3_EXECUTABLE": "${workspaceFolder}/.venv/Scripts/python.exe",
-        "nanobind_DIR": "${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
+    "typescript:S9362": {
+      "level": "off"
     },
-    "cmake.configureArgs": [
-        "-DCMAKE_GENERATOR_INSTANCE=C:/Program Files/Microsoft Visual Studio/18/Insiders",
-        "-DPython_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
-        "-DPython3_EXECUTABLE=${workspaceFolder}/.venv/Scripts/python.exe",
-        "-Dnanobind_DIR=${workspaceFolder}/.venv/Lib/site-packages/nanobind/cmake"
-    ],
-    "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/core/tensor_engine",
-        "--header-insertion=never",
-        "-j=4",
-        "--background-index"
-    ],
-    "claude.customPrompts": {
-        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    "typescript:S7767": {
+      "level": "off"
     },
-    "anthropic.claudeCode.customCommands": {
-        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    "typescript:S6747": {
+      "level": "off"
     },
-    "chatgpt.customPrompts": {
-        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    "javascript:S6747": {
+      "level": "off"
     },
-    "openai.customPrompts": {
-        "sota-audit": "Auditar integridade de tipos, seguranca CWE e conformidade SOTA v8.0 GOLD",
-        "pmev-optimize": "Otimizar funcao matematica e complexidade assintotica com Clean Code e formalismo PMev",
-        "generate-tests": "Gerar testes unitarios completos com pytest/jest cobrindo edge cases e invariantes",
-        "refactor-clean": "Refatorar aplicando principios SOLID, Zero-Any e tipagem estrita",
-        "cwv-gate": "Executar auditoria completa do portao de qualidade de 5 fases (CWV, A11y, CVE, SRI e Higiene de Repositorio) via scripts/ops/cwv_gate.ps1",
-        "nexus-worker": "Iniciar ou auditar a fila assincrona e orquestracao de agentes locais via Nexus (uv run nexus)",
-        "compile-tensor": "Recompilar o motor C++ SIMD Nanobind via CMake e gerar o modulo binario quantum_tensor_engine"
+    "typescript:S6438": {
+      "level": "off"
     },
-    "editor.inlineSuggest.enabled": true,
-    "editor.suggest.preview": true,
-    "gitlens.telemetry.enabled": false,
-    "gitlens.currentLine.enabled": true,
-    "gitlens.codeLens.scopes": [
-        "document"
-    ],
-    "jupyter.interactiveWindow.textEditor.executeSelection": true,
-    "jupyter.askForKernelRestart": false,
-    "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
-    "sonarlint.pathToCompileCommands": "${workspaceFolder}/compile_commands.json",
-    "sonarlint.analysisExcludes": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
-    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,skills/**,**/reports/**,reports/**,**/styles/fontawesome/**,**/fontawesome/**,**/tests/visual/**,**/.remember/**",
-    "css.lint.unknownAtRules": "ignore",
-    "scss.lint.unknownAtRules": "ignore",
-    "vitest.rootConfig": "vitest.config.mjs",
-    "vitest.nodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
-    "sonarlint.disableTelemetry": true,
-    "vscode-edge-devtools.webhint": false,
-    "sonarlint.rules": {
-        "css:S9423": {
-            "level": "off"
-        },
-        "css:S4666": {
-            "level": "off"
-        },
-        "css:S4667": {
-            "level": "off"
-        },
-        "javascript:S6853": {
-            "level": "off"
-        },
-        "typescript:S6853": {
-            "level": "off"
-        },
-        "javascript:S4790": {
-            "level": "off"
-        },
-        "typescript:S4790": {
-            "level": "off"
-        },
-        "javascript:S5332": {
-            "level": "off"
-        },
-        "typescript:S5332": {
-            "level": "off"
-        },
-        "python:S5332": {
-            "level": "off"
-        },
-        "python:S3776": {
-            "level": "off"
-        },
-        "css:S5404": {
-            "level": "off"
-        },
-        "javascript:S2999": {
-            "level": "off"
-        },
-        "typescript:S2999": {
-            "level": "off"
-        },
-        "javascript:S6842": {
-            "level": "off"
-        },
-        "typescript:S6842": {
-            "level": "off"
-        },
-        "javascript:S9362": {
-            "level": "off"
-        },
-        "typescript:S9362": {
-            "level": "off"
-        },
-        "typescript:S7767": {
-            "level": "off"
-        },
-        "typescript:S6747": {
-            "level": "off"
-        },
-        "javascript:S6747": {
-            "level": "off"
-        },
-        "typescript:S6438": {
-            "level": "off"
-        },
-        "javascript:S6438": {
-            "level": "off"
-        }
-    },
-    "rust-analyzer.imports.preferPrelude": true,
-    "rust-analyzer.imports.granularity.enforce": true,
-    "rust-analyzer.completion.termSearch.enable": true,
-    "rust-analyzer.completion.privateEditable.enable": true,
-    "rust-analyzer.completion.fullFunctionSignatures.enable": true,
-    "rust-analyzer.diagnostics.styleLints.enable": true,
-    "rust-analyzer.diagnostics.previewRustcOutput": true,
-    "rust-analyzer.debug.buildBeforeRestart": true,
-    "rust-analyzer.trace.server": "off",
-    "securecoder.enableI18n": false,
-    "securecoder.rules.i18n": "off",
-    "securecoder.rules.internationalization": "off",
-    "securecoder.rules.jsx-not-internationalized": "off",
-    "securecoder.disabledRules": [
-        "jsx-not-internationalized",
-        "i18n",
-        "internationalization"
-    ],
-    "google.cloud.project": "original-498419",
-    "google.cloud.billingQuotaProject": "original-498419",
-    "cloudcode.enableTelemetry": false,
-    "cloudcode.autoDependencies": "on",
-    "cloudcode.cloudRun.showExplorer": true,
-    "cloudcode.gke.showExplorer": true,
-    "cloudcode.secretManager.showExplorer": true,
-    "cloudcode.yaml.schemaValidation": true,
-    "claudeCode.preferredLocation": "panel",
-    "claudeCode.focusView": true,
-    "autoDocstring.docstringFormat": "google",
-    "autoDocstring.startOnNewLine": true,
-    "autoDocstring.includeExtendedSummary": true,
-    "evenBetterToml.schema.enabled": true,
-    "[toml]": {
-        "editor.defaultFormatter": "tamasfe.even-better-toml",
-        "editor.formatOnSave": true
-    },
-    "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.cargo.buildScripts.enable": true,
-    "rust-analyzer.procMacro.enable": true,
-    "rust-analyzer.linkedProjects": [
-        "${workspaceFolder}/wasm-equity/Cargo.toml",
-        "${workspaceFolder}/core/nexus-core-rust/Cargo.toml",
-        "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"
-    ],
-    "rust-analyzer.files.excludeDirs": [
-        ".next",
-        ".venv",
-        "node_modules",
-        "target",
-        ".git"
-    ],
-    "turboConsoleLog.addSemicolonInTheEnd": true,
-    "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
-    "redhat.telemetry.enabled": false,
-    "gdl.openTarget": "system",
-    "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
-        "build/QuantumTensorEngine.sln"
-    ],
-    "ruff.path": [
-        "${workspaceFolder}/.venv/Scripts/ruff.exe"
-    ],
-    "ruff.interpreter": [
-        "${workspaceFolder}/.venv/Scripts/python.exe"
-    ],
-    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
-    "ruff.importStrategy": "fromEnvironment",
-    "ruff.lint.preview": true,
-    "ruff.format.preview": true,
-    "workbench.editorAssociations": {
-        "**/.claude/**/*.bin": "default",
-        "**/CMakeFiles/**/*.bin": "default",
-        "**/.chroma_db/**/*.bin": "default",
-        "*.bin": "default",
-        "*.svg": "cweijan.officeViewer",
-        "*.pdf": "latex-workshop-pdf-hook",
-        "*.xlsx": "cweijan.officeViewer",
-        "*.xls": "cweijan.officeViewer",
-        "*.docx": "cweijan.officeViewer",
-        "*.doc": "cweijan.officeViewer",
-        "*.pptx": "cweijan.officeViewer",
-        "*.parquet": "cweijan.parquetViewer",
-        "*.drawio": "hediet.vscode-drawio",
-        "*.dio": "hediet.vscode-drawio",
-        "*.dio.png": "hediet.vscode-drawio",
-        "*.dio.svg": "hediet.vscode-drawio",
-        "*.excalidraw": "editor.excalidraw",
-        "*.excalidraw.json": "editor.excalidraw",
-        "*.excalidraw.svg": "editor.excalidraw",
-        "*.md": "ultimateViewer.preview",
-        "*.png": "ultimateViewer.preview",
-        "*.csv": "ultimateViewer.preview"
-    },
-    "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
-    "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
-    "markdown-preview-enhanced.enableTypographer": true,
-    "markdown-preview-enhanced.enableScriptExecution": false,
-    "markdown-preview-enhanced.enableHTML5Embed": true,
-    "markdown-preview-enhanced.enableExtendedTableSyntax": true,
-    "markdown-preview-enhanced.enableCriticMarkupSyntax": true,
-    "markdown-preview-enhanced.d2Sketch": true,
-    "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
-    "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
-    "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
-    "wam.switchDevinCli": true,
-    "files.autoSave": "off",
-    "editor.codeActions.triggerOnFocusChange": true,
-    "editor.definitionLinkOpensInPeek": true,
-    "editor.experimental.asyncTokenizationLogging": true,
-    "editor.experimental.preferTreeSitter.css": true,
-    "editor.experimental.preferTreeSitter.ini": true,
-    "editor.experimental.preferTreeSitter.regex": true,
-    "editor.experimental.preferTreeSitter.typescript": true,
-    "editor.experimentalGpuAcceleration": "on",
-    "editor.inlayHints.padding": true,
-    "editor.inlineCompletionsAccessibilityVerbose": false,
-    "editor.linkedEditing": true,
-    "editor.cursorSmoothCaretAnimation": "on",
-    "diffEditor.experimental.showMoves": true,
-    "diffEditor.experimental.useTrueInlineView": true,
-    "editor.inlineSuggest.edits.showCollapsed": true,
-    "editor.inlineSuggest.suppressSuggestions": true,
-    "editor.suggest.localityBonus": true,
-    "editor.suggest.shareSuggestSelections": true,
-    "editor.suggest.showStatusBar": true,
-    "editor.suggest.snippetsPreventQuickSuggestions": true,
-    "files.autoGuessEncoding": true,
-    "files.autoSaveWorkspaceFilesOnly": true,
-    "files.autoSaveWhenNoErrors": true,
-    "files.trimFinalNewlines": true,
-    "explorer.excludeGitIgnore": true,
-    "explorer.fileNesting.enabled": true,
-    "scm.alwaysShowActions": true,
-    "scm.alwaysShowRepositories": true,
-    "scm.diffDecorationsGutterPattern": {
-        "added": true
-    },
-    "scm.repositories.explorer": true,
-    "scm.workingSets.enabled": true,
-    "cmake.ctest.allowParallelJobs": true,
-    "cmake.buildTask": true,
-    "astro.content-intellisense": true,
-    "astro.updateImportsOnFileMove.enabled": true,
-    "search.useParentIgnoreFiles": true,
-    "search.useGlobalIgnoreFiles": true,
-    "accessibility.openChatEditedFiles": true,
-    "accessibility.signalOptions.debouncePositionChanges": true,
-    "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
-    "claudeCode.enableNewConversationShortcut": true,
-    "chatgpt.openOnStartup": true,
-    "chatgpt.runCodexInWindowsSubsystemForLinux": true,
-    "windsurfPyright.analysis.typeCheckingMode": "standard",
-    "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
-    "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
-    "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
-    "windsurfPyright.analysis.inlayHints.variableTypes": true,
-    "windsurfPyright.analysis.inlayHints.genericTypes": true,
-    "ollamaDirectCustomAgent.vectorSearchEnabled": true,
-    "ollamaDirectCustomAgent.whisperUseCloud": true,
-    "ollamaDirectCustomAgent.roleSplitEnabled": true,
-    "ollamaDirectCustomAgent.openOnStartup": true,
-    "ollamaDirectCustomAgent.modelWarmupEnabled": true,
-    "ollamaDirectCustomAgent.fullControlMode": false,
-    "ollamaDirectCustomAgent.fileWatcherEnabled": true,
-    "ollamaDirectCustomAgent.debugMode": true,
-    "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
-    "ollamaDirectCustomAgent.assistantAutoLaunch": true,
-    "claudeCode.disableLoginPrompt": true,
-    "java.project.exclusionFilters": [
-        "**/scripts/validation/**",
-        "**/.pytest_tmp/**",
-        "**/.pytest_cache/**",
-        "**/.venv/**",
-        "**/node_modules/**",
-        "**/dist/**",
-        "**/dist-workers/**",
-        "**/build/**",
-        "**/core/vendor/**",
-        "**/worker/Java/**"
-    ],
-    "java.project.resourceFilters": [
-        "node_modules",
-        ".git",
-        ".venv",
-        ".pytest_tmp",
-        ".pytest_cache",
-        "dist",
-        "dist-workers",
-        "build",
-        "core/vendor",
-        "worker/Java",
-        "scripts/validation"
-    ],
-    "java.import.exclusions": [
-        "**/scripts/validation/**",
-        "**/.pytest_tmp/**",
-        "**/.pytest_cache/**",
-        "**/.venv/**",
-        "**/node_modules/**",
-        "**/dist/**",
-        "**/core/vendor/**",
-        "**/worker/Java/**"
-    ],
-    "java.diagnostic.filter": [
-        "**/scripts/validation/**",
-        "**/.pytest_tmp/**"
-    ],
-    "java.errors.incompleteClasspath.severity": "ignore",
-    "sqltools.connections": [
-        {
-            "name": "Site (PostgreSQL Local)",
-            "group": "PokerRacional",
-            "driver": "PostgreSQL",
-            "server": "localhost",
-            "port": 5432,
-            "database": "postgres",
-            "username": "postgres",
-            "askForPassword": false,
-            "connectionTimeout": 15,
-            "previewLimit": 50,
-            "ssh": "Disabled"
-        }
-    ],
-    "workbench.experimental.modernUI": true,
-    "workbench.list.smoothScrolling": false,
-    "workbench.commandPalette.experimental.suggestCommands": true,
-    "workbench.experimental.cloudChanges.autoStore": "off",
-    "workbench.experimental.modernUIUppercaseViewHeaders": true,
-    "workbench.experimental.cloudChanges.partialMatches.enabled": true,
-    "workbench.experimental.share.enabled": true,
-    "workbench.editor.highlightModifiedTabs": true,
-    "workbench.browser.enableRemoteProxy": true,
-    "workbench.browser.experimentalUserTools.enabled": true,
-    "workbench.browser.openLocalhostLinks": true,
-    "workbench.settings.alwaysShowAdvancedSettings": true,
-    "chat.checkpoints.showFileChanges": true,
-    "chat.agent.sandbox.enabledWindows": "on",
-    "chat.viewProgressBadge.enabled": true,
-    "chat.agentSessionProjection.enabled": true,
-    "chat.exitAfterDelegation": true,
-    "chat.mcp.gallery.enabled": true,
-    "chat.mcp.assisted.nuget.enabled": true,
-    "chat.includeReferencedInstructions": true,
-    "chat.experimental.useSkillAdherencePrompt": true,
-    "chat.tools.compressOutput.enabled": true,
-    "chat.tools.terminal.outputCompaction": true,
-    "chat.tools.terminal.outputDeltas": true,
-    "aws.sagemaker.studio.spaces.enableIdentityFiltering": true,
-    "aws.samcli.enableCodeLenses": true,
-    "lldb-dap.captureSessionLogs": true,
-    "quarto.render.renderOnSave": true,
-    "python.globalModuleInstallation": true,
-    "python.useEnvironmentsExtension": true,
-    "markdown.preview.breaks": true,
-    "markdown.preview.typographer": true,
-    "markdown.preview.doubleClickToSwitchToEditor": true,
-    "markdown-preview-github-styles.colorMode": "auto",
-    "markmap.defaultExpandLevel": 3,
-    "markmap.colorFreezeLevel": 2,
-    "rainbow_csv.autodetect_separators": [
-        "TAB",
-        ",",
-        ";",
-        "|"
-    ],
-    "rainbow_csv.enable_separator_autodetection": true,
-    "csv-editor.readOption_hasHeader": "true",
-    "csv-editor.theme": "auto",
-    "svg.preview.mode": "svg",
-    "[r]": {
-        "editor.defaultFormatter": "REditorSupport.r",
-        "editor.formatOnSave": true,
-        "editor.wordBasedSuggestions": "off"
-    },
-    "[rmd]": {
-        "editor.defaultFormatter": "REditorSupport.r",
-        "editor.formatOnSave": true
-    },
-    "r.executablePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
-    "r.rpath.windows": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
-    "r.consoleArgs": [
-        "--no-save",
-        "--no-restore"
-    ],
-    "r.bracketedPaste": true,
-    "r.sessionWatcher": true,
-    "r.plot.backend": "httpgd",
-    "r.plot.jgd.historyLimit": 100,
-    "r.plot.jgd.exportWidth": 8,
-    "r.plot.jgd.exportHeight": 6,
-    "r.plot.jgd.exportDpi": 300,
-    "r.plot.format": "svglite",
-    "r.plot.defaults.colorTheme": "original",
-    "r.plot.defaults.plotPreviewLayout": "multirow",
-    "r.plot.timing.resizeInterval": 100,
-    "r.plot.timing.refreshInterval": 10,
-    "r.lsp.enabled": true,
-    "r.lsp.diagnostics": true,
-    "r.lsp.args": [
-        "--vanilla"
-    ],
-    "r.libPaths": [
-        "C:/Users/rapha/R/win-library/4.6"
-    ],
-    "terminal.integrated.env.windows": {
-        "R_LIBS_USER": "C:/Users/rapha/R/win-library/4.6"
-    },
-    "r.debugger.checkVersion": "recommended",
-    "playwright.configs": [
-        "frontend/playwright.config.ts",
-        "frontend/playwright.quality.config.ts"
-    ],
-    "csv.columnColorPalette": "cool",
-    "csv.separatorMode": "auto",
-    "vscode-office.gitHistory.quickSyncButton": true,
-    "vscode-office.decodeEscapedUnicodeCharacters": true,
-    "vscode-office.workspacePathAsImageBasePath": true,
-    "vscode-office.pasteImageToWorkspacePath": true,
-    "google.datacloud.expandMenus": true,
-    "google.datacloud.executeCellToolForNotebookMCP": true,
-    "clangd.checkUpdates": true,
-    "lldb-dap.serverMode": true,
-    "lldb-dap.detachOnError": true,
-    "lldb-dap.displayExtendedBacktrace": true,
-    "lldb-dap.enableSyntheticChildDebugging": true,
-    "lldb-dap.enableAutoVariableSummaries": true,
-    "boot-java.ai.mcp-server-enabled": true,
-    "boot-java.code-action.data-query-multiline": true,
-    "yaml.schemas": {
-        "vscode://schemas/custom/github-workflow": ".github/workflows/*.{yml,yaml}",
-        "https://www.schemastore.org/semgrep.json": [
-            ".semgrep.yml",
-            ".semgrep.yaml",
-            "**/.semgrep/**/*.yml",
-            "**/.semgrep/**/*.yaml",
-            "!**/.semgrep/guardian.yml",
-            "!**/.semgrep/guardian.yml.lock"
-        ]
-    },
-    "github-actions.workflows.pinned.workflows": [],
-    "github-actions.custom-variables": [
-        "ACTIONS_STEP_DEBUG",
-        "AGENTCORE_ECR_REPOSITORY_URI",
-        "APP_ID",
-        "DEBUG",
-        "GCP_WIF_PROVIDER",
-        "GEMINI_MODEL",
-        "GOOGLE_CLOUD_LOCATION",
-        "GOOGLE_CLOUD_PROJECT",
-        "GOOGLE_GENAI_USE_GCA",
-        "GOOGLE_GENAI_USE_VERTEXAI",
-        "SERVICE_ACCOUNT_EMAIL",
-        "UPLOAD_ARTIFACTS"
-    ],
-    "github-actions.custom-secrets": [
-        "AGENTCORE_AWS_ROLE_ARN",
-        "APP_PRIVATE_KEY",
-        "GEMINI_API_KEY",
-        "GOOGLE_API_KEY",
-        "NPM_TOKEN"
-    ],
-    "git.detectSubmodulesLimit": 25,
-    "acp.agents": {
-        "Antigravity": {
-            "command": "agy",
-            "args": [
-                "acp",
-                "--disable-telemetry"
-            ]
-        }
-    },
-    "antigravity.binary.path": "C:\\Users\\rapha\\AppData\\Local\\agy\\bin\\agy.exe",
-    "python.terminal.useEnvFile": true,
-    "chat.useClaudeHooks": true,
-    "python.analysis.diagnosticsSource": "Pylance",
-    "nexrall.auditTrail": true,
-    "terminal-in-status-bar.statusBarLabel": true
+    "javascript:S6438": {
+      "level": "off"
+    }
+  },
+  "rust-analyzer.imports.preferPrelude": true,
+  "rust-analyzer.imports.granularity.enforce": true,
+  "rust-analyzer.completion.termSearch.enable": true,
+  "rust-analyzer.completion.privateEditable.enable": true,
+  "rust-analyzer.completion.fullFunctionSignatures.enable": true,
+  "rust-analyzer.diagnostics.styleLints.enable": true,
+  "rust-analyzer.diagnostics.previewRustcOutput": true,
+  "rust-analyzer.debug.buildBeforeRestart": true,
+  "rust-analyzer.trace.server": "off",
+  "securecoder.enableI18n": false,
+  "securecoder.rules.i18n": "off",
+  "securecoder.rules.internationalization": "off",
+  "securecoder.rules.jsx-not-internationalized": "off",
+  "securecoder.disabledRules": ["jsx-not-internationalized", "i18n", "internationalization"],
+  "google.cloud.project": "original-498419",
+  "google.cloud.billingQuotaProject": "original-498419",
+  "cloudcode.enableTelemetry": false,
+  "cloudcode.autoDependencies": "on",
+  "cloudcode.cloudRun.showExplorer": true,
+  "cloudcode.gke.showExplorer": true,
+  "cloudcode.secretManager.showExplorer": true,
+  "cloudcode.yaml.schemaValidation": true,
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.focusView": true,
+  "autoDocstring.docstringFormat": "google",
+  "autoDocstring.startOnNewLine": true,
+  "autoDocstring.includeExtendedSummary": true,
+  "evenBetterToml.schema.enabled": true,
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml",
+    "editor.formatOnSave": true
+  },
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.buildScripts.enable": true,
+  "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.linkedProjects": [
+    "${workspaceFolder}/wasm-equity/Cargo.toml",
+    "${workspaceFolder}/core/nexus-core-rust/Cargo.toml",
+    "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"
+  ],
+  "rust-analyzer.files.excludeDirs": [".next", ".venv", "node_modules", "target", ".git"],
+  "turboConsoleLog.addSemicolonInTheEnd": true,
+  "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
+  "redhat.telemetry.enabled": false,
+  "gdl.openTarget": "system",
+  "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": ["build/QuantumTensorEngine.sln"],
+  "ruff.path": ["${workspaceFolder}/.venv/Scripts/ruff.exe"],
+  "ruff.interpreter": ["${workspaceFolder}/.venv/Scripts/python.exe"],
+  "ruff.configuration": "${workspaceFolder}/pyproject.toml",
+  "ruff.importStrategy": "fromEnvironment",
+  "ruff.lint.preview": true,
+  "ruff.format.preview": true,
+  "workbench.editorAssociations": {
+    "**/.claude/**/*.bin": "default",
+    "**/CMakeFiles/**/*.bin": "default",
+    "**/.chroma_db/**/*.bin": "default",
+    "*.bin": "default",
+    "*.svg": "cweijan.officeViewer",
+    "*.pdf": "latex-workshop-pdf-hook",
+    "*.xlsx": "cweijan.officeViewer",
+    "*.xls": "cweijan.officeViewer",
+    "*.docx": "cweijan.officeViewer",
+    "*.doc": "cweijan.officeViewer",
+    "*.pptx": "cweijan.officeViewer",
+    "*.parquet": "cweijan.parquetViewer",
+    "*.drawio": "hediet.vscode-drawio",
+    "*.dio": "hediet.vscode-drawio",
+    "*.dio.png": "hediet.vscode-drawio",
+    "*.dio.svg": "hediet.vscode-drawio",
+    "*.excalidraw": "editor.excalidraw",
+    "*.excalidraw.json": "editor.excalidraw",
+    "*.excalidraw.svg": "editor.excalidraw",
+    "*.md": "ultimateViewer.preview",
+    "*.png": "ultimateViewer.preview",
+    "*.csv": "ultimateViewer.preview"
+  },
+  "markdown-preview-enhanced.HTML5EmbedUseLinkSyntax": true,
+  "markdown-preview-enhanced.HTML5EmbedIsAllowedHttp": false,
+  "markdown-preview-enhanced.enableTypographer": true,
+  "markdown-preview-enhanced.enableScriptExecution": false,
+  "markdown-preview-enhanced.enableHTML5Embed": true,
+  "markdown-preview-enhanced.enableExtendedTableSyntax": true,
+  "markdown-preview-enhanced.enableCriticMarkupSyntax": true,
+  "markdown-preview-enhanced.d2Sketch": true,
+  "markdown-preview-enhanced.automaticallyShowPreviewOfMarkdownBeingEdited": true,
+  "markdown-preview-enhanced.alwaysShowBacklinksInPreview": true,
+  "markdown-preview-enhanced.aiTranslationAutoUpdate": true,
+  "wam.switchDevinCli": true,
+  "files.autoSave": "off",
+  "editor.codeActions.triggerOnFocusChange": true,
+  "editor.definitionLinkOpensInPeek": true,
+  "editor.experimental.asyncTokenizationLogging": true,
+  "editor.experimental.preferTreeSitter.css": true,
+  "editor.experimental.preferTreeSitter.ini": true,
+  "editor.experimental.preferTreeSitter.regex": true,
+  "editor.experimental.preferTreeSitter.typescript": true,
+  "editor.experimentalGpuAcceleration": "on",
+  "editor.inlayHints.padding": true,
+  "editor.inlineCompletionsAccessibilityVerbose": false,
+  "editor.linkedEditing": true,
+  "editor.cursorSmoothCaretAnimation": "on",
+  "diffEditor.experimental.showMoves": true,
+  "diffEditor.experimental.useTrueInlineView": true,
+  "editor.inlineSuggest.edits.showCollapsed": true,
+  "editor.inlineSuggest.suppressSuggestions": true,
+  "editor.suggest.localityBonus": true,
+  "editor.suggest.shareSuggestSelections": true,
+  "editor.suggest.showStatusBar": true,
+  "editor.suggest.snippetsPreventQuickSuggestions": true,
+  "files.autoGuessEncoding": true,
+  "files.autoSaveWorkspaceFilesOnly": true,
+  "files.autoSaveWhenNoErrors": true,
+  "files.trimFinalNewlines": true,
+  "explorer.excludeGitIgnore": true,
+  "explorer.fileNesting.enabled": true,
+  "scm.alwaysShowActions": true,
+  "scm.alwaysShowRepositories": true,
+  "scm.diffDecorationsGutterPattern": {
+    "added": true
+  },
+  "scm.repositories.explorer": true,
+  "scm.workingSets.enabled": true,
+  "cmake.ctest.allowParallelJobs": true,
+  "cmake.buildTask": true,
+  "astro.content-intellisense": true,
+  "astro.updateImportsOnFileMove.enabled": true,
+  "search.useParentIgnoreFiles": true,
+  "search.useGlobalIgnoreFiles": true,
+  "accessibility.openChatEditedFiles": true,
+  "accessibility.signalOptions.debouncePositionChanges": true,
+  "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
+  "claudeCode.enableNewConversationShortcut": true,
+  "chatgpt.openOnStartup": true,
+  "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+  "windsurfPyright.analysis.typeCheckingMode": "standard",
+  "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
+  "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
+  "windsurfPyright.analysis.inlayHints.functionReturnTypes": true,
+  "windsurfPyright.analysis.inlayHints.variableTypes": true,
+  "windsurfPyright.analysis.inlayHints.genericTypes": true,
+  "ollamaDirectCustomAgent.vectorSearchEnabled": true,
+  "ollamaDirectCustomAgent.whisperUseCloud": true,
+  "ollamaDirectCustomAgent.roleSplitEnabled": true,
+  "ollamaDirectCustomAgent.openOnStartup": true,
+  "ollamaDirectCustomAgent.modelWarmupEnabled": true,
+  "ollamaDirectCustomAgent.fullControlMode": false,
+  "ollamaDirectCustomAgent.fileWatcherEnabled": true,
+  "ollamaDirectCustomAgent.debugMode": true,
+  "ollamaDirectCustomAgent.cloudAutoRotateAccounts": true,
+  "ollamaDirectCustomAgent.assistantAutoLaunch": true,
+  "claudeCode.disableLoginPrompt": true,
+  "java.project.exclusionFilters": [
+    "**/scripts/validation/**",
+    "**/.pytest_tmp/**",
+    "**/.pytest_cache/**",
+    "**/.venv/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/dist-workers/**",
+    "**/build/**",
+    "**/core/vendor/**",
+    "**/worker/Java/**"
+  ],
+  "java.project.resourceFilters": [
+    "node_modules",
+    ".git",
+    ".venv",
+    ".pytest_tmp",
+    ".pytest_cache",
+    "dist",
+    "dist-workers",
+    "build",
+    "core/vendor",
+    "worker/Java",
+    "scripts/validation"
+  ],
+  "java.import.exclusions": [
+    "**/scripts/validation/**",
+    "**/.pytest_tmp/**",
+    "**/.pytest_cache/**",
+    "**/.venv/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/core/vendor/**",
+    "**/worker/Java/**"
+  ],
+  "java.diagnostic.filter": ["**/scripts/validation/**", "**/.pytest_tmp/**"],
+  "java.errors.incompleteClasspath.severity": "ignore",
+  "sqltools.connections": [
+    {
+      "name": "Site (PostgreSQL Local)",
+      "group": "PokerRacional",
+      "driver": "PostgreSQL",
+      "server": "localhost",
+      "port": 5432,
+      "database": "postgres",
+      "username": "postgres",
+      "askForPassword": false,
+      "connectionTimeout": 15,
+      "previewLimit": 50,
+      "ssh": "Disabled"
+    }
+  ],
+  "workbench.experimental.modernUI": true,
+  "workbench.list.smoothScrolling": false,
+  "workbench.commandPalette.experimental.suggestCommands": true,
+  "workbench.experimental.cloudChanges.autoStore": "off",
+  "workbench.experimental.modernUIUppercaseViewHeaders": true,
+  "workbench.experimental.cloudChanges.partialMatches.enabled": true,
+  "workbench.experimental.share.enabled": true,
+  "workbench.editor.highlightModifiedTabs": true,
+  "workbench.browser.enableRemoteProxy": true,
+  "workbench.browser.experimentalUserTools.enabled": true,
+  "workbench.browser.openLocalhostLinks": true,
+  "workbench.settings.alwaysShowAdvancedSettings": true,
+  "chat.checkpoints.showFileChanges": true,
+  "chat.agent.sandbox.enabledWindows": "on",
+  "chat.viewProgressBadge.enabled": true,
+  "chat.agentSessionProjection.enabled": true,
+  "chat.exitAfterDelegation": true,
+  "chat.mcp.gallery.enabled": true,
+  "chat.mcp.assisted.nuget.enabled": true,
+  "chat.includeReferencedInstructions": true,
+  "chat.experimental.useSkillAdherencePrompt": true,
+  "chat.tools.compressOutput.enabled": true,
+  "chat.tools.terminal.outputCompaction": true,
+  "chat.tools.terminal.outputDeltas": true,
+  "aws.sagemaker.studio.spaces.enableIdentityFiltering": true,
+  "aws.samcli.enableCodeLenses": true,
+  "lldb-dap.captureSessionLogs": true,
+  "quarto.render.renderOnSave": true,
+  "python.globalModuleInstallation": true,
+  "python.useEnvironmentsExtension": true,
+  "markdown.preview.breaks": true,
+  "markdown.preview.typographer": true,
+  "markdown.preview.doubleClickToSwitchToEditor": true,
+  "markdown-preview-github-styles.colorMode": "auto",
+  "markmap.defaultExpandLevel": 3,
+  "markmap.colorFreezeLevel": 2,
+  "rainbow_csv.autodetect_separators": ["TAB", ",", ";", "|"],
+  "rainbow_csv.enable_separator_autodetection": true,
+  "csv-editor.readOption_hasHeader": "true",
+  "csv-editor.theme": "auto",
+  "svg.preview.mode": "svg",
+  "[r]": {
+    "editor.defaultFormatter": "REditorSupport.r",
+    "editor.formatOnSave": true,
+    "editor.wordBasedSuggestions": "off"
+  },
+  "[rmd]": {
+    "editor.defaultFormatter": "REditorSupport.r",
+    "editor.formatOnSave": true
+  },
+  "r.executablePath": "C:\\Program Files\\R\\R-4.6.1\\bin\\R.exe",
+  "r.consoleArgs": ["--no-save", "--no-restore"],
+  "r.bracketedPaste": true,
+  "r.sessionWatcher": true,
+  "r.plot.backend": "httpgd",
+  "r.plot.jgd.historyLimit": 100,
+  "r.plot.jgd.exportWidth": 8,
+  "r.plot.jgd.exportHeight": 6,
+  "r.plot.jgd.exportDpi": 300,
+  "r.plot.format": "svglite",
+  "r.plot.defaults.colorTheme": "original",
+  "r.plot.defaults.plotPreviewLayout": "multirow",
+  "r.plot.timing.resizeInterval": 100,
+  "r.plot.timing.refreshInterval": 10,
+  "r.lsp.enabled": true,
+  "r.lsp.diagnostics": true,
+  "r.lsp.args": ["--vanilla"],
+  "r.libPaths": ["C:/Users/rapha/R/win-library/4.6"],
+  "terminal.integrated.env.windows": {
+    "R_LIBS_USER": "C:/Users/rapha/R/win-library/4.6"
+  },
+  "r.debugger.checkVersion": "recommended",
+  "playwright.configs": ["frontend/playwright.config.ts", "frontend/playwright.quality.config.ts"],
+  "csv.columnColorPalette": "cool",
+  "csv.separatorMode": "auto",
+  "vscode-office.gitHistory.quickSyncButton": true,
+  "vscode-office.decodeEscapedUnicodeCharacters": true,
+  "vscode-office.workspacePathAsImageBasePath": true,
+  "vscode-office.pasteImageToWorkspacePath": true,
+  "google.datacloud.expandMenus": true,
+  "google.datacloud.executeCellToolForNotebookMCP": true,
+  "clangd.checkUpdates": true,
+  "lldb-dap.serverMode": true,
+  "lldb-dap.detachOnError": true,
+  "lldb-dap.displayExtendedBacktrace": true,
+  "lldb-dap.enableSyntheticChildDebugging": true,
+  "lldb-dap.enableAutoVariableSummaries": true,
+  "boot-java.ai.mcp-server-enabled": true,
+  "boot-java.code-action.data-query-multiline": true,
+  "yaml.schemas": {
+    "vscode://schemas/custom/github-workflow": ".github/workflows/*.{yml,yaml}",
+    "https://www.schemastore.org/semgrep.json": [
+      ".semgrep.yml",
+      ".semgrep.yaml",
+      "**/.semgrep/**/*.yml",
+      "**/.semgrep/**/*.yaml",
+      "!**/.semgrep/guardian.yml",
+      "!**/.semgrep/guardian.yml.lock"
+    ]
+  },
+  "github-actions.workflows.pinned.workflows": [],
+  "github-actions.custom-variables": [
+    "ACTIONS_STEP_DEBUG",
+    "AGENTCORE_ECR_REPOSITORY_URI",
+    "APP_ID",
+    "DEBUG",
+    "GCP_WIF_PROVIDER",
+    "GEMINI_MODEL",
+    "GOOGLE_CLOUD_LOCATION",
+    "GOOGLE_CLOUD_PROJECT",
+    "GOOGLE_GENAI_USE_GCA",
+    "GOOGLE_GENAI_USE_VERTEXAI",
+    "SERVICE_ACCOUNT_EMAIL",
+    "UPLOAD_ARTIFACTS"
+  ],
+  "github-actions.custom-secrets": [
+    "AGENTCORE_AWS_ROLE_ARN",
+    "APP_PRIVATE_KEY",
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "NPM_TOKEN"
+  ],
+  "git.detectSubmodulesLimit": 25,
+  "acp.agents": {
+    "Antigravity": {
+      "command": "agy",
+      "args": ["acp", "--disable-telemetry"]
+    }
+  },
+  "antigravity.binary.path": "C:\\Users\\rapha\\AppData\\Local\\agy\\bin\\agy.exe",
+  "python.terminal.useEnvFile": true,
+  "chat.useClaudeHooks": true,
+  "python.analysis.diagnosticsSource": "Pylance",
+  "nexrall.auditTrail": true,
+  "terminal-in-status-bar.statusBarLabel": true,
+  "workbench.colorCustomizations": {
+    "statusBarItem.warningBackground": "#136CFF",
+    "statusBarItem.warningForeground": "#FFFFFF",
+    "statusBarItem.warningHoverBackground": "#136CFF",
+    "statusBarItem.warningHoverForeground": "#FFFFFF"
+  }
 }
