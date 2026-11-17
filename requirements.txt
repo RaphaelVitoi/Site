@@ -21,13 +21,8 @@ numpy>=2.5.5
 pandas>=3.1.1
 networkx>=3.7
 scikit-learn>=1.9.1
-scipy>=1.18.1
-duckdb>=2.0.0
-pyspark>=4.3.0
 
 # ── VISUALIZACAO GRAFICA & TELEMETRIA ────────────────────────────────────────
-matplotlib>=3.11.2
-seaborn>=0.13.2
 
 # ── RAG & MEMORIA VETORIAL ───────────────────────────────────────────────────
 # SEGURANCA: PYSEC-2026-311 sem correcao upstream ate 1.5.9. Aceite registrado
@@ -36,7 +31,6 @@ chromadb>=1.5.9
 lancedb>=0.41.0,<1.0.0
 pyarrow>=26.0.1
 onnxruntime>=1.32.0
-sentence-transformers>=6.3.0
 
 # ── CLIENTES LLM, AGENTES & MCP ──────────────────────────────────────────────
 google-genai>=3.4.0
@@ -59,15 +53,11 @@ Pillow>=13.0.0
 defusedxml>=0.7.1
 
 # ── MULTIMIDIA, VISAO & VOZ ──────────────────────────────────────────────────
-opencv-python-headless>=5.0.0.93,<6.0.0
 edge-tts>=7.3.1
 
 # ── NATIVE BINDINGS, AUTOMACAO & CLIPBOARD ───────────────────────────────────
 nanobind>=3.1.0
 pyperclip>=1.11.0
-pyautogui>=0.9.54
-mss>=10.2.0
-playwright>=1.65.2
 
 # ── UTILITARIOS ──────────────────────────────────────────────────────────────
 regex>=2026.11.15
@@ -88,3 +78,8 @@ cloudpathlib>=0.26.0,<1.0.0
 psutil>=7.2.2,<8.0.0
 loguru>=0.8.0
 typer>=0.29.1
+
+# NOTA (Fase 3, auditoria SOTA 2026-11-17): dependencias com zero imports Python
+# medidas no repositorio foram movidas para extras do pyproject.toml
+# (computer-use, analytics, embeddings). Este arquivo espelha apenas
+# [project.dependencies]; instalar extras via `uv sync --extra <nome>`.

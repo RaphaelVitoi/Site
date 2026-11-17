@@ -18,7 +18,7 @@ from urllib.parse import urlsplit
 from aiohttp import web
 
 from api.v1.middleware_correlation import CORRELATION_HEADER, correlation_id_for
-from llm.budget import API_SECRET_TOKEN
+from llm.budget import API_SECRET_TOKEN, cache_put_bounded
 
 # SOTA: Estado do Rate Limiter (IP -> {count, window_start})
 RATE_LIMIT_WINDOW = 60
@@ -345,6 +345,12 @@ USER_TOKEN_HEADER = "X-User-Token"
 #: terceiro.
 USUARIOS_DE_SESSAO: dict[str, str] = {}
 
+#: Teto do mapa de vinculos: cada `cliente_id` novo adicionava uma entrada
+#: eterna. Com o teto, o vinculo mais antigo cede a vez -- e a derivacao
+#: deterministica sha256(sub)[:32] continua cobrindo o caminho do gateway,
+#: entao a evicao nao derruba sessao legitima.
+MAX_USUARIOS_DE_SESSAO = 4096
+
 
 def _registrar_usuario_de_sessao(usuario_id: str, cliente_id: str) -> None:
     """LIGA `(usuario, cliente)` para que o par possa ser re-verificado.
@@ -353,7 +359,7 @@ def _registrar_usuario_de_sessao(usuario_id: str, cliente_id: str) -> None:
     permitiria que um `X-User-Token` valido, reapresentado com um
     `X-Nexus-Client-Id` diferente, passasse como se fosse de outra pessoa.
     """
-    USUARIOS_DE_SESSAO[cliente_id] = usuario_id
+    cache_put_bounded(USUARIOS_DE_SESSAO, cliente_id, usuario_id, MAX_USUARIOS_DE_SESSAO)
 
 
 def _identidade_do_usuario(request) -> str | None:

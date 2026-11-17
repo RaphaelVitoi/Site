@@ -6,21 +6,16 @@ Web Handlers -- Endpoints HTTP do micro-servidor SOTA.
 from __future__ import annotations
 
 import asyncio
-import base64
 import contextlib
 from datetime import UTC, datetime
 import json
 import logging
 import math
-import mimetypes
-import os
 from pathlib import Path
 import re
 import time
 from typing import Any, Literal, cast, get_args
-from urllib.parse import quote
 from uuid import uuid4
-import zipfile
 
 try:
     import psutil
@@ -30,7 +25,12 @@ except ImportError:
 from aiohttp import web
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, ValidationInfo, field_validator
 
-from api.v1.handler_support import _internal_error, _with_execution_provenance
+from api.v1.handler_support import BASE_WORKSPACE_DIR as BASE_WORKSPACE_DIR
+from api.v1.handler_support import (
+    INVALID_JSON_BODY,
+    _internal_error,
+    _with_execution_provenance,
+)
 from api.v1.handlers_canonical import (
     handle_canonical_akq as handle_canonical_akq,
 )
@@ -46,18 +46,45 @@ from api.v1.handlers_canonical import (
 from api.v1.handlers_canonical import (
     handle_canonical_janda_mdf as handle_canonical_janda_mdf,
 )
+from api.v1.handlers_files import _ENV_TEMPLATE_MARKERS as _ENV_TEMPLATE_MARKERS
+from api.v1.handlers_files import _MOUNTED_SECRET_DIRS as _MOUNTED_SECRET_DIRS
+from api.v1.handlers_files import _SENSITIVE_DIR_COMPONENTS as _SENSITIVE_DIR_COMPONENTS
+from api.v1.handlers_files import _SENSITIVE_NAMES as _SENSITIVE_NAMES
+from api.v1.handlers_files import _SENSITIVE_SUFFIXES as _SENSITIVE_SUFFIXES
+from api.v1.handlers_files import ARCHIVE_EXTS as ARCHIVE_EXTS
+from api.v1.handlers_files import IMAGE_EXTS as IMAGE_EXTS
+from api.v1.handlers_files import RAW_MIME_TYPES as RAW_MIME_TYPES
+from api.v1.handlers_files import SPREADSHEET_EXTS as SPREADSHEET_EXTS
+from api.v1.handlers_files import _categorize_file as _categorize_file
+from api.v1.handlers_files import _content_disposition as _content_disposition
+from api.v1.handlers_files import _e_modelo_publico as _e_modelo_publico
+from api.v1.handlers_files import _get_allowed_roots as _get_allowed_roots
+from api.v1.handlers_files import _get_raw_content_type as _get_raw_content_type
+from api.v1.handlers_files import _is_file_access_allowed as _is_file_access_allowed
+from api.v1.handlers_files import _is_sensitive_path as _is_sensitive_path
+from api.v1.handlers_files import _list_zip as _list_zip
+from api.v1.handlers_files import _nome_e_da_familia_ambiente as _nome_e_da_familia_ambiente
+from api.v1.handlers_files import _parse_image as _parse_image
+from api.v1.handlers_files import _parse_image_response as _parse_image_response
+from api.v1.handlers_files import _parse_spreadsheet as _parse_spreadsheet
+from api.v1.handlers_files import _scan_root as _scan_root
+from api.v1.handlers_files import _serve_parsed_file as _serve_parsed_file
+from api.v1.handlers_files import handle_list_files as handle_list_files
+from api.v1.handlers_files import handle_view_file as handle_view_file
+from api.v1.handlers_game_theory import (
+    handle_claudico_translate_action as handle_claudico_translate_action,
+)
+from api.v1.handlers_game_theory import (
+    handle_deepstack_resolve as handle_deepstack_resolve,
+)
+from api.v1.handlers_game_theory import (
+    handle_pluribus_solve as handle_pluribus_solve,
+)
+from api.v1.handlers_game_theory import (
+    handle_rebel_pbs_evaluate as handle_rebel_pbs_evaluate,
+)
 from api.v1.http_metrics import HTTP_METRICS_KEY
 from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
-from core.game_theory_schemas import (
-    ClaudicoTranslateRequest,
-    ClaudicoTranslateResponse,
-    DeepStackResolveRequest,
-    DeepStackResolveResponse,
-    PluribusSolveRequest,
-    PluribusSolveResponse,
-    RebelPbsEvaluateRequest,
-    RebelPbsEvaluateResponse,
-)
 from core.perspective_schemas import (
     PerspectivaResult,
     PerspectiveCalculationRequest,
@@ -79,15 +106,6 @@ from engine.chrysalis_bridge import (
     compute_revision,
     validate_workspace_path,
 )
-from engine.game_theory_solvers import (
-    ClaudicoActionTranslator,
-    ContinualResolvingEngine,
-    DeepStackSubgame,
-    PluribusDepthLimitedSolver,
-    PluribusMultiwayState,
-    PublicBeliefState,
-    Street,
-)
 from engine.solver_importers import UniversalSolverImporter
 from engine.solver_importers.deep_solver import DeepSolverImporter
 from engine.timesfm_engine import (
@@ -102,16 +120,12 @@ from llm.budget import (
     DAILY_API_BUDGET,
 )
 from llm.laya_bridge import ruin_priority_from_intencao
-from llm.laya_solver_adapter import LayaSolverAdapter
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
 from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
 from utils.resources import ResourceGuard
 from utils.storage import buckets as sota_buckets
 from utils.web_search import get_search_engine_from_env
-
-BASE_WORKSPACE_DIR: Path = Path(__file__).resolve().parent.parent.parent
-INVALID_JSON_BODY = "Invalid JSON body"
 
 #: SEC-06/SEC-10 (auditoria 2026-09-30): limites e allowlist de `/api/web-search`.
 #: `max_results` ja era limitado no handler (20); a query nao era, e o
@@ -749,410 +763,6 @@ async def handle_frontend_logs(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_frontend_logs")
 
 
-IMAGE_EXTS = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
-SPREADSHEET_EXTS = (".csv", ".xlsx", ".ods", ".xls")
-ARCHIVE_EXTS = (".zip", ".rar", ".7z")
-
-
-def _categorize_file(ext: str) -> str:
-    if ext in ARCHIVE_EXTS:
-        return "archive"
-    if ext in IMAGE_EXTS:
-        return "image"
-    if ext in (".mp4", ".avi", ".mkv", ".mov", ".mp3", ".wav"):
-        return "media"
-    if ext in SPREADSHEET_EXTS:
-        return "spreadsheet"
-    if ext == ".pdf":
-        return "pdf"
-    return "text"
-
-
-def _scan_root(name: str, root_resolved: Path, ignored_folders: set[str]) -> list[dict[str, Any]]:
-
-    files_list: list[dict[str, Any]] = []
-    for current_root, dirs, files in os.walk(root_resolved):
-        dirs[:] = [d for d in dirs if d not in ignored_folders]
-        if name == "GoogleDrive":
-            relative = Path(current_root).relative_to(root_resolved)
-            if len(relative.parts) > 0 and relative.parts[0] not in ("Documentos", "GD", "Documents"):
-                dirs.clear()
-                continue
-        for f in files:
-            fpath = Path(current_root) / f
-            if _is_sensitive_path(fpath):
-                continue  # a listagem nao anuncia o que a leitura recusa
-            files_list.append(
-                {
-                    "name": f,
-                    "path": fpath.as_posix(),
-                    "relative_path": fpath.relative_to(root_resolved).as_posix(),
-                    "category": _categorize_file(fpath.suffix.lower()),
-                    "size": fpath.stat().st_size if fpath.exists() else 0,
-                }
-            )
-    return files_list[:200]
-
-
-def _get_allowed_roots(base_dir: Path) -> list[tuple[str, Path]]:
-    allowed_roots = [
-        ("Cerebro", base_dir / ".cerebro"),
-        ("Project", base_dir),
-    ]
-    gdrive_base = cast(Path, getattr(_te, "PATH_GDRIVE_ROOT", Path("")))
-    if gdrive_base.exists():
-        allowed_roots.append(("GoogleDrive", gdrive_base))
-    return allowed_roots
-
-
-async def handle_list_files(_request: web.Request) -> web.Response:
-    """SOTA CLI/API: Lists files in the allowed workspace and Google Drive folders."""
-    base_dir = BASE_WORKSPACE_DIR
-    ignored_folders = {
-        ".venv",
-        ".venv-wsl",
-        "node_modules",
-        ".git",
-        ".next",
-        "temp",
-        "reports",
-        "dist",
-        ".mypy_cache",
-        ".ruff_cache",
-    }
-
-    def _scan() -> list[dict[str, Any]]:
-        tree: list[dict[str, Any]] = []
-        for name, root_path in _get_allowed_roots(base_dir):
-            if not root_path.exists():
-                continue
-            root_resolved = root_path.resolve()
-            tree.append(
-                {
-                    "source": name,
-                    "path": root_resolved.as_posix(),
-                    "files": _scan_root(name, root_resolved, ignored_folders),
-                }
-            )
-        return tree
-
-    try:
-        tree = await asyncio.to_thread(_scan)
-        return web.json_response({"status": "SUCCESS", "tree": tree})
-    except Exception as e:
-        return _internal_error(e, "handle_list_files")
-
-
-def _parse_spreadsheet(ext: str, file_path: Path) -> dict[str, Any]:
-    import pandas as pd  # pylint: disable=import-outside-toplevel # noqa: PLC0415
-
-    if ext == ".csv":
-        df = pd.read_csv(file_path, nrows=50)  # pyright: ignore[reportUnknownMemberType]
-    elif ext == ".xlsx":
-        df = pd.read_excel(file_path, nrows=50)  # pyright: ignore[reportUnknownMemberType]
-    else:
-        df = pd.read_excel(file_path, engine="odf", nrows=50)  # pyright: ignore[reportUnknownMemberType]
-    return {"headers": list(df.columns), "rows": df.values.tolist()}  # pyright: ignore[reportUnknownMemberType]
-
-
-def _list_zip(file_path: Path) -> list[dict[str, Any]]:
-    from utils.os_integration import get_winrar_path  # pylint: disable=import-outside-toplevel # noqa: PLC0415
-
-    files: list[dict[str, Any]] = []
-    if zipfile.is_zipfile(file_path):
-        with zipfile.ZipFile(file_path, "r") as zf:
-            for name in zf.namelist():
-                info = zf.getinfo(name)
-                files.append({"name": name, "size": info.file_size, "is_dir": info.is_dir()})
-    else:
-        winrar_path = get_winrar_path()
-        if winrar_path and os.path.exists(winrar_path):
-            files.append({"name": "Conteudo Rar (Visualizacao via WinRAR habilitada)", "size": 0, "is_dir": False})
-    return files
-
-
-def _parse_image(file_path: Path) -> dict[str, Any]:
-    from PIL import Image  # pylint: disable=import-outside-toplevel # noqa: PLC0415
-    from PIL.ExifTags import TAGS  # pylint: disable=import-outside-toplevel # noqa: PLC0415
-
-    with Image.open(file_path) as img:
-        exif_data: dict[str, str] = {}
-        if exif := img.getexif():
-            for tag_id, val in exif.items():
-                tag = TAGS.get(tag_id, tag_id)
-                if not isinstance(val, (bytes, bytearray)) and len(str(val)) < 100:
-                    exif_data[str(tag)] = str(val)
-        b64_str = ""
-        if file_path.stat().st_size < 1 * 1024 * 1024:
-            with open(file_path, "rb") as f:
-                b64_str = base64.b64encode(f.read()).decode("utf-8")
-        return {"format": img.format, "size": f"{img.width}x{img.height}", "exif": exif_data, "base64": b64_str}
-
-
-#: BK-19 (auditoria 2026-09-16): a raiz do projeto inteira era legivel pela API,
-#: inclusive segredos e historico git. Estes nomes ficam fora mesmo para a
-#: credencial de servico -- e para qualquer processo local quando nenhum token
-#: esta configurado. `.env.example` e modelo sem valor, e continua legivel.
-#:
-#: SEC-02 (auditoria 2026-09-30): a lista listava `.secrets` COM PONTO, e o
-#: `docker-compose.yml:2-3` monta o segredo do gateway em
-#: `.claude/secrets/auth_secret.txt` -- diretorio `secrets`, SEM ponto. Nao
-#: casava, e como o compose tambem monta `./.claude:/app/.claude`, o
-#: `AUTH_SECRET` (o mesmo que assina a sessao NextAuth) ficava legivel por
-#: `/api/files/view` dentro do container. Medido executando a cadeia exata:
-#: `/app/.claude/secrets/auth_secret.txt` devolvia servivel=SIM.
-#:
-#: A correcao nao e so acrescentar `secrets`: e derivar a lista do que o
-#: `docker-compose.yml` realmente monta, porque literal novo nasce coberto por
-#: acidente -- que e a mesma razao que fez A-01 existir.
-_MOUNTED_SECRET_DIRS = ("secrets", "queue")
-_SENSITIVE_DIR_COMPONENTS = frozenset({".git", ".secrets", ".ssh", ".gnupg", ".aws", *_MOUNTED_SECRET_DIRS})
-#: SEC-02: `queue/` e `./tasks.db` sao montados no container e `.gitignore:80`
-#: declara `queue/tasks.db` e `*.db` -- o estado da fila (prompts, respostas,
-#: metadata) e leitura de servico hoje. Formato de banco por SUFIXO, porque e
-#: o que o `.gitignore` ja proibe: as duas listas medem o mesmo fato.
-_SENSITIVE_SUFFIXES = frozenset(
-    {
-        ".pem",
-        ".key",
-        ".p12",
-        ".pfx",
-        ".keystore",
-        ".jks",
-        ".db",
-        ".sqlite",
-        ".sqlite3",
-        ".lance",
-    }
-)
-_SENSITIVE_NAMES = frozenset({"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", ".netrc", ".npmrc", ".pypirc"})
-
-#: A-01 (auditoria 2026-09-29): a familia de arquivo de ambiente e reconhecida
-#: por PADRAO, e nao por literal. A regra anterior era `(name == ".env" or
-#: name.startswith(".env.")) and name != ".env.example"` -- literal exato mais
-#: prefixo, com excecao SUBTRAIDA. Literal novo nasce coberto por acidente: e
-#: assim que `_env.ps1` passou a ser servido. Medido antes da correcao:
-#: `_is_file_access_allowed("<raiz>/_env.ps1")` devolvia True, e esse arquivo e
-#: a segunda fonte canonica de credenciais do projeto (declarada em
-#: `_env.example.ps1`, ignorada em `.gitignore:157`), com `API_SECRET_TOKEN` e
-#: `AUTH_SECRET` em claro. Quem tem a credencial de servico -- a unica que
-#: alcanca esta rota -- lia o segredo que o proprio sistema entrega.
-#:
-#: Tres particoes, e cada uma fecha uma familia:
-#: - `ext.startswith("env")`: `.env`, `.env.local`, `.envrc`, `nexus.env`
-#: - `stem in {"env", "_env"}`: `env.sh`, `_env.ps1`
-#: - `stem.endswith(("_env", "-env"))`: `nexus_env.ps1`
-#:
-#: O que NAO e familia e continua servivel: `environment.ts`, `env_loader.py`,
-#: `settings.json`, `CLAUDE.md`. A regra grew por medicao, nao por volumen.
-_ENV_TEMPLATE_MARKERS = (".example", ".sample", ".template", ".dist", ".tpl")
-
-
-def _nome_e_da_familia_ambiente(name: str) -> bool:
-    """Diz se o nome do arquivo pertence a familia de arquivo de ambiente."""
-    stem, _, ext = name.partition(".")
-    return ext.startswith("env") or stem in {"env", "_env"} or stem.endswith(("_env", "-env"))
-
-
-def _e_modelo_publico(name: str) -> bool:
-    """Modelo de ambiente sem valor: legivel de proposito, e a unica excepcao.
-
-    A excecao e DECLARADA por marcador, e nao deduzida. Excecao subtraida
-    (`.env.example` menos um) morre em silencio quando o nome muda de forma;
-    excecao declarada aparece quando o nome novo nao casa com nenhum marcador.
-    """
-    return any(marker in name for marker in _ENV_TEMPLATE_MARKERS)
-
-
-def _is_sensitive_path(file_path: Path) -> bool:
-    # Ponto e espaco finais sao descartados pelo Windows ao abrir o arquivo.
-    parts = [p.rstrip(". ").lower() for p in file_path.parts]
-    name = parts[-1] if parts else ""
-    # SEC-02 (auditoria 2026-09-30): `parts[:-1]` exclui o PROPRIO nome, entao um
-    # volume que e ele mesmo um diretorio sensivel nao casava -- `/app/queue`
-    # devolvia servivel, ainda que `/app/queue/tasks.db` fosse recusado. O
-    # arquivo dentro ja era barrado; o caminho do volume, nao. Medido pelo teste
-    # `test_todo_volume_de_segredo_do_compose_esta_bloqueado`, que deriva os
-    # volumes do `docker-compose.yml` em vez de hardcodar o caso.
-    #
-    # Inclui o proprio nome DEPOIS do nome exato e do sufixo, para nao alterar o
-    # que ja era decidido: um arquivo chamado `queue` na raiz continua caindo
-    # pela regra de nome/sufixo, e um diretorio sensivel ganha a regra nova.
-    if any(p in _SENSITIVE_DIR_COMPONENTS for p in parts[:-1]):
-        return True
-    if name in _SENSITIVE_NAMES or file_path.suffix.lower() in _SENSITIVE_SUFFIXES:
-        return True
-    if name in _SENSITIVE_DIR_COMPONENTS and file_path.is_dir():
-        return True
-    if _nome_e_da_familia_ambiente(name):
-        return not _e_modelo_publico(name)
-    return False
-
-
-def _is_file_access_allowed(file_path: Path) -> bool:
-    if _is_sensitive_path(file_path):
-        return False
-    base_dir = Path(__file__).resolve().parent.parent.parent.resolve()
-    if file_path.is_relative_to(base_dir):
-        return True
-    gdrive_base = cast(Path, getattr(_te, "PATH_GDRIVE_ROOT", Path(""))).resolve()
-    if gdrive_base.exists() and file_path.is_relative_to(gdrive_base):
-        rel = file_path.relative_to(gdrive_base)
-        if len(rel.parts) > 0 and rel.parts[0] in ("Documentos", "GD", "Documents"):
-            return True
-    return False
-
-
-RAW_MIME_TYPES: dict[str, str] = {
-    ".pdf": "application/pdf",
-    ".mp4": "video/mp4",
-    ".mov": "video/quicktime",
-    ".mkv": "video/x-matroska",
-    ".avi": "video/x-msvideo",
-    ".mp3": "audio/mpeg",
-    ".wav": "audio/wav",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".webp": "image/webp",
-    ".svg": "image/svg+xml",
-    ".json": "application/json",
-    ".txt": "text/plain",
-    ".md": "text/markdown",
-    ".csv": "text/csv",
-    ".html": "text/html",
-    ".htm": "text/html",
-    ".zip": "application/zip",
-}
-
-
-def _get_raw_content_type(ext: str) -> str:
-    ext_lower = ext.lower()
-    if ext_lower in RAW_MIME_TYPES:
-        return RAW_MIME_TYPES[ext_lower]
-    guessed, _ = mimetypes.guess_type(f"file{ext_lower}")
-    return guessed or "application/octet-stream"
-
-
-def _content_disposition(filename: str, *, download: bool) -> str:
-    mode = "attachment" if download else "inline"
-    ascii_filename = filename.encode("ascii", "ignore").decode("ascii")
-    ascii_filename = re.sub(r'["\\\r\n]', "_", ascii_filename) or "download"
-    encoded_filename = quote(filename, safe="")
-    return f"{mode}; filename=\"{ascii_filename}\"; filename*=UTF-8''{encoded_filename}"
-
-
-async def _parse_image_response(ext: str, file_path: Path) -> web.Response:
-    if ext != ".svg":
-        img_data = await asyncio.to_thread(_parse_image, file_path)
-        return web.json_response({"type": "image", "data": img_data})
-
-    def _read_svg_b64() -> str:
-        with open(file_path, "rb") as file:
-            return base64.b64encode(file.read()).decode("utf-8")
-
-    b64_str = await asyncio.to_thread(_read_svg_b64)
-    return web.json_response(
-        {
-            "type": "image",
-            "data": {
-                "format": "svg+xml",
-                "size": "Vetor (Escalavel)",
-                "exif": {},
-                "base64": b64_str,
-            },
-        }
-    )
-
-
-async def _serve_parsed_file(file_path: Path, ext: str) -> web.Response:
-    if ext in SPREADSHEET_EXTS:
-        sheet_data = await asyncio.to_thread(_parse_spreadsheet, ext, file_path)
-        return web.json_response({"type": "spreadsheet", "data": sheet_data})
-    if ext in ARCHIVE_EXTS:
-        archive_files = await asyncio.to_thread(_list_zip, file_path)
-        return web.json_response({"type": "archive", "files": archive_files})
-    if ext in IMAGE_EXTS:
-        return await _parse_image_response(ext, file_path)
-    if ext in (".mp4", ".avi", ".mkv", ".mov", ".mp3", ".wav"):
-        return web.json_response({"type": "media", "message": "Streaming de media disponivel."})
-    if ext in (".pdf", ".docx", ".odt", ".doc", ".ppt", ".pptx", ".odp"):
-        rag = await _te.get_rag_async()
-        extracted_text = await rag._extract_text_from_file(file_path)  # pyright: ignore[reportPrivateUsage] # pylint: disable=protected-access
-        words_count = len(extracted_text.split()) if extracted_text else 0
-        return web.json_response(
-            {
-                "type": "document",
-                "content": extracted_text,
-                "format": ext.lstrip("."),
-                "words": words_count,
-                "chars": len(extracted_text) if extracted_text else 0,
-            }
-        )
-
-    file_size = (await asyncio.to_thread(file_path.stat)).st_size
-    if file_size > 5 * 1024 * 1024:
-        return web.json_response(
-            {
-                "type": "text",
-                "content": f"[Aviso] O arquivo e muito grande ({file_size / 1024 / 1024:.1f} MB) para ser exibido diretamente como texto. Baixe o arquivo bruto ou use o RAG para processa-lo.",
-            }
-        )
-
-    text_content = await asyncio.to_thread(file_path.read_text, encoding="utf-8", errors="ignore")
-    return web.json_response(
-        {
-            "type": "text",
-            "content": text_content,
-            "format": ext.lstrip("."),
-            "lines": text_content.count("\n") + 1 if text_content else 0,
-        }
-    )
-
-
-async def handle_view_file(request: web.Request) -> web.StreamResponse:
-    """SOTA CLI/API: Serves or parses the file content securely with traversal guards."""
-    path_param = request.rel_url.query.get("path", "").strip()
-    download_param = request.rel_url.query.get("download", "false").strip().lower() == "true"
-    raw_param = request.rel_url.query.get("raw", "false").strip().lower() == "true" or download_param
-
-    if not path_param:
-        return web.json_response({"error": "Parametro 'path' ausente."}, status=400)
-
-    file_path = await asyncio.to_thread(lambda: Path(path_param).resolve())
-    if not _is_file_access_allowed(file_path):
-        return web.json_response({"error": "[SEC] Acesso negado: Caminho fora das fronteiras autorizadas."}, status=403)
-
-    if not file_path.exists() or not file_path.is_file():
-        return web.json_response({"error": "Arquivo nao encontrado ou nao e um arquivo valido."}, status=404)
-
-    ext = file_path.suffix.lower()
-    if raw_param:
-        headers = {
-            "Content-Type": _get_raw_content_type(ext),
-            "Content-Disposition": _content_disposition(file_path.name, download=download_param),
-            "X-Content-Type-Options": "nosniff",
-        }
-        if ext == ".pdf":
-            # PDF nativo em navegadores exige politica de objetos/plugins sem sandbox bloqueante
-            headers["Content-Security-Policy"] = (
-                "default-src 'self' data: blob:; object-src 'self' data: blob:; script-src 'none'; style-src 'unsafe-inline';"
-            )
-        elif ext == ".svg":
-            # SVG requer sandbox estrito para mitigar execucao de script arbitrario (BK-19)
-            headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src 'self' data:;"
-        else:
-            headers["Content-Security-Policy"] = "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self';"
-
-        return web.FileResponse(file_path, headers=headers)
-
-    try:
-        return await _serve_parsed_file(file_path, ext)
-    except Exception as e:
-        return _internal_error(e, "handle_view_file")
-
-
 async def handle_web_search(request: web.Request) -> web.Response:
     """Realiza busca na web via Tavily/DDG fallback e retorna JSON."""
     try:
@@ -1462,248 +1072,6 @@ async def handle_pmev_heatmap(request: web.Request) -> web.Response:
         return web.json_response({"error": str(ve), "status": "ERROR"}, status=400)
     except Exception as e:
         return _internal_error(e, "handle_pmev_heatmap", status="ERROR")
-
-
-async def handle_pluribus_solve(request: web.Request) -> web.Response:
-    """Resolve uma decisao multiway com horizonte finito e passivo quadratico PMev."""
-    t_start = time.perf_counter()
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
-
-    try:
-        req = PluribusSolveRequest.model_validate(data)
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-
-    def _execute_pluribus() -> tuple[dict[str, Any], dict[str, Any]]:
-        # Adaptacao S1 (Laya) para Pluribus se request trouxer prompt ou metadata
-        adapted_iters = req.iterations
-        adapted_lambda = req.state.lambda_factor
-        laya_meta: dict[str, Any] = {}
-        if getattr(req, "prompt", None) or getattr(req, "intencao_s1", None):
-            query_text = getattr(req, "prompt", "") or str(getattr(req, "intencao_s1", ""))
-            bridge_res = LayaSolverAdapter.adapt_for_solver(
-                "pluribus",
-                query_text,
-                {"iterations": req.iterations, "lambda_factor": req.state.lambda_factor},
-                use_cascade=True,
-            )
-            adapted_iters = int(bridge_res.adapted_parameters.get("iterations", req.iterations))
-            adapted_lambda = float(bridge_res.adapted_parameters.get("lambda_factor", req.state.lambda_factor))
-            laya_meta = {
-                "laya_adapted": True,
-                "engine_id": bridge_res.provenia.engine_id,
-                "ruin_priority": bridge_res.ruin_priority,
-                "framework_signals": bridge_res.framework_signals,
-            }
-
-        state = PluribusMultiwayState(
-            pot=req.state.pot,
-            num_players=req.state.num_players,
-            street=Street(req.state.street.value),
-            active_stacks=req.state.active_stacks,
-            lambda_factor=adapted_lambda,
-        )
-        solver = PluribusDepthLimitedSolver(state)
-        res_solve = solver.solve_depth_limited(
-            equity=req.equity,
-            hero_position=req.hero_position,
-            depth_streets=req.depth_streets,
-            iterations=adapted_iters,
-        )
-        return res_solve, laya_meta
-
-    try:
-        solve_result, laya_meta = await asyncio.to_thread(_execute_pluribus)
-        elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
-
-        resp = PluribusSolveResponse(
-            status="SUCCESS",
-            optimal_action=solve_result["optimal_action"],
-            strategy=solve_result["strategy"],
-            structural_liability=round(float(solve_result["structural_liability"]), 4),
-            effective_equity=round(float(solve_result["effective_equity"]), 4),
-            pos_multiplier=round(float(solve_result["pos_multiplier"]), 4),
-            k_opponents=solve_result["k_opponents"],
-            depth_streets=solve_result["depth_streets"],
-            future_streets=solve_result["future_streets"],
-            effective_stack=round(float(solve_result["effective_stack"]), 4),
-            stack_to_pot_ratio=round(float(solve_result["stack_to_pot_ratio"]), 4),
-            call_cost=round(float(solve_result["call_cost"]), 4),
-            raise_cost=round(float(solve_result["raise_cost"]), 4),
-            horizon_liability=round(float(solve_result["horizon_liability"]), 4),
-            action_evs={key: round(float(value), 4) for key, value in solve_result["action_evs"].items()},
-            iterations_run=req.iterations,
-            execution_time_ms=elapsed_ms,
-        )
-        payload = resp.model_dump()
-        if laya_meta:
-            payload["laya_s1_adaptation"] = laya_meta
-        return web.json_response(_with_execution_provenance(payload, "pluribus-multiway-adapter"))
-    except Exception as e:
-        return _internal_error(e, "handle_pluribus_solve", status="ERROR")
-
-
-def _aggregate_action_frequencies(
-    raw_strategy: dict[str, dict[str, float]],
-    ranges_ip: dict[str, float],
-) -> dict[str, float]:
-    """Agrega frequencias de acoes do raw strategy ponderadas pela range IP.
-
-    Extraido de handle_deepstack_resolve para reduzir complexidade cognitiva (S3776).
-    """
-    actions = ["CHECK", "BET_HALF_POT", "BET_POT", "ALL_IN"]
-    agg_freqs: dict[str, float] = dict.fromkeys(actions, 0.0)
-    total_weight = sum(ranges_ip.values())
-    if total_weight <= 1e-9:
-        return {a: 1.0 / len(actions) for a in actions}
-    for hand, strat in raw_strategy.items():
-        hand_prob = ranges_ip.get(hand, 0.0) / total_weight
-        for a, prob in strat.items():
-            agg_freqs[a] += prob * hand_prob
-    return agg_freqs
-
-
-async def handle_deepstack_resolve(request: web.Request) -> web.Response:
-    """Executa o Continual Resolving no estilo DeepStack ancorado em Gadget Bounds."""
-    t_start = time.perf_counter()
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
-
-    try:
-        req = DeepStackResolveRequest.model_validate(data)
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-
-    def _execute_deepstack() -> tuple[dict[str, float], dict[str, dict[str, float]], dict[str, float], dict[str, Any]]:
-        # Adaptacao S1 (Laya) para DeepStack se request trouxer prompt ou metadata
-        adapted_iters = req.iterations
-        laya_meta: dict[str, Any] = {}
-        if getattr(req, "prompt", None) or getattr(req, "intencao_s1", None):
-            query_text = getattr(req, "prompt", "") or str(getattr(req, "intencao_s1", ""))
-            bridge_res = LayaSolverAdapter.adapt_for_solver(
-                "deepstack",
-                query_text,
-                {"tolerance": float(getattr(req, "tolerance", 0.01))},
-                use_cascade=True,
-            )
-            adapted_iters = (
-                int(req.iterations * (1.0 - bridge_res.s1_prediction.noul * 0.2))
-                if bridge_res.s1_prediction.noul
-                else req.iterations
-            )
-            adapted_iters = max(1, adapted_iters)
-            laya_meta = {
-                "laya_adapted": True,
-                "engine_id": bridge_res.provenia.engine_id,
-                "ruin_priority": bridge_res.ruin_priority,
-                "framework_signals": bridge_res.framework_signals,
-            }
-
-        subgame = DeepStackSubgame(
-            street=Street(req.street.value),
-            pot=req.pot,
-            ranges_ip=req.ranges_ip,
-            ranges_oop=req.ranges_oop,
-            opponent_cfvs=req.opponent_cfvs,
-        )
-        gadget_bounds = subgame.compute_gadget_game_bounds()
-        raw_strategy = ContinualResolvingEngine.resolve_subgame(subgame, iterations=adapted_iters)
-
-        agg_freqs = _aggregate_action_frequencies(raw_strategy, req.ranges_ip)
-        return gadget_bounds, raw_strategy, {k: round(v, 4) for k, v in agg_freqs.items()}, laya_meta
-
-    try:
-        gadget_bounds, strategy, agg_freqs, laya_meta = await asyncio.to_thread(_execute_deepstack)
-        elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
-
-        resp = DeepStackResolveResponse(
-            status="SUCCESS",
-            street=req.street,
-            pot=req.pot,
-            gadget_game_bounds={k: round(v, 4) for k, v in gadget_bounds.items()},
-            strategy=strategy,
-            aggregated_action_frequencies=agg_freqs,
-            iterations_run=req.iterations,
-            execution_time_ms=elapsed_ms,
-        )
-        payload = resp.model_dump()
-        if laya_meta:
-            payload["laya_s1_adaptation"] = laya_meta
-        return web.json_response(_with_execution_provenance(payload, "deepstack-continual-resolving-adapter"))
-    except Exception as e:
-        return _internal_error(e, "handle_deepstack_resolve", status="ERROR")
-
-
-async def handle_rebel_pbs_evaluate(request: web.Request) -> web.Response:
-    """Avalia o Public Belief State (PBS) computando entropias de range."""
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
-
-    try:
-        req = RebelPbsEvaluateRequest.model_validate(data)
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-
-    try:
-        pbs = PublicBeliefState.from_ranges(
-            board=req.board,
-            pot=req.pot,
-            hero_range=req.hero_range,
-            villain_range=req.villain_range,
-        )
-
-        h_total = sum(req.hero_range.values())
-        v_total = sum(req.villain_range.values())
-        is_valid = math.isclose(h_total, 1.0, abs_tol=0.05) and math.isclose(v_total, 1.0, abs_tol=0.05)
-
-        alert = None
-        if pbs.villain_range_entropy < 1.0 and len(req.villain_range) > 3:
-            alert = "ALERTA: Range do adversario altamente polarizado (entropia < 1.0 bit)."
-
-        resp = RebelPbsEvaluateResponse(
-            status="SUCCESS",
-            board=pbs.board,
-            pot=pbs.pot,
-            hero_range_entropy=round(pbs.hero_range_entropy, 4),
-            villain_range_entropy=round(pbs.villain_range_entropy, 4),
-            is_terminal=pbs.is_terminal,
-            board_card_count=len(pbs.board),
-            normalized_ranges_valid=is_valid,
-            entropy_delta_alert=alert,
-        )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "rebel-pbs-adapter"))
-    except Exception as e:
-        return _internal_error(e, "handle_rebel_pbs_evaluate", status="ERROR")
-
-
-async def handle_claudico_translate_action(request: web.Request) -> web.Response:
-    """Mapeia uma aposta fora da arvore para as opcoes discretas vizinhas."""
-    try:
-        data = await request.json()
-        req = ClaudicoTranslateRequest.model_validate(data)
-
-        mapping = ClaudicoActionTranslator.pseudo_harmonic_mapping(
-            actual_bet=req.actual_bet,
-            allowed_bets=req.allowed_bets,
-            pot_size=req.pot_size,
-        )
-        resp = ClaudicoTranslateResponse(
-            status="SUCCESS",
-            mapped_distribution={k: round(v, 4) for k, v in mapping.items()},
-            target_bet=req.actual_bet,
-        )
-        return web.json_response(_with_execution_provenance(resp.model_dump(), "claudico-action-translator"))
-    except ValidationError as ve:
-        return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
-    except Exception as e:
-        return _internal_error(e, "handle_claudico_translate_action", status="ERROR")
 
 
 async def handle_chrysalis_health(_request: web.Request) -> web.Response:

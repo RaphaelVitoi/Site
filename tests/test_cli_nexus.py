@@ -543,3 +543,84 @@ def test_nexus_ops_start_gemma_command():
     res = runner.invoke(app, ["ops", "start-gemma", "--help"])
     assert res.exit_code == 0
     assert "Gemma" in res.stdout
+
+
+# ============================================================================
+# Fase 3 da auditoria SOTA (2026-11-17): shell=True -> argv nos catalogos.
+# Divida paga do registro-2026-08-29-shell-true-nos-catalogos: a string de
+# comando continua vindo de JSON versionado, mas agora chega ao subprocess
+# como lista de argumentos -- metacaractere nao tem shell para ser interpretado.
+# ============================================================================
+
+
+def test_comando_para_argv_resolve_prefixos():
+    """Cada prefixo de runtime vira [binario_absoluto, *args]."""
+    from scripts.cli.nexus import _comando_para_argv
+
+    argv = _comando_para_argv("python scripts/ops/hygiene.py")
+    assert argv is not None
+    assert argv[0] == sys.executable
+    assert argv[1:] == ["scripts/ops/hygiene.py"]
+
+    argv_pwsh = _comando_para_argv("pwsh scripts/ops/cwv_gate.ps1")
+    assert argv_pwsh is not None
+    assert argv_pwsh[0]
+    assert argv_pwsh[1:] == ["scripts/ops/cwv_gate.ps1"]
+
+    argv_node = _comando_para_argv("node scripts/ops/brotli_compressor.mjs")
+    assert argv_node is not None
+    assert argv_node[0]
+    assert argv_node[1:] == ["scripts/ops/brotli_compressor.mjs"]
+
+
+def test_comando_para_argv_fail_closed_fora_do_formato():
+    """Formato desconhecido NAO cai para shell: devolve None."""
+    from scripts.cli.nexus import _comando_para_argv
+
+    assert _comando_para_argv("powershell -NoProfile -File x.ps1") is None
+    assert _comando_para_argv("rm -rf /") is None
+    assert _comando_para_argv("") is None
+
+
+def test_comando_para_argv_metacaractere_vira_argumento_inerte():
+    """Sem shell, `&&`/`|` nao executam: viram argv do proprio interpretador."""
+    from scripts.cli.nexus import _comando_para_argv
+
+    argv = _comando_para_argv("python script.py && calc")
+    assert argv is not None
+    assert argv[0] == sys.executable
+    assert "&&" in argv[2:]
+
+
+def test_catalogos_executados_pelo_nexus_produzem_apenas_argv():
+    """Todo `command` dos dois catalogos que o nexus executa resolve para argv.
+
+    Se um dia alguem adicionar um comando com pipe/redirecionamento ou prefixo
+    novo ao catalogo, este teste falha ANTES de o shell=True voltar a ser
+    necessario -- a expansao correta e ensinar _comando_para_argv, nao reabrir
+    a porta.
+    """
+    import json
+
+    from scripts.cli.nexus import BASE_DIR, _comando_para_argv
+
+    comandos: list[str] = []
+
+    def _coletar(no: object) -> None:
+        if isinstance(no, dict):
+            for chave, valor in no.items():
+                if chave == "command" and isinstance(valor, str):
+                    comandos.append(valor)
+                else:
+                    _coletar(valor)
+        elif isinstance(no, list):
+            for item in no:
+                _coletar(item)
+
+    for rel in ("scripts/SCRIPTS_CATALOG.json", "data/SYSTEM_OPERATIONS_MANIFEST.json"):
+        dados = json.loads((BASE_DIR / rel).read_text(encoding="utf-8"))
+        _coletar(dados)
+
+    assert comandos, "catalogos vazios -- o teste perderia o sentido"
+    for cmd in comandos:
+        assert _comando_para_argv(cmd) is not None, f"comando fora do formato argv: {cmd}"

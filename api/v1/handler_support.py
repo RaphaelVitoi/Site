@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
@@ -11,6 +12,16 @@ from aiohttp import web
 from engine.capability_registry import load_engine_capability_manifest
 
 logger = logging.getLogger("api.v1.handlers")
+
+#: Texto do erro de corpo JSON malformado -- contrato unico compartilhado por
+#: todos os handlers (viviam como constante local de handlers.py).
+INVALID_JSON_BODY = "Invalid JSON body"
+
+#: Raiz do workspace servida por /api/files/*. Vive aqui (e nao em handlers.py)
+#: porque handlers_files.py e handlers.py ambos a consomem -- handlers.py a
+#: re-exporta para compatibilidade de import. Monkeypatch de teste deve mirar
+#: ESTE modulo: o consumidor resolve o atributo em tempo de chamada.
+BASE_WORKSPACE_DIR: Path = Path(__file__).resolve().parent.parent.parent
 
 
 def _internal_error(exc: BaseException, contexto: str, **extra: Any) -> web.Response:

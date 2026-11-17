@@ -314,6 +314,11 @@ async def call_gemma_local(
 
     system_prompt, _ = compor_advisory_s1(system_prompt, user_prompt)
     if not api_key:
+        # Contrato do proxy :17043 (gemma_server.py): valida X-Vitoi-Auth contra
+        # API_SECRET_TOKEN com hmac.compare_digest, bind 127.0.0.1, fail-closed
+        # (503 sem token configurado). VITOI_AUTH_TOKEN e alias historico do
+        # cliente -- o servidor so aceita API_SECRET_TOKEN, entao o fallback
+        # nunca produz credencial valida por conta propria.
         api_key = os.environ.get("API_SECRET_TOKEN") or os.environ.get("VITOI_AUTH_TOKEN")
 
     # 1. Tentativa Primaria: Proxy SOTA (Porta 17043)

@@ -198,5 +198,7 @@ async def get_agent_system_prompt(agent_name: str) -> str:
         return "".join(system_prompt_parts)
 
     final_prompt = await asyncio.to_thread(sync_compile)
-    cache[agent_name] = final_prompt
+    from llm.budget import SYSTEM_PROMPT_CACHE_MAX, cache_put_bounded  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
+    cache_put_bounded(cache, agent_name, final_prompt, SYSTEM_PROMPT_CACHE_MAX)
     return final_prompt

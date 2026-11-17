@@ -385,12 +385,28 @@ if not VALID_AGENTS:
 KEY_BLOCK_DURATION = timedelta(minutes=15)
 KEY_BLOCKLIST: dict[str, datetime] = {}
 
+# Teto do blocklist sincrono (paralelo ao async de llm/budget.py -- os dois
+# servem subsistemas distintos e convergir as assinaturas e refactor maior que
+# o escopo da Fase 3; o bound, porem, e a mesma classe de defeito medida la).
+_CONFIG_BLOCKLIST_MAX = 1024
+
 
 def _key_identifier(provider: str, key: str) -> str:
     return f"{provider}:{key}"
 
 
+def _purgar_blocklist_config(bloco: dict[str, datetime]) -> None:
+    agora = datetime.now(UTC)
+    if len(bloco) <= _CONFIG_BLOCKLIST_MAX:
+        return
+    for chave in [k for k, exp in bloco.items() if exp <= agora]:
+        bloco.pop(chave, None)
+    while len(bloco) > _CONFIG_BLOCKLIST_MAX:
+        bloco.pop(next(iter(bloco)), None)
+
+
 def _is_key_blocked(provider_key: str) -> bool:
+    _purgar_blocklist_config(KEY_BLOCKLIST)
     expiry = KEY_BLOCKLIST.get(provider_key)
     if expiry:
         if expiry > datetime.now(UTC):
@@ -400,6 +416,7 @@ def _is_key_blocked(provider_key: str) -> bool:
 
 
 def _block_key(provider_key: str):
+    _purgar_blocklist_config(KEY_BLOCKLIST)
     KEY_BLOCKLIST[provider_key] = datetime.now(UTC) + KEY_BLOCK_DURATION
 
 

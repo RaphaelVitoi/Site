@@ -13,6 +13,10 @@ services:
       - '17042:17042'
     restart: always
     volumes:
+      # .claude inteiro e necessario: o backend le agent-memory (RAG), agents/,
+      # GOVERNANCA/, RELATORIOS/ e .claude/secrets/auth_secret.txt -- medido por
+      # varredura de imports em 2026-11-17 (Fase 3, auditoria SOTA). Estreitar o
+      # mount quebraria a ingestao do RAG e a leitura do segredo de servico.
       - ./.claude:/app/.claude
       - ./queue:/app/queue
       - ./data/chroma_db:/app/data/chroma_db

@@ -176,13 +176,13 @@ def _cliente_local(local_tmp_dir: Path, monkeypatch, nome_db: str):
     """
     from aiohttp.test_utils import TestClient, TestServer
 
-    from api.v1 import handlers
+    from api.v1 import handler_support
     from api.v1.server import create_app
 
     monkeypatch.setattr(middleware, "API_SECRET_TOKEN", "")
     monkeypatch.setattr(middleware, "SUPABASE_JWT_SECRET", None)
     monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-    monkeypatch.setattr(handlers, "BASE_WORKSPACE_DIR", local_tmp_dir)
+    monkeypatch.setattr(handler_support, "BASE_WORKSPACE_DIR", local_tmp_dir)
 
     manager = QueueManager(queue_path=str(local_tmp_dir / nome_db))
     return TestClient(TestServer(create_app(manager)))

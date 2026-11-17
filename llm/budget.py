@@ -232,10 +232,45 @@ DEEPSEEK_ROUTE_COOLDOWN_DURATION = timedelta(minutes=int(os.environ.get("DEEPSEE
 DEEPSEEK_ROUTE_FAILURE_THRESHOLD = int(os.environ.get("DEEPSEEK_ROUTE_FAILURE_THRESHOLD", "1"))
 ROUTE_BLOCKLIST: dict[str, datetime] = {}
 ROUTE_FAILURE_COUNTS: dict[str, int] = {}
+
+# Teto das blocklists: a cardinalidade real e pequena (chaves/modelos/rotas do
+# pool), mas uma chave bloqueada e nunca mais consultada reteria a entrada para
+# sempre. O sweep so roda quando o dict passa do teto -- custo zero no caminho
+# quente.
+_BLOCKLIST_MAX = 1024
+
+
+def _purgar_blocklist_expirados(bloco: dict[str, datetime], agora: datetime) -> None:
+    if len(bloco) <= _BLOCKLIST_MAX:
+        return
+    for chave in [k for k, exp in bloco.items() if exp <= agora]:
+        bloco.pop(chave, None)
+    while len(bloco) > _BLOCKLIST_MAX:
+        bloco.pop(next(iter(bloco)), None)
+
+
 COMPRESSION_CIRCUIT_BREAKER = {"consecutive_failures": 0, "last_failure": 0.0}
 
 # Caches para otimizacao de performance
 SYSTEM_PROMPT_CACHE: dict[str, str] = {}
+# Teto do cache de prompts: agent_name vem de task.agent (superficie controlavel
+# por quem enfileira), entao sem bound cada nome novo compilava um prompt inteiro
+# (dezenas de leituras de arquivo) e ficava na memoria para sempre.
+SYSTEM_PROMPT_CACHE_MAX = 64
+
+
+def cache_put_bounded(cache: dict, chave: object, valor: object, max_size: int) -> None:
+    """Insere em dict global limitado: ao atingir o teto, o mais antigo cede.
+
+    Centraliza a politica de eviction FIFO usada pelos caches de processo
+    (SYSTEM_PROMPT_CACHE e afins) para que nenhum mapa de estado global
+    cresca sem bound -- a classe de defeito medida na Fase 3 da auditoria.
+    """
+    if len(cache) >= max_size and chave not in cache:
+        cache.pop(next(iter(cache)), None)
+    cache[chave] = valor
+
+
 # AUTONOMY_MODE_CACHE removido em 2026-08-29: zero leitores, medido por AST. O
 # modo autonomo vem de `manager.get_system_state("autonomy_mode")` em
 # agents/autonomy.py -- este era um segundo mecanismo para o mesmo fato, e o
@@ -245,16 +280,25 @@ SYSTEM_PROMPT_CACHE: dict[str, str] = {}
 
 # Trava de Seguranca Global para variaveis de telemetria mapeada por Event Loop
 # SOTA: Garante prevencao contra falhas de cross-loop bounds em Runtime
-_TELEMETRY_LOCKS: dict[int, asyncio.Lock] = {}
+# O loop vai junto no valor (mesmo desenho de AsyncTokenBucket._lock_for_loop):
+# asyncio.run por chamada criava um loop novo e uma entrada ETERNA no dict --
+# era o unico mapa de locks do modulo sem poda de loops mortos.
+_TELEMETRY_LOCKS: dict[int, tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
 _TELEMETRY_THREADING_LOCK = threading.Lock()
 
 
 def get_telemetry_lock() -> asyncio.Lock:
-    loop_id = id(asyncio.get_running_loop())
+    loop = asyncio.get_running_loop()
+    loop_id = id(loop)
     with _TELEMETRY_THREADING_LOCK:
-        if loop_id not in _TELEMETRY_LOCKS:
-            _TELEMETRY_LOCKS[loop_id] = asyncio.Lock()
-        return _TELEMETRY_LOCKS[loop_id]
+        dead = [lid for lid, (loop_obj, _) in _TELEMETRY_LOCKS.items() if loop_obj.is_closed() and loop_obj is not loop]
+        for lid in dead:
+            _TELEMETRY_LOCKS.pop(lid, None)
+        par = _TELEMETRY_LOCKS.get(loop_id)
+        if par is None or par[0] is not loop:
+            par = (loop, asyncio.Lock())
+            _TELEMETRY_LOCKS[loop_id] = par
+        return par[1]
 
 
 def _key_identifier(provider: str, key: str) -> str:
@@ -263,6 +307,7 @@ def _key_identifier(provider: str, key: str) -> str:
 
 async def _is_key_blocked(provider_key: str) -> bool:
     async with get_telemetry_lock():
+        _purgar_blocklist_expirados(KEY_BLOCKLIST, datetime.now(UTC))
         expiry = KEY_BLOCKLIST.get(provider_key)
         if expiry:
             if expiry > datetime.now(UTC):
@@ -273,6 +318,7 @@ async def _is_key_blocked(provider_key: str) -> bool:
 
 async def _block_key(provider_key: str):
     async with get_telemetry_lock():
+        _purgar_blocklist_expirados(KEY_BLOCKLIST, datetime.now(UTC))
         KEY_BLOCKLIST[provider_key] = datetime.now(UTC) + KEY_BLOCK_DURATION
 
 
@@ -282,6 +328,7 @@ def _gemini_model_key_identifier(model: str, key: str) -> str:
 
 async def _is_gemini_model_key_blocked(model: str, key: str) -> bool:
     async with get_telemetry_lock():
+        _purgar_blocklist_expirados(GEMINI_MODEL_KEY_BLOCKLIST, datetime.now(UTC))
         block_id = _gemini_model_key_identifier(model, key)
         expiry = GEMINI_MODEL_KEY_BLOCKLIST.get(block_id)
         if expiry:
@@ -293,6 +340,7 @@ async def _is_gemini_model_key_blocked(model: str, key: str) -> bool:
 
 async def _block_gemini_model_key(model: str, key: str):
     async with get_telemetry_lock():
+        _purgar_blocklist_expirados(GEMINI_MODEL_KEY_BLOCKLIST, datetime.now(UTC))
         block_id = _gemini_model_key_identifier(model, key)
         GEMINI_MODEL_KEY_BLOCKLIST[block_id] = datetime.now(UTC) + GEMINI_MODEL_KEY_BLOCK_DURATION
 
@@ -342,6 +390,7 @@ def _route_identifier(provider: str, model: str) -> str:
 
 async def _is_route_blocked(route_key: str) -> bool:
     async with get_telemetry_lock():
+        _purgar_blocklist_expirados(ROUTE_BLOCKLIST, datetime.now(UTC))
         expiry = ROUTE_BLOCKLIST.get(route_key)
         if expiry:
             if expiry > datetime.now(UTC):
@@ -358,6 +407,7 @@ async def _register_route_success(route_key: str):
 
 async def _register_route_failure(route_key: str):
     async with get_telemetry_lock():
+        _purgar_blocklist_expirados(ROUTE_BLOCKLIST, datetime.now(UTC))
         count = ROUTE_FAILURE_COUNTS.get(route_key, 0) + 1
         ROUTE_FAILURE_COUNTS[route_key] = count
         threshold = ROUTE_FAILURE_THRESHOLD

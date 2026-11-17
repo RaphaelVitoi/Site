@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import platform
 import re
+import shlex
 import shutil
 import sqlite3
 import subprocess  # nosec # noqa: S404
@@ -153,17 +154,28 @@ _CMD_PREFIX_PWSH = "pwsh "
 _CMD_PREFIX_NODE = "node "
 
 
-def _resolver_comando(cmd_str: str) -> str:
-    """Resolve prefixos de runtime (python/pwsh/node) para binarios absolutos."""
-    if cmd_str.startswith(_CMD_PREFIX_PYTHON):
-        return f'"{sys.executable}" ' + cmd_str[len(_CMD_PREFIX_PYTHON) :]
-    if cmd_str.startswith(_CMD_PREFIX_PWSH):
-        pwsh_bin = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
-        return f'"{pwsh_bin}" ' + cmd_str[len(_CMD_PREFIX_PWSH) :]
-    if cmd_str.startswith(_CMD_PREFIX_NODE):
-        node_bin = shutil.which("node") or "node"
-        return f'"{node_bin}" ' + cmd_str[len(_CMD_PREFIX_NODE) :]
-    return cmd_str
+def _comando_para_argv(cmd_str: str) -> list[str] | None:
+    """Converte o comando de catalogo versionado em argv, sem shell.
+
+    Devolve None para qualquer formato fora dos prefixos conhecidos --
+    fail-closed: um comando novo no catalogo nao escapa para o shell por
+    omissao. Substitui o `shell=True` cuja divida estava declarada no
+    registro-2026-08-29-shell-true-nos-catalogos (quitada na Fase 3 da
+    auditoria SOTA): a string vinha de JSON versionado, mas argv elimina a
+    classe inteira de injecao por metacaractere.
+    """
+    cmd = cmd_str.strip()
+    for prefixo in (_CMD_PREFIX_PYTHON, _CMD_PREFIX_PWSH, _CMD_PREFIX_NODE):
+        if not cmd.startswith(prefixo):
+            continue
+        if prefixo == _CMD_PREFIX_PYTHON:
+            binario = sys.executable
+        elif prefixo == _CMD_PREFIX_PWSH:
+            binario = shutil.which("pwsh") or shutil.which("powershell") or "powershell"
+        else:
+            binario = shutil.which("node") or "node"
+        return [binario, *shlex.split(cmd[len(prefixo) :], posix=True)]
+    return None
 
 
 # Nao reintroduzir aqui as constantes do Tri-State Guard (MSG_WARNINGS_SOTA,
@@ -3242,12 +3254,17 @@ def _executar_categoria_scripts(run_cat: str, taxonomy: dict) -> None:
     script_errors: list[tuple[str, str]] = []
     warnings_por_script: dict[str, int | None] = {}
     for s_path, s_data in cat_info.get("scripts", {}).items():
-        cmd_str = _resolver_comando(s_data.get("command", ""))
+        cmd_str = s_data.get("command", "")
+        argv = _comando_para_argv(cmd_str)
+        if argv is None:
+            console.print(
+                f"[bold red][ERRO] Comando fora do formato argv suportado (sem shell): {s_path} -> {cmd_str}[/]"
+            )
+            script_errors.append((s_path, f"comando nao suportado sem shell: {cmd_str}"))
+            continue
         console.print(f"[bold yellow] Disparando:[/] [white]{s_path}[/] [dim]({cmd_str})[/]...")
         t0 = time.monotonic()
-        res = subprocess.run(  # noqa: S602  # Record-Id: registro-2026-08-29-shell-true-nos-catalogos
-            cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False
-        )
+        res = subprocess.run(argv, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
         dt = time.monotonic() - t0
         sla = s_data.get("sla_seconds", 10.0)
 
@@ -3312,12 +3329,21 @@ def _executar_bloco_operacoes(
     op_errors: list[tuple[str, str]] = []
     warnings_por_op: dict[str, int | None] = {}
     for op_id, op_info in targets.items():
-        cmd_str = _resolver_comando(op_info.get("command", ""))
+        cmd_str = op_info.get("command", "")
+        argv = _comando_para_argv(cmd_str)
+        if argv is None:
+            console.print(
+                f"[bold red][ERRO] Comando fora do formato argv suportado (sem shell): "
+                f"{op_info.get('name')} -> {cmd_str}[/]"
+            )
+            op_errors.append((op_id, f"comando nao suportado sem shell: {cmd_str}"))
+            warnings_por_op[str(op_info.get("name") or op_id)] = None
+            continue
         console.print(f"[bold yellow] {tipo_singular}:[/] [white]{op_info.get('name')}[/] [dim]({cmd_str})[/]")
         for c in op_info.get("thematic_criteria", []):
             console.print(f"  [cyan] Criterio:[/] [white]{c}[/]")
         t0 = time.monotonic()
-        res = subprocess.run(cmd_str, shell=True, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)  # noqa: S602  # Record-Id: registro-2026-08-29-shell-true-nos-catalogos
+        res = subprocess.run(argv, cwd=str(BASE_DIR), capture_output=True, text=True, check=False)
         dt = time.monotonic() - t0
         sla = op_info.get("sla_seconds", 10.0)
 
