@@ -348,6 +348,21 @@ def test_axe_manual_review_baseline_is_explicit_and_hash_bound_to_the_svg_source
         'text[x="15"]',
         'text[x="310"]',
         'text[x="185.39999999999998"]',
+        ".text-\\[clamp\\(1\\.75rem\\,4vw\\,2\\.5rem\\)\\]",
+        ".ml-1\\.5",
+        ".mt-3",
+        ".text-\\[0\\.8rem\\]",
+        ".inline-block",
+        'a[href$="icm-masterclass"]',
+        ".hover\\:text-emerald-700",
+        ".hover\\:text-rose-700",
+        '.hover\\:text-indigo-700[href$="gto-cfr"]',
+        '.gap-x-10 > .hover\\:text-\\[var\\(--color-light-text-main\\)\\][href$="biblioteca"]',
+        '.hover\\:text-indigo-700[href$="analytics"]',
+        '.gap-x-10 > .hover\\:text-\\[var\\(--color-light-text-main\\)\\][href$="quem-sou"]',
+        ".m-0",
+        ".m-0 > .text-\\[var\\(--color-light-text-main\\)\\]",
+        ".shadow-inner > .text-\\[var\\(--color-light-text-muted\\)\\]",
     ]
 
 

@@ -39,9 +39,9 @@ onnxruntime>=1.31.1
 sentence-transformers>=6.3.0
 
 # ── CLIENTES LLM, AGENTES & MCP ──────────────────────────────────────────────
-google-genai>=3.2.0
+google-genai>=3.4.0
 google-antigravity>=0.1.23
-openai>=3.49.0
+openai>=3.52.0
 anthropic>=2.9.0
 httpx>=0.28.1
 mcp>=2.3.0

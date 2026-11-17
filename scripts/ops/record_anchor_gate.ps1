@@ -181,7 +181,11 @@ foreach ($arq in $arquivosDeRegistro) {
     $idxNv = [array]::IndexOf($bloco, ($bloco | Where-Object { $_ -match '^nao_verificado:' } | Select-Object -First 1))
     if ($idxNv -ge 0) {
         $valor = ($bloco[$idxNv] -replace '^nao_verificado:\s*', '').Trim()
-        $temItemAbaixo = ($idxNv + 1 -lt $bloco.Count) -and ($bloco[$idxNv + 1] -match '^\s+-\s+\S')
+        # YAML permite indentless sequence: `chave:` seguida de `- item` na
+        # coluna 0 e YAML valido -- e o formato que yaml.safe_dump emite por
+        # padrao. `^\s*-` aceita os dois estilos; `^\s+-` reprovava documento
+        # correto (medido em 2026-11-16 no REGISTRO de elevacao de deps).
+        $temItemAbaixo = ($idxNv + 1 -lt $bloco.Count) -and ($bloco[$idxNv + 1] -match '^\s*-\s+\S')
         if (($valor -eq '' -or $valor -eq '[]') -and -not $temItemAbaixo) {
             Add-Erro "'nao_verificado' declarado vazio. Declare o que nao rodou, ou 'nenhuma' com justificativa: $arq"
         }

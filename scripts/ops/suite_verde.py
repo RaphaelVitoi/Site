@@ -280,6 +280,18 @@ def silencio(extra: list[str]) -> list[str]:
     return [] if any("log_cli" in a for a in extra) else ["-o", "log_cli=false"]
 
 
+def _xdist_com_workers(args: list[str]) -> bool:
+    """True quando a linha de comando liga o xdist com paralelismo real."""
+    if "no:xdist" in args:
+        return False
+    for i, a in enumerate(args):
+        if a == "-n" and i + 1 < len(args):
+            return args[i + 1] != "0"
+        if a.startswith("-n") and len(a) > 2:
+            return a[2:].lstrip("=") != "0"
+    return False
+
+
 def rodar_suite(extra: list[str]) -> int:
     """Executa a suite e, se verde E a arvore continuar limpa, grava o marcador."""
     memoria_livre = psutil.virtual_memory().available
@@ -294,7 +306,20 @@ def rodar_suite(extra: list[str]) -> int:
     tem_basetemp = any(arg.startswith("--basetemp") for arg in extra)
     base = os.environ.get("SOTA_SUITE_BASETEMP") or str(Path(tempfile.gettempdir()) / f"pytest-sota-{os.getpid()}")
     basetemp_args = [] if tem_basetemp else [f"--basetemp={base}"]
-    cmd = [sys.executable, "-m", "pytest", "-q", *basetemp_args, *paralelismo(extra), *silencio(extra), *extra]
+    args = [*basetemp_args, *paralelismo(extra), *silencio(extra), *extra]
+    # `--dist load` (o padrao do xdist) distribui CASOS DE TESTE entre workers.
+    # tests/test_hook_commit_msg.py exercita .husky/commit-msg, que roda
+    # `git write-tree` no indice REAL de RAIZ -- e o proprio teste tambem o
+    # chama para montar a assinatura. Com casos do mesmo arquivo em workers
+    # diferentes, os `write-tree` correm entre si pelo .git/index.lock e um
+    # deles volta vazio: a assinatura sai com `sha=` em branco e o hook
+    # reprova um commit inocente. Medido em 2026-11-17: uma falha por rodada
+    # de suite, sempre em caso aleatorio do mesmo arquivo, sempre com
+    # "campos ausentes: sha=". `loadfile` mantem o arquivo inteiro num worker
+    # so -- serializa os write-tree sem mudar o paralelismo entre arquivos.
+    if _tem_xdist() and _xdist_com_workers(args) and not any(a == "--dist" or a.startswith("--dist=") for a in args):
+        args += ["--dist", "loadfile"]
+    cmd = [sys.executable, "-m", "pytest", "-q", *args]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)
     if r.returncode != 0:
