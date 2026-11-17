@@ -152,10 +152,9 @@ export default function QuemSouPage() {
             <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 href="/"
-                className="flex items-center gap-3 transition-all duration-300"
+                className="flex items-center gap-3 bg-[#0D0C0A] transition-all duration-300 hover:bg-[#2A2825]"
                 style={{
                   padding: '13px 28px',
-                  background: '#0D0C0A',
                   color: '#F5F3EE',
                   borderRadius: 8,
                   fontFamily: 'var(--font-mono)',
@@ -164,8 +163,6 @@ export default function QuemSouPage() {
                   textTransform: 'uppercase',
                   textDecoration: 'none',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#2A2825')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = '#0D0C0A')}
               >
                 Ver a trilha completa
               </Link>
@@ -251,9 +248,7 @@ export default function QuemSouPage() {
                   <span className="rounded border border-[#EDE8E1] px-2.5 py-1 font-mono text-xs tracking-[0.2em] text-[#765421]">
                     {node.period}
                   </span>
-                  <span className="font-mono text-xs tracking-[0.14em] text-[#625F5A] uppercase">
-                    {node.tag}
-                  </span>
+                  <span className="font-mono text-xs tracking-[0.14em] text-[#625F5A] uppercase">{node.tag}</span>
                 </div>
                 <h3 className="text-[1.05rem] leading-[1.2] font-bold tracking-[-0.01em] text-[#0D0C0A]">
                   {node.title}

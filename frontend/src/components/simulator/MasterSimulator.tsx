@@ -14,38 +14,24 @@ import { useScenario } from './hooks/useScenario';
 import { useSimulatorState } from './hooks/useSimulatorState';
 import { useSotaSync } from './hooks/useSotaSync';
 import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from './SotaContext';
-import { GuideToolbar } from './ui/GuideToolbar';
-import { NashDistortionViz } from './ui/NashDistortionViz';
 const SimulatorNavigation = dynamic(() => import('./ui/SimulatorNavigation'), {
   ssr: false,
 });
+import { LoadingFallback, ToolContent } from './ui/ToolContent';
+import type { SpotSubView } from './ui/ToolContent';
 import { useMasterCalculations } from './hooks/useMasterCalculations';
 import { useMasterSpotLogic } from './hooks/useMasterSpotLogic';
 import { useMasterHandlers } from './hooks/useMasterHandlers';
-import { SpatialControls } from './ui/SpatialControls';
 import { SectionHeader } from '../ui/layout/SectionHeader';
 import { useMounted } from '../../hooks/useMounted';
 import dynamic from 'next/dynamic';
 import { Suspense, useCallback, useEffect, useMemo, useDeferredValue, useTransition, useState } from 'react';
 import useSWR from 'swr';
 
-import { MasterTableVisualizer } from './ui/MasterTableVisualizer';
 import { ScenarioQuickSelector } from './ui/ScenarioQuickSelector';
 import { generateDynamicICMQuiz } from '../quiz/icmQuizGenerator';
 
 // SOTA: Dynamic imports with ssr: false for WASM/Worker safety
-const EquityCalculator = dynamic(() => import('./panels/EquityCalculator'), {
-  ssr: false,
-});
-const ComparisonRadar = dynamic(() => import('./panels/ComparisonRadar'), {
-  ssr: false,
-});
-const PerspectivePanel = dynamic(() => import('./panels/PerspectivePanel'), {
-  ssr: false,
-});
-const PostFlopPanel = dynamic(() => import('./panels/PostFlopPanel'), {
-  ssr: false,
-});
 const PmLensPanel = dynamic(() => import('./panels/PmLensPanel'), {
   ssr: false,
 });
@@ -53,41 +39,11 @@ const ReferencialAula12 = dynamic(() => import('./ReferencialAula12'), {
   ssr: false,
 });
 
-const NashPanel = dynamic(() => import('./panels/NashPanel'), { ssr: false });
-const TheoryPanel = dynamic(() => import('./panels/TheoryPanel'), {
-  ssr: false,
-});
-const ScenarioStage = dynamic(() => import('./panels/ScenarioStage'), {
-  ssr: false,
-});
-const MatchupSelector = dynamic(() => import('./panels/MatchupSelector'), {
-  ssr: false,
-});
-const RangeMatrix = dynamic(() => import('./panels/RangeMatrix'), {
-  ssr: false,
-});
-const CfrRegretPanel = dynamic(() => import('./panels/CfrRegretPanel'), {
-  ssr: false,
-});
 const DashboardSOTA = dynamic(() => import('./DashboardSOTA'), { ssr: false });
-const InsolvencyRadar = dynamic(() => import('./ui/InsolvencyRadar'), {
-  ssr: false,
-});
-const QuizEngine = dynamic(() => import('../quiz/QuizEngine').then((mod) => mod.QuizEngine), {
-  ssr: false,
-});
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export type ActiveTool = 'scenario' | 'calculator' | 'matchup' | 'comparar' | 'perspectiva' | 'posflop' | 'cfr';
-
-function LoadingFallback() {
-  return (
-    <div className="text-text-darker flex animate-pulse items-center justify-center p-16 text-[0.65rem] font-black tracking-[0.3em] uppercase">
-      Sincronizando Mente Coletiva...
-    </div>
-  );
-}
+export type { ActiveTool } from './ui/ToolContent';
 
 export default function MasterSimulator() {
   const isMounted = useMounted();
@@ -97,7 +53,7 @@ export default function MasterSimulator() {
   const [activeWorkspaceTab, setActiveWorkspaceTab] = useState<'laboratorio' | 'dashboard' | 'referencial' | 'lente'>(
     'laboratorio',
   );
-  const [spotSubView, setSpotSubView] = useState<'nash' | 'insolvency' | 'ranges' | 'theory' | 'quiz'>('nash');
+  const [spotSubView, setSpotSubView] = useState<SpotSubView>('nash');
 
   const { data: predictiveData } = useSWR('/api/v1/predictive', fetcher, {
     revalidateOnFocus: false,
@@ -109,11 +65,8 @@ export default function MasterSimulator() {
     aggressionFactor,
     setAggressionFactor,
     pkoValue,
-    setPkoValue,
     isNearPayjump,
-    setIsNearPayjump,
     blindsRisingSoon,
-    setBlindsRisingSoon,
     streetFreqs,
     setStreetFreqs,
     activeTool,
@@ -126,9 +79,7 @@ export default function MasterSimulator() {
     currentPot,
     setCurrentPot,
     activePlayers,
-    setActivePlayers,
     isPredictive,
-    setIsPredictive,
     resetState,
   } = state;
 
@@ -194,25 +145,21 @@ export default function MasterSimulator() {
 
   const deferredQuantumConfig = useDeferredValue(quantumConfig);
 
+  const quantumResult = useQuantumEngine(deferredQuantumConfig);
   const {
     effectiveIpRp,
     effectiveOopRp,
-    effectiveSprData,
-    pkoPreview,
     nashFlop,
-    nashTurn,
-    nashRiver,
-    streetRps,
     quantumPerspectiva,
     insolvencyMatrixData,
     isCalculatingInsolvency,
     nashResults,
     dispatchInsolvencyMatrix,
-  } = useQuantumEngine(deferredQuantumConfig);
+  } = quantumResult;
 
   // --- HOOKS ORQUESTRADORES SOTA v6 ---
 
-  const { bayesianWinProb, nativeRangeMetric, apiQuantumMetrics, setNativeRangeMetric } = useMasterCalculations({
+  const calculationsResult = useMasterCalculations({
     scenario,
     aggressionFactor,
     safeHeroInvested,
@@ -220,18 +167,9 @@ export default function MasterSimulator() {
     quantumPerspectiva,
     insolvencyMatrixData,
   });
+  const { bayesianWinProb, nativeRangeMetric, apiQuantumMetrics, setNativeRangeMetric } = calculationsResult;
 
-  const {
-    isIp,
-    isBaseline,
-    finalIpRp,
-    finalOopRp,
-    heroUpdatedStack,
-    villainUpdatedStack,
-    spotContextValue,
-    metricsContextValue,
-    wasmContextValue,
-  } = useMasterSpotLogic({
+  const spotResult = useMasterSpotLogic({
     scenario,
     heroPosition,
     safeHeroInvested,
@@ -255,6 +193,7 @@ export default function MasterSimulator() {
     pkoValue,
     aggFactor: aggressionFactor,
   });
+  const { spotContextValue, metricsContextValue, wasmContextValue } = spotResult;
 
   const dynamicQuizQuestions = useMemo(() => {
     return generateDynamicICMQuiz({
@@ -285,373 +224,6 @@ export default function MasterSimulator() {
   );
 
   const insolvencyRadarData = useInsolvencyRadar(apiQuantumMetrics);
-
-  const activeToolContent = useMemo(() => {
-    const toolContents: Record<ActiveTool, React.ReactNode> = {
-      scenario: (
-        <Suspense fallback={<LoadingFallback />}>
-          {/* Cockpit 2-Colunas · Proporção Equilibrada (6:6) */}
-          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
-            {/* ═══ COLUNA PRINCIPAL (6/12) · Mesa + Controles + Lentes Modulares ═══ */}
-            <div className="flex flex-col gap-5 lg:col-span-6">
-              {/* Mesa Interativa 9P */}
-              <div className="w-full">
-                <MasterTableVisualizer
-                  scenario={scenario}
-                  heroPosition={heroPosition}
-                  currentPot={safeCurrentPot}
-                  effectiveIpRp={finalIpRp}
-                  effectiveOopRp={finalOopRp}
-                  onSelectPosition={(pos) => {
-                    setHeroPosition(pos);
-                    updatePhysics({ position: pos as 'IP' | 'OOP' | 'BB' | 'SB' });
-                  }}
-                />
-              </div>
-
-              {/* Controles Espaciais */}
-              <div className="w-full">
-                <SpatialControls
-                  heroPosition={heroPosition}
-                  handleHeroPositionChange={handleHeroPositionChange}
-                  heroInvested={heroInvested}
-                  setHeroInvested={setHeroInvested}
-                  currentPot={currentPot}
-                  setCurrentPot={setCurrentPot}
-                  activePlayers={activePlayers}
-                  setActivePlayers={setActivePlayers}
-                  isPredictive={isPredictive}
-                  setIsPredictive={setIsPredictive}
-                  onUpdatePhysics={updatePhysics}
-                />
-              </div>
-
-              {/* Seletor de Lentes do Spot */}
-              <div className="no-scrollbar flex items-center gap-1.5 overflow-x-auto rounded-2xl border border-white/8 bg-slate-950/50 p-1 shadow-inner">
-                {[
-                  { id: 'nash', label: 'Nash & Ações', icon: 'fa-chess-knight' },
-                  { id: 'insolvency', label: 'Insolvência', icon: 'fa-satellite-dish' },
-                  { id: 'ranges', label: 'Matriz 169', icon: 'fa-table-cells' },
-                  { id: 'theory', label: 'Teoria', icon: 'fa-book-open' },
-                  { id: 'quiz', label: 'Quiz ICM', icon: 'fa-graduation-cap' },
-                ].map((sub) => {
-                  const isSubActive = spotSubView === sub.id;
-                  return (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => setSpotSubView(sub.id as 'nash' | 'insolvency' | 'ranges' | 'theory' | 'quiz')}
-                      className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold tracking-wide whitespace-nowrap uppercase transition-all duration-200 ${
-                        isSubActive
-                          ? 'bg-accent-indigo-surface/20 border-accent-indigo/40 border text-white shadow-md shadow-indigo-500/10'
-                          : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
-                      }`}
-                    >
-                      <i className={`fa-solid ${sub.icon} text-[0.55rem] ${isSubActive ? 'text-accent-indigo' : ''}`} />
-                      <span>{sub.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Conteúdo da Lente Ativa */}
-              {spotSubView === 'nash' && (
-                <div className="animate-sota-in flex flex-col gap-4">
-                  <div className="w-full">
-                    <GuideToolbar onExport={handleExportHRC} />
-                  </div>
-                  {nashFlop && nashTurn && nashRiver && streetRps && (
-                    <div className="w-full">
-                      <NashPanel
-                        nashFlop={nashFlop}
-                        nashTurn={nashTurn}
-                        nashRiver={nashRiver}
-                        streetFreqs={streetFreqs}
-                        streetRps={streetRps}
-                        aggressionFactor={aggressionFactor}
-                        pkoValue={pkoValue}
-                        pkoPreview={pkoPreview}
-                        isNearPayjump={isNearPayjump}
-                        blindsRisingSoon={blindsRisingSoon}
-                        isBaseline={isBaseline}
-                        onStreetFreqChange={handleStreetFreqChange}
-                        onAggressionChange={handleAggressionChange}
-                        onPkoChange={setPkoValue}
-                        onPayjumpToggle={setIsNearPayjump}
-                        onBlindsToggle={setBlindsRisingSoon}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {spotSubView === 'insolvency' && (
-                <div className="animate-sota-in space-y-5 rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-                  {/* Radar de Insolvência */}
-                  <div className="rounded-2xl border border-white/5 bg-black/30 p-5 shadow-inner">
-                    <div className="mb-4 flex items-center gap-2.5">
-                      <div className="text-accent-rose flex h-8 w-8 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10">
-                        <i className="fa-solid fa-satellite-dish text-sm" />
-                      </div>
-                      <h3 className="m-0 text-sm font-black tracking-[0.2em] text-white uppercase">
-                        Radar de Insolvência
-                      </h3>
-                    </div>
-                    <div className="relative h-72 w-full">
-                      <Suspense
-                        fallback={
-                          <div className="text-text-darker flex h-full animate-pulse items-center justify-center text-[0.6rem] font-black tracking-[0.3em] uppercase">
-                            Sincronizando...
-                          </div>
-                        }
-                      >
-                        <InsolvencyRadar data={insolvencyRadarData} />
-                      </Suspense>
-                    </div>
-                  </div>
-
-                  {/* Distorções por Street */}
-                  {nashResults?.flop && (
-                    <div className="grid grid-cols-3 gap-3">
-                      <NashDistortionViz streetName="Flop" nashData={nashResults.flop} />
-                      <NashDistortionViz streetName="Turn" nashData={nashResults.turn ?? null} />
-                      <NashDistortionViz streetName="River" nashData={nashResults.river ?? null} />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {spotSubView === 'ranges' && (
-                <div className="animate-sota-in w-full">
-                  <RangeMatrix ipRp={finalIpRp} oopRp={finalOopRp} scenarioId={scenario.id} />
-                </div>
-              )}
-
-              {spotSubView === 'theory' && (
-                <div className="animate-sota-in w-full">
-                  <TheoryPanel
-                    scenario={scenario}
-                    effectiveSprData={effectiveSprData}
-                    effectiveIpRp={finalIpRp}
-                    effectiveOopRp={finalOopRp}
-                  />
-                </div>
-              )}
-
-              {spotSubView === 'quiz' && (
-                <div className="animate-sota-in w-full rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-                  <div className="mb-4 flex items-center justify-between border-b border-white/5 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="bg-accent-indigo-surface/10 border-accent-indigo/20 text-accent-indigo flex h-6 w-6 items-center justify-center rounded-lg border text-xs">
-                        <i className="fa-solid fa-graduation-cap" />
-                      </div>
-                      <h4 className="m-0 text-xs font-black tracking-wider text-white uppercase">
-                        Laboratório Didático ICM · {scenario.name}
-                      </h4>
-                    </div>
-                    <span className="text-accent-indigo-light bg-accent-indigo-surface/10 border-accent-indigo/30 rounded border px-2 py-0.5 font-mono text-[0.52rem] tracking-widest uppercase">
-                      Quiz Dinâmico SOTA
-                    </span>
-                  </div>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <QuizEngine key={scenario.id} questions={dynamicQuizQuestions} />
-                  </Suspense>
-                </div>
-              )}
-            </div>
-
-            {/* ═══ COLUNA LATERAL (6/12) · Narrativa + IA + Telemetria ═══ */}
-            <div className="flex flex-col gap-5 lg:col-span-6">
-              {/* Cenário: Narrativa e Medidores de Risco */}
-              <ScenarioStage
-                scenario={scenario}
-                effectiveIpRp={finalIpRp}
-                effectiveOopRp={finalOopRp}
-                dynamicDeathZone={apiQuantumMetrics?.threshEq ? apiQuantumMetrics.threshEq * 100 : 0}
-              />
-
-              {/* Telemetria Quântica do Spot */}
-              <div className="space-y-3 rounded-3xl border border-white/8 bg-slate-950/60 p-5 shadow-xl backdrop-blur-2xl">
-                <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                  <span className="text-accent-emerald flex items-center gap-2 font-mono text-xs font-black tracking-wide uppercase">
-                    <span className="bg-accent-emerald h-1.5 w-1.5 animate-pulse rounded-full" />
-                    <span>Física do Spot</span>
-                  </span>
-                  <span className="text-text-dim font-mono text-[0.5rem] tracking-wider uppercase">v8.0 GOLD</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
-                      IP Risk Premium
-                    </span>
-                    <span className="text-accent-indigo-light font-mono text-base font-black">
-                      {finalIpRp.toFixed(1)}%
-                    </span>
-                  </div>
-
-                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
-                      OOP Risk Premium
-                    </span>
-                    <span className="text-accent-rose font-mono text-base font-black">{finalOopRp.toFixed(1)}%</span>
-                  </div>
-
-                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
-                      Assimetria (ΔRP)
-                    </span>
-                    <span className="font-mono text-base font-black text-white">
-                      {Math.abs(finalIpRp - finalOopRp).toFixed(1)}%
-                    </span>
-                  </div>
-
-                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
-                    <span className="text-text-dim mb-0.5 block text-xs font-bold tracking-normal uppercase">
-                      Inércia FGS
-                    </span>
-                    <span className="text-accent-emerald font-mono text-base font-black">
-                      {blindsRisingSoon ? 'Subindo' : 'Estável'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Suspense>
-      ),
-      calculator: (
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-            <EquityCalculator key={`calc-${scenario.id}`} />
-          </div>
-        </Suspense>
-      ),
-      matchup: (
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-            <MatchupSelector key={`match-${scenario.id}`} />
-          </div>
-        </Suspense>
-      ),
-      comparar: (
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="w-full">
-            {scenarios && scenarios.length > 0 ? (
-              <ComparisonRadar
-                key={`comp-${scenario.id}`}
-                scenarios={scenarios}
-                currentId={scenario.id}
-                nashFlop={nashFlop ?? undefined}
-              />
-            ) : (
-              <LoadingFallback />
-            )}
-          </div>
-        </Suspense>
-      ),
-      perspectiva: (
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-            <PerspectivePanel
-              key={`persp-${scenario.id}`}
-              initialStacks={scenario.stacks}
-              initialPrizes={scenario.prizes}
-              anteSize={anteSize}
-              heroInvestedBb={safeHeroInvested}
-              currentPotBb={safeCurrentPot}
-              initialActivePlayers={safeActivePlayers}
-              initialIsNearPayjump={isNearPayjump}
-              initialBlindsRising={blindsRisingSoon}
-            />
-          </div>
-        </Suspense>
-      ),
-      posflop: (
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-            <PostFlopPanel
-              key={`pf-${scenario.id}`}
-              anteSize={anteSize}
-              scenarioId={scenario.id}
-              initialStacks={scenario.stacks}
-              initialPrizes={scenario.prizes}
-              heroIsIp={isIp}
-              activePlayers={safeActivePlayers}
-              effectiveSprData={effectiveSprData}
-              ipLabel={isIp ? heroPosition : undefined}
-              oopLabel={!isIp ? heroPosition : undefined}
-            />
-          </div>
-        </Suspense>
-      ),
-      cfr: (
-        <Suspense fallback={<LoadingFallback />}>
-          <div className="min-h-140 overflow-hidden rounded-2xl border border-white/8 bg-slate-950/50 p-5 shadow-lg">
-            <CfrRegretPanel
-              key={`cfr-${scenario.id}`}
-              initialPot={safeCurrentPot}
-              initialStack={Math.max(0.1, Math.min(heroUpdatedStack, villainUpdatedStack) || 0.1)}
-              initialEquity={nativeRangeMetric.equity}
-            />
-          </div>
-        </Suspense>
-      ),
-    };
-
-    return toolContents[activeTool] ?? toolContents.scenario;
-  }, [
-    activeTool,
-    scenario,
-    heroPosition,
-    handleHeroPositionChange,
-    heroInvested,
-    setHeroInvested,
-    currentPot,
-    setCurrentPot,
-    activePlayers,
-    setActivePlayers,
-    isPredictive,
-    setIsPredictive,
-    nashFlop,
-    nashTurn,
-    nashRiver,
-    streetRps,
-    streetFreqs,
-    aggressionFactor,
-    pkoValue,
-    pkoPreview,
-    isNearPayjump,
-    blindsRisingSoon,
-    isBaseline,
-    handleStreetFreqChange,
-    handleAggressionChange,
-    finalIpRp,
-    finalOopRp,
-    effectiveSprData,
-    scenarios,
-    anteSize,
-    safeHeroInvested,
-    safeCurrentPot,
-    handleExportHRC,
-    nashResults?.flop,
-    nashResults?.turn,
-    nashResults?.river,
-    setPkoValue,
-    setIsNearPayjump,
-    setBlindsRisingSoon,
-    isIp,
-    safeActivePlayers,
-    heroUpdatedStack,
-    villainUpdatedStack,
-    nativeRangeMetric.equity,
-    insolvencyRadarData,
-    apiQuantumMetrics?.threshEq,
-    spotSubView,
-    setHeroPosition,
-    updatePhysics,
-    dynamicQuizQuestions,
-  ]);
 
   const getWorkspaceTabMeta = (tab: 'laboratorio' | 'dashboard' | 'referencial' | 'lente') => {
     switch (tab) {
@@ -735,7 +307,31 @@ export default function MasterSimulator() {
                       isPending ? 'scale-[0.995] opacity-50 blur-xs' : 'scale-100 opacity-100'
                     }`}
                   >
-                    {activeToolContent}
+                    <ToolContent
+                      activeTool={activeTool}
+                      spotSubView={spotSubView}
+                      onSpotSubViewChange={setSpotSubView}
+                      scenario={scenario}
+                      scenarios={scenarios}
+                      state={state}
+                      quantum={quantumResult}
+                      spot={spotResult}
+                      calculations={calculationsResult}
+                      insolvencyRadarData={insolvencyRadarData}
+                      dynamicQuizQuestions={dynamicQuizQuestions}
+                      safeHeroInvested={safeHeroInvested}
+                      safeCurrentPot={safeCurrentPot}
+                      safeActivePlayers={safeActivePlayers}
+                      updatePhysics={updatePhysics}
+                      onTablePositionSelect={(pos) => {
+                        setHeroPosition(pos);
+                        updatePhysics({ position: pos as 'IP' | 'OOP' | 'BB' | 'SB' });
+                      }}
+                      onHeroPositionChange={handleHeroPositionChange}
+                      onStreetFreqChange={handleStreetFreqChange}
+                      onAggressionChange={handleAggressionChange}
+                      onExportHrc={handleExportHRC}
+                    />
                   </div>
                 </section>
               )}
