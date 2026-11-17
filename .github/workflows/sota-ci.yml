@@ -169,6 +169,14 @@ jobs:
           npm run typecheck
           npm run build
 
+      # MEDIDO EM 2026-11-17 (auditoria SOTA): a suite Jest — 111 arquivos,
+      # 743 testes cobrindo os motores matematicos (ICM, Nash, Monte Carlo,
+      # WASM parity) e seguranca — existia e passava localmente, mas NENHUM
+      # job a executava: regressao em icmEngine/nashSolver passava verde no
+      # CI. Baseline local medido: 111/111 suites, 743/743 testes em ~12s.
+      - name: 🧪 Run Jest unit test suite (743 tests)
+        run: npm run test --workspace frontend
+
       - name: 🧩 Install Playwright Chromium and system dependencies
         run: npm exec --workspace frontend -- playwright install --with-deps chromium
 

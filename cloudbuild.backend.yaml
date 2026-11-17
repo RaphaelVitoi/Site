@@ -27,6 +27,46 @@ steps:
     id: quality-gate
     name: ghcr.io/astral-sh/uv:python3.12-slim
 
+  # 0b. Dependencias Node — necessarias para o Pyright (langserver JS) e para
+  # os testes que invocam node/lighthouse (mesma receita do job python-test
+  # do .github/workflows/sota-ci.yml, que ja media pytest verde em ubuntu).
+  - args:
+      - ci
+      - --no-audit
+      - --no-fund
+    id: node-deps
+    name: node:22
+    waitFor: ['-']
+
+  # 0c. Type Check real — Pyright na versao pinada do pyproject (>=1.1.414).
+  # MEDIDO EM 2026-11-17: o gate anterior rodava so ruff; um NameError de
+  # runtime (AnthropicAdapter, commit dfbbcb9e) passou por ele. Pyright le
+  # [tool.pyright] do pyproject e resolve o .venv criado no passo 0.
+  - args:
+      - -c
+      - |
+        npx --yes pyright@1.1.414 --project pyproject.toml
+        echo "Pyright: PASS"
+    entrypoint: sh
+    id: pyright-gate
+    name: node:22
+    waitFor: [quality-gate]
+
+  # 0d. Suite Pytest — espelha o comando do CI do GitHub
+  # (pytest --cov=engine --cov-fail-under=10). So roda depois de npm ci
+  # porque ha testes que invocam node (extrator Lighthouse do cwv_gate).
+  - args:
+      - -c
+      - |
+        uv run --no-sync pytest --cov=engine --cov-fail-under=10
+        echo "Pytest Gate: PASS"
+    entrypoint: sh
+    env:
+      - UV_LINK_MODE=copy
+    id: pytest-gate
+    name: ghcr.io/astral-sh/uv:python3.12-slim
+    waitFor: [node-deps, pyright-gate]
+
   # 1. Build da Imagem Docker Backend (UV multi-stage)
   - args:
       - build
@@ -42,7 +82,7 @@ steps:
       - .
     id: docker-build
     name: gcr.io/cloud-builders/docker
-    waitFor: [quality-gate]
+    waitFor: [pytest-gate]
 
   # 2. Push para Artifact Registry
   - args:
@@ -73,9 +113,9 @@ steps:
       - --max-instances
       - ${_MAX_INSTANCES}
       - --timeout
-      - "300"
+      - '300'
       - --concurrency
-      - "80"
+      - '80'
       - --allow-unauthenticated
       - --set-env-vars
       - PYTHONUNBUFFERED=1,UV_COMPILE_BYTECODE=1
@@ -87,11 +127,11 @@ steps:
     waitFor: [docker-push]
 
 substitutions:
-  _CPU: "2"
-  _MAX_INSTANCES: "20"
+  _CPU: '2'
+  _MAX_INSTANCES: '20'
   _MEMORY: 2Gi
-  _MIN_INSTANCES: "1"
-  _PORT: "8080"
+  _MIN_INSTANCES: '1'
+  _PORT: '8080'
   _REGION: us-central1
   _REPO: nexus-repo
   _SERVICE_NAME: nexus-backend

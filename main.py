@@ -1,3 +1,13 @@
+"""Entrypoint API-only do Nexus (desenvolvimento local, porta 17042).
+
+Sobe SOMENTE o servidor aiohttp + QueueManager — nao consome a fila de
+tasks. O entrypoint de stack completa (API + worker + watchdog) e
+`core/runtime.py`, usado pelo CMD do Dockerfile e pelo deploy Cloud Run.
+Para desenvolvimento local que precise do worker, use
+`python core/runtime.py` ou `scripts/ops/` conforme a skill
+sota-server-lifecycle-warmup.
+"""
+
 import asyncio
 import logging
 

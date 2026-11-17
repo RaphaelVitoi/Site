@@ -51,12 +51,12 @@
   "frontMatter.preview.host": "http://localhost:3000",
   "frontMatter.content.pageFolders": [
     {
-      "path": "[[workspace]]/patches/skills",
-      "title": "skills"
+      "path": "[[workspace]]/frontend/src/content",
+      "title": "site-content"
     },
     {
-      "title": "maintenance",
-      "path": "[[workspace]]/scripts/maintenance"
+      "title": "docs",
+      "path": "[[workspace]]/docs"
     }
   ]
 }

@@ -7,12 +7,13 @@ updated_at: 2026-10-30
 ---
 
 # 🏛️ NEXUS ORCHESTRATOR — SISTEMA SOTA v8.0 GOLD
->
-> "A excelência não é um ato, mas um hábito. O Estado da Arte é a Cosmovisão executada no seu ápice."
 
-**Governança:** Raphael Vitoi (Tier 0 — Liderança / CEO)
-**Orquestração & Execução:** Chico (Tier 1 — Avatar do Sistema / Coletivo de Fronteira)
-**Data da Versão:** 2026-10-09 | **Release:** SOTA v8.0 GOLD Hardened
+> "A excelência não é um ato, mas um hábito. O Estado da Arte é a Cosmovisão
+> executada no seu ápice."
+
+**Governança:** Raphael Vitoi (Tier 0 — Liderança / CEO) **Orquestração &
+Execução:** Chico (Tier 1 — Avatar do Sistema / Coletivo de Fronteira) **Data da
+Versão:** 2026-10-09 | **Release:** SOTA v8.0 GOLD Hardened
 
 ---
 
@@ -44,15 +45,23 @@ C:\Users\rapha\.gemini\Site\
 
 ### A. Relação de Governança
 
-- **Raphael Vitoi:** Define a estratégia, arquitetura de sistemas, visão de produto e teoria de decisão (+EV / PMev).
-- **Chico:** Analisa requisitos com rigor matemático, pondera trade-offs técnicos e executa as implementações sem atrito (Zero-Entropy).
+- **Raphael Vitoi:** Define a estratégia, arquitetura de sistemas, visão de
+  produto e teoria de decisão (+EV / PMev).
+- **Chico:** Analisa requisitos com rigor matemático, pondera trade-offs
+  técnicos e executa as implementações sem atrito (Zero-Entropy).
 
 ### B. Motores e Cálculos Centrais
 
 - **Equação da Perspectiva Matemática (PMev):**
   $$PM = [(Equity \times R) \times Valuation] - [EV_{fold}(t, d_{pj}, pos) + RIO_{mw}]$$
-- **Validação Automatizada:** `tests/test_vitoi_perspective_engine.py` (95% de cobertura de código).
-- **Processamento Distribuído:** Apache Spark 4.2.0 + Apache Arrow 25.0.1 (Throughput de 54.7k registros/segundo).
+- **Validação Automatizada:** `tests/test_vitoi_perspective_engine.py`;
+  cobertura medida via `pytest --cov` com gate `--cov-fail-under=10` no CI
+  (`sota-ci.yml`).
+- **Processamento Distribuído:** Apache Spark (>=4.3) + Apache Arrow (>=26);
+  throughput de 54.7k registros/segundo é medição histórica do checkpoint
+  [`reports/CHECKPOINT-2026-06-14-infrastructure-hardening.md`](reports/CHECKPOINT-2026-06-14-infrastructure-hardening.md),
+  não spec vigente — benchmark reproduzível em
+  `~/.gemini/spark_equilibrium_engine.py` (fora do repositório).
 
 ### C. Comandos de Operação Rápida (CLI)
 
@@ -70,20 +79,21 @@ powershell -ExecutionPolicy Bypass -File "scripts/ops/cwv_gate.ps1"
 # Compilar frontend em modo de produção
 $env:PATH = "C:\Users\rapha\.fnm\aliases\default;" + $env:PATH; npm --prefix frontend run build
 
-# Executar benchmark do motor Spark Pareto
-python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
+# Executar benchmark do motor Spark Pareto (script externo ao repo, em ~/.gemini/)
+python "$HOME/.gemini/spark_equilibrium_engine.py"  # Linux/macOS
+# Windows: python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
 ```
 
 ---
 
 ## 3. Matriz de Documentos Canônicos
 
-| Categoria | Documento Principal | Propósito |
-| :--- | :--- | :--- |
-| **Governança Canônica** | [`CLAUDE.md`](CLAUDE.md) | Regras constitucionais, soberania piramidal, Tiers e qualidade. |
-| **Rotas do Frontend** | [`ROUTES.md`](ROUTES.md) | Mapeamento das 49 páginas estáticas/dinâmicas e laboratórios interativos. |
-| **Córtex & Memória** | [`.claude/`](.claude/) | Portal de navegação do córtex cognitivo, memórias e manifestos matemáticos. |
-| **Roteamento IA** | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.8 Flash e arquitetura híbrida. |
+| Categoria               | Documento Principal                              | Propósito                                                                   |
+| :---------------------- | :----------------------------------------------- | :-------------------------------------------------------------------------- |
+| **Governança Canônica** | [`CLAUDE.md`](CLAUDE.md)                         | Regras constitucionais, soberania piramidal, Tiers e qualidade.             |
+| **Rotas do Frontend**   | [`ROUTES.md`](ROUTES.md)                         | Mapeamento das 49 páginas estáticas/dinâmicas e laboratórios interativos.   |
+| **Córtex & Memória**    | [`.claude/`](.claude/)                           | Portal de navegação do córtex cognitivo, memórias e manifestos matemáticos. |
+| **Roteamento IA**       | [`data/routing_map.json`](data/routing_map.json) | Tiers de modelos calibrados para Gemini 3.8 Flash e arquitetura híbrida.    |
 
 ---
 
@@ -97,4 +107,6 @@ python "C:\Users\rapha\.gemini\spark_equilibrium_engine.py"
 - [Regras mestras do repositório](governance/REPOSITORY_RULES.md)
 
 ---
-*Nexus Orchestrator SOTA v8.0 GOLD — Sistema 100% Operacional e Blindado.*
+
+_Nexus Orchestrator SOTA v8.0 GOLD — governança executável, portões de qualidade
+em CI e deploy._
