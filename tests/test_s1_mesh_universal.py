@@ -61,6 +61,7 @@ def test_mcp_tool_interceptor_poda_ferramentas_irrelevantes() -> None:
     filtradas, telem = interceptar_e_podar_ferramentas_s1(
         tools=tools_mock,
         prompt="Pesquise a documentacao da API no site oficial",
+        registrar_telemetria=False,
     )
 
     assert telem.tools_original_count == 5
