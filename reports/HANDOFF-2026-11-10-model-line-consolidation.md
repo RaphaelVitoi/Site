@@ -1462,6 +1462,9 @@ nao_verificado:
   - "rotas de nuvem (gemini/anthropic/openai/openrouter) -- pools de chaves
     vazias, pendencia Tier 0"
   - "CI remoto do push -- gates locais nao sao CI"
+referencias_nao_resolviveis:
+  - frontend/src/lib/ai/mesh-router.ts
+  # caminho(s) citado(s) historicamente; removido(s) na Fase 2 da auditoria SOTA (2026-11-17) como codigo morto/fluxo residual
 ---
 
 # HANDOFF 2026-11-10 — Consolidação da malha de modelos + fechamento operacional

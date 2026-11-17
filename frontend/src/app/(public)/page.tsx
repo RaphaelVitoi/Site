@@ -1,7 +1,7 @@
-'use client';
-
 import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
+import { DownwardDriftWidget } from '@/components/home/DownwardDriftWidget';
+import { HomeVideo } from '@/components/home/HomeVideo';
+import { ModuleExplorer } from '@/components/home/ModuleExplorer';
 
 /* ─── Tokens ────────────────────────────────────────────────────────────────
    Light-mode ethereal system:
@@ -16,96 +16,6 @@ import { useState, useEffect, useRef } from 'react';
    ─────────────────────────────────────────────────────────────────────────── */
 
 export default function Home() {
-  const [activeModule, setActiveModule] = useState<number>(0);
-  const [videoReady, setVideoReady] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const moduleButtonRefs = useRef<Array<HTMLButtonElement | null>>([]);
-
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.muted = true;
-    const playPromise = v.play();
-    if (playPromise !== undefined && typeof playPromise.then === 'function') {
-      playPromise.then(() => setVideoReady(true)).catch(() => setVideoReady(true));
-    } else {
-      setVideoReady(true);
-    }
-  }, []);
-
-  const modules = [
-    {
-      num: 1,
-      title: 'O Problema e o Mapa',
-      desc: 'Fundamentos de precificação e risco.',
-      topics: [
-        'ICM desde a mão 1 (não apenas na bolha)',
-        'Risk Premium: definição precisa, cálculo e intuição',
-        'RP vs Bubble Factor: relações de equidade',
-        'Calculadora de valuation de stacks em FTs reais',
-      ],
-    },
-    {
-      num: 2,
-      title: 'Toy-Games como Laboratório',
-      desc: 'Isolamento de variáveis estratégicas.',
-      topics: [
-        'Justificativa metodológica: isolamento de variáveis',
-        '5 Toy-Games: RP progressivo no OOP (RP 0 → 24)',
-        '3 Toy-Games: RP invertido no IP (CL vs Short)',
-        'Conceitos emergentes: Teto do RP e Vantagem de Risco',
-      ],
-    },
-    {
-      num: 3,
-      title: 'ICM Pós-Flop — A Fronteira',
-      desc: 'O Downward Drift no pós-flop.',
-      topics: [
-        'Por que o edge migrou do pré-flop para o pós-flop',
-        'Downward Drift: transformação de sizings e ações',
-        'SPR e distribuição do Risk Premium por street',
-        'Covering advantage e premium check-back',
-      ],
-    },
-    {
-      num: 4,
-      title: 'Variáveis Contextuais',
-      desc: 'Impactos e dinâmica de torneios.',
-      topics: [
-        'Estruturas de payout (Flat vs Top-Heavy)',
-        'FGS (Future Game Simulation) vs ICM clássico',
-        'Torneios KO/Bounty: colisão de RP e Bounty Power',
-        'Dinâmica de CL: leverage futuro e risco de ruína',
-      ],
-    },
-    {
-      num: 5,
-      title: 'Aplicação Prática e Conexões',
-      desc: 'Heurísticas de combate em tempo real.',
-      topics: [
-        'Checklist de bolso "Antevisão" e 10 erros comuns',
-        'Configuração de laboratório solo com solvers',
-        'Loss aversion sob a ótica da Prospect Theory',
-        'Teoria de Sistemas: a mesa como organismo integrado',
-      ],
-    },
-  ];
-
-  const handleModuleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp' && event.key !== 'Home' && event.key !== 'End') return;
-
-    event.preventDefault();
-    let nextIndex: number;
-    if (event.key === 'Home') nextIndex = 0;
-    else if (event.key === 'End') nextIndex = modules.length - 1;
-    else {
-      const direction = event.key === 'ArrowDown' ? 1 : -1;
-      nextIndex = (index + direction + modules.length) % modules.length;
-    }
-    setActiveModule(nextIndex);
-    moduleButtonRefs.current[nextIndex]?.focus();
-  };
-
   return (
     <div data-surface="editorial" className="light-page font-body min-h-screen overflow-x-hidden text-[#1C1B1A]">
       {/* ════════════════════════════════════════════════════════════
@@ -282,39 +192,7 @@ export default function Home() {
           </div>
 
           {/* Gallery frame video wrap */}
-          <div className="rounded-md border border-[#DED9D2] bg-[#FAFAF8] p-3 shadow-[0_8px_32px_rgba(13,12,10,0.04)]">
-            <div className="relative overflow-hidden rounded border border-[#B09460] bg-[#0D0C0A]">
-              {/* Overlay label */}
-              <div className="pointer-events-none absolute top-0 right-0 left-0 z-10 flex items-center justify-between bg-[#0D0C0A] px-6 py-3.5 font-mono text-xs tracking-[0.14em] text-white uppercase">
-                <span>raphaelvitoi.mp4</span>
-                <span>Poker Racional · SOTA</span>
-              </div>
-              <video
-                ref={videoRef}
-                src="/raphaelvitoi.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                aria-describedby="video-raphaelvitoi-description"
-                className={`block aspect-video w-full object-cover transition-opacity duration-[1.2s] ${videoReady ? 'opacity-100' : 'opacity-0'}`}
-                onCanPlay={() => setVideoReady(true)}
-              >
-                <track
-                  kind="captions"
-                  src="/captions/raphaelvitoi.pt-BR.vtt"
-                  srcLang="pt-BR"
-                  label="Português"
-                  default
-                />
-                Seu navegador não suporta a tag de vídeo.
-              </video>
-              <p id="video-raphaelvitoi-description" className="sr-only">
-                Vídeo visual de apresentação do Poker Racional. O áudio permanece desativado nesta página; o conteúdo
-                técnico está disponível em texto nas seções adjacentes.
-              </p>
-            </div>
-          </div>
+          <HomeVideo />
         </div>
       </Section>
 
@@ -381,87 +259,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[38.2%_61.8%]">
-            {/* Index list */}
-            <div role="tablist" aria-label="Módulos da ementa" className="flex flex-col gap-2">
-              {modules.map((m, idx) => (
-                <button
-                  key={m.num}
-                  type="button"
-                  id={`module-tab-${m.num}`}
-                  role="tab"
-                  aria-selected={activeModule === idx}
-                  aria-controls={`module-panel-${m.num}`}
-                  tabIndex={activeModule === idx ? 0 : -1}
-                  ref={(element) => {
-                    moduleButtonRefs.current[idx] = element;
-                  }}
-                  onClick={() => setActiveModule(idx)}
-                  onKeyDown={(event) => handleModuleKeyDown(event, idx)}
-                  className={`flex items-center justify-between rounded border px-5 py-4 text-left font-mono text-sm tracking-[0.12em] transition-all duration-300 ${
-                    activeModule === idx
-                      ? 'border-[#0D0C0A] bg-[#0D0C0A] text-[#F5F3EE]'
-                      : 'border-[#DED9D2] bg-transparent text-[#5d5a55] hover:border-[#0D0C0A] hover:text-[#0D0C0A]'
-                  }`}
-                >
-                  <span className="font-bold">MÓDULO 0{m.num}</span>
-                  <span className="max-w-30 text-right text-xs leading-tight">{m.title}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Content Detail Panel */}
-            <div
-              id={`module-panel-${modules[activeModule]?.num ?? 1}`}
-              role="tabpanel"
-              aria-labelledby={`module-tab-${modules[activeModule]?.num ?? 1}`}
-              className="flex min-h-85 flex-col justify-between rounded-xl border border-[#DED9D2] bg-[#FAFAF7] p-8 shadow-[0_4px_20px_rgba(13,12,10,0.02)] lg:p-10"
-            >
-              {(() => {
-                const currentModule = modules[activeModule];
-                if (!currentModule) return null;
-                return (
-                  <div className="space-y-8">
-                    <div>
-                      <p className="mb-3.5 font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
-                        Módulo 0{currentModule.num} · {currentModule.desc}
-                      </p>
-                      <h3 className="font-display text-[1.8rem] leading-[1.2] tracking-tight text-[#0D0C0A]">
-                        {currentModule.title}
-                      </h3>
-                    </div>
-                    <div className="h-px bg-[#DED9D2]" />
-                    <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      {currentModule.topics.map((t) => (
-                        <li
-                          key={t}
-                          className="flex items-start gap-3 font-serif text-[1.05rem] leading-[1.65] text-[#262423]"
-                        >
-                          <div className="mt-2.25 h-1 w-1 shrink-0 rounded-full bg-[#B09460]" />
-                          {t}
-                        </li>
-                      ))}
-                    </ul>
-                    <div className="flex flex-wrap gap-3 pt-4">
-                      {[
-                        { href: '/biblioteca', icon: 'fa-book-open', label: 'Biblioteca' },
-                        { href: '/simulador', icon: 'fa-scale-unbalanced', label: 'Simulador' },
-                        { href: '/simulador/gto-cfr', icon: 'fa-network-wired', label: 'Lab CFR' },
-                      ].map((cta) => (
-                        <Link
-                          key={cta.href}
-                          href={cta.href}
-                          className="flex items-center gap-2 rounded border border-[#DED9D2] px-5.5 py-2.5 font-mono text-xs tracking-[0.14em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
-                        >
-                          <i className={`fa-solid ${cta.icon} text-[#B09460]`} /> {cta.label}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
+          <ModuleExplorer />
         </div>
       </Section>
 
@@ -526,11 +324,12 @@ export default function Home() {
               Cockpit de Ferramentas Visuais SOTA
             </h2>
             <p className="mx-auto max-w-xl text-[1.1rem] leading-[1.8] font-normal text-[#262423]">
-              Motores interativos com renderização gráfica vetorial, aceleração WebAssembly e modelagem Bayesiana em tempo real.
+              Motores interativos com renderização gráfica vetorial, aceleração WebAssembly e modelagem Bayesiana em
+              tempo real.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {[
               {
                 icon: 'fa-calculator',
@@ -570,14 +369,10 @@ export default function Home() {
                       {tool.tag}
                     </span>
                   </div>
-                  <h3 className="font-display text-lg font-bold text-[#0D0C0A] tracking-tight">
-                    {tool.title}
-                  </h3>
-                  <p className="font-serif text-[0.98rem] leading-[1.7] text-[#262423]">
-                    {tool.desc}
-                  </p>
+                  <h3 className="font-display text-lg font-bold tracking-tight text-[#0D0C0A]">{tool.title}</h3>
+                  <p className="font-serif text-[0.98rem] leading-[1.7] text-[#262423]">{tool.desc}</p>
                 </div>
-                <div className="pt-6 border-t border-[#EDE8E1] mt-6">
+                <div className="mt-6 border-t border-[#EDE8E1] pt-6">
                   <Link
                     href={tool.href}
                     className="inline-flex items-center gap-2 font-mono text-xs font-bold tracking-[0.12em] text-[#0D0C0A] uppercase transition-colors group-hover:text-[#765421]"
@@ -600,9 +395,7 @@ export default function Home() {
       <Section>
         <div className="flex flex-col items-center justify-between gap-12 rounded-xl border border-[#DED9D2] bg-[#FAFAF8] p-10 shadow-[0_4px_20px_rgba(13,12,10,0.02)] md:flex-row md:p-14">
           <div className="max-w-xl space-y-5">
-            <p className="font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
-              Bônus Exclusivo
-            </p>
+            <p className="font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">Bônus Exclusivo</p>
             <h3 className="font-display text-[clamp(1.6rem,3vw,2.2rem)] leading-tight tracking-tight text-[#0D0C0A]">
               Checklist de Bolso
               <br />
@@ -666,10 +459,7 @@ export default function Home() {
             {/* Tags */}
             <div className="flex flex-wrap gap-2">
               {['ICM e Risk Premium', 'GTO e Equilíbrio', 'Embaixador GTO Wizard', 'Psicologia (UEMG)'].map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-[#DED9D2] px-3.5 py-1.5 text-sm text-[#262423]"
-                >
+                <span key={tag} className="rounded-full border border-[#DED9D2] px-3.5 py-1.5 text-sm text-[#262423]">
                   {tag}
                 </span>
               ))}
@@ -799,172 +589,6 @@ function PillarCard({
       <p className="mb-4.5 font-mono text-xs font-bold tracking-[0.14em] text-[#765421]">{num}</p>
       <h3 className="mb-3 text-[0.88rem] font-bold tracking-wider text-[#0D0C0A] uppercase">{title}</h3>
       <p className="font-serif text-[1.05rem] leading-[1.76] text-[#262423]">{desc}</p>
-    </div>
-  );
-}
-
-function DownwardDriftWidget() {
-  const [rp, setRp] = useState(15);
-  const betFreq = Math.max(12, Math.round(65 - rp * 1.35));
-  const minEquity = Math.min(80, Math.round(50 + rp * 0.5));
-  let sizing = 'Grande — 75% pot';
-  let sizingColorClass = 'text-[#765421]';
-  let sizingColorHex = '#765421';
-  if (rp > 10 && rp <= 22) {
-    sizing = 'Pequeno — 30% pot';
-    sizingColorClass = 'text-[#286247]';
-    sizingColorHex = '#286247';
-  } else if (rp > 22) {
-    sizing = 'Check — 0% pot';
-    sizingColorClass = 'text-[#6e3636]';
-    sizingColorHex = '#6e3636';
-  }
-
-  // SVG dimensions: width = 380 (viewbox 0 0 400 120, range from 10 to 390)
-  const xStart = 10 + (minEquity / 100) * 380;
-  const xEnd = 390;
-  const controlY = 110 - (betFreq / 100) * 160;
-  const controlX = (xStart + xEnd) / 2;
-  const activePath = `M ${xStart},110 Q ${controlX},${controlY} ${xEnd},110 Z`;
-  const cutoffLabelX = Math.max(15, xStart - 45);
-  const cutoffBackdropX = Math.max(10, cutoffLabelX - 5);
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#DED9D2] bg-[#FAFAF8] p-10 transition-all duration-500 hover:shadow-[0_12px_40px_rgba(13,12,10,0.04)]">
-      <div className="flex items-center justify-between border-b border-[#DED9D2] pb-4.5">
-        <span className="font-mono text-xs font-bold tracking-[0.14em] text-[#0D0C0A] uppercase">
-          Downward Drift Model
-        </span>
-        <span className="flex items-center gap-2 font-mono text-xs font-bold tracking-[0.14em] text-[#765421] uppercase">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#765421]" /> Active
-        </span>
-      </div>
-
-      {/* Interactive SVG Curve Visualizer */}
-      <div className="relative h-30 w-full overflow-hidden rounded-lg border border-[#EDE8E1] bg-[#F5F3EE]">
-        <svg viewBox="0 0 400 120" className="block h-full w-full" aria-label="Visualizador Interativo de Curva Downward Drift" role="img">
-          <defs>
-            <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#765421" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#765421" stopOpacity="0.0" />
-            </linearGradient>
-            <linearGradient id="grayGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#B2B0AB" stopOpacity="0.1" />
-              <stop offset="100%" stopColor="#B2B0AB" stopOpacity="0.0" />
-            </linearGradient>
-          </defs>
-
-          {/* Background Total Range Curve */}
-          <path d="M 10,110 Q 200,10 390,110 Z" fill="url(#grayGradient)" />
-          <path d="M 10,110 Q 200,10 390,110" stroke="#B2B0AB" strokeWidth="0.8" strokeDasharray="3 3" fill="none" />
-
-          {/* Active Range Curve */}
-          <path d={activePath} fill="url(#goldGradient)" className="transition-[d] duration-300 ease-in-out" />
-          <path
-            d={`M ${xStart},110 Q ${controlX},${controlY} ${xEnd},110`}
-            stroke="#765421"
-            strokeWidth="1.5"
-            fill="none"
-            className="transition-[d] duration-300 ease-in-out"
-          />
-
-          {/* Threshold marker */}
-          <line
-            x1={xStart}
-            y1="10"
-            x2={xStart}
-            y2="110"
-            stroke={sizingColorHex}
-            strokeWidth="1"
-            strokeDasharray="2 2"
-            className="transition-all duration-300 ease-in-out"
-          />
-          <circle cx={xStart} cy="60" r="3" fill={sizingColorHex} className="transition-all duration-300 ease-in-out" />
-
-          {/* Text labels */}
-          <text x="15" y="25" fill="#625f5a" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="1">
-            MÃOS FRACAS
-          </text>
-          <text x="310" y="25" fill="#625f5a" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="1">
-            MÃOS FORTES
-          </text>
-          {/* Superficie opaca: a curva dinamica nunca disputa legibilidade com o rotulo de corte. */}
-          <rect
-            data-a11y-contrast-backdrop="downward-drift-cutoff"
-            x={cutoffBackdropX}
-            y="94"
-            width="100"
-            height="16"
-            rx="2"
-            fill="#F5F3EE"
-            pointerEvents="none"
-          />
-          <text
-            x={cutoffLabelX}
-            y="105"
-            fill={sizingColorHex}
-            fontFamily="var(--font-mono)"
-            fontSize="7"
-            fontWeight="bold"
-            letterSpacing="0.5"
-            className="transition-all duration-300 ease-in-out"
-          >
-            CORTE: {minEquity}% EQ
-          </text>
-        </svg>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex justify-between font-mono text-xs tracking-[0.14em] text-[#625f5a] uppercase">
-          <span>Risk Premium da Mesa</span>
-          <span className="font-bold text-[#0D0C0A]">{rp}%</span>
-        </div>
-        <div className="relative h-1 overflow-hidden rounded-full bg-[#EDE8E1]">
-          <progress
-            value={rp}
-            max="35"
-            className="absolute inset-0 h-full w-full appearance-none bg-transparent [&::-moz-progress-bar]:bg-[#B09460] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:bg-[#B09460]"
-            aria-hidden="true"
-          />
-          <input
-            type="range"
-            min="0"
-            max="35"
-            value={rp}
-            onChange={(e) => setRp(Number(e.target.value))}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            aria-label="Risk Premium"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        {[
-          { label: 'Frequência de Bet', value: `${betFreq}%` },
-          { label: 'Eq. mínima p/ Bet', value: `${minEquity}%` },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-xl border border-[#DED9D2] bg-[#F5F3EE] px-4.5 py-4 transition-all duration-300"
-          >
-            <p className="mb-2 font-mono text-xs font-bold tracking-[0.14em] text-[#625f5a] uppercase">
-              {item.label}
-            </p>
-            <p className="font-display text-[1.45rem] leading-none font-bold tracking-[-0.02em] text-[#0D0C0A]">
-              {item.value}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between rounded-xl border border-[#DED9D2] bg-[#F5F3EE] px-5 py-4.5 transition-all duration-300">
-        <span className="font-mono text-xs font-bold tracking-[0.14em] text-[#625f5a] uppercase">
-          Sizing recomendado
-        </span>
-        <span className={`font-mono text-[0.72rem] font-bold transition-colors duration-300 ${sizingColorClass}`}>
-          {sizing}
-        </span>
-      </div>
     </div>
   );
 }

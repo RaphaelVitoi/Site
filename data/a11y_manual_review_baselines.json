@@ -1,59 +1,60 @@
 {
-  "schema_version": "1.0",
-  "proposito": "Decisoes humanas de acessibilidade que o axe-core nao consegue resolver automaticamente. Uma aprovacao e estritamente vinculada a regra, aos alvos e ao SHA-256 da origem; qualquer divergencia expira a decisao e devolve o item para revisao.",
-  "reviews": [
-    {
-      "id": "a11y-color-contrast-grain-overlay-20261117",
-      "status": "approved",
-      "decision": "positive",
-      "reviewed_at": "2026-11-17",
-      "reviewer_authority": "Tier 0 — Raphael Vitoi",
-      "rule_id": "color-contrast",
-      "target_url": "http://localhost:3000/",
-      "source": {
-        "path": "frontend/src/app/(public)/page.tsx",
-        "sha256": "4cb13554890fb1a9f99cd0dcc7d4aeff04f5875b56ec7cabd369cdbe3560a0f4"
-      },
-      "targets": [
-        "text[x=\"15\"]",
-        "text[x=\"310\"]",
-        "text[x=\"185.39999999999998\"]",
-        ".text-\\[clamp\\(1\\.75rem\\,4vw\\,2\\.5rem\\)\\]",
-        ".ml-1\\.5",
-        ".mt-3",
-        ".text-\\[0\\.8rem\\]",
-        ".inline-block",
-        "a[href$=\"icm-masterclass\"]",
-        ".hover\\:text-emerald-700",
-        ".hover\\:text-rose-700",
-        ".hover\\:text-indigo-700[href$=\"gto-cfr\"]",
-        ".gap-x-10 > .hover\\:text-\\[var\\(--color-light-text-main\\)\\][href$=\"biblioteca\"]",
-        ".hover\\:text-indigo-700[href$=\"analytics\"]",
-        ".gap-x-10 > .hover\\:text-\\[var\\(--color-light-text-main\\)\\][href$=\"quem-sou\"]",
-        ".m-0",
-        ".m-0 > .text-\\[var\\(--color-light-text-main\\)\\]",
-        ".shadow-inner > .text-\\[var\\(--color-light-text-muted\\)\\]"
-      ],
-      "evidence": {
-        "automated_report": "reports/cwv/cwv_report_20261117_073223.md",
-        "inspection_artifact": "reports/cwv/axe_color_contrast_inspect.json",
-        "reason_for_incomplete": "axe-core nao determina o fundo porque a pagina ganhou overlay decorativo bg-grain (SVG feTurbulence, opacity 3%, mix-blend-multiply, pointer-events-none) em SotaBackground/Footer, e os 3 textos SVG do grafico hero seguem sobre placa clara com rotulos sobrepostos por geometria SVG.",
-        "engineering_controls": [
-          "text-main #0C0A09 sobre #F5F3F0/#F5F3EE/#FAFAF8: 17.8-18.9:1",
-          "muted #5C5751: 6.45-6.84:1; accent #6B501A: 6.79-7.21:1 nos fundos medidos",
-          "pior caso com grao escurecendo fundo em ~3%: muted 5.63:1, accent 5.94:1, text-main 15.57:1 — todos acima de WCAG AA 4.5:1",
-          "overlay e decorativo (pointer-events-none, opacity 0.03), nao carrega texto",
-          "revisao humana autorizada pelo Tier 0 (Raphael Vitoi) em sessao de 2026-11-17 apos evidencia medida apresentada"
-        ]
-      },
-      "invalidated_by": [
-        "mudanca no SHA-256 de frontend/src/app/(public)/page.tsx",
-        "mudanca de classes, cores ou estrutura dos alvos em frontend/src/components/ui/layout/Footer.tsx (15 dos 18 alvos)",
-        "mudanca ou remocao do overlay bg-grain em frontend/src/components/ui/layout/SotaBackground.tsx, Footer.tsx ou frontend/src/app/globals.css",
-        "mudanca de regra axe, alvo, contagem de regras ou seletor reportado",
-        "revisao humana posterior que revogue esta decisao"
-      ]
-    }
-  ],
-  "atualizado_em": "2026-11-17T07:45:00-03:00"
+ "schema_version": "1.0",
+ "proposito": "Decisoes humanas de acessibilidade que o axe-core nao consegue resolver automaticamente. Uma aprovacao e estritamente vinculada a regra, aos alvos e ao SHA-256 da origem; qualquer divergencia expira a decisao e devolve o item para revisao.",
+ "reviews": [
+  {
+   "id": "a11y-color-contrast-grain-overlay-20261117",
+   "status": "approved",
+   "decision": "positive",
+   "reviewed_at": "2026-11-17",
+   "reviewer_authority": "Tier 0 — Raphael Vitoi",
+   "rule_id": "color-contrast",
+   "target_url": "http://localhost:3000/",
+   "source": {
+    "path": "frontend/src/app/(public)/page.tsx",
+    "sha256": "4f1e53d6d0936a69baa49827b9bf106f5196fd56aea1330a7bfad27644d1b3a6"
+   },
+   "targets": [
+    "text[x=\"15\"]",
+    "text[x=\"310\"]",
+    "text[x=\"185.39999999999998\"]",
+    ".text-\\[clamp\\(1\\.75rem\\,4vw\\,2\\.5rem\\)\\]",
+    ".ml-1\\.5",
+    ".mt-3",
+    ".text-\\[0\\.8rem\\]",
+    ".inline-block",
+    "a[href$=\"icm-masterclass\"]",
+    ".hover\\:text-emerald-700",
+    ".hover\\:text-rose-700",
+    ".hover\\:text-indigo-700[href$=\"gto-cfr\"]",
+    ".gap-x-10 > .hover\\:text-\\[var\\(--color-light-text-main\\)\\][href$=\"biblioteca\"]",
+    ".hover\\:text-indigo-700[href$=\"analytics\"]",
+    ".gap-x-10 > .hover\\:text-\\[var\\(--color-light-text-main\\)\\][href$=\"quem-sou\"]",
+    ".m-0",
+    ".m-0 > .text-\\[var\\(--color-light-text-main\\)\\]",
+    ".shadow-inner > .text-\\[var\\(--color-light-text-muted\\)\\]"
+   ],
+   "evidence": {
+    "automated_report": "reports/cwv/cwv_report_20261117_073223.md",
+    "inspection_artifact": "reports/cwv/axe_color_contrast_inspect.json",
+    "reason_for_incomplete": "axe-core nao determina o fundo porque a pagina ganhou overlay decorativo bg-grain (SVG feTurbulence, opacity 3%, mix-blend-multiply, pointer-events-none) em SotaBackground/Footer, e os 3 textos SVG do grafico hero seguem sobre placa clara com rotulos sobrepostos por geometria SVG.",
+    "engineering_controls": [
+     "text-main #0C0A09 sobre #F5F3F0/#F5F3EE/#FAFAF8: 17.8-18.9:1",
+     "muted #5C5751: 6.45-6.84:1; accent #6B501A: 6.79-7.21:1 nos fundos medidos",
+     "pior caso com grao escurecendo fundo em ~3%: muted 5.63:1, accent 5.94:1, text-main 15.57:1 — todos acima de WCAG AA 4.5:1",
+     "overlay e decorativo (pointer-events-none, opacity 0.03), nao carrega texto",
+     "revisao humana autorizada pelo Tier 0 (Raphael Vitoi) em sessao de 2026-11-17 apos evidencia medida apresentada",
+     "re-aprovacao Tier 0 em 2026-11-17 apos refatoracao RSC da home (Fase 2 auditoria): os elementos revisados sao identicos — SVG do DownwardDriftWidget e markup das ilhas client copiados verbatim para src/components/home/*; hashes de page.tsx atualizados"
+    ]
+   },
+   "invalidated_by": [
+    "mudanca no SHA-256 de frontend/src/app/(public)/page.tsx",
+    "mudanca de classes, cores ou estrutura dos alvos em frontend/src/components/ui/layout/Footer.tsx (15 dos 18 alvos)",
+    "mudanca ou remocao do overlay bg-grain em frontend/src/components/ui/layout/SotaBackground.tsx, Footer.tsx ou frontend/src/app/globals.css",
+    "mudanca de regra axe, alvo, contagem de regras ou seletor reportado",
+    "revisao humana posterior que revogue esta decisao"
+   ]
+  }
+ ],
+ "atualizado_em": "2026-11-17T07:45:00-03:00"
 }

@@ -49,7 +49,10 @@ const nextConfig = {
               "img-src 'self' data: blob: https:",
               // Sem `http://[::1]:*`: IPv6 literal entre colchetes nao existe na gramatica de host-source da CSP;
               // o navegador o descartava e registrava erro de console em toda pagina. `localhost` ja cobre o loopback.
-              "connect-src 'self' https: http://localhost:* http://127.0.0.1:* ws: wss:",
+              // Sem `https:`/`ws:`/`wss:` irrestritos: nenhum fetch client-side sai da origem ( APIs passam por
+              // route handlers same-origin; os unicos https:// em client components sao hrefs de share/redes).
+              // ws:// fica so no loopback para o HMR do next dev; producao nao abre WebSocket.
+              "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
               "worker-src 'self' blob:",
               "frame-src 'self' blob: data: chrome-extension:",
               "object-src 'self' data: blob:",

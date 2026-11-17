@@ -511,6 +511,26 @@
       },
       "expira_se": "Ferramentas de tooling adotarem glob corrigido.",
       "revisar_em": "2027-01-31"
+    },
+    {
+      "id": "picomatch-redos-dev-tooling-20261117",
+      "status": "accepted",
+      "accepted_at": "2026-11-17",
+      "reviewer_authority": "Tier 0 -- Raphael Vitoi",
+      "package": "picomatch",
+      "version": "4.0.5",
+      "vulnerability_ids": [
+        "GHSA-fc5q-39xc-vjpf"
+      ],
+      "evidence": {
+        "vetor": "ReDoS por extglob de ramo unico repetido no picomatch (GHSA-fc5q-39xc-vjpf, high).",
+        "alcance_medido": "npm audit --omit=dev: 0 vulnerabilidades. As 46 ocorrencias high sao 100% devDependencies (jest, typescript-eslint, knip, markdownlint-cli, vitest, @next/eslint-plugin-next via fast-glob/micromatch/tinyglobby/anymatch/fdir). picomatch nao e empacotado no build Next.js nem executado em runtime de producao.",
+        "consumo_real": "Matching de globs em ferramentas de lint/test/build locais e CI. Vetor requer padrao adversarial controlado pelo atacante em input de glob — nenhum desses caminhos recebe input externo.",
+        "ausencia_de_correcao": "picomatch latest no registro e 4.0.7 e tambem consta no range vulneravel '*' do advisory; npm audit fix --dry-run medido em 2026-11-17 nao elimina a ocorrencia. Advisory publicado apos a medicao anterior do portao (cache CVE 0,7h).",
+        "registro": "reports/REGISTRO-2026-11-17-fase-2-saneamento-estrutural-frontend.md"
+      },
+      "expira_se": "Publicacao de picomatch corrigido (>4.0.5) que alcance as cadeias jest/eslint/typescript-eslint, ou introducao de picomatch em dependencia de producao.",
+      "revisar_em": "2027-02-28"
     }
   ]
 }

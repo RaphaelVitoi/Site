@@ -51,18 +51,18 @@
     {
       "id": "8bd18115-22bf-540f-88c7-cf4f40b165b7",
       "numericId": 3,
-      "content": "O Supabase e usado apenas para autenticacao; o codigo nao le nem grava tabela, RPC ou canal Realtime. Substitui a premissa antiga de RLS estrito, que descrevia um banco inexistente no repositorio.",
+      "content": "O Supabase foi completamente removido do frontend na Fase 2 da auditoria SOTA (2026-11-17): route handler (auth)/callback, utils/supabase e as deps @supabase/* eliminados; a autenticacao vigente e Auth.js/next-auth. Substitui a premissa anterior de uso restrito a autenticacao.",
       "metadata": [
         {
           "key": "custom:evidencia",
           "value": [
-            "frontend/src/utils/supabase/server.ts",
-            "frontend/src/app/(auth)/callback/route.ts"
+            "reports/REGISTRO-2026-11-17-fase-2-saneamento-estrutural-frontend.md",
+            "frontend/src/app/(auth)/login/page.tsx"
           ]
         },
         {
           "key": "custom:medido_em",
-          "value": "2026-09-16"
+          "value": "2026-11-17"
         }
       ]
     },

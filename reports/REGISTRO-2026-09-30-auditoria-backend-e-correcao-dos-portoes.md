@@ -45,6 +45,9 @@ revisoes_de_ancora:
       - .claude/agent-memory/gemma4/MEMORY.md
     parecer: >-
       Revisado em 2026-09-30 e mantido valido. Consolidacao do handoff de gemma4 mantendo a proveniencia e aprendizados sistemicos.
+referencias_nao_resolviveis:
+  - frontend/src/utils/supabase/server.ts
+  # caminho(s) citado(s) historicamente; removido(s) na Fase 2 da auditoria SOTA (2026-11-17) como codigo morto/fluxo residual
 ---
 
 # REGISTRO — Auditoria de backend e correção dos portões que a medição expôs

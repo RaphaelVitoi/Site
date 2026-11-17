@@ -47,6 +47,9 @@ pendencias_resolvidas:
   - pend-2026-09-17-operador-sem-allowlist
   - pend-2026-09-17-hidratacao-apaga-estado
   - pend-2026-09-17-diagnostico-fabricado
+referencias_nao_resolviveis:
+  - frontend/src/utils/supabase/server.ts
+  # caminho(s) citado(s) historicamente; removido(s) na Fase 2 da auditoria SOTA (2026-11-17) como codigo morto/fluxo residual
 ---
 
 # Correção dos achados da auditoria de frontend — 2026-09-17

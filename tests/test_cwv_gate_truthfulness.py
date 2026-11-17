@@ -24,6 +24,7 @@ LEGACY_GATE = RAIZ / "scripts" / "ops" / "cwv_gate.py"
 PROBE = RAIZ / "scripts" / "ops" / "runtime_quality_probe.mjs"
 GLOBAL_CSS = RAIZ / "frontend" / "src" / "app" / "globals.css"
 HOME_PAGE = RAIZ / "frontend" / "src" / "app" / "(public)" / "page.tsx"
+DRIFT_WIDGET = RAIZ / "frontend" / "src" / "components" / "home" / "DownwardDriftWidget.tsx"
 A11Y_REVIEW_BASELINE = RAIZ / "data" / "a11y_manual_review_baselines.json"
 CWV_MANUAL_REVIEW = RAIZ / "data" / "cwv_manual_review_records.json"
 LIGHTHOUSE_CWV_AUDIT = RAIZ / "scripts" / "ops" / "lighthouse_cwv_audit.mjs"
@@ -326,7 +327,7 @@ def _hex_contrast_ratio(foreground: str, background: str) -> float:
 
 def test_downward_drift_cutoff_label_has_opaque_backdrop_and_aa_color_states() -> None:
     """O rotulo dinamico do SVG nao pode cruzar uma curva sem superficie legivel."""
-    source = HOME_PAGE.read_text(encoding="utf-8")
+    source = DRIFT_WIDGET.read_text(encoding="utf-8")
 
     assert 'data-a11y-contrast-backdrop="downward-drift-cutoff"' in source
     for color in ("#765421", "#286247", "#6e3636"):

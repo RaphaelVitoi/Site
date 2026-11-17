@@ -244,6 +244,9 @@ revisoes_de_ancora:
   parecer: Revisado em 2026-11-01. Integracao SOTA do Vercel AI SDK e Google Gemini,
     registro do no ai-mesh-engine no Nexus Mesh e atualizacao de telemetria da Jules
     Bolt (Gemini 3.8 Flash).
+referencias_nao_resolviveis:
+  - frontend/src/lib/ai/mesh-router.ts
+  # caminho(s) citado(s) historicamente; removido(s) na Fase 2 da auditoria SOTA (2026-11-17) como codigo morto/fluxo residual
 ---
 
 
