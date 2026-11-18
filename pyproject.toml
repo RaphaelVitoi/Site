@@ -58,7 +58,7 @@ dependencies = [
     "pyarrow>=26.0.1",
     "onnxruntime>=1.32.0",
     # ── CLIENTES LLM ──────────────────────────────────────────────────
-    "google-genai>=3.4.0",
+    "google-genai>=3.5.0",
     "google-antigravity>=0.1.23",
     "openai>=3.54.0",
     "anthropic>=2.10.0",
@@ -72,7 +72,7 @@ dependencies = [
     # NOTA historica: moviepy foi REMOVIDO em 2026-08-21 -- exigia pillow<12.0,
     # prendo o projeto em Pillow 11.x (10 CVEs corrigidas em 12.3.0). 2.2.1 e a
     # ultima versao e nao levanta o teto. Zero imports no codigo.
-    "regex>=2026.11.15",
+    "regex>=2026.11.18",
     "requests>=2.34.2,<3.0.0",
     "PyYAML>=6.0.3,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",

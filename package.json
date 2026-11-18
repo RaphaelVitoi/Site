@@ -60,7 +60,7 @@
     "prettier": "3.10.1",
     "prettier-plugin-tailwindcss": "0.8.1",
     "rimraf": "6.1.4",
-    "turbo": "2.11.11",
+    "turbo": "2.11.12",
     "vitest": "^5.1.0"
   },
   "overrides": {

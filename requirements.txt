@@ -33,7 +33,7 @@ pyarrow>=26.0.1
 onnxruntime>=1.32.0
 
 # ── CLIENTES LLM, AGENTES & MCP ──────────────────────────────────────────────
-google-genai>=3.4.0
+google-genai>=3.5.0
 google-antigravity>=0.1.23
 openai>=3.54.0
 anthropic>=2.10.0
@@ -60,7 +60,7 @@ nanobind>=3.1.0
 pyperclip>=1.11.0
 
 # ── UTILITARIOS ──────────────────────────────────────────────────────────────
-regex>=2026.11.15
+regex>=2026.11.18
 requests>=2.34.2,<3.0.0
 PyYAML>=6.0.3,<7.0.0
 tqdm>=4.70.1,<5.0.0
