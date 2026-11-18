@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Chat GPT-6 Astra <noreply@openai.com>
 criado_em: '2026-09-10'
-commit: f8dcebcc
+commit: "a6dbc8a6"
 classes: [interno, auditoria, publicacao]
 caminhos:
   - frontend/package.json

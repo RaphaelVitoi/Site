@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: '2026-09-18T10:30:00-03:00'
 atualizado_em: '2026-09-18T10:30:00-03:00'
-commit: 7e83a5b4
+commit: "575af358"
 classes: [interno, medido, governanca, dependencias]
 caminhos:
   - reports/REGISTRO-2026-09-18-decisoes-delegadas-sobre-as-pendencias.md

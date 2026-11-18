@@ -61,10 +61,10 @@
     "prettier-plugin-tailwindcss": "0.8.1",
     "rimraf": "6.1.4",
     "turbo": "2.11.12",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "overrides": {
-    "@vitest/mocker": "^5.1.0",
+    "@vitest/mocker": "^5.1.1",
     "postcss": "8.5.32",
     "dompurify": "^3.4.16",
     "@hono/node-server": "^1.19.15",

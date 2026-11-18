@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: "antigravity@gemini-3.8-flash"
 criado_em: 2026-09-08T20:55:00-03:00
 atualizado_em: 2026-09-08T20:55:00-03:00
-commit: b10cff3a
+commit: "72207ff3"
 classes: [interno, medido, governanca, roteamento, adaptacao, saneamento]
 caminhos:
   - engine/llm_api.py

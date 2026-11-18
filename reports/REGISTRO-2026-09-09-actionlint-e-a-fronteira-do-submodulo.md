@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: "Claude Opus 5 [Tier 1.B] -- sessao claude-opus5-site-2026-09-08-aberturas"
 criado_em: 2026-09-09T04:40:00-03:00
 atualizado_em: 2026-09-09T05:20:00-03:00
-commit: 0195af23
+commit: "764b2b28"
 classes: [interno, medido, ci, fronteira]
 caminhos:
   - .github/workflows/sota-ci.yml

@@ -35,7 +35,7 @@ onnxruntime>=1.32.0
 # ── CLIENTES LLM, AGENTES & MCP ──────────────────────────────────────────────
 google-genai>=3.5.0
 google-antigravity>=0.1.23
-openai>=3.54.0
+openai>=3.55.0
 anthropic>=2.10.0
 httpx>=0.28.1
 mcp>=2.3.0

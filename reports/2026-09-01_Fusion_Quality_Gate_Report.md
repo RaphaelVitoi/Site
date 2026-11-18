@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: chico@sota-v8-gold
 criado_em: 2026-09-01T21:00-03:00
 atualizado_em: 2026-09-01T21:00-03:00
-commit: a22df57e
+commit: "42c11a8f"
 classes:
 - interno
 - medido
