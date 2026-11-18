@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: "Gemini 3.8 Flash [Tier 1.A] -- sessao gemini-site-2026-09-07-padronizacao-markdownlint"
 criado_em: 2026-09-07T15:30:00-03:00
 atualizado_em: 2026-09-07T15:30:00-03:00
-commit: 7883f6c2
+commit: "b5115bc9"
 classes: [interno, medido, governanca]
 caminhos:
   - .markdownlint.json

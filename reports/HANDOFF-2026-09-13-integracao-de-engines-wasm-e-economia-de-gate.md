@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: "Codex GPT-5.6 Sol <noreply@openai.com>"
 criado_em: 2026-09-13T11:25:00-03:00
 atualizado_em: 2026-09-13T11:25:00-03:00
-commit: 57a8f555
+commit: "f2097bb7"
 classes: [interno, handoff, medido, pmev, engines, wasm, python, feedback, continuidade]
 caminhos:
   - data/engine_capabilities.json

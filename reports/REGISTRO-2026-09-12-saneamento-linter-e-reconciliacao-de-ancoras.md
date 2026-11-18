@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: "Gemini 3.8 Flash <noreply@google.com>"
 criado_em: 2026-09-12T23:15:00-03:00
 atualizado_em: 2026-09-12T23:15:00-03:00
-commit: 2f248556
+commit: "ce18a1d9"
 classes: [interno, medido, saneamento, linters, pre-commit]
 caminhos:
   - .vscode/settings.json

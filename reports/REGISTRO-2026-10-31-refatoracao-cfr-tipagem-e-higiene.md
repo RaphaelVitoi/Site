@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash [Tier 1]
 criado_em: 2026-10-31
-commit: de4de77d
+commit: "d9b61e71"
 classes: [interno, medido, frontend, backend, qualidade]
 caminhos:
   - .vscode/settings.json

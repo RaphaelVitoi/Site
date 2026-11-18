@@ -7,7 +7,7 @@ autor:
   "Codex GPT-6 Luna [Tier 1] -- sessao 01a0cad2-cb70-7111-95f0-3d080332f420"
 criado_em: "2026-09-22T21:37:00-03:00"
 atualizado_em: "2026-09-22T21:37:00-03:00"
-commit: b529aa7a
+commit: "afe4fcdd"
 classes: [interno, medido, continuidade, governanca, configuracao, qualidade]
 config_medida:
   congelada_em: \'2026-09-22'

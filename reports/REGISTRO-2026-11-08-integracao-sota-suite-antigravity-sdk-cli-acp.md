@@ -4,7 +4,7 @@ tipo: registro
 escopo: antigravity-suite-sdk-cli-acp-zed-eclipse
 autor: CHICO SOTA v8.0 GOLD
 criado_em: '2026-11-08'
-commit: 4659e26b
+commit: "3b5fb8da"
 classes:
   - interno
   - medido

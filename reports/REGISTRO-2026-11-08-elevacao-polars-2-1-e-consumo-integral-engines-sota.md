@@ -7,7 +7,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-11-08T12:05:00-03:00'
 atualizado_em: '2026-11-08T12:05:00-03:00'
-commit: b3d43172
+commit: "fd17f51d"
 classes:
   - interno
   - medido

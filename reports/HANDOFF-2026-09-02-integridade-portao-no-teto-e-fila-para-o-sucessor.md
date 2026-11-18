@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: 2026-09-02T02:30-03:00
 atualizado_em: 2026-09-02T02:30-03:00
-commit: 61bc5fcf3a5f007224b0cd7bc43dc07e5c904255
+commit: "86fa02e1"
 classes: [interno, continuidade, medido]
 caminhos:
   - reports/AUDITORIA-2026-09-02-integridade-do-projeto-e-piso-de-transformers.md

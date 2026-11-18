@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: "Hermes Agent [Tier 0] -- sessao 2026-09-20"
 criado_em: 2026-09-20T20:30:00-03:00
 atualizado_em: 2026-09-20T20:30:00-03:00
-commit: c46098bd
+commit: "cf4fa152"
 classes: [interno, integracao, pmev, systemic, parity, s1s2, dependencias, arquitetura]
 caminhos:
   - pyproject.toml

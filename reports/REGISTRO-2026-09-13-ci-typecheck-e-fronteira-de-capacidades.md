@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: "Codex GPT-5.6 Sol <noreply@openai.com>"
 criado_em: 2026-09-13T09:52:00-03:00
 atualizado_em: 2026-09-13T10:39:24-03:00
-commit: 2e82c075
+commit: "eb00a9df"
 classes: [interno, medido, pmev, engines, ci, autenticacao, capacidades]
 caminhos:
   - api/v1/middleware.py

@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: opus-5
 criado_em: 2026-09-10T10:30:00-03:00
 atualizado_em: 2026-09-10T10:30:00-03:00
-commit: 008ed3af
+commit: "699ce02b"
 classes: [interno, medido, continuidade]
 config_medida:
   congelada_em: \'2026-09-10'

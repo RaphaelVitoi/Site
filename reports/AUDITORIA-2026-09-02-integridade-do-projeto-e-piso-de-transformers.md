@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: claude@opus-5
 criado_em: 2026-09-02T02:10-03:00
 atualizado_em: 2026-09-02T02:10-03:00
-commit: 61bc5fcf
+commit: "609993c6"
 commit_inicio_auditoria: e323487755f130012fa2f56bfe215f46bd35a4f3
 classes: [interno, medido]
 caminhos:
