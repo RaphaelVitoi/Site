@@ -95,6 +95,54 @@ async def _try_compress_gemini(
     return None, True
 
 
+def _resolve_openrouter_tier(task: Task, model: str) -> tuple[int, bool]:
+    """Mapeia tarefa e modelo para (tier_openrouter, allow_fallback) protegendo Tier 1."""
+    meta = task.metadata if isinstance(task.metadata, dict) else {}
+    if meta.get("compression_task"):
+        return 3, False
+
+    agent_name = (task.agent or "").lstrip("@").strip().lower()
+    is_free_model = model.lower().endswith(":free")
+
+    try:
+        from core.subagents_mesh import SubagentTier  # noqa: PLC0415
+        from llm.routing_policy import AGENTES, TierAgente  # noqa: PLC0415
+
+        if meta.get("subagent") or agent_name in {t.value for t in SubagentTier}:
+            return 4, True
+
+        policy = AGENTES.get(agent_name)
+        if policy is not None:
+            tier_agente = policy[0]
+            if tier_agente == TierAgente.GOVERNANCA:
+                return (2, True) if is_free_model else (1, False)
+            if tier_agente == TierAgente.ESTRATEGIA:
+                return 2, True
+            return 3, False
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Fallback para selecao de tier OpenRouter por modelo: %s", exc)
+
+    return (4, True) if is_free_model else (3, False)
+
+
+def _resolve_openrouter_keys_for_task(task: Task, model: str) -> list[str]:
+    """Seleciona chaves saudaveis do tier autorizado via OpenRouterPoolManager."""
+    tier, allow_fallback = _resolve_openrouter_tier(task, model)
+    try:
+        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+        ranked = openrouter_pool_manager.get_ranked_keys_for_tier(tier, allow_fallback=allow_fallback)
+        if ranked:
+            return ranked
+        # Se o tier tem chaves provisionadas mas todas estao em cooldown/revogadas,
+        # respeitar o isolamento (retorna [] em vez de vazar para Tier 1).
+        if openrouter_pool_manager.get_pool_keys(tier):
+            return []
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Fallback para OPENROUTER_KEYS legado: %s", exc)
+    return OPENROUTER_KEYS
+
+
 async def _try_compress_openrouter(
     session: aiohttp.ClientSession,
     system_prompt: str,
@@ -104,17 +152,11 @@ async def _try_compress_openrouter(
     manager: QueueManager,
 ) -> str | None:
     OPENROUTER_ALTERNATIVE_MODELS = te.OPENROUTER_ALTERNATIVE_MODELS
-    if not OPENROUTER_KEYS:
-        return None
 
     compression_model = next(
         (m for m in OPENROUTER_ALTERNATIVE_MODELS if "r1" not in str(m).lower()),
         OPENROUTER_ALTERNATIVE_MODELS[0] if OPENROUTER_ALTERNATIVE_MODELS else "nvidia/nemotron-3.5-lightning:free",
     )
-    logger.info(
-        f"[[{_c(task_agent)}]{task_agent}[/]] Acionando compressao cognitiva via OpenRouter ({compression_model})..."
-    )
-
     dummy_task = Task(
         id=f"COMPRESSION-OR-{int(time.time())}",
         description="Context compression task via OpenRouter",
@@ -123,6 +165,13 @@ async def _try_compress_openrouter(
         timestamp=datetime.now(UTC).isoformat(),
         metadata={"compression_task": True},
     )
+    compression_keys = _resolve_openrouter_keys_for_task(dummy_task, compression_model)
+    if not compression_keys:
+        return None
+
+    logger.info(
+        f"[[{_c(task_agent)}]{task_agent}[/]] Acionando compressao cognitiva via OpenRouter ({compression_model})..."
+    )
 
     result = await _try_provider(
         session=session,
@@ -130,7 +179,7 @@ async def _try_compress_openrouter(
         model=compression_model,
         system_prompt=system_prompt,
         user_prompt=text,
-        keys=OPENROUTER_KEYS,
+        keys=compression_keys,
         task=dummy_task,
         manager=manager,
         max_retries=1,
@@ -323,7 +372,7 @@ async def _dispatch_llm_provider(
     if provider == "gemini":
         keys = _gemini_key_pool_for_model(model)
     elif provider == "openrouter":
-        keys = OPENROUTER_KEYS
+        keys = _resolve_openrouter_keys_for_task(task, model)
     elif provider == "anthropic":
         logger.debug("Provedor 'anthropic' indisponivel no momento; pulando modelo %s.", model)
         return None

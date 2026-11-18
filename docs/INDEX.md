@@ -1,9 +1,19 @@
 ---
+id: docs-index-engenheiro
+tipo: indice
+escopo: "Site -- Indice Canonico de Engenharia com fontes de verdade e apontamento para governanca e pools de chaves"
+autor: "Gemini 4 Hydrogen <noreply@google.com>"
+criado_em: "2026-10-30T00:00:00-03:00"
+atualizado_em: "2026-11-18T12:30:00-03:00"
 title: "Índice Canônico de Engenharia"
 type: index
 status: active
 owner: site-governance
-updated_at: 2026-10-30
+updated_at: 2026-11-18
+verificado:
+  - "Referencias apontam para documentos canonicos ativos no repositorio, incluindo docs/POOLS-DE-CHAVES.md"
+nao_verificado:
+  - "Contagens detalhadas de catalogos MCP e pools residem em suas respectivas fontes unicas, nao neste indice"
 ---
 
 # Índice Canônico de Engenharia
@@ -45,6 +55,7 @@ Setembro/2026, o KERNEL.md foi rebaixado a ponteiro.
 || Relatório Oficial de Sessão (2026-08-24) | [../reports/RELATORIO_SESSAO_2026_08_24_SOTA_v8_GOLD.md](../reports/RELATORIO_SESSAO_2026_08_24_SOTA_v8_GOLD.md) |
 || Auditoria Mensal de Roteamento (2026_08) | [../reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_08.md](../reports/audits/AUDITORIA_MENSAL_MODUS_OPERANDI_ROUTING_2026_08.md) |
 || Segurança | [security](security) |
+|| Pools de Chaves & Credenciais | [POOLS-DE-CHAVES.md](POOLS-DE-CHAVES.md) — inventário sha8, tiers OpenRouter/Gemini/Decision/Multimodal/Ollama e skill `key-pool-audit` |
 || Pesquisa de produto e teoria | [research](research) |
 
 Auditoria temporal recente: [quarentena do catálogo de plugins Claude — 2026-08-21](audits/2026-08-21-claude-plugin-quarantine.md).

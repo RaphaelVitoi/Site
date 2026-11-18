@@ -11,20 +11,19 @@ autor:
   Devin (SWE-2 Flash)
   <158243242+devin-ai-integration[bot]@users.noreply.github.com>
 criado_em: "2026-11-12T12:30:00-03:00"
-atualizado_em: "2026-11-12T14:00:00-03:00"
+atualizado_em: "2026-11-18T11:46:00-03:00"
 verificado:
   - "Pool Gemini: 5/5 chaves validadas HTTP 200 em /v1beta/models (2026-11-12)"
   - "Pool Decision: 3/3 validadas HTTP 200 + decide_s1 live via
-    gemini-decision-1"
-  - "Pool OpenRouter: 21/21 tiers + 3/3 dedicadas validadas HTTP 200 em
-    /api/v1/auth/key"
-  - "Incidente TIER1_KEY_2 (HTTP 401) documentado e corrigido com renumeracao"
+    gemini-decision-1 (2026-11-12)"
+  - "Pool OpenRouter (2026-11-18): 25/25 tiers (T1=5, T2=10, T3=5, T4=5) + 3/3 dedicadas + OPENROUTER_API_KEY isolada em TIER4_KEY_1 verificadas offline (HKCU == HKLM, formato, sha8, zero duplicatas); Tier 1 (5/5) validada ao vivo com HTTP 200 (media 101 ms)"
   - "Pool multimodal: 8/8 chaves (4 AI Studio + 4 OpenRouter) validadas HTTP 200
-    em 2026-11-12"
+    em 2026-11-12 e sincronizadas em 2026-11-18"
+  - "Ollama Cloud & Ecossistema (2026-11-18): OLLAMA_API_KEY + OLLAMA_CLOUD_KEY (legada HKLM promovida), tuning RX 570 (q8_0/2/32768/FA=1), HF_TOKEN, SOTA_OPENAI_API_KEY e SOTA_SITE_TOKEN sincronizados HKCU == HKLM"
 nao_verificado:
   - "Pools Anthropic e OpenAI: nao provisionadas (pendencia aberta)"
-  - "Quota/throughput real por chave: apenas autenticacao medida"
-  - "Rotacao de chaves coladas em chat: a cargo do operador"
+  - "Validacao HTTP live individual de TIER2_KEY_8..10 e endpoint remoto OLLAMA_CLOUD_KEY: verificadas offline no Registro por audit-keys"
+  - "Quota/throughput real por chave: apenas autenticacao medida em 2026-11-12"
 ---
 
 # Pools de Chaves e Credenciais — Inventário Consolidado
@@ -48,26 +47,24 @@ Gerenciada por `llm/openrouter_pool.py` (`OpenRouterPoolManager`, singleton
 (401/403 → revogação; 429 → cooldown; 5xx → cooldown curto). Chaves são
 coletadas por regex `OPENROUTER_TIER{1-4}_KEY_{n}` em HKCU+HKLM.
 
-| Variável                     | Tier     | Papel                                                     | sha8                                                                         | Validação 2026-11-12 |
-| ---------------------------- | -------- | --------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------- |
-| `OPENROUTER_TIER1_KEY_1`     | 1        | Core Cognitivo                                            | `20d78224`                                                                   | HTTP 200 OK          |
-| `OPENROUTER_TIER1_KEY_2`     | 1        | Core Cognitivo                                            | `f2c5feea`                                                                   | HTTP 200 OK          |
-| `OPENROUTER_TIER1_KEY_3`     | 1        | Core Cognitivo                                            | `ce865020`                                                                   | HTTP 200 OK          |
-| `OPENROUTER_TIER1_KEY_4`     | 1        | Core Cognitivo                                            | `3628fd7f`                                                                   | HTTP 200 OK          |
-| `OPENROUTER_TIER2_KEY_1..7`  | 2        | Superagentes & Pesquisa                                   | `76bdb9ee` `7b833cde` `04c61a58` `1a66cbd5` `a9b56b18` `647929fb` `ff4c4e79` | HTTP 200 OK (7/7)    |
-| `OPENROUTER_TIER3_KEY_1..5`  | 3        | Frota especialista & batch                                | `961a0848` `d3e62c15` `39e540cf` `56a1f42f` `c7227d85`                       | HTTP 200 OK (5/5)    |
-| `OPENROUTER_TIER4_KEY_1..5`  | 4        | Subagentes dedicados                                      | `9669414e` `1eea72b3` `d112b6a6` `c1590242` `4348e59c`                       | HTTP 200 OK (5/5)    |
-| `OPENROUTER_API_KEY`         | legado   | fallback p/ `gemma_server`, `providers`, `routing_policy` | `20d78224` (= TIER1_KEY_1)                                                   | —                    |
-| `OPENROUTER_ANTIGRAVITY_KEY` | dedicada | condutor Antigravity                                      | `b3fe711b`                                                                   | HTTP 200 OK          |
-| `OPENROUTER_DEVIN_KEY`       | dedicada | condutor Devin                                            | `cb0df99c`                                                                   | HTTP 200 OK          |
-| `OPENROUTER_HERMES_KEY`      | dedicada | condutor Hermes Agent                                     | `8288df2d`                                                                   | HTTP 200 OK          |
-| `WEBHOOK_OPENROUTER_SECRET`  | config   | webhook OpenRouter (`whsec_…`)                            | `7f28f360`                                                                   | não é chave de API   |
+| Variável                     | Tier     | Papel                                                     | sha8                                                                                            | Validação                        |
+| ---------------------------- | -------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------- |
+| `OPENROUTER_TIER1_KEY_1`     | 1        | Core Cognitivo                                            | `20d78224`                                                                                      | HTTP 200 OK (2026-11-12)         |
+| `OPENROUTER_TIER1_KEY_2`     | 1        | Core Cognitivo (rotacionada 2026-11-18)                   | `22eba9b5`                                                                                      | Offline HKCU/HKLM (2026-11-18)   |
+| `OPENROUTER_TIER1_KEY_3`     | 1        | Core Cognitivo                                            | `ce865020`                                                                                      | HTTP 200 OK (2026-11-12)         |
+| `OPENROUTER_TIER1_KEY_4`     | 1        | Core Cognitivo                                            | `3628fd7f`                                                                                      | HTTP 200 OK (2026-11-12)         |
+| `OPENROUTER_TIER1_KEY_5`     | 1        | Core Cognitivo (adicionada 2026-11-18)                    | `34b51f77`                                                                                      | Offline HKCU/HKLM (2026-11-18)   |
+| `OPENROUTER_TIER2_KEY_1..7`  | 2        | Superagentes & Pesquisa                                   | `76bdb9ee` `7b833cde` `04c61a58` `1a66cbd5` `a9b56b18` `647929fb` `ff4c4e79`                    | HTTP 200 OK (7/7, 2026-11-12)    |
+| `OPENROUTER_TIER2_KEY_8..10` | 2        | Superagentes & Pesquisa (adicionadas 2026-11-18)          | `a89d74b3` `3639dfc3` `4145ccc4`                                                                | Offline HKCU/HKLM (3/3, 2026-11-18) |
+| `OPENROUTER_TIER3_KEY_1..5`  | 3        | Frota especialista & batch                                | `961a0848` `d3e62c15` `39e540cf` `56a1f42f` `c7227d85`                                          | HTTP 200 OK (5/5, 2026-11-12)    |
+| `OPENROUTER_TIER4_KEY_1..5`  | 4        | Subagentes dedicados                                      | `9669414e` `1eea72b3` `d112b6a6` `c1590242` `4348e59c`                                          | HTTP 200 OK (5/5, 2026-11-12)    |
+| `OPENROUTER_API_KEY`         | legado   | ponte p/ `gemma_server`, `/api/v1/rag`, `providers`, `media_pool` (isolada do Tier 1; chave distinta entra em Tier 4) | `9669414e` (`= TIER4_KEY_1`) | Offline HKCU/HKLM (2026-11-18) |
+| `OPENROUTER_ANTIGRAVITY_KEY` | dedicada | condutor Antigravity                                      | `b3fe711b`                                                                                      | HTTP 200 OK (2026-11-12)         |
+| `OPENROUTER_DEVIN_KEY`       | dedicada | condutor Devin                                            | `cb0df99c`                                                                                      | HTTP 200 OK (2026-11-12)         |
+| `OPENROUTER_HERMES_KEY`      | dedicada | condutor Hermes Agent                                     | `8288df2d`                                                                                      | HTTP 200 OK (2026-11-12)         |
+| `WEBHOOK_OPENROUTER_SECRET`  | config   | webhook OpenRouter (`whsec_…`)                            | `7f28f360`                                                                                      | não é chave de API               |
 
-**Incidente registrado:** na primeira provisão (5 chaves Tier 1), a segunda
-chave (`…24059cbe…`, sha8 de validação `319a5602`) retornou
-`HTTP 401 {"error":"User not found."}` em `/api/v1/auth/key` — chave
-inválida/revogada no provedor. Foi removida do Registro e os índices
-renumerados; restam 4 chaves ativas em `TIER1_KEY_1..4`.
+**Histórico de manutenção:** em 2026-11-12, `TIER1_KEY_2` foi removida por HTTP 401 e renumerada para 4 chaves (`TIER1_KEY_1..4`). Em 2026-11-18, `TIER1_KEY_2` foi rotacionada (`22eba9b5`), `TIER1_KEY_5` foi provisionada (`34b51f77`, totalizando 5 chaves no Tier 1), `TIER2_KEY_8..10` elevaram o Tier 2 para 10 chaves, e `OPENROUTER_API_KEY` foi reapontada de `TIER1_KEY_1` para `TIER4_KEY_1` para evitar contenção de cota no Tier 1.
 
 **Nota de nomenclatura:** o webhook usa `WEBHOOK_OPENROUTER_SECRET` (sufixo, não
 prefixo) de propósito — `llm/budget.py` agrega qualquer env `OPENROUTER_*` com
@@ -162,16 +159,17 @@ Chaves OpenRouter dedicadas **fora** dos tier pools (mesmo padrão de
 - Provisionamento manual equivalente: gravar as variáveis em `HKCU:\Environment`
   e `HKLM:\...\Environment` (ou rodar `scripts/ops/Set-OpenRouterKeyPools.ps1` /
   `Set-GeminiKeyPool.ps1`) e emitir broadcast `WM_SETTINGCHANGE`.
-- Auditoria sem vazar chave: `llm/budget.py::OPENROUTER_KEYS`, `cli/commands.py`
-  (`nexus keys`), `gemini_pool_manager.format_markdown_table()`.
+- Auditoria sem vazar chave: CLI `audit-keys` (skill `.agents/skills/key-pool-audit/SKILL.md`), `llm/budget.py::OPENROUTER_KEYS`, `cli/commands.py` (`nexus keys`), `gemini_pool_manager.format_markdown_table()`.
+- **Ollama Cloud & SOTA local (harmonizado em 2026-11-18):** `OLLAMA_API_KEY` (primária `HKCU`/`HKLM`) + `OLLAMA_CLOUD_KEY` (chave legada promovida de `HKLM` para backup em `OLLAMA_KEYS`, `llm/budget.py`), `OLLAMA_KV_CACHE_TYPE=q8_0`, `OLLAMA_MAX_LOADED_MODELS=2`, `OLLAMA_CONTEXT_LENGTH=32768`, `OLLAMA_FLASH_ATTENTION=1`, `HF_TOKEN`, `SOTA_OPENAI_API_KEY` e `SOTA_SITE_TOKEN` espelhados em `HKCU` e `HKLM`.
 
-## Verificação executada (2026-11-12)
+## Verificação executada (2026-11-12 live · 2026-11-18 offline)
 
-| Pool                  | Chaves | Resultado                                                 |
-| --------------------- | ------ | --------------------------------------------------------- |
-| Gemini                | 5/5    | HTTP 200 em `/v1beta/models` para todas                   |
-| Decision              | 3/3    | HTTP 200 + `decide_s1` live via `gemini-decision-1`       |
-| OpenRouter tiers      | 21/21  | HTTP 200 em `/api/v1/auth/key` (após remoção da inválida) |
-| OpenRouter dedicadas  | 3/3    | HTTP 200                                                  |
-| Multimodal AI Studio  | 4/4    | HTTP 200 em `/v1beta/models` (TTS/Video/Image/Translate)  |
-| Multimodal OpenRouter | 4/4    | HTTP 200 em `/api/v1/auth/key`                            |
+| Pool                  | Chaves | Resultado                                                                 |
+| --------------------- | ------ | ------------------------------------------------------------------------- |
+| Gemini                | 5/5    | HTTP 200 em `/v1beta/models` (2026-11-12) · Sync HKCU/HKLM OK (2026-11-18) |
+| Decision              | 3/3    | HTTP 200 + `decide_s1` live (2026-11-12) · Sync HKCU/HKLM OK (2026-11-18) |
+| OpenRouter tiers      | 25/25  | T1=5, T2=10, T3=5, T4=5 — Sync HKCU/HKLM + formato OK via `audit-keys` (2026-11-18; live HTTP pendente para novas/rotacionadas) |
+| OpenRouter dedicadas  | 4/4    | 3 dedicadas HTTP 200 (2026-11-12) + `OPENROUTER_API_KEY` (= `TIER4_KEY_1`) offline OK (2026-11-18) |
+| Multimodal AI Studio  | 4/4    | HTTP 200 em `/v1beta/models` (2026-11-12) · Sync HKCU/HKLM OK (2026-11-18) |
+| Multimodal OpenRouter | 4/4    | HTTP 200 em `/api/v1/auth/key` (2026-11-12) · Sync HKCU/HKLM OK (2026-11-18) |
+| Ollama Cloud          | 2/2    | `OLLAMA_API_KEY` + `OLLAMA_CLOUD_KEY` sincronizadas HKCU/HKLM (2026-11-18) |

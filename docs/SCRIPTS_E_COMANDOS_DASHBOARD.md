@@ -77,6 +77,8 @@ nao_verificado:
 
 ## 📊 Diagnóstico, Segurança e Redes
 
+- `audit-keys` (`key-pool-audit`)
+  - **Descrição:** Auditoria estética e didática (Rich) de todas as keys, pools, tiers e credenciais em `HKCU`, `HKLM` e `Process` com telemetria histórica (`tasks.db`) e suporte a `-Live` (sonda HTTP read-only de saúde e latência em `ms` sem consumir tokens), `-Pool`, `-AnomaliesOnly`, `-Plain`, `-Json` e `-Strict`.
 - `nexus-keys`
   - **Descrição:** Audita chaves de API e executa diagnóstico de conectividade
     com as APIs do Google.

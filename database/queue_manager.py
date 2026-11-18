@@ -982,6 +982,44 @@ class QueueManager:
             "avg_tokens": float(row["avg_tokens"]) if row["avg_tokens"] is not None else None,
         }
 
+    async def get_keys_recent_stats_batch(
+        self,
+        provider: str,
+        key_hashes: list[str],
+        window_minutes: int = 180,
+    ) -> dict[str, dict[str, Any]]:
+        """Consulta em lote estatisticas recentes de todas as chaves de um provider (1 query SQL)."""
+        if not key_hashes:
+            return {}
+        import json  # noqa: PLC0415
+
+        cutoff = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
+        query = (
+            "SELECT key_hash, COUNT(*) AS attempts, "
+            "SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS successes, "
+            "SUM(CASE WHEN status!='success' THEN 1 ELSE 0 END) AS failures, "
+            "AVG(latency_ms) AS avg_latency_ms, AVG(total_tokens) AS avg_tokens "
+            "FROM key_usage_metrics "
+            "WHERE provider = ? AND timestamp >= ? AND key_hash IN (SELECT value FROM json_each(?)) "
+            "GROUP BY key_hash"
+        )
+        async with self._get_async_db() as db:
+            db.row_factory = sqlite3.Row
+            async with db.execute(query, (provider, cutoff, json.dumps(key_hashes))) as cursor:
+                rows = await cursor.fetchall()
+
+        empty = {"attempts": 0, "successes": 0, "failures": 0, "avg_latency_ms": None, "avg_tokens": None}
+        out: dict[str, dict[str, Any]] = {kh: dict(empty) for kh in key_hashes}
+        for row in rows:
+            out[str(row["key_hash"])] = {
+                "attempts": int(row["attempts"] or 0),
+                "successes": int(row["successes"] or 0),
+                "failures": int(row["failures"] or 0),
+                "avg_latency_ms": float(row["avg_latency_ms"]) if row["avg_latency_ms"] is not None else None,
+                "avg_tokens": float(row["avg_tokens"]) if row["avg_tokens"] is not None else None,
+            }
+        return out
+
     async def get_key_health_report(
         self,
         window_minutes: int = 180,

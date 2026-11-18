@@ -388,6 +388,7 @@
     "skills": [
       "credentials",
       "firebase-security-rules-auditor",
+      "key-pool-audit",
       "sota-quality-gate",
       "gcloud-auth-verification",
       "site-session-handoff"

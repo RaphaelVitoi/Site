@@ -213,3 +213,115 @@ def test_active_openrouter_free_models_resolve_to_openrouter() -> None:
     ):
         assert _infer_provider_for_model(model) == "openrouter"
         assert _resolve_model_provider_and_target(model, [], [], ["or-key"], ["nous-key"]) == ("openrouter", model)
+
+
+def test_legacy_openrouter_api_key_routes_to_tier4_without_contaminating_tier1(mock_env_pools) -> None:
+    """Chave legada distinta entra em Tier 4 quando Tier 1 ja tem chaves dedicadas."""
+    legacy = "sk-or-v1-legacy-bridge-key-1234567890"
+    with patch.dict(os.environ, {"OPENROUTER_API_KEY": legacy}, clear=False):
+        mgr = OpenRouterPoolManager()
+    assert legacy not in mgr.get_pool_keys(1)
+    assert legacy in mgr.get_pool_keys(4)
+
+
+@pytest.mark.asyncio
+async def test_402_cooldown_and_ranked_keys_round_robin(mock_env_pools) -> None:
+    """HTTP 402 aplica cooldown estendido e get_ranked_keys_for_tier rotaciona entre chaves saudaveis."""
+    mgr = OpenRouterPoolManager()
+    t1 = mgr.get_pool_keys(1)
+    assert mgr.has_available_key(1) is True
+
+    await mgr.mark_failure(t1[0], status_code=402)
+    assert mgr.is_key_available(t1[0]) is False
+    ranked = mgr.get_ranked_keys_for_tier(1, allow_fallback=False)
+    assert t1[0] not in ranked
+    assert set(ranked) == set(t1[1:])
+
+
+@pytest.mark.asyncio
+async def test_providers_bidirectional_feedback_updates_openrouter_pool(monkeypatch: pytest.MonkeyPatch) -> None:
+    """_try_provider propaga sucesso (latencia) e falha (402) de volta ao openrouter_pool_manager."""
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    from core.schemas import Task
+    import llm.openrouter_pool as or_pool
+    import llm.providers as providers
+
+    mgr = OpenRouterPoolManager()
+    mgr._pools = {1: ["sk-or-v1-t1-a", "sk-or-v1-t1-b"], 2: [], 3: [], 4: []}
+    mgr._stats = {}
+    or_pool._init_key_stats(mgr._stats, mgr._pools)
+    monkeypatch.setattr(or_pool, "openrouter_pool_manager", mgr)
+
+    async def fake_call_openrouter(session, model, sys_p, usr_p, key, *args, **kwargs):
+        if key == "sk-or-v1-t1-a":
+            raise RuntimeError("HTTP 402: Insufficient credits")
+        return "ok", {"prompt_tokens": 5, "completion_tokens": 3}
+
+    monkeypatch.setattr(providers, "call_openrouter", fake_call_openrouter)
+    db_mgr = SimpleNamespace(
+        get_keys_recent_stats_batch=AsyncMock(return_value={}),
+        get_key_recent_stats=AsyncMock(return_value={"attempts": 0}),
+        update_llm_cache=AsyncMock(),
+        record_api_usage=AsyncMock(),
+        record_key_usage_metric=AsyncMock(),
+    )
+    task = Task(id="TEST-BIDIR", description="test", agent="@chico", timestamp="2026-11-18T00:00:00Z")
+
+    res = await providers._try_provider(
+        session=SimpleNamespace(),  # type: ignore[arg-type]
+        provider="openrouter",
+        model="openai/gpt-5.6-sol",
+        system_prompt="sys",
+        user_prompt="user",
+        keys=["sk-or-v1-t1-a", "sk-or-v1-t1-b"],
+        task=task,
+        manager=db_mgr,  # type: ignore[arg-type]
+        max_retries=0,
+    )
+    assert res is not None
+    assert res["text"] == "ok"
+    assert mgr.is_key_available("sk-or-v1-t1-a") is False
+    assert mgr.is_key_available("sk-or-v1-t1-b") is True
+
+
+def test_orchestrator_tier_routing_protects_tier1() -> None:
+    """Subagentes, compressao e executores nunca consomem Tier 1 por padrao."""
+    from core.schemas import Task
+    from llm.orchestrator import _resolve_openrouter_tier
+
+    t_chico = Task(id="T1", description="x", agent="@chico", timestamp="2026-11-18T00:00:00Z")
+    t_mav = Task(id="T2", description="x", agent="@maverick", timestamp="2026-11-18T00:00:00Z")
+    t_impl = Task(id="T3", description="x", agent="@implementor", timestamp="2026-11-18T00:00:00Z")
+    t_comp = Task(
+        id="T4",
+        description="x",
+        agent="@chico",
+        timestamp="2026-11-18T00:00:00Z",
+        metadata={"compression_task": True},
+    )
+    t_sub = Task(
+        id="T5",
+        description="x",
+        agent="@implementor",
+        timestamp="2026-11-18T00:00:00Z",
+        metadata={"subagent": True},
+    )
+
+    assert _resolve_openrouter_tier(t_chico, "anthropic/claude-opus-5.5") == (1, False)
+    assert _resolve_openrouter_tier(t_mav, "google/gemini-4-argon") == (2, True)
+    assert _resolve_openrouter_tier(t_impl, "nvidia/nemotron-3.5-lightning:free") == (3, False)
+    assert _resolve_openrouter_tier(t_comp, "nvidia/nemotron-3.5-lightning:free") == (3, False)
+    assert _resolve_openrouter_tier(t_sub, "google/gemma-4-31b-it:free") == (4, True)
+
+
+@pytest.mark.asyncio
+async def test_observatory_snapshot_masks_secrets() -> None:
+    """Snapshot do observatorio nunca retorna chaves brutas."""
+    from llm.key_observatory import collect_observatory_snapshot
+
+    snap = await collect_observatory_snapshot(None, live=False, pool_filter="OpenRouter Tier 1")
+    for entry in snap["entries"]:
+        assert "..." in entry["mask"] or entry["mask"].startswith("<")
+        assert len(entry["sha8"]) == 8

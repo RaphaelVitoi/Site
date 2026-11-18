@@ -1215,6 +1215,69 @@ async def _cli_check_keys(_argv: list, manager: QueueManager) -> None:
     await _cmd_verify_keys(manager)
 
 
+async def _cli_audit_keys(argv: list, manager: QueueManager) -> None:
+    """Observatorio integrado de keys/pools/tiers (HKCU/HKLM/DB/Live) sem expor segredos."""
+    from llm.key_observatory import collect_observatory_snapshot  # noqa: PLC0415
+
+    args = [str(a) for a in argv[2:]]
+    if "--json" in args or "-Json" in args:
+        live = ("--live" in args) or ("-Live" in args)
+        pool = ""
+        for idx, tok in enumerate(args):
+            if tok in ("--pool", "-Pool") and idx + 1 < len(args):
+                pool = args[idx + 1]
+                break
+        snap = await collect_observatory_snapshot(manager, live=live, pool_filter=pool)
+        print(json.dumps(snap, indent=2, ensure_ascii=True))
+        return
+
+    import subprocess  # noqa: PLC0415
+
+    ps_args: list[str] = []
+    skip_next = False
+    for idx, tok in enumerate(args):
+        if skip_next:
+            skip_next = False
+            continue
+        low = tok.lower()
+        if low in ("--live", "-live"):
+            ps_args.append("-Live")
+        elif low in ("--anomalies-only", "-anomaliesonly"):
+            ps_args.append("-AnomaliesOnly")
+        elif low in ("--plain", "-plain"):
+            ps_args.append("-Plain")
+        elif low in ("--strict", "-strict"):
+            ps_args.append("-Strict")
+        elif low in ("--pool", "-pool") and idx + 1 < len(args):
+            ps_args.extend(["-Pool", args[idx + 1]])
+            skip_next = True
+
+    def _run_ps_audit() -> int:
+        ps_script = (
+            Path(__file__).resolve().parents[1]
+            / ".agents"
+            / "skills"
+            / "key-pool-audit"
+            / "scripts"
+            / "Audit-KeyPools.ps1"
+        )
+        if not ps_script.exists():
+            return -1
+        proc = subprocess.run(  # noqa: S603 -- Record-Id: auditoria-2026-11-18-pools-chaves-observatorio-e-roteamento
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), *ps_args],
+            check=False,
+        )
+        return proc.returncode
+
+    rc = await asyncio.to_thread(_run_ps_audit)
+    if rc == -1:
+        snap = await collect_observatory_snapshot(manager, live=("--live" in args) or ("-Live" in args))
+        print(json.dumps(snap, indent=2, ensure_ascii=True))
+        return
+    if rc != 0:
+        sys.exit(rc)
+
+
 async def _cli_health(_argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_run_health_parallel(manager), indent=2))
 
@@ -1335,6 +1398,8 @@ _COMMAND_HANDLERS = {
     "nexus-gemini-health": _cli_gemini_health,
     "check-keys": _cli_check_keys,
     "nexus-keys": _cli_check_keys,
+    "audit-keys": _cli_audit_keys,
+    "nexus-audit-keys": _cli_audit_keys,
     "health": _cli_health,
     "worker": _cli_worker,
     "worker-api": _cli_worker,

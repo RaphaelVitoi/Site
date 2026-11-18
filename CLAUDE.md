@@ -491,18 +491,19 @@ gerador ou o manifesto.
 
 **Estrutura canônica de credenciais no Windows Registry (`HKCU` e `HKLM`):**
 
-- **Tier 1 (Core Cognitivo — 4 chaves ativas):** `OPENROUTER_TIER1_KEY_1..4` (Claude Opus 5.5+, ChatGPT 6 Astra/Sol+, Gemini 4 Argon/Carbon+). Zero tolerância a latência ou contenção de cota. (5 chaves foram provisionadas em 2026-11-12; `TIER1_KEY_2` retornou HTTP 401 "User not found" na validação live e foi removida do Registro — ver `docs/POOLS-DE-CHAVES.md`.)
-- **Tier 2 (Superagentes & Pesquisa — 7 chaves):** `OPENROUTER_TIER2_KEY_1..7` (Jules, Stitch, Exa, Hermes Agent/Laguna). Fallback autorizado para Tier 4 e Tier 1.
+- **Tier 1 (Core Cognitivo — 5 chaves ativas):** `OPENROUTER_TIER1_KEY_1..5` (Claude Opus 5.5+, ChatGPT 6 Astra/Sol+, Gemini 4 Argon/Carbon+). Zero tolerância a latência ou contenção de cota. (`TIER1_KEY_2` rotacionada e `TIER1_KEY_5` provisionada em 2026-11-18 — ver `docs/POOLS-DE-CHAVES.md`.)
+- **Tier 2 (Superagentes & Pesquisa — 10 chaves):** `OPENROUTER_TIER2_KEY_1..10` (Jules, Stitch, Exa, Hermes Agent/Laguna). Fallback autorizado para Tier 4 e Tier 1.
 - **Tier 3 (Frota Especialista & Batch — 5 chaves):** `OPENROUTER_TIER3_KEY_1..5` (19 agentes especialistas, dream replay, síntese massiva). Alto throughput, estritamente isolado do Tier 1.
 - **Tier 4 (Subagentes Dedicados — 5 chaves):** `OPENROUTER_TIER4_KEY_1..5` (task-subagents, generalist, research, architect). Fallback autorizado para Tier 3.
-- **Chaves dedicadas por agente:** `OPENROUTER_ANTIGRAVITY_KEY`, `OPENROUTER_DEVIN_KEY`, `OPENROUTER_HERMES_KEY` — fora dos tier pools (não entram em `OPENROUTER_TIER*_KEY_*`), para atribuição/uso por condutor.
+- **Chaves dedicadas por agente e legado:** `OPENROUTER_ANTIGRAVITY_KEY`, `OPENROUTER_DEVIN_KEY`, `OPENROUTER_HERMES_KEY` — fora dos tier pools (não entram em `OPENROUTER_TIER*_KEY_*`), para atribuição/uso por condutor; `OPENROUTER_API_KEY` atua como ponte legada de serviços/fallback (`gemma_server`, `/api/v1/rag`, `media_pool`, `providers`) espelhada em `OPENROUTER_TIER4_KEY_1` (isolada da cota do Tier 1).
 - **Pool Gemini (AI Studio — 5 chaves):** `GEMINI_API_KEY_1..5` + aliases `GEMINI_FLASH_KEY_1..5`, servida por `llm/gemini_pool.py` (rotação weighted + circuit breaker) para `gemini-3.5-flash-lite`; `GEMINI_API_KEY` espelha a chave 1 como fallback.
 - **Pool Decision (System-1 — 3 chaves):** `DECISION_API_1..3` para a Gemini Decisions API, servida por `llm/decision_pool.py` na cascata Laya → `gemini-decision-1`; fallback controlado para `GEMINI_API_KEY`/`GOOGLE_API_KEY`.
 - **Config GCP/OAuth:** `GCP_PROJECT_ID`/`GCP_PROJECT_NUMBER`/`GOOGLE_CLOUD_PROJECT_NUMBER`/`GCP_ACCOUNT_EMAIL` (`original-498419` / `913870412920`), `GOOGLE_OAUTH_CLIENT_ID` e `GOOGLE_OAUTH_CLIENT_SECRET`, `WEBHOOK_OPENROUTER_SECRET` (nome fora do prefixo `OPENROUTER_` de propósito — não é chave de API e poluiria a auditoria de `OPENROUTER_KEYS`).
 - **Pool Multimodal Gemini (TTS/Video/Image/Translate — 8 chaves):** `GEMINI_{TTS,VIDEO,IMAGE,TRANSLATE}_KEY` (AI Studio) + `OPENROUTER_GEMINI_{TTS,VIDEO,IMAGE,TRANSLATE}_KEY` (OpenRouter), servida por `llm/media_pool.py` (`media_pool_manager`) com circuit breaker por modalidade/provider; fallback para `GEMINI_API_KEY`/`OPENROUTER_API_KEY`; `MEDIA_POOL_PROVIDER` controla a ordem (`aistudio` default primeiro).
-- **HuggingFace (SOTA):** `HF_TOKEN` / `PLATFORM_HF_KEY` (Sincronizado via Registry para suporte a MCP e inferência).
+- **Ollama Cloud (2 chaves) & HuggingFace (SOTA):** `OLLAMA_API_KEY` (primária) + `OLLAMA_CLOUD_KEY` (legada promovida a backup em `OLLAMA_KEYS`, `llm/budget.py`) e `HF_TOKEN` / `PLATFORM_HF_KEY` sincronizados entre `HKCU` e `HKLM`.
+- **Auditoria offline via skill/CLI:** `audit-keys` (skill `.agents/skills/key-pool-audit/SKILL.md` / `.agents/skills/key-pool-audit/scripts/Audit-KeyPools.ps1`) audita existência, formato, `sha8`, duplicatas e sincronia `HKCU`/`HKLM`/`Process` sem vazar texto claro.
 
-> Inventário consolidado, fingerprints sha8 e validação live de cada chave:
+> Inventário consolidado, fingerprints sha8 e validação de cada chave:
 > `docs/POOLS-DE-CHAVES.md`. Pendentes: pools Anthropic e OpenAI
 > (`pend-2026-11-10-key-pools-api`).
 
@@ -533,7 +534,7 @@ O custo de provisionar, hospedar e manter servidores dedicados, instâncias em n
 
 1. **1º Nível — Cotas Pagas de Assinatura Pro (`Faixa.FLAT_FEE`):** Primazia mandatória para o Tier 1; custo marginal zero dentro do teto mensal contratado.
 2. **2º Nível — Modelos Free em Nuvem e Edge:** Ingestão maciça de rotina via Ollama local (Gemma 4/Qwen — `:cloud` descontinuado), llama.cpp (família Qwen, sufixo `b` por ser condutor) e Hermes Agent (roteamento dinâmico Laguna, sufixo `b`, blindado da calibração). Custo de infraestrutura = zero.
-3. **3º Nível — Pools Multi-Tier OpenRouter:** 21 chaves de tier + 3 dedicadas por agente + 4 multimodais, particionadas em HKCU/HKLM com isolamento estrito de cotas e circuit breaker adaptativo (Tiers 1 a 4 + dedicadas).
+3. **3º Nível — Pools Multi-Tier OpenRouter:** 25 chaves de tier (`T1=5`, `T2=10`, `T3=5`, `T4=5`) + 3 dedicadas por agente + 4 multimodais, particionadas em HKCU/HKLM com isolamento estrito de cotas e circuit breaker adaptativo (Tiers 1 a 4 + dedicadas).
 4. **4º Nível — Pay-as-you-go Sob Demanda:** Acionamento estrito e cirúrgico com tetos autorizados em `esforcos_autorizados`.
 
 ---

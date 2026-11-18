@@ -20,6 +20,7 @@ SecOps, intercepcao de Regex destrutivo, Protecao de Permissoes (GDPR/IP), RBAC,
 
 - `credentials`
 - `firebase-security-rules-auditor`
+- `key-pool-audit`
 - `sota-quality-gate`
 - `gcloud-auth-verification`
 - `site-session-handoff`

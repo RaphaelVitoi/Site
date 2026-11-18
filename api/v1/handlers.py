@@ -260,6 +260,41 @@ async def handle_get_key_health_summary(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_get_key_health_summary")
 
 
+async def handle_get_key_observatory(request: web.Request) -> web.Response:
+    """Retorna snapshot mascarado do observatorio de pools, chaves, HKCU/HKLM e DB."""
+    from llm.key_observatory import collect_observatory_snapshot  # noqa: PLC0415
+
+    manager = request.app[MANAGER_KEY]
+    pool_filter = request.rel_url.query.get("pool", "").strip()
+    if len(pool_filter) > 40 or (pool_filter and not re.fullmatch(r"^[A-Za-z0-9_ .-]+$", pool_filter)):
+        return web.json_response({"error": "Parametro 'pool' invalido."}, status=400)
+    try:
+        snapshot = await collect_observatory_snapshot(manager, live=False, pool_filter=pool_filter)
+        return web.json_response(snapshot)
+    except Exception as e:  # noqa: BLE001
+        return _internal_error(e, "handle_get_key_observatory")
+
+
+async def handle_probe_key_observatory(request: web.Request) -> web.Response:
+    """Executa auditoria mascarada opcionalmente com sonda HTTP live (0 tokens LLM)."""
+    from llm.key_observatory import collect_observatory_snapshot  # noqa: PLC0415
+
+    manager = request.app[MANAGER_KEY]
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
+
+    live = bool(data.get("live", False))
+    pool_filter = str(data.get("pool", "") or "").strip()
+    if len(pool_filter) > 40 or (pool_filter and not re.fullmatch(r"^[A-Za-z0-9_ .-]+$", pool_filter)):
+        return web.json_response({"error": "Campo 'pool' invalido."}, status=400)
+    try:
+        snapshot = await collect_observatory_snapshot(manager, live=live, pool_filter=pool_filter)
+        return web.json_response(snapshot)
+    except Exception as e:  # noqa: BLE001
+        return _internal_error(e, "handle_probe_key_observatory")
+
+
 async def handle_get_task_result(request: web.Request) -> web.Response:
     """Obtem o resultado de uma tarefa finalizada a partir do disco."""
     try:

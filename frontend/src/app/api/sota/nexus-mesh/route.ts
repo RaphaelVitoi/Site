@@ -6,6 +6,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { buildNexusServerUrl } from '@/lib/api-contract';
 
 export const dynamic = 'force-dynamic';
 
@@ -257,6 +258,14 @@ export async function GET() {
     actionType: 'benchmark_perception',
   };
 
+  // 9. Pool de Chaves & Routing Multi-Tier (HKCU/HKLM)
+  const hasTier1 = Boolean(process.env['OPENROUTER_TIER1_KEY_1'] || process.env['OPENROUTER_API_KEY']);
+  const hasDecision = Boolean(process.env['DECISION_API_1']);
+  const keyPoolsStatus: 'ACTIVE' | 'STANDBY' = hasTier1 || hasCloudRoute ? 'ACTIVE' : 'STANDBY';
+  const keyPoolsDetails = hasTier1
+    ? `Tiers 1-4 + Gemini + Multimodal${hasDecision ? ' + Decision' : ''} sincronizados (HKCU/HKLM)`
+    : 'Pools carregados via Registro do Windows (use Auditar Pools & Latencia)';
+
   const nodes: EcosystemNode[] = [
     {
       id: 'ollama-gpu',
@@ -348,6 +357,20 @@ export async function GET() {
       details: chrysalisDetails,
       category: 'backend',
       actionAvailable: false,
+    },
+    {
+      id: 'key-pools-routing',
+      name: 'Pool de Chaves & Routing',
+      role: 'Isolamento Tier 1-4 OpenRouter, Gemini, Decision, Multimodal e Ollama',
+      port: 'HKCU/HKLM',
+      protocol: 'Registry / HTTP',
+      status: keyPoolsStatus,
+      latencyMs: backend.latencyMs,
+      details: keyPoolsDetails,
+      category: 'llm',
+      actionAvailable: true,
+      actionLabel: 'Auditar Pools & Latência',
+      actionType: 'audit_keys',
     },
     perceptionNode,
   ];
@@ -444,6 +467,45 @@ function handleBenchmarkPerception() {
   });
 }
 
+async function handleAuditKeys() {
+  const token = process.env['API_SECRET_TOKEN'] || '';
+  const res = await pingEndpoint(
+    buildNexusServerUrl('/api/v1/keys/observatory'),
+    4000,
+    token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  );
+  if (res.ok && res.data && typeof res.data === 'object') {
+    const d = res.data as { total_synced?: number; total_vars?: number; fails_count?: number; warns_count?: number };
+    return NextResponse.json({
+      success: true,
+      action: 'audit_keys',
+      latencyMs: res.latencyMs,
+      message: `Observatorio: ${d.total_synced ?? 0}/${d.total_vars ?? 0} chaves HKCU==HKLM (${d.fails_count ?? 0} FAIL, ${d.warns_count ?? 0} WARN) em ${res.latencyMs}ms.`,
+    });
+  }
+  return NextResponse.json({
+    success: true,
+    action: 'audit_keys',
+    latencyMs: res.latencyMs,
+    message: 'Use o painel "Observatorio de Pools & Chaves" abaixo para sonda offline ou Live HTTP.',
+  });
+}
+
+async function handleTestAiMesh() {
+  const [backendPing, ollamaPing] = await Promise.all([
+    pingEndpoint(buildNexusServerUrl('/ping'), 1500),
+    pingEndpoint('http://127.0.0.1:11434/api/tags', 1200),
+  ]);
+  const routesOk = backendPing.ok || ollamaPing.ok;
+  return NextResponse.json({
+    success: routesOk,
+    action: 'test_ai_mesh',
+    message: routesOk
+      ? `Roteamento verificado: Backend ${backendPing.ok ? `OK (${backendPing.latencyMs}ms)` : 'OFF'} · Ollama ${ollamaPing.ok ? `OK (${ollamaPing.latencyMs}ms)` : 'OFF'}.`
+      : 'Nenhuma rota de inferencia local respondeu ao probe.',
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json().catch(() => ({}))) as {
@@ -464,6 +526,14 @@ export async function POST(request: Request) {
 
     if (action === 'benchmark_perception') {
       return handleBenchmarkPerception();
+    }
+
+    if (action === 'audit_keys') {
+      return await handleAuditKeys();
+    }
+
+    if (action === 'test_ai_mesh') {
+      return await handleTestAiMesh();
     }
 
     return NextResponse.json({ error: 'Acao desconhecida' }, { status: 400 });

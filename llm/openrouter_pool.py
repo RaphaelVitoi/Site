@@ -3,10 +3,10 @@ SOTA OpenRouter Multi-Tier Key Pool Manager.
 
 Provides intelligent, adaptive key rotation, circuit breaking, and quota isolation
 across agent tiers:
-  - Tier 1: Core Cognitive Mastery (3 keys) - High reasoning, zero-tolerance latency.
-  - Tier 2: Cloud Superagents & Research (2 keys) - Tool calling, search, context.
+  - Tier 1: Core Cognitive Mastery (5 keys) - High reasoning, zero-tolerance latency.
+  - Tier 2: Cloud Superagents & Research (10 keys) - Tool calling, search, context.
   - Tier 3: Specialist Fleet & Heavy Batch (5 keys) - High throughput, dream replay.
-  - Tier 4: Dedicated Subagents (4 keys) - Dynamic task delegation.
+  - Tier 4: Dedicated Subagents (5 keys) - Dynamic task delegation.
 
 Credentials are read from HKCU / HKLM (Windows Registry) and process environment,
 guaranteeing zero plaintext exposure in code or version control.
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 RE_TIER_KEY = re.compile(r"^OPENROUTER_TIER(?P<tier>[1-4])_KEY_(?P<idx>\d+)$")
 
 DEFAULT_COOLDOWN_429 = timedelta(minutes=5)
+DEFAULT_COOLDOWN_402 = timedelta(minutes=15)
 DEFAULT_COOLDOWN_SERVER_ERROR = timedelta(minutes=2)
 
 
@@ -128,11 +129,17 @@ def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
             if var_value not in new_pools[tier]:
                 new_pools[tier].append(var_value)
 
-    legacy_key = env_map.get("OPENROUTER_API_KEY", "").strip()
-    if legacy_key and _is_real_key_value(legacy_key) and not new_pools[1]:
-        new_pools[1].append(legacy_key)
-
     known_keys = {k for tier_keys in new_pools.values() for k in tier_keys}
+    legacy_key = env_map.get("OPENROUTER_API_KEY", "").strip()
+    if legacy_key and _is_real_key_value(legacy_key):
+        if not new_pools[1]:
+            new_pools[1].append(legacy_key)
+            known_keys.add(legacy_key)
+        elif legacy_key not in known_keys:
+            # Chave legada distinta atua como reforco isolado de subagentes/fallback (Tier 4).
+            new_pools[4].append(legacy_key)
+            known_keys.add(legacy_key)
+
     for var_name in _NAMED_OPENROUTER_KEY_VARS:
         val = env_map.get(var_name, "").strip()
         if val and _is_real_key_value(val) and val not in known_keys:
@@ -173,6 +180,7 @@ class OpenRouterPoolManager:
         self._sync_lock = threading.RLock()
         self._pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
         self._stats: dict[str, KeyStats] = {}
+        self._tier_cursors: dict[int, int] = {1: 0, 2: 0, 3: 0, 4: 0}
         self.reload_from_environment()
 
     def _get_lock(self) -> asyncio.Lock:
@@ -242,43 +250,81 @@ class OpenRouterPoolManager:
 
         return success_rate - latency_penalty - failure_penalty
 
+    @staticmethod
+    def _authorized_tier_order(tier: int, allow_fallback: bool) -> list[int]:
+        tiers_to_try = [tier]
+        if allow_fallback:
+            if tier == 2:
+                tiers_to_try.extend([4, 1])
+            elif tier == 4:
+                tiers_to_try.append(3)
+        return tiers_to_try
+
+    def is_key_available(self, key: str) -> bool:
+        """Retorna True se a chave nao esta revogada nem em cooldown ativo."""
+        s8 = _key_sha8(key)
+        with self._sync_lock:
+            return self._score_key(s8) > -400.0
+
+    def has_available_key(self, tier: int | None = None) -> bool:
+        """Verifica em O(N) sem mutar estado se existe ao menos uma chave saudavel."""
+        tiers = [tier] if tier is not None else [1, 2, 3, 4]
+        with self._sync_lock:
+            for t in tiers:
+                for key in self._pools.get(t, []):
+                    if self._score_key(_key_sha8(key)) > -400.0:
+                        return True
+        return False
+
+    def get_ranked_keys_for_tier(self, tier: int, allow_fallback: bool = True) -> list[str]:
+        """Retorna chaves disponiveis por tier ordenadas por saude com desempate round-robin."""
+        tiers_to_try = self._authorized_tier_order(tier, allow_fallback)
+        ordered: list[str] = []
+        seen: set[str] = set()
+        with self._sync_lock:
+            for t in tiers_to_try:
+                candidate_keys = self._pools.get(t, [])
+                if not candidate_keys:
+                    continue
+                n = len(candidate_keys)
+                cursor = self._tier_cursors.get(t, 0) % n
+                rotated = [(idx, candidate_keys[(cursor + idx) % n]) for idx in range(n)]
+                ranked = sorted(
+                    rotated,
+                    key=lambda item: (-round(self._score_key(_key_sha8(item[1])), 3), item[0]),
+                )
+                for _, cand in ranked:
+                    if cand not in seen and self._score_key(_key_sha8(cand)) > -400.0:
+                        ordered.append(cand)
+                        seen.add(cand)
+                self._tier_cursors[t] = (cursor + 1) % n
+        return ordered
+
     async def get_key_for_tier(self, tier: int, allow_fallback: bool = True) -> tuple[str | None, int]:
         """
         Seleciona a chave mais saudavel do pool do tier requisitado.
         Devolve (chave, tier_efetivo) ou (None, 0) caso todas estejam esgotadas.
         """
         async with self._get_lock():
-            # Ordem de busca: tier solicitado -> fallbacks autorizados
-            tiers_to_try = [tier]
-            if allow_fallback:
-                if tier == 2:
-                    tiers_to_try.extend([4, 1])  # Tier 2 pode usar 4 ou 1
-                elif tier == 4:
-                    tiers_to_try.append(3)  # Tier 4 pode cair para 3
-                elif tier == 3:
-                    # Tier 3 nao desce: se esgotar, sinaliza None para acionar Tier 6 local
-                    pass
-                elif tier == 1:
-                    # Tier 1 nunca usa tiers inferiores
-                    pass
+            tiers_to_try = self._authorized_tier_order(tier, allow_fallback)
 
             for t in tiers_to_try:
                 candidate_keys = self._pools.get(t, [])
                 if not candidate_keys:
                     continue
 
-                # Rankeia por score de saude decrescente
-                ranked = sorted(
-                    candidate_keys,
-                    key=lambda k: self._score_key(_key_sha8(k)),
-                    reverse=True,
-                )
-
-                for best_key in ranked:
-                    s8 = _key_sha8(best_key)
-                    score = self._score_key(s8)
-                    if score > -400.0:  # Nao esta em cooldown nem revogada
-                        return best_key, t
+                n = len(candidate_keys)
+                with self._sync_lock:
+                    cursor = self._tier_cursors.get(t, 0) % n
+                    rotated = [(idx, candidate_keys[(cursor + idx) % n]) for idx in range(n)]
+                    ranked = sorted(
+                        rotated,
+                        key=lambda item: (-round(self._score_key(_key_sha8(item[1])), 3), item[0]),
+                    )
+                    for _, best_key in ranked:
+                        if self._score_key(_key_sha8(best_key)) > -400.0:
+                            self._tier_cursors[t] = (cursor + 1) % n
+                            return best_key, t
 
             return None, 0
 
@@ -314,6 +360,14 @@ class OpenRouterPoolManager:
                 # Chave invalida ou revogada: banimento definitivo
                 st["is_revoked"] = True
                 logger.error("[OPENROUTER POOL] Chave sha8=%s foi REVOGADA/REJEITADA (HTTP %d).", s8, status_code)
+            elif status_code == 402:
+                # Conta sem creditos: cooldown estendido para evitar queima em cascata
+                st["blocked_until"] = now + DEFAULT_COOLDOWN_402
+                logger.warning(
+                    "[OPENROUTER POOL] Chave sha8=%s retornou HTTP 402 (saldo). Cooldown de %ds aplicado.",
+                    s8,
+                    int(DEFAULT_COOLDOWN_402.total_seconds()),
+                )
             elif status_code == 429:
                 # Rate limit: cooldown inteligente
                 cooldown_dur = timedelta(seconds=retry_after_s) if retry_after_s > 0 else DEFAULT_COOLDOWN_429

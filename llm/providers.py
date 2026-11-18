@@ -203,6 +203,14 @@ class OpenRouterStrategy(LLMProviderStrategy):
     def token_keys(self) -> tuple[str, str]:
         return ("prompt_tokens", "completion_tokens")
 
+    async def check_quarantine(self, model: str, key: str) -> bool:
+        del model
+        with contextlib.suppress(Exception):
+            from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+            return not openrouter_pool_manager.is_key_available(key)
+        return False
+
     async def call(
         self,
         session: aiohttp.ClientSession,
@@ -572,27 +580,21 @@ def _check_local_llama_availability(model: str) -> bool:
 
 
 async def _check_openrouter_availability() -> bool:
-    """Check OpenRouter provider has any available key."""
+    """Check OpenRouter provider has any available key without mutating cursors."""
     try:
         from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
 
-        # Try each tier for any available key
-        for tier in (1, 2, 3, 4):
-            key, _ = await openrouter_pool_manager.get_key_for_tier(tier, allow_fallback=False)
-            if key is not None:
-                return True
-        return False
+        return openrouter_pool_manager.has_available_key()
     except Exception:
         return False
 
 
-def _check_gemini_availability() -> bool:
-    """Check Gemini provider has available keys."""
+def _check_gemini_availability(model: str | None = None) -> bool:
+    """Check Gemini live singleton pool has available keys for the requested model."""
     try:
-        from llm.gemini_pool import GeminiPoolManager  # noqa: PLC0415
+        from llm.gemini_pool import gemini_pool_manager  # noqa: PLC0415
 
-        manager = GeminiPoolManager(read_registry=False)
-        return manager.available_keys_count() > 0
+        return gemini_pool_manager.available_keys_count(model=model) > 0
     except Exception:
         return False
 
@@ -630,12 +632,13 @@ async def _check_provider_availability(provider: str, model: str) -> bool:
     if provider == "openrouter":
         return await _check_openrouter_availability()
     if provider == "gemini":
-        return _check_gemini_availability()
+        return _check_gemini_availability(model)
     if provider == "ollama":
         try:
+            from llm.budget import OLLAMA_KEYS  # noqa: PLC0415
             from llm.ollama_cloud import billing_cooldown_remaining_s, is_configured  # noqa: PLC0415
 
-            return is_configured() and billing_cooldown_remaining_s() <= 0.0
+            return (is_configured() or bool(OLLAMA_KEYS)) and billing_cooldown_remaining_s() <= 0.0
         except Exception:  # noqa: BLE001
             return False
 
@@ -695,6 +698,47 @@ async def _handle_chaos_injection(task: Task, c_func: Callable[[str], str]) -> N
         pass
 
 
+async def _notify_pool_success(provider: str, model: str, key: str, latency_ms: float) -> None:
+    """Propaga sucesso e latencia medida de volta ao pool manager ativo em memoria."""
+    with contextlib.suppress(Exception):
+        if provider == "openrouter":
+            from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+            await openrouter_pool_manager.mark_success(key, latency_ms)
+        elif provider == "gemini":
+            from llm.gemini_pool import gemini_pool_manager  # noqa: PLC0415
+
+            gemini_pool_manager.mark_success(key, latency_ms, model=model)
+
+
+async def _notify_pool_failure(
+    provider: str,
+    model: str,
+    key: str,
+    status_code: int,
+    retry_after_s: float = 0.0,
+    error_msg: str = "",
+) -> None:
+    """Propaga falha HTTP/timeout de volta ao pool manager ativo em memoria."""
+    if not key:
+        return
+    with contextlib.suppress(Exception):
+        if provider == "openrouter":
+            from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+            await openrouter_pool_manager.mark_failure(key, status_code=status_code, retry_after_s=retry_after_s)
+        elif provider == "gemini":
+            from llm.gemini_pool import gemini_pool_manager  # noqa: PLC0415
+
+            gemini_pool_manager.mark_failure(
+                key,
+                status_code,
+                retry_after_s if retry_after_s > 0 else 0.0,
+                error_msg[:300],
+                model=model,
+            )
+
+
 async def _process_successful_call(
     strategy: LLMProviderStrategy,
     key: str,
@@ -738,6 +782,7 @@ async def _process_successful_call(
         total_tokens=p_tokens + c_tokens,
     )
     await _register_route_success(route_key)
+    await _notify_pool_success(ctx.provider, ctx.model, key, float(latency_ms))
 
     return {
         "text": response_text,
@@ -755,6 +800,7 @@ async def _handle_timeout_error(
     key_hash: str,
     route_key: str,
     retries_left: int,
+    key: str = "",
 ) -> bool:
     # SOTA: A penalidade de latencia reflete estritamente o limite do SLA
     # configurado, imune a atrasos do Event Loop
@@ -779,6 +825,7 @@ async def _handle_timeout_error(
             strategy.name,
         )
         await _register_route_failure(route_key)
+        await _notify_pool_failure(ctx.provider, ctx.model, key, 504, error_msg=f"{strategy.name} timeout")
         return False
     logger.warning(
         "[[%s]%s[/]] Timeout em %s. Retentando (%d retries restantes)...",
@@ -799,6 +846,7 @@ async def _handle_5xx_error(
     general_retries_left: int,
     rate_limit_retries_left: int,
     key_hash: str = "none",
+    key: str = "",
 ) -> tuple[bool, int, int]:
     await _register_route_failure(route_key)
     if general_retries_left < 0:
@@ -818,6 +866,13 @@ async def _handle_5xx_error(
             model=ctx.model,
             agent=ctx.task.agent,
             task_id=ctx.task.id,
+        )
+        await _notify_pool_failure(
+            ctx.provider,
+            ctx.model,
+            key,
+            status_code or 503,
+            error_msg=f"{strategy.name} HTTP {status_code}",
         )
         return False, general_retries_left, rate_limit_retries_left
     logger.warning(
@@ -839,6 +894,7 @@ async def _handle_429_error(
     general_retries_left: int,
     rate_limit_retries_left: int,
     key_hash: str = "none",
+    key: str = "",
 ) -> tuple[bool, int, int]:
     try:
         match = re.search(r"retry_after=(\d+)", error_msg)
@@ -881,6 +937,14 @@ async def _handle_429_error(
         model=ctx.model,
         agent=ctx.task.agent,
         task_id=ctx.task.id,
+    )
+    await _notify_pool_failure(
+        ctx.provider,
+        ctx.model,
+        key,
+        429,
+        retry_after_s=float(delay),
+        error_msg=error_msg,
     )
     await asyncio.sleep(0.25)
     return False, general_retries_left, rate_limit_retries_left
@@ -943,6 +1007,9 @@ async def _record_general_failure(
 
     if status_code in (401, 402, 403):
         await _block_key(provider_key)
+        await _notify_pool_failure(ctx.provider, ctx.model, key, status_code, error_msg=error_msg)
+    elif status_code:
+        await _notify_pool_failure(ctx.provider, ctx.model, key, status_code, error_msg=error_msg)
 
     await strategy.handle_semantic_error(e, ctx.model, key)
     return False, general_retries_left, rate_limit_retries_left
@@ -974,6 +1041,7 @@ async def _handle_general_error(
             general_retries_left,
             rate_limit_retries_left,
             key_hash=key_hash,
+            key=key,
         )
 
     if "429" in error_msg:
@@ -984,6 +1052,7 @@ async def _handle_general_error(
             general_retries_left,
             rate_limit_retries_left,
             key_hash=key_hash,
+            key=key,
         )
         if not should_retry and ctx.provider == "gemini":
             await _block_gemini_model_key(ctx.model, key)
@@ -1058,6 +1127,7 @@ async def _attempt_key_execution(
             key_hash,
             route_key,
             general_retries_left,
+            key=key,
         )
         return None, should_retry, general_retries_left, rate_limit_retries_left
     except Exception as e:  # noqa: BLE001

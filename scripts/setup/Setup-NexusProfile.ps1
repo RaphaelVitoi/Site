@@ -300,6 +300,11 @@ function nexus-keys {
     }
 }
 
+function nexus-audit-keys {
+    # Observatorio estético e seguro de pools/keys (HKCU/HKLM/DB/Live) via key-pool-audit.
+    & "$Global:NexusProjectRoot\.agents\skills\key-pool-audit\scripts\Audit-KeyPools.ps1" @args
+}
+
 function nexus-fallback {
     param(
         [int]$Minutes = 180

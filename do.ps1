@@ -65,6 +65,12 @@ param (
     [switch]$Audit,
 
     [Parameter()]
+    [switch]$AuditKeys,
+
+    [Parameter()]
+    [switch]$Live,
+
+    [Parameter()]
     [string]$AuditScenario = 'Auditoria Global de Integridade SOTA',
 
     [Parameter()]
@@ -421,6 +427,15 @@ if ($PSBoundParameters.ContainsKey('FixEPERM')) {
 
 if ($Audit) {
     Invoke-NexusScript -ScriptName 'scripts\routines\invoke_sota_audit.ps1' -Message 'INICIANDO AUDITORIA ADAPTATIVA (SMART MDA)' -Arguments $AuditScenario
+}
+
+if ($AuditKeys) {
+    $AuditKeysScript = Join-Path $ScriptDirectory '.agents\skills\key-pool-audit\scripts\Audit-KeyPools.ps1'
+    if (-not (Test-Path -LiteralPath $AuditKeysScript)) {
+        throw "Script de auditoria de chaves nao encontrado: $AuditKeysScript"
+    }
+    if ($Live) { & $AuditKeysScript -Live } else { & $AuditKeysScript }
+    exit $LASTEXITCODE
 }
 
 if ($SyncAgents) {

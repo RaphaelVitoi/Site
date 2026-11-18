@@ -5,6 +5,7 @@ import contextlib
 from datetime import UTC, datetime, timedelta
 import hashlib
 import hmac
+import inspect
 import logging
 import os
 import sys
@@ -455,10 +456,26 @@ async def is_cognitive_hibernation_active(manager: QueueManager, task: Task) -> 
 
 
 async def _rank_keys_by_health(provider: str, keys: list[str], manager: QueueManager) -> list[str]:
+    if not keys:
+        return []
+    hashes = [_key_fingerprint(provider, key) for key in keys]
+    batch_fn = getattr(manager, "get_keys_recent_stats_batch", None)
+    stats_by_hash: dict[str, dict[str, Any]] | None = None
+    if callable(batch_fn):
+        try:
+            maybe_res = batch_fn(provider, hashes, window_minutes=180)
+            res = await maybe_res if inspect.isawaitable(maybe_res) else maybe_res
+            if isinstance(res, dict):
+                stats_by_hash = res
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Fallback para consulta sequencial em _rank_keys_by_health: %s", exc)
+
     ranked = []
-    for idx, key in enumerate(keys):
-        key_hash = _key_fingerprint(provider, key)
-        stats = await manager.get_key_recent_stats(provider, key_hash, window_minutes=180)
+    for idx, (key, key_hash) in enumerate(zip(keys, hashes, strict=True)):
+        if stats_by_hash is not None and key_hash in stats_by_hash:
+            stats = stats_by_hash[key_hash]
+        else:
+            stats = await manager.get_key_recent_stats(provider, key_hash, window_minutes=180)
         score = _score_key_from_stats(stats)
         ranked.append((score, idx, key))
 

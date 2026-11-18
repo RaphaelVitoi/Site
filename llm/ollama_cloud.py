@@ -80,13 +80,13 @@ def _trip_billing_cooldown() -> float:
 
 
 def ollama_api_key() -> str:
-    """Chave OLLAMA_API_KEY do ambiente efetivo (env + env_loader via budget)."""
+    """Chave OLLAMA_API_KEY (com fallback para OLLAMA_CLOUD_KEY) do ambiente efetivo."""
     try:
         from llm.budget import ALL_ENV_VARS  # noqa: PLC0415
 
-        return ALL_ENV_VARS.get("OLLAMA_API_KEY", "").strip()
+        return (ALL_ENV_VARS.get("OLLAMA_API_KEY") or ALL_ENV_VARS.get("OLLAMA_CLOUD_KEY") or "").strip()
     except Exception:  # noqa: BLE001
-        return os.environ.get("OLLAMA_API_KEY", "").strip()
+        return (os.environ.get("OLLAMA_API_KEY") or os.environ.get("OLLAMA_CLOUD_KEY") or "").strip()
 
 
 def is_configured() -> bool:
