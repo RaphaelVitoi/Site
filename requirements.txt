@@ -8,7 +8,7 @@
 aiofiles>=25.1.0
 aiohttp>=3.14.5
 aiosqlite>=0.22.1
-fastapi>=0.163.1
+fastapi>=0.163.2
 multidict>=7.2.1
 uvicorn[standard]>=0.54.0
 
@@ -35,8 +35,8 @@ onnxruntime>=1.32.0
 # ── CLIENTES LLM, AGENTES & MCP ──────────────────────────────────────────────
 google-genai>=3.4.0
 google-antigravity>=0.1.23
-openai>=3.52.0
-anthropic>=2.9.0
+openai>=3.54.0
+anthropic>=2.10.0
 httpx>=0.28.1
 mcp>=2.3.0
 laya>=0.4.35

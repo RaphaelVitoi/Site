@@ -108,6 +108,11 @@ const QuizEngine = dynamic(() => import('../../quiz/QuizEngine').then((mod) => m
   ssr: false,
 });
 
+type ScenarioCockpitProps = Omit<
+  ToolContentProps,
+  'activeTool' | 'scenarios' | 'safeHeroInvested' | 'safeActivePlayers'
+>;
+
 function ScenarioCockpit({
   scenario,
   spotSubView,
@@ -125,7 +130,7 @@ function ScenarioCockpit({
   onStreetFreqChange,
   onAggressionChange,
   onExportHrc,
-}: ToolContentProps): ReactNode {
+}: ScenarioCockpitProps): ReactNode {
   const {
     heroPosition,
     heroInvested,
@@ -376,16 +381,21 @@ function ScenarioCockpit({
   );
 }
 
-export function ToolContent(props: ToolContentProps): ReactNode {
-  const { activeTool, scenario, scenarios, quantum, spot, calculations } = props;
-  const { state, safeHeroInvested, safeCurrentPot, safeActivePlayers } = props;
+export function ToolContent({
+  activeTool,
+  scenarios,
+  safeHeroInvested,
+  safeActivePlayers,
+  ...cockpitProps
+}: ToolContentProps): ReactNode {
+  const { scenario, quantum, spot, calculations, state, safeCurrentPot } = cockpitProps;
   const { anteSize, heroPosition, isNearPayjump, blindsRisingSoon } = state;
   const { isIp, heroUpdatedStack, villainUpdatedStack } = spot;
   const { nativeRangeMetric } = calculations;
 
   switch (activeTool) {
     case 'scenario':
-      return <ScenarioCockpit {...props} />;
+      return <ScenarioCockpit {...cockpitProps} />;
     case 'calculator':
       return (
         <Suspense fallback={<LoadingFallback />}>
@@ -470,6 +480,6 @@ export function ToolContent(props: ToolContentProps): ReactNode {
         </Suspense>
       );
     default:
-      return <ScenarioCockpit {...props} />;
+      return <ScenarioCockpit {...cockpitProps} />;
   }
 }

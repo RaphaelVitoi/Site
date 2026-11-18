@@ -10,6 +10,7 @@ loop dono. Cada teste aqui prova a politica de eviction/poda introduzida.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -19,7 +20,7 @@ from llm import budget
 
 
 @pytest.fixture(autouse=True)
-def _limpa_estado_global() -> None:
+def _limpa_estado_global() -> Iterator[None]:
     middleware.USUARIOS_DE_SESSAO.clear()
     budget.SYSTEM_PROMPT_CACHE.clear()
     budget.KEY_BLOCKLIST.clear()
@@ -95,7 +96,8 @@ def test_blocklist_fifo_quando_nao_ha_expirados(monkeypatch: pytest.MonkeyPatch)
     budget.KEY_BLOCKLIST.update({"k1": futuro, "k2": futuro, "k3": futuro})
     budget._purgar_blocklist_expirados(budget.KEY_BLOCKLIST, datetime.now(UTC))
     assert "k1" not in budget.KEY_BLOCKLIST
-    assert {"k2": futuro, "k3": futuro} == budget.KEY_BLOCKLIST
+    actual = dict(budget.KEY_BLOCKLIST)
+    assert actual == {"k2": futuro, "k3": futuro}
 
 
 @pytest.mark.asyncio

@@ -37,6 +37,7 @@ nao_verificado:
 # Calibracao Presencial Tier 0 -- Gemini 4: Arvore Associativa, Zoom Out 4-Camadas e Selo Minimalista
 
 **Base empirica do ciclo (`gemini-4-hydrogen`, media `9.43` / ciclo geral `9.45`):**
+
 - `seq 91` (`2d6c9a22`, `9.5`, `640a19d3-fc6a-4648-b009-f8cf4ead810e`): ausencia de proatividade, criatividade, *zoom out*, olhar sistemico e tracos de Meta-Agente.
 - `seq 92` (`a3cc9ace`, `9.5`, `076c0ef9-bf61-4216-ba69-1aec5b86f2be`): ausencia recorrente de *zoom out* sistemico/associativo/preditivo, custo de oportunidade de alto ROI e metacognicao agentica.
 - `seq 94` (`dee6e961`, `9.3`, `b1b57d40-dc84-415a-8e3c-3a16d9518346`): degradacao da memoria de contexto no fim de janela longa, subaproveitando a arquitetura de memoria local.
@@ -58,7 +59,7 @@ nao_verificado:
    - Executar *zoom out* da linearidade de tarefas para paralelismo/analise de sistema em galhos de arvore (ROI e reuso);
    - Elaboracao metacognitiva direta: *"Por que estou operando deste modo e para que estou operando deste modo?"*
 3. **Selo obrigatorio, nao silencioso e minimalista (1 linha limpa e estetica):**
-   `> \`MC · C<id>\` **Mem** C/M/L/E · **Rec→Pred** <micro-arco> · **ROI** <decisao> · *<proposito>*`
+   ``> `MC · C<id>` **Mem** C/M/L/E · **Rec→Pred** <micro-arco> · **ROI** <decisao> · *<proposito>*``
    *(Pilula inicial em codigo, separador `·`, seta `→`, zero paths longos/hashes no selo, maximo ~115 chars para permanecer em 1 linha visual.)*
 
 **Why:** Sem selo visivel e gatilhos fluidos (inclusive temporalidade simulada `C7` e arbitragem `C8`), o agente tende a voltar para execucao linear reativa (`seq 91/92`), perder simbolos no fim da janela (`seq 94`) ou decidir arbitrariamente diante de ambiguidade estrutural. Sem minimalismo (teto de 1 linha), a checagem vira atrito que degrada o fluxo agentico.

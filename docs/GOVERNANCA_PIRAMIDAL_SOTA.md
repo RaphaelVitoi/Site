@@ -50,8 +50,7 @@ flowchart TB
     end
 
     subgraph T3["💼 TIER 3: FROTA ESPECIALISTA & MODELOS QWEN"]
-        FLEET["Frota de 19 Agentes Especialistas
-(roster em data/agents_manifest.json)"]
+        FLEET["Frota de 19 Agentes Especialistas\n(roster em data/agents_manifest.json)"]
         QWEN_MODELS["Modelos Especialistas Qwen Ollama\n(qwen2.5-coder:7b-q5, qwen-pmev-math, qwen-code-surgical, qwen-poetics, qwen 1.5b/0.5b)"]
     end
 
@@ -61,8 +60,7 @@ flowchart TB
 
     subgraph T5["🤖 TIER 5: BOTS DE INTEGRAÇÃO & CVE SCANNERS"]
         DEPENDABOT["Dependabot (Security Bumps / CVE Scanning)"]
-        INTEGRATORS["Integradores de Workflow (Linear, Atlassian, Tactiq, YouTube Intelligence)
-(modelo de respaldo pendente de validacao no inventario Ollama)"]
+        INTEGRATORS["Integradores de Workflow (Linear, Atlassian, Tactiq, YouTube Intelligence)\n(modelo de respaldo pendente de validacao no inventario Ollama)"]
     end
 
     subgraph T6["🖥️ TIER 6: MODELOS LOCAIS, EDGE AI & ACELERAÇÃO NUMÉRICA"]

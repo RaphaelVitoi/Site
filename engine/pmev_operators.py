@@ -264,7 +264,7 @@ class OperatorF4Absorption:
         p_ruin_vector: tuple[float, ...],
         absorption_states: tuple[AbsorptionState, ...],
     ) -> None:
-        self.p_ruin = np.array(p_ruin_vector, dtype=np.float64)
+        self.p_ruin: NDArray[np.float64] = np.array(p_ruin_vector, dtype=np.float64)
         self.absorption_states = absorption_states
 
     def forward(self, expectation_vector: NDArray[np.float64]) -> NDArray[np.float64]:

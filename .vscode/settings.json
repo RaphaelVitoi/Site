@@ -108,7 +108,7 @@
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -465,7 +465,7 @@
   "editor.inlineSuggest.experimental.showOnSuggestConflict": "always",
   "claudeCode.enableNewConversationShortcut": true,
   "chatgpt.openOnStartup": true,
-  "chatgpt.runCodexInWindowsSubsystemForLinux": true,
+  "chatgpt.runCodexInWindowsSubsystemForLinux": false,
   "windsurfPyright.analysis.typeCheckingMode": "standard",
   "windsurfPyright.analysis.inlayHints.callArgumentNames": true,
   "windsurfPyright.analysis.inlayHints.callArgumentNamesMatching": true,
