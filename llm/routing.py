@@ -213,7 +213,7 @@ def _score_codigo(m: str) -> int:
 
 
 def _score_math(m: str) -> int:
-    if not m.endswith(":free") and ("31b" in m or "gemma-4-31b" in m):
+    if not m.endswith(FREE_TIER_MARKER) and ("31b" in m or "gemma-4-31b" in m):
         return -5
     if "r1" in m or "reason" in m or "laguna" in m:
         return -3
@@ -257,7 +257,7 @@ def _score_razonio(m: str) -> int:
 def _score_curadoria(m: str) -> int:
     if "120b" in m or "glm" in m:
         return -6
-    if not m.endswith(":free") and ("31b" in m or "gemma-4-31b" in m):
+    if not m.endswith(FREE_TIER_MARKER) and ("31b" in m or "gemma-4-31b" in m):
         return -5
     if "3.8" in m:
         return -3
@@ -267,7 +267,7 @@ def _score_curadoria(m: str) -> int:
 
 
 def _score_inteligencia(m: str) -> int:
-    if not m.endswith(":free") and ("31b" in m or "gemma-4-31b" in m):
+    if not m.endswith(FREE_TIER_MARKER) and ("31b" in m or "gemma-4-31b" in m):
         return -6
     if "120b" in m or "glm" in m:
         return -5
@@ -304,7 +304,7 @@ def _especialidade(m: str, domain: str | None) -> int:
 
 
 def _is_local_model(model_l: str) -> bool:
-    if model_l.endswith(":free"):
+    if model_l.endswith(FREE_TIER_MARKER):
         return False
     if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
         return True
@@ -317,7 +317,7 @@ def _infer_provider_for_model(model: str) -> str | None:
     model_l = model.lower()
     if "space-bunny" in model_l or model_l.startswith("hermes/"):
         return "hermes"
-    if model_l.endswith(":free"):
+    if model_l.endswith(FREE_TIER_MARKER):
         return "openrouter"
     if _is_local_model(model_l):
         return "local"
@@ -680,7 +680,7 @@ async def _apply_model_health_gate(models: list[str], manager: QueueManager, tas
         is_checkable = (
             provider == "openrouter"
             and model_l not in protected_models
-            and not (drop_only_free_models and ":free" not in model_l)
+            and not (drop_only_free_models and FREE_TIER_MARKER not in model_l)
         )
 
         if not is_checkable:

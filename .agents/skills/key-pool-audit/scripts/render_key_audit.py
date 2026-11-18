@@ -43,15 +43,22 @@ _HMAC_POOL_SALTS: dict[str, bytes] = {
     "media": b"sota_media_pool_salt",
 }
 
+_POOL_DECISION = "Pool Decision"
+_POOL_GEMINI_TEXT = "Gemini Texto"
+_POOL_MEDIA_AI = "Multimodal AI Studio"
+_STATUS_200_OK = "200 OK"
+_STYLE_BOLD_GREEN = "bold green"
+_STYLE_BOLD_RED = "bold red"
+
 POOL_SHORT: dict[str, str] = {
     "OpenRouter Tier 1": "OR·T1",
     "OpenRouter Tier 2": "OR·T2",
     "OpenRouter Tier 3": "OR·T3",
     "OpenRouter Tier 4": "OR·T4",
     "OpenRouter Dedicadas": "OR·Ded",
-    "Pool Decision": "Decision",
-    "Gemini Texto": "Gemini",
-    "Multimodal AI Studio": "Med·AI",
+    _POOL_DECISION: "Decision",
+    _POOL_GEMINI_TEXT: "Gemini",
+    _POOL_MEDIA_AI: "Med·AI",
     "Multimodal OpenRouter": "Med·OR",
     "Ollama Cloud": "Ollama",
     "Providers Pendentes/Extras": "Extras",
@@ -64,9 +71,9 @@ POOL_DOCS: dict[str, tuple[str, str]] = {
     "OpenRouter Tier 3": ("Frota Especialista & Batch", "Alto throughput; degrada -> Ollama Local"),
     "OpenRouter Tier 4": ("Subagentes Dedicados + Ponte Legada", "Degrada -> Tier 3"),
     "OpenRouter Dedicadas": ("Credenciais por condutor + OPENROUTER_API_KEY", "OPENROUTER_API_KEY = TIER4_KEY_1"),
-    "Pool Decision": ("System-1 Gemini Decisions API", "Laya -> gemini-decision-1; proj 913870412920"),
-    "Gemini Texto": ("Pool Flash-Lite (5 chaves + aliases Flash)", "Cota compartilhada no proj 913870412920"),
-    "Multimodal AI Studio": ("TTS / Video / Image / Translate (direto)", "1o na ordem MEDIA_POOL_PROVIDER"),
+    _POOL_DECISION: ("System-1 Gemini Decisions API", "Laya -> gemini-decision-1; proj 913870412920"),
+    _POOL_GEMINI_TEXT: ("Pool Flash-Lite (5 chaves + aliases Flash)", "Cota compartilhada no proj 913870412920"),
+    _POOL_MEDIA_AI: ("TTS / Video / Image / Translate (direto)", "1o na ordem MEDIA_POOL_PROVIDER"),
     "Multimodal OpenRouter": ("TTS / Video / Image / Translate (fallback)", "2o na ordem MEDIA_POOL_PROVIDER"),
     "Ollama Cloud": ("OLLAMA_API_KEY + OLLAMA_CLOUD_KEY (backup)", "ollama.com/api (Bearer); local :11434"),
     "Providers Pendentes/Extras": ("Anthropic / OpenAI", "Nao provisionadas (pend-2026-11-10)"),
@@ -179,6 +186,73 @@ def _pool_sha8(pool_kind: str, key: str) -> str:
     return hmac.new(salt, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
 
 
+def _read_last_audit_meta(con: sqlite3.Connection, meta: dict[str, object]) -> None:
+    cur = con.execute("SELECT value FROM system_state WHERE key='keys_last_audit'")
+    row = cur.fetchone()
+    if not row or not row[0]:
+        return
+    try:
+        parsed = json.loads(row[0])
+        meta["last_audit_ts"] = parsed.get("timestamp")
+        meta["last_audit_summary"] = f"{parsed.get('online_keys', '?')}/{parsed.get('total_keys', '?')} online"
+    except json.JSONDecodeError:
+        pass
+
+
+def _query_provider_totals(con: sqlite3.Connection) -> dict[str, dict[str, object]]:
+    prov_rows = con.execute(
+        """
+        SELECT provider,
+               COUNT(*) AS total,
+               SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS ok,
+               ROUND(AVG(CASE WHEN latency_ms > 0 THEN latency_ms END), 1) AS avg_ms
+        FROM key_usage_metrics
+        GROUP BY provider
+        """
+    ).fetchall()
+    return {
+        str(p): {"total": int(t), "ok": int(o or 0), "avg_ms": float(ms) if ms is not None else None}
+        for p, t, o, ms in prov_rows
+    }
+
+
+def _query_fingerprint_map(con: sqlite3.Connection) -> dict[str, DbStat]:
+    fp_rows = con.execute(
+        """
+        SELECT provider,
+               key_hash,
+               COUNT(*) AS attempts,
+               SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS successes,
+               ROUND(AVG(CASE WHEN latency_ms > 0 THEN latency_ms END), 1) AS avg_ms,
+               MAX(timestamp) AS max_ts
+        FROM key_usage_metrics
+        GROUP BY provider, key_hash
+        """
+    ).fetchall()
+    fp_map: dict[str, DbStat] = {}
+    for prov, khash, att, ok_cnt, avg_ms, _max_ts in fp_rows:
+        fp_map[f"{prov}:{khash}"] = {
+            "attempts": int(att),
+            "successes": int(ok_cnt or 0),
+            "avg_latency_ms": float(avg_ms) if avg_ms is not None else None,
+            "last_status": str(prov),
+        }
+    return fp_map
+
+
+def _match_env_to_fp_map(env_map: dict[str, str], fp_map: dict[str, DbStat]) -> dict[str, DbStat]:
+    by_var: dict[str, DbStat] = {}
+    for var_name, secret in env_map.items():
+        for prov in ("openrouter", "gemini", "ollama", "local"):
+            fp = _budget_fingerprint(prov, secret)
+            for candidate_hash in (fp, f"{prov}:sha256:{fp}", f"{prov}:{fp}", f"{prov}:{prov}:sha256:{fp}"):
+                stat = fp_map.get(candidate_hash)
+                if stat is not None:
+                    by_var[var_name] = stat
+                    break
+    return by_var
+
+
 def _load_db_stats(env_map: dict[str, str]) -> tuple[dict[str, DbStat], dict[str, object]]:
     """Carrega estatisticas agregadas de key_usage_metrics e ultimo keys_last_audit."""
     by_var: dict[str, DbStat] = {}
@@ -192,64 +266,10 @@ def _load_db_stats(env_map: dict[str, str]) -> tuple[dict[str, DbStat], dict[str
         return by_var, meta
 
     try:
-        cur = con.execute("SELECT value FROM system_state WHERE key='keys_last_audit'")
-        row = cur.fetchone()
-        if row and row[0]:
-            try:
-                parsed = json.loads(row[0])
-                meta["last_audit_ts"] = parsed.get("timestamp")
-                meta["last_audit_summary"] = f"{parsed.get('online_keys', '?')}/{parsed.get('total_keys', '?')} online"
-            except json.JSONDecodeError:
-                pass
-
-        prov_rows = con.execute(
-            """
-            SELECT provider,
-                   COUNT(*) AS total,
-                   SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS ok,
-                   ROUND(AVG(CASE WHEN latency_ms > 0 THEN latency_ms END), 1) AS avg_ms
-            FROM key_usage_metrics
-            GROUP BY provider
-            """
-        ).fetchall()
-        meta["provider_totals"] = {
-            str(p): {"total": int(t), "ok": int(o or 0), "avg_ms": float(ms) if ms is not None else None}
-            for p, t, o, ms in prov_rows
-        }
-
-        fp_rows = con.execute(
-            """
-            SELECT provider,
-                   key_hash,
-                   COUNT(*) AS attempts,
-                   SUM(CASE WHEN status='success' THEN 1 ELSE 0 END) AS successes,
-                   ROUND(AVG(CASE WHEN latency_ms > 0 THEN latency_ms END), 1) AS avg_ms,
-                   MAX(timestamp) AS max_ts
-            FROM key_usage_metrics
-            GROUP BY provider, key_hash
-            """
-        ).fetchall()
-        fp_map: dict[str, DbStat] = {}
-        for prov, khash, att, ok_cnt, avg_ms, _max_ts in fp_rows:
-            stat: DbStat = {
-                "attempts": int(att),
-                "successes": int(ok_cnt or 0),
-                "avg_latency_ms": float(avg_ms) if avg_ms is not None else None,
-                "last_status": str(prov),
-            }
-            fp_map[f"{prov}:{khash}"] = stat
-
-        for var_name, secret in env_map.items():
-            for prov in ("openrouter", "gemini", "ollama", "local"):
-                fp = _budget_fingerprint(prov, secret)
-                for candidate_hash in (fp, f"{prov}:sha256:{fp}"):
-                    if candidate_hash in fp_map:
-                        by_var[var_name] = fp_map[candidate_hash]
-                        break
-                    pref = f"{prov}:{candidate_hash}"
-                    if pref in fp_map:
-                        by_var[var_name] = fp_map[pref]
-                        break
+        _read_last_audit_meta(con, meta)
+        meta["provider_totals"] = _query_provider_totals(con)
+        fp_map = _query_fingerprint_map(con)
+        by_var = _match_env_to_fp_map(env_map, fp_map)
     except sqlite3.Error:
         pass
     finally:
@@ -265,7 +285,7 @@ def _probe_target_for_var(var_name: str, pool: str, value: str) -> tuple[str, st
     if value.startswith("sk-or-v1-"):
         return ("openrouter", value)
     if value.startswith(("AQ.", "AIza")) and (
-        pool in ("Pool Decision", "Gemini Texto", "Multimodal AI Studio")
+        pool in (_POOL_DECISION, _POOL_GEMINI_TEXT, _POOL_MEDIA_AI)
         or var_name in ("GOOGLE_JULES_API_KEY", "JULES_API_KEY", "GOOGLE_STITCH_API_KEY", "STITCH_API_KEY")
     ):
         return ("aistudio", value)
@@ -278,6 +298,83 @@ def _probe_target_for_var(var_name: str, pool: str, value: str) -> tuple[str, st
     return None
 
 
+def _format_openrouter_detail(info: dict[str, object]) -> str:
+    if info.get("is_free_tier"):
+        return "free"
+    rem = info.get("limit_remaining")
+    return f"rem={rem}" if rem is not None else "paid"
+
+
+async def _probe_openrouter(session: aiohttp.ClientSession, secret: str, t0: float) -> LiveResult:
+    async with session.get(
+        "https://openrouter.ai/api/v1/auth/key",
+        headers={"Authorization": f"Bearer {secret}"},
+    ) as resp:
+        ms = round((time.monotonic() - t0) * 1000.0, 1)
+        if resp.status != 200:
+            return {"status_label": f"HTTP {resp.status}", "ok": False, "latency_ms": ms, "detail": "auth err"}
+        data = await resp.json(content_type=None)
+        info = data.get("data", {}) if isinstance(data, dict) else {}
+        detail = _format_openrouter_detail(info if isinstance(info, dict) else {})
+        return {"status_label": _STATUS_200_OK, "ok": True, "latency_ms": ms, "detail": detail}
+
+
+async def _probe_hf(session: aiohttp.ClientSession, secret: str, t0: float) -> LiveResult:
+    async with session.get(
+        "https://huggingface.co/api/whoami-v2",
+        headers={"Authorization": f"Bearer {secret}"},
+    ) as resp:
+        ms = round((time.monotonic() - t0) * 1000.0, 1)
+        if resp.status != 200:
+            return {"status_label": f"HTTP {resp.status}", "ok": False, "latency_ms": ms, "detail": "hf err"}
+        data = await resp.json(content_type=None)
+        who = data.get("name", "ok") if isinstance(data, dict) else "ok"
+        return {"status_label": _STATUS_200_OK, "ok": True, "latency_ms": ms, "detail": f"@{who}"}
+
+
+async def _probe_aistudio(session: aiohttp.ClientSession, secret: str, t0: float) -> LiveResult:
+    async with session.get(
+        "https://generativelanguage.googleapis.com/v1beta/models",
+        params={"pageSize": "1", "key": secret},
+    ) as resp:
+        ms = round((time.monotonic() - t0) * 1000.0, 1)
+        if resp.status == 200:
+            return {"status_label": _STATUS_200_OK, "ok": True, "latency_ms": ms, "detail": "AI Studio"}
+        return {"status_label": f"HTTP {resp.status}", "ok": False, "latency_ms": ms, "detail": "key/quota"}
+
+
+async def _probe_bearer_status(
+    session: aiohttp.ClientSession,
+    url: str,
+    secret: str,
+    detail: str,
+    t0: float,
+    extra_headers: dict[str, str] | None = None,
+) -> LiveResult:
+    headers = {"Authorization": f"Bearer {secret}", **(extra_headers or {})}
+    async with session.get(url, headers=headers) as resp:
+        ms = round((time.monotonic() - t0) * 1000.0, 1)
+        ok = resp.status == 200
+        return {
+            "status_label": f"{resp.status} {'OK' if ok else 'ERR'}",
+            "ok": ok,
+            "latency_ms": ms,
+            "detail": detail,
+        }
+
+
+async def _probe_local_http(session: aiohttp.ClientSession, url: str, t0: float) -> LiveResult:
+    async with session.get(url) as resp:
+        ms = round((time.monotonic() - t0) * 1000.0, 1)
+        ok = resp.status in (200, 401, 403)
+        return {
+            "status_label": f"UP ({resp.status})" if ok else f"HTTP {resp.status}",
+            "ok": ok,
+            "latency_ms": ms,
+            "detail": "local",
+        }
+
+
 async def _probe_one(
     session: aiohttp.ClientSession,
     semaphore: asyncio.Semaphore,
@@ -288,80 +385,24 @@ async def _probe_one(
         t0 = time.monotonic()
         try:
             if kind == "openrouter":
-                async with session.get(
-                    "https://openrouter.ai/api/v1/auth/key",
-                    headers={"Authorization": f"Bearer {secret}"},
-                ) as resp:
-                    ms = round((time.monotonic() - t0) * 1000.0, 1)
-                    if resp.status == 200:
-                        data = await resp.json(content_type=None)
-                        info = data.get("data", {}) if isinstance(data, dict) else {}
-                        rem = info.get("limit_remaining")
-                        is_free = info.get("is_free_tier")
-                        extra = "free" if is_free else (f"rem={rem}" if rem is not None else "paid")
-                        return {"status_label": "200 OK", "ok": True, "latency_ms": ms, "detail": extra}
-                    return {"status_label": f"HTTP {resp.status}", "ok": False, "latency_ms": ms, "detail": "auth err"}
-
+                return await _probe_openrouter(session, secret, t0)
             if kind == "aistudio":
-                async with session.get(
-                    "https://generativelanguage.googleapis.com/v1beta/models",
-                    params={"pageSize": "1", "key": secret},
-                ) as resp:
-                    ms = round((time.monotonic() - t0) * 1000.0, 1)
-                    if resp.status == 200:
-                        return {"status_label": "200 OK", "ok": True, "latency_ms": ms, "detail": "AI Studio"}
-                    return {"status_label": f"HTTP {resp.status}", "ok": False, "latency_ms": ms, "detail": "key/quota"}
-
+                return await _probe_aistudio(session, secret, t0)
             if kind == "hf":
-                async with session.get(
-                    "https://huggingface.co/api/whoami-v2",
-                    headers={"Authorization": f"Bearer {secret}"},
-                ) as resp:
-                    ms = round((time.monotonic() - t0) * 1000.0, 1)
-                    if resp.status == 200:
-                        data = await resp.json(content_type=None)
-                        who = data.get("name", "ok") if isinstance(data, dict) else "ok"
-                        return {"status_label": "200 OK", "ok": True, "latency_ms": ms, "detail": f"@{who}"}
-                    return {"status_label": f"HTTP {resp.status}", "ok": False, "latency_ms": ms, "detail": "hf err"}
-
+                return await _probe_hf(session, secret, t0)
             if kind == "ollama_cloud":
-                async with session.get(
-                    "https://ollama.com/api/tags",
-                    headers={"Authorization": f"Bearer {secret}"},
-                ) as resp:
-                    ms = round((time.monotonic() - t0) * 1000.0, 1)
-                    ok = resp.status == 200
-                    return {
-                        "status_label": f"{resp.status} {'OK' if ok else 'ERR'}",
-                        "ok": ok,
-                        "latency_ms": ms,
-                        "detail": "ollama.com",
-                    }
-
+                return await _probe_bearer_status(session, "https://ollama.com/api/tags", secret, "ollama.com", t0)
             if kind == "github":
-                async with session.get(
+                return await _probe_bearer_status(
+                    session,
                     "https://api.github.com/user",
-                    headers={"Authorization": f"Bearer {secret}", "User-Agent": "sota-key-audit"},
-                ) as resp:
-                    ms = round((time.monotonic() - t0) * 1000.0, 1)
-                    ok = resp.status == 200
-                    return {
-                        "status_label": f"{resp.status} {'OK' if ok else 'ERR'}",
-                        "ok": ok,
-                        "latency_ms": ms,
-                        "detail": "GitHub",
-                    }
-
+                    secret,
+                    "GitHub",
+                    t0,
+                    {"User-Agent": "sota-key-audit"},
+                )
             if kind == "local_http":
-                async with session.get(secret) as resp:
-                    ms = round((time.monotonic() - t0) * 1000.0, 1)
-                    ok = resp.status in (200, 401, 403)
-                    return {
-                        "status_label": f"UP ({resp.status})" if ok else f"HTTP {resp.status}",
-                        "ok": ok,
-                        "latency_ms": ms,
-                        "detail": "local",
-                    }
+                return await _probe_local_http(session, secret, t0)
         except TimeoutError:
             return {"status_label": "TIMEOUT", "ok": False, "latency_ms": None, "detail": ">8s"}
         except aiohttp.ClientError as exc:
@@ -421,11 +462,11 @@ async def _run_live_probes(
 def _fmt_reg_proc_badge(sync: str, proc: str) -> Text:
     t = Text()
     if sync == "SYNCED":
-        t.append("●", style="bold green")
+        t.append("●", style=_STYLE_BOLD_GREEN)
     elif sync in ("HKCU_ONLY", "HKLM_ONLY"):
         t.append("▲", style="bold yellow")
     elif sync == "DIFF_VALUES":
-        t.append("✖", style="bold red")
+        t.append("✖", style=_STYLE_BOLD_RED)
     else:
         t.append("?", style="yellow")
     t.append("/", style="dim")
@@ -448,7 +489,7 @@ def _fmt_latency(ms: float | None) -> Text:
     if ms is None:
         return Text("—", style="dim")
     if ms < 350:
-        return Text(f"{ms:.0f} ms", style="bold green")
+        return Text(f"{ms:.0f} ms", style=_STYLE_BOLD_GREEN)
     if ms < 1000:
         return Text(f"{ms:.0f} ms", style="yellow")
     return Text(f"{ms:.0f} ms", style="red")
@@ -471,37 +512,33 @@ def _role_note(row: AuditEntryRow, env_map: dict[str, str], live: LiveResult | N
     return " · ".join(parts)
 
 
-def _render_dashboard(
-    payload: AuditPayload,
-    db_stats: dict[str, DbStat],
-    db_meta: dict[str, object],
-    live_vars: dict[str, LiveResult],
-    local_results: dict[str, LiveResult],
-    env_map: dict[str, str],
-    *,
-    anomalies_only: bool,
-    live_mode: bool,
-) -> None:
-    console = Console()
-    summary = payload["Summary"]
-    anomalies = payload["Anomalies"]
-    entries = payload["Entries"]
+def _hygiene_color(fails: int, warns: int) -> str:
+    if fails == 0 and warns == 0:
+        return "green"
+    return "red" if fails > 0 else "yellow"
 
-    total_vars = sum(s["TotalVars"] for s in summary)
-    total_synced = sum(s["Synced"] for s in summary)
-    total_invalid = sum(s["InvalidFmt"] for s in summary)
-    fails = sum(1 for a in anomalies if a["Severity"] == "FAIL")
-    warns = sum(1 for a in anomalies if a["Severity"] == "WARN")
-    infos = sum(1 for a in anomalies if a["Severity"] == "INFO")
 
+def _db_pct_style(pct: int) -> str:
+    if pct >= 80:
+        return "green"
+    return "yellow" if pct >= 40 else "red"
+
+
+def _anomaly_severity_style(sev: str) -> str:
+    if sev == "FAIL":
+        return _STYLE_BOLD_RED
+    if sev == "WARN":
+        return "bold yellow"
+    return "bold cyan"
+
+
+def _build_header_panel(timestamp: str, live_mode: bool) -> Panel:
     try:
-        ts_fmt = datetime.fromisoformat(payload["Timestamp"]).strftime("%Y-%m-%d %H:%M:%S")
+        ts_fmt = datetime.fromisoformat(timestamp).strftime("%Y-%m-%d %H:%M:%S")
     except ValueError:
-        ts_fmt = payload["Timestamp"]
-
-    # Header
+        ts_fmt = timestamp
     mode_tag = "[bold green]LIVE HTTP PROBE (0 tokens)[/]" if live_mode else "[bold cyan]OFFLINE + TELEMETRIA DB[/]"
-    header = Panel(
+    return Panel(
         Text.from_markup(
             f"[bold bright_white]SOTA KEY POOL & CREDENTIAL OBSERVATORY[/]  ·  {mode_tag}\n"
             f"[dim]Timestamp:[/] {ts_fmt}  ·  [dim]Escopo:[/] HKCU + HKLM + Process  ·  "
@@ -510,10 +547,52 @@ def _render_dashboard(
         border_style="bright_cyan",
         box=box.ROUNDED,
     )
-    console.print()
-    console.print(header)
 
-    # KPI Cards
+
+def _build_health_card(
+    live_mode: bool,
+    live_vars: dict[str, LiveResult],
+    db_meta: dict[str, object],
+) -> Panel:
+    if live_mode and live_vars:
+        ok_cnt = sum(1 for r in live_vars.values() if r["ok"] is True)
+        lats = [r["latency_ms"] for r in live_vars.values() if r["latency_ms"] is not None]
+        avg_ms = (sum(lats) / len(lats)) if lats else 0.0
+        return Panel(
+            f"[bold green]{ok_cnt}/{len(live_vars)}[/] chaves HTTP 200\n"
+            f"[dim]Latência média probe:[/] [bold]{avg_ms:.0f} ms[/]",
+            title="[bold green]Saúde & Latência Live[/]",
+            border_style="green",
+            box=box.ROUNDED,
+        )
+    prov_totals = db_meta.get("provider_totals") or {}
+    or_tot = prov_totals.get("openrouter", {}) if isinstance(prov_totals, dict) else {}
+    gm_tot = prov_totals.get("gemini", {}) if isinstance(prov_totals, dict) else {}
+    return Panel(
+        f"[dim]DB Gemini:[/] {gm_tot.get('ok', 0)}/{gm_tot.get('total', 0)} ok "
+        f"({gm_tot.get('avg_ms') or '—'} ms)\n"
+        f"[dim]DB OpenRouter:[/] {or_tot.get('ok', 0)}/{or_tot.get('total', 0)} ok "
+        f"({or_tot.get('avg_ms') or '—'} ms)",
+        title="[bold blue]Telemetria Histórica (DB)[/]",
+        border_style="blue",
+        box=box.ROUNDED,
+    )
+
+
+def _build_kpi_columns(
+    summary: list[PoolSummaryRow],
+    anomalies: list[AnomalyRow],
+    db_meta: dict[str, object],
+    live_vars: dict[str, LiveResult],
+    live_mode: bool,
+) -> Columns:
+    total_vars = sum(s["TotalVars"] for s in summary)
+    total_synced = sum(s["Synced"] for s in summary)
+    total_invalid = sum(s["InvalidFmt"] for s in summary)
+    fails = sum(1 for a in anomalies if a["Severity"] == "FAIL")
+    warns = sum(1 for a in anomalies if a["Severity"] == "WARN")
+    infos = sum(1 for a in anomalies if a["Severity"] == "INFO")
+
     sync_color = "green" if total_synced == total_vars else "yellow"
     card_reg = Panel(
         f"[bold {sync_color}]{total_synced}/{total_vars}[/] sincronizadas\n"
@@ -522,33 +601,8 @@ def _render_dashboard(
         border_style="cyan",
         box=box.ROUNDED,
     )
-
-    if live_mode and live_vars:
-        ok_cnt = sum(1 for r in live_vars.values() if r["ok"] is True)
-        lats = [r["latency_ms"] for r in live_vars.values() if r["latency_ms"] is not None]
-        avg_ms = (sum(lats) / len(lats)) if lats else 0.0
-        card_health = Panel(
-            f"[bold green]{ok_cnt}/{len(live_vars)}[/] chaves HTTP 200\n"
-            f"[dim]Latência média probe:[/] [bold]{avg_ms:.0f} ms[/]",
-            title="[bold green]Saúde & Latência Live[/]",
-            border_style="green",
-            box=box.ROUNDED,
-        )
-    else:
-        prov_totals = db_meta.get("provider_totals") or {}
-        or_tot = prov_totals.get("openrouter", {}) if isinstance(prov_totals, dict) else {}
-        gm_tot = prov_totals.get("gemini", {}) if isinstance(prov_totals, dict) else {}
-        card_health = Panel(
-            f"[dim]DB Gemini:[/] {gm_tot.get('ok', 0)}/{gm_tot.get('total', 0)} ok "
-            f"({gm_tot.get('avg_ms') or '—'} ms)\n"
-            f"[dim]DB OpenRouter:[/] {or_tot.get('ok', 0)}/{or_tot.get('total', 0)} ok "
-            f"({or_tot.get('avg_ms') or '—'} ms)",
-            title="[bold blue]Telemetria Histórica (DB)[/]",
-            border_style="blue",
-            box=box.ROUNDED,
-        )
-
-    hyg_color = "green" if (fails == 0 and warns == 0) else ("red" if fails > 0 else "yellow")
+    card_health = _build_health_card(live_mode, live_vars, db_meta)
+    hyg_color = _hygiene_color(fails, warns)
     hyg_label = "HOMEOSTASE OK" if (fails == 0 and warns == 0) else f"{fails} FAIL · {warns} WARN"
     card_hyg = Panel(
         f"[bold {hyg_color}]{hyg_label}[/]\n[dim]FAIL:[/] {fails}  ·  [dim]WARN:[/] {warns}  ·  [dim]INFO:[/] {infos}",
@@ -556,20 +610,54 @@ def _render_dashboard(
         border_style=hyg_color,
         box=box.ROUNDED,
     )
-    console.print(Columns([card_reg, card_health, card_hyg], equal=True, expand=True))
+    return Columns([card_reg, card_health, card_hyg], equal=True, expand=True)
 
-    # Local services bar (when --live)
-    if local_results:
-        srv_parts = []
-        for label, res in local_results.items():
-            dot = "[green]●[/]" if res["ok"] else "[dim red]○[/]"
-            lat = f" {res['latency_ms']:.0f}ms" if res["latency_ms"] is not None else ""
-            srv_parts.append(f"{dot} [bold]{label}[/] [dim]({res['status_label']}{lat})[/]")
-        console.print(
-            Panel("   ".join(srv_parts), title="[bold]Serviços Locais[/]", border_style="dim", box=box.ROUNDED)
-        )
 
-    # Pool Summary Table
+def _render_local_services_bar(console: Console, local_results: dict[str, LiveResult]) -> None:
+    if not local_results:
+        return
+    srv_parts = []
+    for label, res in local_results.items():
+        dot = "[green]●[/]" if res["ok"] else "[dim red]○[/]"
+        lat = f" {res['latency_ms']:.0f}ms" if res["latency_ms"] is not None else ""
+        srv_parts.append(f"{dot} [bold]{label}[/] [dim]({res['status_label']}{lat})[/]")
+    console.print(Panel("   ".join(srv_parts), title="[bold]Serviços Locais[/]", border_style="dim", box=box.ROUNDED))
+
+
+def _resolve_pool_health_cell(
+    p_entries: list[AuditEntryRow],
+    live_mode: bool,
+    live_vars: dict[str, LiveResult],
+    db_stats: dict[str, DbStat],
+) -> str:
+    if live_mode:
+        probed = [live_vars[e["Variable"]] for e in p_entries if e["Variable"] in live_vars]
+        if not probed:
+            return "[dim]offline/local[/]"
+        ok_p = sum(1 for r in probed if r["ok"])
+        lats = [r["latency_ms"] for r in probed if r["latency_ms"] is not None]
+        med_ms = f"{sum(lats) / len(lats):.0f}ms" if lats else "—"
+        color = "green" if ok_p == len(probed) else "yellow"
+        return f"[{color}]{ok_p}/{len(probed)} OK[/] · {med_ms}"
+
+    db_hits = [db_stats[e["Variable"]] for e in p_entries if e["Variable"] in db_stats]
+    if not db_hits:
+        return "[green]READY[/] [dim](offline)[/]"
+    att = sum(d["attempts"] for d in db_hits)
+    ok_d = sum(d["successes"] for d in db_hits)
+    lats = [d["avg_latency_ms"] for d in db_hits if d["avg_latency_ms"] is not None]
+    avg_d = f"{sum(lats) / len(lats):.0f}ms" if lats else "—"
+    pct = int(round(100.0 * ok_d / att)) if att else 0
+    return f"[cyan]DB {pct}%[/] ({ok_d}/{att}) · {avg_d}"
+
+
+def _build_pool_summary_table(
+    summary: list[PoolSummaryRow],
+    entries: list[AuditEntryRow],
+    live_mode: bool,
+    live_vars: dict[str, LiveResult],
+    db_stats: dict[str, DbStat],
+) -> Table:
     t_pool = Table(
         title="[bold bright_cyan]Topologia & Saúde por Pool[/]",
         box=box.SIMPLE_HEAVY,
@@ -587,104 +675,80 @@ def _render_dashboard(
     for s in summary:
         p_name = s["Pool"]
         role_desc, policy = POOL_DOCS.get(p_name, ("Pool de credenciais", "—"))
-        sync_cell = (
-            f"[green]{s['Synced']}/{s['TotalVars']}[/]"
-            if s["Synced"] == s["TotalVars"]
-            else f"[yellow]{s['Synced']}/{s['TotalVars']}[/]"
-        )
+        sync_color = "green" if s["Synced"] == s["TotalVars"] else "yellow"
+        sync_cell = f"[{sync_color}]{s['Synced']}/{s['TotalVars']}[/]"
         fmt_cell = "[green]OK[/]" if s["InvalidFmt"] == 0 else f"[red]{s['InvalidFmt']} ERR[/]"
-
         p_entries = [e for e in entries if e["Pool"] == p_name]
-        if live_mode:
-            probed = [live_vars[e["Variable"]] for e in p_entries if e["Variable"] in live_vars]
-            if probed:
-                ok_p = sum(1 for r in probed if r["ok"])
-                lats = [r["latency_ms"] for r in probed if r["latency_ms"] is not None]
-                med_ms = f"{sum(lats) / len(lats):.0f}ms" if lats else "—"
-                health_cell = (
-                    f"[green]{ok_p}/{len(probed)} OK[/] · {med_ms}"
-                    if ok_p == len(probed)
-                    else f"[yellow]{ok_p}/{len(probed)} OK[/] · {med_ms}"
-                )
-            else:
-                health_cell = "[dim]offline/local[/]"
-        else:
-            db_hits = [db_stats[e["Variable"]] for e in p_entries if e["Variable"] in db_stats]
-            if db_hits:
-                att = sum(d["attempts"] for d in db_hits)
-                ok_d = sum(d["successes"] for d in db_hits)
-                lats = [d["avg_latency_ms"] for d in db_hits if d["avg_latency_ms"] is not None]
-                avg_d = f"{sum(lats) / len(lats):.0f}ms" if lats else "—"
-                pct = int(round(100.0 * ok_d / att)) if att else 0
-                health_cell = f"[cyan]DB {pct}%[/] ({ok_d}/{att}) · {avg_d}"
-            else:
-                health_cell = "[green]READY[/] [dim](offline)[/]"
-
+        health_cell = _resolve_pool_health_cell(p_entries, live_mode, live_vars, db_stats)
         t_pool.add_row(p_name, str(s["TotalVars"]), sync_cell, fmt_cell, health_cell, f"{role_desc} [dim]· {policy}[/]")
+    return t_pool
 
-    console.print(t_pool)
 
-    # Detailed Inventory Table
-    if not anomalies_only:
-        t_inv = Table(
-            title="[bold bright_cyan]Inventário Mascarado, Estado & Latência[/]",
-            caption="[dim]Reg/Proc: ●/● = HKCU==HKLM & Processo atual · ◐ = Processo antigo · ○ = Unset no processo atual[/]",
-            box=box.ROUNDED,
-            header_style="bold bright_white on grey15",
-            padding=(0, 1),
-            expand=True,
+def _resolve_inventory_health_cells(
+    row: AuditEntryRow,
+    live_res: LiveResult | None,
+    db_res: DbStat | None,
+) -> tuple[Text, Text]:
+    if live_res is not None:
+        h_style = _STYLE_BOLD_GREEN if live_res["ok"] else _STYLE_BOLD_RED
+        return Text(live_res["status_label"], style=h_style), _fmt_latency(live_res["latency_ms"])
+    if db_res is not None:
+        att = db_res["attempts"]
+        ok_c = db_res["successes"]
+        pct = int(round(100.0 * ok_c / att)) if att else 0
+        return Text(f"DB {pct}% ({ok_c}/{att})", style=_db_pct_style(pct)), _fmt_latency(db_res["avg_latency_ms"])
+    health_txt = Text("READY", style="green") if row["FormatValid"] is not False else Text("FMT ERR", style="red")
+    return health_txt, Text("—", style="dim")
+
+
+def _build_inventory_table(
+    entries: list[AuditEntryRow],
+    live_vars: dict[str, LiveResult],
+    db_stats: dict[str, DbStat],
+    env_map: dict[str, str],
+) -> Table:
+    t_inv = Table(
+        title="[bold bright_cyan]Inventário Mascarado, Estado & Latência[/]",
+        caption="[dim]Reg/Proc: ●/● = HKCU==HKLM & Processo atual · ◐ = Processo antigo · ○ = Unset no processo atual[/]",
+        box=box.ROUNDED,
+        header_style="bold bright_white on grey15",
+        padding=(0, 1),
+        expand=True,
+    )
+    t_inv.add_column("Pool", style="cyan", no_wrap=True)
+    t_inv.add_column("Variável", style="bold white", no_wrap=True)
+    t_inv.add_column("Chave", style="dim", no_wrap=True)
+    t_inv.add_column("sha8", style="magenta", no_wrap=True)
+    t_inv.add_column("R/P", justify="center", no_wrap=True)
+    t_inv.add_column("Saúde", justify="center", no_wrap=True)
+    t_inv.add_column("Lat", justify="right", no_wrap=True)
+    t_inv.add_column("Papel / Info", style="dim")
+
+    secret_rows = sorted(
+        (r for r in entries if r["IsSecret"]),
+        key=lambda r: (r["Pool"], re.sub(r"\d+", lambda m: m.group(0).zfill(4), r["Variable"])),
+    )
+    for row in secret_rows:
+        var_name = row["Variable"]
+        mask = row["HKCU_Mask"] if row["HKCU_Mask"] != "<unset>" else row["HKLM_Mask"]
+        sha8 = row["HKCU_Sha8"] or row["HKLM_Sha8"]
+        live_res = live_vars.get(var_name)
+        health_txt, lat_txt = _resolve_inventory_health_cells(row, live_res, db_stats.get(var_name))
+        t_inv.add_row(
+            POOL_SHORT.get(row["Pool"], row["Pool"]),
+            var_name,
+            _fmt_short_mask(mask),
+            sha8,
+            _fmt_reg_proc_badge(row["Sync"], row["Process"]),
+            health_txt,
+            lat_txt,
+            _role_note(row, env_map, live_res),
         )
-        t_inv.add_column("Pool", style="cyan", no_wrap=True)
-        t_inv.add_column("Variável", style="bold white", no_wrap=True)
-        t_inv.add_column("Chave", style="dim", no_wrap=True)
-        t_inv.add_column("sha8", style="magenta", no_wrap=True)
-        t_inv.add_column("R/P", justify="center", no_wrap=True)
-        t_inv.add_column("Saúde", justify="center", no_wrap=True)
-        t_inv.add_column("Lat", justify="right", no_wrap=True)
-        t_inv.add_column("Papel / Info", style="dim")
+    return t_inv
 
-        secret_rows = sorted(
-            (r for r in entries if r["IsSecret"]),
-            key=lambda r: (r["Pool"], re.sub(r"\d+", lambda m: m.group(0).zfill(4), r["Variable"])),
-        )
-        for row in secret_rows:
-            var_name = row["Variable"]
-            mask = row["HKCU_Mask"] if row["HKCU_Mask"] != "<unset>" else row["HKLM_Mask"]
-            sha8 = row["HKCU_Sha8"] or row["HKLM_Sha8"]
-            live_res = live_vars.get(var_name)
-            db_res = db_stats.get(var_name)
 
-            if live_res is not None:
-                h_style = "bold green" if live_res["ok"] else "bold red"
-                health_txt = Text(live_res["status_label"], style=h_style)
-                lat_txt = _fmt_latency(live_res["latency_ms"])
-            elif db_res is not None:
-                att = db_res["attempts"]
-                ok_c = db_res["successes"]
-                pct = int(round(100.0 * ok_c / att)) if att else 0
-                h_style = "green" if pct >= 80 else ("yellow" if pct >= 40 else "red")
-                health_txt = Text(f"DB {pct}% ({ok_c}/{att})", style=h_style)
-                lat_txt = _fmt_latency(db_res["avg_latency_ms"])
-            else:
-                health_txt = (
-                    Text("READY", style="green") if row["FormatValid"] is not False else Text("FMT ERR", style="red")
-                )
-                lat_txt = Text("—", style="dim")
-
-            t_inv.add_row(
-                POOL_SHORT.get(row["Pool"], row["Pool"]),
-                var_name,
-                _fmt_short_mask(mask),
-                sha8,
-                _fmt_reg_proc_badge(row["Sync"], row["Process"]),
-                health_txt,
-                lat_txt,
-                _role_note(row, env_map, live_res),
-            )
-        console.print(t_inv)
-
-    # Didactic Infrastructure & Quota Notes
-    infra_panel = Panel(
+def _build_infra_panel(env_map: dict[str, str]) -> Panel:
+    return Panel(
         Text.from_markup(
             "[bold cyan]Regras de Cota:[/] AI Studio/GCP ([bold]GEMINI_*[/], [bold]DECISION_API_*[/]) divide quota por projeto "
             f"([bold]{env_map.get('GCP_PROJECT_ID', 'original-498419')}[/] / {env_map.get('GCP_PROJECT_NUMBER', '913870412920')}); "
@@ -701,9 +765,9 @@ def _render_dashboard(
         border_style="dim cyan",
         box=box.ROUNDED,
     )
-    console.print(infra_panel)
 
-    # Anomalies Panel
+
+def _render_anomalies_section(console: Console, anomalies: list[AnomalyRow]) -> None:
     if not anomalies:
         console.print(
             Panel(
@@ -713,22 +777,49 @@ def _render_dashboard(
                 box=box.ROUNDED,
             )
         )
-    else:
-        t_anom = Table(
-            title="[bold yellow]Anomalias e Alertas[/]",
-            box=box.ROUNDED,
-            header_style="bold white on grey15",
-            expand=True,
+        return
+    t_anom = Table(
+        title="[bold yellow]Anomalias e Alertas[/]",
+        box=box.ROUNDED,
+        header_style="bold white on grey15",
+        expand=True,
+    )
+    t_anom.add_column("Sev", justify="center", no_wrap=True)
+    t_anom.add_column("Variável", style="bold white", no_wrap=True)
+    t_anom.add_column("Pool", style="cyan", no_wrap=True)
+    t_anom.add_column("Detalhe", style="white")
+    for a in sorted(anomalies, key=lambda x: (x["Severity"], x["Pool"], x["Variable"])):
+        t_anom.add_row(
+            Text(a["Severity"], style=_anomaly_severity_style(a["Severity"])), a["Variable"], a["Pool"], a["Issue"]
         )
-        t_anom.add_column("Sev", justify="center", no_wrap=True)
-        t_anom.add_column("Variável", style="bold white", no_wrap=True)
-        t_anom.add_column("Pool", style="cyan", no_wrap=True)
-        t_anom.add_column("Detalhe", style="white")
-        for a in sorted(anomalies, key=lambda x: (x["Severity"], x["Pool"], x["Variable"])):
-            sev = a["Severity"]
-            sev_style = "bold red" if sev == "FAIL" else ("bold yellow" if sev == "WARN" else "bold cyan")
-            t_anom.add_row(Text(sev, style=sev_style), a["Variable"], a["Pool"], a["Issue"])
-        console.print(t_anom)
+    console.print(t_anom)
+
+
+def _render_dashboard(
+    payload: AuditPayload,
+    db_stats: dict[str, DbStat],
+    db_meta: dict[str, object],
+    live_vars: dict[str, LiveResult],
+    local_results: dict[str, LiveResult],
+    env_map: dict[str, str],
+    *,
+    anomalies_only: bool,
+    live_mode: bool,
+) -> None:
+    console = Console()
+    summary = payload["Summary"]
+    anomalies = payload["Anomalies"]
+    entries = payload["Entries"]
+
+    console.print()
+    console.print(_build_header_panel(payload["Timestamp"], live_mode))
+    console.print(_build_kpi_columns(summary, anomalies, db_meta, live_vars, live_mode))
+    _render_local_services_bar(console, local_results)
+    console.print(_build_pool_summary_table(summary, entries, live_mode, live_vars, db_stats))
+    if not anomalies_only:
+        console.print(_build_inventory_table(entries, live_vars, db_stats, env_map))
+    console.print(_build_infra_panel(env_map))
+    _render_anomalies_section(console, anomalies)
 
 
 def main() -> int:

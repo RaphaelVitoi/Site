@@ -118,8 +118,8 @@ def show_toast(title: str, message: str) -> None:
     logger.info(f"[OS Notification] {title}: {message}")
     if sys.platform == "win32":
         env = os.environ.copy()
-        env["SOTA_TOAST_TITLE"] = str(title)[:200]
-        env["SOTA_TOAST_MSG"] = str(message)[:500]
+        env["SOTA_TOAST_TITLE"] = title[:200]
+        env["SOTA_TOAST_MSG"] = message[:500]
         try:
             subprocess.Popen(
                 ["powershell", "-NoProfile", "-Command", _WIN_TOAST_PS_SCRIPT],

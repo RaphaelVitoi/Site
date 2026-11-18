@@ -118,6 +118,13 @@ _NAMED_OPENROUTER_KEY_VARS = (
 )
 
 
+def _append_unique_pool_key(pool: list[str], known_keys: set[str], value: str) -> None:
+    """Adiciona chave valida ao pool alvo caso ainda nao esteja registrada."""
+    if value and _is_real_key_value(value) and value not in known_keys:
+        pool.append(value)
+        known_keys.add(value)
+
+
 def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
     new_pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
     for var_name, var_value in env_map.items():
@@ -131,20 +138,12 @@ def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
 
     known_keys = {k for tier_keys in new_pools.values() for k in tier_keys}
     legacy_key = env_map.get("OPENROUTER_API_KEY", "").strip()
-    if legacy_key and _is_real_key_value(legacy_key):
-        if not new_pools[1]:
-            new_pools[1].append(legacy_key)
-            known_keys.add(legacy_key)
-        elif legacy_key not in known_keys:
-            # Chave legada distinta atua como reforco isolado de subagentes/fallback (Tier 4).
-            new_pools[4].append(legacy_key)
-            known_keys.add(legacy_key)
+    # Chave legada distinta atua como reforco isolado de subagentes/fallback (Tier 4).
+    target_tier = 1 if not new_pools[1] else 4
+    _append_unique_pool_key(new_pools[target_tier], known_keys, legacy_key)
 
     for var_name in _NAMED_OPENROUTER_KEY_VARS:
-        val = env_map.get(var_name, "").strip()
-        if val and _is_real_key_value(val) and val not in known_keys:
-            new_pools[4].append(val)
-            known_keys.add(val)
+        _append_unique_pool_key(new_pools[4], known_keys, env_map.get(var_name, "").strip())
     return new_pools
 
 

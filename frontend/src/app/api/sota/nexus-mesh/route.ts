@@ -174,128 +174,74 @@ function resolveChrysalisPort(chrysalisBase: string): number | string {
   return 8788;
 }
 
-export async function GET() {
-  const tStart = performance.now();
+function buildAiMeshDetails(hasCloudRoute: boolean, hasLocalRoute: boolean): string {
+  if (hasCloudRoute) {
+    return 'Roteador agentico ativo com Gemini 3.5/3.8 Flash e failover deterministico';
+  }
+  if (hasLocalRoute) {
+    return 'Roteador agentico operando via rota local (Ollama/Backend)';
+  }
+  return 'Roteador agentico em standby (configure GEMINI_API_KEY ou ative motor local)';
+}
 
-  // 1. Ollama (11434) - Inspecao de Tags e Modelos em VRAM
-  const [ollamaPing, ollamaPs] = await Promise.all([
-    pingEndpoint('http://127.0.0.1:11434/api/tags', 1200),
-    pingEndpoint('http://127.0.0.1:11434/api/ps', 1200),
-  ]);
-  const ollama = resolveOllamaNode(ollamaPing, ollamaPs);
+function buildKeyPoolsDetails(hasTier1: boolean, hasDecision: boolean): string {
+  if (!hasTier1) {
+    return 'Pools carregados via Registro do Windows (use Auditar Pools & Latencia)';
+  }
+  const decisionSuffix = hasDecision ? ' + Decision' : '';
+  return `Tiers 1-4 + Gemini + Multimodal${decisionSuffix} sincronizados (HKCU/HKLM)`;
+}
 
-  // 2. Chrome CDP (9222 / 9223)
-  const [cdp9222, cdp9223] = await Promise.all([
-    pingEndpoint('http://127.0.0.1:9222/json/version', 1000),
-    pingEndpoint('http://127.0.0.1:9223/json/version', 1000),
-  ]);
-  const cdp = resolveCdpNode(cdp9222, cdp9223);
+interface ProbeServiceNodesInput {
+  ollama: ReturnType<typeof resolveOllamaNode>;
+  ollamaPingLatencyMs: number;
+  cdp: ReturnType<typeof resolveCdpNode>;
+  backend: PingResult;
+  mcpGateway: PingResult;
+  playwrightMcp: PingResult;
+  chrysalis: PingResult;
+  chrysalisBase: string;
+  chrysalisPort: number | string;
+}
 
-  // 3. Shared MCP Gateway (8933)
-  const mcpGateway = await pingEndpoint('http://127.0.0.1:8933/status', 1000);
+function buildProbeServiceNodes(input: ProbeServiceNodesInput): {
+  ollamaNode: EcosystemNode;
+  trailingNodes: EcosystemNode[];
+} {
+  const {
+    ollama,
+    ollamaPingLatencyMs,
+    cdp,
+    backend,
+    mcpGateway,
+    playwrightMcp,
+    chrysalis,
+    chrysalisBase,
+    chrysalisPort,
+  } = input;
   const mcpData = mcpGateway.data as { server_instances?: Record<string, string> } | null;
   const configuredServers = mcpData?.server_instances ? Object.keys(mcpData.server_instances).length : 0;
   const isMcpOperational = mcpGateway.ok || mcpGateway.status === 200;
-  const mcpStatus: 'ACTIVE' | 'OFFLINE' = isMcpOperational ? 'ACTIVE' : 'OFFLINE';
-  const mcpDetails = isMcpOperational
-    ? `mcp-proxy operacional (${configuredServers} servidores MCP unificados em HTTP SSE)`
-    : 'Servidor indisponivel (inicie via scripts/ops/Repair-SharedMcpGateway.ps1)';
-
-  // 4. Shared Playwright MCP (8931)
-  const playwrightMcp = await pingEndpoint('http://127.0.0.1:8931/', 1000);
   const isPlaywrightOperational = playwrightMcp.ok || playwrightMcp.status === 200 || playwrightMcp.status === 400;
-  const playwrightStatus: 'ACTIVE' | 'OFFLINE' = isPlaywrightOperational ? 'ACTIVE' : 'OFFLINE';
-  const playwrightDetails = isPlaywrightOperational
-    ? 'playwright-mcp ativo para automacao headless e E2E'
-    : 'Servico em standby ou tarefa agendada inativa';
-
-  // 5. Backend Aiohttp (17042)
-  const backend = await pingEndpoint('http://127.0.0.1:17042/ping', 1000);
-  const backendStatus: 'ACTIVE' | 'OFFLINE' = backend.ok ? 'ACTIVE' : 'OFFLINE';
-  const backendDetails = backend.ok
-    ? 'Python Aiohttp server respondendo ao /ping com sucesso'
-    : 'Servidor Python 17042 inativo ou em modo headless';
-
-  // 6. Chrysalis Live Engine (8788)
-  const chrysalisBase = process.env['CHRYSALIS_SERVICE_URL'] || 'http://127.0.0.1:8788';
-  const chrysalisPort = resolveChrysalisPort(chrysalisBase);
-  const cleanChrysalisBase = chrysalisBase.replace(/\/$/, '');
-  const chrysalis = await pingEndpoint(`${cleanChrysalisBase}/v1/apps`, 1000);
   const isChrysalisOperational = chrysalis.ok || chrysalis.status === 401 || chrysalis.status === 403;
-  const chrysalisStatus: 'ACTIVE' | 'OFFLINE' = isChrysalisOperational ? 'ACTIVE' : 'OFFLINE';
-  const chrysalisDetails = isChrysalisOperational
-    ? 'Chrysalis Live Engine operacional (servico externo AGPL)'
-    : `Chrysalis Live Engine indisponivel em ${chrysalisBase}`;
 
-  // 7. Roteamento AI Mesh (Cloud vs Local)
-  const hasCloudRoute = Boolean(
-    process.env['GEMINI_API_KEY'] ||
-    process.env['GOOGLE_GENERATIVE_AI_API_KEY'] ||
-    process.env['GOOGLE_API_KEY']
-  );
-  const hasLocalRoute = backendStatus === 'ACTIVE' || ollama.status === 'ACTIVE';
-  const aiMeshStatus: 'ACTIVE' | 'STANDBY' = (hasCloudRoute || hasLocalRoute) ? 'ACTIVE' : 'STANDBY';
-  let aiMeshDetails = 'Roteador agentico em standby (configure GEMINI_API_KEY ou ative motor local)';
-  if (hasCloudRoute) {
-    aiMeshDetails = 'Roteador agentico ativo com Gemini 3.5/3.8 Flash e failover deterministico';
-  } else if (hasLocalRoute) {
-    aiMeshDetails = 'Roteador agentico operando via rota local (Ollama/Backend)';
-  }
-
-  // 7. Motor Analitico DuckDB & Percepcao
-  const perceptionNode: EcosystemNode = {
-    id: 'perception-som',
-    name: 'SOTA Multimodal & SoM Engine',
-    role: 'Captura Ultrawide (3440x1440), Set-of-Mark Grounding e Memoria DuckDB',
-    port: 'In-Memory',
-    protocol: 'DuckDB / PIL',
-    status: 'ACTIVE',
-    latencyMs: 12,
-    details: 'Buffer 3440x1440 com latencia SoM de 11.6ms (Padrão Ouro 60 FPS)',
-    category: 'perception',
-    actionAvailable: true,
-    actionLabel: 'Executar Benchmark SoM',
-    actionType: 'benchmark_perception',
+  const ollamaNode: EcosystemNode = {
+    id: 'ollama-gpu',
+    name: 'Ollama LLM Engine & VRAM',
+    role: 'Inferencia local acelerada por GPU para subagentes e Qwen Code',
+    port: 11434,
+    protocol: 'HTTP REST',
+    status: ollama.status,
+    latencyMs: ollamaPingLatencyMs,
+    details: ollama.details,
+    category: 'llm',
+    actionAvailable: ollama.status === 'ACTIVE',
+    actionLabel: ollama.vramDetails ? 'Reaquecer VRAM (1h)' : 'Aquecer qwen-code na VRAM',
+    actionType: 'warmup_ollama',
+    vramDetails: ollama.vramDetails,
   };
 
-  // 9. Pool de Chaves & Routing Multi-Tier (HKCU/HKLM)
-  const hasTier1 = Boolean(process.env['OPENROUTER_TIER1_KEY_1'] || process.env['OPENROUTER_API_KEY']);
-  const hasDecision = Boolean(process.env['DECISION_API_1']);
-  const keyPoolsStatus: 'ACTIVE' | 'STANDBY' = hasTier1 || hasCloudRoute ? 'ACTIVE' : 'STANDBY';
-  const keyPoolsDetails = hasTier1
-    ? `Tiers 1-4 + Gemini + Multimodal${hasDecision ? ' + Decision' : ''} sincronizados (HKCU/HKLM)`
-    : 'Pools carregados via Registro do Windows (use Auditar Pools & Latencia)';
-
-  const nodes: EcosystemNode[] = [
-    {
-      id: 'ollama-gpu',
-      name: 'Ollama LLM Engine & VRAM',
-      role: 'Inferencia local acelerada por GPU para subagentes e Qwen Code',
-      port: 11434,
-      protocol: 'HTTP REST',
-      status: ollama.status,
-      latencyMs: ollamaPing.latencyMs,
-      details: ollama.details,
-      category: 'llm',
-      actionAvailable: ollama.status === 'ACTIVE',
-      actionLabel: ollama.vramDetails ? 'Reaquecer VRAM (1h)' : 'Aquecer qwen-code na VRAM',
-      actionType: 'warmup_ollama',
-      vramDetails: ollama.vramDetails,
-    },
-    {
-      id: 'ai-mesh-engine',
-      name: 'Nexus AI Mesh & Vercel AI SDK',
-      role: 'Inferencia neural de alta velocidade (Gemini 3.5/3.8 Flash + Vercel Gateway)',
-      port: 'Cloud / Edge',
-      protocol: 'AI SDK 7.0 / REST',
-      status: aiMeshStatus,
-      latencyMs: 140,
-      details: aiMeshDetails,
-      category: 'llm',
-      actionAvailable: true,
-      actionLabel: 'Testar Roteamento de Inferencia',
-      actionType: 'test_ai_mesh',
-    },
+  const trailingNodes: EcosystemNode[] = [
     {
       id: 'chrome-cdp',
       name: 'Chrome DevTools Protocol (CDP)',
@@ -316,9 +262,11 @@ export async function GET() {
       role: 'Motor de jogos, teoria de perspectiva, hand histories e filas',
       port: 17042,
       protocol: 'HTTP REST',
-      status: backendStatus,
+      status: backend.ok ? 'ACTIVE' : 'OFFLINE',
       latencyMs: backend.latencyMs,
-      details: backendDetails,
+      details: backend.ok
+        ? 'Python Aiohttp server respondendo ao /ping com sucesso'
+        : 'Servidor Python 17042 inativo ou em modo headless',
       category: 'backend',
       actionAvailable: false,
     },
@@ -328,9 +276,11 @@ export async function GET() {
       role: 'Hub central de ferramentas MCP unificado na porta 8933',
       port: 8933,
       protocol: 'HTTP SSE',
-      status: mcpStatus,
+      status: isMcpOperational ? 'ACTIVE' : 'OFFLINE',
       latencyMs: mcpGateway.latencyMs,
-      details: mcpDetails,
+      details: isMcpOperational
+        ? `mcp-proxy operacional (${configuredServers} servidores MCP unificados em HTTP SSE)`
+        : 'Servidor indisponivel (inicie via scripts/ops/Repair-SharedMcpGateway.ps1)',
       category: 'mcp',
       actionAvailable: false,
     },
@@ -340,9 +290,11 @@ export async function GET() {
       role: 'Automacao de navegadores headless sob protocolo MCP',
       port: 8931,
       protocol: 'HTTP SSE',
-      status: playwrightStatus,
+      status: isPlaywrightOperational ? 'ACTIVE' : 'OFFLINE',
       latencyMs: playwrightMcp.latencyMs,
-      details: playwrightDetails,
+      details: isPlaywrightOperational
+        ? 'playwright-mcp ativo para automacao headless e E2E'
+        : 'Servico em standby ou tarefa agendada inativa',
       category: 'mcp',
       actionAvailable: false,
     },
@@ -352,12 +304,91 @@ export async function GET() {
       role: 'Servico externo AGPL de frontend adaptativo e edicao live',
       port: chrysalisPort,
       protocol: 'HTTP REST',
-      status: chrysalisStatus,
+      status: isChrysalisOperational ? 'ACTIVE' : 'OFFLINE',
       latencyMs: chrysalis.latencyMs,
-      details: chrysalisDetails,
+      details: isChrysalisOperational
+        ? 'Chrysalis Live Engine operacional (servico externo AGPL)'
+        : `Chrysalis Live Engine indisponivel em ${chrysalisBase}`,
       category: 'backend',
       actionAvailable: false,
     },
+  ];
+
+  return { ollamaNode, trailingNodes };
+}
+
+export async function GET() {
+  const tStart = performance.now();
+  const chrysalisBase = process.env['CHRYSALIS_SERVICE_URL'] || 'http://127.0.0.1:8788';
+  const chrysalisPort = resolveChrysalisPort(chrysalisBase);
+  const cleanChrysalisBase = chrysalisBase.replace(/\/$/, '');
+
+  const [ollamaPing, ollamaPs, cdp9222, cdp9223, mcpGateway, playwrightMcp, backend, chrysalis] = await Promise.all([
+    pingEndpoint('http://127.0.0.1:11434/api/tags', 1200),
+    pingEndpoint('http://127.0.0.1:11434/api/ps', 1200),
+    pingEndpoint('http://127.0.0.1:9222/json/version', 1000),
+    pingEndpoint('http://127.0.0.1:9223/json/version', 1000),
+    pingEndpoint('http://127.0.0.1:8933/status', 1000),
+    pingEndpoint('http://127.0.0.1:8931/', 1000),
+    pingEndpoint('http://127.0.0.1:17042/ping', 1000),
+    pingEndpoint(`${cleanChrysalisBase}/v1/apps`, 1000),
+  ]);
+
+  const ollama = resolveOllamaNode(ollamaPing, ollamaPs);
+  const cdp = resolveCdpNode(cdp9222, cdp9223);
+  const { ollamaNode, trailingNodes } = buildProbeServiceNodes({
+    ollama,
+    ollamaPingLatencyMs: ollamaPing.latencyMs,
+    cdp,
+    backend,
+    mcpGateway,
+    playwrightMcp,
+    chrysalis,
+    chrysalisBase,
+    chrysalisPort,
+  });
+
+  const hasCloudRoute = Boolean(
+    process.env['GEMINI_API_KEY'] || process.env['GOOGLE_GENERATIVE_AI_API_KEY'] || process.env['GOOGLE_API_KEY'],
+  );
+  const hasLocalRoute = backend.ok || ollama.status === 'ACTIVE';
+  const aiMeshStatus: 'ACTIVE' | 'STANDBY' = hasCloudRoute || hasLocalRoute ? 'ACTIVE' : 'STANDBY';
+  const hasTier1 = Boolean(process.env['OPENROUTER_TIER1_KEY_1'] || process.env['OPENROUTER_API_KEY']);
+  const hasDecision = Boolean(process.env['DECISION_API_1']);
+  const keyPoolsStatus: 'ACTIVE' | 'STANDBY' = hasTier1 || hasCloudRoute ? 'ACTIVE' : 'STANDBY';
+
+  const perceptionNode: EcosystemNode = {
+    id: 'perception-som',
+    name: 'SOTA Multimodal & SoM Engine',
+    role: 'Captura Ultrawide (3440x1440), Set-of-Mark Grounding e Memoria DuckDB',
+    port: 'In-Memory',
+    protocol: 'DuckDB / PIL',
+    status: 'ACTIVE',
+    latencyMs: 12,
+    details: 'Buffer 3440x1440 com latencia SoM de 11.6ms (Padrão Ouro 60 FPS)',
+    category: 'perception',
+    actionAvailable: true,
+    actionLabel: 'Executar Benchmark SoM',
+    actionType: 'benchmark_perception',
+  };
+
+  const nodes: EcosystemNode[] = [
+    ollamaNode,
+    {
+      id: 'ai-mesh-engine',
+      name: 'Nexus AI Mesh & Vercel AI SDK',
+      role: 'Inferencia neural de alta velocidade (Gemini 3.5/3.8 Flash + Vercel Gateway)',
+      port: 'Cloud / Edge',
+      protocol: 'AI SDK 7.0 / REST',
+      status: aiMeshStatus,
+      latencyMs: 140,
+      details: buildAiMeshDetails(hasCloudRoute, hasLocalRoute),
+      category: 'llm',
+      actionAvailable: true,
+      actionLabel: 'Testar Roteamento de Inferencia',
+      actionType: 'test_ai_mesh',
+    },
+    ...trailingNodes,
     {
       id: 'key-pools-routing',
       name: 'Pool de Chaves & Routing',
@@ -366,7 +397,7 @@ export async function GET() {
       protocol: 'Registry / HTTP',
       status: keyPoolsStatus,
       latencyMs: backend.latencyMs,
-      details: keyPoolsDetails,
+      details: buildKeyPoolsDetails(hasTier1, hasDecision),
       category: 'llm',
       actionAvailable: true,
       actionLabel: 'Auditar Pools & Latência',
@@ -406,10 +437,7 @@ async function handleWarmupOllama(model = 'qwen-code-surgical:latest', keepAlive
 
   if (!response.ok) {
     const errorText = await response.text();
-    return NextResponse.json(
-      { success: false, error: `Falha no Ollama: ${errorText}` },
-      { status: 502 },
-    );
+    return NextResponse.json({ success: false, error: `Falha no Ollama: ${errorText}` }, { status: 502 });
   }
 
   const resData = (await response.json()) as { eval_count?: number; eval_duration?: number };
@@ -497,12 +525,19 @@ async function handleTestAiMesh() {
     pingEndpoint('http://127.0.0.1:11434/api/tags', 1200),
   ]);
   const routesOk = backendPing.ok || ollamaPing.ok;
+  if (!routesOk) {
+    return NextResponse.json({
+      success: false,
+      action: 'test_ai_mesh',
+      message: 'Nenhuma rota de inferencia local respondeu ao probe.',
+    });
+  }
+  const backendState = backendPing.ok ? `OK (${backendPing.latencyMs}ms)` : 'OFF';
+  const ollamaState = ollamaPing.ok ? `OK (${ollamaPing.latencyMs}ms)` : 'OFF';
   return NextResponse.json({
-    success: routesOk,
+    success: true,
     action: 'test_ai_mesh',
-    message: routesOk
-      ? `Roteamento verificado: Backend ${backendPing.ok ? `OK (${backendPing.latencyMs}ms)` : 'OFF'} · Ollama ${ollamaPing.ok ? `OK (${ollamaPing.latencyMs}ms)` : 'OFF'}.`
-      : 'Nenhuma rota de inferencia local respondeu ao probe.',
+    message: `Roteamento verificado: Backend ${backendState} · Ollama ${ollamaState}.`,
   });
 }
 

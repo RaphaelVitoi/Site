@@ -1215,24 +1215,28 @@ async def _cli_check_keys(_argv: list, manager: QueueManager) -> None:
     await _cmd_verify_keys(manager)
 
 
-async def _cli_audit_keys(argv: list, manager: QueueManager) -> None:
-    """Observatorio integrado de keys/pools/tiers (HKCU/HKLM/DB/Live) sem expor segredos."""
-    from llm.key_observatory import collect_observatory_snapshot  # noqa: PLC0415
+_AUDIT_BOOL_FLAGS: dict[str, str] = {
+    "--live": "-Live",
+    "-live": "-Live",
+    "--anomalies-only": "-AnomaliesOnly",
+    "-anomaliesonly": "-AnomaliesOnly",
+    "--plain": "-Plain",
+    "-plain": "-Plain",
+    "--strict": "-Strict",
+    "-strict": "-Strict",
+}
 
-    args = [str(a) for a in argv[2:]]
-    if "--json" in args or "-Json" in args:
-        live = ("--live" in args) or ("-Live" in args)
-        pool = ""
-        for idx, tok in enumerate(args):
-            if tok in ("--pool", "-Pool") and idx + 1 < len(args):
-                pool = args[idx + 1]
-                break
-        snap = await collect_observatory_snapshot(manager, live=live, pool_filter=pool)
-        print(json.dumps(snap, indent=2, ensure_ascii=True))
-        return
 
-    import subprocess  # noqa: PLC0415
+def _extract_audit_pool_arg(args: list[str]) -> str:
+    """Extrai o valor da flag --pool/-Pool de uma lista de argumentos CLI."""
+    for idx, tok in enumerate(args):
+        if tok in ("--pool", "-Pool") and idx + 1 < len(args):
+            return args[idx + 1]
+    return ""
 
+
+def _build_audit_ps_args(args: list[str]) -> list[str]:
+    """Traduz flags estilo CLI Python para parametros do Audit-KeyPools.ps1."""
     ps_args: list[str] = []
     skip_next = False
     for idx, tok in enumerate(args):
@@ -1240,38 +1244,47 @@ async def _cli_audit_keys(argv: list, manager: QueueManager) -> None:
             skip_next = False
             continue
         low = tok.lower()
-        if low in ("--live", "-live"):
-            ps_args.append("-Live")
-        elif low in ("--anomalies-only", "-anomaliesonly"):
-            ps_args.append("-AnomaliesOnly")
-        elif low in ("--plain", "-plain"):
-            ps_args.append("-Plain")
-        elif low in ("--strict", "-strict"):
-            ps_args.append("-Strict")
+        mapped = _AUDIT_BOOL_FLAGS.get(low)
+        if mapped is not None:
+            ps_args.append(mapped)
         elif low in ("--pool", "-pool") and idx + 1 < len(args):
             ps_args.extend(["-Pool", args[idx + 1]])
             skip_next = True
+    return ps_args
 
-    def _run_ps_audit() -> int:
-        ps_script = (
-            Path(__file__).resolve().parents[1]
-            / ".agents"
-            / "skills"
-            / "key-pool-audit"
-            / "scripts"
-            / "Audit-KeyPools.ps1"
-        )
-        if not ps_script.exists():
-            return -1
-        proc = subprocess.run(  # noqa: S603 -- Record-Id: auditoria-2026-11-18-pools-chaves-observatorio-e-roteamento
-            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), *ps_args],
-            check=False,
-        )
-        return proc.returncode
 
-    rc = await asyncio.to_thread(_run_ps_audit)
+def _run_audit_ps_script(ps_args: list[str]) -> int:
+    """Executa Audit-KeyPools.ps1 via PowerShell; retorna -1 se script nao existir."""
+    import shutil  # noqa: PLC0415
+    import subprocess  # noqa: PLC0415, S404 -- Record-Id: auditoria-2026-11-18-pools-chaves-observatorio-e-roteamento
+
+    ps_script = (
+        Path(__file__).resolve().parents[1] / ".agents" / "skills" / "key-pool-audit" / "scripts" / "Audit-KeyPools.ps1"
+    )
+    ps_exe = shutil.which("powershell")
+    if not ps_script.exists() or ps_exe is None:
+        return -1
+    proc = subprocess.run(  # noqa: S603 -- Record-Id: auditoria-2026-11-18-pools-chaves-observatorio-e-roteamento
+        [ps_exe, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(ps_script), *ps_args],
+        check=False,
+    )
+    return proc.returncode
+
+
+async def _cli_audit_keys(argv: list, manager: QueueManager) -> None:
+    """Observatorio integrado de keys/pools/tiers (HKCU/HKLM/DB/Live) sem expor segredos."""
+    from llm.key_observatory import collect_observatory_snapshot  # noqa: PLC0415
+
+    args = [str(a) for a in argv[2:]]
+    live = ("--live" in args) or ("-Live" in args)
+    if "--json" in args or "-Json" in args:
+        snap = await collect_observatory_snapshot(manager, live=live, pool_filter=_extract_audit_pool_arg(args))
+        print(json.dumps(snap, indent=2, ensure_ascii=True))
+        return
+
+    rc = await asyncio.to_thread(_run_audit_ps_script, _build_audit_ps_args(args))
     if rc == -1:
-        snap = await collect_observatory_snapshot(manager, live=("--live" in args) or ("-Live" in args))
+        snap = await collect_observatory_snapshot(manager, live=live)
         print(json.dumps(snap, indent=2, ensure_ascii=True))
         return
     if rc != 0:

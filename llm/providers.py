@@ -579,7 +579,7 @@ def _check_local_llama_availability(model: str) -> bool:
         return False
 
 
-async def _check_openrouter_availability() -> bool:
+def _check_openrouter_availability() -> bool:
     """Check OpenRouter provider has any available key without mutating cursors."""
     try:
         from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
@@ -630,7 +630,7 @@ async def _check_provider_availability(provider: str, model: str) -> bool:
     if provider == "local":
         return await asyncio.to_thread(_check_local_llama_availability, model)
     if provider == "openrouter":
-        return await _check_openrouter_availability()
+        return _check_openrouter_availability()
     if provider == "gemini":
         return _check_gemini_availability(model)
     if provider == "ollama":

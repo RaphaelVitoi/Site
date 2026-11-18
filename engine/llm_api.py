@@ -1209,6 +1209,36 @@ def _extract_anthropic_keys(all_env_vars: dict[str, str]) -> list[str]:
     )
 
 
+def _collect_openrouter_pool_fallback() -> list[str]:
+    """Coleta chaves OpenRouter do pool manager ordenado por prioridade de Tier."""
+    keys: list[str] = []
+    try:
+        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+        for t in (4, 2, 3, 1):
+            for k in openrouter_pool_manager.get_ranked_keys_for_tier(t, allow_fallback=False):
+                if k not in keys:
+                    keys.append(k)
+    except Exception as err:
+        logger.debug("Falha ao consultar pool openrouter: %s", err)
+    return keys
+
+
+def _sort_openrouter_keys_by_tier(raw_keys: list[str]) -> list[str]:
+    """Ordena chaves preservando Tier 4 -> Tier 2 -> Tier 3 -> extras -> Tier 1."""
+    try:
+        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
+
+        tier_rank: dict[str, int] = {}
+        for rank, t in enumerate((4, 2, 3, 1)):
+            for tk in openrouter_pool_manager.get_pool_keys(t):
+                tier_rank.setdefault(tk, rank)
+        raw_keys.sort(key=lambda k: tier_rank.get(k, 2))
+    except Exception as err:
+        logger.debug("Mantendo ordem padrao de chaves OpenRouter: %s", err)
+    return raw_keys
+
+
 def _extract_openrouter_keys(all_env_vars: dict[str, str]) -> list[str]:
     """Ordena chaves OpenRouter protegendo Tier 1 (Tier 4 -> Tier 2 -> Tier 3 -> extras -> Tier 1)."""
     raw_keys = list(
@@ -1223,28 +1253,8 @@ def _extract_openrouter_keys(all_env_vars: dict[str, str]) -> list[str]:
         )
     )
     if not raw_keys:
-        try:
-            from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
-
-            for t in (4, 2, 3, 1):
-                for k in openrouter_pool_manager.get_ranked_keys_for_tier(t, allow_fallback=False):
-                    if k not in raw_keys:
-                        raw_keys.append(k)
-        except Exception as err:
-            logger.debug("Falha ao consultar pool openrouter: %s", err)
-        return raw_keys
-
-    try:
-        from llm.openrouter_pool import openrouter_pool_manager  # noqa: PLC0415
-
-        tier_rank: dict[str, int] = {}
-        for rank, t in enumerate((4, 2, 3, 1)):
-            for tk in openrouter_pool_manager.get_pool_keys(t):
-                tier_rank.setdefault(tk, rank)
-        raw_keys.sort(key=lambda k: tier_rank.get(k, 2))
-    except Exception as err:
-        logger.debug("Mantendo ordem padrao de chaves OpenRouter: %s", err)
-    return raw_keys
+        return _collect_openrouter_pool_fallback()
+    return _sort_openrouter_keys_by_tier(raw_keys)
 
 
 def _extract_nous_keys(all_env_vars: dict[str, str]) -> list[str]:

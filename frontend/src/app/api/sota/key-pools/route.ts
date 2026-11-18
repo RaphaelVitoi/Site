@@ -16,16 +16,17 @@ export const dynamic = 'force-dynamic';
 
 const execFileAsync = promisify(execFile);
 const POOL_FILTER_RX = /^[A-Za-z0-9_ .-]{0,40}$/;
+const DEFAULT_SITE_ROOT = String.raw`C:\Users\rapha\.gemini\Site`;
 
 function resolveSiteRoot(): string {
   const cwd = process.cwd();
-  const candidates = [path.resolve(cwd, '..'), cwd, 'C:\\Users\\rapha\\.gemini\\Site'];
+  const candidates = [path.resolve(cwd, '..'), cwd, DEFAULT_SITE_ROOT];
   for (const dir of candidates) {
     if (fs.existsSync(path.join(dir, 'task_executor.py'))) {
       return dir;
     }
   }
-  return 'C:\\Users\\rapha\\.gemini\\Site';
+  return DEFAULT_SITE_ROOT;
 }
 
 async function queryBackendObservatory(
