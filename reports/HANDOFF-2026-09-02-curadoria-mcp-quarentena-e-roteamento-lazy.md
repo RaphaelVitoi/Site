@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: gemini-3.8-flash-high
 criado_em: 2026-09-02 23:30:00-03:00
 atualizado_em: 2026-09-02 23:30:00-03:00
-commit: dfbbcb9e
+commit: "4b2504d5"
 classes:
   - interno
   - continuidade

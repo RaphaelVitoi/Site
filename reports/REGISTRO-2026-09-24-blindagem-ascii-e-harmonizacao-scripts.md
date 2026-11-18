@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-09-24T10:30:00-03:00'
-commit: 5f7441c2
+commit: "eeb0e7f2"
 classes: [interno, medido, governanca, ascii, quality-gate, scripts, otimizacao]
 config_medida:
   congelada_em: \'2026-09-24'

@@ -355,16 +355,16 @@ class SOTAUnifiedFreeRouter:
 
         if complexity_score <= 2:
             free_models = (
-                "poolside/laguna-xs-2.1:free",
-                "poolside/laguna-s-2.1:free",
-                "qwen/qwen-2.5-coder-32b-instruct:free",
+                "nvidia/nemotron-3.5-lightning:free",
+                "google/gemma-4-26b-a4b-it:free",
+                "cohere/north-mini-code:free",
             )
         else:
             free_models = (
-                "poolside/laguna-s-2.1:free",
-                "qwen/qwen-2.5-coder-32b-instruct:free",
-                "meta-llama/llama-3.3-70b-instruct:free",
-                "poolside/laguna-xs-2.1:free",
+                "nvidia/nemotron-3-ultra-550b-a55b:free",
+                "cohere/north-mini-code:free",
+                "google/gemma-4-31b-it:free",
+                "nvidia/nemotron-3.5-lightning:free",
             )
 
         last_err = "no_openrouter_keys"

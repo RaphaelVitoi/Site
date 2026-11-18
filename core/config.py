@@ -238,13 +238,13 @@ def _reload_system_config() -> bool:
                 DEEP_THINKING_MODELS = tuple(
                     MODEL_ROUTING.get(
                         "deep_thinking",
-                        (MODEL_GEMINI_FLASH, "gemma4:12b", "poolside/laguna-s-2.1:free"),
+                        (MODEL_GEMINI_FLASH, "gemma4:12b", "nvidia/nemotron-3-ultra-550b-a55b:free"),
                     )
                 )
                 FAST_OPERATIONS_MODELS = tuple(
                     MODEL_ROUTING.get(
                         "fast_operations",
-                        (MODEL_GEMINI_FLASH, "qwen2.5-coder:1.5b", "poolside/laguna-xs-2.1:free"),
+                        (MODEL_GEMINI_FLASH, "qwen2.5-coder:1.5b", "nvidia/nemotron-3.5-lightning:free"),
                     )
                 )
                 PROTECTED_AGENTS_FROM_CLEANUP = tuple(

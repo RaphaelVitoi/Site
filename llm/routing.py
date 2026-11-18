@@ -213,7 +213,7 @@ def _score_codigo(m: str) -> int:
 
 
 def _score_math(m: str) -> int:
-    if "31b" in m or "gemma-4-31b" in m:
+    if not m.endswith(":free") and ("31b" in m or "gemma-4-31b" in m):
         return -5
     if "r1" in m or "reason" in m or "laguna" in m:
         return -3
@@ -257,7 +257,7 @@ def _score_razonio(m: str) -> int:
 def _score_curadoria(m: str) -> int:
     if "120b" in m or "glm" in m:
         return -6
-    if "31b" in m or "gemma-4-31b" in m:
+    if not m.endswith(":free") and ("31b" in m or "gemma-4-31b" in m):
         return -5
     if "3.8" in m:
         return -3
@@ -267,7 +267,7 @@ def _score_curadoria(m: str) -> int:
 
 
 def _score_inteligencia(m: str) -> int:
-    if "31b" in m or "gemma-4-31b" in m:
+    if not m.endswith(":free") and ("31b" in m or "gemma-4-31b" in m):
         return -6
     if "120b" in m or "glm" in m:
         return -5
@@ -304,6 +304,8 @@ def _especialidade(m: str, domain: str | None) -> int:
 
 
 def _is_local_model(model_l: str) -> bool:
+    if model_l.endswith(":free"):
+        return False
     if "gemma" in model_l and ("google/" in model_l or model_l.startswith("gemma")):
         return True
     if "qwen" in model_l and "/" not in model_l:
@@ -315,6 +317,8 @@ def _infer_provider_for_model(model: str) -> str | None:
     model_l = model.lower()
     if "space-bunny" in model_l or model_l.startswith("hermes/"):
         return "hermes"
+    if model_l.endswith(":free"):
+        return "openrouter"
     if _is_local_model(model_l):
         return "local"
     if "gemini" in model_l:
@@ -609,9 +613,9 @@ def _inject_openrouter_alternatives(models: list[str], designated_model: str | N
     openrouter_alternative_models = te.OPENROUTER_ALTERNATIVE_MODELS
     if not openrouter_alternative_models:
         openrouter_alternative_models = (
-            "poolside/laguna-s-2.1:free",
-            "poolside/laguna-xs-2.1:free",
-            "meta-llama/llama-3.3-70b-instruct:free",
+            "nvidia/nemotron-3-ultra-550b-a55b:free",
+            "nvidia/nemotron-3.5-lightning:free",
+            "google/gemma-4-31b-it:free",
         )
     designado = (designated_model or "").strip().lower()
     merged = list(models)

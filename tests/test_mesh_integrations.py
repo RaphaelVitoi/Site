@@ -269,7 +269,7 @@ async def test_free_router_openrouter_rotates_keys_and_free_models():
         res = await router._call_openrouter("Analise complexa", complexity_score=4)
 
     assert res["provider"] == "openrouter-free"
-    assert res["model"] == "poolside/laguna-s-2.1:free"
+    assert res["model"] == "nvidia/nemotron-3-ultra-550b-a55b:free"
     assert res["output"] == "ok via rotation"
     assert all(":free" in m for _, m in attempts)
 

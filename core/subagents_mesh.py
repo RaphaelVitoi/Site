@@ -179,10 +179,10 @@ SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
 }
 
 # Contingencia cloud zero-custo (:free) quando daemons locais estiverem indisponiveis
-FREE_MODEL_LAGUNA_XS = "poolside/laguna-xs-2.1:free"
-FREE_MODEL_LAGUNA_S = "poolside/laguna-s-2.1:free"
-FREE_MODEL_QWEN_CODER_32B = "qwen/qwen-2.5-coder-32b-instruct:free"
-FREE_MODEL_LLAMA_33_70B = "meta-llama/llama-3.3-70b-instruct:free"
+FREE_MODEL_LAGUNA_XS = "nvidia/nemotron-3.5-lightning:free"
+FREE_MODEL_LAGUNA_S = "nvidia/nemotron-3-ultra-550b-a55b:free"
+FREE_MODEL_QWEN_CODER_32B = "cohere/north-mini-code:free"
+FREE_MODEL_LLAMA_33_70B = "google/gemma-4-31b-it:free"
 
 FREE_CLOUD_FALLBACK_MAP: dict[SubagentTier, tuple[str, ...]] = {
     SubagentTier.APPSEC: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_QWEN_CODER_32B),

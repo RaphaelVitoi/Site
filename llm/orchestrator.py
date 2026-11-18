@@ -109,7 +109,7 @@ async def _try_compress_openrouter(
 
     compression_model = next(
         (m for m in OPENROUTER_ALTERNATIVE_MODELS if "r1" not in str(m).lower()),
-        OPENROUTER_ALTERNATIVE_MODELS[0] if OPENROUTER_ALTERNATIVE_MODELS else "poolside/laguna-xs-2.1:free",
+        OPENROUTER_ALTERNATIVE_MODELS[0] if OPENROUTER_ALTERNATIVE_MODELS else "nvidia/nemotron-3.5-lightning:free",
     )
     logger.info(
         f"[[{_c(task_agent)}]{task_agent}[/]] Acionando compressao cognitiva via OpenRouter ({compression_model})..."

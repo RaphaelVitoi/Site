@@ -753,6 +753,13 @@ def _resolve_model_provider_and_target(
     has_openrouter = bool(openrouter_keys)
     has_anthropic = bool(anthropic_keys)
 
+    if (
+        model_l.endswith(":free")
+        and has_openrouter
+        and not any(k in model_l for k in ("laguna", "poolside", "space-bunny", "space_bunny", "stealth"))
+    ):
+        return "openrouter", model
+
     resolved = _resolve_local_or_ollama_target(model, model_l)
     if resolved:
         return resolved

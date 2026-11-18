@@ -931,7 +931,12 @@ async def _record_general_failure(
     )
     await _register_route_failure(route_key)
 
-    if "connection closed" in error_msg.lower() or "cannot connect" in error_msg.lower():
+    if (
+        status_code == 404
+        or "connection closed" in error_msg.lower()
+        or "cannot connect" in error_msg.lower()
+        or "no longer available" in error_msg.lower()
+    ):
         extra = max(0, ROUTE_FAILURE_THRESHOLD - 1)
         for _ in range(extra):
             await _register_route_failure(route_key)

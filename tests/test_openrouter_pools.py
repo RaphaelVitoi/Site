@@ -148,3 +148,68 @@ async def test_telemetry_summary(mock_env_pools):
     for item in summary:
         assert len(item["sha8"]) == 8  # type: ignore[arg-type]
         assert item["tier"] in (1, 2, 3, 4)
+
+
+@pytest.mark.asyncio
+async def test_openrouter_404_trips_route_immediately_without_key_burn(monkeypatch: pytest.MonkeyPatch) -> None:
+    """HTTP 404 (modelo descontinuado) deve bloquear a rota na 1a tentativa sem rodar 5 chaves."""
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    from core.schemas import Task
+    import llm.providers as providers
+
+    calls = 0
+
+    async def fake_call_openrouter(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        raise RuntimeError(
+            'HTTP 404: Not Found - {"error":{"message":"model is no longer available on OpenRouter","code":404}}'
+        )
+
+    monkeypatch.setattr(providers, "call_openrouter", fake_call_openrouter)
+    route_key = providers._route_identifier("openrouter", "dead/model-404-test:free")
+    await providers._register_route_success(route_key)
+
+    manager = SimpleNamespace(
+        get_key_health_scores=AsyncMock(return_value={}),
+        get_key_recent_stats=AsyncMock(return_value={}),
+        record_key_usage_metric=AsyncMock(),
+        is_circuit_open=AsyncMock(return_value=False),
+    )
+    task = Task(id="TEST-404", description="test", agent="@chico", timestamp="2026-11-18T00:00:00Z")
+    keys = [f"sk-or-v1-key-{i}" for i in range(5)]
+
+    res = await providers._try_provider(
+        session=SimpleNamespace(),  # type: ignore[arg-type]
+        provider="openrouter",
+        model="dead/model-404-test:free",
+        system_prompt="sys",
+        user_prompt="user",
+        keys=keys,
+        task=task,
+        manager=manager,  # type: ignore[arg-type]
+        max_retries=0,
+    )
+    assert res is None
+    assert calls == 1
+    assert await providers._is_route_blocked(route_key) is True
+    await providers._register_route_success(route_key)
+
+
+def test_active_openrouter_free_models_resolve_to_openrouter() -> None:
+    """Modelos :free ativos (incluindo Gemma/Ling OpenRouter) devem rotear para openrouter."""
+    from engine.llm_api import _resolve_model_provider_and_target
+    from llm.routing import _infer_provider_for_model
+
+    for model in (
+        "nvidia/nemotron-3-ultra-550b-a55b:free",
+        "google/gemma-4-31b-it:free",
+        "google/gemma-4-26b-a4b-it:free",
+        "cohere/north-mini-code:free",
+        "nvidia/nemotron-3.5-lightning:free",
+        "inclusionai/ling-3.2-flash:free",
+    ):
+        assert _infer_provider_for_model(model) == "openrouter"
+        assert _resolve_model_provider_and_target(model, [], [], ["or-key"], ["nous-key"]) == ("openrouter", model)

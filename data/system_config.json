@@ -326,9 +326,9 @@
       "gemini-3.8-flash",
       "gemini-3.5-flash-lite",
       "gemini-4-hydrogen",
-      "poolside/laguna-s-2.1:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "qwen/qwen-2.5-coder-32b-instruct:free",
+      "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "google/gemma-4-31b-it:free",
+      "inclusionai/ling-3.2-flash:free",
       "qwen2.5-coder:7b-instruct-q5_K_M",
       "gemma4:e4b",
       "gemini-pro-latest",
@@ -337,7 +337,8 @@
     ],
     "fast_operations": [
       "gemini-3.5-flash-lite",
-      "poolside/laguna-xs-2.1:free",
+      "nvidia/nemotron-3.5-lightning:free",
+      "google/gemma-4-26b-a4b-it:free",
       "qwen2.5-coder:7b-instruct-q5_K_M",
       "qwen2.5-coder:1.5b",
       "gemma4:e4b",
@@ -346,8 +347,8 @@
     "coding": [
       "qwen2.5-coder:7b-instruct-q5_K_M",
       "gemini-3.5-flash-lite",
-      "poolside/laguna-s-2.1:free",
-      "qwen/qwen-2.5-coder-32b-instruct:free",
+      "cohere/north-mini-code:free",
+      "nvidia/nemotron-3-ultra-550b-a55b:free",
       "qwen2.5-coder:1.5b",
       "gemini-3.8-flash",
       "gemini-4-hydrogen"
@@ -355,8 +356,8 @@
     "general_purpose": [
       "gemini-3.8-flash",
       "gemini-3.5-flash-lite",
-      "poolside/laguna-s-2.1:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
+      "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "google/gemma-4-31b-it:free",
       "qwen2.5-coder:7b-instruct-q5_K_M",
       "gemma4:e4b",
       "gemini-4-hydrogen",
@@ -365,10 +366,10 @@
       "gemini-3.1-pro-preview"
     ],
     "openrouter_alternatives": [
-      "poolside/laguna-s-2.1:free",
-      "poolside/laguna-xs-2.1:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "qwen/qwen-2.5-coder-32b-instruct:free"
+      "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "google/gemma-4-31b-it:free",
+      "cohere/north-mini-code:free",
+      "nvidia/nemotron-3.5-lightning:free"
     ]
   },
   "system_prompts": {
