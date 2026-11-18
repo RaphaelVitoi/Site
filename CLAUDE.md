@@ -305,6 +305,7 @@ Se ele reprovar, "a regra está errada" é a hipótese **menos** provável.
 - **Commit e Push Monocráticos sob Demanda:** O agente **nunca** commita nem empurra commits por iniciativa própria ou de forma autônoma. O commit (`git commit`) e o push (`git push`) ocorrem **somente quando requisitados expressamente pelo operador Raphael Vitoi**.
 - **Invariante do Trabalho Staged e Harmonizado:** As alterações produzidas devem ser mantidas permanentemente sincronizadas, harmonizadas e colocadas na área de preparação (`git add`), mantendo a árvore e o índice prontos e limpos para execução imediata ao receber a ordem do operador.
 - **Cessação de Testes Proativos:** O agente cessa imediatamente a execução autônoma de suítes de teste e gates redundantes que geram latência excessiva. Testes só rodam quando expressamente solicitados pelo operador.
+- **Escopo Causal de Reteste & Primazia de Arbitragem Tier 0 (2026-11-18):** Nunca reexecute a suíte integral quando o bloqueio não tiver relação com testes (ex.: rejeição de `commit-msg`/`Assinatura:` sobre árvore já medida) nem após correção de falha pontual (reteste apenas os testes relacionados ao escopo alterado). Havendo arbitragem explícita de Raphael Vitoi (Tier 0), execute-a imediatamente sem hesitação nem conflito com travas da malha.
 
 ### 1.1 Operar de host sem Windows PowerShell 5.1
 
