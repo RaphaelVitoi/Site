@@ -3,7 +3,7 @@ title: "Governança — projeto `Site`"
 type: governance
 status: active
 owner: raphael-vitoi
-updated_at: 2026-11-12
+updated_at: 2026-11-18
 ---
 
 # Governança — projeto `Site`
@@ -12,7 +12,7 @@ updated_at: 2026-11-12
 Regras que valem para todos os projetos ficam em `..\CLAUDE.md`, na raiz
 multiprojeto.
 
-**Última revisão:** 2026-11-17 (-03:00) · Corte de Conhecimento: Novembro/2026 · Protocolo Chico SOTA v8.0 GOLD — *data de referência da governança; atualizável quando modelos forem lançados, aposentados ou houver mudança de franquia.*
+**Última revisão:** 2026-11-18 (-03:00) · Corte de Conhecimento: Novembro/2026 · Protocolo Chico SOTA v8.0 GOLD — *data de referência da governança; atualizável quando modelos forem lançados, aposentados ou houver mudança de franquia.*
 
 ---
 
@@ -195,6 +195,8 @@ Vale igual para o `committer` quando um agente leva ao portão trabalho de outro
 autor é quem produziu, committer é quem commitou, e os dois se declaram — a
 forma medida em `29ef243e` é *"Assinatura: `<autor>` via `<committer>` como
 committer"*.
+
+**Modo bifásico `Orchestrator (Argon)` — planejador como co-autor, executor na `Assinatura:` (determinado pelo Tier 0 em 2026-11-18).** Quando a sessão opera no modo Orquestrador do Antigravity em que o **Gemini 4 Argon** (`gemini-4-argon`) elabora o plano em *Plan Mode* e o **Gemini 4 Hydrogen** (`gemini-4-hydrogen`) executa as mutações e verificações, a autoria primária do Git (`-c user.name="Gemini 4 Hydrogen" -c user.email="noreply@google.com"`) e a linha `Assinatura:` pertencem **sempre ao agente executor** (`Assinatura: Gemini 4 Hydrogen [Tier 1] -- modelo=gemini-4-hydrogen condutor=antigravity ...`), registrando-se o modelo planejador como co-autor explícito no corpo do commit via trailer `Co-authored-by: Gemini 4 Argon <noreply@google.com>`.
 
 **Onde a residual mora, medido em 2026-09-12 — e não é onde esta seção sugeria.**
 A identidade herdada estava em `.git/config`, **local a este repositório**; a

@@ -17,6 +17,7 @@ from typing import Any
 import aiofiles
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 
 from agents.execution import execute_task_workflow
 from core.arbitrator import UniversalArbitrator
@@ -26,8 +27,10 @@ from core.schemas import Task
 from database.queue_manager import QueueManager
 from llm.budget import (
     _RATE_LIMITERS,
+    GEMINI_KEYS,
     GEMINI_MODEL_KEY_BLOCKLIST,
     KEY_BLOCKLIST,
+    OPENROUTER_KEYS,
     ROUTE_BLOCKLIST,
     ROUTE_FAILURE_COUNTS,
     get_telemetry_lock,
@@ -47,6 +50,8 @@ else:
     _SET_CONSOLE_TITLE_W = None
 
 _LAST_STATUS_UPDATE = 0.0
+_BOOT_MONOTONIC = time.monotonic()
+_ACTIVE_TASKS_META: dict[str, tuple[str, float]] = {}
 MAX_CONCURRENT_TASKS = 4  # Externalizado: ajuste aqui para escalar o paralelismo
 
 #: Identidade deste processo na coluna `claimed_by` (BK-07). Host e PID bastam
@@ -54,7 +59,63 @@ MAX_CONCURRENT_TASKS = 4  # Externalizado: ajuste aqui para escalar o paralelism
 WORKER_ID = f"{socket.gethostname()}:{os.getpid()}"
 
 logger = logging.getLogger(__name__)
-console = Console()
+# Compartilha a instancia de Console com RichHandler (task_executor) para pausar
+# o spinner ao emitir logs e evitar quebra/duplicacao visual no scrollback.
+console: Console = getattr(task_exec, "console", None) or Console()
+
+
+def _format_uptime(elapsed_s: float) -> str:
+    total_s = max(0, int(elapsed_s))
+    hours, rem = divmod(total_s, 3600)
+    minutes, seconds = divmod(rem, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
+def _active_tasks_summary(now: float) -> str:
+    if not _ACTIVE_TASKS_META:
+        return "[dim]IDLE // DAG Watch[/]"
+    parts = [f"{agent}:{tid}({int(max(0.0, now - started))}s)" for tid, (agent, started) in _ACTIVE_TASKS_META.items()]
+    summary = ", ".join(parts)
+    if len(summary) > 72:
+        summary = f"{summary[:69]}..."
+    return f"[cyan]{summary}[/]"
+
+
+def _build_boot_panel(counts: dict[str, int]) -> Panel:
+    """Constroi painel SOTA compacto de inicializacao do Nexus Worker."""
+    deep_head = (getattr(_core_config, "DEEP_THINKING_MODELS", ()) or ("?",))[0]
+    fast_head = (getattr(_core_config, "FAST_OPERATIONS_MODELS", ()) or ("?",))[0]
+    or_alts = getattr(_core_config, "OPENROUTER_ALTERNATIVE_MODELS", ()) or ()
+    or_head = or_alts[0] if or_alts else "n/a"
+
+    grid = Table.grid(padding=(0, 2))
+    grid.add_column(style="bold cyan", no_wrap=True)
+    grid.add_column(style="white")
+
+    grid.add_row(
+        "CORE",
+        f"[bold white]NEXUS ORCHESTRATOR[/] | [magenta]Kernel SOTA v8.0 GOLD[/] | "
+        f"Worker [dim]{WORKER_ID}[/] | Slots [bold]{MAX_CONCURRENT_TASKS}[/]",
+    )
+    grid.add_row(
+        "MESH",
+        f"Pools [green]Gemini:{len(GEMINI_KEYS)}[/] / [cyan]OpenRouter:{len(OPENROUTER_KEYS)}[/] | "
+        f"Deep [dim]{deep_head}[/] | Fast [dim]{fast_head}[/] | OR [dim]{or_head}[/]",
+    )
+    grid.add_row(
+        "QUEUE",
+        f"Pendentes [yellow]{counts.get('pending', 0)}[/] | "
+        f"Rodando [magenta]{counts.get('running', 0)}[/] | "
+        f"Completas [green]{counts.get('completed', 0)}[/] | "
+        f"Falhas [red]{counts.get('failed', 0)}[/]",
+    )
+    return Panel(
+        grid,
+        border_style="cyan",
+        title="[bold]ESTABILIDADE OPERACIONAL COMPROVADA[/]",
+        subtitle="[dim]Hot-Reload Config | Anti-Overlap Spinner | Circuit Breaker 404/429[/]",
+        expand=False,
+    )
 
 
 def _claim_owner_is_dead(claimed_by: str | None) -> bool:
@@ -149,18 +210,33 @@ def _update_terminal_status(counts: dict[str, int], running_tasks_count: int, st
         return
     _LAST_STATUS_UPDATE = now
 
+    reload_fn = getattr(te, "_maybe_reload_config", None)
+    if callable(reload_fn):
+        with contextlib.suppress(Exception):
+            reload_fn()
+
     pending_count = counts.get("pending", 0)
+    completed_count = counts.get("completed", 0)
+    failed_count = counts.get("failed", 0)
+    uptime = _format_uptime(now - _BOOT_MONOTONIC)
+    blocked_routes = len(ROUTE_BLOCKLIST)
+    blocked_keys = len(KEY_BLOCKLIST)
+    active_summary = _active_tasks_summary(now)
+
     if _SET_CONSOLE_TITLE_W:
         current_time = datetime.now(UTC).astimezone().strftime("%H:%M:%S")
         _SET_CONSOLE_TITLE_W(
-            f"NEXUS WORKER | Pendentes: {pending_count} | Rodando: {running_tasks_count} | Pulso: {current_time}"
+            f"NEXUS WORKER | P:{pending_count} R:{running_tasks_count}/{MAX_CONCURRENT_TASKS} "
+            f"OK:{completed_count} F:{failed_count} | Blk:{blocked_routes}r/{blocked_keys}k | "
+            f"Up:{uptime} | {current_time}"
         )
 
     if status_line:
         status_line.update(
-            "[bold]Vigilia de Guardiao Absoluta SOTA[/] | Em Suspensao: "
-            f"[yellow]{pending_count}[/] | Corpos Ativos: [magenta]{running_tasks_count}[/] | "
-            f"Completas: [green]{counts.get('completed', 0)}[/]"
+            f"[bold cyan]Vigilia SOTA[/] [dim]up {uptime}[/] | "
+            f"P:[yellow]{pending_count}[/] R:[magenta]{running_tasks_count}/{MAX_CONCURRENT_TASKS}[/] "
+            f"OK:[green]{completed_count}[/] F:[red]{failed_count}[/] | "
+            f"Blk:[dim]{blocked_routes}r/{blocked_keys}k[/] | {active_summary}"
         )
 
 
@@ -255,6 +331,7 @@ async def _process_task_error(e: Exception, task: Task, manager: QueueManager, s
 
 async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphore) -> None:
     released = False
+    _ACTIVE_TASKS_META[task.id] = (task.agent, time.monotonic())
 
     def _safe_release() -> None:
         nonlocal released
@@ -269,6 +346,7 @@ async def _task_wrapper(task: Task, manager: QueueManager, sem: asyncio.Semaphor
     except Exception as e:  # noqa: BLE001
         await _process_task_error(e, task, manager, _safe_release)
     finally:
+        _ACTIVE_TASKS_META.pop(task.id, None)
         _safe_release()
 
 
@@ -341,11 +419,16 @@ async def _dispatch_optimal_task(
             return
 
         display_id = _format_display_id(task.id)
+        prio = str((task.metadata or {}).get("priority", "medium")).upper()
+        slot_used = len(running_tasks) + 1
         logger.info(
-            "[bold magenta][>] ESPACO DE ENTRADA VITAL REQUISITADO:[/] [%s]%s[/] (ID: %s)",
+            "[bold magenta][>] ESPACO DE ENTRADA VITAL REQUISITADO:[/] [%s]%s[/] (ID: %s | Prio: %s | Slot: %d/%d)",
             te._c(task.agent),
             task.agent,
             display_id,
+            prio,
+            slot_used,
+            MAX_CONCURRENT_TASKS,
         )
 
         future = asyncio.create_task(_task_wrapper(task, manager, semaphore))
@@ -405,37 +488,16 @@ async def start_worker(manager: QueueManager | None = None) -> None:
         except OSError:
             logger.exception("Nao foi possivel escrever o arquivo PID em %s", te.PID_FILE)
 
-    # 1. Limpa o terminal para o God Mode Visual
-    cmd = "cls" if os.name == "nt" else "clear"
-    process = await asyncio.create_subprocess_shell(cmd)
-    await process.communicate()
+    # 1. Limpa o terminal via Rich sem spawnar shell externo
+    console.clear()
 
     await _recover_zombies(manager)
 
     # 2. Varredura inicial da Fila
     counts = await manager.get_task_counts()
-    pending = counts.get("pending", 0)
-    completed = counts.get("completed", 0)
-    failed = counts.get("failed", 0)
 
     # Painel de Boas-vindas SOTA
-    header = (
-        "[bold cyan]NEXUS ORCHESTRATOR[/] | [magenta]Kernel SOTA v7.1 (Manifestacao Maxima / Roteamento Assicrono)[/]\n"
-    )
-    header += (
-        "[dim]A desorganizacao e a entropia findam nas correntes deste circuito. "
-        "Abencado sob a Cosmologia Vitoi Absoluta.[/]\n\n"
-    )
-    header += f"Ramificacoes Pendentes Atuais: [yellow]{pending}[/] | "
-    header += f"Entregas Imaculadas: [green]{completed}[/] | Falhas: [red]{failed}[/]"
-    console.print(
-        Panel(
-            header,
-            border_style="cyan",
-            title="[bold]ESTABILIDADE OPERACIONAL COMPROVADA[/]",
-            expand=False,
-        )
-    )
+    console.print(_build_boot_panel(counts))
 
     status_line = console.status(
         "[cyan]A imergir os fluxos da rede interligada global de neuronios ciberneticos...[/]",

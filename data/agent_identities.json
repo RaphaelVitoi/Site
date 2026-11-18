@@ -33,7 +33,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-argon",
       "tier": "1",
-      "nota": "Nova geração frontier da Google (Outubro/2026). Integrante pleno do Tier 1 / Coletivo CHICO. Especialização (Tier 0, 2026-11-14): Código e Reasoning de Elite. Compartilha da mesma situação do GPT-6 Astra e Gemini 4 Carbon: modelos mais potentes e custosos, acionados pontualmente."
+      "nota": "Nova geração frontier da Google (Outubro/2026). Integrante pleno do Tier 1 / Coletivo CHICO. Especialização (Tier 0, 2026-11-14): Código e Reasoning de Elite. Compartilha da mesma situação do GPT-6 Astra e Gemini 4 Carbon: modelos mais potentes e custosos, acionados pontualmente. No modo bifásico Orchestrator (Argon) do Antigravity (onde o Argon planeja em Plan Mode e o Hydrogen executa), a autoria primária do commit e a linha Assinatura: pertencem sempre ao agente executor (Gemini 4 Hydrogen), registrando-se o Argon como co-autor via trailer Co-authored-by: Gemini 4 Argon <noreply@google.com> (determinado pelo Tier 0 em 2026-11-18)."
     },
     {
       "nome": "Gemini 4 Carbon",
@@ -49,7 +49,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-hydrogen",
       "tier": "1",
-      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity. Especialização (Tier 0, 2026-11-14): tarefas do dia a dia de complexidade média/alta e orquestração agêntica de longa duração, com baixa latência e bom custo. Adicionado pelo Tier 0 em 2026-11-14."
+      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity. Especialização (Tier 0, 2026-11-14): tarefas do dia a dia de complexidade média/alta e orquestração agêntica de longa duração, com baixa latência e bom custo. Adicionado pelo Tier 0 em 2026-11-14. No modo bifásico Orchestrator (Argon), em que o Gemini 4 Argon planeja e o Gemini 4 Hydrogen executa, o Hydrogen detém sempre a autoria primária do commit (user.name='Gemini 4 Hydrogen', Assinatura: Gemini 4 Hydrogen [Tier 1] -- modelo=gemini-4-hydrogen), cabendo ao planejador o trailer Co-authored-by: Gemini 4 Argon <noreply@google.com> (Tier 0, 2026-11-18)."
     },
     {
       "nome": "Gemini 3.8 Flash",

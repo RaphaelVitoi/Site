@@ -187,3 +187,44 @@ def test_proactor_reset_exception_handler_silences_winerror_10054() -> None:
 
     restore()
     assert loop.handler is None
+
+
+def test_worker_loop_shares_console_with_task_executor() -> None:
+    import task_executor as task_exec
+    import worker.loop as worker_loop
+
+    assert worker_loop.console is task_exec.console
+
+
+def test_worker_boot_panel_renders_rich_panel() -> None:
+    from rich.panel import Panel
+
+    import worker.loop as worker_loop
+
+    panel = worker_loop._build_boot_panel({"pending": 2, "running": 1, "completed": 31, "failed": 0})
+    assert isinstance(panel, Panel)
+
+
+def test_update_terminal_status_reports_hud_telemetry(monkeypatch) -> None:
+    import time
+    from unittest.mock import MagicMock
+
+    import worker.loop as worker_loop
+
+    monkeypatch.setattr(worker_loop, "_LAST_STATUS_UPDATE", 0.0)
+    monkeypatch.setattr(worker_loop, "_ACTIVE_TASKS_META", {"EGM-TEST-1": ("@chico", time.monotonic() - 5.0)})
+    status_line = MagicMock()
+
+    worker_loop._update_terminal_status(
+        {"pending": 2, "running": 1, "completed": 31, "failed": 0},
+        1,
+        status_line,
+    )
+
+    status_line.update.assert_called_once()
+    rendered = status_line.update.call_args.args[0]
+    assert "P:[yellow]2[/]" in rendered
+    assert f"R:[magenta]1/{worker_loop.MAX_CONCURRENT_TASKS}[/]" in rendered
+    assert "OK:[green]31[/]" in rendered
+    assert "Blk:" in rendered
+    assert "@chico:EGM-TEST-1" in rendered
