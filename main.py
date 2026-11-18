@@ -21,7 +21,10 @@ async def main():
     loop = asyncio.get_running_loop()
     loop.set_exception_handler(_silence_proactor_reset)
     manager = QueueManager()
-    await start_api_server(manager)
+    try:
+        await start_api_server(manager)
+    finally:
+        await manager.close()
 
 
 if __name__ == "__main__":

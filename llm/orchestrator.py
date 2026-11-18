@@ -16,10 +16,12 @@ from llm.budget import (
     COMPRESSION_CIRCUIT_BREAKER,
     OLLAMA_KEYS,
     OPENROUTER_KEYS,
+    APIBudgetExhaustedError,
     APIKeysExhaustedError,
     _gemini_key_pool_for_model,
     _is_route_blocked,
     _route_identifier,
+    is_cognitive_hibernation_active,
 )
 from llm.providers import _try_provider
 from llm.routing import (
@@ -408,6 +410,9 @@ async def call_llm_api(
     te._maybe_reload_config()
     _c = te._c
 
+    if await is_cognitive_hibernation_active(manager, task):
+        raise APIBudgetExhaustedError("Sistema em hibernacao cognitiva.")
+
     system_prompt = await _try_apply_s1_advisory(task, manager, system_prompt, user_prompt)
     models_to_try, agent_type, designated_model = await _prepare_routing_pipeline(task, manager)
 
@@ -415,7 +420,7 @@ async def call_llm_api(
 
     timeout_seconds = te._agent_sla_value(task.agent, "llm_timeout_seconds", 600)
     provider_retries = te._agent_sla_value(task.agent, "provider_retries", 2)
-    request_timeout = make_client_timeout(total=timeout_seconds)
+    request_timeout = make_client_timeout(total=timeout_seconds, connect=15, sock_read=min(300, timeout_seconds))
 
     session = get_global_http_session()
 

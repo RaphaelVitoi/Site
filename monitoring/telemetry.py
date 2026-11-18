@@ -6,6 +6,7 @@ import asyncio
 import contextlib
 from datetime import UTC, datetime
 import logging
+import threading
 from typing import Any
 
 from core.config import PATH_AUDIT_LOGS
@@ -45,12 +46,19 @@ except ImportError:
     PMEV_CALCULATION_COUNTER = None
 
 
+_ECONOMIC_LOG_LOCK = threading.Lock()
+
+
 def send_toast(title: str, message: str, _status: str = "success"):
     """Wrapper para a notificacao agnostica SOTA."""
     # pylint: disable=unused-argument
     # SOTA: _status parameter accepted for compatibility with client signatures
     _ = _status
-    agnostic_send_toast(title, message)
+    try:
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, agnostic_send_toast, title, message)
+    except RuntimeError:
+        agnostic_send_toast(title, message)
 
 
 def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
@@ -68,8 +76,11 @@ def _write_economic_log_sync(task: Task, duration_secs: float, status: str):
         )
         log_entry = enforce_pure_ascii(log_entry)
 
-        with open(log_file, "a", encoding="ascii", errors="backslashreplace") as f:
-            f.write(log_entry)
+        with _ECONOMIC_LOG_LOCK:
+            if log_file.exists() and log_file.stat().st_size > 10 * 1024 * 1024:
+                log_file.replace(log_file.with_suffix(".1.log"))
+            with open(log_file, "a", encoding="ascii", errors="backslashreplace") as f:
+                f.write(log_entry)
 
         if PROMETHEUS_AVAILABLE and TASK_EXECUTION_COUNTER is not None and TASK_DURATION_HISTOGRAM is not None:
             with contextlib.suppress(Exception):

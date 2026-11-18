@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import atexit
 from datetime import UTC, datetime, timedelta
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -224,10 +226,12 @@ def _reload_system_config() -> bool:
     global HEURISTIC_THRESHOLD, TECHNICAL_AGENTS, PRIORITY_WEIGHTS
     try:
         mtime = PATH_SYSTEM_CONFIG.stat().st_mtime
-        if _CONFIG_MTIME.get("system_config") != mtime:
+        routing_mtime = PATH_ROUTING_MAP.stat().st_mtime if PATH_ROUTING_MAP.exists() else 0.0
+        if _CONFIG_MTIME.get("system_config") != mtime or _CONFIG_MTIME.get("routing_map") != routing_mtime:
             new_config = load_json_config(PATH_SYSTEM_CONFIG, {})
             if new_config:
                 _CONFIG_MTIME["system_config"] = mtime
+                _CONFIG_MTIME["routing_map"] = routing_mtime
                 SYSTEM_CONFIG = new_config
                 ROUTING_CONFIG = load_json_config(PATH_ROUTING_MAP, {})
                 MODEL_ROUTING = SYSTEM_CONFIG.get("model_routing", ROUTING_CONFIG)
@@ -295,8 +299,9 @@ def _reload_agents_manifest() -> bool:
         mtime = PATH_AGENTS_MANIFEST.stat().st_mtime
         if _CONFIG_MTIME.get("agents_manifest") != mtime:
             new_manifest = load_json_config(PATH_AGENTS_MANIFEST, {})
-            _CONFIG_MTIME["agents_manifest"] = mtime
             if new_manifest:
+                _CONFIG_MTIME["agents_manifest"] = mtime
+                _FALLBACK_JA_AVISADO.clear()
                 AGENT_SOURCE = str(PATH_AGENTS_MANIFEST)
                 AGENTS_MANIFEST = new_manifest
                 INTENT_MAP = {f"@{n}": {"pattern": d.get("routing_pattern", "")} for n, d in AGENTS_MANIFEST.items()}
@@ -384,6 +389,8 @@ if not VALID_AGENTS:
 # Circuit breaker para chaves bloqueadas temporariamente
 KEY_BLOCK_DURATION = timedelta(minutes=15)
 KEY_BLOCKLIST: dict[str, datetime] = {}
+_BLOCKLIST_LOCK = threading.RLock()
+_KEY_FINGERPRINT_SALT: bytes = b"sota_budget_pool_salt"
 
 # Teto do blocklist sincrono (paralelo ao async de llm/budget.py -- os dois
 # servem subsistemas distintos e convergir as assinaturas e refactor maior que
@@ -392,32 +399,38 @@ _CONFIG_BLOCKLIST_MAX = 1024
 
 
 def _key_identifier(provider: str, key: str) -> str:
-    return f"{provider}:{key}"
+    if ":sha256:" in key:
+        return f"{provider}:{key}"
+    digest = hmac.new(_KEY_FINGERPRINT_SALT, f"{provider}:{key}".encode(), hashlib.sha256).hexdigest()[:24]
+    return f"{provider}:sha256:{digest}"
 
 
 def _purgar_blocklist_config(bloco: dict[str, datetime]) -> None:
     agora = datetime.now(UTC)
-    if len(bloco) <= _CONFIG_BLOCKLIST_MAX:
-        return
-    for chave in [k for k, exp in bloco.items() if exp <= agora]:
-        bloco.pop(chave, None)
-    while len(bloco) > _CONFIG_BLOCKLIST_MAX:
-        bloco.pop(next(iter(bloco)), None)
+    with _BLOCKLIST_LOCK:
+        if len(bloco) <= _CONFIG_BLOCKLIST_MAX:
+            return
+        for chave in [k for k, exp in bloco.items() if exp <= agora]:
+            bloco.pop(chave, None)
+        while len(bloco) > _CONFIG_BLOCKLIST_MAX:
+            bloco.pop(next(iter(bloco)), None)
 
 
 def _is_key_blocked(provider_key: str) -> bool:
-    _purgar_blocklist_config(KEY_BLOCKLIST)
-    expiry = KEY_BLOCKLIST.get(provider_key)
-    if expiry:
-        if expiry > datetime.now(UTC):
-            return True
-        KEY_BLOCKLIST.pop(provider_key, None)
-    return False
+    with _BLOCKLIST_LOCK:
+        _purgar_blocklist_config(KEY_BLOCKLIST)
+        expiry = KEY_BLOCKLIST.get(provider_key)
+        if expiry:
+            if expiry > datetime.now(UTC):
+                return True
+            KEY_BLOCKLIST.pop(provider_key, None)
+        return False
 
 
 def _block_key(provider_key: str):
-    _purgar_blocklist_config(KEY_BLOCKLIST)
-    KEY_BLOCKLIST[provider_key] = datetime.now(UTC) + KEY_BLOCK_DURATION
+    with _BLOCKLIST_LOCK:
+        _purgar_blocklist_config(KEY_BLOCKLIST)
+        KEY_BLOCKLIST[provider_key] = datetime.now(UTC) + KEY_BLOCK_DURATION
 
 
 # ==========================================
@@ -446,6 +459,9 @@ def _flush_telemetry_buffer() -> None:
             return
         try:
             PATH_TELEMETRY_DUMP.parent.mkdir(parents=True, exist_ok=True)
+            if PATH_TELEMETRY_DUMP.exists() and PATH_TELEMETRY_DUMP.stat().st_size > 10 * 1024 * 1024:
+                rotated_dump = PATH_TELEMETRY_DUMP.with_name(f"{PATH_TELEMETRY_DUMP.name}.1")
+                PATH_TELEMETRY_DUMP.replace(rotated_dump)
             with open(PATH_TELEMETRY_DUMP, "a", encoding="ascii", errors="backslashreplace") as f:
                 f.writelines(json.dumps(item, ensure_ascii=True) + "\n" for item in _TELEMETRY_BUFFER)
             _TELEMETRY_BUFFER.clear()
@@ -472,26 +488,42 @@ class SecretMaskingFilter(logging.Filter):
 
     def __init__(self, name: str = ""):
         super().__init__(name)
-        # Padrao para chaves: sk-..., gsk-..., anthropic-..., google-..., etc.
+        # Padrao para chaves: sk-..., gsk_..., tvly-..., AIza..., github tokens, Bearer, etc.
         self.secret_pattern = re.compile(
-            r"(sk-[a-zA-Z0-9]{20,}|AIza[a-zA-Z0-9\-_]{35}|xox[pb]-[0-9]{12}-[a-zA-Z0-9]{12,}|"
-            r"ghp_[a-zA-Z0-9]{36}|(?:api[-_])?key[=:][\s\"']?([a-zA-Z0-9\-_]{20,})[\s\"']?)",
+            r"(sk-[a-zA-Z0-9_-]{20,}|gsk_[a-zA-Z0-9_-]{20,}|tvly-[a-zA-Z0-9_-]{16,}|"
+            r"AIza[a-zA-Z0-9\-_]{35}|gh[opsu]_[a-zA-Z0-9_]{36,}|github_pat_[a-zA-Z0-9_]{22,}|"
+            r"xox[pb]-[0-9]{12}-[a-zA-Z0-9]{12,}|Bearer\s+[A-Za-z0-9._\-]{20,}|"
+            r"(?:api[-_])?key[=:][\s\"']?([a-zA-Z0-9\-_]{20,})[\s\"']?)",
             re.IGNORECASE,
         )
 
+    def _mask_text(self, value: str) -> str:
+        return self.secret_pattern.sub(REDACTED_SECRET_MASK, value)
+
+    def _mask_args(self, args: Any) -> Any:
+        if isinstance(args, dict):
+            return {k: (self._mask_text(v) if isinstance(v, str) else v) for k, v in args.items()}
+        if isinstance(args, tuple):
+            return tuple(self._mask_text(v) if isinstance(v, str) else v for v in args)
+        if isinstance(args, str):
+            return (self._mask_text(args),)
+        return args
+
+    def _mask_exc(self, record: logging.LogRecord) -> None:
+        if isinstance(record.exc_text, str):
+            record.exc_text = self._mask_text(record.exc_text)
+        if record.exc_info and record.exc_info[1] is not None:
+            formatted_exc = logging.Formatter().formatException(record.exc_info)
+            if self.secret_pattern.search(formatted_exc):
+                record.exc_text = self._mask_text(formatted_exc)
+                record.exc_info = None
+
     def filter(self, record: logging.LogRecord) -> bool:
         if isinstance(record.msg, str):
-            record.msg = self.secret_pattern.sub(REDACTED_SECRET_MASK, record.msg)
+            record.msg = self._mask_text(record.msg)
         if record.args:
-            if isinstance(record.args, dict):
-                record.args = {
-                    k: (self.secret_pattern.sub(REDACTED_SECRET_MASK, v) if isinstance(v, str) else v)
-                    for k, v in record.args.items()
-                }
-            elif isinstance(record.args, tuple):
-                record.args = tuple(
-                    self.secret_pattern.sub(REDACTED_SECRET_MASK, v) if isinstance(v, str) else v for v in record.args
-                )
+            record.args = self._mask_args(record.args)
+        self._mask_exc(record)
         return True
 
 
@@ -511,7 +543,32 @@ class AsciiEnforcementFilter(logging.Filter):
         return True
 
 
-# Registra os filtros de forma global no root logger
+def _ensure_handler_filters(handler: logging.Handler) -> None:
+    if not any(isinstance(f, SecretMaskingFilter) for f in handler.filters):
+        handler.addFilter(SecretMaskingFilter())
+    if not any(isinstance(f, AsciiEnforcementFilter) for f in handler.filters):
+        handler.addFilter(AsciiEnforcementFilter())
+
+
+def attach_filters_to_root_handlers() -> None:
+    """Garante SecretMaskingFilter e AsciiEnforcementFilter em todos os handlers do root logger."""
+    root = logging.getLogger()
+    for handler in root.handlers:
+        _ensure_handler_filters(handler)
+
+
+# Registra os filtros de forma global no root logger e nos seus handlers (atuais e futuros)
 root_logger = logging.getLogger()
 root_logger.addFilter(SecretMaskingFilter())
 root_logger.addFilter(AsciiEnforcementFilter())
+attach_filters_to_root_handlers()
+
+_ORIG_ROOT_ADD_HANDLER = root_logger.addHandler
+
+
+def _filtered_root_add_handler(hdlr: logging.Handler) -> None:
+    _ensure_handler_filters(hdlr)
+    _ORIG_ROOT_ADD_HANDLER(hdlr)
+
+
+vars(root_logger)["addHandler"] = _filtered_root_add_handler

@@ -16,7 +16,7 @@ class Task(BaseModel):
     description: str
     status: Literal["pending", "running", "completed", "failed", "cancelled"] = "pending"
     timestamp: str
-    agent: str = Field(..., pattern=r"^@[\w]+$")
+    agent: str = Field(..., pattern=r"^@[\w-]+$")
     completedAt: str | None = None
     model: str | None = None
     metadata: TaskMetadata = Field(
@@ -68,8 +68,10 @@ class GeneralTelemetry(BaseModel):
 
     @field_validator("category", mode="before")
     @classmethod
-    def normalize_category(cls, v: str) -> str:
+    def normalize_category(cls, v: object) -> object:
         """Normaliza categorias para o padrao SOTA (ASCII)."""
+        if not isinstance(v, str):
+            return v
         mapping = {
             "Pos-Flop": "Pos-Flop",
             "Pos Flop": "Pos-Flop",

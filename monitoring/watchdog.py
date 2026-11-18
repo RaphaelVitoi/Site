@@ -3,7 +3,9 @@ Watchdog -- Supervisao Ativa 24/7 SOTA (Monitoramento Preditivo de Latencia e En
 """
 
 import asyncio
+import contextlib
 from datetime import UTC, datetime
+import inspect
 import json
 import logging
 
@@ -86,6 +88,20 @@ async def _process_watchdog_triggers(
     failure_rate: float,
 ):
     """Processa e enfileira alertas de degradacao."""
+    active_tasks: list[Task] = []
+    get_tasks_fn = getattr(manager, "get_tasks", None)
+    if callable(get_tasks_fn):
+        for status_name in ("pending", "running"):
+            with contextlib.suppress(Exception):
+                res = get_tasks_fn(status=status_name)
+                if inspect.isawaitable(res):
+                    res = await res
+                if isinstance(res, list):
+                    active_tasks.extend(res)
+    if any(getattr(t, "id", "").startswith("WATCHDOG-ALERT-") for t in active_tasks):
+        logger.info("[WATCHDOG] Alerta WATCHDOG-ALERT-* ja ativo na fila; suprimindo duplicata.")
+        return
+
     alert_id = f"WATCHDOG-ALERT-{datetime.now(UTC).strftime('%Y%m%d%H')}"
     desc = (
         f"[SUPERVISAO 24/7 SOTA] ALERTA DE DEGRADACAO: {trigger}.\n\n"
@@ -101,6 +117,17 @@ async def _process_watchdog_triggers(
 
 async def _run_watchdog_cycle(manager: QueueManager):
     """Executa um ciclo unico de monitoramento e avaliacao de metricas."""
+    for method_name, kwarg_name, arg_val in (
+        ("recover_stalled_tasks", "max_running_minutes", 45),
+        ("promote_starved_tasks", "max_wait_hours", 2),
+    ):
+        fn = getattr(manager, method_name, None)
+        if callable(fn):
+            with contextlib.suppress(Exception):
+                res = fn(**{kwarg_name: arg_val})
+                if inspect.isawaitable(res):
+                    await res
+
     counts = await manager.get_task_counts()
     current_failed = counts.get("failed", 0)
     current_pending = counts.get("pending", 0)

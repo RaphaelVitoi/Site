@@ -14,7 +14,7 @@ import mimetypes
 import os
 from pathlib import Path
 import re
-from typing import Any, cast
+from typing import Any
 from urllib.parse import quote
 import zipfile
 
@@ -69,13 +69,23 @@ def _scan_root(name: str, root_resolved: Path, ignored_folders: set[str]) -> lis
     return files_list[:200]
 
 
+def _resolve_gdrive_root() -> Path | None:
+    raw = getattr(_te, "PATH_GDRIVE_ROOT", None)
+    if raw is None:
+        return None
+    candidate = raw if isinstance(raw, Path) else Path(str(raw).strip())
+    if str(candidate).strip() in ("", ".") or not candidate.is_absolute():
+        return None
+    return candidate
+
+
 def _get_allowed_roots(base_dir: Path) -> list[tuple[str, Path]]:
     allowed_roots = [
         ("Cerebro", base_dir / ".cerebro"),
         ("Project", base_dir),
     ]
-    gdrive_base = cast(Path, getattr(_te, "PATH_GDRIVE_ROOT", Path("")))
-    if gdrive_base.exists():
+    gdrive_base = _resolve_gdrive_root()
+    if gdrive_base is not None and gdrive_base.exists():
         allowed_roots.append(("GoogleDrive", gdrive_base))
     return allowed_roots
 
@@ -136,7 +146,7 @@ def _list_zip(file_path: Path) -> list[dict[str, Any]]:
     files: list[dict[str, Any]] = []
     if zipfile.is_zipfile(file_path):
         with zipfile.ZipFile(file_path, "r") as zf:
-            for name in zf.namelist():
+            for name in zf.namelist()[:500]:
                 info = zf.getinfo(name)
                 files.append({"name": name, "size": info.file_size, "is_dir": info.is_dir()})
     else:
@@ -150,6 +160,15 @@ def _parse_image(file_path: Path) -> dict[str, Any]:
     from PIL import Image  # pylint: disable=import-outside-toplevel # noqa: PLC0415
     from PIL.ExifTags import TAGS  # pylint: disable=import-outside-toplevel # noqa: PLC0415
 
+    file_size = file_path.stat().st_size
+    if file_size > 15 * 1024 * 1024:
+        return {
+            "format": file_path.suffix.lstrip(".").upper(),
+            "size": "Imagem > 15MB (use raw=true)",
+            "exif": {},
+            "base64": "",
+        }
+
     with Image.open(file_path) as img:
         exif_data: dict[str, str] = {}
         if exif := img.getexif():
@@ -158,7 +177,7 @@ def _parse_image(file_path: Path) -> dict[str, Any]:
                 if not isinstance(val, (bytes, bytearray)) and len(str(val)) < 100:
                     exif_data[str(tag)] = str(val)
         b64_str = ""
-        if file_path.stat().st_size < 1 * 1024 * 1024:
+        if file_size < 1 * 1024 * 1024:
             with open(file_path, "rb") as f:
                 b64_str = base64.b64encode(f.read()).decode("utf-8")
         return {"format": img.format, "size": f"{img.width}x{img.height}", "exif": exif_data, "base64": b64_str}
@@ -195,8 +214,14 @@ _SENSITIVE_SUFFIXES = frozenset(
         ".keystore",
         ".jks",
         ".db",
+        ".db-wal",
+        ".db-shm",
         ".sqlite",
+        ".sqlite-wal",
+        ".sqlite-shm",
         ".sqlite3",
+        ".sqlite3-wal",
+        ".sqlite3-shm",
         ".lance",
     }
 )
@@ -236,6 +261,8 @@ def _e_modelo_publico(name: str) -> bool:
     (`.env.example` menos um) morre em silencio quando o nome muda de forma;
     excecao declarada aparece quando o nome novo nao casa com nenhum marcador.
     """
+    if name.endswith((".local", ".prod", ".production", ".secret", ".real")):
+        return False
     return any(marker in name for marker in _ENV_TEMPLATE_MARKERS)
 
 
@@ -243,19 +270,13 @@ def _is_sensitive_path(file_path: Path) -> bool:
     # Ponto e espaco finais sao descartados pelo Windows ao abrir o arquivo.
     parts = [p.rstrip(". ").lower() for p in file_path.parts]
     name = parts[-1] if parts else ""
-    # SEC-02 (auditoria 2026-09-30): `parts[:-1]` exclui o PROPRIO nome, entao um
-    # volume que e ele mesmo um diretorio sensivel nao casava -- `/app/queue`
-    # devolvia servivel, ainda que `/app/queue/tasks.db` fosse recusado. O
-    # arquivo dentro ja era barrado; o caminho do volume, nao. Medido pelo teste
-    # `test_todo_volume_de_segredo_do_compose_esta_bloqueado`, que deriva os
-    # volumes do `docker-compose.yml` em vez de hardcodar o caso.
-    #
-    # Inclui o proprio nome DEPOIS do nome exato e do sufixo, para nao alterar o
-    # que ja era decidido: um arquivo chamado `queue` na raiz continua caindo
-    # pela regra de nome/sufixo, e um diretorio sensivel ganha a regra nova.
     if any(p in _SENSITIVE_DIR_COMPONENTS for p in parts[:-1]):
         return True
-    if name in _SENSITIVE_NAMES or file_path.suffix.lower() in _SENSITIVE_SUFFIXES:
+    if (
+        name in _SENSITIVE_NAMES
+        or file_path.suffix.lower() in _SENSITIVE_SUFFIXES
+        or any(name.endswith(sfx) for sfx in _SENSITIVE_SUFFIXES)
+    ):
         return True
     if name in _SENSITIVE_DIR_COMPONENTS and file_path.is_dir():
         return True
@@ -267,14 +288,16 @@ def _is_sensitive_path(file_path: Path) -> bool:
 def _is_file_access_allowed(file_path: Path) -> bool:
     if _is_sensitive_path(file_path):
         return False
-    base_dir = Path(__file__).resolve().parent.parent.parent.resolve()
+    base_dir = handler_support.BASE_WORKSPACE_DIR.resolve()
     if file_path.is_relative_to(base_dir):
         return True
-    gdrive_base = cast(Path, getattr(_te, "PATH_GDRIVE_ROOT", Path(""))).resolve()
-    if gdrive_base.exists() and file_path.is_relative_to(gdrive_base):
-        rel = file_path.relative_to(gdrive_base)
-        if len(rel.parts) > 0 and rel.parts[0] in ("Documentos", "GD", "Documents"):
-            return True
+    gdrive_base = _resolve_gdrive_root()
+    if gdrive_base is not None:
+        gdrive_resolved = gdrive_base.resolve()
+        if gdrive_resolved.exists() and file_path.is_relative_to(gdrive_resolved):
+            rel = file_path.relative_to(gdrive_resolved)
+            if len(rel.parts) > 0 and rel.parts[0] in ("Documentos", "GD", "Documents"):
+                return True
     return False
 
 
@@ -323,17 +346,19 @@ async def _parse_image_response(ext: str, file_path: Path) -> web.Response:
         img_data = await asyncio.to_thread(_parse_image, file_path)
         return web.json_response({"type": "image", "data": img_data})
 
-    def _read_svg_b64() -> str:
+    def _read_svg_b64() -> tuple[str, str]:
+        if file_path.stat().st_size > 2 * 1024 * 1024:
+            return "", "SVG > 2MB (use raw=true)"
         with open(file_path, "rb") as file:
-            return base64.b64encode(file.read()).decode("utf-8")
+            return base64.b64encode(file.read()).decode("utf-8"), "Vetor (Escalavel)"
 
-    b64_str = await asyncio.to_thread(_read_svg_b64)
+    b64_str, size_label = await asyncio.to_thread(_read_svg_b64)
     return web.json_response(
         {
             "type": "image",
             "data": {
                 "format": "svg+xml",
-                "size": "Vetor (Escalavel)",
+                "size": size_label,
                 "exif": {},
                 "base64": b64_str,
             },
@@ -395,11 +420,17 @@ async def handle_view_file(request: web.Request) -> web.StreamResponse:
     if not path_param:
         return web.json_response({"error": "Parametro 'path' ausente."}, status=400)
 
-    file_path = await asyncio.to_thread(lambda: Path(path_param).resolve())
-    if not _is_file_access_allowed(file_path):
+    def _resolve_and_authorize() -> tuple[Path, bool, bool]:
+        resolved = Path(path_param).resolve()
+        allowed = _is_file_access_allowed(resolved)
+        exists_file = allowed and resolved.exists() and resolved.is_file()
+        return resolved, allowed, exists_file
+
+    file_path, allowed, exists_file = await asyncio.to_thread(_resolve_and_authorize)
+    if not allowed:
         return web.json_response({"error": "[SEC] Acesso negado: Caminho fora das fronteiras autorizadas."}, status=403)
 
-    if not file_path.exists() or not file_path.is_file():
+    if not exists_file:
         return web.json_response({"error": "Arquivo nao encontrado ou nao e um arquivo valido."}, status=404)
 
     ext = file_path.suffix.lower()

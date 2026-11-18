@@ -14,10 +14,11 @@ import re
 import shutil
 import subprocess  # noqa: S404
 import sys
+import threading
 import time
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, TypedDict
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, TypedDict
 
 if TYPE_CHECKING:
     from memory_rag import MemoryRAG
@@ -129,19 +130,46 @@ class OpenAICompletionRequest(BaseModel):
 
 class HTTPSessionManager:
     session: aiohttp.ClientSession | None = None
+    _sessions: ClassVar[dict[int, tuple[asyncio.AbstractEventLoop, aiohttp.ClientSession]]] = {}
+    _guard: ClassVar[threading.Lock] = threading.Lock()
 
     @classmethod
     def get_session(cls) -> aiohttp.ClientSession:
-        if cls.session is None or cls.session.closed:
-            # SOTA: Keepalive otimizado e conexoes reutilizadas para latencia minima
-            connector = aiohttp.TCPConnector(limit=100, keepalive_timeout=30)
-            cls.session = aiohttp.ClientSession(connector=connector)
-        return cls.session
+        loop = asyncio.get_running_loop()
+        loop_id = id(loop)
+        with cls._guard:
+            dead_ids = [lid for lid, (lp, _) in cls._sessions.items() if lp.is_closed() and lp is not loop]
+            for lid in dead_ids:
+                cls._sessions.pop(lid, None)
+            entry = cls._sessions.get(loop_id)
+            if entry is None or entry[0] is not loop or entry[1].closed:
+                # SOTA: Keepalive otimizado e conexoes reutilizadas para latencia minima
+                connector = aiohttp.TCPConnector(limit=100, keepalive_timeout=30)
+                timeout = aiohttp.ClientTimeout(total=300, connect=10, sock_read=120)
+                sess = aiohttp.ClientSession(connector=connector, timeout=timeout)
+                cls._sessions[loop_id] = (loop, sess)
+                cls.session = sess
+                return sess
+            return entry[1]
 
     @classmethod
     async def close(cls):
-        if cls.session and not cls.session.closed:
-            await cls.session.close()
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+        to_close: list[aiohttp.ClientSession] = []
+        with cls._guard:
+            for lid, (lp, sess) in tuple(cls._sessions.items()):
+                if current_loop is None or lp is current_loop:
+                    cls._sessions.pop(lid, None)
+                    if not sess.closed:
+                        to_close.append(sess)
+            if current_loop is None and cls.session and not cls.session.closed and cls.session not in to_close:
+                to_close.append(cls.session)
+            cls.session = None
+        for sess in to_close:
+            await sess.close()
 
 
 @asynccontextmanager
@@ -764,6 +792,68 @@ def _calculate_dynamic_context(
     return min(target_ctx, max_ctx)
 
 
+_VRAM_PROBE_CACHE: dict[str, tuple[float, float, str]] = {}
+_VRAM_PROBE_LOCK = threading.Lock()
+_VRAM_CACHE_TTL_S = 300.0
+
+
+def _probe_nvidia_vram_gb() -> tuple[float, str] | None:
+    """Sonda memoria livre da GPU via nvidia-smi."""
+    nvidia_smi_bin = shutil.which("nvidia-smi")
+    if not nvidia_smi_bin:
+        return None
+    try:
+        result = subprocess.check_output(
+            [nvidia_smi_bin, "--query-gpu=memory.free", "--format=csv,nounits,noheader"],
+            encoding="utf-8",
+            timeout=2.0,
+        )
+        free_gb = float(result.strip().split("\n", maxsplit=1)[0].strip()) / 1024.0
+        return (free_gb, "nvidia")
+    except Exception as e:
+        logger.debug("[SOTA GUARD] Falha na inspecao de VRAM NVIDIA: %s", e)
+        return None
+
+
+def _probe_wmi_vram_gb() -> tuple[float, str] | None:
+    """Fallback Windows/WMI para estimativa de VRAM instalada."""
+    if os.name != "nt":
+        return None
+    ps_bin = shutil.which("powershell")
+    if not ps_bin:
+        return None
+    try:
+        cmd = [
+            ps_bin,
+            "-NoProfile",
+            "-Command",
+            "Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json",
+        ]
+        res = subprocess.check_output(cmd, encoding="utf-8", timeout=5.0)
+        data = json.loads(res)
+        gpu_list = data if isinstance(data, list) else [data]
+        max_vram_bytes = max((gpu.get("AdapterRAM", 0) or 0) for gpu in gpu_list)
+        return (max_vram_bytes / (1024**3), "wmi")
+    except Exception as e:
+        logger.debug("[SOTA GUARD] Bypass da inspecao de VRAM AMD (PowerShell/WMI falhou): %s", e)
+        return None
+
+
+def _probe_available_vram_gb() -> tuple[float, str] | None:
+    """Executa sondagem fisica de VRAM NVIDIA/WMI com cache de 300s."""
+    now = time.monotonic()
+    with _VRAM_PROBE_LOCK:
+        cached = _VRAM_PROBE_CACHE.get("gpu")
+        if cached and (now - cached[0]) < _VRAM_CACHE_TTL_S:
+            return cached[1], cached[2]
+
+    measured = _probe_nvidia_vram_gb() or _probe_wmi_vram_gb()
+    if measured is not None:
+        with _VRAM_PROBE_LOCK:
+            _VRAM_PROBE_CACHE["gpu"] = (now, measured[0], measured[1])
+    return measured
+
+
 def _validate_thermodynamic_hardware(model_name: str) -> str | None:
     """SOTA: Valida limite fisico de VRAM para prevenir colapso termodinamico (OOM)."""
     vram_map = {
@@ -778,51 +868,19 @@ def _validate_thermodynamic_hardware(model_name: str) -> str | None:
     if required_vram_gb <= 0.0:
         return None
 
-    # SOTA: Verificacao de VRAM NVIDIA (Nativa/Linux/Windows com Drivers)
-    if shutil.which("nvidia-smi"):
-        try:
-            result = subprocess.check_output(  # noqa: S603, S607
-                ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,nounits,noheader"],
-                encoding="utf-8",
-                timeout=2.0,
-            )
-            free_gb = float(result.strip().split("\n", maxsplit=1)[0].strip()) / 1024.0
-            if free_gb < required_vram_gb:
-                logger.info(
-                    "[SOTA VRAM] VRAM NVIDIA Livre (%.1f GB) menor que o modelo ideal (%.1f GB). Offloading de CPU ativado pelo Ollama.",
-                    free_gb,
-                    required_vram_gb,
-                )
-            return None
-        except Exception as e:
-            logger.debug("[SOTA GUARD] Falha na inspecao de VRAM NVIDIA: %s", e)
+    measured = _probe_available_vram_gb()
+    if measured is None:
+        return None
 
-    # SOTA: Fallback AMD/Windows (Agnosticismo via WMI/CIM)
-    if os.name == "nt":
-        try:
-            cmd = [
-                "powershell",
-                "-NoProfile",
-                "-Command",
-                "Get-CimInstance Win32_VideoController | Select-Object Name, AdapterRAM | ConvertTo-Json",
-            ]
-            res = subprocess.check_output(cmd, encoding="utf-8", timeout=5.0)  # noqa: S603
-            data = json.loads(res)
-            gpu_list = data if isinstance(data, list) else [data]
-
-            max_vram_bytes = max((gpu.get("AdapterRAM", 0) or 0) for gpu in gpu_list)
-
-            total_vram_gb = max_vram_bytes / (1024**3)
-            if total_vram_gb < required_vram_gb:
-                logger.info(
-                    "[SOTA VRAM] VRAM Total AMD/Generic (%.1f GB) menor que o ideal (%.1f GB). Offloading de CPU ativado pelo Ollama.",
-                    total_vram_gb,
-                    required_vram_gb,
-                )
-            return None
-        except Exception as e:
-            logger.debug("[SOTA GUARD] Bypass da inspecao de VRAM AMD (PowerShell/WMI falhou): %s", e)
-
+    available_gb, source = measured
+    if available_gb < required_vram_gb:
+        label = "VRAM NVIDIA Livre" if source == "nvidia" else "VRAM Total AMD/Generic"
+        logger.info(
+            "[SOTA VRAM] %s (%.1f GB) menor que o modelo ideal (%.1f GB). Offloading de CPU ativado pelo Ollama.",
+            label,
+            available_gb,
+            required_vram_gb,
+        )
     return None
 
 

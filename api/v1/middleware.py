@@ -6,6 +6,7 @@ Middlewares SOTA -- Interceptadores para Limite de Taxa, Autenticacao e CORS.
 import base64
 import hashlib
 import hmac
+import ipaddress
 import json
 import logging
 import math
@@ -19,6 +20,15 @@ from aiohttp import web
 
 from api.v1.middleware_correlation import CORRELATION_HEADER, correlation_id_for
 from llm.budget import API_SECRET_TOKEN, cache_put_bounded
+
+_INITIAL_API_SECRET_TOKEN = API_SECRET_TOKEN
+
+
+def _api_secret_token() -> str | None:
+    if API_SECRET_TOKEN != _INITIAL_API_SECRET_TOKEN:
+        return API_SECRET_TOKEN
+    return os.environ.get("API_SECRET_TOKEN") or API_SECRET_TOKEN
+
 
 # SOTA: Estado do Rate Limiter (IP -> {count, window_start})
 RATE_LIMIT_WINDOW = 60
@@ -39,7 +49,7 @@ def _purge_expired_ips(now: float, force: bool = False) -> None:
     for ip in expired:
         _ip_blocks.pop(ip, None)
     if len(_ip_blocks) > MAX_TRACKED_IPS:
-        sorted_ips = sorted(_ip_blocks.items(), key=lambda item: float(item[1]["start_time"]))
+        sorted_ips = sorted(_ip_blocks.items(), key=lambda item: (int(item[1]["count"]), float(item[1]["start_time"])))
         to_remove = len(_ip_blocks) - MAX_TRACKED_IPS
         for ip, _ in sorted_ips[:to_remove]:
             _ip_blocks.pop(ip, None)
@@ -388,6 +398,10 @@ def _identidade_do_usuario(request) -> str | None:
     if payload is None:
         return None
 
+    token_role = payload.get("role")
+    if isinstance(token_role, str) and token_role in {"anon", "service_role"}:
+        return None
+
     subject = payload.get("sub")
     if not isinstance(subject, str) or not subject.strip():
         return None
@@ -592,19 +606,23 @@ def _rate_limit_key(request) -> str:
     remote_ip = getattr(request, "remote", None) or "127.0.0.1"
     client_id = request.headers.get(CLIENT_ID_HEADER, "").strip()
     auth_header = request.headers.get("Authorization", "")
+    service_token = _api_secret_token()
     if (
         client_id
-        and API_SECRET_TOKEN
+        and service_token
         and auth_header.startswith("Bearer ")
         and _CLIENT_ID_RE.fullmatch(client_id)
-        and secrets.compare_digest(auth_header[7:], API_SECRET_TOKEN)
+        and secrets.compare_digest(auth_header[7:], service_token)
     ):
         return f"client:{client_id}"
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded and _is_loopback(remote_ip):
         hops = [hop.strip() for hop in forwarded.split(",") if hop.strip()]
         if hops:
-            return hops[-1]
+            try:
+                return str(ipaddress.ip_address(hops[-1]))
+            except ValueError:
+                return remote_ip
     return remote_ip
 
 
@@ -657,11 +675,13 @@ async def rate_limit_middleware(request, handler):
 @web.middleware
 async def auth_middleware(request, handler):
     """Verifica tokens de autorizacao e aplica validacao de origem."""
-    if request.method == "OPTIONS" or (request.method == "GET" and request.path in PUBLIC_PROBE_ROUTES):
+    normalized_path = request.path.rstrip("/") or "/"
+    if request.method == "OPTIONS" or (request.method == "GET" and normalized_path in PUBLIC_PROBE_ROUTES):
         return await handler(request)
 
     origin = request.headers.get("Origin")
-    if not API_SECRET_TOKEN and not _jwt_secret():
+    service_token = _api_secret_token()
+    if not service_token and not _jwt_secret():
         return await _handle_no_token_auth(request, origin, handler)
 
     auth_header = request.headers.get("Authorization")
@@ -675,10 +695,10 @@ async def auth_middleware(request, handler):
         return await _handle_jwt_token_auth(token, request, handler)
 
     # Fallback: se nao for JWT, valida contra a API_SECRET_TOKEN legada
-    if not API_SECRET_TOKEN:
+    if not service_token:
         return _recusa(request, 403, "token_legado_nao_configurada")
 
-    if not secrets.compare_digest(token, API_SECRET_TOKEN):
+    if not secrets.compare_digest(token, service_token):
         return _recusa(request, 403, "token_invalido")
 
     # FASE 6 / opcao C (Tier 0, 2026-09-30): a credencial de servico abriu a

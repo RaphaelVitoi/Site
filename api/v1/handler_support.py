@@ -17,6 +17,24 @@ logger = logging.getLogger("api.v1.handlers")
 #: todos os handlers (viviam como constante local de handlers.py).
 INVALID_JSON_BODY = "Invalid JSON body"
 
+
+async def read_json_object(
+    request: web.Request, *, error_envelope: bool = False
+) -> tuple[dict[str, Any] | None, web.Response | None]:
+    """Lê e valida que o corpo da requisicao e um objeto JSON (dict), retornando 400 caso contrario."""
+    try:
+        data = await request.json()
+    except Exception:
+        body: dict[str, Any] = (
+            {"status": "ERROR", "error": INVALID_JSON_BODY} if error_envelope else {"error": INVALID_JSON_BODY}
+        )
+        return None, web.json_response(body, status=400)
+    if not isinstance(data, dict):
+        body = {"status": "ERROR", "error": INVALID_JSON_BODY} if error_envelope else {"error": INVALID_JSON_BODY}
+        return None, web.json_response(body, status=400)
+    return data, None
+
+
 #: Raiz do workspace servida por /api/files/*. Vive aqui (e nao em handlers.py)
 #: porque handlers_files.py e handlers.py ambos a consomem -- handlers.py a
 #: re-exporta para compatibilidade de import. Monkeypatch de teste deve mirar

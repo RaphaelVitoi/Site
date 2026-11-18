@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 import logging
 import os
 from pathlib import Path
+import threading
 import time
 from typing import Any
 
@@ -44,6 +45,25 @@ MODEL_WORKING_FREE_FALLBACK = "upstage/solar-mini4:free"
 MODEL_GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
 MODEL_OPENROUTER_GEMINI_35_FLASH_LITE = "google/gemini-3.5-flash-lite"
 circuit_breaker_lock = asyncio.Lock()
+_CIRCUIT_BREAKER_LOCKS: dict[int, tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
+_CB_GUARD = threading.Lock()
+
+
+def _get_circuit_breaker_lock() -> asyncio.Lock:
+    """Retorna lock do circuit breaker isolado para o event loop ativo."""
+    loop = asyncio.get_running_loop()
+    loop_id = id(loop)
+    with _CB_GUARD:
+        dead_ids = [lid for lid, (lp, _) in _CIRCUIT_BREAKER_LOCKS.items() if lp.is_closed() and lp is not loop]
+        for lid in dead_ids:
+            _CIRCUIT_BREAKER_LOCKS.pop(lid, None)
+        entry = _CIRCUIT_BREAKER_LOCKS.get(loop_id)
+        if entry is None or entry[0] is not loop:
+            lock = asyncio.Lock()
+            _CIRCUIT_BREAKER_LOCKS[loop_id] = (loop, lock)
+            return lock
+        return entry[1]
+
 
 logger = logging.getLogger(__name__)
 
@@ -373,7 +393,7 @@ async def call_gemma_local(
 async def _evaluate_api_error(error_msg: str, provider_name: str, provider_key: str, block_on_429: bool) -> str:
     """Retorna 'abort_provider', 'abort_key', ou 'retry'."""
     if any(err in error_msg for err in ["500", "502", "503", "504", "timeout"]):
-        async with circuit_breaker_lock:
+        async with _get_circuit_breaker_lock():
             fail_count = PROVIDER_FAILURE_COUNTS.get(provider_name, 0) + 1
             PROVIDER_FAILURE_COUNTS[provider_name] = fail_count
             if fail_count >= MAX_PROVIDER_FAILURES:
@@ -450,7 +470,7 @@ async def _execute_provider_attempt(
         await manager.record_api_usage(task.id, task.agent, model, provider_name, prompt_tokens, completion_tokens)
 
         # Reseta o Circuit Breaker em caso de sucesso
-        async with circuit_breaker_lock:
+        async with _get_circuit_breaker_lock():
             PROVIDER_FAILURE_COUNTS[provider_name] = 0
         return response_text, ""
     except Exception as e:  # pylint: disable=broad-exception-caught
@@ -557,8 +577,12 @@ async def _try_provider(
     Complexidade ciclomatica reduzida (S3776) via extracao de _try_single_key.
     """
     current_time = time.time()
-    async with circuit_breaker_lock:
+    async with _get_circuit_breaker_lock():
         blocked_until = PROVIDER_BLOCK_UNTIL.get(provider_name, 0)
+        if blocked_until > 0 and blocked_until <= current_time:
+            PROVIDER_BLOCK_UNTIL.pop(provider_name, None)
+            PROVIDER_FAILURE_COUNTS.pop(provider_name, None)
+            blocked_until = 0
     if blocked_until > current_time:
         logger.warning(
             "[CIRCUIT BREAKER] Provedor '%s' temporariamente em quarentena. Acionando Fallback...",
@@ -614,11 +638,13 @@ async def _try_provider(
 
 
 def _generate_fallback_response(agent_name: str, models_to_try: list[str]) -> str:
+    blocked_snapshot = list(KEY_BLOCKLIST.keys())
+    blocked_summary = ", ".join(blocked_snapshot[:8]) if blocked_snapshot else "nenhuma"
     return (
         f"### ALERTA DE CONTINGENCIA (FALLBACK)\n"
         f"O agente `{agent_name}` falhou em sua missao. Nenhuma API respondeu aos chamados.\n"
         f"**Modelos Tentados:** {', '.join(models_to_try)}\n"
-        f"**Chaves Bloqueadas na Sessao:** {list(KEY_BLOCKLIST.keys())}\n\n"
+        f"**Chaves Bloqueadas na Sessao:** {len(blocked_snapshot)} ({blocked_summary})\n\n"
         "**Plano de Acao Sugerido:**\n"
         "1.  Verifique a conexao de rede com `nexus-diag-net`.\n"
         "2.  Audite o status das chaves de API com `nexus-keys`.\n"
@@ -1029,7 +1055,7 @@ async def _dispatch_local_or_ollama_pipeline(
     openrouter_keys: list[str],
     response_format: dict | None,
 ) -> tuple[str | None, str, str]:
-    res, provider = _dispatch_local_engine(provider, target_model, system_prompt, user_prompt)
+    res, provider = await asyncio.to_thread(_dispatch_local_engine, provider, target_model, system_prompt, user_prompt)
     if res:
         return res, provider, target_model
 

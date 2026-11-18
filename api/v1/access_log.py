@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import cast
 
 from aiohttp import web
-from aiohttp.abc import AbstractAccessLogger, BaseRequest
+from aiohttp.abc import AbstractAccessLogger
+from aiohttp.web_request import BaseRequest
 from aiohttp.web_response import StreamResponse
 
 from api.v1.middleware_correlation import correlation_id_for

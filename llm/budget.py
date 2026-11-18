@@ -15,7 +15,7 @@ from typing import Any
 from core.schemas import Task
 from database.queue_manager import QueueManager
 from monitoring.telemetry import send_toast
-from utils.env_loader import load_env
+from utils.env_loader import is_real_key_value, load_env
 
 # =================================================
 # ORCAMENTO COGNITIVO E HIBERNACAO (Logistica SOTA)
@@ -44,20 +44,7 @@ ALL_ENV_VARS = {**os.environ, **ENV_KEYS}
 
 
 def _is_real_key_value(value: str) -> bool:
-    if not value:
-        return False
-    v = value.strip()
-    invalid_prefixes = ("$env:", "${", "sk-REPLACE", "SUA_KEY", "COLE_SUA_KEY", "COLOQUE_", "dummy-", "dummy")
-    if any(v.startswith(prefix) for prefix in invalid_prefixes):
-        return False
-
-    if len(v) < 12:
-        return False
-
-    # Sufixos de chaves conhecidamente revogadas (configuravel via REVOKED_KEY_SUFFIXES no env)
-    revoked_raw = ALL_ENV_VARS.get("REVOKED_KEY_SUFFIXES", "XfUE")
-    invalid_suffixes = tuple(s.strip() for s in revoked_raw.split(",") if s.strip())
-    return not any(v.endswith(suffix) for suffix in invalid_suffixes)
+    return is_real_key_value(value, revoked_raw=ALL_ENV_VARS.get("REVOKED_KEY_SUFFIXES", "XfUE"))
 
 
 def _collect_keys(prefixes: tuple, exclude_prefixes: tuple = ()) -> list[str]:
@@ -302,7 +289,9 @@ def get_telemetry_lock() -> asyncio.Lock:
 
 
 def _key_identifier(provider: str, key: str) -> str:
-    return f"{provider}:{key}"
+    if ":sha256:" in key:
+        return f"{provider}:{key}"
+    return f"{provider}:sha256:{_key_fingerprint(provider, key)}"
 
 
 async def _is_key_blocked(provider_key: str) -> bool:
@@ -323,7 +312,7 @@ async def _block_key(provider_key: str):
 
 
 def _gemini_model_key_identifier(model: str, key: str) -> str:
-    return f"gemini:{model}:{key}"
+    return f"gemini:{model}:sha256:{_key_fingerprint('gemini', key)}"
 
 
 async def _is_gemini_model_key_blocked(model: str, key: str) -> bool:
@@ -456,6 +445,8 @@ async def is_cognitive_hibernation_active(manager: QueueManager, task: Task) -> 
     if state:
         try:
             hibernation_end = datetime.fromisoformat(state)
+            if hibernation_end.tzinfo is None:
+                hibernation_end = hibernation_end.replace(tzinfo=UTC)
             if datetime.now(UTC) < hibernation_end:
                 return True
         except ValueError:
@@ -517,7 +508,14 @@ class AsyncTokenBucket:
                 self._locks[loop_id] = par
             return par[1]
 
-    def _token_wait(self, tokens: int) -> float:
+    def reset(self) -> None:
+        """Restaura capacidade total e contadores sob lock sincrono."""
+        with self._state_guard:
+            self.tokens = float(self.capacity)
+            self.last_fill = time.monotonic()
+            self.starvation_events = 0
+
+    def _token_wait(self, tokens: float) -> float:
         """Espera de refill: 0 quando ha tokens; 3600s quando o bucket nunca enche."""
         if self.tokens >= tokens:
             return 0.0
@@ -525,7 +523,8 @@ class AsyncTokenBucket:
             return (tokens - self.tokens) / self.fill_rate_per_sec
         return 3600.0
 
-    async def consume(self, tokens: int = 1):
+    async def consume(self, tokens: float = 1.0):
+        effective_tokens = max(0.0, min(float(tokens), float(self.capacity)))
         async with self._lock_for_loop():
             min_spacing = 1.0 / self.fill_rate_per_sec if self.fill_rate_per_sec > 0 else 4.2
             while True:
@@ -538,14 +537,14 @@ class AsyncTokenBucket:
                     self.last_fill = now
 
                     spacing_wait = max(0.0, min_spacing - (now - self.last_consume))
-                    if self.tokens >= tokens and spacing_wait <= 0.0:
-                        self.tokens -= tokens
+                    if self.tokens >= effective_tokens and spacing_wait <= 0.0:
+                        self.tokens -= effective_tokens
                         self.last_consume = now
                         return
 
-                    token_wait = self._token_wait(tokens)
+                    token_wait = self._token_wait(effective_tokens)
                     wait_time = max(spacing_wait, token_wait)
-                    starved = self.tokens < tokens
+                    starved = self.tokens < effective_tokens
                     if starved:
                         self.starvation_events += 1
                     starvation_events = self.starvation_events
@@ -561,7 +560,7 @@ class AsyncTokenBucket:
 
                 if starved:
                     logger.warning(
-                        f"[Rate Limiter SOTA] Starvation detectado. Aguardando {wait_time:.2f}s para {tokens} tokens."
+                        f"[Rate Limiter SOTA] Starvation detectado. Aguardando {wait_time:.2f}s para {effective_tokens} tokens."
                     )
                 await asyncio.sleep(wait_time)
 

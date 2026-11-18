@@ -11,12 +11,16 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum, StrEnum
+import ipaddress
 import json
 import logging
+import os
 from pathlib import Path
 import re
+import socket
 import time
 from typing import Final
+from urllib.parse import urlsplit
 import urllib.request
 
 from engine.clippy_clipboard import ClippyClipboard
@@ -35,7 +39,20 @@ HTTPS_PREFIX: Final[str] = "https://"
 # urllib abre file: e esquemas custom; o modo CDP_BROWSER explicito aceita qualquer texto.
 ALLOWED_FETCH_SCHEMES: Final[tuple[str, ...]] = (HTTP_PREFIX, HTTPS_PREFIX)
 
-_CDP_LOCK = asyncio.Lock()
+_CDP_LOCKS: dict[int, tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
+
+
+def _get_cdp_lock() -> asyncio.Lock:
+    loop = asyncio.get_running_loop()
+    loop_id = id(loop)
+    dead = [lid for lid, (l_obj, _) in _CDP_LOCKS.items() if l_obj.is_closed() and l_obj is not loop]
+    for lid in dead:
+        _CDP_LOCKS.pop(lid, None)
+    pair = _CDP_LOCKS.get(loop_id)
+    if pair is None or pair[0] is not loop:
+        pair = (loop, asyncio.Lock())
+        _CDP_LOCKS[loop_id] = pair
+    return pair[1]
 
 
 class WebBrowseMode(StrEnum):
@@ -139,17 +156,57 @@ class CDPBrowserBridge:
         except Exception as e:
             return {"online": False, "port": port, "error": str(e)}
 
+    @staticmethod
+    def _is_blocked_ip(raw_ip: str) -> bool:
+        try:
+            ip = ipaddress.ip_address(raw_ip.split("%", maxsplit=1)[0])
+        except ValueError:
+            return False
+        return ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_reserved or ip.is_multicast
+
+    @staticmethod
+    def _resolve_host_ips(hostname: str) -> list[str]:
+        try:
+            addr_infos = socket.getaddrinfo(hostname, None)
+        except OSError:
+            return []
+        return [str(info[4][0]) for info in addr_infos]
+
+    @classmethod
+    def _validate_public_fetch_url(cls, url: str) -> str | None:
+        """Recusa esquemas invalidos e destinos internos/loopback/privados (protecao SSRF)."""
+        cleaned = url.strip()
+        if not cleaned.lower().startswith(ALLOWED_FETCH_SCHEMES):
+            return f"Esquema de URL recusado: somente {HTTP_PREFIX} e {HTTPS_PREFIX}"
+        hostname = (urlsplit(cleaned).hostname or "").strip().lower()
+        if not hostname:
+            return "Host de URL ausente."
+        if os.environ.get("SOTA_ALLOW_LOCAL_FETCH") == "1":
+            return None
+        if hostname in {"localhost", "localhost.localdomain"} or hostname.endswith(".local"):
+            return f"Destino interno bloqueado por politica SSRF: {hostname}"
+        resolved_ips = cls._resolve_host_ips(hostname)
+        if not resolved_ips:
+            if cls._is_blocked_ip(hostname):
+                return f"IP interno bloqueado por politica SSRF: {hostname}"
+            return None
+        blocked_ip = next((ip_str for ip_str in resolved_ips if cls._is_blocked_ip(ip_str)), None)
+        if blocked_ip is not None:
+            return f"Endereco resolvido interno bloqueado por politica SSRF: {blocked_ip}"
+        return None
+
     async def fetch_page_content(self, url: str, timeout_sec: float = 10.0) -> dict[str, str | None]:
-        if not url.strip().lower().startswith(ALLOWED_FETCH_SCHEMES):
-            return {"error": f"Esquema de URL recusado: somente {HTTP_PREFIX} e {HTTPS_PREFIX}", "url": url}
-        port = self.get_active_port()
+        ssrf_err = self._validate_public_fetch_url(url)
+        if ssrf_err:
+            return {"error": ssrf_err, "url": url}
+        port = await asyncio.to_thread(self.get_active_port)
         if not port:
             return {"error": "Nenhuma instancia do Google Chrome Dev (CDP) ativa nas portas 9222/9223"}
 
-        async with _CDP_LOCK:
+        async with _get_cdp_lock():
             # Safe HTTP fetch via Chrome Dev endpoint / fallback to direct content parser
             try:
-                req = urllib.request.Request(  # noqa: S310 - esquema validado acima  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
+                req = urllib.request.Request(  # noqa: S310 - esquema e destino validados acima  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
                     url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) SOTA/8.0"}
                 )
                 loop = asyncio.get_running_loop()
@@ -168,10 +225,18 @@ class CDPBrowserBridge:
             except Exception as e:
                 return {"error": str(e), "url": url}
 
-    @staticmethod
-    def _sync_fetch(req: urllib.request.Request, timeout_sec: float) -> str:
-        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:  # noqa: S310 - so chamado apos validar esquema  # Record-Id: registro-2026-09-16-preludio-saneamento-pos-crise-de-quota
-            raw = resp.read()
+    @classmethod
+    def _sync_fetch(cls, req: urllib.request.Request, timeout_sec: float) -> str:
+        class _SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                err = cls._validate_public_fetch_url(newurl)
+                if err:
+                    raise ValueError(err)
+                return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+        opener = urllib.request.build_opener(_SafeRedirectHandler())
+        with opener.open(req, timeout=timeout_sec) as resp:
+            raw = resp.read(2 * 1024 * 1024)
             return raw.decode("utf-8", errors="replace")
 
 

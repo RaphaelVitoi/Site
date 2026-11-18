@@ -5,9 +5,11 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+import re
 import sys
 
 logger = logging.getLogger(__name__)
+_ENV_KEY_RE = re.compile(r"^[A-Za-z_]\w*$", re.ASCII)
 
 
 def _parse_env_line(line: str) -> tuple[str, str]:
@@ -25,7 +27,9 @@ def _parse_env_line(line: str) -> tuple[str, str]:
         return parts[0].strip(), parts[1].strip()
     elif ":" in line:
         parts = line.split(":", 1)
-        return parts[0].strip(), parts[1].strip()
+        cand_key = parts[0].strip()
+        if _ENV_KEY_RE.fullmatch(cand_key):
+            return cand_key, parts[1].strip()
     return "", ""
 
 
@@ -179,3 +183,20 @@ def load_env() -> dict[str, str]:
     _apply_platform_guards(keys)
 
     return keys
+
+
+def is_real_key_value(value: str, revoked_raw: str | None = None) -> bool:
+    """Valida se o segredo nao e placeholder, curto demais ou sufixo revogado."""
+    if not value:
+        return False
+    v = value.strip()
+    invalid_prefixes = ("$env:", "${", "sk-REPLACE", "SUA_KEY", "COLE_SUA_KEY", "COLOQUE_", "dummy-", "dummy")
+    if any(v.startswith(prefix) for prefix in invalid_prefixes):
+        return False
+
+    if len(v) < 12:
+        return False
+
+    raw = revoked_raw if revoked_raw is not None else os.environ.get("REVOKED_KEY_SUFFIXES", "XfUE")
+    invalid_suffixes = tuple(s.strip() for s in raw.split(",") if s.strip())
+    return not any(v.endswith(suffix) for suffix in invalid_suffixes)

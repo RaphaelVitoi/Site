@@ -12,13 +12,16 @@ import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from enum import StrEnum
+import logging
 import os
 import re
+import secrets
 import sys
 import time
 from typing import TYPE_CHECKING, Any
+import uuid
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, JsonValue
@@ -96,8 +99,10 @@ class GenerateRequest(BaseModel):
         }
     )
 
-    prompt: str = Field(..., min_length=1, description="Payload de entrada para inferencia.")
-    system_instruction: str = Field(default="", description="Instrucoes de sistema ou metaprompt de governanca.")
+    prompt: str = Field(..., min_length=1, max_length=64000, description="Payload de entrada para inferencia.")
+    system_instruction: str = Field(
+        default="", max_length=16000, description="Instrucoes de sistema ou metaprompt de governanca."
+    )
     force_target: ExecutionTarget | None = Field(default=None, description="Sobrescreve a heuristica do roteador.")
     thinking_budget_override: int | None = Field(
         default=None, ge=-1, le=65536, description="Orcamento de raciocinio (-1=dinamico, 0=off, >0=fixo)."
@@ -415,12 +420,7 @@ class HybridOrchestrator:
         if not self.cloud.is_configured:
             # Modo de simulacao offline opcional para testes de infraestrutura
             if os.getenv("SIMULATE_INFERENCE", "false").lower() in ("true", "1", "yes"):
-                if target == ExecutionTarget.LOCAL_LLAMA_VULKAN:
-                    sim_latency = 120.0
-                elif target == ExecutionTarget.GEMINI_37_FLASH_STANDARD:
-                    sim_latency = 450.0
-                else:
-                    sim_latency = 1200.0
+                sim_latency = 450.0 if target == ExecutionTarget.GEMINI_37_FLASH_STANDARD else 1200.0
                 await asyncio.sleep(sim_latency / 1000.0)
                 latency = (time.perf_counter() - start_time) * 1000.0
                 return GenerateResponse(
@@ -481,6 +481,36 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     await local_llama_client.close()
 
 
+logger = logging.getLogger("hybrid_router")
+
+_DEFAULT_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:17042",
+    "http://localhost:17042",
+]
+
+
+def _hybrid_trusted_origins() -> list[str]:
+    raw = os.getenv("NEXUS_TRUSTED_ORIGINS", "").strip()
+    if not raw:
+        return list(_DEFAULT_TRUSTED_ORIGINS)
+    return [o.strip() for o in raw.split(",") if o.strip() and o.strip() != "*"]
+
+
+def _verify_hybrid_router_auth(authorization: str | None = Header(default=None)) -> None:
+    configured_token = os.getenv("HYBRID_ROUTER_API_KEY", "").strip()
+    if not configured_token and os.getenv("HYBRID_ROUTER_REQUIRE_AUTH") == "1":
+        configured_token = os.getenv("API_SECRET_TOKEN", "").strip()
+    if not configured_token:
+        return
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Autorizacao ausente ou mal formatada.")
+    token = authorization[7:].strip()
+    if not secrets.compare_digest(token, configured_token):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token invalido.")
+
+
 app = FastAPI(
     title="Hybrid Edge/Cloud LLM Router API SOTA",
     description="Microservico de alta densidade para roteamento dinamico entre llama.cpp (Vulkan) e Google Gemini 3.8 Flash.",
@@ -490,10 +520,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_hybrid_trusted_origins(),
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -509,7 +539,7 @@ async def health_check() -> HealthCheckResponse:
     )
 
 
-@app.post("/v1/router/analyze", tags=["Roteamento"])
+@app.post("/v1/router/analyze", tags=["Roteamento"], dependencies=[Depends(_verify_hybrid_router_auth)])
 async def analyze_prompt(request: GenerateRequest) -> RouteMetrics:
     return analyzer.compute_metrics(
         prompt=request.prompt,
@@ -520,16 +550,18 @@ async def analyze_prompt(request: GenerateRequest) -> RouteMetrics:
     )
 
 
-@app.post("/v1/chat/generate", tags=["Inferencia"])
+@app.post("/v1/chat/generate", tags=["Inferencia"], dependencies=[Depends(_verify_hybrid_router_auth)])
 async def generate_completion(request: GenerateRequest) -> GenerateResponse:
     try:
         return await orchestrator.dispatch(request)
     except HTTPException:
         raise
     except Exception as exc:
+        error_id = uuid.uuid4().hex[:12]
+        logger.exception("[%s] Falha durante o pipeline de geracao do hybrid_router", error_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Falha durante o pipeline de geracao: {str(exc)}",
+            detail=f"Falha interna durante o pipeline de geracao (error_id={error_id}).",
         ) from exc
 
 
@@ -539,4 +571,4 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
     # Padrao loopback: em conteiner, HOST=0.0.0.0 vem do compose/Dockerfile.
     host = os.getenv("HOST", "127.0.0.1")
-    uvicorn.run("app:app", host=host, port=port, reload=False, log_level="info")
+    uvicorn.run(app, host=host, port=port, reload=False, log_level="info")

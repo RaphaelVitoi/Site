@@ -466,7 +466,7 @@ class SplashStrategy(LLMProviderStrategy):
             from llm.splash_client import LocalSplashClient  # noqa: PLC0415
 
             client = LocalSplashClient(host=self.host, port=self.port, timeout=2.0)
-            return not client.is_healthy()
+            return not await asyncio.to_thread(client.is_healthy)
         except Exception:
             return True
 
@@ -486,7 +486,7 @@ class SplashStrategy(LLMProviderStrategy):
         from llm.splash_client import LocalSplashClient  # noqa: PLC0415
 
         client = LocalSplashClient(host=self.host, port=self.port)
-        if not client.is_healthy():
+        if not await asyncio.to_thread(client.is_healthy):
             raise ConnectionError(
                 f"Splash engine offline ou insalubre na porta {self.port}. Inicie via LM Studio Bionic ou servidor local."
             )
@@ -626,7 +626,7 @@ async def _check_provider_availability(provider: str, model: str) -> bool:
 
     # Dispatch to provider-specific checkers
     if provider == "local":
-        return _check_local_llama_availability(model)
+        return await asyncio.to_thread(_check_local_llama_availability, model)
     if provider == "openrouter":
         return await _check_openrouter_availability()
     if provider == "gemini":
@@ -798,6 +798,7 @@ async def _handle_5xx_error(
     route_key: str,
     general_retries_left: int,
     rate_limit_retries_left: int,
+    key_hash: str = "none",
 ) -> tuple[bool, int, int]:
     await _register_route_failure(route_key)
     if general_retries_left < 0:
@@ -806,6 +807,17 @@ async def _handle_5xx_error(
             ctx.c_func(ctx.task.agent),
             ctx.task.agent,
             strategy.name,
+        )
+        await ctx.manager.record_key_usage_metric(
+            provider=ctx.provider,
+            key_hash=key_hash,
+            status="5xx_error",
+            latency_ms=0,
+            error_class="HTTP5xxError",
+            error_detail=f"{strategy.name} HTTP {status_code}",
+            model=ctx.model,
+            agent=ctx.task.agent,
+            task_id=ctx.task.id,
         )
         return False, general_retries_left, rate_limit_retries_left
     logger.warning(
@@ -826,6 +838,7 @@ async def _handle_429_error(
     ctx: ProviderContext,
     general_retries_left: int,
     rate_limit_retries_left: int,
+    key_hash: str = "none",
 ) -> tuple[bool, int, int]:
     try:
         match = re.search(r"retry_after=(\d+)", error_msg)
@@ -858,11 +871,18 @@ async def _handle_429_error(
         strategy.name,
         ctx.model,
     )
-    sys_rand = secrets.SystemRandom()
-    if delay <= 65:
-        await asyncio.sleep(float(delay) + sys_rand.uniform(1.0, 3.0))
-    else:
-        await asyncio.sleep(sys_rand.uniform(2.0, 4.0))
+    await ctx.manager.record_key_usage_metric(
+        provider=ctx.provider,
+        key_hash=key_hash,
+        status="rate_limited",
+        latency_ms=0,
+        error_class="HTTP429Error",
+        error_detail=f"{strategy.name} 429 quota exhausted",
+        model=ctx.model,
+        agent=ctx.task.agent,
+        task_id=ctx.task.id,
+    )
+    await asyncio.sleep(0.25)
     return False, general_retries_left, rate_limit_retries_left
 
 
@@ -948,17 +968,23 @@ async def _handle_general_error(
             route_key,
             general_retries_left,
             rate_limit_retries_left,
+            key_hash=key_hash,
         )
 
     if "429" in error_msg:
         should_retry, g_left, r_left = await _handle_429_error(
-            error_msg, strategy, ctx, general_retries_left, rate_limit_retries_left
+            error_msg,
+            strategy,
+            ctx,
+            general_retries_left,
+            rate_limit_retries_left,
+            key_hash=key_hash,
         )
         if not should_retry and ctx.provider == "gemini":
             await _block_gemini_model_key(ctx.model, key)
         return should_retry, g_left, r_left
 
-    if general_retries_left >= 0:
+    if general_retries_left >= 0 and status_code not in (400, 401, 402, 403, 404) and not _is_semantic_gemini_error(e):
         logger.warning(
             "[[%s]%s[/]] Erro geral em %s (%s). Retentando... (%d restantes)",
             ctx.c_func(ctx.task.agent),

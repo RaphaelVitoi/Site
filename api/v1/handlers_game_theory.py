@@ -15,7 +15,7 @@ from typing import Any
 from aiohttp import web
 from pydantic import ValidationError
 
-from api.v1.handler_support import INVALID_JSON_BODY, _internal_error, _with_execution_provenance
+from api.v1.handler_support import INVALID_JSON_BODY, _internal_error, _with_execution_provenance, read_json_object
 from core.game_theory_schemas import (
     ClaudicoTranslateRequest,
     ClaudicoTranslateResponse,
@@ -41,17 +41,16 @@ from llm.laya_solver_adapter import LayaSolverAdapter
 async def handle_pluribus_solve(request: web.Request) -> web.Response:
     """Resolve uma decisao multiway com horizonte finito e passivo quadratico PMev."""
     t_start = time.perf_counter()
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = PluribusSolveRequest.model_validate(data)
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
 
-    def _execute_pluribus() -> tuple[dict[str, Any], dict[str, Any]]:
+    def _execute_pluribus() -> tuple[dict[str, Any], dict[str, Any], int]:
         # Adaptacao S1 (Laya) para Pluribus se request trouxer prompt ou metadata
         adapted_iters = req.iterations
         adapted_lambda = req.state.lambda_factor
@@ -64,8 +63,10 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
                 {"iterations": req.iterations, "lambda_factor": req.state.lambda_factor},
                 use_cascade=True,
             )
-            adapted_iters = int(bridge_res.adapted_parameters.get("iterations", req.iterations))
-            adapted_lambda = float(bridge_res.adapted_parameters.get("lambda_factor", req.state.lambda_factor))
+            adapted_iters = max(1, min(1000, int(bridge_res.adapted_parameters.get("iterations", req.iterations))))
+            adapted_lambda = max(
+                0.0, min(5.0, float(bridge_res.adapted_parameters.get("lambda_factor", req.state.lambda_factor)))
+            )
             laya_meta = {
                 "laya_adapted": True,
                 "engine_id": bridge_res.provenia.engine_id,
@@ -87,10 +88,10 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
             depth_streets=req.depth_streets,
             iterations=adapted_iters,
         )
-        return res_solve, laya_meta
+        return res_solve, laya_meta, adapted_iters
 
     try:
-        solve_result, laya_meta = await asyncio.to_thread(_execute_pluribus)
+        solve_result, laya_meta, adapted_iters = await asyncio.to_thread(_execute_pluribus)
         elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
         resp = PluribusSolveResponse(
@@ -109,7 +110,7 @@ async def handle_pluribus_solve(request: web.Request) -> web.Response:
             raise_cost=round(float(solve_result["raise_cost"]), 4),
             horizon_liability=round(float(solve_result["horizon_liability"]), 4),
             action_evs={key: round(float(value), 4) for key, value in solve_result["action_evs"].items()},
-            iterations_run=req.iterations,
+            iterations_run=adapted_iters,
             execution_time_ms=elapsed_ms,
         )
         payload = resp.model_dump()
@@ -143,17 +144,18 @@ def _aggregate_action_frequencies(
 async def handle_deepstack_resolve(request: web.Request) -> web.Response:
     """Executa o Continual Resolving no estilo DeepStack ancorado em Gadget Bounds."""
     t_start = time.perf_counter()
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = DeepStackResolveRequest.model_validate(data)
     except ValidationError as ve:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
 
-    def _execute_deepstack() -> tuple[dict[str, float], dict[str, dict[str, float]], dict[str, float], dict[str, Any]]:
+    def _execute_deepstack() -> tuple[
+        dict[str, float], dict[str, dict[str, float]], dict[str, float], dict[str, Any], int
+    ]:
         # Adaptacao S1 (Laya) para DeepStack se request trouxer prompt ou metadata
         adapted_iters = req.iterations
         laya_meta: dict[str, Any] = {}
@@ -170,7 +172,7 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
                 if bridge_res.s1_prediction.noul
                 else req.iterations
             )
-            adapted_iters = max(1, adapted_iters)
+            adapted_iters = max(1, min(1000, adapted_iters))
             laya_meta = {
                 "laya_adapted": True,
                 "engine_id": bridge_res.provenia.engine_id,
@@ -189,10 +191,10 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
         raw_strategy = ContinualResolvingEngine.resolve_subgame(subgame, iterations=adapted_iters)
 
         agg_freqs = _aggregate_action_frequencies(raw_strategy, req.ranges_ip)
-        return gadget_bounds, raw_strategy, {k: round(v, 4) for k, v in agg_freqs.items()}, laya_meta
+        return gadget_bounds, raw_strategy, {k: round(v, 4) for k, v in agg_freqs.items()}, laya_meta, adapted_iters
 
     try:
-        gadget_bounds, strategy, agg_freqs, laya_meta = await asyncio.to_thread(_execute_deepstack)
+        gadget_bounds, strategy, agg_freqs, laya_meta, adapted_iters = await asyncio.to_thread(_execute_deepstack)
         elapsed_ms = round((time.perf_counter() - t_start) * 1000, 2)
 
         resp = DeepStackResolveResponse(
@@ -202,7 +204,7 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
             gadget_game_bounds={k: round(v, 4) for k, v in gadget_bounds.items()},
             strategy=strategy,
             aggregated_action_frequencies=agg_freqs,
-            iterations_run=req.iterations,
+            iterations_run=adapted_iters,
             execution_time_ms=elapsed_ms,
         )
         payload = resp.model_dump()
@@ -215,10 +217,9 @@ async def handle_deepstack_resolve(request: web.Request) -> web.Response:
 
 async def handle_rebel_pbs_evaluate(request: web.Request) -> web.Response:
     """Avalia o Public Belief State (PBS) computando entropias de range."""
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = RebelPbsEvaluateRequest.model_validate(data)
@@ -259,8 +260,10 @@ async def handle_rebel_pbs_evaluate(request: web.Request) -> web.Response:
 
 async def handle_claudico_translate_action(request: web.Request) -> web.Response:
     """Mapeia uma aposta fora da arvore para as opcoes discretas vizinhas."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = ClaudicoTranslateRequest.model_validate(data)
 
         mapping = ClaudicoActionTranslator.pseudo_harmonic_mapping(

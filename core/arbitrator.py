@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import math
+import threading
 import time
 from typing import Any, ClassVar
 
@@ -46,6 +47,7 @@ class UniversalArbitrator:
     PROPAGATION_GAMMA: ClassVar[float] = 0.8  # Desconto de profundidade topologica
 
     _dag_cache: ClassVar[dict[int, tuple[dict[str, dict[str, Any]], float]]] = {}
+    _dag_cache_lock: ClassVar[threading.Lock] = threading.Lock()
     CACHE_TTL_SECONDS: ClassVar[float] = 3.0
 
     @classmethod
@@ -116,24 +118,38 @@ class UniversalArbitrator:
         if not pending_tasks:
             return {}
 
-        current_hash = hash(tuple(sorted([t.id for t in pending_tasks])))
+        current_hash = hash(
+            tuple(
+                sorted(
+                    (
+                        t.id,
+                        t.status,
+                        str((t.metadata or {}).get("priority", "normal")),
+                        tuple(cls.dependency_ids(t)),
+                    )
+                    for t in pending_tasks
+                )
+            )
+        )
         current_time = time.monotonic()
 
-        if current_hash in cls._dag_cache:
-            cache_map, cache_time = cls._dag_cache[current_hash]
-            if (current_time - cache_time) < cls.CACHE_TTL_SECONDS:
-                return cache_map
+        with cls._dag_cache_lock:
+            if current_hash in cls._dag_cache:
+                cache_map, cache_time = cls._dag_cache[current_hash]
+                if (current_time - cache_time) < cls.CACHE_TTL_SECONDS:
+                    return cache_map
 
         graph = cls._build_graph(pending_tasks)
         cls._compute_utilities(graph)
 
-        # Previne vazamento infinito de memoria no dicionario estatico
-        if len(cls._dag_cache) >= 100:
-            cls._dag_cache = {
-                h: (g, t) for h, (g, t) in cls._dag_cache.items() if (current_time - t) < cls.CACHE_TTL_SECONDS
-            }
+        with cls._dag_cache_lock:
+            # Previne vazamento infinito de memoria no dicionario estatico
+            if len(cls._dag_cache) >= 100:
+                cls._dag_cache = {
+                    h: (g, t) for h, (g, t) in cls._dag_cache.items() if (current_time - t) < cls.CACHE_TTL_SECONDS
+                }
 
-        cls._dag_cache[current_hash] = (graph, current_time)
+            cls._dag_cache[current_hash] = (graph, current_time)
 
         return graph
 

@@ -22,7 +22,11 @@ import logging
 import os
 import re
 import sys
+import threading
 from typing import NamedTuple, TypedDict
+import weakref
+
+from utils.env_loader import is_real_key_value
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +43,15 @@ _HMAC_SALT: bytes = b"sota_openrouter_pool_salt"
 def _key_sha8(key: str) -> str:
     """Calcula fingerprint truncado de 8 caracteres do token para telemetria sem vazamento."""
     return hmac.new(_HMAC_SALT, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
+
+
+def _is_real_key_value(value: str) -> bool:
+    """Valida chave real delegando para llm.budget quando carregado (sem ciclo de import)."""
+    budget_mod = sys.modules.get("llm.budget")
+    fn = getattr(budget_mod, "_is_real_key_value", None) if budget_mod is not None else None
+    if callable(fn):
+        return bool(fn(value))
+    return is_real_key_value(value)
 
 
 class KeyHealth(NamedTuple):
@@ -107,7 +120,7 @@ _NAMED_OPENROUTER_KEY_VARS = (
 def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
     new_pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
     for var_name, var_value in env_map.items():
-        if not var_value or len(var_value) < 10:
+        if not var_value or not _is_real_key_value(var_value):
             continue
         m = RE_TIER_KEY.match(var_name.upper())
         if m:
@@ -116,13 +129,13 @@ def _build_openrouter_pools(env_map: dict[str, str]) -> dict[int, list[str]]:
                 new_pools[tier].append(var_value)
 
     legacy_key = env_map.get("OPENROUTER_API_KEY", "").strip()
-    if legacy_key and len(legacy_key) >= 10 and not new_pools[1]:
+    if legacy_key and _is_real_key_value(legacy_key) and not new_pools[1]:
         new_pools[1].append(legacy_key)
 
     known_keys = {k for tier_keys in new_pools.values() for k in tier_keys}
     for var_name in _NAMED_OPENROUTER_KEY_VARS:
         val = env_map.get(var_name, "").strip()
-        if val and len(val) >= 10 and val not in known_keys:
+        if val and _is_real_key_value(val) and val not in known_keys:
             new_pools[4].append(val)
             known_keys.add(val)
     return new_pools
@@ -154,28 +167,54 @@ class OpenRouterPoolManager:
 
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
+        self._loop_locks: dict[int, tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = {}
+        self._loop_locks_guard = threading.Lock()
+        self._loop_refs: dict[int, weakref.ref[asyncio.AbstractEventLoop]] = {}
+        self._sync_lock = threading.RLock()
         self._pools: dict[int, list[str]] = {1: [], 2: [], 3: [], 4: []}
         self._stats: dict[str, KeyStats] = {}
         self.reload_from_environment()
+
+    def _get_lock(self) -> asyncio.Lock:
+        """Retorna lock asyncio isolado por event loop."""
+        loop = asyncio.get_running_loop()
+        loop_id = id(loop)
+        with self._loop_locks_guard:
+            dead_ids = [lid for lid, (lp, _) in self._loop_locks.items() if lp.is_closed() and lp is not loop]
+            for lid in dead_ids:
+                self._loop_locks.pop(lid, None)
+                self._loop_refs.pop(lid, None)
+            prev_ref = self._loop_refs.get(loop_id)
+            prev_loop = prev_ref() if prev_ref is not None else None
+            entry = self._loop_locks.get(loop_id)
+            if entry is None or entry[0] is not loop or prev_loop is not loop or loop.is_closed():
+                lock = asyncio.Lock()
+                self._loop_locks[loop_id] = (loop, lock)
+                self._loop_refs[loop_id] = weakref.ref(loop)
+                return lock
+            return entry[1]
 
     def reload_from_environment(self) -> None:
         """Carrega todas as chaves por Tier a partir do os.environ e do Registro (HKCU/HKLM no Windows)."""
         env_map: dict[str, str] = dict(os.environ)
         _read_windows_registry_openrouter(env_map)
-        self._pools = _build_openrouter_pools(env_map)
-        _init_key_stats(self._stats, self._pools)
+        with self._sync_lock:
+            self._pools = _build_openrouter_pools(env_map)
+            _init_key_stats(self._stats, self._pools)
+            t1, t2, t3, t4 = (len(self._pools[i]) for i in (1, 2, 3, 4))
 
         logger.info(
             "[OPENROUTER POOL] Pools carregados: Tier1=%d, Tier2=%d, Tier3=%d, Tier4=%d",
-            len(self._pools[1]),
-            len(self._pools[2]),
-            len(self._pools[3]),
-            len(self._pools[4]),
+            t1,
+            t2,
+            t3,
+            t4,
         )
 
     def get_pool_keys(self, tier: int) -> list[str]:
         """Devolve as chaves brutas registradas para o tier informado."""
-        return list(self._pools.get(tier, []))
+        with self._sync_lock:
+            return list(self._pools.get(tier, []))
 
     def _score_key(self, s8: str) -> float:
         """Calcula score de saude (0-100) para desempate adaptativo."""
@@ -208,7 +247,7 @@ class OpenRouterPoolManager:
         Seleciona a chave mais saudavel do pool do tier requisitado.
         Devolve (chave, tier_efetivo) ou (None, 0) caso todas estejam esgotadas.
         """
-        async with self._lock:
+        async with self._get_lock():
             # Ordem de busca: tier solicitado -> fallbacks autorizados
             tiers_to_try = [tier]
             if allow_fallback:
@@ -246,7 +285,7 @@ class OpenRouterPoolManager:
     async def mark_success(self, key: str, latency_ms: float) -> None:
         """Registra requisicao bem-sucedida, atualizando latencia e zerando cooldowns."""
         s8 = _key_sha8(key)
-        async with self._lock:
+        async with self._get_lock():
             if s8 not in self._stats:
                 return
             st = self._stats[s8]
@@ -263,7 +302,7 @@ class OpenRouterPoolManager:
         """Registra falha e aciona circuit breaker com base no status HTTP."""
         s8 = _key_sha8(key)
         now = datetime.now(UTC)
-        async with self._lock:
+        async with self._get_lock():
             if s8 not in self._stats:
                 return
             st = self._stats[s8]
@@ -291,25 +330,27 @@ class OpenRouterPoolManager:
     def get_telemetry_summary(self) -> list[dict[str, str | int | float | bool]]:
         """Gera resumo factual de saude de todas as chaves sem expor segredos."""
         summary: list[dict[str, str | int | float | bool]] = []
-        for s8, st in sorted(self._stats.items(), key=lambda x: (x[1]["tier"], x[0])):
-            blocked = False
-            b_until = st["blocked_until"]
-            if b_until and isinstance(b_until, datetime):
-                blocked = datetime.now(UTC) < b_until
+        with self._sync_lock:
+            stats_snapshot = sorted(self._stats.items(), key=lambda x: (x[1]["tier"], x[0]))
+            for s8, st in stats_snapshot:
+                blocked = False
+                b_until = st["blocked_until"]
+                if b_until and isinstance(b_until, datetime):
+                    blocked = datetime.now(UTC) < b_until
 
-            summary.append(
-                {
-                    "sha8": s8,
-                    "tier": st["tier"],
-                    "attempts": st["attempts"],
-                    "successes": st["successes"],
-                    "failures": st["failures"],
-                    "avg_latency_ms": round(st["avg_latency_ms"], 1),
-                    "is_blocked": blocked,
-                    "is_revoked": st["is_revoked"],
-                    "score": round(self._score_key(s8), 1),
-                }
-            )
+                summary.append(
+                    {
+                        "sha8": s8,
+                        "tier": st["tier"],
+                        "attempts": st["attempts"],
+                        "successes": st["successes"],
+                        "failures": st["failures"],
+                        "avg_latency_ms": round(st["avg_latency_ms"], 1),
+                        "is_blocked": blocked,
+                        "is_revoked": st["is_revoked"],
+                        "score": round(self._score_key(s8), 1),
+                    }
+                )
         return summary
 
 

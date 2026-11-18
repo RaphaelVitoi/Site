@@ -20,6 +20,7 @@ from rich.panel import Panel
 
 from agents.execution import execute_task_workflow
 from core.arbitrator import UniversalArbitrator
+import core.config as _core_config
 import core.runtime as te
 from core.schemas import Task
 from database.queue_manager import QueueManager
@@ -123,14 +124,14 @@ async def _handle_hibernation(manager: QueueManager, status_line: Any) -> bool:
         # SOTA: Reset absoluto da memoria de bloqueios ao acordar da hibernacao
         await manager.set_system_state("hibernation_until", "")
         for limiter in _RATE_LIMITERS.values():
-            limiter.tokens = float(limiter.capacity)
-            limiter.last_fill = time.monotonic()
-            limiter.starvation_events = 0
+            limiter.reset()
         async with get_telemetry_lock():
             ROUTE_BLOCKLIST.clear()
             KEY_BLOCKLIST.clear()
             GEMINI_MODEL_KEY_BLOCKLIST.clear()
             ROUTE_FAILURE_COUNTS.clear()
+        with _core_config._BLOCKLIST_LOCK:
+            _core_config.KEY_BLOCKLIST.clear()
         logger.info(
             "[SISTEMA IMUNOLOGICO] Hibernacao concluida. Amnesia de bloqueios induzida. "
             "Rotas, chaves e rate limits restaurados para Friccao Zero."
@@ -374,23 +375,22 @@ async def _cleanup_worker(manager: QueueManager, running_tasks: set[asyncio.Futu
             _ = await asyncio.wait(running_tasks, timeout=5.0)
         except Exception as e:  # noqa: BLE001
             logger.warning("[SISTEMA] Cancelamento interrompido: %s", e)
-        try:
-            # So as reservas DESTE worker (BK-07); as de outro processo seguem com ele.
-            released = await manager.release_tasks_claimed_by(WORKER_ID)
-            logger.info("[SISTEMA] %d tarefas deste worker revertidas para 'pending'.", released)
-        except Exception:  # noqa: BLE001
-            logger.exception("[SISTEMA] Falha ao curar estado zombie no banco de dados")
+
+    try:
+        # So as reservas DESTE worker (BK-07); as de outro processo seguem com ele.
+        released = await manager.release_tasks_claimed_by(WORKER_ID)
+        logger.info("[SISTEMA] %d tarefas deste worker revertidas para 'pending'.", released)
+    except Exception:  # noqa: BLE001
+        logger.exception("[SISTEMA] Falha ao curar estado zombie no banco de dados")
 
     if te.PID_FILE and te.PID_FILE.exists():
         with contextlib.suppress(OSError):
             te.PID_FILE.unlink()  # type: ignore
 
-    if hasattr(_llm_session_mod, "_global_http_session"):
-        session = getattr(_llm_session_mod, "_global_http_session", None)
-        if session and not session.closed:
-            await session.close()
-            await asyncio.sleep(0.250)  # SOTA: Respiro para expurgo de sockets e conexoes SSL do aiohttp
-        setattr(_llm_session_mod, "_global_http_session", None)  # noqa: B010
+    close_fn = getattr(_llm_session_mod, "close_all_http_sessions", None)
+    if callable(close_fn):
+        await close_fn()  # type: ignore[misc]
+        await asyncio.sleep(0.250)  # SOTA: Respiro para expurgo de sockets e conexoes SSL do aiohttp
 
 
 async def start_worker(manager: QueueManager | None = None) -> None:
@@ -448,10 +448,10 @@ async def start_worker(manager: QueueManager | None = None) -> None:
 
     try:
         while True:
-            if await _handle_hibernation(manager, status_line):
-                continue
-
             try:
+                if await _handle_hibernation(manager, status_line):
+                    continue
+
                 counts = await manager.get_task_counts()
                 _update_terminal_status(counts, len(running_tasks), status_line)
 

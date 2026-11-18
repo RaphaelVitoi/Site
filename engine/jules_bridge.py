@@ -272,7 +272,8 @@ class JulesClient:
         if not self.is_configured:
             raise ValueError(JULES_ERROR_NOT_CONFIGURED)
 
-        url = f"{JULES_API_BASE}/sessions/{session_id}:sendMessage"
+        clean_id = urllib.parse.quote(session_id.split("/")[-1], safe="")
+        url = f"{JULES_API_BASE}/sessions/{clean_id}:sendMessage"
         payload = json.dumps({"prompt": message}).encode("utf-8")
         req = urllib.request.Request(url, data=payload, headers=self._get_headers(), method="POST")
 
@@ -308,7 +309,8 @@ class JulesClient:
         if not self.is_configured:
             raise ValueError(JULES_ERROR_NOT_CONFIGURED)
 
-        url = f"{JULES_API_BASE}/sessions/{session_id}/diff"
+        clean_id = urllib.parse.quote(session_id.split("/")[-1], safe="")
+        url = f"{JULES_API_BASE}/sessions/{clean_id}/diff"
         req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
 
         try:
@@ -338,7 +340,7 @@ class JulesClient:
 
         url = f"{JULES_API_BASE}/sources?pageSize={page_size}"
         if page_token:
-            url += f"&pageToken={page_token}"
+            url += f"&pageToken={urllib.parse.quote(page_token, safe='')}"
         req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
 
         try:
@@ -359,7 +361,7 @@ class JulesClient:
 
         url = f"{JULES_API_BASE}/sessions?pageSize={page_size}"
         if page_token:
-            url += f"&pageToken={page_token}"
+            url += f"&pageToken={urllib.parse.quote(page_token, safe='')}"
         req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
 
         try:
@@ -378,14 +380,16 @@ class JulesClient:
         if not self.is_configured:
             return []
 
+        clean_id = urllib.parse.quote(session_id.split("/")[-1], safe="")
         all_activities: list[dict[str, object]] = []
         page_token = ""
+        max_pages: int = 50
 
         try:
-            while True:
-                url = f"{JULES_API_BASE}/sessions/{session_id}/activities?pageSize={page_size}"
+            for _ in range(max_pages):
+                url = f"{JULES_API_BASE}/sessions/{clean_id}/activities?pageSize={page_size}"
                 if page_token:
-                    url += f"&pageToken={urllib.parse.quote(page_token)}"
+                    url += f"&pageToken={urllib.parse.quote(page_token, safe='')}"
                 req = urllib.request.Request(url, headers=self._get_headers(), method="GET")
                 with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                     data = json.loads(resp.read().decode("utf-8"))

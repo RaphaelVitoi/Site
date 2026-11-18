@@ -5,7 +5,7 @@ from __future__ import annotations
 from aiohttp import web
 from pydantic import ValidationError
 
-from api.v1.handler_support import _internal_error, _with_execution_provenance
+from api.v1.handler_support import INVALID_JSON_BODY, _internal_error, _with_execution_provenance, read_json_object
 from core.canonical_theory_schemas import (
     ChenAKQGameRequest,
     ChenAKQGameResponse,
@@ -30,8 +30,10 @@ from engine.canonical_poker_theory import (
 
 async def handle_canonical_clairvoyance(request: web.Request) -> web.Response:
     """Resolve o Clairvoyance Game [0, 1] analiticamente (Chen & Ankenman, Cap. 11)."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = ChenClairvoyanceRequest.model_validate(data)
         sol = ChenClairvoyanceSolver.solve(pot=req.pot, bet=req.bet)
         resp = ChenClairvoyanceResponse(
@@ -54,8 +56,10 @@ async def handle_canonical_clairvoyance(request: web.Request) -> web.Response:
 
 async def handle_canonical_akq(request: web.Request) -> web.Response:
     """Resolve o Jogo AKQ analiticamente (Chen & Ankenman, Cap. 13 & 15)."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = ChenAKQGameRequest.model_validate(data)
         sol = ChenAKQGameSolver.solve(pot=req.pot, bet=req.bet)
         resp = ChenAKQGameResponse(
@@ -79,8 +83,10 @@ async def handle_canonical_akq(request: web.Request) -> web.Response:
 
 async def handle_canonical_janda_mdf(request: web.Request) -> web.Response:
     """Calcula a Minimum Defense Frequency (MDF) e responsabilidade multiway (Janda, Partes 1 & 12)."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = JandaMDFRequest.model_validate(data)
         res = JandaMDFCalculator.calculate_mdf(pot=req.pot, bet=req.bet, num_defenders=req.num_defenders)
         resp = JandaMDFResponse(
@@ -104,8 +110,10 @@ async def handle_canonical_janda_mdf(request: web.Request) -> web.Response:
 
 async def handle_canonical_geometric_sizing(request: web.Request) -> web.Response:
     """Calcula o Dimensionamento Geometrico de Apostas multi-rua (Janda, Partes 3 & 14)."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = JandaGeometricSizingRequest.model_validate(data)
         res = JandaGeometricBetSizing.calculate_geometric_sizing(
             pot=req.pot,
@@ -142,8 +150,10 @@ async def handle_canonical_geometric_sizing(request: web.Request) -> web.Respons
 
 async def handle_canonical_bluff_ratios(request: web.Request) -> web.Response:
     """Calcula as razoes de blefe para valor por rua (Janda, Parte 5)."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = JandaBluffRatioRequest.model_validate(data)
         res = JandaStreetBluffValueRatio.calculate_ratios(bet_fraction=req.bet_fraction_of_pot)
         resp = JandaBluffRatioResponse(

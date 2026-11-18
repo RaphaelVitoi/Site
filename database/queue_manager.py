@@ -11,8 +11,10 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import threading
 from typing import Any
 import uuid
+import weakref
 
 import aiosqlite
 
@@ -41,10 +43,26 @@ class QueueManager:
     def __init__(self, queue_path: str | None = None) -> None:
         self.base_path = Path(__file__).parent.parent.resolve()
         self._is_initialized = False
-        self._init_lock: asyncio.Lock | None = None
+        self._init_locks: dict[int, asyncio.Lock] = {}
+        self._init_locks_guard = threading.Lock()
+        self._init_loop_refs: dict[int, weakref.ref[asyncio.AbstractEventLoop]] = {}
         self._memory_conn_async = None
         self._resolve_db_path(queue_path)
         self._validate_path_traversal()
+
+    def _get_init_lock(self) -> asyncio.Lock:
+        """Retorna lock asyncio isolado por event loop com seguranca contra reuso de id()."""
+        loop = asyncio.get_running_loop()
+        loop_id = id(loop)
+        with self._init_locks_guard:
+            prev_ref = self._init_loop_refs.get(loop_id)
+            prev_loop = prev_ref() if prev_ref is not None else None
+            lock = self._init_locks.get(loop_id)
+            if lock is None or prev_loop is None or prev_loop is not loop or prev_loop.is_closed():
+                lock = asyncio.Lock()
+                self._init_locks[loop_id] = lock
+                self._init_loop_refs[loop_id] = weakref.ref(loop)
+            return lock
 
     def _resolve_db_path(self, queue_path: str | None) -> None:
         if queue_path is None:
@@ -172,10 +190,7 @@ class QueueManager:
         if self._is_initialized:
             return
 
-        if self._init_lock is None:
-            self._init_lock = asyncio.Lock()
-
-        lock = self._init_lock
+        lock = self._get_init_lock()
         async with lock:
             if self._is_initialized:
                 return
@@ -230,6 +245,8 @@ class QueueManager:
                     await conn.execute("ALTER TABLE tasks ADD COLUMN claimed_by TEXT")
                 if "claimed_at" not in task_columns:
                     await conn.execute("ALTER TABLE tasks ADD COLUMN claimed_at TEXT")
+                if "model" not in task_columns:
+                    await conn.execute("ALTER TABLE tasks ADD COLUMN model TEXT")
 
                 # SOTA: Partial Expression Index para Extracao O(1) na Fila DAG com 10.000+ Tarefas
                 await conn.execute("""
@@ -347,16 +364,17 @@ class QueueManager:
 
         backup_dir = Path(self.db_path).parent / "backups"
         backup_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S_%f")
         backup_path = backup_dir / f"{Path(self.db_path).stem}_{timestamp}.db"
 
         try:
             async with self._get_async_db() as source_db:
                 await source_db.execute("PRAGMA wal_checkpoint(FULL)")
-                async with aiosqlite.connect(backup_path) as backup_db:
+                async with aiosqlite.connect(backup_path, timeout=10.0) as backup_db:
+                    await backup_db.execute(_PRAGMA_BUSY_TIMEOUT)
                     await source_db.backup(backup_db)
             logger.info("[BACKUP] Snapshot SOTA materializado com sucesso: %s", backup_path)
-            self._enforce_backup_retention_policy(backup_dir, max_backups=20)
+            await asyncio.to_thread(self._enforce_backup_retention_policy, backup_dir, 20)
         except Exception:  # pylint: disable=broad-exception-caught
             logger.exception("[BACKUP] Colapso durante a materializacao do snapshot online")
             if backup_path.exists():
@@ -371,8 +389,8 @@ class QueueManager:
             await db.execute(
                 """
                 INSERT INTO tasks
-                (id, description, status, timestamp, agent, priority, metadata, completedAt)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (id, description, status, timestamp, agent, model, priority, metadata, completedAt)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     task.id,
@@ -380,6 +398,7 @@ class QueueManager:
                     task.status,
                     task.timestamp,
                     task.agent,
+                    task.model,
                     task.metadata.get("priority", "normal") if task.metadata else "normal",
                     json.dumps(task.metadata, ensure_ascii=True) if task.metadata else "{}",
                     task.completedAt,
@@ -411,9 +430,12 @@ class QueueManager:
                 ready_tasks AS (
                     SELECT t1.* FROM pending_tasks AS t1
                     WHERE NOT EXISTS (
-                        SELECT 1 FROM json_each(t1.metadata, '$.depends_on') AS dep
-                        JOIN tasks AS t2 ON t2.id = dep.value
-                        WHERE t2.status NOT IN ('completed', 'cancelled')
+                        SELECT 1 FROM json_each(
+                            CASE WHEN json_valid(t1.metadata) THEN t1.metadata ELSE '{}' END,
+                            '$.depends_on'
+                        ) AS dep
+                        LEFT JOIN tasks AS t2 ON t2.id = dep.value
+                        WHERE t2.id IS NULL OR t2.status NOT IN ('completed', 'cancelled')
                     )
                 )
                 SELECT * FROM ready_tasks
@@ -472,7 +494,10 @@ class QueueManager:
                     (new_status, completed_at, task_id),
                 )
             elif new_status == "running":
-                await db.execute("UPDATE tasks SET status = ? WHERE id = ?", (new_status, task_id))
+                await db.execute(
+                    "UPDATE tasks SET status = ?, completedAt = NULL WHERE id = ?",
+                    (new_status, task_id),
+                )
             else:
                 await db.execute(
                     "UPDATE tasks SET status = ?, claimed_by = NULL, claimed_at = NULL WHERE id = ?",
@@ -587,7 +612,9 @@ class QueueManager:
         Reseta para 'pending' incrementando retentativas, ou falha se ultrapassar o limite de 3.
         Otimizacao ACID Absoluta: Resolvido via SQLite JSON1 na camada C (Zero Python Loops).
         """
-        cutoff = (datetime.now(UTC) - timedelta(minutes=max_running_minutes)).isoformat()
+        now_dt = datetime.now(UTC)
+        now_iso = now_dt.isoformat()
+        cutoff = (now_dt - timedelta(minutes=max_running_minutes)).isoformat()
 
         # A idade de uma tarefa travada conta da RESERVA (`claimed_at`); `timestamp`
         # e a criacao e nao e mais reescrito aqui (BK-11). Linhas anteriores a
@@ -598,6 +625,7 @@ class QueueManager:
                 status = CASE WHEN COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1 < 3 THEN 'pending' ELSE 'failed' END,
                 claimed_by = NULL,
                 claimed_at = NULL,
+                completedAt = CASE WHEN COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1 < 3 THEN completedAt ELSE ? END,
                 metadata = json_set(
                     COALESCE(metadata, '{}'),
                     '$.retry_count', COALESCE(json_extract(metadata, '$.retry_count'), 0) + 1,
@@ -607,40 +635,40 @@ class QueueManager:
                         ELSE 'Processamento abortado: Limite maximo de retentativas de travamento atingido.'
                     END
                 )
-            WHERE status = 'running' AND COALESCE(claimed_at, timestamp) < ?
+            WHERE status = 'running' AND COALESCE(claimed_at, timestamp) < ? AND json_valid(COALESCE(metadata, '{}'))
             RETURNING id, status, json_extract(metadata, '$.retry_count') as retries, description;
         """
         async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
-            async with db.execute(query, (str(max_running_minutes), cutoff)) as cursor:
+            async with db.execute(query, (now_iso, str(max_running_minutes), cutoff)) as cursor:
                 recovered_rows = list(await cursor.fetchall())
-
-            for row in recovered_rows:
-                task_id = row["id"]
-                new_status = row["status"]
-                retries = int(row["retries"] or 1)
-                desc = row["description"]
-
-                if new_status == "pending":
-                    logger.warning(
-                        "[AUTO-HEAL] Tarefa '%s' ressucitada. Retentativa %d/3.",
-                        task_id,
-                        retries,
-                    )
-                    if send_toast is not None:
-                        send_toast(
-                            "[WARN] Auto-Cura SOTA",
-                            f"Tarefa '{desc[:30]}' ressuscitada (Tenta {retries}/3)",
-                            "warning",
-                        )
-                else:
-                    logger.error(
-                        "[AUTO-HEAL] Tarefa '%s' falhou definitivamente apos %d travamentos.",
-                        task_id,
-                        retries,
-                    )
-
             await db.commit()
+
+        for row in recovered_rows:
+            task_id = row["id"]
+            new_status = row["status"]
+            retries = int(row["retries"] or 1)
+            desc = row["description"]
+
+            if new_status == "pending":
+                logger.warning(
+                    "[AUTO-HEAL] Tarefa '%s' ressucitada. Retentativa %d/3.",
+                    task_id,
+                    retries,
+                )
+                if send_toast is not None:
+                    send_toast(
+                        "[WARN] Auto-Cura SOTA",
+                        f"Tarefa '{desc[:30]}' ressuscitada (Tenta {retries}/3)",
+                        "warning",
+                    )
+            else:
+                logger.error(
+                    "[AUTO-HEAL] Tarefa '%s' falhou definitivamente apos %d travamentos.",
+                    task_id,
+                    retries,
+                )
+
         return len(recovered_rows)
 
     async def promote_starved_tasks(self, max_wait_hours: int = 2) -> int:
@@ -674,7 +702,7 @@ class QueueManager:
                     WHEN 'high' THEN 'critical'
                     ELSE 'critical'
                 END
-            WHERE status = 'pending' AND timestamp < ? AND priority != 'critical'
+            WHERE status = 'pending' AND timestamp < ? AND COALESCE(priority, 'normal') != 'critical' AND json_valid(COALESCE(metadata, '{}'))
             RETURNING id, priority, json_extract(metadata, '$.original_priority') as old_priority;
         """
         async with self._get_async_db() as db:
@@ -707,7 +735,7 @@ class QueueManager:
             if status:
                 conditions.append("status = ?")
                 params.append(status)
-            if since_hours:
+            if since_hours is not None and since_hours > 0:
                 cutoff = (datetime.now(UTC) - timedelta(hours=since_hours)).isoformat()
                 conditions.append("timestamp >= ?")
                 params.append(cutoff)
@@ -734,8 +762,9 @@ class QueueManager:
                 rows = await cursor.fetchall()
                 counts = {"pending": 0, "running": 0, "completed": 0, "failed": 0}
                 for r in rows:
-                    if r["status"] in counts:
-                        counts[r["status"]] = r["count"]
+                    status_name = r["status"]
+                    if status_name in counts or status_name == "cancelled":
+                        counts[status_name] = r["count"]
                 return counts
 
     async def get_performance_history(self) -> list[dict[str, Any]]:
@@ -808,11 +837,10 @@ class QueueManager:
                 if row is not None:
                     return row[0]
 
-        # SOTA: Fallback Generico
-        generic_models = [m for m in models_list if m.startswith("@")]
-        if generic_models:
-            placeholders_gen = ",".join("?" for _ in generic_models)
-            async with self._get_async_db() as db:
+            # SOTA: Fallback Generico reutilizando a mesma conexao
+            generic_models = [m for m in models_list if m.startswith("@")]
+            if generic_models:
+                placeholders_gen = ",".join("?" for _ in generic_models)
                 query_gen = f"""
                     SELECT response FROM llm_cache
                     WHERE prompt = ? AND model IN ({placeholders_gen})
@@ -1094,10 +1122,27 @@ class QueueManager:
         cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
         await self._archive_and_tasks(cutoff)
+        await self._prune_retention_tables()
         self._purge_obsolete_files(cutoff_date)
         # SOTA: Executa manutencao apos o expurgo massivo
         await self.perform_maintenance()
         gc.collect()
+
+    async def _prune_retention_tables(self) -> None:
+        """Executa poda temporal nas tabelas historicas e caches de longa vida."""
+        now_dt = datetime.now(UTC)
+        cutoff_30d = (now_dt - timedelta(days=30)).isoformat()
+        cutoff_90d = (now_dt - timedelta(days=90)).isoformat()
+        retention_queries = (
+            ("DELETE FROM archive_tasks WHERE timestamp < ?", cutoff_90d),
+            ("DELETE FROM llm_cache WHERE timestamp < ?", cutoff_30d),
+            ("DELETE FROM api_usage WHERE timestamp < ?", cutoff_90d),
+            ("DELETE FROM key_usage_metrics WHERE timestamp < ?", cutoff_30d),
+        )
+        async with self._get_async_db() as db:
+            for sql, limit_iso in retention_queries:
+                await db.execute(sql, (limit_iso,))
+            await db.commit()
 
     async def _archive_and_tasks(self, cutoff: str) -> None:
         """Transfere tarefas completadas/falhas para o arquivo frio."""
@@ -1217,12 +1262,19 @@ class QueueManager:
         legacy_agents = {"@seo": "@curator"}  # pylint: disable=line-too-long
         if agent_name in legacy_agents:
             agent_name = legacy_agents[agent_name]
-        elif agent_name not in _core_config.VALID_AGENTS:
+        elif (
+            agent_name not in {"@subagent", "@subagents"}
+            and not agent_name.startswith("@sub_")
+            and agent_name not in _core_config.VALID_AGENTS
+        ):
             logger.warning(
                 "[DAL] Agente '%s' nao encontrado no manifesto. Fallback para @chico.",
                 agent_name,
             )
             agent_name = "@chico"
+
+        row_keys = row.keys()
+        task_model = row["model"] if "model" in row_keys else None
 
         return Task(
             id=row["id"],
@@ -1230,6 +1282,7 @@ class QueueManager:
             status=row["status"],
             timestamp=row["timestamp"],
             agent=agent_name,
+            model=task_model,
             completedAt=row["completedAt"],
             metadata=metadata,
         )

@@ -87,6 +87,7 @@ def test_economic_log_writing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 async def test_audit_engine_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Valida processamento de eventos do frontend e flush do AuditEngine."""
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("monitoring.audit_engine.BASE_DIR", tmp_path)
     engine = AuditEngine(manager=None)
 
     events = [
@@ -117,6 +118,7 @@ async def test_audit_engine_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 async def test_audit_engine_auto_flush(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """Valida que o AuditEngine realiza flush automatico quando buffer atinge o limite."""
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr("monitoring.audit_engine.BASE_DIR", tmp_path)
     engine = AuditEngine(manager=None)
     engine.MAX_BUFFER = 3
 

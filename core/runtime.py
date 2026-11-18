@@ -65,8 +65,8 @@ def _maybe_reload_config() -> bool:
     return _config.maybe_reload_config()
 
 
-def _maybe_reload_config_async() -> Any:
-    return _config.maybe_reload_config()
+async def _maybe_reload_config_async() -> bool:
+    return await asyncio.to_thread(_config.maybe_reload_config)
 
 
 def _feature_enabled(flag: str) -> bool:

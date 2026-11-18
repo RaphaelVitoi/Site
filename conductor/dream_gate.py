@@ -53,13 +53,16 @@ class DreamGate:
                 suggested_action="PROCEED_NORMAL",
             )
 
+        anchor_names = {"claude.md", "agents.md", "gemini.md", "modus_operandi.md"}
+        unique_files = list(dict.fromkeys(target_files))
         anchor_hits: list[str] = []
-        for file_path in target_files:
+        for file_path in unique_files:
             normalized_path = file_path.replace("\\", "/")
-            for pattern in self.CRITICAL_ANCHOR_PATTERNS:
-                if pattern in normalized_path:
-                    anchor_hits.append(file_path)
-                    break
+            parts_lower = [part.lower() for part in normalized_path.strip("/").split("/") if part]
+            if not parts_lower:
+                continue
+            if "reports" in parts_lower[:-1] or parts_lower[-1] in anchor_names:
+                anchor_hits.append(file_path)
 
         if anchor_hits and not has_formal_anchor_revision:
             return GateAssessment(
@@ -71,7 +74,7 @@ class DreamGate:
             )
 
         # Calculo de risco proporcional a amplitude do escopo (Target Lock)
-        file_count = len(target_files)
+        file_count = len(unique_files)
         if file_count > 10:
             risk = min(0.85, 0.1 * file_count)
             return GateAssessment(

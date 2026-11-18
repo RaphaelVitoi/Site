@@ -11,7 +11,6 @@ from datetime import UTC, datetime
 import json
 import logging
 import math
-from pathlib import Path
 import re
 import time
 from typing import Any, Literal, cast, get_args
@@ -30,6 +29,7 @@ from api.v1.handler_support import (
     INVALID_JSON_BODY,
     _internal_error,
     _with_execution_provenance,
+    read_json_object,
 )
 from api.v1.handlers_canonical import (
     handle_canonical_akq as handle_canonical_akq,
@@ -120,6 +120,7 @@ from llm.budget import (
     DAILY_API_BUDGET,
 )
 from llm.laya_bridge import ruin_priority_from_intencao
+from monitoring.telemetry import get_prometheus_metrics_snapshot
 from utils.cache import _read_file_cached_internal  # pyright: ignore[reportPrivateUsage]
 from utils.cache import cache as sota_cache
 from utils.harmonizer import harmonizer
@@ -176,8 +177,10 @@ def normalizar_timestamp_iso(valor: str) -> str:
 async def handle_add_task(request: web.Request) -> web.Response:
     """Lida com a adicao de novas tarefas a fila."""
     manager = request.app[MANAGER_KEY]
+    post_data, err_resp = await read_json_object(request)
+    if err_resp is not None or post_data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
     try:
-        post_data = await request.json()
         new_task = Task.model_validate(post_data)
         try:
             new_task.timestamp = normalizar_timestamp_iso(new_task.timestamp)
@@ -269,9 +272,9 @@ async def handle_get_task_result(request: web.Request) -> web.Response:
 
         # SOTA: Isolamento de I/O bloqueante (disco) para fora do Event Loop
         def _resolve_and_read():
-            result_path = (Path(".claude/RELATORIOS") / f"{task_id}.md").resolve()
-            base_dir = Path(".claude/RELATORIOS").resolve()
-            if not str(result_path).startswith(str(base_dir)):
+            base_dir = (BASE_WORKSPACE_DIR / ".claude" / "RELATORIOS").resolve()
+            result_path = (base_dir / f"{task_id}.md").resolve()
+            if not result_path.is_relative_to(base_dir):
                 return False, "INVALID_PATH"
             if not result_path.exists():
                 return False, "NOT_FOUND"
@@ -328,8 +331,10 @@ async def handle_get_state(request: web.Request) -> web.Response:
 async def handle_set_state(request: web.Request) -> web.Response:
     """Define uma variavel de estado dinamico do sistema."""
     manager = request.app[MANAGER_KEY]
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         key = data.get("key")
         value = data.get("value")
         if not key:
@@ -341,7 +346,10 @@ async def handle_set_state(request: web.Request) -> web.Response:
                 {"error": f"Chave de estado nao declarada: {key}. Consultar CHAVES_DE_ESTADO."},
                 status=400,
             )
-        await manager.set_system_state(key, value)
+        if value is None:
+            return web.json_response({"error": "value missing"}, status=400)
+        value_str = value if isinstance(value, str) else str(value)
+        await manager.set_system_state(key, value_str)
         return web.json_response({"status": "SUCCESS"})
     except Exception as e:  # noqa: BLE001
         return _internal_error(e, "handle_set_state")
@@ -392,6 +400,34 @@ async def handle_ask_oracle(request: web.Request) -> web.Response:
         return _internal_error(e, "handle_ask_oracle")
 
 
+def _parse_s1_min_confidence(data: dict[str, Any]) -> tuple[float | None, bool, web.Response | None]:
+    has_min_conf_key = "min_confidence" in data
+    raw_min_conf = data.get("min_confidence")
+    if raw_min_conf is None:
+        return None, has_min_conf_key, None
+    try:
+        parsed = float(raw_min_conf)
+    except (TypeError, ValueError):
+        return (
+            None,
+            has_min_conf_key,
+            web.json_response(
+                {"status": "ERROR", "error": "Parametro 'min_confidence' deve ser numero entre 0 e 1."},
+                status=400,
+            ),
+        )
+    if not math.isfinite(parsed) or not 0.0 <= parsed <= 1.0:
+        return (
+            None,
+            has_min_conf_key,
+            web.json_response(
+                {"status": "ERROR", "error": "Parametro 'min_confidence' deve estar entre 0.0 e 1.0."},
+                status=400,
+            ),
+        )
+    return parsed, has_min_conf_key, None
+
+
 async def handle_s1_decide(request: web.Request) -> web.Response:
     """POST /api/v1/s1/decide — cascata System-1 (Laya -> microservico -> Gemini Decision 1).
 
@@ -400,10 +436,9 @@ async def handle_s1_decide(request: web.Request) -> web.Response:
     proveniencia §4 (engine ``laya-s1-trained`` | ``laya-s1-fallback`` |
     ``gemini-decision-1``). Erros de formato -> 400; nenhum motor -> 503.
     """
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     state = data.get("state")
     questions = data.get("questions")
@@ -413,14 +448,16 @@ async def handle_s1_decide(request: web.Request) -> web.Response:
             status=400,
         )
     prefer_cloud = bool(data.get("prefer_cloud", False))
-    raw_min_conf = data.get("min_confidence")
+    parsed_min_conf, has_min_conf_key, min_conf_err = _parse_s1_min_confidence(data)
+    if min_conf_err is not None:
+        return min_conf_err
 
     def _run_decide() -> Any:
         from llm.gemini_decisions import decide_s1, default_min_confidence  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
-        if raw_min_conf is not None:
-            eff_min_conf: float | None = float(raw_min_conf)
-        elif "min_confidence" in data:
+        if parsed_min_conf is not None:
+            eff_min_conf: float | None = parsed_min_conf
+        elif has_min_conf_key:
             eff_min_conf = None
         else:
             eff_min_conf = default_min_confidence()
@@ -438,17 +475,46 @@ async def handle_s1_decide(request: web.Request) -> web.Response:
     return web.json_response(payload)
 
 
+def _parse_glossary_terms(raw: Any) -> tuple[list[str] | None, web.Response | None]:
+    if raw is None:
+        return None, None
+    if not isinstance(raw, list):
+        return None, web.json_response(
+            {"status": "ERROR", "error": "Parametro 'glossary_terms' deve ser lista de strings."},
+            status=400,
+        )
+    return ([str(t) for t in raw] if raw else None), None
+
+
 def _parse_translate_payload(data: Any) -> tuple[dict[str, Any] | None, web.Response | None]:
     """Valida e normaliza payload JSON de ``POST /api/v1/translate``."""
     if not isinstance(data, dict):
         return None, web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
-    text = data.get("text")
-    image_b64 = data.get("image_base64") or data.get("image_path")
-    has_text = isinstance(text, str) and bool(text.strip())
-    has_img = isinstance(image_b64, str) and bool(image_b64.strip())
+    raw_image_path = data.get("image_path")
+    if isinstance(raw_image_path, str) and raw_image_path.strip():
+        return None, web.json_response(
+            {"status": "ERROR", "error": "Parametro 'image_path' nao permitido via HTTP. Envie 'image_base64'."},
+            status=400,
+        )
+    text_raw = data.get("text")
+    img_raw = data.get("image_base64")
+    text_val = text_raw if isinstance(text_raw, str) else ""
+    img_val = img_raw if isinstance(img_raw, str) else ""
+    has_text = bool(text_val.strip())
+    has_img = bool(img_val.strip())
     if not has_text and not has_img:
         return None, web.json_response(
-            {"status": "ERROR", "error": "Informe 'text' ou 'image_base64'/'image_path' nao vazio."},
+            {"status": "ERROR", "error": "Informe 'text' ou 'image_base64' nao vazio."},
+            status=400,
+        )
+    if len(text_val) > 32_000:
+        return None, web.json_response(
+            {"status": "ERROR", "error": "Parametro 'text' excede limite de 32000 caracteres."},
+            status=400,
+        )
+    if len(img_val) > 4 * 1024 * 1024:
+        return None, web.json_response(
+            {"status": "ERROR", "error": "Parametro 'image_base64' excede limite de 4MB."},
             status=400,
         )
     domain = str(data.get("domain") or "general").strip().lower()
@@ -457,20 +523,17 @@ def _parse_translate_payload(data: Any) -> tuple[dict[str, Any] | None, web.Resp
             {"status": "ERROR", "error": "Parametro 'domain' deve ser general, poker ou tech."},
             status=400,
         )
-    glossary_terms = data.get("glossary_terms")
-    if glossary_terms is not None and not isinstance(glossary_terms, list):
-        return None, web.json_response(
-            {"status": "ERROR", "error": "Parametro 'glossary_terms' deve ser lista de strings."},
-            status=400,
-        )
+    glossary_list, glossary_err = _parse_glossary_terms(data.get("glossary_terms"))
+    if glossary_err is not None:
+        return None, glossary_err
     return {
         "has_img": has_img,
-        "text": str(text or ""),
-        "image": str(image_b64 or ""),
+        "text": text_val,
+        "image": img_val,
         "target_lang": str(data.get("target_lang") or "pt-BR"),
         "source_lang": str(data.get("source_lang") or "auto"),
         "domain": domain,
-        "glossary_terms": [str(t) for t in glossary_terms] if glossary_terms else None,
+        "glossary_terms": glossary_list,
         "prefer_local": bool(data.get("prefer_local", True)),
         "allow_cloud_fallback": bool(data.get("allow_cloud_fallback", True)),
     }, None
@@ -478,10 +541,9 @@ def _parse_translate_payload(data: Any) -> tuple[dict[str, Any] | None, web.Resp
 
 async def handle_translate(request: web.Request) -> web.Response:
     """POST /api/v1/translate -- traducao multilingue/vision via TranslateGemma 4B."""
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     params, err_resp = _parse_translate_payload(data)
     if err_resp is not None or params is None:
@@ -499,6 +561,7 @@ async def handle_translate(request: web.Request) -> web.Response:
                 domain=params["domain"],
                 prefer_local=params["prefer_local"],
                 allow_cloud_fallback=params["allow_cloud_fallback"],
+                allow_local_path=False,
             )
         return translate_text(
             params["text"],
@@ -598,8 +661,10 @@ async def handle_get_tournaments(request: web.Request) -> web.Response:
         return web.json_response({"status": "SUCCESS", "data": tournaments})
     except LabPersistenceUnavailableError as err:
         # 503 e nao 200-vazio: persistencia indisponivel NAO e "zero torneios".
+        error_id = uuid4().hex[:12]
+        logger.warning("[%s] handle_get_tournaments: %s", error_id, err)
         return web.json_response(
-            {"status": "ERROR", "error": f"Persistencia do laboratorio indisponivel: {err}"},
+            {"status": "ERROR", "error": "Persistencia do laboratorio indisponivel.", "error_id": error_id},
             status=503,
         )
     except Exception as e:  # noqa: BLE001
@@ -617,11 +682,27 @@ async def handle_rag_ingest(request: web.Request) -> web.Response:
             _read_file_cached_internal.cache_clear()  # type: ignore
 
         rag = await _te.get_rag_async()
-        # Friccao Zero: Fire and forget para nao segurar a resposta HTTP do PowerShell
+        # Friccao Zero: Single-flight para nao empilhar ingestoes concorrentes
         bg_tasks = _get_bg_tasks(request.app)
-        task = asyncio.create_task(rag.ingest_all_memories())
+        if any(not existing.done() and existing.get_name() == "rag-ingest" for existing in bg_tasks):
+            return web.json_response(
+                {
+                    "status": "SUCCESS",
+                    "message": "Ingestao RAG ja esta em execucao em background.",
+                },
+                status=202,
+            )
+
+        def _on_rag_ingest_done(finished: asyncio.Task[Any]) -> None:
+            bg_tasks.discard(finished)
+            if not finished.cancelled():
+                exc = finished.exception()
+                if exc is not None:
+                    logger.error("[RAG] Falha em ingestao background: %s", exc, exc_info=exc)
+
+        task = asyncio.create_task(rag.ingest_all_memories(), name="rag-ingest")
         bg_tasks.add(task)
-        task.add_done_callback(bg_tasks.discard)
+        task.add_done_callback(_on_rag_ingest_done)
         return web.json_response(
             {
                 "status": "SUCCESS",
@@ -652,8 +733,10 @@ async def handle_get_resource_usage(_request: web.Request) -> web.Response:
 
 async def handle_rag_query(request: web.Request) -> web.Response:
     """SOTA v6.2.1 GOLD: Consulta RAG com Caching de Multi-Tier."""
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         query_data = RAGQuery.model_validate(data)
 
         # Check Cache Tier 1/2
@@ -678,24 +761,26 @@ async def handle_rag_query(request: web.Request) -> web.Response:
 
 class BucketOpRequest(BaseModel):
     op: Literal["upload", "download"]
-    bucket: str = "default"
-    filename: str
-    content: str = ""
+    bucket: str = Field(default="default", min_length=1, max_length=255)
+    filename: str = Field(..., min_length=1, max_length=255)
+    content: str = Field(default="", max_length=2 * 1024 * 1024)
 
 
 async def handle_bucket_op(request: web.Request) -> web.Response:
     """SOTA v6.2.1 GOLD: Operacoes de Bucketing (Storage Abstraction)."""
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = BucketOpRequest.model_validate(data)
 
         if req.op == "upload":
-            sota_buckets.upload_file(req.bucket, req.filename, req.content.encode())
+            await asyncio.to_thread(sota_buckets.upload_file, req.bucket, req.filename, req.content.encode("utf-8"))
             return web.json_response({"status": "SUCCESS", "message": f"File {req.filename} uploaded to {req.bucket}"})
         if req.op == "download":
-            content = sota_buckets.download_file(req.bucket, req.filename)
-            if content:
-                return web.json_response({"status": "SUCCESS", "content": content.decode()})
+            content = await asyncio.to_thread(sota_buckets.download_file, req.bucket, req.filename)
+            if content is not None:
+                return web.json_response({"status": "SUCCESS", "content": content.decode("utf-8", errors="replace")})
             return web.json_response({"error": "File not found"}, status=404)
 
         return web.json_response({"error": "Invalid operation"}, status=400)
@@ -745,8 +830,10 @@ async def handle_frontend_logs(request: web.Request) -> web.Response:
     audit_engine = request.app.get(AUDIT_ENGINE_KEY)
     if not audit_engine:
         return web.json_response({"error": "AuditEngine nao inicializado"}, status=500)
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = FrontendLogsRequest.model_validate(data)
         if req.events:
             # Processamento assincrono para nao travar a resposta HTTP
@@ -841,8 +928,10 @@ async def handle_web_search(request: web.Request) -> web.Response:
 
 async def handle_calculate_perspective(request: web.Request) -> web.Response:
     """Calcula pontualmente a Perspectiva Matematica (PMev) VITOI."""
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = PerspectiveCalculationRequest.model_validate(data)
 
         ev_fold = VitoiPerspectiveEngine.calculate_dynamic_ev_fold(
@@ -924,40 +1013,45 @@ async def _diagnostico_dream_rsi(tree_res: dict[str, Any], runtime_ms: float) ->
 
 async def handle_simulate_perspective_tree(request: web.Request) -> web.Response:
     """Executa a simulacao recursiva da arvore de decisao de Perspectiva Matematica."""
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = PerspectiveTreeRequest.model_validate(data)
 
-        ev_fold = (
-            req.ev_fold_dynamic
-            if req.ev_fold_dynamic is not None
-            else VitoiPerspectiveEngine.calculate_dynamic_ev_fold(1.0, 10.0, 0.5, req.position)
-        )
-        struct_liab = VitoiPerspectiveEngine.calculate_structural_liability(req.active_players - 1, req.base_rio)
-        amort_edge = VitoiPerspectiveEngine.calculate_edge_amortization(
-            req.stack_eff, req.edge_base, req.aggression_factor
-        )
+        def _simulate() -> tuple[dict[str, Any], float]:
+            ev_fold = (
+                req.ev_fold_dynamic
+                if req.ev_fold_dynamic is not None
+                else VitoiPerspectiveEngine.calculate_dynamic_ev_fold(1.0, 10.0, 0.5, req.position)
+            )
+            struct_liab = VitoiPerspectiveEngine.calculate_structural_liability(req.active_players - 1, req.base_rio)
+            amort_edge = VitoiPerspectiveEngine.calculate_edge_amortization(
+                req.stack_eff, req.edge_base, req.aggression_factor
+            )
 
-        inicio = time.perf_counter()
-        tree_res: dict[str, Any] = VitoiPerspectiveEngine.simulate_decision_tree(
-            equity=req.equity,
-            pot_size=req.pot_size,
-            stack_eff=req.stack_eff,
-            active_players=req.active_players,
-            street_idx=req.street_idx,
-            hero_invested=req.hero_invested,
-            ev_fold_dynamic=ev_fold,
-            structural_liability=struct_liab,
-            valuation_stack=req.valuation_stack,
-            amortized_edge=amort_edge,
-            aggression_factor=req.aggression_factor,
-            realization_factor=req.realization_factor,
-            loss_aversion_base=req.loss_aversion_base,
-            fgs_health=req.fgs_health,
-            rp_opp=req.rp_opp,
-            fold_equity=req.fold_equity,
-        )
-        runtime_ms = (time.perf_counter() - inicio) * 1000.0
+            inicio = time.perf_counter()
+            res_tree: dict[str, Any] = VitoiPerspectiveEngine.simulate_decision_tree(
+                equity=req.equity,
+                pot_size=req.pot_size,
+                stack_eff=req.stack_eff,
+                active_players=req.active_players,
+                street_idx=req.street_idx,
+                hero_invested=req.hero_invested,
+                ev_fold_dynamic=ev_fold,
+                structural_liability=struct_liab,
+                valuation_stack=req.valuation_stack,
+                amortized_edge=amort_edge,
+                aggression_factor=req.aggression_factor,
+                realization_factor=req.realization_factor,
+                loss_aversion_base=req.loss_aversion_base,
+                fgs_health=req.fgs_health,
+                rp_opp=req.rp_opp,
+                fold_equity=req.fold_equity,
+            )
+            return res_tree, (time.perf_counter() - inicio) * 1000.0
+
+        tree_res, runtime_ms = await asyncio.to_thread(_simulate)
 
         # Etapa 0 (laya S1): prior de ruina sobre a barreira de ruina (Teorema 2, BF<1).
         # intencao_s1 (Task.metadata['n']) -> ruin_priority via llm.laya_bridge.
@@ -995,17 +1089,22 @@ async def handle_simulate_perspective_tree(request: web.Request) -> web.Response
 
 async def handle_import_solver_tree(request: web.Request) -> web.Response:
     """Importa e normaliza arvores de DeepSolver, GTOWizard, Monker, HRC Pro e PioSolver."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = SolverImportRequest.model_validate(data)
 
-        importer = UniversalSolverImporter()
-        response = importer.import_tree(
-            raw_content=req.raw_content,
-            solver_type=req.solver_type,
-            tournament_context=req.tournament_context,
-            convert_to_pmev=True,
-        )
+        def _run_import() -> Any:
+            importer = UniversalSolverImporter()
+            return importer.import_tree(
+                raw_content=req.raw_content,
+                solver_type=req.solver_type,
+                tournament_context=req.tournament_context,
+                convert_to_pmev=True,
+            )
+
+        response = await asyncio.to_thread(_run_import)
 
         return web.json_response(response.model_dump(), status=200 if response.status == "SUCCESS" else 400)
     except ValidationError as ve:
@@ -1016,35 +1115,39 @@ async def handle_import_solver_tree(request: web.Request) -> web.Response:
 
 async def handle_pmev_heatmap(request: web.Request) -> web.Response:
     """Gera matriz comparativa 13x13 (DeepSolver vs. PMev) e analise diferencial de combos."""
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     try:
-        data = await request.json()
         req = PmevHeatmapRequest.model_validate(data)
 
-        # Se threshold nao for fornecido explicitamente, calcula via motor PMev
-        threshold = req.pmev_threshold
-        calc_res = None
-        if threshold is None:
-            calc_res = calculate_pmev_call_threshold(
-                pot=req.pot,
-                call_amount=req.call_amount,
-                bubble_factor=req.bubble_factor,
-                stack_bb=req.stack_bb,
-                position=req.position,
-                time_to_blind=req.time_to_blind_minutes,
-                edge_base=req.edge_base,
-                aggression=req.aggression,
-                loss_aversion_lambda=req.loss_aversion_lambda,
-                ante_bb=req.ante_bb,
-                players_behind=req.players_behind,
-                structure_speed=req.structure_speed,
-            )
-            threshold = calc_res["pmev_req"]
+        def _compute_heatmap() -> tuple[dict[str, Any], dict[str, Any] | None]:
+            threshold = req.pmev_threshold
+            calc_res_inner: dict[str, Any] | None = None
+            if threshold is None:
+                calc_res_inner = calculate_pmev_call_threshold(
+                    pot=req.pot,
+                    call_amount=req.call_amount,
+                    bubble_factor=req.bubble_factor,
+                    stack_bb=req.stack_bb,
+                    position=req.position,
+                    time_to_blind=req.time_to_blind_minutes,
+                    edge_base=req.edge_base,
+                    aggression=req.aggression,
+                    loss_aversion_lambda=req.loss_aversion_lambda,
+                    ante_bb=req.ante_bb,
+                    players_behind=req.players_behind,
+                    structure_speed=req.structure_speed,
+                )
+                threshold = calc_res_inner["pmev_req"]
 
-        importer = DeepSolverImporter()
-        heatmap_data = importer.generate_pmev_heatmap(
-            deepsolver_range=req.deepsolver_range,
-            pmev_threshold=threshold,
-        )
+            importer = DeepSolverImporter()
+            return importer.generate_pmev_heatmap(
+                deepsolver_range=req.deepsolver_range,
+                pmev_threshold=threshold,
+            ), calc_res_inner
+
+        heatmap_data, calc_res = await asyncio.to_thread(_compute_heatmap)
 
         resp = PmevHeatmapResponse(
             status="SUCCESS",
@@ -1090,10 +1193,9 @@ async def handle_chrysalis_health(_request: web.Request) -> web.Response:
 
 async def handle_chrysalis_validate_plan(request: web.Request) -> web.Response:
     """Valida plano de edicao com revisao otimista (sem mutar arquivo)."""
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
+    body, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or body is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
     mode = str(body.get("mode", "accept"))
     approved = body.get("approved") is True
     mutation = mode != "plan"
@@ -1207,6 +1309,9 @@ async def handle_prometheus_metrics(request: web.Request) -> web.Response:
     http_metrics = request.app.get(HTTP_METRICS_KEY)
     if http_metrics is not None:
         lines.extend(http_metrics.render().splitlines())
+    prom_snapshot = get_prometheus_metrics_snapshot()
+    if prom_snapshot:
+        lines.extend(prom_snapshot.decode("utf-8", errors="replace").splitlines())
     return web.Response(
         text="\n".join(lines) + "\n",
         content_type="text/plain",
@@ -1268,10 +1373,9 @@ async def _dispatch_timesfm_forecast(
 
 async def handle_timesfm_forecast(request: web.Request) -> web.Response:
     """Endpoint de inferencia e previsao temporal via Google Research TimesFM."""
-    try:
-        data = await request.json()
-    except Exception:
-        return web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
+    data, err_resp = await read_json_object(request, error_envelope=True)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"status": "ERROR", "error": INVALID_JSON_BODY}, status=400)
 
     try:
         req = TimesFMForecastRequest.model_validate(data)

@@ -4,6 +4,8 @@ Gerenciamento e persistencia de dados experimentais e cenarios SOTA (Lab Manager
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
+import contextlib
 import json
 import logging
 from pathlib import Path
@@ -36,10 +38,18 @@ class LabManager:
         base_path = Path(__file__).parent.parent.resolve()
         self.db_path = base_path / db_path
 
+    @contextlib.asynccontextmanager
+    async def _connect(self) -> AsyncGenerator[aiosqlite.Connection, None]:
+        """Abre conexao SQLite do laboratorio com diretorio garantido e busy_timeout."""
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiosqlite.connect(self.db_path, timeout=10.0) as db:
+            await db.execute("PRAGMA busy_timeout=5000;")
+            yield db
+
     async def get_tournaments(self) -> list[dict[str, str | int]]:
         """Recupera todos os torneios ativos."""
         try:
-            async with aiosqlite.connect(self.db_path) as db:
+            async with self._connect() as db:
                 db.row_factory = sqlite3.Row
                 async with db.execute("SELECT * FROM Tournament ORDER BY start_date DESC") as cursor:
                     rows = await cursor.fetchall()
@@ -51,7 +61,7 @@ class LabManager:
     async def get_scenarios_for_tournament(self, tournament_id: str) -> list[dict[str, str | int]]:
         """Recupera cenarios atrelados a um torneio."""
         try:
-            async with aiosqlite.connect(self.db_path) as db:
+            async with self._connect() as db:
                 db.row_factory = sqlite3.Row
                 async with db.execute(
                     "SELECT * FROM TournamentScenario WHERE tournamentId = ?",
@@ -97,7 +107,7 @@ class LabManager:
                 "Estudo PMev recusado por procedencia incompleta; sem default para: " + ", ".join(ausentes)
             )
         try:
-            async with aiosqlite.connect(self.db_path) as db:
+            async with self._connect() as db:
                 await db.execute(
                     """
                     CREATE TABLE IF NOT EXISTS PmevBenchmarkStudy (
@@ -119,7 +129,7 @@ class LabManager:
                     )
                     """
                 )
-                study_id = str(study_data.get("id", f"pmev_{uuid.uuid4().hex[:12]}"))
+                study_id = str(study_data.get("id") or f"pmev_{uuid.uuid4().hex[:12]}")
                 await db.execute(
                     """
                     INSERT INTO PmevBenchmarkStudy (
@@ -154,8 +164,9 @@ class LabManager:
 
     async def get_pmev_benchmark_studies(self, limit: int = 20) -> list[dict[str, str | float | int]]:
         """Recupera estudos e benchmarks persistidos do PMev."""
+        limit = max(1, min(limit, 500))
         try:
-            async with aiosqlite.connect(self.db_path) as db:
+            async with self._connect() as db:
                 db.row_factory = sqlite3.Row
                 async with db.execute(
                     "SELECT * FROM PmevBenchmarkStudy ORDER BY created_at DESC LIMIT ?",

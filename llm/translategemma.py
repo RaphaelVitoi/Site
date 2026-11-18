@@ -728,12 +728,14 @@ def translate_batch(
     return [translate_text(t, target_lang=target_lang, source_lang=source_lang, domain=domain, **kwargs) for t in texts]
 
 
-def _load_image_base64(image_path_or_b64: str | Path) -> str:
+def _load_image_base64(image_path_or_b64: str | Path, *, allow_local_path: bool = True) -> str:
     """Aceita caminho de arquivo de imagem ou string base64 ja codificada."""
     if isinstance(image_path_or_b64, Path):
+        if not allow_local_path:
+            raise ValueError("Caminho de arquivo local nao permitido.")
         return base64.b64encode(image_path_or_b64.read_bytes()).decode("ascii")
     candidate = image_path_or_b64.strip()
-    if len(candidate) < 512 and Path(candidate).is_file():
+    if allow_local_path and len(candidate) < 512 and Path(candidate).is_file():
         return base64.b64encode(Path(candidate).read_bytes()).decode("ascii")
     if candidate.startswith("data:image/") and ";base64," in candidate:
         return candidate.split(";base64,", maxsplit=1)[1]
@@ -752,9 +754,10 @@ def translate_image(
     keep_alive: str = DEFAULT_TRANSLATE_KEEP_ALIVE,
     timeout_s: float = 60.0,
     model: str | None = None,
+    allow_local_path: bool = True,
 ) -> TranslationResult:
     """Extrai e traduz texto visual (screenshots de solver/HUD/UI) usando capacidade vision."""
-    b64_img = _load_image_base64(image_path_or_b64)
+    b64_img = _load_image_base64(image_path_or_b64, allow_local_path=allow_local_path)
     src_code, src_name = normalize_lang_code(source_lang)
     tgt_code, tgt_name = normalize_lang_code(target_lang)
     model_tag = _resolve_translategemma_tag(model)

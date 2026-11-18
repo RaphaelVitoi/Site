@@ -56,16 +56,21 @@ class SOTACache:
             self.memory_cache[key] = (expiry, value)
         if not persist:
             return
+        tmp_file = ""
         try:
             os.makedirs(self.cache_dir, exist_ok=True)
             hashed_key = self._get_hash(key)
             cache_file = os.path.join(self.cache_dir, f"{hashed_key}.json")
-            tmp_file = cache_file + ".tmp"
+            tmp_file = f"{cache_file}.{os.getpid()}.{threading.get_ident()}.tmp"
             with open(tmp_file, "w", encoding="utf-8") as f:
                 json.dump({"expiry": expiry, "value": value}, f)
             os.replace(tmp_file, cache_file)
         except Exception as e:
             logger.debug("[CACHE] Falha de I/O ao persistir a chave '%s': %s", key, e)
+        finally:
+            if tmp_file and os.path.exists(tmp_file):
+                with contextlib.suppress(OSError):
+                    os.remove(tmp_file)
 
     def get(self, key: str) -> Any | None:
         # Tier 1: Memory Only

@@ -4,6 +4,7 @@ Web Server -- Micro-servidor SOTA (aiohttp) com routing e ciclo de vida.
 
 # pylint: disable=broad-exception-caught, import-outside-toplevel
 import asyncio
+import contextlib
 import logging
 import os
 import time
@@ -54,7 +55,7 @@ from api.v1.handlers import (
     handle_web_search,
 )
 from api.v1.http_metrics import HTTP_METRICS_KEY, RequestMetricsRegistry, http_metrics_middleware
-from api.v1.keys import AUDIT_ENGINE_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
+from api.v1.keys import AUDIT_ENGINE_KEY, BG_TASKS_KEY, LAB_MANAGER_KEY, MANAGER_KEY, START_TIME_KEY
 from api.v1.middleware import (
     auth_middleware,
     cookie_middleware,
@@ -65,6 +66,7 @@ from api.v1.middleware import (
 from api.v1.middleware_correlation import request_correlation_middleware, request_id_response_prepare
 from database.lab_manager import LabManager
 from database.queue_manager import QueueManager
+from llm.session import close_all_http_sessions
 
 try:
     from monitoring.audit_engine import AuditEngine  # type: ignore
@@ -79,6 +81,10 @@ except Exception:  # noqa: BLE001 - fallback de resiliencia para ambientes sem m
         async def process_frontend_events(self, events):
             """Processamento emulando operacao assincrona (noop)."""
             _ = events
+            await asyncio.sleep(0)
+
+        async def flush(self):
+            """Flush emulando operacao assincrona (noop)."""
             await asyncio.sleep(0)
 
 
@@ -109,6 +115,27 @@ async def handle_predictive_profile(_request: web.Request) -> web.Response:
     return web.json_response({"profile": profile})
 
 
+async def _on_app_cleanup(app: web.Application) -> None:
+    """Drena tarefas em background, descarrega auditoria e fecha sessoes HTTP no encerramento."""
+    bg_tasks = app.get(BG_TASKS_KEY)
+    if isinstance(bg_tasks, set) and bg_tasks:
+        pending_bg = [task for task in bg_tasks if not task.done()]
+        for task in pending_bg:
+            task.cancel()
+        if pending_bg:
+            with contextlib.suppress(TimeoutError):
+                await asyncio.wait_for(asyncio.gather(*pending_bg, return_exceptions=True), timeout=5.0)
+
+    audit_engine = app.get(AUDIT_ENGINE_KEY)
+    flush_fn = getattr(audit_engine, "flush", None)
+    if callable(flush_fn):
+        with contextlib.suppress(Exception):
+            await flush_fn()  # type: ignore[misc]
+
+    with contextlib.suppress(Exception):
+        await close_all_http_sessions()
+
+
 def create_app(manager: QueueManager) -> web.Application:
     """Monta a aplicacao aiohttp com middlewares, estado e tabela de rotas."""
     app = web.Application(
@@ -126,6 +153,7 @@ def create_app(manager: QueueManager) -> web.Application:
         ]
     )
     app.on_response_prepare.append(request_id_response_prepare)
+    app.on_cleanup.append(_on_app_cleanup)
     app[MANAGER_KEY] = manager
     app[LAB_MANAGER_KEY] = LabManager()  # Instancia o DAO do Laboratorio SOTA
     app[AUDIT_ENGINE_KEY] = AuditEngine(manager)  # Instancia o Motor de Auditoria SOTA

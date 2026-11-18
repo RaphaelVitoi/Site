@@ -81,20 +81,26 @@ class RStatisticalBridge:
     def rscript_path(self) -> str | None:
         return str(self._rscript_path) if self._rscript_path else None
 
-    def execute_r_script(self, r_code: str, timeout_seconds: float = 10.0) -> dict[str, Any]:
+    def execute_r_script(
+        self,
+        r_code: str,
+        timeout_seconds: float = 10.0,
+        extra_env: dict[str, str] | None = None,
+    ) -> dict[str, Any]:
         """Executa codigo R arbitrario passando e recebendo JSON estruturado."""
         if not self.is_available:
             raise RuntimeError("Rscript nao encontrado no ambiente.")
 
+        fallback_lib = (Path.home() / "R" / "win-library" / "4.6").as_posix()
         wrapper = f"""
 suppressPackageStartupMessages({{
-  sota_lib <- "C:/Users/rapha/R/win-library/4.6"
+  user_lib <- Sys.getenv("R_LIBS_USER")
+  if (nzchar(user_lib) && dir.exists(user_lib) && !(user_lib %in% .libPaths())) {{
+    .libPaths(c(user_lib, .libPaths()))
+  }}
+  sota_lib <- "{fallback_lib}"
   if (dir.exists(sota_lib) && !(sota_lib %in% .libPaths())) {{
     .libPaths(c(sota_lib, .libPaths()))
-  }}
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {{
-    user_lib <- Sys.getenv("R_LIBS_USER")
-    if (dir.exists(user_lib)) .libPaths(c(user_lib, .libPaths()))
   }}
   library(jsonlite)
 }})
@@ -108,9 +114,11 @@ cat(jsonlite::toJSON(result, auto_unbox = TRUE, digits = 8))
 cat("___SOTA_R_OUTPUT_END___")
 """
         env = os.environ.copy()
-        sota_lib_path = Path("C:/Users/rapha/R/win-library/4.6")
-        if sota_lib_path.is_dir() and not env.get("R_LIBS_USER"):
+        sota_lib_path = Path.home() / "R" / "win-library" / "4.6"
+        if not env.get("R_LIBS_USER") and sota_lib_path.is_dir():
             env["R_LIBS_USER"] = sota_lib_path.as_posix()
+        if extra_env:
+            env.update(extra_env)
 
         cmd = [str(self._rscript_path), "--vanilla", "-"]
         proc = subprocess.run(
@@ -144,12 +152,16 @@ cat("___SOTA_R_OUTPUT_END___")
         if not ev_samples:
             raise ValueError("ev_samples nao pode ser vazio")
 
-        n = len(ev_samples)
+        clean_samples = [float(x) for x in ev_samples]
+        if not all(math.isfinite(x) for x in clean_samples):
+            raise ValueError("ev_samples contem valores nao finitos (NaN/Inf)")
+
+        n = len(clean_samples)
         if self.is_available:
             try:
-                samples_json = json.dumps(ev_samples)
-                r_code = f"""
-x <- fromJSON('{samples_json}')
+                samples_json = json.dumps(clean_samples)
+                r_code = """
+x <- fromJSON(Sys.getenv("SOTA_R_SAMPLES_JSON"))
 m <- mean(x)
 s <- sd(x)
 if (is.na(s)) s <- 0
@@ -183,7 +195,7 @@ list(
   cvar_99 = cvar_99
 )
 """
-                res = self.execute_r_script(r_code)
+                res = self.execute_r_script(r_code, extra_env={"SOTA_R_SAMPLES_JSON": samples_json})
                 return TailRiskResult(
                     mean=float(res["mean"]),
                     variance=float(res["variance"]),
@@ -199,13 +211,13 @@ list(
                 logger.warning("Falha na computacao via R (%s), aplicando fallback Python", e)
 
         # Fallback analitico Python
-        m = sum(ev_samples) / n
-        var = sum((x - m) ** 2 for x in ev_samples) / (n - 1) if n > 1 else 0.0
+        m = sum(clean_samples) / n
+        var = sum((x - m) ** 2 for x in clean_samples) / (n - 1) if n > 1 else 0.0
         sd = math.sqrt(var) if var > 0 else 0.0
-        skew = (sum((x - m) ** 3 for x in ev_samples) / n) / (sd**3) if sd > 0 else 0.0
-        kurt = ((sum((x - m) ** 4 for x in ev_samples) / n) / (sd**4)) - 3.0 if sd > 0 else 0.0
+        skew = (sum((x - m) ** 3 for x in clean_samples) / n) / (sd**3) if sd > 0 else 0.0
+        kurt = ((sum((x - m) ** 4 for x in clean_samples) / n) / (sd**4)) - 3.0 if sd > 0 else 0.0
 
-        sorted_x = sorted(ev_samples)
+        sorted_x = sorted(clean_samples)
         idx_95 = max(1, math.floor(0.05 * n))
         idx_99 = max(1, math.floor(0.01 * n))
         var_95 = -sorted_x[idx_95 - 1]
@@ -234,8 +246,17 @@ list(
         threshold: float = 0.5,
     ) -> BayesianMdaResult:
         """Atualizacao Bayesiana Conjugada Beta-Binomial para frequencias de acao (MDA)."""
-        post_alpha = prior_alpha + successes
-        post_beta = prior_beta + (trials - successes)
+        post_alpha = float(prior_alpha) + successes
+        post_beta = float(prior_beta) + (trials - successes)
+        threshold_val = float(threshold)
+        if not (
+            math.isfinite(post_alpha)
+            and math.isfinite(post_beta)
+            and math.isfinite(threshold_val)
+            and (post_alpha + post_beta) > 0
+            and (prior_alpha + prior_beta) > 0
+        ):
+            raise ValueError("Parametros Bayesianos devem ser finitos e possuir soma positiva.")
         post_mean = post_alpha / (post_alpha + post_beta)
         prior_mean = prior_alpha / (prior_alpha + prior_beta)
 
@@ -244,7 +265,7 @@ list(
                 r_code = f"""
 q_low <- qbeta(0.025, {post_alpha}, {post_beta})
 q_high <- qbeta(0.975, {post_alpha}, {post_beta})
-p_above <- 1 - pbeta({threshold}, {post_alpha}, {post_beta})
+p_above <- 1 - pbeta({threshold_val}, {post_alpha}, {post_beta})
 
 list(
   ci_lower = q_low,
@@ -267,11 +288,18 @@ list(
 
         # Fallback aproximacao normal
         var_post = (post_alpha * post_beta) / (((post_alpha + post_beta) ** 2) * (post_alpha + post_beta + 1))
-        sd_post = math.sqrt(var_post)
+        sd_post = math.sqrt(max(0.0, var_post))
         ci_low = max(0.0, post_mean - 1.96 * sd_post)
         ci_high = min(1.0, post_mean + 1.96 * sd_post)
-        z = (threshold - post_mean) / sd_post if sd_post > 0 else 0.0
-        prob_above = 0.5 * (1.0 - math.erf(z / math.sqrt(2.0)))
+        if sd_post > 0:
+            z = (threshold_val - post_mean) / sd_post
+            prob_above = 0.5 * (1.0 - math.erf(z / math.sqrt(2.0)))
+        elif post_mean > threshold_val:
+            prob_above = 1.0
+        elif post_mean == threshold_val:
+            prob_above = 0.5
+        else:
+            prob_above = 0.0
 
         return BayesianMdaResult(
             prior_mean=prior_mean,

@@ -33,7 +33,7 @@ def get_chrome_dev_path() -> str:
     for bin_name in ["google-chrome-unstable", "google-chrome-stable", "google-chrome", "chrome"]:
         cmd = "which" if sys.platform != "win32" else "where"
         try:
-            res = subprocess.run([cmd, bin_name], capture_output=True, text=True, check=True)
+            res = subprocess.run([cmd, bin_name], capture_output=True, text=True, check=True, timeout=5.0)
             path = res.stdout.strip().split("\n")[0]
             if path and os.path.exists(path):
                 return path
@@ -69,6 +69,7 @@ def get_clipboard_text() -> str:
                 check=True,
                 encoding="utf-8",
                 errors="ignore",
+                timeout=5.0,
             )
             return res.stdout.strip()
         except Exception as e:
@@ -91,32 +92,40 @@ def set_clipboard_text(text: str) -> bool:
             with subprocess.Popen(
                 ["powershell", "-Command", "Set-Clipboard"], stdin=subprocess.PIPE, text=True, encoding="utf-8"
             ) as process:
-                process.communicate(input=text)
+                process.communicate(input=text, timeout=5.0)
                 return process.returncode == 0
         except Exception as e:
             logger.warning(f"[OS Clipboard] PowerShell Set-Clipboard failed: {e}")
     return False
 
 
+_WIN_TOAST_PS_SCRIPT = (
+    '[void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms"); '
+    "$objNotifyIcon = New-Object System.Windows.Forms.NotifyIcon; "
+    "$objNotifyIcon.Icon = [System.Drawing.SystemIcons]::Information; "
+    '$objNotifyIcon.BalloonTipIcon = "Info"; '
+    "$objNotifyIcon.BalloonTipTitle = $env:SOTA_TOAST_TITLE; "
+    "$objNotifyIcon.BalloonTipText = $env:SOTA_TOAST_MSG; "
+    "$objNotifyIcon.Visible = $True; "
+    "$objNotifyIcon.ShowBalloonTip(5000); "
+    "Start-Sleep -Seconds 6; "
+    "$objNotifyIcon.Dispose()"
+)
+
+
 def show_toast(title: str, message: str) -> None:
     """Displays an OS-level desktop notification/balloon tip."""
     logger.info(f"[OS Notification] {title}: {message}")
     if sys.platform == "win32":
-        # Dynamic PowerShell Balloon Tip to avoid importing heavy GUI frameworks (e.g. win10toast)
-        # SOTA v7.0 Gold: zero-dependencies, zero-friction
-        ps_script = f"""
-        [void] [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms")
-        $objNotifyIcon = New-Object System.Windows.Forms.NotifyIcon
-        $objNotifyIcon.Icon = [System.Drawing.SystemIcons]::Information
-        $objNotifyIcon.BalloonTipIcon = "Info"
-        $objNotifyIcon.BalloonTipTitle = "{title.replace('"', '`"')}"
-        $objNotifyIcon.BalloonTipText = "{message.replace('"', '`"')}"
-        $objNotifyIcon.Visible = $True
-        $objNotifyIcon.ShowBalloonTip(10000)
-        """
+        env = os.environ.copy()
+        env["SOTA_TOAST_TITLE"] = str(title)[:200]
+        env["SOTA_TOAST_MSG"] = str(message)[:500]
         try:
             subprocess.Popen(
-                ["powershell", "-Command", ps_script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                ["powershell", "-NoProfile", "-Command", _WIN_TOAST_PS_SCRIPT],
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
         except Exception as e:
             logger.warning(f"[OS Notification] Failed to trigger Windows balloon tip: {e}")

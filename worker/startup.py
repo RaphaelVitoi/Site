@@ -5,6 +5,7 @@ Worker Startup -- Inicializacao conjunta do Worker, API e Watchdog.
 
 import asyncio
 from collections.abc import Callable
+import contextlib
 import logging
 import signal
 from types import FrameType
@@ -55,8 +56,7 @@ def _install_shutdown_handlers(
     previous_signal_handlers: dict[signal.Signals, _SignalHandler] = {}
     restored = False
 
-    def request_shutdown(signum: int, _frame: FrameType | None) -> None:
-        logger.info("Sinal %s recebido; iniciando encerramento gracioso.", signal.Signals(signum).name)
+    def request_shutdown(_signum: int, _frame: FrameType | None) -> None:
         loop.call_soon_threadsafe(shutdown_event.set)
 
     for signum in (signal.SIGINT, signal.SIGTERM):
@@ -129,13 +129,17 @@ async def _run_service_group(manager: QueueManager, shutdown_event: asyncio.Even
             service_task.result()
             raise RuntimeError(f"Servico de longa duracao encerrou inesperadamente: {service_tasks[service_task]}")
 
-        logger.info("Encerramento solicitado; cancelando servicos e drenando tarefas.")
+        logger.info("Sinal de encerramento recebido; cancelando servicos e drenando tarefas.")
     finally:
         shutdown_task.cancel()
         for task in service_tasks:
             if not task.done():
                 task.cancel()
-        await asyncio.gather(shutdown_task, *service_tasks, return_exceptions=True)
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(
+                asyncio.gather(shutdown_task, *service_tasks, return_exceptions=True),
+                timeout=15.0,
+            )
 
 
 async def start_worker_and_api():

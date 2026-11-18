@@ -24,6 +24,8 @@ import sys
 import threading
 from typing import Any
 
+from utils.env_loader import is_real_key_value
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_COOLDOWN_429 = timedelta(seconds=45)
@@ -36,6 +38,15 @@ _HMAC_SALT: bytes = b"sota_gemini_pool_salt"
 def _key_sha8(key: str) -> str:
     """Calcula fingerprint truncado de 8 caracteres do token para telemetria sem vazamento."""
     return hmac.new(_HMAC_SALT, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
+
+
+def _is_real_key_value(value: str) -> bool:
+    """Valida chave real delegando para llm.budget quando carregado (sem ciclo de import)."""
+    budget_mod = sys.modules.get("llm.budget")
+    fn = getattr(budget_mod, "_is_real_key_value", None) if budget_mod is not None else None
+    if callable(fn):
+        return bool(fn(value))
+    return is_real_key_value(value)
 
 
 def _normalize_model_key(model: str | None) -> str:
@@ -151,7 +162,7 @@ _AUXILIARY_GEMINI_KEY_VARS = (
 
 def _append_valid_key(collected: list[str], raw_value: str) -> None:
     val = raw_value.strip()
-    if len(val) >= 20 and val not in collected:
+    if len(val) >= 20 and _is_real_key_value(val) and val not in collected:
         collected.append(val)
 
 
@@ -183,7 +194,7 @@ class GeminiPoolManager:
     """
 
     def __init__(self, read_registry: bool = True) -> None:
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._keys: list[str] = []
         self._stats: dict[str, KeyStats] = {}
         self._round_robin_idx: int = 0
@@ -198,25 +209,30 @@ class GeminiPoolManager:
         if read_registry:
             _read_windows_registry_env(env_map)
 
-        # Atualiza metadados do projeto se presentes
-        if "GEMINI_PROJECT_ID" in env_map:
-            self._project_id = env_map["GEMINI_PROJECT_ID"]
-        if "GEMINI_PROJECT_NAME" in env_map:
-            self._project_name = env_map["GEMINI_PROJECT_NAME"]
+        with self._lock:
+            # Atualiza metadados do projeto se presentes
+            if "GEMINI_PROJECT_ID" in env_map:
+                self._project_id = env_map["GEMINI_PROJECT_ID"]
+            if "GEMINI_PROJECT_NAME" in env_map:
+                self._project_name = env_map["GEMINI_PROJECT_NAME"]
 
-        self._keys = _collect_gemini_keys_from_map(env_map, include_auxiliary=read_registry)
+            self._keys = _collect_gemini_keys_from_map(env_map, include_auxiliary=read_registry)
 
-        # Inicializa registros de estatistica
-        for i, key in enumerate(self._keys):
-            sha = _key_sha8(key)
-            if sha not in self._stats:
-                self._stats[sha] = KeyStats(key=key, index=i + 1)
+            # Inicializa registros de estatistica
+            for i, key in enumerate(self._keys):
+                sha = _key_sha8(key)
+                if sha not in self._stats:
+                    self._stats[sha] = KeyStats(key=key, index=i + 1)
+
+            total = len(self._keys)
+            proj_id = self._project_id
+            proj_name = self._project_name
 
         logger.info(
             "[GEMINI POOL] Pool carregado com %d chaves ativas (Projeto: %s / %s).",
-            len(self._keys),
-            self._project_id,
-            self._project_name,
+            total,
+            proj_id,
+            proj_name,
         )
 
     def ensure_keys(self, keys: list[str]) -> None:
@@ -224,7 +240,7 @@ class GeminiPoolManager:
         with self._lock:
             for key in keys:
                 val = (key or "").strip()
-                if len(val) < 12:
+                if len(val) < 12 or not _is_real_key_value(val):
                     continue
                 sha = _key_sha8(val)
                 if val not in self._keys:
@@ -234,11 +250,13 @@ class GeminiPoolManager:
 
     def total_keys(self) -> int:
         """Retorna o numero total de chaves registradas."""
-        return len(self._keys)
+        with self._lock:
+            return len(self._keys)
 
     def available_keys_count(self, model: str | None = None) -> int:
         """Retorna quantas chaves estao aptas a responder no momento (opcionalmente para um modelo)."""
-        return sum(1 for st in self._stats.values() if st.is_available(model=model))
+        with self._lock:
+            return sum(1 for st in self._stats.values() if st.is_available(model=model))
 
     def get_key_for_workload(
         self, workload: GeminiWorkload | str = GeminiWorkload.TRIAGEM, model: str | None = None
@@ -377,40 +395,42 @@ class GeminiPoolManager:
         now = datetime.now(UTC)
         norm_model = _normalize_model_key(model)
         summary: list[dict[str, Any]] = []
-        for sha, st in sorted(self._stats.items(), key=lambda item: item[1].index):
-            blocked = False
-            remaining_cooldown_s = 0.0
-            active_expiries: list[datetime] = []
-            if st.blocked_until and st.blocked_until > now:
-                active_expiries.append(st.blocked_until)
-            if norm_model:
-                model_exp = st.model_blocked_until.get(norm_model)
-                if model_exp and model_exp > now:
-                    active_expiries.append(model_exp)
-            elif st.model_blocked_until:
-                active_expiries.extend(exp for exp in st.model_blocked_until.values() if exp > now)
+        with self._lock:
+            stats_snapshot = sorted(self._stats.items(), key=lambda item: item[1].index)
+            for sha, st in stats_snapshot:
+                blocked = False
+                remaining_cooldown_s = 0.0
+                active_expiries: list[datetime] = []
+                if st.blocked_until and st.blocked_until > now:
+                    active_expiries.append(st.blocked_until)
+                if norm_model:
+                    model_exp = st.model_blocked_until.get(norm_model)
+                    if model_exp and model_exp > now:
+                        active_expiries.append(model_exp)
+                elif st.model_blocked_until:
+                    active_expiries.extend(exp for exp in st.model_blocked_until.values() if exp > now)
 
-            if active_expiries:
-                blocked = True
-                remaining_cooldown_s = round((max(active_expiries) - now).total_seconds(), 1)
+                if active_expiries:
+                    blocked = True
+                    remaining_cooldown_s = round((max(active_expiries) - now).total_seconds(), 1)
 
-            summary.append(
-                {
-                    "index": st.index,
-                    "sha8": sha,
-                    "attempts": st.attempts,
-                    "successes": st.successes,
-                    "failures": st.failures,
-                    "avg_latency_ms": round(st.avg_latency_ms, 1),
-                    "is_blocked": blocked,
-                    "cooldown_s": remaining_cooldown_s,
-                    "is_revoked": st.is_revoked,
-                    "health_score": round(st.calculate_health_score(model=model), 1),
-                    "atomic_edits": st.workload_counts[GeminiWorkload.ATOMIC_EDITS],
-                    "triagem": st.workload_counts[GeminiWorkload.TRIAGEM],
-                    "linting": st.workload_counts[GeminiWorkload.LINTING],
-                }
-            )
+                summary.append(
+                    {
+                        "index": st.index,
+                        "sha8": sha,
+                        "attempts": st.attempts,
+                        "successes": st.successes,
+                        "failures": st.failures,
+                        "avg_latency_ms": round(st.avg_latency_ms, 1),
+                        "is_blocked": blocked,
+                        "cooldown_s": remaining_cooldown_s,
+                        "is_revoked": st.is_revoked,
+                        "health_score": round(st.calculate_health_score(model=model), 1),
+                        "atomic_edits": st.workload_counts[GeminiWorkload.ATOMIC_EDITS],
+                        "triagem": st.workload_counts[GeminiWorkload.TRIAGEM],
+                        "linting": st.workload_counts[GeminiWorkload.LINTING],
+                    }
+                )
         return summary
 
     def format_markdown_table(self) -> str:

@@ -114,6 +114,9 @@ def _build_http_session() -> aiohttp.ClientSession:
     )
 
 
+_BACKGROUND_CLOSE_TASKS: set[asyncio.Task[Any]] = set()
+
+
 def _aclose_orphaned_session(sess: aiohttp.ClientSession) -> None:
     """Fecha (best-effort) sessao orfa de loop morto, agendando no loop corrente."""
 
@@ -122,7 +125,9 @@ def _aclose_orphaned_session(sess: aiohttp.ClientSession) -> None:
             await sess.close()
 
     with contextlib.suppress(RuntimeError):
-        asyncio.get_running_loop().create_task(_close())
+        task = asyncio.get_running_loop().create_task(_close())
+        _BACKGROUND_CLOSE_TASKS.add(task)
+        task.add_done_callback(_BACKGROUND_CLOSE_TASKS.discard)
 
 
 def get_global_http_session() -> aiohttp.ClientSession:
@@ -145,6 +150,28 @@ def get_global_http_session() -> aiohttp.ClientSession:
             par = (loop, _build_http_session())
             _GLOBAL_HTTP_SESSIONS[loop_id] = par
         return par[1]
+
+
+async def close_all_http_sessions() -> None:
+    """Fecha todas as sessoes HTTP aiohttp abertas associadas ao loop corrente."""
+    try:
+        current_loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return
+
+    sessions_to_close: list[aiohttp.ClientSession] = []
+    with _HTTP_SESSIONS_GUARD:
+        for lid, (loop_obj, sess) in tuple(_GLOBAL_HTTP_SESSIONS.items()):
+            if loop_obj is current_loop:
+                _GLOBAL_HTTP_SESSIONS.pop(lid, None)
+                if not sess.closed:
+                    sessions_to_close.append(sess)
+
+    for sess in sessions_to_close:
+        with contextlib.suppress(Exception):
+            await sess.close()
+    if sessions_to_close:
+        await asyncio.sleep(0.05)
 
 
 def _sync_fallback_request(
