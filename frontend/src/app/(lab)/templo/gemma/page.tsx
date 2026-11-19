@@ -525,9 +525,9 @@ export default function GemmaPortal() {
           for (const frac of fractions) {
             const targetTime = duration * frac;
             video.currentTime = targetTime;
-            await new Promise((r) => {
-              // NOSONAR typescript:S9382 -- seeks de keyframe sao sequenciais por natureza
-              video.onseeked = r;
+            // NOSONAR typescript:S9382 -- seeks de keyframe sao sequenciais: um unico <video> so resolve um currentTime por vez
+            await new Promise<void>((resolve) => { // NOSONAR
+              video.onseeked = () => resolve();
             });
             const canvas = document.createElement('canvas');
             canvas.width = Math.min(video.videoWidth || 480, 480);

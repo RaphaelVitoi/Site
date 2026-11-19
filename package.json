@@ -49,18 +49,18 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.4.6",
-    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/jest-dom": "8.0.0",
     "@testing-library/react": "16.3.3",
     "concurrently": "10.0.7",
     "jest": "30.5.2",
     "jest-environment-jsdom": "30.5.2",
-    "knip": "^6.45.1",
+    "knip": "^6.46.1",
     "lighthouse": "13.6.0",
     "markdownlint-cli": "^0.50.0",
     "prettier": "3.10.1",
     "prettier-plugin-tailwindcss": "0.8.1",
     "rimraf": "6.1.4",
-    "turbo": "2.11.12",
+    "turbo": "2.11.13",
     "vitest": "^5.1.1"
   },
   "overrides": {

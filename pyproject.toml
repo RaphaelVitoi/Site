@@ -19,7 +19,7 @@ dependencies = [
     "multidict>=7.2.1",
     "uvicorn[standard]>=0.54.0",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
-    "pydantic>=2.14.3",
+    "pydantic>=2.14.4",
     "pydantic-settings>=2.16.3",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
     # ── MOTOR MATEMATICO, GRAFOS & ANALYTICS ──────────────────────────
     "numpy>=2.5.5",
@@ -59,9 +59,9 @@ dependencies = [
     "onnxruntime>=1.32.0",
     # ── CLIENTES LLM ──────────────────────────────────────────────────
     "google-genai>=3.6.1",
-    "google-antigravity>=0.1.23",
-    "openai>=3.55.1",
-    "anthropic>=2.10.0",
+    "google-antigravity>=0.1.24",
+    "openai>=3.56.0",
+    "anthropic>=2.11.0",
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
     "pypdf>=7.0.1,<8.0.0",  # 7.0.1: latest PyPI 2026-11-10; major release SOTA sem alertas abertos
@@ -99,7 +99,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.4.37",
+    "laya>=0.5.0",
     "accelerate>=1.16.0",
     "timesfm[torch]==3.0.2",
     # Computer-use, OLAP e embeddings alternativos foram movidos para
@@ -122,7 +122,7 @@ packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "work
 
 # Instalado com: uv sync --extra dev (ou pip install -e .[dev])
 dev = [
-    "ruff>=0.17.5",
+    "ruff>=0.17.6",
     "pylint>=4.1.4",
     "pyright>=1.1.414",
     "pytest>=9.2.0",
@@ -216,7 +216,7 @@ all = [
 # (dev/all) -- PEP 735 (uv sync) e extras pip sao canais de instalacao distintos.
 # As duas listas DEVEM permanecer identicas; "deduplicar" quebra um dos lados.
 dev = [
-    "ruff>=0.17.5",
+    "ruff>=0.17.6",
     "pylint>=4.1.4",
     "pyright>=1.1.414",
     "pytest>=9.2.0",
