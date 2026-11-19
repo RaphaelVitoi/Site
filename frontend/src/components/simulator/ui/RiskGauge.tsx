@@ -6,21 +6,20 @@
 
 'use client';
 
-import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
 
 export interface RiskGaugeProps {
   value: number;
-  label?: string | undefined;
-  pos?: string | undefined;
-  stack?: string | undefined;
-  baseColor?: 'indigo' | 'pink' | undefined;
-  threshold?: number | undefined;
-  opponentValue?: number | undefined;
-  dynamicDeathZone?: number | undefined;
-  maxRp?: number | undefined;
-  muted?: boolean | undefined;
+  label?: string;
+  pos?: string;
+  stack?: string;
+  baseColor?: 'indigo' | 'pink';
+  threshold?: number;
+  opponentValue?: number;
+  dynamicDeathZone?: number;
+  maxRp?: number;
+  muted?: boolean;
 }
 
 type GaugeState = 'normal' | 'predator' | 'death';
@@ -155,7 +154,7 @@ export function RiskGauge({
 
   let centerContent = (
     <span
-      className={`font-mono text-2xl font-black tracking-tighter text-white sm:text-3xl tabular-nums ${isCritical ? 'text-accent-danger' : ''}`}
+      className={`font-mono text-2xl font-black tracking-tighter text-white tabular-nums sm:text-3xl ${isCritical ? 'text-accent-danger' : ''}`}
       style={{ textShadow: `0 0 25px ${colorHex}80` }}
     >
       {safeValue.toFixed(1)}%
@@ -165,36 +164,45 @@ export function RiskGauge({
   if (isDeathZone) {
     centerContent = (
       <div className="relative">
-        <i className="fa-solid fa-biohazard mb-2 animate-pulse text-4xl" style={{ color: colorHex, filter: `drop-shadow(0 0 15px ${colorHex})` }} />
-        <div className="absolute inset-0 bg-accent-rose/20 blur-2xl rounded-full -z-10 animate-pulse" />
+        <i
+          className="fa-solid fa-biohazard mb-2 animate-pulse text-4xl"
+          style={{ color: colorHex, filter: `drop-shadow(0 0 15px ${colorHex})` }}
+        />
+        <div className="bg-accent-rose/20 absolute inset-0 -z-10 animate-pulse rounded-full blur-2xl" />
       </div>
     );
   } else if (isPredatorZone) {
     centerContent = (
       <div className="relative">
-        <i className="fa-solid fa-crosshairs mb-2 text-4xl animate-spin-[20s_linear_infinite]" style={{ color: colorHex, filter: `drop-shadow(0 0 15px ${colorHex})` }} />
-        <div className="absolute inset-0 bg-accent-emerald/20 blur-2xl rounded-full -z-10" />
+        <i
+          className="fa-solid fa-crosshairs animate-spin-[20s_linear_infinite] mb-2 text-4xl"
+          style={{ color: colorHex, filter: `drop-shadow(0 0 15px ${colorHex})` }}
+        />
+        <div className="bg-accent-emerald/20 absolute inset-0 -z-10 rounded-full blur-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center group/gauge">
+    <div className="group/gauge flex flex-col items-center">
       <div className="relative mx-auto mb-6 aspect-square w-full max-w-40 transition-transform duration-700 group-hover/gauge:scale-105">
-        <svg viewBox="0 0 36 36" className="h-full w-full -rotate-90 filter drop-shadow-[0_0_30px_rgba(0,0,0,0.5)]" aria-label="Indicador Circular de Risco" role="img">
+        <svg
+          viewBox="0 0 36 36"
+          className="h-full w-full -rotate-90 drop-shadow-[0_0_30px_rgba(0,0,0,0.5)] filter"
+          aria-label="Indicador Circular de Risco"
+          role="img"
+        >
           <path
             className="fill-none stroke-slate-900/60"
             strokeWidth="3"
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
           />
-          <motion.path
-            className={`fill-none ${isDeathZone ? 'animate-pulse' : ''}`}
+          <path
+            className={`sota-gauge-arc fill-none ${isDeathZone ? 'animate-pulse' : ''}`}
             stroke={colorHex}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
-            initial={{ strokeDasharray: '0, 100' }}
-            animate={{ strokeDasharray: `${dashPercentage}, 100` }}
-            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+            strokeDasharray={`${dashPercentage}, 100`}
             d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
             style={{ filter: `drop-shadow(0 0 12px ${colorHex})` }}
           />
@@ -208,13 +216,15 @@ export function RiskGauge({
         </div>
       </div>
 
-      <div className="text-center space-y-2">
-        <div className="text-[0.6rem] font-black tracking-[0.4em] text-text-darker uppercase group-hover/gauge:text-text-muted transition-colors">{label}</div>
-        <div className="text-2xl leading-none font-black text-white tracking-tighter uppercase group-hover/gauge:text-glow-indigo transition-all duration-500">{pos}</div>
-        <div className="font-mono text-[0.75rem] font-black text-text-darker tracking-widest uppercase">{stack}</div>
+      <div className="space-y-2 text-center">
+        <div className="text-text-darker group-hover/gauge:text-text-muted text-[0.6rem] font-black tracking-[0.4em] uppercase transition-colors">
+          {label}
+        </div>
+        <div className="group-hover/gauge:text-glow-indigo text-2xl leading-none font-black tracking-tighter text-white uppercase transition-all duration-500">
+          {pos}
+        </div>
+        <div className="text-text-darker font-mono text-[0.75rem] font-black tracking-widest uppercase">{stack}</div>
       </div>
     </div>
   );
 }
-
-export default RiskGauge;

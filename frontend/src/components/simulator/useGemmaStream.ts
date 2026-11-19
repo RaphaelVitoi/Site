@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { fetchResponse, isAbortError } from '@/lib/client-fetch';
 import type { PhysicsSnapshot, InferenceRequest } from '@/lib/schemas';
 import { logger } from '@/lib/logger';
 
@@ -111,20 +112,16 @@ export function useGemmaStream() {
 					think,
 				};
 
-				const response = await fetch('/api/v1/gemma', {
+				const response = await fetchResponse('/api/v1/gemma', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify(payload),
 					signal: abortControllerRef.current.signal,
+					timeoutMs: 90_000,
+					fallbackError: 'Colapso na comunicação com o Proxy SOTA.',
 				});
-
-				if (!response.ok) {
-					throw new Error(
-						`[HTTP ${response.status}] Colapso na comunicação com o Proxy SOTA.`,
-					);
-				}
 
 				if (!response.body) {
 					throw new Error('ReadableStream não suportado pela engine de rede do browser.');
@@ -160,8 +157,12 @@ export function useGemmaStream() {
 
 				return finalContent;
 			} catch (err: unknown) {
-				if (err instanceof Error && err.name === 'AbortError') {
+				if (isAbortError(err) && abortControllerRef.current?.signal.aborted) {
 					logger.info('Engine:GemmaStream', 'Stream abortado (Cleanup/Cancelamento).');
+					return;
+				}
+				if (isAbortError(err)) {
+					setError('Proxy Inference SOTA excedeu o tempo limite.');
 					return;
 				}
 				logger.error('Engine:GemmaStream', 'Falha no Stream', { error: err });

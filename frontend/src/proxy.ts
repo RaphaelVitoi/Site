@@ -14,12 +14,20 @@ export async function proxy(req: NextRequest) {
 	const token = await getToken({ req, secret: resolveAuthSecret() });
 	const { pathname } = req.nextUrl;
 
-	const isOperatorRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/api/vitoi');
+	const isOperatorRoute =
+		pathname.startsWith('/dashboard') ||
+		pathname.startsWith('/api/vitoi') ||
+		pathname.startsWith('/api/sota/key-pools') ||
+		pathname.startsWith('/api/sota/nexus-mesh') ||
+		pathname.startsWith('/api/sota/chrysalis');
 
 	if (isOperatorRoute && !token) {
 		// API responde com status, não com redirect: um `fetch` não segue para a página de login.
 		if (pathname.startsWith('/api/')) {
-			return NextResponse.json({ error: 'Sessão exigida.' }, { status: 401 });
+			return NextResponse.json(
+				{ error: 'Sessão exigida.' },
+				{ status: 401, headers: { 'Cache-Control': 'no-store' } },
+			);
 		}
 		const url = req.nextUrl.clone();
 		url.pathname = '/login';
@@ -32,7 +40,10 @@ export async function proxy(req: NextRequest) {
 	// declarada em NEXUS_OPERATOR_EMAILS, e lista vazia não libera ninguém (FE-04).
 	if (isOperatorRoute && !isOperatorEmail(token?.email)) {
 		if (pathname.startsWith('/api/')) {
-			return NextResponse.json({ error: 'Área restrita ao operador.' }, { status: 403 });
+			return NextResponse.json(
+				{ error: 'Área restrita ao operador.' },
+				{ status: 403, headers: { 'Cache-Control': 'no-store' } },
+			);
 		}
 		const url = req.nextUrl.clone();
 		url.pathname = '/login';
@@ -51,5 +62,11 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-	matcher: ['/dashboard/:path*', '/api/vitoi/:path*'],
+	matcher: [
+		'/dashboard/:path*',
+		'/api/vitoi/:path*',
+		'/api/sota/key-pools/:path*',
+		'/api/sota/nexus-mesh/:path*',
+		'/api/sota/chrysalis/:path*',
+	],
 };

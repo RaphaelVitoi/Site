@@ -57,7 +57,7 @@ function parseProfileMap(rawData: unknown): Map<string, number> {
 	return profile;
 }
 
-async function getOrchestratorTelemetry() {
+async function getOrchestratorTelemetry(requestId: string) {
 	if (!shouldQueryDashboardOrchestrator()) {
 		return {
 			available: false,
@@ -69,11 +69,15 @@ async function getOrchestratorTelemetry() {
 	}
 
 	try {
-		// Busca telemetria SOTA da API do Orquestrador Python (Latência Zero SSR)
+		// Busca telemetria SOTA da API do Orquestrador Python (sem cache privado em rota force-dynamic)
 		const token = process.env['API_SECRET_TOKEN'] || '';
 		const res = await fetch(buildNexusServerUrl('/db-summary'), {
-			headers: token ? { Authorization: `Bearer ${token}` } : {},
-			next: { revalidate: 15 }, // SSR caching dinâmico
+			headers: {
+				'X-Request-Id': requestId,
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			signal: AbortSignal.timeout(2_500),
+			cache: 'no-store',
 		});
 
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -107,7 +111,7 @@ async function getOrchestratorTelemetry() {
 	}
 }
 
-async function getPredictiveProfile() {
+async function getPredictiveProfile(requestId: string) {
 	if (!shouldQueryDashboardOrchestrator()) {
 		return { available: false, topVazamento: 'Indisponível' };
 	}
@@ -117,8 +121,12 @@ async function getPredictiveProfile() {
 		// ao motor aiohttp, unificando a topologia de comunicação no SSR.
 		const token = process.env['API_SECRET_TOKEN'] || '';
 		const res = await fetch(buildNexusServerUrl('/predictive-profile'), {
-			headers: token ? { Authorization: `Bearer ${token}` } : {},
-			next: { revalidate: 15 },
+			headers: {
+				'X-Request-Id': requestId,
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
+			},
+			signal: AbortSignal.timeout(2_500),
+			cache: 'no-store',
 		});
 
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -146,8 +154,11 @@ async function getPredictiveProfile() {
 }
 
 export default async function DashboardPage() {
-	const telemetry = await getOrchestratorTelemetry();
-	const predictive = await getPredictiveProfile();
+	const requestId = crypto.randomUUID().replaceAll('-', '').slice(0, 16);
+	const [telemetry, predictive] = await Promise.all([
+		getOrchestratorTelemetry(requestId),
+		getPredictiveProfile(requestId),
+	]);
 
 	return (
 		<div className="min-h-screen bg-bg-base text-text-bright overflow-x-hidden font-body pb-24">

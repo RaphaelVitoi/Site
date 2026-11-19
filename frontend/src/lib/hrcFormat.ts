@@ -1,5 +1,4 @@
 import { readHRCPrizes } from './hrcPrizes';
-export { readHRCPrizes } from './hrcPrizes';
 import { z } from 'zod';
 import type { TournamentPlayer, TableSelection, TournamentSnapshot } from './tournamentContext';
 import { selectAnalysisTable } from './tournamentContext';
@@ -115,7 +114,7 @@ function orderTableSeats(
     return order.map(id => table.find(p => p.id === id)!);
   }
   if (source?.buttonSeat !== undefined && table.every(p => p.seat !== undefined)) {
-    const seats = [...table].sort((a, b) => a.seat! - b.seat!);
+    const seats = table.toSorted((a, b) => a.seat! - b.seat!);
     const button = seats.findIndex(p => p.seat === source.buttonSeat);
     if (button < 0) throw new Error('O botão informado não está na mesa selecionada.');
     const first = seats.length === 2 ? button : (button + 3) % seats.length;

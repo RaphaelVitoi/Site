@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 import { UI_I18N } from '../../../constants/translations';
 import { cleanTextForSpeech } from '../hooks/useSotaSpeech';
 
@@ -66,17 +67,28 @@ export function GeminiVoicePlayer({
 		updateVoices();
 		window.speechSynthesis.onvoiceschanged = updateVoices;
 
-		if (typeof window !== 'undefined' && 'fetch' in window) {
-			fetch('http://127.0.0.1:9333/api/voice/status')
-				.then((res) => res.json())
+		const controller = new AbortController();
+		if (typeof globalThis.fetch === 'function') {
+			void fetchJson<{ ok?: boolean; success?: boolean }>('/api/v1/voice/status', {
+				signal: controller.signal,
+				timeoutMs: 2_500,
+			})
 				.then((data) => {
-					if (data?.ok || data?.success) setIsNexusActive(true);
+					if (!controller.signal.aborted && (data?.ok || data?.success)) {
+						setIsNexusActive(true);
+					}
 				})
-				.catch(() => setIsNexusActive(false));
+				.catch((cause: unknown) => {
+					if (!controller.signal.aborted && !isAbortError(cause)) {
+						setIsNexusActive(false);
+					}
+				});
 		}
 
 		return () => {
+			controller.abort();
 			if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+				window.speechSynthesis.onvoiceschanged = null;
 				window.speechSynthesis.cancel();
 			}
 		};

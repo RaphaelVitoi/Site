@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 import type { CounterfactualRequest, CounterfactualResult } from '@/lib/counterfactualExperiment';
 import { downloadHRCJson } from '@/lib/hrcExport';
 
@@ -29,11 +30,25 @@ export default function CounterfactualPanel({ context, inputError }: Props) {
   const [pending, setPending] = useState(false);
   const [completed, setCompleted] = useState<{ key: string; result: CounterfactualResult } | null>(null);
   const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
+  const mountedRef = useRef(true);
+  const controllerRef = useRef<AbortController | null>(null);
   const key = JSON.stringify({ context, values, edited });
   const result = completed?.key === key && !inputError ? completed.result : null;
   const error = failure?.key === key ? failure.message : null;
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      controllerRef.current?.abort();
+    };
+  }, []);
+
   async function calculate() {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     setPending(true); setFailure(null); setCompleted(null);
     try {
       const tokens = values.probabilities.split(',').map(value => value.trim());
@@ -42,15 +57,24 @@ export default function CounterfactualPanel({ context, inputError }: Props) {
         origin: edited ? 'user-assumption' : 'didactic-default', unit: 'toy-utility', horizon: 'shared-terminal-horizon',
         fold: Number(values.fold), win: Number(values.win), loss: Number(values.loss), probabilities: tokens.map(Number),
       } };
-      const response = await fetch('/api/sota/counterfactual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!response.ok) {
-        const body: { error?: string } = await response.json();
-        throw new Error(body.error ?? 'Não foi possível calcular.');
-      }
-      const output: CounterfactualResult = await response.json();
+      const output = await fetchJson<CounterfactualResult>('/api/sota/counterfactual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+        timeoutMs: 12_000,
+        fallbackError: 'Não foi possível calcular.',
+      });
+      if (!mountedRef.current || controller.signal.aborted) return;
       setCompleted({ key, result: output });
-    } catch (error_) { setFailure({ key, message: error_ instanceof Error ? error_.message : 'Falha no experimento.' }); }
-    finally { setPending(false); }
+    } catch (error_) {
+      if (!mountedRef.current || isAbortError(error_)) return;
+      setFailure({ key, message: error_ instanceof Error ? error_.message : 'Falha no experimento.' });
+    } finally {
+      if (mountedRef.current && controllerRef.current === controller) {
+        setPending(false);
+      }
+    }
   }
 
   return <section className="rounded-xl border border-white/20 p-4 space-y-4" aria-label="Experimento de contrafactuais">

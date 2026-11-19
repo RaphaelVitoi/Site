@@ -11,8 +11,10 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { NextResponse } from 'next/server';
 import { buildNexusServerUrl } from '@/lib/api-contract';
+import { buildOperatorBackendHeaders, requireOperatorSession } from '@/lib/server/operator-gateway';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const execFileAsync = promisify(execFile);
 const POOL_FILTER_RX = /^[A-Za-z0-9_ .-]{0,40}$/;
@@ -32,20 +34,21 @@ function resolveSiteRoot(): string {
 async function queryBackendObservatory(
   live: boolean,
   pool: string,
+  requestId: string,
+  sessao: unknown,
 ): Promise<{ ok: true; data: unknown } | { ok: false }> {
-  const token = process.env['API_SECRET_TOKEN'] || '';
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), live ? 18000 : 2500);
   try {
     const endpoint = buildNexusServerUrl('/api/v1/keys/observatory');
     const url = !live && pool ? `${endpoint}?pool=${encodeURIComponent(pool)}` : endpoint;
+    const headers = buildOperatorBackendHeaders(
+      requestId,
+      live ? { 'Content-Type': 'application/json' } : undefined,
+      sessao,
+    );
     const init: RequestInit = {
       method: live ? 'POST' : 'GET',
-      headers: live ? { ...headers, 'Content-Type': 'application/json' } : headers,
-      signal: controller.signal,
+      headers,
+      signal: AbortSignal.timeout(live ? 18_000 : 2_500),
       cache: 'no-store',
     };
     if (live) {
@@ -57,8 +60,6 @@ async function queryBackendObservatory(
     return { ok: true, data };
   } catch {
     return { ok: false };
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -73,45 +74,53 @@ async function runCliFallback(live: boolean, pool: string): Promise<unknown> {
 
   const { stdout } = await execFileAsync(pythonExe, args, {
     cwd: siteRoot,
-    timeout: live ? 20000 : 8000,
+    timeout: live ? 20_000 : 8_000,
     maxBuffer: 2 * 1024 * 1024,
   });
   return JSON.parse(stdout) as unknown;
 }
 
-async function resolveSnapshot(live: boolean, pool: string): Promise<unknown> {
-  const backend = await queryBackendObservatory(live, pool);
+async function resolveSnapshot(live: boolean, pool: string, requestId: string, sessao: unknown): Promise<unknown> {
+  const backend = await queryBackendObservatory(live, pool, requestId, sessao);
   if (backend.ok) return backend.data;
   return runCliFallback(live, pool);
 }
 
 export async function GET(request: Request) {
+  const guard = await requireOperatorSession(undefined, request);
+  if (!guard.ok) return guard.response;
+  const responseHeaders = { 'Cache-Control': 'no-store', 'X-Request-Id': guard.requestId };
+
   try {
     const { searchParams } = new URL(request.url);
     const pool = (searchParams.get('pool') || '').trim();
     if (!POOL_FILTER_RX.test(pool)) {
-      return NextResponse.json({ error: 'Filtro de pool invalido' }, { status: 400 });
+      return NextResponse.json({ error: 'Filtro de pool invalido' }, { status: 400, headers: responseHeaders });
     }
-    const snapshot = await resolveSnapshot(false, pool);
-    return NextResponse.json(snapshot);
+    const snapshot = await resolveSnapshot(false, pool, guard.requestId, guard.session);
+    return NextResponse.json(snapshot, { headers: responseHeaders });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Falha ao auditar pools';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: msg }, { status: 500, headers: responseHeaders });
   }
 }
 
 export async function POST(request: Request) {
+  const guard = await requireOperatorSession(undefined, request);
+  if (!guard.ok) return guard.response;
+  const responseHeaders = { 'Cache-Control': 'no-store', 'X-Request-Id': guard.requestId };
+
   try {
     const body = (await request.json().catch(() => ({}))) as { live?: unknown; pool?: unknown };
     const live = body.live === true;
     const pool = typeof body.pool === 'string' ? body.pool.trim() : '';
     if (!POOL_FILTER_RX.test(pool)) {
-      return NextResponse.json({ error: 'Filtro de pool invalido' }, { status: 400 });
+      return NextResponse.json({ error: 'Filtro de pool invalido' }, { status: 400, headers: responseHeaders });
     }
-    const snapshot = await resolveSnapshot(live, pool);
-    return NextResponse.json(snapshot);
+    const snapshot = await resolveSnapshot(live, pool, guard.requestId, guard.session);
+    return NextResponse.json(snapshot, { headers: responseHeaders });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Falha ao sondar pools';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: msg }, { status: 500, headers: responseHeaders });
   }
 }

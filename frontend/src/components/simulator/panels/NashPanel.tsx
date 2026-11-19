@@ -7,7 +7,6 @@
  * BINDING: [engine/types.ts, components/simulator/ui/*]
  */
 
-import { motion } from 'framer-motion';
 import { memo, useCallback, useState } from 'react';
 import type { ChipEvFreqs, IcmDistortionResult, StreetChipEvFreqs } from '../solver/types';
 import { ActionRow } from '../ui/ActionRow';
@@ -68,11 +67,9 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
         <span className="text-text-muted text-xs font-bold uppercase">{LABELS.rpPct}</span>
       </div>
       <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${Math.min(100, ipRp * 2.5)}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          className="bg-accent-indigo h-full shadow-[0_0_15px_var(--accent-indigo)]"
+        <div
+          style={{ width: `${Math.min(100, ipRp * 2.5)}%` }}
+          className="sota-bar-fill bg-accent-indigo h-full shadow-[0_0_15px_var(--accent-indigo)]"
         />
       </div>
     </div>
@@ -91,11 +88,9 @@ const StreetDashboards = ({ ipRp, oopRp, current }: { ipRp: number; oopRp: numbe
         <span className="text-text-muted text-xs font-bold uppercase">{LABELS.rpPct}</span>
       </div>
       <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-white/5">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${Math.min(100, oopRp * 2.5)}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          className="bg-accent-amber h-full shadow-[0_0_15px_var(--accent-amber)]"
+        <div
+          style={{ width: `${Math.min(100, oopRp * 2.5)}%` }}
+          className="sota-bar-fill bg-accent-amber h-full shadow-[0_0_15px_var(--accent-amber)]"
         />
       </div>
     </div>

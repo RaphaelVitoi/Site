@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { buildNexusServerUrl } from '@/lib/api-contract';
 import { logger } from '@/lib/logger';
 import { isOperatorEmail } from '@/lib/server/operator';
+import { resolverCorrelationId } from '@/lib/server/visitor-id';
 
 /**
  * IDENTITY: Perfil preditivo e telemetria de quem pergunta
@@ -28,15 +29,13 @@ const ASCII_PARA_UTF8: Record<string, string> = {
 	'Excesso de Agressao': 'Excesso de Agressão',
 };
 
-async function perfilDoOperador(): Promise<Record<string, number> | null> {
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), 800);
+async function perfilDoOperador(requestId: string): Promise<Record<string, number> | null> {
 	try {
-		const headers: Record<string, string> = {};
+		const headers: Record<string, string> = { 'X-Request-Id': requestId };
 		const credencial = process.env['API_SECRET_TOKEN'];
 		if (credencial) headers['Authorization'] = `Bearer ${credencial}`;
 		const res = await fetch(buildNexusServerUrl('/predictive-profile'), {
-			signal: controller.signal,
+			signal: AbortSignal.timeout(1_200),
 			cache: 'no-store',
 			headers,
 		});
@@ -51,16 +50,19 @@ async function perfilDoOperador(): Promise<Record<string, number> | null> {
 		return Object.keys(perfil).length > 0 ? perfil : null;
 	} catch {
 		return null;
-	} finally {
-		clearTimeout(timeoutId);
 	}
 }
 
-export async function GET() {
+export async function GET(request?: Request) {
+	const requestId = resolverCorrelationId(request);
+	const responseHeaders = { 'Cache-Control': 'no-store', 'X-Request-Id': requestId };
 	const session = await auth();
 	const userId = session?.user?.id;
 	if (!userId) {
-		return NextResponse.json({ profile: null, telemetry: [], source: 'sem-sessao' satisfies PredictiveSource });
+		return NextResponse.json(
+			{ profile: null, telemetry: [], source: 'sem-sessao' satisfies PredictiveSource },
+			{ headers: responseHeaders },
+		);
 	}
 
 	try {
@@ -76,17 +78,26 @@ export async function GET() {
 		}));
 
 		if (isOperatorEmail(session.user?.email)) {
-			const profile = await perfilDoOperador();
-			return NextResponse.json({
-				profile,
-				telemetry,
-				source: (profile ? 'nexus-operador' : 'indisponivel') satisfies PredictiveSource,
-			});
+			const profile = await perfilDoOperador(requestId);
+			return NextResponse.json(
+				{
+					profile,
+					telemetry,
+					source: (profile ? 'nexus-operador' : 'indisponivel') satisfies PredictiveSource,
+				},
+				{ headers: responseHeaders },
+			);
 		}
 
-		return NextResponse.json({ profile: null, telemetry, source: 'sem-modelo-individual' satisfies PredictiveSource });
+		return NextResponse.json(
+			{ profile: null, telemetry, source: 'sem-modelo-individual' satisfies PredictiveSource },
+			{ headers: responseHeaders },
+		);
 	} catch (error) {
 		logger.error('API:Predictive', 'Falha ao consultar telemetria', { error });
-		return NextResponse.json({ profile: null, telemetry: [], source: 'indisponivel' satisfies PredictiveSource });
+		return NextResponse.json(
+			{ profile: null, telemetry: [], source: 'indisponivel' satisfies PredictiveSource },
+			{ headers: responseHeaders },
+		);
 	}
 }

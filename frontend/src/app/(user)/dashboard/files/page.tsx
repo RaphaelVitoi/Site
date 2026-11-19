@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
 import {
@@ -99,9 +100,7 @@ function FileExplorerTree({
                 ></i>
                 <span className="text-xs font-bold tracking-wider text-white uppercase">{src.source}</span>
               </div>
-              <span className="text-text-muted rounded-full bg-white/10 px-1.5 py-0.5 text-[10px]">
-                {files.length}
-              </span>
+              <span className="text-text-muted rounded-full bg-white/10 px-1.5 py-0.5 text-[10px]">{files.length}</span>
             </button>
 
             {!isCollapsed && (
@@ -152,68 +151,69 @@ export default function FilesDashboardPage() {
 
   // Carregar lista de arquivos
   useEffect(() => {
+    const controller = new AbortController();
     async function fetchFiles() {
       try {
-        const res = await fetch('/api/vitoi/files/list');
-        if (!res.ok) {
-          const errPayload = (await res.json().catch(() => null)) as { error?: string } | null;
-          setError(errPayload?.error || `Serviço temporariamente indisponível (HTTP ${res.status}).`);
-          setLoading(false);
-          return;
-        }
-        const data = (await res.json()) as { status: string; tree: SourceTree[]; error?: string };
-        if (data.status === 'SUCCESS') {
+        const data = await fetchJson<{ status: string; tree: SourceTree[]; error?: string }>('/api/vitoi/files/list', {
+          signal: controller.signal,
+          timeoutMs: 15_000,
+          fallbackError: 'Serviço temporariamente indisponível.',
+        });
+        if (controller.signal.aborted) return;
+        if (data?.status === 'SUCCESS') {
           setTree(data.tree);
         } else {
-          setError(data.error || 'Falha ao obter lista de arquivos.');
+          setError(data?.error || 'Falha ao obter lista de arquivos.');
         }
       } catch (err: unknown) {
-        setError((err as Error).message || 'Falha na conexão com a API de arquivos.');
+        if (controller.signal.aborted || isAbortError(err)) return;
+        setError(err instanceof Error ? err.message : 'Falha na conexão com a API de arquivos.');
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
     void fetchFiles();
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   // Carregar conteúdo individual do arquivo selecionado
   useEffect(() => {
     if (!selectedFile) return;
     const file = selectedFile;
+    const controller = new AbortController();
 
-    // Resposta de um arquivo selecionado antes não pode sobrescrever a do arquivo atual.
-    let ativo = true;
     async function fetchFileContent() {
       setLoadingContent(true);
       setFileContent(null);
       try {
         const encPath = encodeURIComponent(file.path);
-        const res = await fetch(`/api/vitoi/files/view?path=${encPath}`);
-        if (!res.ok) {
-          const errPayload = (await res.json().catch(() => null)) as { error?: string } | null;
-          if (ativo) {
-            setFileContent({
-              type: 'text',
-              error: errPayload?.error || `Erro ao ler arquivo (HTTP ${res.status}).`,
-            });
-          }
-          return;
+        const data = await fetchJson<FileContent>(`/api/vitoi/files/view?path=${encPath}`, {
+          signal: controller.signal,
+          timeoutMs: 15_000,
+          fallbackError: 'Erro ao ler arquivo.',
+        });
+        if (!controller.signal.aborted && data) {
+          setFileContent(data);
         }
-        const data = (await res.json()) as FileContent;
-        if (ativo) setFileContent(data);
       } catch (err: unknown) {
-        if (ativo)
-          setFileContent({
-            type: 'text',
-            error: (err as Error).message || 'Falha ao ler arquivo.',
-          });
+        if (controller.signal.aborted || isAbortError(err)) return;
+        setFileContent({
+          type: 'text',
+          error: err instanceof Error ? err.message : 'Falha ao ler arquivo.',
+        });
       } finally {
-        if (ativo) setLoadingContent(false);
+        if (!controller.signal.aborted) {
+          setLoadingContent(false);
+        }
       }
     }
     void fetchFileContent();
     return () => {
-      ativo = false;
+      controller.abort();
     };
   }, [selectedFile]);
 
@@ -307,4 +307,3 @@ export default function FilesDashboardPage() {
     </div>
   );
 }
-

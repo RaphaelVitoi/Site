@@ -44,8 +44,6 @@ export const PRIZES = [
 	{ pos: '9º', val: 36.47, jump: 0 },
 ];
 
-export const TOTAL_POOL = 1260;
-
 export type RangeAction = 'raise' | 'call' | 'shove' | 'fold';
 export type RangeCell = Partial<Record<RangeAction, number>>;
 

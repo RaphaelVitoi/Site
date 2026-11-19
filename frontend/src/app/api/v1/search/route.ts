@@ -79,15 +79,16 @@ function formatSearchResults(items: SearchResultItem[]): string {
 }
 
 export async function GET(request: Request) {
+	const headers = { 'Cache-Control': 'no-store' };
 	const session = await auth();
 	if (!session) {
-		return NextResponse.json({ error: 'Acesso Negado: Sessão SOTA exigida.' }, { status: 401 });
+		return NextResponse.json({ error: 'Acesso Negado: Sessão SOTA exigida.' }, { status: 401, headers });
 	}
 
 	const { searchParams } = new URL(request.url);
 	const query = searchParams.get('q')?.trim();
 	if (!query) {
-		return NextResponse.json({ error: 'Parâmetro de busca ausente.' }, { status: 400 });
+		return NextResponse.json({ error: 'Parâmetro de busca ausente.' }, { status: 400, headers });
 	}
 
 	try {
@@ -99,20 +100,21 @@ export async function GET(request: Request) {
 				Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 				'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
 			},
+			signal: AbortSignal.timeout(5_000),
 			cache: 'no-store',
 		});
 
 		if (!res.ok) {
-			return NextResponse.json({ results: [], formatted: '' });
+			return NextResponse.json({ results: [], formatted: '' }, { headers });
 		}
 
 		const html = await res.text();
 		const items = parseBingResults(html);
 		const formatted = formatSearchResults(items);
 
-		return NextResponse.json({ results: items, formatted });
+		return NextResponse.json({ results: items, formatted }, { headers });
 	} catch (err: unknown) {
 		console.warn('[WebSearch Route] Falha ao realizar busca:', err);
-		return NextResponse.json({ results: [], formatted: '' });
+		return NextResponse.json({ results: [], formatted: '' }, { headers });
 	}
 }

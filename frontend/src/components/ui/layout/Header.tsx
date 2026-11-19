@@ -2,9 +2,9 @@
 
 import { ROUTES } from '@/constants/routes';
 import BrandMark from '@/components/ui/layout/BrandMark';
-import ReadingProgressBar from '@/components/ui/layout/ReadingProgressBar';
+import { ReadingProgressBar } from '@/components/ui/layout/ReadingProgressBar';
 import { isLightPage as checkIsLightPage, isReadingContentPage } from '@/lib/surface';
-import { AnimatePresence, motion } from 'framer-motion';
+import { fetchJson } from '@/lib/client-fetch';
 import { useSession } from 'next-auth/react';
 import { HeaderAuthAction } from '@/components/ui/layout/HeaderAuthAction';
 import Link from 'next/link';
@@ -176,26 +176,64 @@ function useHeaderState() {
       return;
     }
 
+    let activeController: AbortController | null = null;
     const checkGemma = () => {
-      fetch('/api/v1/gemma')
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data: { online?: boolean } | null) => setGemmaOnline(Boolean(data?.online)))
-        .catch(() => setGemmaOnline(false));
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return;
+      }
+      activeController?.abort();
+      const controller = new AbortController();
+      activeController = controller;
+
+      void fetchJson<{ online?: boolean }>('/api/v1/gemma', {
+        signal: controller.signal,
+        timeoutMs: 3_000,
+      })
+        .then((data) => {
+          if (!controller.signal.aborted) {
+            setGemmaOnline(Boolean(data?.online));
+          }
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) {
+            setGemmaOnline(false);
+          }
+        });
     };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkGemma();
+      }
+    };
+
     checkGemma();
-    const intervalId = setInterval(checkGemma, 30000);
+    const intervalId = setInterval(checkGemma, 30_000);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
 
     return () => {
       clearInterval(intervalId);
+      activeController?.abort();
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
     };
   }, [shouldCheckGemma]);
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
+    if (!activeSubmenu) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveSubmenu(null);
+      }
     };
-  }, [mobileOpen]);
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [activeSubmenu]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -225,7 +263,10 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
     : 'relative flex h-9 w-9 xl:h-10 xl:w-10 items-center justify-center overflow-hidden rounded-xl bg-black/20 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(255,255,255,0.03)] transition-all duration-700 group-hover:border-amber-500/30 group-hover:shadow-[0_0_30px_rgba(212,175,55,0.15)]';
 
   return (
-    <Link href={ROUTES.HOME} className="group relative flex items-center gap-2 xl:gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 rounded-xl">
+    <Link
+      href={ROUTES.HOME}
+      className="group focus-visible:ring-accent-indigo relative flex items-center gap-2 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 xl:gap-3"
+    >
       <div className={logoContainerClass}>
         <div
           className={`absolute inset-0 bg-linear-to-br ${
@@ -242,7 +283,7 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
       <div className="flex flex-col justify-center">
         <div className="flex items-center gap-2">
           <span
-            className={`text-[1.1rem] xl:text-[1.2rem] font-black tracking-tighter ${
+            className={`text-[1.1rem] font-black tracking-tighter xl:text-[1.2rem] ${
               isLightPage ? 'text-light-text-main' : 'text-white'
             } leading-none transition-all duration-500`}
           >
@@ -250,7 +291,7 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
             <span
               className={`font-light ${
                 isLightPage ? 'text-light-text-muted' : 'text-text-muted'
-              } ml-0.5 tracking-[0.18em] xl:tracking-[0.2em] transition-colors duration-500`}
+              } ml-0.5 tracking-[0.18em] transition-colors duration-500 xl:tracking-[0.2em]`}
             >
               {HEADER_STRINGS.brandSubtitle}
             </span>
@@ -265,9 +306,9 @@ const HeaderBrand: React.FC<{ isLightPage: boolean; gemmaOnline: boolean }> = ({
           />
         </div>
         <span
-          className={`text-[0.5rem] xl:text-[0.55rem] font-black tracking-[0.25em] xl:tracking-[0.4em] uppercase ${
+          className={`text-[0.5rem] font-black tracking-[0.25em] uppercase xl:text-[0.55rem] xl:tracking-[0.4em] ${
             isLightPage ? 'text-light-text-accent' : 'text-accent-indigo-light'
-          } mt-1.5 xl:mt-2 leading-none transition-all duration-500`}
+          } mt-1.5 leading-none transition-all duration-500 xl:mt-2`}
         >
           {HEADER_STRINGS.tagline}
         </span>
@@ -304,16 +345,17 @@ const HeaderDesktopNav: React.FC<{
             Boolean(item.submenu?.some((sub) => pathname === sub.href));
 
           return (
-            <li
-              key={item.label}
-              className="group/nav relative"
-              onMouseEnter={() => item.submenu && setActiveSubmenu(item.label)}
-              onMouseLeave={() => setActiveSubmenu(null)}
-            >
+            <li key={item.label} className="group/nav relative">
               <Link
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 aria-haspopup={item.submenu ? 'true' : undefined}
                 aria-expanded={item.submenu ? activeSubmenu === item.label : undefined}
+                onFocus={() => {
+                  if (activeSubmenu && activeSubmenu !== item.label) {
+                    setActiveSubmenu(null);
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (item.submenu) {
                     if (e.key === 'Escape') {
@@ -326,75 +368,67 @@ const HeaderDesktopNav: React.FC<{
                     }
                   }
                 }}
-                className={`relative z-10 flex items-center gap-1.5 xl:gap-2 px-2.5 xl:px-4 py-2 xl:py-2.5 text-[0.58rem] xl:text-[0.62rem] font-black tracking-[0.12em] xl:tracking-[0.16em] whitespace-nowrap uppercase transition-all duration-300 ${getNavLinkClass(isLightPage, isActive)}`}
+                className={`relative z-10 flex items-center gap-1.5 px-2.5 py-2 text-[0.58rem] font-black tracking-[0.12em] whitespace-nowrap uppercase transition-all duration-300 xl:gap-2 xl:px-4 xl:py-2.5 xl:text-[0.62rem] xl:tracking-[0.16em] ${getNavLinkClass(isLightPage, isActive)}`}
               >
                 {item.label}
                 {item.submenu && (
-                  <i className="fa-solid fa-chevron-down text-[0.45rem] xl:text-[0.5rem] opacity-50 transition-transform duration-300 group-hover/nav:rotate-180" />
+                  <i className="fa-solid fa-chevron-down text-[0.45rem] opacity-50 transition-transform duration-300 group-hover/nav:rotate-180 xl:text-[0.5rem]" />
                 )}
               </Link>
 
-              {isActive && !item.submenu && (
-                <motion.div
-                  layoutId="active-nav"
-                  className={activeIndicatorBg}
-                  transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                />
-              )}
+              {isActive && !item.submenu && <div aria-hidden="true" className={activeIndicatorBg} />}
 
-              <AnimatePresence>
-                {item.submenu && activeSubmenu === item.label && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="pointer-events-auto absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 pt-4"
-                  >
-                    <div className={submenuCardClass}>
-                      <div
-                        className={`absolute inset-0 bg-linear-to-br ${
-                          isLightPage ? 'from-[#B09460]/5' : 'from-accent-indigo/5'
-                        } pointer-events-none to-transparent`}
-                      />
-                      {item.submenu.map((sub) => (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          className={`group/sub flex items-center gap-3 rounded-xl px-4 py-3 transition-all ${
-                            isLightPage ? 'hover:bg-black/5' : 'hover:bg-white/5'
+              {item.submenu && (
+                <div
+                  className={`sota-submenu-panel pointer-events-auto absolute top-full left-1/2 z-50 w-64 -translate-x-1/2 pt-4 ${
+                    activeSubmenu === item.label ? 'block' : 'hidden group-focus-within/nav:block group-hover/nav:block'
+                  }`}
+                >
+                  <div className={submenuCardClass}>
+                    <div
+                      className={`absolute inset-0 bg-linear-to-br ${
+                        isLightPage ? 'from-[#B09460]/5' : 'from-accent-indigo/5'
+                      } pointer-events-none to-transparent`}
+                    />
+                    {item.submenu.map((sub) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        aria-current={pathname === sub.href ? 'page' : undefined}
+                        onClick={() => setActiveSubmenu(null)}
+                        className={`group/sub flex items-center gap-3 rounded-xl px-4 py-3 transition-all ${
+                          isLightPage ? 'hover:bg-black/5' : 'hover:bg-white/5'
+                        }`}
+                      >
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${
+                            isLightPage
+                              ? 'border border-black/5 bg-black/5 group-hover/sub:border-[#B09460]/20 group-hover/sub:bg-[#B09460]/10'
+                              : 'group-hover/sub:bg-accent-indigo/10 group-hover/sub:border-accent-indigo/20 border border-white/5 bg-white/5'
                           }`}
                         >
-                          <div
-                            className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${
+                          <i
+                            className={`fa-solid ${sub.icon} ${
                               isLightPage
-                                ? 'border border-black/5 bg-black/5 group-hover/sub:border-[#B09460]/20 group-hover/sub:bg-[#B09460]/10'
-                                : 'group-hover/sub:bg-accent-indigo/10 group-hover/sub:border-accent-indigo/20 border border-white/5 bg-white/5'
+                                ? 'text-light-text-muted group-hover/sub:text-light-text-accent text-xs'
+                                : 'text-text-muted group-hover/sub:text-accent-indigo-light text-xs'
                             }`}
-                          >
-                            <i
-                              className={`fa-solid ${sub.icon} ${
-                                isLightPage
-                                  ? 'text-light-text-muted group-hover/sub:text-light-text-accent text-xs'
-                                  : 'text-text-muted group-hover/sub:text-accent-indigo-light text-xs'
-                              }`}
-                            />
-                          </div>
-                          <span
-                            className={`text-[0.65rem] font-bold tracking-widest uppercase transition-colors ${
-                              isLightPage
-                                ? 'text-light-text-muted group-hover/sub:text-light-text-main'
-                                : 'text-text-muted group-hover/sub:text-white'
-                            }`}
-                          >
-                            {sub.label}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                          />
+                        </div>
+                        <span
+                          className={`text-[0.65rem] font-bold tracking-widest uppercase transition-colors ${
+                            isLightPage
+                              ? 'text-light-text-muted group-hover/sub:text-light-text-main'
+                              : 'text-text-muted group-hover/sub:text-white'
+                          }`}
+                        >
+                          {sub.label}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </li>
           );
         })}
@@ -408,126 +442,150 @@ const HeaderMobileDrawer: React.FC<{
   isLightPage: boolean;
   onClose: () => void;
 }> = ({ isOpen, isLightPage, onClose }) => {
+  const dialogRef = React.useRef<HTMLDialogElement>(null);
+
   React.useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen) {
+      if (typeof dialog.showModal === 'function') {
+        if (!dialog.open) dialog.showModal();
+      } else {
+        dialog.setAttribute('open', '');
+      }
+      return;
+    }
+    if (typeof dialog.close === 'function') {
+      if (dialog.open) dialog.close();
+    } else {
+      dialog.removeAttribute('open');
+    }
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog || !isOpen || typeof HTMLDialogElement === 'undefined') return;
+    if ('closedBy' in HTMLDialogElement.prototype) return;
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dialog.getBoundingClientRect();
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    let pressedOutside = false;
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutside = isOutside(e);
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutside && isOutside(e)) {
+        onClose();
+      }
+    };
+    dialog.addEventListener('pointerdown', onPointerDown);
+    dialog.addEventListener('pointerup', onPointerUp);
+    return () => {
+      dialog.removeEventListener('pointerdown', onPointerDown);
+      dialog.removeEventListener('pointerup', onPointerUp);
+    };
   }, [isOpen, onClose]);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
-            onClick={onClose}
-          />
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menu principal de navegação"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className={`fixed top-0 right-0 bottom-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto border-l px-8 pt-24 pb-8 shadow-2xl transition-colors duration-300 lg:hidden ${
-              isLightPage ? 'border-light-border bg-light-surface' : 'bg-bg-deep border-white/10'
-            }`}
-          >
-            <button
-              type="button"
-              className={`absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 ${
-                isLightPage
-                  ? 'text-light-text-muted hover:text-light-text-main border border-black/10 bg-black/5 hover:bg-black/10'
-                  : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
-              }`}
-              onClick={onClose}
-              aria-label={HEADER_STRINGS.closeMenu}
-            >
-              <i className="fa-solid fa-xmark text-xl" />
-            </button>
+    <dialog
+      ref={dialogRef}
+      id="mobile-nav-drawer"
+      aria-label="Menu principal de navegação"
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
+      }}
+      onClose={onClose}
+      {...({ closedby: 'any' } as Record<string, string>)}
+      className={`sota-drawer-panel fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-[85vw] max-w-sm flex-col overflow-y-auto border-l px-8 pt-24 pb-8 shadow-2xl transition-colors duration-300 open:flex lg:open:hidden ${
+        isLightPage ? 'border-light-border bg-light-surface' : 'bg-bg-deep border-white/10'
+      }`}
+    >
+      <button
+        type="button"
+        autoFocus
+        className={`focus-visible:ring-accent-indigo absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${
+          isLightPage
+            ? 'text-light-text-muted hover:text-light-text-main border border-black/10 bg-black/5 hover:bg-black/10'
+            : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'
+        }`}
+        onClick={onClose}
+        aria-label={HEADER_STRINGS.closeMenu}
+      >
+        <i className="fa-solid fa-xmark text-xl" />
+      </button>
 
-            <div className="flex flex-col gap-8">
-              {NAV_ITEMS.map((item) => (
-                <div key={item.label} className="flex flex-col gap-3">
-                  <span
-                    className={`border-b pb-2 text-[0.65rem] font-black tracking-[0.25em] uppercase ${
-                      isLightPage ? 'border-black/5 text-light-text-accent' : 'text-accent-indigo border-white/5'
+      <div className="flex flex-col gap-8">
+        {NAV_ITEMS.map((item) => (
+          <div key={item.label} className="flex flex-col gap-3">
+            <span
+              className={`border-b pb-2 text-[0.65rem] font-black tracking-[0.25em] uppercase ${
+                isLightPage ? 'text-light-text-accent border-black/5' : 'text-accent-indigo border-white/5'
+              }`}
+            >
+              {item.label}
+            </span>
+            {item.submenu ? (
+              <div className="flex flex-col gap-2 pl-2">
+                {item.submenu.map((sub) => (
+                  <Link
+                    key={sub.href}
+                    href={sub.href}
+                    onClick={onClose}
+                    className={`flex items-center gap-4 py-1.5 text-sm font-bold transition-colors ${
+                      isLightPage
+                        ? 'text-light-text-muted hover:text-light-text-main'
+                        : 'text-text-main hover:text-white'
                     }`}
                   >
-                    {item.label}
-                  </span>
-                  {item.submenu ? (
-                    <div className="flex flex-col gap-2 pl-2">
-                      {item.submenu.map((sub) => (
-                        <Link
-                          key={sub.href}
-                          href={sub.href}
-                          onClick={onClose}
-                          className={`flex items-center gap-4 py-1.5 text-sm font-bold transition-colors ${
-                            isLightPage
-                              ? 'text-light-text-muted hover:text-light-text-main'
-                              : 'text-text-main hover:text-white'
-                          }`}
-                        >
-                          <i
-                            className={`fa-solid ${sub.icon} ${
-                              isLightPage ? 'text-light-text-muted' : 'text-text-darker'
-                            } w-5`}
-                          />
-                          {sub.label}
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <Link
-                      href={item.href}
-                      onClick={onClose}
-                      className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
-                        isLightPage
-                          ? 'text-light-text-muted hover:text-light-text-main'
-                          : 'text-text-main hover:text-white'
-                      }`}
-                    >
-                      <i
-                        className={`fa-solid fa-circle w-5 text-[0.3rem] ${
-                          isLightPage ? 'text-[#B09460]/50' : 'text-accent-indigo/50'
-                        }`}
-                      />
-                      {item.label}
-                    </Link>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className={`mt-auto border-t pt-8 ${isLightPage ? 'border-black/5' : 'border-white/5'}`}>
+                    <i
+                      className={`fa-solid ${sub.icon} ${
+                        isLightPage ? 'text-light-text-muted' : 'text-text-darker'
+                      } w-5`}
+                    />
+                    {sub.label}
+                  </Link>
+                ))}
+              </div>
+            ) : (
               <Link
-                href={ROUTES.QUEM_SOU}
+                href={item.href}
                 onClick={onClose}
-                className={`flex items-center gap-4 text-xs font-black tracking-widest uppercase transition-colors ${
-                  isLightPage ? 'text-light-text-muted hover:text-light-text-main' : 'text-text-muted hover:text-white'
+                className={`flex items-center gap-4 py-1 pl-2 text-sm font-bold transition-colors ${
+                  isLightPage ? 'text-light-text-muted hover:text-light-text-main' : 'text-text-main hover:text-white'
                 }`}
               >
-                <i className={`fa-solid fa-user-astronaut ${isLightPage ? 'text-[#B09460]' : 'text-accent-indigo'}`} />{' '}
-                {HEADER_STRINGS.author}
+                <i
+                  className={`fa-solid fa-circle w-5 text-[0.3rem] ${
+                    isLightPage ? 'text-[#B09460]/50' : 'text-accent-indigo/50'
+                  }`}
+                />
+                {item.label}
               </Link>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className={`mt-auto border-t pt-8 ${isLightPage ? 'border-black/5' : 'border-white/5'}`}>
+        <Link
+          href={ROUTES.QUEM_SOU}
+          onClick={onClose}
+          className={`flex items-center gap-4 text-xs font-black tracking-widest uppercase transition-colors ${
+            isLightPage ? 'text-light-text-muted hover:text-light-text-main' : 'text-text-muted hover:text-white'
+          }`}
+        >
+          <i className={`fa-solid fa-user-astronaut ${isLightPage ? 'text-[#B09460]' : 'text-accent-indigo'}`} />{' '}
+          {HEADER_STRINGS.author}
+        </Link>
+      </div>
+    </dialog>
   );
 };
 
-export const Header: React.FC = () => {
+const Header: React.FC = () => {
   const {
     mobileOpen,
     setMobileOpen,
@@ -569,12 +627,12 @@ export const Header: React.FC = () => {
             setActiveSubmenu={setActiveSubmenu}
           />
 
-          <div className="flex shrink-0 items-center justify-end gap-3 xl:gap-4 justify-self-end">
+          <div className="flex shrink-0 items-center justify-end gap-3 justify-self-end xl:gap-4">
             <HeaderAuthAction isLightPage={isLightPage} />
             {!isSimulatorPage && (
               <Link href={ROUTES.SIMULADOR} className={actionButtonClass}>
                 <span
-                  className={`relative text-[0.62rem] xl:text-[0.7rem] font-black tracking-[0.14em] xl:tracking-[0.2em] uppercase transition-colors ${
+                  className={`relative text-[0.62rem] font-black tracking-[0.14em] uppercase transition-colors xl:text-[0.7rem] xl:tracking-[0.2em] ${
                     isLightPage ? 'text-[#FAFAF7]' : 'text-accent-indigo-light group-hover:text-white'
                   }`}
                 >
@@ -585,7 +643,9 @@ export const Header: React.FC = () => {
 
             <button
               type="button"
-              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 lg:hidden ${
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav-drawer"
+              className={`focus-visible:ring-accent-indigo flex h-11 w-11 items-center justify-center rounded-xl transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 lg:hidden ${
                 isLightPage
                   ? 'text-light-text-muted hover:text-light-text-main border border-black/10 bg-black/5 hover:bg-black/10'
                   : 'text-text-muted border border-white/10 bg-white/5 hover:bg-white/10 hover:text-white'

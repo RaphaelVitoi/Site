@@ -12,15 +12,29 @@
  * backend inalcançável, 503. O cliente já cai no fallback analítico nesses três casos.
  */
 
-import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import type { NextRequest } from 'next/server';
 import { buildNexusServerUrl } from '@/lib/api-contract';
 import { resolveAuthSecret } from '@/lib/server/auth-secret';
 import { CorpoExcedeLimiteError, lerCorpoComLimite } from '@/lib/server/limited-body';
+import { identificadorDoVisitante, resolverCorrelationId } from '@/lib/server/visitor-id';
+
+export { identificadorDoVisitante } from '@/lib/server/visitor-id';
 
 const MAX_PROXY_BODY_BYTES = 2 * 1024 * 1024; // 2 MB
+const DEFAULT_PROXY_TIMEOUT_MS = 15_000;
+
+function comporSinalTimeout(requestSignal: AbortSignal | undefined, timeoutMs: number): AbortSignal | undefined {
+  if (typeof AbortSignal === 'undefined' || typeof AbortSignal.timeout !== 'function') {
+    return requestSignal;
+  }
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  if (requestSignal && typeof AbortSignal.any === 'function') {
+    return AbortSignal.any([requestSignal, timeoutSignal]);
+  }
+  return timeoutSignal;
+}
 
 /**
  * Extrai o token JWT da sessão, ou `null` se não houver.
@@ -39,24 +53,24 @@ const MAX_PROXY_BODY_BYTES = 2 * 1024 * 1024; // 2 MB
 export type ObterToken = (req: Request) => Promise<string | null>;
 
 export const tokenDaSessao: ObterToken = async (req: Request) => {
-	try {
-		const token = await getToken({ req: req as unknown as NextRequest, secret: resolveAuthSecret() });
-		if (!token) return null;
-		// O token precisa de `sub`: sem ele o backend não consegue ligar a
-		// requisição a uma pessoa, e aceitá-lo seria aceitar uma afirmação sem
-		// sujeito. `proxy.ts` já exige token; este é o segundo filtro, e é o
-		// que impede que um token sem identidade vire "usuário" no backend.
-		if (typeof token.sub !== 'string' || token.sub.trim() === '') return null;
-		// `['jwt']` e não `.jwt`: o tipo do NextAuth é um index signature, e
-		// `noPropertyAccessFromIndexSignature` (herdado do `tsconfig.base.json`)
-		// proíbe o acesso por ponto. O valor também é `unknown` — daí o
-		// `typeof`, que é o que fecha o `Promise<{} | null>` que o tsc
-		// reclamou. Verificado por `npm run typecheck`, que pegou os dois.
-		const bruto = token['jwt'];
-		return typeof bruto === 'string' && bruto.length > 0 ? bruto : null;
-	} catch {
-		return null;
-	}
+  try {
+    const token = await getToken({ req: req as unknown as NextRequest, secret: resolveAuthSecret() });
+    if (!token) return null;
+    // O token precisa de `sub`: sem ele o backend não consegue ligar a
+    // requisição a uma pessoa, e aceitá-lo seria aceitar uma afirmação sem
+    // sujeito. `proxy.ts` já exige token; este é o segundo filtro, e é o
+    // que impede que um token sem identidade vire "usuário" no backend.
+    if (typeof token.sub !== 'string' || token.sub.trim() === '') return null;
+    // `['jwt']` e não `.jwt`: o tipo do NextAuth é um index signature, e
+    // `noPropertyAccessFromIndexSignature` (herdado do `tsconfig.base.json`)
+    // proíbe o acesso por ponto. O valor também é `unknown` — daí o
+    // `typeof`, que é o que fecha o `Promise<{} | null>` que o tsc
+    // reclamou. Verificado por `npm run typecheck`, que pegou os dois.
+    const bruto = token['jwt'];
+    return typeof bruto === 'string' && bruto.length > 0 ? bruto : null;
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -71,12 +85,12 @@ export const tokenDaSessao: ObterToken = async (req: Request) => {
  * de "sessão sem token", e as duas têm causas diferentes.
  */
 async function obterTokenComToleranciaAFalha(obterToken: ObterToken, req: Request): Promise<string | null> {
-	try {
-		return await obterToken(req);
-	} catch (error_) {
-		console.warn('[nexus-proxy] token do usuário ilegível; encaminhando sem identidade', error_);
-		return null;
-	}
+  try {
+    return await obterToken(req);
+  } catch (error_) {
+    console.warn('[nexus-proxy] token do usuário ilegível; encaminhando sem identidade', error_);
+    return null;
+  }
 }
 
 /**
@@ -86,101 +100,144 @@ async function obterTokenComToleranciaAFalha(obterToken: ObterToken, req: Reques
  * inteiro num balde único de 300 req/min. O id do usuário vai como hash — o backend precisa só
  * distinguir visitantes, não saber quem são — e ele só é lido junto da credencial de serviço.
  */
-export function identificadorDoVisitante(sessao: unknown): string | null {
-	const id = (sessao as { user?: { id?: unknown } } | null)?.user?.id;
-	if (typeof id !== 'string' || id.length === 0) return null;
-	return createHash('sha256').update(id).digest('hex').slice(0, 32);
+export interface NexusProxyOptions {
+  /** Resolve a sessão do visitante; injetável para teste. */
+  obterSessao: () => Promise<unknown>;
+  /** Nome curto do recurso, usado nas mensagens de erro. */
+  rotulo: string;
+  /**
+   * Extrai o token JWT do usuário. Injetável para teste — o valor vive no
+   * cookie, e um teste sem servidor Next não o alcança. O default é a
+   * implementação real; o parâmetro existe para o teste fornecer a sua.
+   */
+  obterToken?: ObterToken;
+  /** Tempo limite maximo da chamada ao backend em ms (padrao 15_000). */
+  timeoutMs?: number;
 }
 
-export interface NexusProxyOptions {
-	/** Resolve a sessão do visitante; injetável para teste. */
-	obterSessao: () => Promise<unknown>;
-	/** Nome curto do recurso, usado nas mensagens de erro. */
-	rotulo: string;
-	/**
-	 * Extrai o token JWT do usuário. Injetável para teste — o valor vive no
-	 * cookie, e um teste sem servidor Next não o alcança. O default é a
-	 * implementação real; o parâmetro existe para o teste fornecer a sua.
-	 */
-	obterToken?: ObterToken;
+async function parseProxyBody(
+  req: Request,
+  rotulo: string,
+  responseHeaders: Record<string, string>,
+): Promise<{ ok: true; body: unknown } | { ok: false; response: NextResponse }> {
+  try {
+    const texto = await lerCorpoComLimite(req, MAX_PROXY_BODY_BYTES);
+    if (texto) {
+      return { ok: true, body: JSON.parse(texto) };
+    }
+    const body: unknown = typeof req.json === 'function' ? await req.json() : {};
+    return { ok: true, body };
+  } catch (error) {
+    if (error instanceof CorpoExcedeLimiteError) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { status: 'ERROR', error: `${rotulo}: corpo da requisição excede o limite de 2 MB.` },
+          { status: 413, headers: responseHeaders },
+        ),
+      };
+    }
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { status: 'ERROR', error: `${rotulo}: JSON inválido.` },
+        { status: 400, headers: responseHeaders },
+      ),
+    };
+  }
 }
 
 export async function encaminharAoNexus(
-	req: Request,
-	caminho: string,
-	{ obterSessao, rotulo, obterToken = tokenDaSessao }: NexusProxyOptions,
+  req: Request,
+  caminho: string,
+  { obterSessao, rotulo, obterToken = tokenDaSessao, timeoutMs = DEFAULT_PROXY_TIMEOUT_MS }: NexusProxyOptions,
 ): Promise<NextResponse> {
-	const sessao = await obterSessao();
-	if (!sessao) {
-		return NextResponse.json({ status: 'ERROR', error: `${rotulo}: sessão exigida.` }, { status: 401 });
-	}
+  const requestId = resolverCorrelationId(req);
+  const responseHeaders = {
+    'Cache-Control': 'no-store',
+    'X-Request-Id': requestId,
+  };
 
-	const credencial = process.env['API_SECRET_TOKEN'];
-	if (!credencial) {
-		return NextResponse.json(
-			{ status: 'ERROR', error: `${rotulo}: gateway não configurado (API_SECRET_TOKEN ausente).` },
-			{ status: 503 },
-		);
-	}
+  const sessao = await obterSessao();
+  if (!sessao) {
+    return NextResponse.json(
+      { status: 'ERROR', error: `${rotulo}: sessão exigida.` },
+      { status: 401, headers: responseHeaders },
+    );
+  }
 
-	let body: unknown;
-	try {
-		const texto = await lerCorpoComLimite(req, MAX_PROXY_BODY_BYTES);
-		if (texto) {
-			body = JSON.parse(texto);
-		} else if (typeof req.json === 'function') {
-			body = await req.json();
-		} else {
-			body = {};
-		}
-	} catch (error) {
-		if (error instanceof CorpoExcedeLimiteError) {
-			return NextResponse.json(
-				{ status: 'ERROR', error: `${rotulo}: corpo da requisição excede o limite de 2 MB.` },
-				{ status: 413 },
-			);
-		}
-		return NextResponse.json({ status: 'ERROR', error: `${rotulo}: JSON inválido.` }, { status: 400 });
-	}
+  const credencial = process.env['API_SECRET_TOKEN'];
+  if (!credencial) {
+    return NextResponse.json(
+      { status: 'ERROR', error: `${rotulo}: gateway não configurado (API_SECRET_TOKEN ausente).` },
+      { status: 503, headers: responseHeaders },
+    );
+  }
 
-	const headers: Record<string, string> = {
-		'Content-Type': 'application/json',
-		Authorization: `Bearer ${credencial}`,
-	};
-	const visitante = identificadorDoVisitante(sessao);
-	if (visitante) headers['X-Nexus-Client-Id'] = visitante;
+  const parsedBody = await parseProxyBody(req, rotulo, responseHeaders);
+  if (!parsedBody.ok) {
+    return parsedBody.response;
+  }
+  const { body } = parsedBody;
 
-	// FASE 6 / opção C (autorizado pelo Tier 0 em 2026-09-30): a credencial de
-	// serviço prova QUE ESTE PROCESSO é o gateway — nada sobre QUEM é o usuário.
-	// Sem o token do usuário, o backend só responde 401 ou 403; nunca consegue
-	// dizer "esta requisição é do usuário X".
-	//
-	// O token vai num header SEPARADO, e não no `Authorization`. Isso mantém as
-	// duas credenciais com naturezas distintas: `Authorization` decide a PORTA
-	// (serviço vs. produto), `X-User-Token` decide a PESSOA. Colocá-los no mesmo
-	// header obrigaria o backend a escolher entre duas leituras do mesmo valor,
-	// e essa escolha seria convenção, não contrato.
-	//
-	// `getToken` é a MESMA função que `proxy.ts:14` usa: o backend valida
-	// exatamente a assinatura que o edge já aceitou, e não nasce uma segunda
-	// decisão de sessão em dois lugares.
-	const tokenUsuario = await obterTokenComToleranciaAFalha(obterToken, req);
-	if (tokenUsuario) headers['X-User-Token'] = tokenUsuario;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${credencial}`,
+    'X-Request-Id': requestId,
+  };
+  const visitante = identificadorDoVisitante(sessao);
+  if (visitante) headers['X-Nexus-Client-Id'] = visitante;
 
-	let resp: Response;
-	try {
-		resp = await fetch(buildNexusServerUrl(caminho), {
-			method: 'POST',
-			headers,
-			body: JSON.stringify(body),
-			cache: 'no-store',
-		});
-	} catch (error) {
-		// A mensagem do fetch carrega host, porta e código de socket do backend (BK-15): fica no log.
-		console.warn(`[nexus-proxy] ${rotulo}: backend inalcançável`, error);
-		return NextResponse.json({ status: 'ERROR', error: `${rotulo}: backend inalcançável.` }, { status: 503 });
-	}
+  // FASE 6 / opção C (autorizado pelo Tier 0 em 2026-09-30): a credencial de
+  // serviço prova QUE ESTE PROCESSO é o gateway — nada sobre QUEM é o usuário.
+  // Sem o token do usuário, o backend só responde 401 ou 403; nunca consegue
+  // dizer "esta requisição é do usuário X".
+  //
+  // O token vai num header SEPARADO, e não no `Authorization`. Isso mantém as
+  // duas credenciais com naturezas distintas: `Authorization` decide a PORTA
+  // (serviço vs. produto), `X-User-Token` decide a PESSOA. Colocá-los no mesmo
+  // header obrigaria o backend a escolher entre duas leituras do mesmo valor,
+  // e essa escolha seria convenção, não contrato.
+  //
+  // `getToken` é a MESMA função que `proxy.ts:14` usa: o backend valida
+  // exatamente a assinatura que o edge já aceitou, e não nasce uma segunda
+  // decisão de sessão em dois lugares.
+  const tokenUsuario = await obterTokenComToleranciaAFalha(obterToken, req);
+  if (tokenUsuario) headers['X-User-Token'] = tokenUsuario;
 
-	const data = await resp.json().catch(() => ({ status: 'ERROR', error: `${rotulo}: resposta não-JSON do backend.` }));
-	return NextResponse.json(data, { status: resp.status });
+  let resp: Response;
+  try {
+    const signal = comporSinalTimeout(req.signal, timeoutMs);
+    resp = await fetch(buildNexusServerUrl(caminho), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+      cache: 'no-store',
+      ...(signal ? { signal } : {}),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      console.warn(`[nexus-proxy] ${rotulo}: tempo limite excedido (${timeoutMs}ms)`, error);
+      return NextResponse.json(
+        { status: 'ERROR', error: `${rotulo}: tempo limite excedido no backend.` },
+        { status: 504, headers: responseHeaders },
+      );
+    }
+    // A mensagem do fetch carrega host, porta e código de socket do backend (BK-15): fica no log.
+    console.warn(`[nexus-proxy] ${rotulo}: backend inalcançável`, error);
+    return NextResponse.json(
+      { status: 'ERROR', error: `${rotulo}: backend inalcançável.` },
+      { status: 503, headers: responseHeaders },
+    );
+  }
+
+  const upstreamRequestId = typeof resp.headers?.get === 'function' ? resp.headers.get('x-request-id') : null;
+  const data = await resp.json().catch(() => ({ status: 'ERROR', error: `${rotulo}: resposta não-JSON do backend.` }));
+  return NextResponse.json(data, {
+    status: resp.status,
+    headers: {
+      'Cache-Control': 'no-store',
+      'X-Request-Id': upstreamRequestId || requestId,
+    },
+  });
 }

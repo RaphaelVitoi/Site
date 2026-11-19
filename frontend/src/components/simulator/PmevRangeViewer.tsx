@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { fetchBlob } from '@/lib/client-fetch';
 
 // Ranks canônicos de Texas Hold'em
 const RANKS = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
@@ -1241,7 +1242,7 @@ export function PmevRangeViewer() {
 	const handleDownloadPdf = async () => {
 		setDownloadingPdf(true);
 		try {
-			const res = await fetch('/api/sota/pmev-pdf', {
+			const blob = await fetchBlob('/api/sota/pmev-pdf', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
@@ -1251,18 +1252,17 @@ export function PmevRangeViewer() {
 					pmev_threshold: 0.43,
 					expanded_hands: gridCells.filter((c) => c.action === 'EXPAND').map((c) => c.hand),
 				}),
+				timeoutMs: 20_000,
+				fallbackError: 'Falha ao gerar PDF técnico PMev.',
 			});
-			if (res.ok) {
-				const blob = await res.blob();
-				const url = window.URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = `relatorio_tecnico_poker_racional_${position}_${stackBb}bb.pdf`;
-				document.body.appendChild(a);
-				a.click();
-				a.remove();
-				window.URL.revokeObjectURL(url);
-			}
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `relatorio_tecnico_poker_racional_${position}_${stackBb}bb.pdf`;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			window.URL.revokeObjectURL(url);
 		} catch (err) {
 			console.error('Erro no download do PDF:', err);
 		} finally {

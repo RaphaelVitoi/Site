@@ -107,5 +107,3 @@ export function ArticleVoiceNarration({ title, content }: ArticleVoiceNarrationP
     </div>
   );
 }
-
-export default ArticleVoiceNarration;

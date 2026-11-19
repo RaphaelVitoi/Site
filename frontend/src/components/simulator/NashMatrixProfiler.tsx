@@ -337,5 +337,3 @@ export const NashMatrixProfiler: React.FC<NashMatrixProfilerProps> = ({
 		</div>
 	);
 };
-
-export default NashMatrixProfiler;

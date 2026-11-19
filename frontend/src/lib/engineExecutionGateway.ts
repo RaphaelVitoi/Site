@@ -79,6 +79,63 @@ function apiRecord(value: unknown, field: string): Record<string, unknown> {
 	return value as Record<string, unknown>;
 }
 
+function buildPluribusApiPayload(input: PluribusStateConfig): string {
+	return JSON.stringify({
+		state: {
+			pot: input.pot,
+			num_players: input.numPlayers,
+			street: input.street ?? 'flop',
+			active_stacks: input.activeStacks,
+			lambda_factor: input.lambdaFactor ?? 2.25,
+		},
+		equity: input.nominalEquity,
+		hero_position: input.heroPosition,
+		depth_streets: input.depthStreets ?? 1,
+		iterations: input.iterations ?? 60,
+	});
+}
+
+function parsePluribusApiResponse(raw: unknown, status: number, ok: boolean): PluribusSolveOutput {
+	const body = apiRecord(raw, 'body');
+	if (!ok) {
+		const detail = typeof body['error'] === 'string' ? `: ${body['error']}` : '';
+		throw new Error(`Pluribus API ${status}${detail}`);
+	}
+
+	const strategy = apiRecord(body['strategy'], 'strategy');
+	const actionEvs = apiRecord(body['action_evs'], 'action_evs');
+	const optimalAction = body['optimal_action'] === 'RAISE_POT' ? 'RAISE' : body['optimal_action'];
+	if (optimalAction !== 'FOLD' && optimalAction !== 'CALL' && optimalAction !== 'RAISE') {
+		throw new Error('Pluribus API response has invalid optimal_action');
+	}
+
+	return {
+		strategy: {
+			FOLD: apiNumber(strategy['FOLD'], 'strategy.FOLD'),
+			CALL: apiNumber(strategy['CALL'], 'strategy.CALL'),
+			RAISE: apiNumber(strategy['RAISE_POT'], 'strategy.RAISE_POT'),
+		},
+		optimalAction,
+		structuralLiability: apiNumber(body['structural_liability'], 'structural_liability'),
+		effectiveEquity: apiNumber(body['effective_equity'], 'effective_equity'),
+		posMultiplier: apiNumber(body['pos_multiplier'], 'pos_multiplier'),
+		kOpponents: apiNumber(body['k_opponents'], 'k_opponents'),
+		iterations: apiNumber(body['iterations_run'], 'iterations_run'),
+		depthStreets: apiNumber(body['depth_streets'], 'depth_streets'),
+		effectiveStack: apiNumber(body['effective_stack'], 'effective_stack'),
+		stackToPotRatio: apiNumber(body['stack_to_pot_ratio'], 'stack_to_pot_ratio'),
+		callCost: apiNumber(body['call_cost'], 'call_cost'),
+		raiseCost: apiNumber(body['raise_cost'], 'raise_cost'),
+		futureStreets: apiNumber(body['future_streets'], 'future_streets'),
+		horizonLiability: apiNumber(body['horizon_liability'], 'horizon_liability'),
+		evs: {
+			FOLD: apiNumber(actionEvs['FOLD'], 'action_evs.FOLD'),
+			CALL: apiNumber(actionEvs['CALL'], 'action_evs.CALL'),
+			RAISE: apiNumber(actionEvs['RAISE_POT'], 'action_evs.RAISE_POT'),
+		},
+	};
+}
+
 export function createPluribusApiExecutor(
 	accessToken: string,
 	fetchImpl: FetchLike = fetch,
@@ -94,60 +151,30 @@ export function createPluribusApiExecutor(
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${accessToken}`,
 				},
-				body: JSON.stringify({
-					state: {
-						pot: input.pot,
-						num_players: input.numPlayers,
-						street: input.street ?? 'flop',
-						active_stacks: input.activeStacks,
-						lambda_factor: input.lambdaFactor ?? 2.25,
-					},
-					equity: input.nominalEquity,
-					hero_position: input.heroPosition,
-					depth_streets: input.depthStreets ?? 1,
-					iterations: input.iterations ?? 60,
-				}),
+				body: buildPluribusApiPayload(input),
 			},
 		);
 		const raw = (await response.json()) as unknown;
-		const body = apiRecord(raw, 'body');
-		if (!response.ok) {
-			const detail = typeof body['error'] === 'string' ? `: ${body['error']}` : '';
-			throw new Error(`Pluribus API ${response.status}${detail}`);
-		}
+		return parsePluribusApiResponse(raw, response.status, response.ok);
+	};
+}
 
-		const strategy = apiRecord(body['strategy'], 'strategy');
-		const actionEvs = apiRecord(body['action_evs'], 'action_evs');
-		const optimalAction = body['optimal_action'] === 'RAISE_POT' ? 'RAISE' : body['optimal_action'];
-		if (optimalAction !== 'FOLD' && optimalAction !== 'CALL' && optimalAction !== 'RAISE') {
-			throw new Error('Pluribus API response has invalid optimal_action');
-		}
-
-		return {
-			strategy: {
-				FOLD: apiNumber(strategy['FOLD'], 'strategy.FOLD'),
-				CALL: apiNumber(strategy['CALL'], 'strategy.CALL'),
-				RAISE: apiNumber(strategy['RAISE_POT'], 'strategy.RAISE_POT'),
-			},
-			optimalAction,
-			structuralLiability: apiNumber(body['structural_liability'], 'structural_liability'),
-			effectiveEquity: apiNumber(body['effective_equity'], 'effective_equity'),
-			posMultiplier: apiNumber(body['pos_multiplier'], 'pos_multiplier'),
-			kOpponents: apiNumber(body['k_opponents'], 'k_opponents'),
-			iterations: apiNumber(body['iterations_run'], 'iterations_run'),
-			depthStreets: apiNumber(body['depth_streets'], 'depth_streets'),
-			effectiveStack: apiNumber(body['effective_stack'], 'effective_stack'),
-			stackToPotRatio: apiNumber(body['stack_to_pot_ratio'], 'stack_to_pot_ratio'),
-			callCost: apiNumber(body['call_cost'], 'call_cost'),
-			raiseCost: apiNumber(body['raise_cost'], 'raise_cost'),
-			futureStreets: apiNumber(body['future_streets'], 'future_streets'),
-			horizonLiability: apiNumber(body['horizon_liability'], 'horizon_liability'),
-			evs: {
-				FOLD: apiNumber(actionEvs['FOLD'], 'action_evs.FOLD'),
-				CALL: apiNumber(actionEvs['CALL'], 'action_evs.CALL'),
-				RAISE: apiNumber(actionEvs['RAISE_POT'], 'action_evs.RAISE_POT'),
-			},
-		};
+/**
+ * Executor same-origin BFF (`/api/sota/pluribus`) para sessoes autenticadas no
+ * navegador sem trafegar credenciais de servico para o cliente.
+ */
+export function createPluribusBffExecutor(fetchImpl: FetchLike = fetch): PluribusExecutor {
+	return async (input) => {
+		const signal = typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(8_000) : undefined;
+		const response = await fetchImpl('/api/sota/pluribus', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: buildPluribusApiPayload(input),
+			cache: 'no-store',
+			...(signal ? { signal } : {}),
+		});
+		const raw = (await response.json()) as unknown;
+		return parsePluribusApiResponse(raw, response.status, response.ok);
 	};
 }
 

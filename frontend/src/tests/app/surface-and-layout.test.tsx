@@ -4,18 +4,6 @@ import { isLightPage, isReadingContentPage, LIGHT_EDITORIAL_ROUTES } from '@/lib
 import { ROUTES } from '@/constants/routes';
 import { ReadingProgressBar } from '@/components/ui/layout/ReadingProgressBar';
 
-jest.mock('framer-motion', () => ({
-	motion: {
-		div: ({ className, style, children }: { className?: string; style?: React.CSSProperties; children?: React.ReactNode }) => (
-			<div data-testid="motion-progress" className={className} style={style}>
-				{children}
-			</div>
-		),
-	},
-	useScroll: () => ({ scrollYProgress: { get: () => 0.5 } }),
-	useSpring: (val: unknown) => val,
-}));
-
 describe('Arquitetura de Superfícies & Layout (SOTA)', () => {
 	describe('isLightPage', () => {
 		it('identifica corretamente superfícies editoriais claras', () => {
@@ -74,9 +62,10 @@ describe('Arquitetura de Superfícies & Layout (SOTA)', () => {
 			expect(wrapper).toHaveClass('pointer-events-none');
 			expect(wrapper).toHaveClass('fixed');
 
-			const progressDiv = container.querySelector('[data-testid="motion-progress"]');
+			const progressDiv = container.querySelector('[data-testid="reading-progress"]');
 			expect(progressDiv).toBeInTheDocument();
 			expect(progressDiv).toHaveClass('origin-left');
+			expect(progressDiv).toHaveClass('sota-reading-progress');
 		});
 	});
 });

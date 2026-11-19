@@ -43,10 +43,9 @@
 import { buildSimulatedStacks, calculateMapaICM, calculatePerspectivaVitoi, premioDeRiscoCanonico, type PerspectivaInput, type ReferencePointStatus } from './perspectiva';
 import { ruinPriorityFromIntencao, type IntencaoS1 } from './laya';
 
-export { ruinPriorityFromIntencao, type IntencaoS1 } from './laya';
+export { type IntencaoS1 } from './laya';
 
 const RP_MAX = 60;
-export const BF_THRESHOLD = 1.01;
 export const RP_CEILING_THRESHOLD = 24;
 
 export interface RpDerivationResult {

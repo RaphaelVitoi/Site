@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 import type { CounterfactualRequest } from '@/lib/counterfactualExperiment';
 import type { IcmTransitionRequest, IcmTransitionResult } from '@/lib/icmTransitionExperiment';
 import { downloadHRCJson } from '@/lib/hrcExport';
@@ -52,6 +53,8 @@ function TransitionEditor({ context, inputError }: Readonly<Props>) {
   const [pending, setPending] = useState(false);
   const [completed, setCompleted] = useState<{ key: string; result: IcmTransitionResult } | null>(null);
   const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
+  const mountedRef = useRef(true);
+  const controllerRef = useRef<AbortController | null>(null);
   const key = JSON.stringify({ stacks, orders, probabilities, iterations, edited });
   const balances = actions.map(action => {
     const values = players.map(p => stacks[p.id]![action]);
@@ -61,7 +64,20 @@ function TransitionEditor({ context, inputError }: Readonly<Props>) {
   const conservationError = context.chipLedger && balances.some(b => !b.valid || b.difference !== 0);
   const result = !inputError && completed?.key === key ? completed.result : null;
   const error = failure?.key === key ? failure.message : null;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      controllerRef.current?.abort();
+    };
+  }, []);
+
   async function calculate() {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     setPending(true); setFailure(null); setCompleted(null);
     try {
       const branch = (action: typeof actions[number]) => ({
@@ -70,12 +86,24 @@ function TransitionEditor({ context, inputError }: Readonly<Props>) {
       });
       const payload: IcmTransitionRequest = { context, origin: edited ? 'user-assumption' : 'identity-default', horizon: 'after-table-settlement',
         fold: branch('fold'), win: branch('win'), loss: branch('loss'), probabilities: probabilities.split(',').map(parseFiniteNumber), iterations: parseFiniteNumber(iterations), seed: 1 };
-      const response = await fetch('/api/sota/icm-transitions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      if (!response.ok) { const body: { error?: string } = await response.json(); throw new Error(body.error ?? 'Falha ao avaliar transições.'); }
-      const output: IcmTransitionResult = await response.json();
+      const output = await fetchJson<IcmTransitionResult>('/api/sota/icm-transitions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+        timeoutMs: 20_000,
+        fallbackError: 'Falha ao avaliar transições.',
+      });
+      if (!mountedRef.current || controller.signal.aborted) return;
       setCompleted({ key, result: output });
-    } catch (error_) { setFailure({ key, message: error_ instanceof Error ? error_.message : 'Falha no cálculo.' }); }
-    finally { setPending(false); }
+    } catch (error_) {
+      if (!mountedRef.current || isAbortError(error_)) return;
+      setFailure({ key, message: error_ instanceof Error ? error_.message : 'Falha no cálculo.' });
+    } finally {
+      if (mountedRef.current && controllerRef.current === controller) {
+        setPending(false);
+      }
+    }
   }
   return <section className="rounded-xl border border-white/20 p-4 space-y-4" aria-label="Transições de stacks com ICM">
     <h3 className="text-lg font-bold">Bancada PMev · valores derivados de ICM</h3>

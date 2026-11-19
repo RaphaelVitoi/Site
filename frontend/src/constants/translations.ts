@@ -42,5 +42,5 @@ export const SIMULATOR_I18N = {
 } as const;
 
 export type SimulatorLocale = keyof typeof SIMULATOR_I18N;
-export const currentLocale: SimulatorLocale = 'ptBR';
-export const UI_I18N = SIMULATOR_I18N.ptBR;
+const currentLocale: SimulatorLocale = 'ptBR';
+export const UI_I18N = SIMULATOR_I18N[currentLocale];

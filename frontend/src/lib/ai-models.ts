@@ -77,36 +77,7 @@ export function generateGeometricPath(
 	return path;
 }
 
-// --- 2. COUNTERFACTUAL REGRET MINIMIZATION (CFR) ---
-
-export interface CfrAction {
-	action: string;
-	regret: number;
-	strategy: number; // Porcentagem convergente
-}
-
-/**
- * Mock iterativo de Regret Matching para simular convergência GTO.
- * Em um cenário real, isso rodaria milhões de vezes.
- * Aqui, simulamos a "dor" de cada decisão para gerar a Mixed Strategy.
- */
-export function simulateCfrRegretMatching(evs: Record<string, number>): CfrAction[] {
-	const entries = Object.entries(evs);
-	if (entries.length === 0) return [];
-
-	const totalRegret = entries.reduce((sum, [, ev]) => sum + Math.max(0, ev), 0);
-
-	return entries.map(([action, ev]) => {
-		const strategy = totalRegret > 0 ? Math.max(0, ev) / totalRegret : 1 / entries.length;
-		return {
-			action,
-			regret: Math.max(0, ev * 1.5), // Escala do "Arrependimento"
-			strategy: strategy * 100,
-		};
-	});
-}
-
-// --- 3. RECURSIVE BAYESIAN UPDATING ---
+// --- 2. RECURSIVE BAYESIAN UPDATING ---
 
 /**
  * Atualiza a crença sobre o range do oponente (Posterior) com base na ação tomada.

@@ -21,3 +21,8 @@ export {
 } from './icmMatrix';
 export * from './holdemEquities';
 export * from './icmWorkerPool';
+export {
+	computeDynamicFoldEV,
+	computeRealizationFactor,
+	computeMultiwayLiability,
+} from './dynamicFoldEquityEngine';

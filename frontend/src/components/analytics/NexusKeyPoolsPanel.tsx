@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 
 export interface ObservatoryPoolSummary {
   pool: string;
@@ -306,29 +307,45 @@ export function NexusKeyPoolsPanel() {
   const [showInventory, setShowInventory] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [error, setError] = useState('');
+  const activeControllerRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
 
   const fetchSnapshot = useCallback(async (live = false, filter = '') => {
+    activeControllerRef.current?.abort();
+    const controller = new AbortController();
+    activeControllerRef.current = controller;
+
     if (live) setProbingLive(true);
     else setLoading(true);
     setError('');
     try {
       const { url, init } = buildKeyPoolsRequest(live, filter);
-      const res = await fetch(url, init);
-      const json = (await res.json()) as ObservatorySnapshot & { error?: string };
-      if (!res.ok) {
-        throw new Error(json.error || 'Falha ao consultar observatorio de pools');
-      }
+      const json = await fetchJson<ObservatorySnapshot>(url, {
+        ...init,
+        signal: controller.signal,
+        timeoutMs: live ? 25_000 : 12_000,
+        fallbackError: 'Falha ao consultar observatorio de pools',
+      });
+      if (!mountedRef.current || controller.signal.aborted) return;
       setData(json);
     } catch (cause) {
+      if (!mountedRef.current || isAbortError(cause)) return;
       setError(cause instanceof Error ? cause.message : 'Erro ao consultar observatorio de chaves');
     } finally {
-      setLoading(false);
-      setProbingLive(false);
+      if (mountedRef.current && activeControllerRef.current === controller) {
+        setLoading(false);
+        setProbingLive(false);
+      }
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     void fetchSnapshot(false, poolFilter);
+    return () => {
+      mountedRef.current = false;
+      activeControllerRef.current?.abort();
+    };
   }, [fetchSnapshot, poolFilter]);
 
   const liveOnlineCount = useMemo(() => {

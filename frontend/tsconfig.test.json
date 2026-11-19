@@ -1,0 +1,42 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "outDir": "./.next/test-types",
+    "emitDeclarationOnly": true,
+    "tsBuildInfoFile": "./tsconfig.test.tsbuildinfo",
+    "types": ["jest", "node", "@testing-library/jest-dom"],
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "verbatimModuleSyntax": false,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitReturns": false,
+    "noUncheckedIndexedAccess": false,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true
+  },
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    ".next",
+    ".next-dev",
+    ".next-build",
+    "src/tests/**",
+    "src/.archive/**",
+    "src/components/simulator/workers/**",
+    "wasm-equity/target"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.worker.json"
+    }
+  ]
+}

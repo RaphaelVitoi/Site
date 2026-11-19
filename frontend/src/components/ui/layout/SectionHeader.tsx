@@ -30,5 +30,3 @@ export function SectionHeader({ step, label, title, description, id }: Readonly<
     </div>
   );
 }
-
-export default SectionHeader;

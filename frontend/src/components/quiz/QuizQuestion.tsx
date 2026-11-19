@@ -6,7 +6,6 @@
  * ROLE: Renderizador de questões com feedback gamificado.
  */
 
-import { AnimatePresence, motion } from 'framer-motion';
 import React from 'react';
 import type { QuizOption, QuizQuestion as QuizQuestionType } from './types';
 
@@ -62,14 +61,13 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
 					}
 
 					return (
-						<motion.button
+						<button
+							type="button"
 							key={option.id}
-							initial={{ opacity: 0, x: -20 }}
-							animate={{ opacity: 1, x: 0 }}
-							transition={{ delay: idx * 0.1 }}
+							style={{ transitionDelay: isAnswered ? '0ms' : `${idx * 70}ms` }}
 							onClick={() => !isAnswered && onSelectOption(option.id)}
 							disabled={isAnswered}
-							className={btnClasses}
+							className={`sota-enter-slide-right ${btnClasses}`}
 						>
 							{!isAnswered && (
 								<div className="absolute inset-0 bg-linear-to-r from-accent-indigo/5 to-transparent opacity-0 group-hover/opt:opacity-100 transition-opacity" />
@@ -77,53 +75,45 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
 
 							<span className="font-bold relative z-10">{option.label}</span>
 							{icon && (
-								<motion.span
-									initial={{ scale: 0 }}
-									animate={{ scale: 1 }}
-									className="shrink-0 relative z-10"
-								>
+								<span className="sota-enter-pop shrink-0 relative z-10">
 									{icon}
-								</motion.span>
+								</span>
 							)}
-						</motion.button>
+						</button>
 					);
 				})}
 			</div>
 
-			<AnimatePresence>
-				{isAnswered && question.explanation && (
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						className={`mt-12 p-10 rounded-[2.5rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden ${isUserCorrect ? 'bg-accent-emerald/5 border-accent-emerald/20' : 'bg-accent-danger/5 border-accent-danger/20'}`}
-					>
-						<div className="absolute top-0 right-0 p-8 opacity-5">
+			{isAnswered && question.explanation && (
+				<div
+					className={`sota-enter-up mt-12 p-10 rounded-[2.5rem] border backdrop-blur-3xl shadow-2xl relative overflow-hidden ${isUserCorrect ? 'bg-accent-emerald/5 border-accent-emerald/20' : 'bg-accent-danger/5 border-accent-danger/20'}`}
+				>
+					<div className="absolute top-0 right-0 p-8 opacity-5">
+						<i
+							className={`fa-solid ${isUserCorrect ? 'fa-lightbulb' : 'fa-triangle-exclamation'} text-6xl text-white`}
+						/>
+					</div>
+
+					<div className="flex items-center gap-4 mb-6 relative z-10">
+						<div
+							className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-lg ${isUserCorrect ? 'bg-accent-emerald/20 border-accent-emerald/30 text-accent-emerald' : 'bg-accent-danger/20 border-accent-danger/30 text-accent-danger'}`}
+						>
 							<i
-								className={`fa-solid ${isUserCorrect ? 'fa-lightbulb' : 'fa-triangle-exclamation'} text-6xl text-white`}
+								className={`fa-solid ${isUserCorrect ? 'fa-check' : 'fa-bolt'} text-sm`}
 							/>
 						</div>
+						<h3
+							className={`uppercase tracking-[0.3em] text-[0.75rem] font-black m-0 ${isUserCorrect ? 'text-accent-emerald' : 'text-accent-danger'}`}
+						>
+							{isUserCorrect ? 'Visão SOTA Confirmada' : 'Entropia Detectada'}
+						</h3>
+					</div>
 
-						<div className="flex items-center gap-4 mb-6 relative z-10">
-							<div
-								className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-lg ${isUserCorrect ? 'bg-accent-emerald/20 border-accent-emerald/30 text-accent-emerald' : 'bg-accent-danger/20 border-accent-danger/30 text-accent-danger'}`}
-							>
-								<i
-									className={`fa-solid ${isUserCorrect ? 'fa-check' : 'fa-bolt'} text-sm`}
-								/>
-							</div>
-							<h3
-								className={`uppercase tracking-[0.3em] text-[0.75rem] font-black m-0 ${isUserCorrect ? 'text-accent-emerald' : 'text-accent-danger'}`}
-							>
-								{isUserCorrect ? 'Visão SOTA Confirmada' : 'Entropia Detectada'}
-							</h3>
-						</div>
-
-						<div className="text-indigo-100/80 text-[1rem] m-0 leading-loose font-medium relative z-10">
-							{question.explanation}
-						</div>
-					</motion.div>
-				)}
-			</AnimatePresence>
+					<div className="text-indigo-100/80 text-[1rem] m-0 leading-loose font-medium relative z-10">
+						{question.explanation}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

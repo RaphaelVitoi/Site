@@ -6,6 +6,7 @@ import {
 	isResolved,
 	parsePmevBenchmarkDataset,
 	placeProbabilities,
+	structureById,
 } from '@/lib/pmevBenchmark';
 
 const clone = <T,>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
@@ -73,5 +74,11 @@ describe('Artefato público do benchmark ICM × ChipEV', () => {
 	it('intervalo inteiro de um lado do zero é o único que conta como resolvido', () => {
 		expect(isResolved({ modelo: 0, referencia: 0, diferenca: -1, ic95: [-2, -0.5] })).toBe(true);
 		expect(isResolved({ modelo: 0, referencia: 0, diferenca: -1, ic95: [-2, 0.5] })).toBe(false);
+	});
+
+	it('localiza estrutura por id e rejeita id inexistente', () => {
+		const s = structureById('ps-stt-9p-9.20-0.80');
+		expect(s.id).toBe('ps-stt-9p-9.20-0.80');
+		expect(() => structureById('estrutura-inexistente')).toThrow(/Estrutura desconhecida/);
 	});
 });

@@ -33,7 +33,10 @@ export function extractHrcSettings(bytes: Uint8Array): string {
       if (result !== undefined) return result;
     }
   } catch (error) {
-    throw new Error(`Não foi possível abrir o cenário HRC: ${error instanceof Error ? error.message : 'arquivo inválido'}`);
+    throw new Error(
+      `Não foi possível abrir o cenário HRC: ${error instanceof Error ? error.message : 'arquivo inválido'}`,
+      { cause: error },
+    );
   }
   throw new Error('O arquivo HRC não contém settings.json na raiz. Exporte JSON (Hand Config) pelo HRC.');
 }

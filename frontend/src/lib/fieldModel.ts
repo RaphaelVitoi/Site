@@ -7,7 +7,6 @@ export const FieldModelSchema = z.object({
   estimatedPlayerIds: z.array(z.string()),
   originalExternalStacks: z.array(z.number().positive()).optional(),
 });
-export type FieldModel = z.infer<typeof FieldModelSchema>;
 
 /** Largest-remainder apportionment of a declared chip budget; each live player gets >=1 chip. */
 export function allocateWholeChips(weights: number[], total: number): number[] {

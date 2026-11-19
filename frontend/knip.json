@@ -7,6 +7,7 @@
     "src/lib/index.ts"
   ],
   "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/content/interativo/toy_games_page.tsx"],
   "ignoreExportsUsedInFile": true,
   "ignoreDependencies": [
     "server-only",
@@ -14,10 +15,7 @@
     "prettier-plugin-tailwindcss",
     "tailwindcss",
     "@tailwindcss/typography",
-    "axe-core",
-    "typescript-eslint",
-    "@next/eslint-plugin-next",
-    "eslint-plugin-react",
-    "eslint-plugin-react-hooks"
+    "@fortawesome/fontawesome-free",
+    "@next/bundle-analyzer"
   ]
 }

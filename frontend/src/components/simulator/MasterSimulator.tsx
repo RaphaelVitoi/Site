@@ -13,7 +13,7 @@ import { useQuantumEngine } from './hooks/useQuantumEngine';
 import { useScenario } from './hooks/useScenario';
 import { useSimulatorState } from './hooks/useSimulatorState';
 import { useSotaSync } from './hooks/useSotaSync';
-import { SotaMetricsContext, SotaSpotContext, SotaWasmContext } from './SotaContext';
+import { SotaEcosystemProvider } from './SotaContext';
 const SimulatorNavigation = dynamic(() => import('./ui/SimulatorNavigation'), {
   ssr: false,
 });
@@ -27,6 +27,7 @@ import { useMounted } from '../../hooks/useMounted';
 import dynamic from 'next/dynamic';
 import { Suspense, useCallback, useEffect, useMemo, useDeferredValue, useTransition, useState } from 'react';
 import useSWR from 'swr';
+import { fetchJson } from '@/lib/client-fetch';
 
 import { ScenarioQuickSelector } from './ui/ScenarioQuickSelector';
 import { generateDynamicICMQuiz } from '../quiz/icmQuizGenerator';
@@ -41,7 +42,12 @@ const ReferencialAula12 = dynamic(() => import('./ReferencialAula12'), {
 
 const DashboardSOTA = dynamic(() => import('./DashboardSOTA'), { ssr: false });
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+interface PredictivePayload {
+  profile?: Record<string, number> | null;
+  telemetry?: Array<{ evLoss: number; isCorrect: boolean; createdAt: string | Date }> | null;
+}
+
+const fetcher = (url: string) => fetchJson<PredictivePayload>(url, { timeoutMs: 10_000 });
 
 export type { ActiveTool } from './ui/ToolContent';
 
@@ -199,7 +205,7 @@ export default function MasterSimulator() {
     return generateDynamicICMQuiz({
       stacks: scenario.stacks,
       prizes: scenario.prizes,
-      predictiveProfile: stablePredictiveProfile ?? undefined,
+      ...(stablePredictiveProfile ? { predictiveProfile: stablePredictiveProfile } : {}),
     });
   }, [scenario.stacks, scenario.prizes, stablePredictiveProfile]);
 
@@ -243,175 +249,171 @@ export default function MasterSimulator() {
   }
 
   return (
-    <SotaSpotContext value={spotContextValue}>
-      <SotaMetricsContext value={metricsContextValue}>
-        <SotaWasmContext value={wasmContextValue}>
-          <div className="flex min-h-screen w-full flex-col">
-            {/* Espaços de trabalho do simulador — a identidade está na barra de laboratórios acima. */}
-            <nav
-              aria-label="Áreas de trabalho do Simulador Mestre"
-              className="sticky top-(--simulator-header-height) z-30 border-b border-white/8 bg-slate-950/60 px-4 py-2 backdrop-blur-2xl sm:px-6"
-            >
-              <div className="mx-auto flex max-w-7xl justify-center">
-                <div className="flex flex-wrap items-center justify-center gap-1 rounded-xl border border-white/8 bg-slate-950/60 p-1 shadow-inner">
-                  {(['laboratorio', 'dashboard', 'referencial', 'lente'] as const).map((tab) => {
-                    const isActive = activeWorkspaceTab === tab;
-                    const meta = getWorkspaceTabMeta(tab);
-                    return (
-                      <button
-                        type="button"
-                        key={tab}
-                        onClick={() => setActiveWorkspaceTab(tab)}
-                        className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.58rem] font-black tracking-[0.12em] uppercase transition-all duration-200 ${
-                          isActive
-                            ? 'bg-accent-indigo/20 border-accent-indigo/40 border text-white shadow-md'
-                            : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
-                        }`}
-                      >
-                        <i className={`fa-solid ${meta.icon} text-[0.55rem] ${isActive ? 'text-accent-indigo' : ''}`} />
-                        <span>{meta.text}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </nav>
-
-            {/* Conteúdo do Workspace Ativo */}
-            <div className="w-full flex-1 py-6">
-              {activeWorkspaceTab === 'laboratorio' && (
-                <section
-                  className="animate-sota-in mx-auto max-w-7xl space-y-5 px-4 sm:px-6 lg:px-8"
-                  aria-label="Cockpit Estratégico & Cenários"
-                >
-                  {/* Atlas: cenários organizados por família estratégica */}
-                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-4 shadow-lg sm:p-5">
-                    <ScenarioQuickSelector
-                      scenarios={scenarios}
-                      activeId={scenario.id}
-                      onSelect={handleScenarioSelect}
-                    />
-                  </div>
-
-                  {/* Barra de Ferramentas */}
-                  <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-1.5 shadow-lg">
-                    <SimulatorNavigation activeTool={activeTool} onSelectTool={setActiveTool} />
-                  </div>
-
-                  {/* Palco Central de Execução */}
-                  <div
-                    id="simulator-tool-panel"
-                    role="tabpanel"
-                    aria-labelledby={`simulator-tab-${activeTool}`}
-                    className={`transition-all duration-200 ${
-                      isPending ? 'scale-[0.995] opacity-50 blur-xs' : 'scale-100 opacity-100'
+    <SotaEcosystemProvider
+      spotContextValue={spotContextValue}
+      metricsContextValue={metricsContextValue}
+      wasmContextValue={wasmContextValue}
+    >
+      <div className="flex min-h-screen w-full flex-col">
+        {/* Espaços de trabalho do simulador — a identidade está na barra de laboratórios acima. */}
+        <nav
+          aria-label="Áreas de trabalho do Simulador Mestre"
+          className="sticky top-(--simulator-header-height) z-30 border-b border-white/8 bg-slate-950/60 px-4 py-2 backdrop-blur-2xl sm:px-6"
+        >
+          <div className="mx-auto flex max-w-7xl justify-center">
+            <div className="flex flex-wrap items-center justify-center gap-1 rounded-xl border border-white/8 bg-slate-950/60 p-1 shadow-inner">
+              {(['laboratorio', 'dashboard', 'referencial', 'lente'] as const).map((tab) => {
+                const isActive = activeWorkspaceTab === tab;
+                const meta = getWorkspaceTabMeta(tab);
+                return (
+                  <button
+                    type="button"
+                    key={tab}
+                    onClick={() => setActiveWorkspaceTab(tab)}
+                    className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-[0.58rem] font-black tracking-[0.12em] uppercase transition-all duration-200 ${
+                      isActive
+                        ? 'bg-accent-indigo/20 border-accent-indigo/40 border text-white shadow-md'
+                        : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
                     }`}
                   >
-                    <ToolContent
-                      activeTool={activeTool}
-                      spotSubView={spotSubView}
-                      onSpotSubViewChange={setSpotSubView}
-                      scenario={scenario}
-                      scenarios={scenarios}
-                      state={state}
-                      quantum={quantumResult}
-                      spot={spotResult}
-                      calculations={calculationsResult}
-                      insolvencyRadarData={insolvencyRadarData}
-                      dynamicQuizQuestions={dynamicQuizQuestions}
-                      safeHeroInvested={safeHeroInvested}
-                      safeCurrentPot={safeCurrentPot}
-                      safeActivePlayers={safeActivePlayers}
-                      updatePhysics={updatePhysics}
-                      onTablePositionSelect={(pos) => {
-                        setHeroPosition(pos);
-                        updatePhysics({ position: pos as 'IP' | 'OOP' | 'BB' | 'SB' });
-                      }}
-                      onHeroPositionChange={handleHeroPositionChange}
-                      onStreetFreqChange={handleStreetFreqChange}
-                      onAggressionChange={handleAggressionChange}
-                      onExportHrc={handleExportHRC}
-                    />
-                  </div>
-                </section>
-              )}
-
-              {activeWorkspaceTab === 'dashboard' && (
-                <section
-                  className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
-                  aria-label="Dashboard Quântico de Telemetria e Radar"
-                >
-                  <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
-                    <SectionHeader
-                      step="00"
-                      label="Telemetria & Radar Studio"
-                      title="Cockpit de Telemetria & Radar SOTA"
-                      description="A sua Assinatura Bayesiana. A Mente Preditiva monitora seus erros de EV, tensões de insolvência e distorções de Nash em tempo real."
-                    />
-                    <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
-                  </div>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <DashboardSOTA
-                      scenarios={scenarios}
-                      currentScenario={scenario}
-                      nashFlop={nashFlop ?? undefined}
-                      insolvencyRadarData={insolvencyRadarData}
-                    />
-                  </Suspense>
-                </section>
-              )}
-
-              {activeWorkspaceTab === 'referencial' && (
-                <section
-                  className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
-                  aria-label="Referencial Empírico"
-                >
-                  <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
-                    <SectionHeader
-                      step="01"
-                      label="Referencial"
-                      title="Âncora Empírica (Aula 1.2)"
-                      description="Dados reais e fundamentos absolutos do motor de simulação."
-                    />
-                    <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
-                  </div>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReferencialAula12 />
-                  </Suspense>
-                </section>
-              )}
-
-              {activeWorkspaceTab === 'lente' && (
-                <section
-                  className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
-                  aria-label="Framework de Perspectiva Matemática"
-                >
-                  <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
-                    <SectionHeader
-                      step="02"
-                      label="Framework"
-                      title="Lente de Perspectiva (PM)"
-                      description="Ambiente de exploração da Perspectiva Matemática: cenários e modelos em desenvolvimento."
-                    />
-                    <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
-                  </div>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <PmLensPanel
-                      initialStacks={scenario.stacks}
-                      initialPrizes={scenario.prizes}
-                      currentPot={safeCurrentPot}
-                      heroInvested={safeHeroInvested}
-                      heroPosition={heroPosition}
-                      activePlayers={safeActivePlayers}
-                      blindsRisingSoon={blindsRisingSoon}
-                    />
-                  </Suspense>
-                </section>
-              )}
+                    <i className={`fa-solid ${meta.icon} text-[0.55rem] ${isActive ? 'text-accent-indigo' : ''}`} />
+                    <span>{meta.text}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </SotaWasmContext>
-      </SotaMetricsContext>
-    </SotaSpotContext>
+        </nav>
+
+        {/* Conteúdo do Workspace Ativo */}
+        <div className="w-full flex-1 py-6">
+          {activeWorkspaceTab === 'laboratorio' && (
+            <section
+              className="animate-sota-in mx-auto max-w-7xl space-y-5 px-4 sm:px-6 lg:px-8"
+              aria-label="Cockpit Estratégico & Cenários"
+            >
+              {/* Atlas: cenários organizados por família estratégica */}
+              <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-4 shadow-lg sm:p-5">
+                <ScenarioQuickSelector scenarios={scenarios} activeId={scenario.id} onSelect={handleScenarioSelect} />
+              </div>
+
+              {/* Barra de Ferramentas */}
+              <div className="rounded-2xl border border-white/8 bg-slate-950/50 p-1.5 shadow-lg">
+                <SimulatorNavigation activeTool={activeTool} onSelectTool={setActiveTool} />
+              </div>
+
+              {/* Palco Central de Execução */}
+              <div
+                id="simulator-tool-panel"
+                role="tabpanel"
+                aria-labelledby={`simulator-tab-${activeTool}`}
+                className={`transition-all duration-200 ${
+                  isPending ? 'scale-[0.995] opacity-50 blur-xs' : 'scale-100 opacity-100'
+                }`}
+              >
+                <ToolContent
+                  activeTool={activeTool}
+                  spotSubView={spotSubView}
+                  onSpotSubViewChange={setSpotSubView}
+                  scenario={scenario}
+                  scenarios={scenarios}
+                  state={state}
+                  quantum={quantumResult}
+                  spot={spotResult}
+                  calculations={calculationsResult}
+                  insolvencyRadarData={insolvencyRadarData}
+                  dynamicQuizQuestions={dynamicQuizQuestions}
+                  safeHeroInvested={safeHeroInvested}
+                  safeCurrentPot={safeCurrentPot}
+                  safeActivePlayers={safeActivePlayers}
+                  updatePhysics={updatePhysics}
+                  onTablePositionSelect={(pos) => {
+                    setHeroPosition(pos);
+                    updatePhysics({ position: pos as 'IP' | 'OOP' | 'BB' | 'SB' });
+                  }}
+                  onHeroPositionChange={handleHeroPositionChange}
+                  onStreetFreqChange={handleStreetFreqChange}
+                  onAggressionChange={handleAggressionChange}
+                  onExportHrc={handleExportHRC}
+                />
+              </div>
+            </section>
+          )}
+
+          {activeWorkspaceTab === 'dashboard' && (
+            <section
+              className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+              aria-label="Dashboard Quântico de Telemetria e Radar"
+            >
+              <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
+                <SectionHeader
+                  step="00"
+                  label="Telemetria & Radar Studio"
+                  title="Cockpit de Telemetria & Radar SOTA"
+                  description="A sua Assinatura Bayesiana. A Mente Preditiva monitora seus erros de EV, tensões de insolvência e distorções de Nash em tempo real."
+                />
+                <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
+              </div>
+              <Suspense fallback={<LoadingFallback />}>
+                <DashboardSOTA
+                  scenarios={scenarios}
+                  currentScenario={scenario}
+                  {...(nashFlop ? { nashFlop } : {})}
+                  insolvencyRadarData={insolvencyRadarData}
+                />
+              </Suspense>
+            </section>
+          )}
+
+          {activeWorkspaceTab === 'referencial' && (
+            <section
+              className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+              aria-label="Referencial Empírico"
+            >
+              <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
+                <SectionHeader
+                  step="01"
+                  label="Referencial"
+                  title="Âncora Empírica (Aula 1.2)"
+                  description="Dados reais e fundamentos absolutos do motor de simulação."
+                />
+                <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
+              </div>
+              <Suspense fallback={<LoadingFallback />}>
+                <ReferencialAula12 />
+              </Suspense>
+            </section>
+          )}
+
+          {activeWorkspaceTab === 'lente' && (
+            <section
+              className="animate-sota-in mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
+              aria-label="Framework de Perspectiva Matemática"
+            >
+              <div className="mx-auto mb-10 max-w-4xl space-y-4 text-center">
+                <SectionHeader
+                  step="02"
+                  label="Framework"
+                  title="Lente de Perspectiva (PM)"
+                  description="Ambiente de exploração da Perspectiva Matemática: cenários e modelos em desenvolvimento."
+                />
+                <div className="bg-accent-indigo/30 mx-auto h-px w-32" />
+              </div>
+              <Suspense fallback={<LoadingFallback />}>
+                <PmLensPanel
+                  initialStacks={scenario.stacks}
+                  initialPrizes={scenario.prizes}
+                  currentPot={safeCurrentPot}
+                  heroInvested={safeHeroInvested}
+                  heroPosition={heroPosition}
+                  activePlayers={safeActivePlayers}
+                  blindsRisingSoon={blindsRisingSoon}
+                />
+              </Suspense>
+            </section>
+          )}
+        </div>
+      </div>
+    </SotaEcosystemProvider>
   );
 }

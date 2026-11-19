@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 const ORDEM = ['ps-stt-9p-9.20-0.80', 'ps-mtt-45p-0.91-0.09', 'ps-spin-3p-0.46-0.04', 'ps-spin-3p-3.68-0.32'];
 const posicao = (id: string) => (ORDEM.includes(id) ? ORDEM.indexOf(id) : ORDEM.length);
-const estruturas: BenchmarkStructure[] = [...PMEV_BENCHMARK.estruturas].sort((a, b) => posicao(a.id) - posicao(b.id));
+const estruturas: BenchmarkStructure[] = PMEV_BENCHMARK.estruturas.toSorted((a, b) => posicao(a.id) - posicao(b.id));
 const stt = estruturas.find((e) => !e.vencedor_leva_tudo && e.field <= e.max_mesa);
 const sng = estruturas.find((e) => !e.vencedor_leva_tudo && e.field > e.max_mesa);
 const spins = estruturas.filter((e) => e.vencedor_leva_tudo);

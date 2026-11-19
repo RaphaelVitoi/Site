@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
 export type FileCategory = 'text' | 'archive' | 'image' | 'media' | 'spreadsheet' | 'pdf';
-export type FileContentType = 'text' | 'document' | 'spreadsheet' | 'image' | 'archive' | 'media';
+type FileContentType = 'text' | 'document' | 'spreadsheet' | 'image' | 'archive' | 'media';
 export type ReaderFontSize = 'sm' | 'base' | 'lg';
 export type PdfTabMode = 'visual' | 'text';
 export type MarkdownTabMode = 'formatted' | 'raw';
@@ -18,7 +18,7 @@ export interface FileItem {
 }
 
 export interface FileContent {
-  type: 'text' | 'document' | 'spreadsheet' | 'image' | 'archive' | 'media';
+  type: FileContentType;
   content?: string;
   message?: string;
   error?: string;
@@ -71,7 +71,7 @@ const FONT_SIZE_TEXT_CLASS: Record<ReaderFontSize, string> = {
 
 function renderEditorialContent(content: string | undefined, search: string) {
   if (!content) {
-    return <span className="italic text-text-muted">[Sem texto legível extraído]</span>;
+    return <span className="text-text-muted italic">[Sem texto legível extraído]</span>;
   }
   const trimmed = search.trim();
   if (!trimmed) {
@@ -93,8 +93,8 @@ export interface UniversalDocumentViewerProps {
   readonly selectedFile: FileItem;
   readonly fileContent: FileContent | null;
   readonly loadingContent: boolean;
-  readonly rawUrl?: string | undefined;
-  readonly onClose?: (() => void) | undefined;
+  readonly rawUrl?: string;
+  readonly onClose?: () => void;
 }
 
 function computeCsvChartData(fileContent: FileContent | null): ChartDataPoint[] | null {
@@ -158,12 +158,7 @@ interface ViewerErrorStateProps {
   readonly fileName: string;
 }
 
-function ViewerErrorState({
-  error,
-  rawUrl,
-  downloadUrl,
-  fileName,
-}: Readonly<ViewerErrorStateProps>) {
+function ViewerErrorState({ error, rawUrl, downloadUrl, fileName }: Readonly<ViewerErrorStateProps>) {
   return (
     <div className="flex grow flex-col items-center justify-center py-20 text-center text-xs">
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-400">
@@ -186,7 +181,7 @@ function ViewerErrorState({
         <a
           href={downloadUrl}
           download={fileName}
-          className="flex items-center space-x-1.5 rounded-lg bg-accent-indigo-surface px-3 py-1.5 text-xs font-semibold text-white hover:bg-accent-indigo/80"
+          className="bg-accent-indigo-surface hover:bg-accent-indigo/80 flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white"
         >
           <i className="fa-solid fa-download"></i>
           <span>Baixar Arquivo</span>
@@ -209,7 +204,7 @@ interface ViewerHeaderToolbarProps {
   readonly copyToClipboard: (text: string) => void;
   readonly rawUrl: string;
   readonly downloadUrl: string;
-  readonly onClose?: (() => void) | undefined;
+  readonly onClose: (() => void) | undefined;
 }
 
 function ViewerHeaderToolbar({
@@ -230,7 +225,7 @@ function ViewerHeaderToolbar({
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/5 bg-white/2 p-2.5">
       <div className="flex items-center space-x-2">
-        <span className="rounded bg-accent-indigo/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-accent-indigo-light uppercase">
+        <span className="bg-accent-indigo/20 text-accent-indigo-light rounded px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase">
           {fileExt}
         </span>
         <span className="text-text-muted text-xs">{formatFileSize(selectedFile.size)}</span>
@@ -255,9 +250,7 @@ function ViewerHeaderToolbar({
               type="button"
               onClick={() => setPdfTab('text')}
               className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                pdfTab === 'text'
-                  ? 'bg-accent-indigo-surface text-white shadow-sm'
-                  : 'text-text-muted hover:text-white'
+                pdfTab === 'text' ? 'bg-accent-indigo-surface text-white shadow-sm' : 'text-text-muted hover:text-white'
               }`}
             >
               <i className="fa-solid fa-file-lines text-[11px]"></i>
@@ -284,9 +277,7 @@ function ViewerHeaderToolbar({
               type="button"
               onClick={() => setMdTab('raw')}
               className={`flex items-center space-x-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                mdTab === 'raw'
-                  ? 'bg-accent-indigo-surface text-white shadow-sm'
-                  : 'text-text-muted hover:text-white'
+                mdTab === 'raw' ? 'bg-accent-indigo-surface text-white shadow-sm' : 'text-text-muted hover:text-white'
               }`}
             >
               <i className="fa-solid fa-code text-[11px]"></i>
@@ -302,7 +293,7 @@ function ViewerHeaderToolbar({
             className={`flex items-center space-x-1.5 rounded-lg border border-white/10 px-2.5 py-1 text-xs font-medium transition-all ${
               copied
                 ? 'border-emerald-500/50 bg-emerald-500/20 text-emerald-300'
-                : 'bg-white/5 text-text-muted hover:bg-white/10 hover:text-white'
+                : 'text-text-muted bg-white/5 hover:bg-white/10 hover:text-white'
             }`}
             title="Copiar conteúdo para a área de transferência"
           >
@@ -315,7 +306,7 @@ function ViewerHeaderToolbar({
           href={rawUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center space-x-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-text-muted transition-colors hover:bg-white/10 hover:text-white"
+          className="text-text-muted flex items-center space-x-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs transition-colors hover:bg-white/10 hover:text-white"
           title="Abrir arquivo bruto em nova aba"
         >
           <i className="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
@@ -336,7 +327,7 @@ function ViewerHeaderToolbar({
           <button
             type="button"
             onClick={onClose}
-            className="ml-2 flex h-7 w-7 items-center justify-center rounded-lg text-text-muted hover:bg-white/10 hover:text-white"
+            className="text-text-muted ml-2 flex h-7 w-7 items-center justify-center rounded-lg hover:bg-white/10 hover:text-white"
           >
             <i className="fa-solid fa-xmark"></i>
           </button>
@@ -352,27 +343,24 @@ interface PdfVisualViewerProps {
   readonly setPdfTab: (t: PdfTabMode) => void;
 }
 
-function PdfVisualViewer({
-  rawUrl,
-  fileName,
-  setPdfTab,
-}: Readonly<PdfVisualViewerProps>) {
+function PdfVisualViewer({ rawUrl, fileName, setPdfTab }: Readonly<PdfVisualViewerProps>) {
   return (
     <div className="relative flex h-155 grow flex-col overflow-hidden rounded-xl border border-white/10 bg-black/40 shadow-2xl">
       <object data={rawUrl} type="application/pdf" className="h-full w-full" aria-label={fileName}>
         <iframe src={rawUrl} className="h-full w-full border-0" title={fileName}>
-          <div className="flex h-full flex-col items-center justify-center p-8 text-center text-xs text-text-muted">
+          <div className="text-text-muted flex h-full flex-col items-center justify-center p-8 text-center text-xs">
             <i className="fa-solid fa-file-pdf mb-3 text-4xl text-rose-400"></i>
             <p className="font-semibold text-white">Visualização de PDF Integrada</p>
             <p className="mt-1 max-w-sm">
-              Se o seu navegador não carregar o PDF embutido diretamente, você pode abri-lo em uma nova aba ou alternar para o Modo Leitor RAG.
+              Se o seu navegador não carregar o PDF embutido diretamente, você pode abri-lo em uma nova aba ou alternar
+              para o Modo Leitor RAG.
             </p>
             <div className="mt-4 flex space-x-3">
               <a
                 href={rawUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-lg bg-accent-indigo-surface px-3 py-1.5 text-xs font-medium text-white shadow"
+                className="bg-accent-indigo-surface rounded-lg px-3 py-1.5 text-xs font-medium text-white shadow"
               >
                 Abrir PDF em Nova Aba
               </a>
@@ -393,8 +381,8 @@ function PdfVisualViewer({
 
 interface EditorialReaderViewerProps {
   readonly category: string;
-  readonly words?: number | undefined;
-  readonly content?: string | undefined;
+  readonly words: number | undefined;
+  readonly content: string | undefined;
   readonly docSearch: string;
   readonly setDocSearch: (val: string) => void;
   readonly fontSize: ReaderFontSize;
@@ -412,10 +400,10 @@ function EditorialReaderViewer({
 }: Readonly<EditorialReaderViewerProps>) {
   return (
     <div className="flex grow flex-col space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-accent-indigo/20 bg-accent-indigo-surface/5 px-3 py-2 text-xs">
+      <div className="border-accent-indigo/20 bg-accent-indigo-surface/5 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs">
         <div className="flex items-center space-x-2">
           <i className="fa-solid fa-wand-magic-sparkles text-accent-indigo-light"></i>
-          <span className="font-semibold text-accent-indigo-light">
+          <span className="text-accent-indigo-light font-semibold">
             {category === 'pdf'
               ? 'Motor RAG Nexus (Extração Vetorial & Textual)'
               : 'Modo Leitor Editorial Nexus (Documento Office)'}
@@ -429,13 +417,13 @@ function EditorialReaderViewer({
 
         <div className="flex items-center space-x-2">
           <div className="relative">
-            <i className="fa-solid fa-magnifying-glass absolute top-2 left-2.5 text-[10px] text-text-muted"></i>
+            <i className="fa-solid fa-magnifying-glass text-text-muted absolute top-2 left-2.5 text-[10px]"></i>
             <input
               type="text"
               placeholder="Pesquisar no texto..."
               value={docSearch}
               onChange={(e) => setDocSearch(e.target.value)}
-              className="w-36 rounded-md border border-white/10 bg-black/40 py-1 pr-2.5 pl-7 text-xs text-white placeholder-white/30 focus:border-accent-indigo focus:outline-none sm:w-48"
+              className="focus:border-accent-indigo w-36 rounded-md border border-white/10 bg-black/40 py-1 pr-2.5 pl-7 text-xs text-white placeholder-white/30 focus:outline-none sm:w-48"
             />
           </div>
 
@@ -477,7 +465,7 @@ function EditorialReaderViewer({
       <div
         className={`max-h-140 grow overflow-y-auto rounded-xl border border-white/5 bg-black/30 p-6 leading-relaxed whitespace-pre-wrap ${
           FONT_SIZE_TEXT_CLASS[fontSize]
-        } text-neutral-200 selection:bg-accent-indigo selection:text-white`}
+        } selection:bg-accent-indigo text-neutral-200 selection:text-white`}
       >
         {renderEditorialContent(content, docSearch)}
       </div>
@@ -486,18 +474,13 @@ function EditorialReaderViewer({
 }
 
 interface MarkdownViewerProps {
-  readonly content?: string | undefined;
+  readonly content: string | undefined;
   readonly mdTab: MarkdownTabMode;
   readonly wrapLines: boolean;
   readonly setWrapLines: (w: boolean) => void;
 }
 
-function MarkdownViewer({
-  content,
-  mdTab,
-  wrapLines,
-  setWrapLines,
-}: Readonly<MarkdownViewerProps>) {
+function MarkdownViewer({ content, mdTab, wrapLines, setWrapLines }: Readonly<MarkdownViewerProps>) {
   return (
     <div className="flex grow flex-col space-y-2">
       {mdTab === 'formatted' ? (
@@ -506,13 +489,9 @@ function MarkdownViewer({
         </div>
       ) : (
         <div className="flex flex-col space-y-2">
-          <div className="flex items-center justify-between text-[11px] text-text-muted">
+          <div className="text-text-muted flex items-center justify-between text-[11px]">
             <span>Código Fonte Markdown ({content?.split('\n').length || 0} linhas)</span>
-            <button
-              type="button"
-              onClick={() => setWrapLines(!wrapLines)}
-              className="hover:text-white"
-            >
+            <button type="button" onClick={() => setWrapLines(!wrapLines)} className="hover:text-white">
               Quebra de linha: {wrapLines ? 'Ativada' : 'Desativada'}
             </button>
           </div>
@@ -530,49 +509,39 @@ function MarkdownViewer({
 }
 
 interface CodeTextViewerProps {
-  readonly content?: string | undefined;
+  readonly content: string | undefined;
   readonly wrapLines: boolean;
   readonly setWrapLines: (w: boolean) => void;
 }
 
-function CodeTextViewer({
-  content,
-  wrapLines,
-  setWrapLines,
-}: Readonly<CodeTextViewerProps>) {
+function CodeTextViewer({ content, wrapLines, setWrapLines }: Readonly<CodeTextViewerProps>) {
   return (
     <div className="flex grow flex-col space-y-2">
-      <div className="flex items-center justify-between text-[11px] text-text-muted">
+      <div className="text-text-muted flex items-center justify-between text-[11px]">
         <div className="flex items-center space-x-2">
-          <span className="font-mono text-accent-indigo-light">
+          <span className="text-accent-indigo-light font-mono">
             {content ? `${content.split('\n').length} linhas` : '0 linhas'}
           </span>
           <span>•</span>
           <span>{content ? `${content.length.toLocaleString()} caracteres` : '0 caracteres'}</span>
         </div>
-        <button
-          type="button"
-          onClick={() => setWrapLines(!wrapLines)}
-          className="hover:text-white"
-        >
+        <button type="button" onClick={() => setWrapLines(!wrapLines)} className="hover:text-white">
           Quebra de linha: {wrapLines ? 'Ativada' : 'Desativada'}
         </button>
       </div>
 
       <div className="flex max-h-140 grow overflow-auto rounded-xl border border-white/5 bg-black/40 font-mono text-xs">
-        <div className="sticky left-0 select-none border-r border-white/10 bg-black/60 py-4 pr-3 pl-3 text-right text-white/30">
-          {(content || '')
-            .split('\n')
-            .map((_, i) => (
-              <div key={`line-num-${i + 1}`} className="leading-relaxed">
-                {i + 1}
-              </div>
-            ))}
+        <div className="sticky left-0 border-r border-white/10 bg-black/60 py-4 pr-3 pl-3 text-right text-white/30 select-none">
+          {(content || '').split('\n').map((_, i) => (
+            <div key={`line-num-${i + 1}`} className="leading-relaxed">
+              {i + 1}
+            </div>
+          ))}
         </div>
 
         <div
           className={`grow p-4 leading-relaxed text-indigo-100 ${
-            wrapLines ? 'whitespace-pre-wrap break-all' : 'whitespace-pre'
+            wrapLines ? 'break-all whitespace-pre-wrap' : 'whitespace-pre'
           }`}
         >
           {content || '[Arquivo Vazio]'}
@@ -590,13 +559,7 @@ interface SpreadsheetViewerProps {
   readonly chartData: ChartDataPoint[] | null;
 }
 
-function SpreadsheetViewer({
-  headers,
-  rows,
-  gridSearch,
-  setGridSearch,
-  chartData,
-}: Readonly<SpreadsheetViewerProps>) {
+function SpreadsheetViewer({ headers, rows, gridSearch, setGridSearch, chartData }: Readonly<SpreadsheetViewerProps>) {
   return (
     <div className="flex min-h-0 grow flex-col space-y-4">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -604,12 +567,10 @@ function SpreadsheetViewer({
           <div className="rounded border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-400">
             Planilha tabular carregada
           </div>
-          <span className="text-text-muted text-[11px]">
-            {rows.length} linhas analisadas
-          </span>
+          <span className="text-text-muted text-[11px]">{rows.length} linhas analisadas</span>
         </div>
         <div className="relative w-full sm:w-64">
-          <i className="fa-solid fa-magnifying-glass absolute top-2.5 left-2.5 text-[11px] text-text-muted"></i>
+          <i className="fa-solid fa-magnifying-glass text-text-muted absolute top-2.5 left-2.5 text-[11px]"></i>
           <input
             type="text"
             placeholder="Filtrar dados da planilha..."
@@ -634,11 +595,7 @@ function SpreadsheetViewer({
           <tbody>
             {rows
               .filter((row: unknown[]) =>
-                row.some((val) =>
-                  formatCellValue(val)
-                    .toLowerCase()
-                    .includes(gridSearch.toLowerCase()),
-                ),
+                row.some((val) => formatCellValue(val).toLowerCase().includes(gridSearch.toLowerCase())),
               )
               .map((row: unknown[], rIdx: number) => {
                 const rowKey = `row-${rIdx}-${formatCellValue(row[0])}`;
@@ -701,11 +658,7 @@ interface MediaOrArchiveViewerProps {
   readonly rawUrl: string;
 }
 
-function MediaOrArchiveViewer({
-  selectedFile,
-  fileContent,
-  rawUrl,
-}: Readonly<MediaOrArchiveViewerProps>) {
+function MediaOrArchiveViewer({ selectedFile, fileContent, rawUrl }: Readonly<MediaOrArchiveViewerProps>) {
   if (fileContent?.type === 'image' && fileContent.data) {
     return (
       <div className="grid min-h-0 grow grid-cols-1 gap-6 md:grid-cols-12">
@@ -728,7 +681,7 @@ function MediaOrArchiveViewer({
                 href={rawUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-block rounded-lg bg-accent-indigo-surface px-3 py-1.5 text-xs text-white"
+                className="bg-accent-indigo-surface mt-3 inline-block rounded-lg px-3 py-1.5 text-xs text-white"
               >
                 Abrir Imagem Completa
               </a>
@@ -739,15 +692,11 @@ function MediaOrArchiveViewer({
           <div className="rounded-xl border border-white/5 bg-white/5 p-4">
             <h4 className="mb-2 text-xs font-bold tracking-wide text-white uppercase">Dimensões</h4>
             <p className="text-base font-black text-white">{fileContent.data.size}</p>
-            <p className="text-text-muted mt-0.5 text-[10px] uppercase">
-              Formato: {fileContent.data.format}
-            </p>
+            <p className="text-text-muted mt-0.5 text-[10px] uppercase">Formato: {fileContent.data.format}</p>
           </div>
           {fileContent.data.exif && Object.keys(fileContent.data.exif).length > 0 && (
             <div className="max-h-75 overflow-y-auto rounded-xl border border-white/5 bg-white/5 p-4">
-              <h4 className="mb-2 text-xs font-bold tracking-wide text-white uppercase">
-                Metadados EXIF
-              </h4>
+              <h4 className="mb-2 text-xs font-bold tracking-wide text-white uppercase">Metadados EXIF</h4>
               <div className="space-y-1.5">
                 {Object.entries(fileContent.data.exif).map(([k, v]) => (
                   <div key={k} className="flex flex-col border-b border-white/5 pb-1">
@@ -765,14 +714,13 @@ function MediaOrArchiveViewer({
 
   if (selectedFile.category === 'media') {
     const isAudio =
-      selectedFile.name.toLowerCase().endsWith('.mp3') ||
-      selectedFile.name.toLowerCase().endsWith('.wav');
+      selectedFile.name.toLowerCase().endsWith('.mp3') || selectedFile.name.toLowerCase().endsWith('.wav');
 
     return (
       <div className="flex max-h-137.5 grow flex-col items-center space-y-4 overflow-y-auto rounded-xl border border-white/5 bg-black/40 p-4">
         {isAudio ? (
-          <div className="flex flex-col items-center justify-center space-y-6 py-12 w-full max-w-md">
-            <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-accent-indigo/10 border border-accent-indigo/30 animate-pulse">
+          <div className="flex w-full max-w-md flex-col items-center justify-center space-y-6 py-12">
+            <div className="bg-accent-indigo/10 border-accent-indigo/30 relative flex h-24 w-24 animate-pulse items-center justify-center rounded-full border">
               <i className="fa-solid fa-music text-accent-indigo text-4xl"></i>
             </div>
             <audio controls src={rawUrl} className="w-full shadow-lg">
@@ -785,11 +733,7 @@ function MediaOrArchiveViewer({
           </div>
         ) : (
           <>
-            <video
-              controls
-              src={rawUrl}
-              className="max-h-96 w-full rounded-xl border border-white/10 shadow-2xl"
-            >
+            <video controls src={rawUrl} className="max-h-96 w-full rounded-xl border border-white/10 shadow-2xl">
               <track kind="captions" />
             </video>
             <div className="text-text-muted w-full text-center text-xs">
@@ -819,7 +763,10 @@ function MediaOrArchiveViewer({
             </thead>
             <tbody>
               {fileContent.files.map((file) => (
-                <tr key={`archive-file-${file.name}-${file.size}`} className="border-b border-white/5 transition-colors hover:bg-white/5">
+                <tr
+                  key={`archive-file-${file.name}-${file.size}`}
+                  className="border-b border-white/5 transition-colors hover:bg-white/5"
+                >
                   <td className="text-text-main p-3 font-mono">
                     <i
                       className={`fa-solid ${file.is_dir ? 'fa-folder text-accent-indigo-light' : 'fa-file-code text-text-muted'} mr-2`}
@@ -856,9 +803,7 @@ export function UniversalDocumentViewer({
   const [fontSize, setFontSize] = useState<ReaderFontSize>('sm');
   const [docSearch, setDocSearch] = useState('');
 
-  const rawUrl =
-    customRawUrl ||
-    `/api/vitoi/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`;
+  const rawUrl = customRawUrl || `/api/vitoi/files/view?path=${encodeURIComponent(selectedFile.path)}&raw=true`;
   const downloadUrl = `${rawUrl}${rawUrl.includes('?') ? '&' : '?'}download=true`;
 
   const isMarkdown = selectedFile.name.toLowerCase().endsWith('.md');
@@ -883,10 +828,7 @@ export function UniversalDocumentViewer({
     }
   };
 
-  const chartData = useMemo<ChartDataPoint[] | null>(
-    () => computeCsvChartData(fileContent),
-    [fileContent],
-  );
+  const chartData = useMemo<ChartDataPoint[] | null>(() => computeCsvChartData(fileContent), [fileContent]);
 
   if (loadingContent) {
     return <ViewerLoadingState fileName={selectedFile.name} />;
@@ -907,8 +849,7 @@ export function UniversalDocumentViewer({
   const isReader =
     (selectedFile.category === 'pdf' && pdfTab === 'text') ||
     (fileContent?.type === 'document' && selectedFile.category !== 'pdf');
-  const isCodeOrText =
-    !isMarkdown && !isDoc && selectedFile.category !== 'pdf' && fileContent?.type === 'text';
+  const isCodeOrText = !isMarkdown && !isDoc && selectedFile.category !== 'pdf' && fileContent?.type === 'text';
 
   return (
     <div className="flex min-h-0 grow flex-col space-y-3">
@@ -928,9 +869,7 @@ export function UniversalDocumentViewer({
         onClose={onClose}
       />
 
-      {isPdfVisual && (
-        <PdfVisualViewer rawUrl={rawUrl} fileName={selectedFile.name} setPdfTab={setPdfTab} />
-      )}
+      {isPdfVisual && <PdfVisualViewer rawUrl={rawUrl} fileName={selectedFile.name} setPdfTab={setPdfTab} />}
 
       {isReader && (
         <EditorialReaderViewer
@@ -954,11 +893,7 @@ export function UniversalDocumentViewer({
       )}
 
       {isCodeOrText && (
-        <CodeTextViewer
-          content={fileContent?.content}
-          wrapLines={wrapLines}
-          setWrapLines={setWrapLines}
-        />
+        <CodeTextViewer content={fileContent?.content} wrapLines={wrapLines} setWrapLines={setWrapLines} />
       )}
 
       {fileContent?.type === 'spreadsheet' && fileContent.data && (

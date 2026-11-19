@@ -32,6 +32,7 @@ const nextConfig = {
   agentRules: false,
   experimental: {
     mcpServer: false,
+    optimizePackageImports: ['recharts'],
   },
   async headers() {
     return [
@@ -49,10 +50,11 @@ const nextConfig = {
               "img-src 'self' data: blob: https:",
               // Sem `http://[::1]:*`: IPv6 literal entre colchetes nao existe na gramatica de host-source da CSP;
               // o navegador o descartava e registrava erro de console em toda pagina. `localhost` ja cobre o loopback.
-              // Sem `https:`/`ws:`/`wss:` irrestritos: nenhum fetch client-side sai da origem ( APIs passam por
-              // route handlers same-origin; os unicos https:// em client components sao hrefs de share/redes).
-              // ws:// fica so no loopback para o HMR do next dev; producao nao abre WebSocket.
-              "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
+              // Sem `https:`/`ws:`/`wss:` irrestritos: em producao todos os fetches passam pelos route handlers BFF `'self'`.
+              // Em dev, loopback/ws liberam HMR e portas locais do ecossistema.
+              process.env.NODE_ENV === 'production'
+                ? "connect-src 'self'"
+                : "connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*",
               "worker-src 'self' blob:",
               "frame-src 'self' blob: data: chrome-extension:",
               "object-src 'self' data: blob:",
@@ -84,6 +86,10 @@ const nextConfig = {
           {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), geolocation=(), payment=(), usb=(), interest-cohort=()',
           },
         ],
       },

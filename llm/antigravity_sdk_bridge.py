@@ -764,7 +764,7 @@ class AntigravityAgentBridge:
                 if raw_thoughts is not None:
                     if hasattr(raw_thoughts, "__aiter__"):
                         async for t in raw_thoughts:
-                            thoughts.append(str(t))
+                            thoughts.append(t)
                     elif isinstance(raw_thoughts, (list, tuple, set)):
                         for t in raw_thoughts:
                             thoughts.append(str(t))

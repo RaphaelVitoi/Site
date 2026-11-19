@@ -88,6 +88,7 @@
     "handshake",
     "heart-crack",
     "house",
+    "key",
     "layer-group",
     "lightbulb",
     "link",
@@ -150,15 +151,18 @@
     "discord",
     "google",
     "instagram",
+    "linkedin-in",
     "markdown",
     "twitch",
+    "twitter",
+    "whatsapp",
     "youtube"
   ],
   "fontes": {
     "fa-solid-900": {
-      "glifos": 144,
+      "glifos": 145,
       "bytes_origem": 119488,
-      "bytes_recorte": 14352
+      "bytes_recorte": 14396
     },
     "fa-regular-400": {
       "glifos": 29,
@@ -166,9 +170,9 @@
       "bytes_recorte": 3972
     },
     "fa-brands-400": {
-      "glifos": 6,
+      "glifos": 9,
       "bytes_origem": 115420,
-      "bytes_recorte": 1588
+      "bytes_recorte": 2024
     }
   }
 }

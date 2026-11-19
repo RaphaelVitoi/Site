@@ -7,7 +7,10 @@
  */
 
 import { acoesComProcedencia, somaDasFrequencias } from '@/lib/aula12Evidence';
-import { PAR_2_IP_APOS_CHECK } from '@/components/simulator/solver/evidencia/aula12Pairs';
+import {
+	PAR_2_IP_APOS_CHECK,
+	STACKS_DECLARADOS_NO_TEXTO,
+} from '@/components/simulator/solver/evidencia/aula12Pairs';
 import { read, unreadable, type EvidenceScenario } from '@/components/simulator/solver/evidenceContract';
 
 describe('ponte de evidência da Aula 1.2', () => {
@@ -129,6 +132,11 @@ describe('ponte de evidência da Aula 1.2', () => {
 
 		it('cenário sem ações devolve lista vazia, não erro', () => {
 			expect(acoesComProcedencia(cenario([]))).toEqual([]);
+		});
+
+		it('mantém auditável a divergência entre texto declarado e capturas do documento', () => {
+			expect(STACKS_DECLARADOS_NO_TEXTO.btnBb).toBe(38);
+			expect(STACKS_DECLARADOS_NO_TEXTO.bbBb).toBe(53);
 		});
 	});
 });

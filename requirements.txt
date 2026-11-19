@@ -33,7 +33,7 @@ pyarrow>=26.0.1
 onnxruntime>=1.32.0
 
 # ── CLIENTES LLM, AGENTES & MCP ──────────────────────────────────────────────
-google-genai>=3.5.0
+google-genai>=3.6.1
 google-antigravity>=0.1.23
 openai>=3.55.1
 anthropic>=2.10.0

@@ -82,10 +82,10 @@ export interface ISotaWasmContext {
   ) => void;
 
   // SOTA: Métricas Quânticas Computadas via WASM
-  quantumMetricsData?: import('./hooks/useQuantumEngine').QuantumMetricsResult | null;
+  quantumMetricsData?: import('./hooks/useQuantumEngine').InsolvencyMetrics | null;
   isCalculatingMetrics?: boolean;
   dispatchQuantumMetrics?: (
-    payload: import('./hooks/useQuantumEngine').QuantumMetricsPayload
+    payload: import('./hooks/useQuantumEngine').InsolvencyPayload
   ) => void;
 
   // SOTA: Distorção de Nash e Despacho ICM (WASM)
@@ -101,7 +101,7 @@ export const SotaSpotContext = createContext<ISotaSpotContext | null>(null);
 export const SotaMetricsContext = createContext<ISotaMetricsContext | null>(null);
 export const SotaWasmContext = createContext<ISotaWasmContext | null>(null);
 
-export interface ISotaEcosystemProviderProps {
+interface ISotaEcosystemProviderProps {
   spotContextValue: ISotaSpotContext;
   metricsContextValue: ISotaMetricsContext;
   wasmContextValue: ISotaWasmContext;

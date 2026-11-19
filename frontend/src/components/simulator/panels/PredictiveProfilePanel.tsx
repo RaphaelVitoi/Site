@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 
 interface PredictiveProfile {
 	'Aversão ao Risco': number;
@@ -27,24 +28,32 @@ export default function PredictiveProfilePanel() {
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		const controller = new AbortController();
+
 		async function fetchProfile() {
 			try {
 				// Fricção Zero: Leitura dinâmica via API Local/Proxy
-				const res = await fetch('/api/v1/predictive', {
-					cache: 'no-store',
+				const data = await fetchJson<{ profile?: PredictiveProfile }>('/api/v1/predictive', {
+					signal: controller.signal,
+					timeoutMs: 8_000,
 				});
-
-				if (res.ok) {
-					const data = await res.json();
+				if (!controller.signal.aborted && data.profile) {
 					setProfile(data.profile);
 				}
 			} catch (e) {
+				if (isAbortError(e)) return;
 				console.error('[ENTROPIA] Falha ao carregar Perfil Preditivo', e);
 			} finally {
-				setLoading(false);
+				if (!controller.signal.aborted) {
+					setLoading(false);
+				}
 			}
 		}
 		void fetchProfile();
+
+		return () => {
+			controller.abort();
+		};
 	}, []);
 
 	if (loading) {

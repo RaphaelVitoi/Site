@@ -7,7 +7,6 @@
 
 'use client';
 
-import { motion } from 'framer-motion';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { use, useMemo, useState } from 'react';
@@ -43,13 +42,13 @@ interface HistorianData {
   }>;
 }
 
-interface DashboardSOTAProps {
-  initialData?: HistorianData | null | undefined;
-  hudMode?: boolean | undefined;
-  scenarios?: Scenario[] | undefined;
-  currentScenario?: Scenario | undefined;
-  nashFlop?: IcmDistortionResult | undefined;
-  insolvencyRadarData?: Array<{ subject: string; Ameaça: number }> | undefined;
+export interface DashboardSOTAProps {
+  initialData?: HistorianData | null;
+  hudMode?: boolean;
+  scenarios?: Scenario[];
+  currentScenario?: Scenario;
+  nashFlop?: IcmDistortionResult;
+  insolvencyRadarData?: Array<{ subject: string; Ameaça: number }>;
 }
 
 type RadarStudioMode = 'insolvency' | 'comparison' | 'vulnerabilities';
@@ -64,8 +63,8 @@ function PerfilNaoMedido() {
     <div className="rounded-3xl border border-white/10 bg-black/30 p-8 text-center">
       <p className="m-0 text-xs font-black tracking-widest text-white uppercase">Perfil preditivo não medido</p>
       <p className="text-text-muted mx-auto mt-3 mb-0 max-w-md text-xs leading-relaxed">
-        Não existe modelo individual para esta conta. O diagnóstico de vieses aparece aqui quando houver
-        medição — nenhum valor de referência é exibido como se fosse seu.
+        Não existe modelo individual para esta conta. O diagnóstico de vieses aparece aqui quando houver medição —
+        nenhum valor de referência é exibido como se fosse seu.
       </p>
     </div>
   );
@@ -133,11 +132,9 @@ function HudView({ radarData, topLeaks }: HudViewProps) {
                 <span className="font-mono text-[0.65rem] font-black text-white">{(value * 100).toFixed(0)}%</span>
               </div>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5 shadow-inner">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${value * 100}%` }}
-                  transition={{ duration: 1.5, ease: 'easeOut', delay: idx * 0.2 }}
-                  className={`h-full rounded-full ${idx === 0 ? 'bg-accent-rose shadow-[0_0_8px_var(--color-accent-rose)]' : 'bg-accent-indigo shadow-[0_0_8px_var(--color-accent-indigo)]'}`}
+                <div
+                  style={{ width: `${value * 100}%`, transitionDelay: `${idx * 150}ms` }}
+                  className={`sota-bar-fill h-full rounded-full ${idx === 0 ? 'bg-accent-rose shadow-[0_0_8px_var(--color-accent-rose)]' : 'bg-accent-indigo shadow-[0_0_8px_var(--color-accent-indigo)]'}`}
                 />
               </div>
             </div>
@@ -166,90 +163,90 @@ function ExecutiveKpiSection({
   isSolvent,
 }: ExecutiveKpiSectionProps) {
   return (
-    <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4" aria-label="KPIs Executivos de Telemetria">
-      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+    <section
+      className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6"
+      aria-label="KPIs Executivos de Telemetria"
+    >
+      <div className="glass-panel flex flex-col justify-between rounded-2xl border border-white/8 bg-slate-950/60 p-4 shadow-lg">
+        <span className="text-text-dim mb-1 block text-[0.55rem] font-black tracking-[0.2em] uppercase">
           Instabilidade
         </span>
         <div className="flex items-baseline gap-2">
-          <span className={`font-mono text-xl font-black ${marginInstability > 15 ? 'text-accent-rose' : 'text-white'}`}>
+          <span
+            className={`font-mono text-xl font-black ${marginInstability > 15 ? 'text-accent-rose' : 'text-white'}`}
+          >
             {marginInstability.toFixed(1)}%
           </span>
         </div>
-        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-          Margem &delta;
-        </span>
+        <span className="text-text-darker mt-1 font-mono text-[0.52rem] tracking-wider uppercase">Margem &delta;</span>
       </div>
 
-      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+      <div className="glass-panel flex flex-col justify-between rounded-2xl border border-white/8 bg-slate-950/60 p-4 shadow-lg">
+        <span className="text-text-dim mb-1 block text-[0.55rem] font-black tracking-[0.2em] uppercase">
           Vantagem Risco
         </span>
         <div className="flex items-baseline gap-2">
-          <span className={`font-mono text-xl font-black ${riskAdvantage >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}>
-            {riskAdvantage > 0 ? '+' : ''}{riskAdvantage.toFixed(1)}%
+          <span
+            className={`font-mono text-xl font-black ${riskAdvantage >= 0 ? 'text-accent-emerald' : 'text-accent-rose'}`}
+          >
+            {riskAdvantage > 0 ? '+' : ''}
+            {riskAdvantage.toFixed(1)}%
           </span>
         </div>
-        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+        <span className="text-text-darker mt-1 font-mono text-[0.52rem] tracking-wider uppercase">
           {riskAdvantage >= 0 ? 'IP Domina' : 'OOP Vulnerável'}
         </span>
       </div>
 
-      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+      <div className="glass-panel flex flex-col justify-between rounded-2xl border border-white/8 bg-slate-950/60 p-4 shadow-lg">
+        <span className="text-text-dim mb-1 block text-[0.55rem] font-black tracking-[0.2em] uppercase">
           Fator &Psi;
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-xl font-black text-accent-indigo-light">
-            {aggFactor.toFixed(1)}x
-          </span>
+          <span className="text-accent-indigo-light font-mono text-xl font-black">{aggFactor.toFixed(1)}x</span>
         </div>
-        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
-          Agressão Real
-        </span>
+        <span className="text-text-darker mt-1 font-mono text-[0.52rem] tracking-wider uppercase">Agressão Real</span>
       </div>
 
-      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+      <div className="glass-panel flex flex-col justify-between rounded-2xl border border-white/8 bg-slate-950/60 p-4 shadow-lg">
+        <span className="text-text-dim mb-1 block text-[0.55rem] font-black tracking-[0.2em] uppercase">
           Assimetria &Delta;RP
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-xl font-black text-white">
-            {deltaRp.toFixed(1)}%
-          </span>
+          <span className="font-mono text-xl font-black text-white">{deltaRp.toFixed(1)}%</span>
         </div>
-        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+        <span className="text-text-darker mt-1 font-mono text-[0.52rem] tracking-wider uppercase">
           Distorção de Preço
         </span>
       </div>
 
-      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
+      <div className="glass-panel flex flex-col justify-between rounded-2xl border border-white/8 bg-slate-950/60 p-4 shadow-lg">
+        <span className="text-text-dim mb-1 block text-[0.55rem] font-black tracking-[0.2em] uppercase">
           Posterior Bayes
         </span>
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-xl font-black text-accent-indigo">
+          <span className="text-accent-indigo font-mono text-xl font-black">
             {bayesianWinProb !== null ? `${bayesianWinProb.toFixed(1)}%` : '--'}
           </span>
         </div>
-        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+        <span className="text-text-darker mt-1 font-mono text-[0.52rem] tracking-wider uppercase">
           Win Prob Posterior
         </span>
       </div>
 
-      <div className="glass-panel p-4 rounded-2xl bg-slate-950/60 border border-white/8 shadow-lg flex flex-col justify-between">
-        <span className="text-[0.55rem] font-black uppercase tracking-[0.2em] text-text-dim block mb-1">
-          Solvência
-        </span>
+      <div className="glass-panel flex flex-col justify-between rounded-2xl border border-white/8 bg-slate-950/60 p-4 shadow-lg">
+        <span className="text-text-dim mb-1 block text-[0.55rem] font-black tracking-[0.2em] uppercase">Solvência</span>
         <div className="flex items-center gap-2">
           <div
-            className={`h-2.5 w-2.5 rounded-full ${isSolvent ? 'bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]' : 'bg-accent-rose shadow-[0_0_10px_var(--accent-rose)] animate-pulse'}`}
+            className={`h-2.5 w-2.5 rounded-full ${isSolvent ? 'bg-accent-emerald shadow-[0_0_10px_var(--accent-emerald)]' : 'bg-accent-rose animate-pulse shadow-[0_0_10px_var(--accent-rose)]'}`}
           />
-          <span className={`font-mono text-sm font-black uppercase tracking-wider ${isSolvent ? 'text-accent-emerald' : 'text-accent-rose'}`}>
+          <span
+            className={`font-mono text-sm font-black tracking-wider uppercase ${isSolvent ? 'text-accent-emerald' : 'text-accent-rose'}`}
+          >
             {isSolvent ? 'Solvente' : 'Insolvente'}
           </span>
         </div>
-        <span className="text-[0.52rem] font-mono text-text-darker uppercase tracking-wider mt-1">
+        <span className="text-text-darker mt-1 font-mono text-[0.52rem] tracking-wider uppercase">
           Equilíbrio de Nash
         </span>
       </div>
@@ -388,7 +385,7 @@ export default function DashboardSOTA({
   const bayesianWinProb = qMetrics?.bayesianWinProb ?? null;
 
   return (
-    <div className="sota-panel-gap animate-sota-in tabular-nums flex flex-col gap-10">
+    <div className="sota-panel-gap animate-sota-in flex flex-col gap-10 tabular-nums">
       {/* ═══ 1. FAIXA SUPERIOR DE KPIS EXECUTIVOS SOTA ═══ */}
       <ExecutiveKpiSection
         marginInstability={marginInstability}
@@ -400,33 +397,36 @@ export default function DashboardSOTA({
       />
 
       {/* ═══ 2. RADAR STUDIO SOTA: HUB MULTIDIMENSIONAL INTEGRADO ═══ */}
-      <section className="glass-panel p-6 sm:p-8 rounded-4xl bg-slate-950/50 border border-white/8 shadow-2xl relative overflow-hidden" aria-label="Radar Studio SOTA">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-accent-indigo/5 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-rose/5 blur-[120px] rounded-full pointer-events-none" />
+      <section
+        className="glass-panel relative overflow-hidden rounded-4xl border border-white/8 bg-slate-950/50 p-6 shadow-2xl sm:p-8"
+        aria-label="Radar Studio SOTA"
+      >
+        <div className="bg-accent-indigo/5 pointer-events-none absolute top-0 right-0 h-80 w-80 rounded-full blur-[120px]" />
+        <div className="bg-accent-rose/5 pointer-events-none absolute bottom-0 left-0 h-80 w-80 rounded-full blur-[120px]" />
 
         {/* Cabeçalho do Studio com Seletor Segmentado */}
-        <div className="relative z-10 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 border-b border-white/8 pb-6 mb-6">
-          <div className="space-y-1 min-w-0 max-w-2xl">
+        <div className="relative z-10 mb-6 flex flex-col items-start justify-between gap-6 border-b border-white/8 pb-6 xl:flex-row xl:items-center">
+          <div className="max-w-2xl min-w-0 space-y-1">
             <div className="flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rounded-full bg-accent-indigo shadow-[0_0_12px_var(--accent-indigo)] animate-pulse shrink-0" />
-              <h2 className="text-base sm:text-lg font-black text-white uppercase tracking-[0.25em] m-0 truncate">
+              <div className="bg-accent-indigo h-2.5 w-2.5 shrink-0 animate-pulse rounded-full shadow-[0_0_12px_var(--accent-indigo)]" />
+              <h2 className="m-0 truncate text-base font-black tracking-[0.25em] text-white uppercase sm:text-lg">
                 Radar Studio SOTA
               </h2>
             </div>
-            <p className="text-[0.62rem] font-mono text-text-dim uppercase tracking-wider m-0 leading-relaxed">
+            <p className="text-text-dim m-0 font-mono text-[0.62rem] leading-relaxed tracking-wider uppercase">
               Visualização vetorial multidimensional de tensões, topologia e psicologia de mesa
             </p>
           </div>
 
           {/* Segmented Switcher */}
-          <div className="flex items-center p-1 bg-black/50 rounded-2xl border border-white/10 shadow-inner overflow-x-auto no-scrollbar max-w-full shrink-0">
+          <div className="no-scrollbar flex max-w-full shrink-0 items-center overflow-x-auto rounded-2xl border border-white/10 bg-black/50 p-1 shadow-inner">
             <button
               type="button"
               onClick={() => setRadarStudioMode('insolvency')}
-              className={`shrink-0 whitespace-nowrap px-3 sm:px-3.5 py-2 rounded-xl text-[0.6rem] sm:text-[0.62rem] font-black uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.6rem] font-black tracking-wider whitespace-nowrap uppercase transition-all duration-300 sm:px-3.5 sm:text-[0.62rem] ${
                 radarStudioMode === 'insolvency'
-                  ? 'bg-accent-rose/20 text-accent-rose-light border border-accent-rose/40 shadow-lg shadow-rose-500/10'
-                  : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
+                  ? 'bg-accent-rose/20 text-accent-rose-light border-accent-rose/40 border shadow-lg shadow-rose-500/10'
+                  : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
               }`}
             >
               <i className="fa-solid fa-satellite-dish text-xs" />
@@ -436,10 +436,10 @@ export default function DashboardSOTA({
             <button
               type="button"
               onClick={() => setRadarStudioMode('comparison')}
-              className={`shrink-0 whitespace-nowrap px-3 sm:px-3.5 py-2 rounded-xl text-[0.6rem] sm:text-[0.62rem] font-black uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.6rem] font-black tracking-wider whitespace-nowrap uppercase transition-all duration-300 sm:px-3.5 sm:text-[0.62rem] ${
                 radarStudioMode === 'comparison'
-                  ? 'bg-accent-indigo/20 text-white border border-accent-indigo/40 shadow-lg shadow-indigo-500/10'
-                  : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
+                  ? 'bg-accent-indigo/20 border-accent-indigo/40 border text-white shadow-lg shadow-indigo-500/10'
+                  : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
               }`}
             >
               <i className="fa-solid fa-draw-polygon text-xs" />
@@ -449,10 +449,10 @@ export default function DashboardSOTA({
             <button
               type="button"
               onClick={() => setRadarStudioMode('vulnerabilities')}
-              className={`shrink-0 whitespace-nowrap px-3 sm:px-3.5 py-2 rounded-xl text-[0.6rem] sm:text-[0.62rem] font-black uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-2 text-[0.6rem] font-black tracking-wider whitespace-nowrap uppercase transition-all duration-300 sm:px-3.5 sm:text-[0.62rem] ${
                 radarStudioMode === 'vulnerabilities'
-                  ? 'bg-accent-emerald/20 text-accent-emerald-light border border-accent-emerald/40 shadow-lg shadow-emerald-500/10'
-                  : 'text-text-dim hover:text-text-muted hover:bg-white/5 border border-transparent'
+                  ? 'bg-accent-emerald/20 text-accent-emerald-light border-accent-emerald/40 border shadow-lg shadow-emerald-500/10'
+                  : 'text-text-dim hover:text-text-muted border border-transparent hover:bg-white/5'
               }`}
             >
               <i className="fa-solid fa-brain text-xs" />
@@ -464,65 +464,67 @@ export default function DashboardSOTA({
         {/* Conteúdo do Modo Ativo do Studio */}
         <div className="relative z-10">
           {radarStudioMode === 'insolvency' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-sota-in">
-              <div className="lg:col-span-7 h-96 w-full flex items-center justify-center">
+            <div className="animate-sota-in grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+              <div className="flex h-96 w-full items-center justify-center lg:col-span-7">
                 <InsolvencyRadar data={activeInsolvencyData} />
               </div>
-              <div className="lg:col-span-5 flex flex-col gap-4">
+              <div className="flex flex-col gap-4 lg:col-span-5">
                 <div className="border-b border-white/5 pb-3">
-                  <span className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-white">
+                  <span className="text-[0.68rem] font-black tracking-[0.2em] text-white uppercase">
                     Diagnóstico dos 6 Vetores de Ameaça
                   </span>
-                  <p className="text-[0.6rem] text-text-dim mt-1 m-0">
+                  <p className="text-text-dim m-0 mt-1 text-[0.6rem]">
                     Projeção vetorial instantânea calculada a partir dos parâmetros físicos da mesa
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.52rem] font-black uppercase tracking-wider text-text-dim block mb-1">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-1 block text-[0.52rem] font-black tracking-wider uppercase">
                       Pressão RIO MW
                     </span>
-                    <span className="font-mono text-base font-black text-accent-rose">
+                    <span className="text-accent-rose font-mono text-base font-black">
                       {(qMetrics?.rioMw ?? 0.8).toFixed(2)}x
                     </span>
-                    <p className="text-[0.5rem] text-text-darker m-0 mt-0.5">Responsabilidade reversa</p>
+                    <p className="text-text-darker m-0 mt-0.5 text-[0.5rem]">Responsabilidade reversa</p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.52rem] font-black uppercase tracking-wider text-text-dim block mb-1">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-1 block text-[0.52rem] font-black tracking-wider uppercase">
                       Erosão no Fold
                     </span>
-                    <span className="font-mono text-base font-black text-accent-indigo-light">
+                    <span className="text-accent-indigo-light font-mono text-base font-black">
                       {(qMetrics?.adjustedEvFold ?? -0.5).toFixed(2)} bb
                     </span>
-                    <p className="text-[0.5rem] text-text-darker m-0 mt-0.5">Threshold de desistência</p>
+                    <p className="text-text-darker m-0 mt-0.5 text-[0.5rem]">Threshold de desistência</p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.52rem] font-black uppercase tracking-wider text-text-dim block mb-1">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-1 block text-[0.52rem] font-black tracking-wider uppercase">
                       Desvantagem Risco
                     </span>
                     <span className="font-mono text-base font-black text-white">
                       {Math.abs(riskAdvantage).toFixed(1)}%
                     </span>
-                    <p className="text-[0.5rem] text-text-darker m-0 mt-0.5">Divergência de cobertura</p>
+                    <p className="text-text-darker m-0 mt-0.5 text-[0.5rem]">Divergência de cobertura</p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[0.52rem] font-black uppercase tracking-wider text-text-dim block mb-1">
+                  <div className="rounded-xl border border-white/5 bg-black/30 p-3">
+                    <span className="text-text-dim mb-1 block text-[0.52rem] font-black tracking-wider uppercase">
                       Vulnerabilidade
                     </span>
-                    <span className="font-mono text-base font-black text-accent-emerald">
+                    <span className="text-accent-emerald font-mono text-base font-black">
                       {(qMetrics?.perspectiva ?? 12.5).toFixed(1)}%
                     </span>
-                    <p className="text-[0.5rem] text-text-darker m-0 mt-0.5">Lente Teórica PM</p>
+                    <p className="text-text-darker m-0 mt-0.5 text-[0.5rem]">Lente Teórica PM</p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white/2 border border-white/5 text-[0.68rem] text-text-muted leading-relaxed">
+                <div className="text-text-muted rounded-2xl border border-white/5 bg-white/2 p-4 text-[0.68rem] leading-relaxed">
                   <p className="m-0">
-                    <strong className="text-white">Interpretação SOTA:</strong> Quando os eixos de <em>Pressão RIO</em> e <em>Erosão RP</em> expandem para além de 60%, o defensor entra na Zona de Falência das Pot Odds, exigindo overfold profilático.
+                    <strong className="text-white">Interpretação SOTA:</strong> Quando os eixos de <em>Pressão RIO</em>{' '}
+                    e <em>Erosão RP</em> expandem para além de 60%, o defensor entra na Zona de Falência das Pot Odds,
+                    exigindo overfold profilático.
                   </p>
                 </div>
               </div>
@@ -539,7 +541,7 @@ export default function DashboardSOTA({
                   embedded
                 />
               ) : (
-                <div className="p-12 text-center text-text-darker font-mono text-xs uppercase tracking-widest">
+                <div className="text-text-darker p-12 text-center font-mono text-xs tracking-widest uppercase">
                   Nenhum cenário adicional carregado para comparação topológica.
                 </div>
               )}
@@ -548,8 +550,8 @@ export default function DashboardSOTA({
 
           {radarStudioMode === 'vulnerabilities' && radarData.length === 0 && <PerfilNaoMedido />}
           {radarStudioMode === 'vulnerabilities' && radarData.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-sota-in">
-              <div className="lg:col-span-7 h-96 w-full flex items-center justify-center">
+            <div className="animate-sota-in grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+              <div className="flex h-96 w-full items-center justify-center lg:col-span-7">
                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
                     <defs>
@@ -602,19 +604,22 @@ export default function DashboardSOTA({
                 </ResponsiveContainer>
               </div>
 
-              <div className="lg:col-span-5 flex flex-col gap-6">
+              <div className="flex flex-col gap-6 lg:col-span-5">
                 <div className="border-b border-white/5 pb-4">
-                  <span className="text-[0.68rem] font-black uppercase tracking-[0.2em] text-white">
+                  <span className="text-[0.68rem] font-black tracking-[0.2em] text-white uppercase">
                     Top Leaks Cognitivos Identificados
                   </span>
-                  <p className="text-[0.6rem] text-text-dim mt-1 m-0">
+                  <p className="text-text-dim m-0 mt-1 text-[0.6rem]">
                     Vulnerabilidades psicológicas e heurísticas estimadas pela Mente Preditiva
                   </p>
                 </div>
 
                 <div className="space-y-4 rounded-2xl border border-white/5 bg-slate-950/40 p-5 shadow-inner">
                   {topLeaks.map(([name, value], idx) => (
-                    <div key={name} className="group/leak flex flex-col gap-2.5 transition-all duration-300 hover:translate-x-1">
+                    <div
+                      key={name}
+                      className="group/leak flex flex-col gap-2.5 transition-all duration-300 hover:translate-x-1"
+                    >
                       <div className="flex items-center justify-between px-2">
                         <span
                           className={`text-[0.7rem] font-black tracking-widest uppercase transition-colors ${idx === 0 ? 'text-accent-rose' : 'text-text-muted group-hover/leak:text-white'}`}
@@ -625,16 +630,10 @@ export default function DashboardSOTA({
                           {(value * 100).toFixed(1)}%
                         </span>
                       </div>
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-white/5 shadow-inner border border-white/5">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${value * 100}%` }}
-                          transition={{
-                            duration: 1.2,
-                            ease: 'easeOut',
-                            delay: idx * 0.2,
-                          }}
-                          className={`h-full rounded-full ${idx === 0 ? 'bg-accent-rose shadow-[0_0_12px_var(--color-accent-rose)]' : 'bg-accent-emerald shadow-[0_0_12px_var(--color-accent-emerald)]'}`}
+                      <div className="h-2 w-full overflow-hidden rounded-full border border-white/5 bg-white/5 shadow-inner">
+                        <div
+                          style={{ width: `${value * 100}%`, transitionDelay: `${idx * 150}ms` }}
+                          className={`sota-bar-fill h-full rounded-full ${idx === 0 ? 'bg-accent-rose shadow-[0_0_12px_var(--color-accent-rose)]' : 'bg-accent-emerald shadow-[0_0_12px_var(--color-accent-emerald)]'}`}
                         />
                       </div>
                     </div>
@@ -647,9 +646,12 @@ export default function DashboardSOTA({
       </section>
 
       {/* ═══ 3. CAMADA DE INSOLVÊNCIA & GEOMETRIA DO RISCO ═══ */}
-      <section className="grid grid-cols-1 items-stretch gap-10 xl:grid-cols-[1.3fr_1fr]" aria-label="Matriz de Insolvência e Perspectiva">
-        <div className="glass-panel group/insolvency-wrap p-6 sm:p-8 rounded-4xl bg-slate-950/50 border border-white/8 shadow-2xl relative">
-          <div className="bg-grain pointer-events-none absolute inset-0 rounded-4xl overflow-hidden opacity-5 mix-blend-overlay" />
+      <section
+        className="grid grid-cols-1 items-stretch gap-10 xl:grid-cols-[1.3fr_1fr]"
+        aria-label="Matriz de Insolvência e Perspectiva"
+      >
+        <div className="glass-panel group/insolvency-wrap relative rounded-4xl border border-white/8 bg-slate-950/50 p-6 shadow-2xl sm:p-8">
+          <div className="bg-grain pointer-events-none absolute inset-0 overflow-hidden rounded-4xl opacity-5 mix-blend-overlay" />
           <div className="relative z-10 mb-8 flex items-center justify-between border-b border-white/5 pb-6">
             <div className="flex items-center gap-4">
               <div className="bg-accent-indigo h-3 w-3 animate-pulse rounded-full shadow-[0_0_20px_var(--color-accent-indigo)]" />
@@ -669,7 +671,7 @@ export default function DashboardSOTA({
           </div>
         </div>
 
-        <div className="glass-panel group/pm-guide flex flex-col justify-between overflow-hidden p-6 sm:p-8 rounded-4xl bg-slate-950/50 border border-white/8 shadow-2xl relative">
+        <div className="glass-panel group/pm-guide relative flex flex-col justify-between overflow-hidden rounded-4xl border border-white/8 bg-slate-950/50 p-6 shadow-2xl sm:p-8">
           <div className="bg-grain pointer-events-none absolute inset-0 opacity-5 mix-blend-overlay" />
           <div className="relative z-10 space-y-8">
             <div className="flex items-center gap-5">
@@ -691,7 +693,8 @@ export default function DashboardSOTA({
             </div>
 
             <p className="text-text-muted border-accent-indigo/40 rounded-r-2xl border-l-2 bg-white/2 py-4 pl-6 text-[0.85rem] leading-relaxed font-medium italic shadow-inner">
-              &quot;A Matriz de Insolvência ao lado não é apenas um cálculo de equidade, mas uma projeção A* Pathfinding de sobrevivência financeira.&quot;
+              &quot;A Matriz de Insolvência ao lado não é apenas um cálculo de equidade, mas uma projeção A* Pathfinding
+              de sobrevivência financeira.&quot;
             </p>
 
             {/* Módulo de Telemetria Visual SOTA */}
@@ -723,7 +726,7 @@ export default function DashboardSOTA({
                 <span className="text-text-muted mb-1 block text-[0.6rem] tracking-widest uppercase">
                   OOP Call (ChipEV)
                 </span>
-                <span className="font-mono text-xl font-black text-text-muted">50.0%</span>
+                <span className="text-text-muted font-mono text-xl font-black">50.0%</span>
               </div>
               <div className="bg-accent-rose-surface/10 border-accent-rose/20 flex flex-col items-center justify-center rounded-2xl border p-4 text-center shadow-[0_0_20px_rgba(244,63,94,0.1)]">
                 <span className="text-accent-rose mb-1 block text-[0.6rem] tracking-widest uppercase">
@@ -739,7 +742,10 @@ export default function DashboardSOTA({
       </section>
 
       {/* ═══ 4. CENTRAL DE TELEMETRIA TEMPORAL & QUADRANTES ═══ */}
-      <section className="glass-panel group/telemetry relative flex flex-col overflow-hidden p-6 sm:p-8 rounded-4xl bg-slate-950/50 border border-white/8 shadow-2xl" aria-label="Curva de Performance Temporal">
+      <section
+        className="glass-panel group/telemetry relative flex flex-col overflow-hidden rounded-4xl border border-white/8 bg-slate-950/50 p-6 shadow-2xl sm:p-8"
+        aria-label="Curva de Performance Temporal"
+      >
         <div className="relative z-10 mb-8 flex items-center justify-between border-b border-white/5 pb-6">
           <div className="flex items-center gap-4">
             <div className="bg-accent-emerald h-2.5 w-2.5 animate-pulse rounded-full shadow-[0_0_15px_var(--color-accent-emerald)]" />

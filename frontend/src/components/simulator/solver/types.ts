@@ -26,9 +26,6 @@ export interface ScenarioQuiz {
   explanation: string;
 }
 
-// Alias retrocompativel para componentes legados
-export type Quiz = ScenarioQuiz;
-
 // Tipos literais para segurança em tempo de compilação
 export type ScenarioColor = 'indigo' | 'rose' | 'emerald' | 'sky' | 'amber' | 'fuchsia' | 'slate' | 'blue';
 export type ScenarioCategory = 'clinical' | 'baseline' | 'toyGame';
@@ -45,7 +42,6 @@ export interface ChipEvFreqs {
 }
 
 export type HeroPosition = 'IP' | 'SB' | 'BB' | 'OOP';
-export type ActiveTool = 'scenario' | 'calculator' | 'matchup' | 'comparar' | 'perspectiva' | 'posflop';
 
 // Street pós-flop em que o cálculo de frequências ICM está sendo aplicado
 export type Street = 'flop' | 'turn' | 'river';
@@ -128,33 +124,6 @@ export interface Scenario {
   /** Frequências ChipEV de referência por street — flop, turn, river (exemplo didático) */
   defaultStreetFreqs: StreetChipEvFreqs;
   quiz: ScenarioQuiz;
-}
-
-// SOTA: ICM Lab DTOs (Paridade exata com LabManager -> get_tournaments)
-export interface TournamentScenario {
-  id: string;
-  tournamentId: string;
-  name: string;
-  description?: string;
-  playersRemaining: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Tournament {
-  id: string;
-  name: string;
-  buyIn: number;
-  prizePool: number;
-  startDate: string;
-  endDate?: string;
-  scenarios?: TournamentScenario[];
-}
-
-export interface IcmLabResponse<T> {
-  status: 'SUCCESS' | 'ERROR';
-  data?: T;
-  error?: string;
 }
 
 export interface QuantumMetrics {

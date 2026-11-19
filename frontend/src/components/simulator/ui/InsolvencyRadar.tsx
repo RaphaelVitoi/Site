@@ -28,7 +28,7 @@ export interface InsolvencyRadarProps {
 	showComparison?: boolean;
 }
 
-export function InsolvencyRadar({ data, showComparison = false }: Readonly<InsolvencyRadarProps>) {
+function InsolvencyRadar({ data, showComparison = false }: Readonly<InsolvencyRadarProps>) {
 	const maxThreat = useMemo(() => {
 		if (!data || data.length === 0) return null;
 		return data.reduce((prev, curr) => (curr.Ameaça > prev.Ameaça ? curr : prev), data[0]!);

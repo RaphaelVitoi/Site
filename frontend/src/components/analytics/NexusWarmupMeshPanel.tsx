@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import type { EcosystemNode } from '@/app/api/sota/nexus-mesh/route';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 
 interface MeshApiResponse {
   timestamp: string;
@@ -19,55 +20,87 @@ export function NexusWarmupMeshPanel() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [showGuide, setShowGuide] = useState(false);
+  const mountedRef = useRef(true);
+  const pollControllerRef = useRef<AbortController | null>(null);
+  const actionControllerRef = useRef<AbortController | null>(null);
 
   const fetchMeshStatus = useCallback(async () => {
+    pollControllerRef.current?.abort();
+    const controller = new AbortController();
+    pollControllerRef.current = controller;
+
     try {
-      const res = await fetch('/api/sota/nexus-mesh', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Falha ao consultar malha');
-      const json = (await res.json()) as MeshApiResponse;
+      const json = await fetchJson<MeshApiResponse>('/api/sota/nexus-mesh', {
+        signal: controller.signal,
+        timeoutMs: 12_000,
+        fallbackError: 'Falha ao consultar malha',
+      });
+      if (!mountedRef.current || controller.signal.aborted) return;
       setData(json);
-    } catch {
+    } catch (cause) {
+      if (isAbortError(cause)) return;
       // Fallback gracioso mantendo integridade visual
     } finally {
-      setLoading(false);
+      if (mountedRef.current && pollControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     void fetchMeshStatus();
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         void fetchMeshStatus();
       }
     }, 15000);
-    return () => clearInterval(interval);
+    return () => {
+      mountedRef.current = false;
+      clearInterval(interval);
+      pollControllerRef.current?.abort();
+      actionControllerRef.current?.abort();
+    };
   }, [fetchMeshStatus]);
 
   const executeAction = async (actionType: string, nodeId: string) => {
+    actionControllerRef.current?.abort();
+    const controller = new AbortController();
+    actionControllerRef.current = controller;
+
     setActionLoading(nodeId);
     setFeedback(null);
     try {
-      const res = await fetch('/api/sota/nexus-mesh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: actionType }),
-      });
-      const result = (await res.json()) as { success?: boolean; message?: string; error?: string; status?: string };
-      if (!res.ok || !result.success) {
+      const result = await fetchJson<{ success?: boolean; message?: string; error?: string; status?: string }>(
+        '/api/sota/nexus-mesh',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: actionType }),
+          signal: controller.signal,
+          timeoutMs: 30_000,
+          fallbackError: 'Falha ao executar acao',
+        },
+      );
+      if (!result.success) {
         throw new Error(result.error || 'Falha ao executar acao');
       }
+      if (!mountedRef.current || controller.signal.aborted) return;
       setFeedback({
         message: result.message || result.status || 'Acao executada com louvor na malha.',
         type: 'success',
       });
       await fetchMeshStatus();
     } catch (err: unknown) {
+      if (!mountedRef.current || isAbortError(err)) return;
       setFeedback({
         message: err instanceof Error ? err.message : 'Falha na operacao de warmup',
         type: 'error',
       });
     } finally {
-      setActionLoading(null);
+      if (mountedRef.current && actionControllerRef.current === controller) {
+        setActionLoading(null);
+      }
     }
   };
 

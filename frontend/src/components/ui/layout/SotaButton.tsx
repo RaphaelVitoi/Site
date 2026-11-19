@@ -6,7 +6,6 @@
 
 'use client';
 
-import { motion } from 'framer-motion';
 import React from 'react';
 
 export interface SotaButtonProps {
@@ -73,20 +72,18 @@ export const SotaButton: React.FC<SotaButtonProps> = ({
 	'aria-label': ariaLabel,
 }) => {
 	const baseStyles =
-		'relative inline-flex items-center justify-center gap-3 font-heading font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 overflow-hidden active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base select-none group';
+		'relative inline-flex items-center justify-center gap-3 font-heading font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 overflow-hidden hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base select-none group';
 
 	const variantClass = getButtonVariantClass(variant);
 	const sizeClass = getButtonSizeClass(size);
 
 	return (
-		<motion.button
+		<button
 			type={type}
 			onClick={onClick}
 			id={id}
 			title={title}
 			aria-label={ariaLabel}
-			whileHover={{ y: -2 }}
-			whileTap={{ scale: 0.97 }}
 			className={`
         ${baseStyles}
         ${variantClass}
@@ -108,8 +105,6 @@ export const SotaButton: React.FC<SotaButtonProps> = ({
 					{rightIcon && <span className="opacity-70">{rightIcon}</span>}
 				</>
 			)}
-		</motion.button>
+		</button>
 	);
 };
-
-export default SotaButton;

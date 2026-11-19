@@ -18,7 +18,7 @@ export function generateDynamicICMQuiz(state: SimulatorState): QuizQuestion[] {
 
 	// Heurísticas de detecção de cenário (Context-Awareness SOTA)
 	const isBubble = safePrizes.length > 1 && stacks.length === safePrizes.length + 1;
-	const sortedStacks = [...stacks].sort((a, b) => b - a);
+	const sortedStacks = stacks.toSorted((a, b) => b - a);
 	const isMassiveChipleader =
 		sortedStacks.length > 0 && totalChips > 0 && (sortedStacks[0] ?? 0) > totalChips * 0.4;
 	const isTopHeavy = safePrizes.length > 1 && totalPrizes > 0 && (safePrizes[0] ?? 0) / totalPrizes > 0.35;

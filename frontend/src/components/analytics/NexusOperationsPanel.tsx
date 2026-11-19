@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 
 type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 type Task = {
@@ -44,72 +45,111 @@ export function NexusOperationsPanel() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const refreshing = useRef(false);
+  const mountedRef = useRef(true);
+  const refreshControllerRef = useRef<AbortController | null>(null);
+  const actionControllerRef = useRef<AbortController | null>(null);
 
   const refresh = useCallback(async () => {
     if (refreshing.current) return;
     refreshing.current = true;
+    refreshControllerRef.current?.abort();
+    const controller = new AbortController();
+    refreshControllerRef.current = controller;
+
     try {
-      const response = await fetch('/api/vitoi/tasks', { cache: 'no-store' });
-      if (!response.ok) throw new Error('Fila operacional indisponível.');
-      const data: unknown = await response.json();
+      const data = await fetchJson<unknown>('/api/vitoi/tasks', {
+        signal: controller.signal,
+        timeoutMs: 10_000,
+        fallbackError: 'Fila operacional indisponível.',
+      });
+      if (!mountedRef.current || controller.signal.aborted) return;
       if (!Array.isArray(data)) throw new Error('Resposta inesperada da fila.');
       setTasks(
         (data as Task[])
-          .slice()
-          .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
+          .toSorted((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
           .slice(0, 30),
       );
       setLastUpdated(new Date());
       setError('');
     } catch (cause) {
+      if (!mountedRef.current || isAbortError(cause)) return;
       setError(cause instanceof Error ? cause.message : 'Falha ao consultar a fila.');
     } finally {
       refreshing.current = false;
-      setLoading(false);
+      if (mountedRef.current && refreshControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
+    mountedRef.current = true;
     void refresh();
     const timer = window.setInterval(() => {
       if (document.visibilityState === 'visible') void refresh();
     }, 15000);
-    return () => window.clearInterval(timer);
+    return () => {
+      mountedRef.current = false;
+      window.clearInterval(timer);
+      refreshControllerRef.current?.abort();
+      actionControllerRef.current?.abort();
+    };
   }, [refresh]);
 
   async function submit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!description.trim() || submitting) return;
+    actionControllerRef.current?.abort();
+    const controller = new AbortController();
+    actionControllerRef.current = controller;
+
     setSubmitting(true);
     setError('');
     setNotice('');
     try {
-      const response = await fetch('/api/vitoi/tasks', {
+      const data = await fetchJson<{ id?: string; error?: string }>('/api/vitoi/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description }),
+        signal: controller.signal,
+        timeoutMs: 15_000,
+        fallbackError: 'Não foi possível enfileirar a tarefa.',
       });
-      const data = (await response.json()) as { id?: string; error?: string };
-      if (!response.ok || !data.id) throw new Error(data.error ?? 'Não foi possível enfileirar a tarefa.');
+      if (!data.id) throw new Error(data.error ?? 'Não foi possível enfileirar a tarefa.');
+      if (!mountedRef.current || controller.signal.aborted) return;
       setDescription('');
       setNotice(`Tarefa ${data.id} aceita pela fila; isso ainda não significa que foi executada.`);
       await refresh();
     } catch (cause) {
+      if (!mountedRef.current || isAbortError(cause)) return;
       setError(cause instanceof Error ? cause.message : 'Falha ao enviar tarefa.');
     } finally {
-      setSubmitting(false);
+      if (mountedRef.current && actionControllerRef.current === controller) {
+        setSubmitting(false);
+      }
     }
   }
 
   async function openResult(id: string) {
+    actionControllerRef.current?.abort();
+    const controller = new AbortController();
+    actionControllerRef.current = controller;
+
     setResult(null);
     setError('');
     try {
-      const response = await fetch(`/api/vitoi/tasks/result?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-      const data = (await response.json()) as Result & { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'Resultado ainda não disponível.');
+      const data = await fetchJson<Result & { error?: string }>(
+        `/api/vitoi/tasks/result?id=${encodeURIComponent(id)}`,
+        {
+          signal: controller.signal,
+          timeoutMs: 10_000,
+          fallbackError: 'Resultado ainda não disponível.',
+        },
+      );
+      if (!mountedRef.current || controller.signal.aborted) return;
       setResult(data);
     } catch (cause) {
+      if (!mountedRef.current || isAbortError(cause)) return;
       setError(cause instanceof Error ? cause.message : 'Falha ao abrir resultado.');
     }
   }

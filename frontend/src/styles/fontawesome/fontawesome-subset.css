@@ -187,13 +187,13 @@
 
 .fa-pull-left,
 .fa-pull-start {
-  float: left;
+  float: inline-start;
   margin-inline-end: var(--fa-pull-margin, 0.3em);
 }
 
 .fa-pull-right,
 .fa-pull-end {
-  float: right;
+  float: inline-end;
   margin-inline-start: var(--fa-pull-margin, 0.3em);
 }
 
@@ -376,8 +376,8 @@
   .fa-spin-snap-8,
   .fa-swing,
   .fa-wag {
-    animation: none;
-    transition: none;
+    animation: none !important;
+    transition: none !important;
   }
 }
 @keyframes fa-beat {
@@ -1722,6 +1722,9 @@
 
 
 
+.fa-key {
+  --fa: "\f084";
+}
 
 .fa-gears {
   --fa: "\f085";
@@ -3562,6 +3565,9 @@
 
 
 
+.fa-twitter {
+  --fa: "\f099";
+}
 
 
 
@@ -3571,6 +3577,9 @@
 
 
 
+.fa-linkedin-in {
+  --fa: "\f0e1";
+}
 
 
 
@@ -3682,6 +3691,9 @@
 
 
 
+.fa-whatsapp {
+  --fa: "\f232";
+}
 
 
 
@@ -4037,7 +4049,6 @@
 :root, :host {
   --fa-family-classic: 'Font Awesome 7 Free';
   --fa-font-regular: normal 400 1em/1 var(--fa-family-classic);
-  --fa-font-solid: normal 900 1em/1 var(--fa-family-classic);
   /* deprecated: this older custom property will be removed next major release */
   --fa-style-family-classic: var(--fa-family-classic);
 }
@@ -4061,6 +4072,18 @@
 .fa-regular {
   --fa-style: 400;
 }
+/*!
+ * Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com
+ * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
+ * Copyright 2026 Fonticons, Inc.
+ */
+:root, :host {
+  --fa-family-classic: 'Font Awesome 7 Free';
+  --fa-font-solid: normal 900 1em/1 var(--fa-family-classic);
+  /* deprecated: this older custom property will be removed next major release */
+  --fa-style-family-classic: var(--fa-family-classic);
+}
+
 @font-face {
   font-family: "Font Awesome 7 Free";
   font-style: normal;
@@ -4071,6 +4094,10 @@
 .fas {
   --fa-family: var(--fa-family-classic);
   --fa-style: 900;
+}
+
+.fa-classic {
+  --fa-family: var(--fa-family-classic);
 }
 
 .fa-solid {

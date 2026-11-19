@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 import sqlite3
 
@@ -16,7 +17,7 @@ def test_train_model_closes_sqlite_connection_on_insufficient_data(
 ) -> None:
     db_path = tmp_path / "telemetry.db"
     original_connect = sqlite3.connect
-    with original_connect(db_path) as conn:
+    with contextlib.closing(original_connect(db_path)) as conn:
         conn.execute("CREATE TABLE TelemetryEvent (isCorrect INTEGER, metadata TEXT)")
 
     opened_connections: list[sqlite3.Connection] = []

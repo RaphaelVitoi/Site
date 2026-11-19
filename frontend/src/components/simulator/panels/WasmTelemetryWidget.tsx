@@ -25,7 +25,7 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 	const logContainerRef = useRef<HTMLDivElement>(null);
 
 	const extractedLatency = useMemo(() => {
-		const latencyLog = [...wasmLogs].reverse().find(l => l.includes('em ') && l.includes('ms'));
+		const latencyLog = wasmLogs.findLast(l => l.includes('em ') && l.includes('ms'));
 		if (latencyLog) {
 			const regex = /em ([\d.]+)ms/;
 			const match = regex.exec(latencyLog);
@@ -35,7 +35,7 @@ export function WasmTelemetryWidget({ wasmLogs, resultCi, riskAdvantage = 0 }: R
 	}, [wasmLogs]);
 
 	const extractedNodes = useMemo(() => {
-		const nodesLog = [...wasmLogs].reverse().find(l => l.includes('Nodes:'));
+		const nodesLog = wasmLogs.findLast(l => l.includes('Nodes:'));
 		if (nodesLog) {
 			const regex = /Nodes: (\d+)/;
 			const match = regex.exec(nodesLog);

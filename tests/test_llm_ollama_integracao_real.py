@@ -107,6 +107,20 @@ async def _inferir(session: aiohttp.ClientSession, modelo: str, fmt: dict | None
     )
 
 
+async def _inferir_com_retry(session: aiohttp.ClientSession, modelo: str, fmt: dict | None, tentativas: int = 3):
+    """Re-tenta so falhas de transporte/timeout: o daemon Ollama atende uma
+    inferencia por vez e a suite paralela divide a maquina com outros agentes
+    que tambem o usam. Um TimeoutError aqui mede contencao, nao o contrato."""
+    for tentativa in range(tentativas):
+        try:
+            return await _inferir(session, modelo, fmt)
+        except (TimeoutError, aiohttp.ClientError):
+            if tentativa == tentativas - 1:
+                raise
+            await asyncio.sleep(10)
+    raise AssertionError("inalcancavel: o loop sempre retorna ou levanta")
+
+
 @requires_daemon
 @pytest.mark.asyncio
 async def test_call_ollama_responde_texto_contudo_com_schema_no_daemon_real() -> None:
@@ -117,7 +131,7 @@ async def test_call_ollama_responde_texto_contudo_com_schema_no_daemon_real() ->
         "required": ["resposta"],
     }
     async with aiohttp.ClientSession() as sessao:
-        texto, uso = await _inferir(sessao, MODELO_LOCAL, schema)
+        texto, uso = await _inferir_com_retry(sessao, MODELO_LOCAL, schema)
 
     assert isinstance(texto, str), f"resposta nao textual: {texto!r}"
     assert texto.strip(), "resposta vazia"
@@ -136,7 +150,7 @@ async def test_call_ollama_responde_texto_contudo_com_schema_no_daemon_real() ->
 async def test_call_ollama_sem_schema_nao_injeta_format() -> None:
     """Sem response_format, o corpo nao leva 'format' e a inferencia e livre."""
     async with aiohttp.ClientSession() as sessao:
-        texto, uso = await _inferir(sessao, MODELO_LOCAL, None)
+        texto, uso = await _inferir_com_retry(sessao, MODELO_LOCAL, None)
 
     assert isinstance(texto, str), f"resposta nao textual: {texto!r}"
     assert texto.strip(), "resposta vazia"

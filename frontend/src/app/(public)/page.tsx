@@ -155,7 +155,7 @@ export default function Home() {
               <br />
               Invisível
             </h2>
-            <p className="font-mono text-xs tracking-[0.14em] text-[#B2B0AB] uppercase">GTO Wizard Data</p>
+            <p className="font-mono text-xs tracking-[0.14em] text-[#625f5a] uppercase">GTO Wizard Data</p>
           </div>
           <div className="space-y-6 pt-2 text-[1.12rem] leading-[1.85] text-[#262423]">
             <blockquote className="border-l-2 border-[#B09460] pl-6 font-serif text-[1.2rem] leading-[1.75] text-[#1C1B1A] italic">
@@ -163,7 +163,7 @@ export default function Home() {
               do torneio em $EV."
             </blockquote>
             <p>
-              Em potes 3-bet? O erro custa mais de{' '}
+              Em potes 3-bet? O erro custa{' '}
               <span className="font-bold text-[#0D0C0A]">mais de 30% do valor da jogada</span>.
             </p>
             <p>
@@ -549,7 +549,7 @@ function Rule() {
 }
 
 function Section({ children }: { readonly children: React.ReactNode }) {
-  return <section className="mx-auto max-w-260 px-10 py-24">{children}</section>;
+  return <section className="sota-deferred-section mx-auto max-w-260 px-10 py-24">{children}</section>;
 }
 
 function Label({ children }: { readonly children: React.ReactNode }) {

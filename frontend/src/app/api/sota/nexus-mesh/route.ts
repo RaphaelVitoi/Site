@@ -7,8 +7,14 @@
 
 import { NextResponse } from 'next/server';
 import { buildNexusServerUrl } from '@/lib/api-contract';
+import { buildOperatorBackendHeaders, requireOperatorSession } from '@/lib/server/operator-gateway';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+const MODEL_NAME_RX = /^[a-zA-Z0-9._:/-]{1,80}$/;
+const KEEP_ALIVE_RX = /^\d{1,3}[smh]$/;
+const DEFAULT_NO_STORE_HEADERS: Record<string, string> = { 'Cache-Control': 'no-store' };
 
 export interface EcosystemNode {
   id: string;
@@ -40,14 +46,11 @@ async function pingEndpoint(
 ): Promise<{ ok: boolean; status: number; latencyMs: number; data: unknown }> {
   const t0 = performance.now();
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     const response = await fetch(url, {
       ...options,
-      signal: controller.signal,
+      signal: AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     });
-    clearTimeout(timeout);
     const elapsed = performance.now() - t0;
     let data: unknown = null;
     const contentType = response.headers.get('content-type') || '';
@@ -317,7 +320,11 @@ function buildProbeServiceNodes(input: ProbeServiceNodesInput): {
   return { ollamaNode, trailingNodes };
 }
 
-export async function GET() {
+export async function GET(request?: Request) {
+  const guard = await requireOperatorSession(undefined, request);
+  if (!guard.ok) return guard.response;
+  const responseHeaders = { 'Cache-Control': 'no-store', 'X-Request-Id': guard.requestId };
+
   const tStart = performance.now();
   const chrysalisBase = process.env['CHRYSALIS_SERVICE_URL'] || 'http://127.0.0.1:8788';
   const chrysalisPort = resolveChrysalisPort(chrysalisBase);
@@ -330,7 +337,7 @@ export async function GET() {
     pingEndpoint('http://127.0.0.1:9223/json/version', 1000),
     pingEndpoint('http://127.0.0.1:8933/status', 1000),
     pingEndpoint('http://127.0.0.1:8931/', 1000),
-    pingEndpoint('http://127.0.0.1:17042/ping', 1000),
+    pingEndpoint(buildNexusServerUrl('/ping'), 1000, { headers: { 'X-Request-Id': guard.requestId } }),
     pingEndpoint(`${cleanChrysalisBase}/v1/apps`, 1000),
   ]);
 
@@ -409,17 +416,30 @@ export async function GET() {
   const totalActive = nodes.filter((n) => n.status === 'ACTIVE').length;
   const elapsedTotal = Math.round(performance.now() - tStart);
 
-  return NextResponse.json({
-    timestamp: new Date().toISOString(),
-    scanLatencyMs: elapsedTotal,
-    totalNodes: nodes.length,
-    activeNodes: totalActive,
-    homeostasisRate: Math.round((totalActive / nodes.length) * 100),
-    nodes,
-  });
+  return NextResponse.json(
+    {
+      timestamp: new Date().toISOString(),
+      scanLatencyMs: elapsedTotal,
+      totalNodes: nodes.length,
+      activeNodes: totalActive,
+      homeostasisRate: Math.round((totalActive / nodes.length) * 100),
+      nodes,
+    },
+    { headers: responseHeaders },
+  );
 }
 
-async function handleWarmupOllama(model = 'qwen-code-surgical:latest', keepAlive = '1h') {
+async function handleWarmupOllama(
+  model = 'qwen-code-surgical:latest',
+  keepAlive = '1h',
+  responseHeaders: Record<string, string> = DEFAULT_NO_STORE_HEADERS,
+) {
+  if (!MODEL_NAME_RX.test(model) || !KEEP_ALIVE_RX.test(keepAlive)) {
+    return NextResponse.json(
+      { success: false, error: 'Parametros invalidos de modelo ou keepAlive para Ollama.' },
+      { status: 400, headers: responseHeaders },
+    );
+  }
   const t0 = performance.now();
   const response = await fetch('http://127.0.0.1:11434/api/generate', {
     method: 'POST',
@@ -430,6 +450,7 @@ async function handleWarmupOllama(model = 'qwen-code-surgical:latest', keepAlive
       stream: false,
       keep_alive: keepAlive,
     }),
+    signal: AbortSignal.timeout(30_000),
     cache: 'no-store',
   });
 
@@ -437,23 +458,29 @@ async function handleWarmupOllama(model = 'qwen-code-surgical:latest', keepAlive
 
   if (!response.ok) {
     const errorText = await response.text();
-    return NextResponse.json({ success: false, error: `Falha no Ollama: ${errorText}` }, { status: 502 });
+    return NextResponse.json(
+      { success: false, error: `Falha no Ollama: ${errorText}` },
+      { status: 502, headers: responseHeaders },
+    );
   }
 
   const resData = (await response.json()) as { eval_count?: number; eval_duration?: number };
   const evalMs = Math.round((resData.eval_duration || 0) / 1e6);
 
-  return NextResponse.json({
-    success: true,
-    action: 'warmup_ollama',
-    model,
-    latencyMs: elapsed,
-    evalMs,
-    message: `Modelo ${model} carregado com sucesso na GPU VRAM (keep-alive: ${keepAlive}).`,
-  });
+  return NextResponse.json(
+    {
+      success: true,
+      action: 'warmup_ollama',
+      model,
+      latencyMs: elapsed,
+      evalMs,
+      message: `Modelo ${model} carregado com sucesso na GPU VRAM (keep-alive: ${keepAlive}).`,
+    },
+    { headers: responseHeaders },
+  );
 }
 
-async function handleInspectCdp() {
+async function handleInspectCdp(responseHeaders: Record<string, string> = DEFAULT_NO_STORE_HEADERS) {
   const [list9222, list9223] = await Promise.all([
     pingEndpoint('http://127.0.0.1:9222/json/list', 1200),
     pingEndpoint('http://127.0.0.1:9223/json/list', 1200),
@@ -470,78 +497,101 @@ async function handleInspectCdp() {
 
   const pages = Array.isArray(activeList.data) ? activeList.data : [];
 
-  return NextResponse.json({
-    success: true,
-    action: 'inspect_cdp',
-    port: inspectedPort,
-    pagesCount: pages.length,
-    pages: pages.slice(0, 5).map((p: unknown) => {
-      const page = p as { title?: string; url?: string; type?: string };
-      return { title: page.title || 'Sem Titulo', url: page.url || '', type: page.type || 'page' };
-    }),
-  });
-}
-
-function handleBenchmarkPerception() {
-  return NextResponse.json({
-    success: true,
-    action: 'benchmark_perception',
-    resolution: [3440, 1440],
-    captureLatencyMs: 30.42,
-    somOverlayLatencyMs: 11.63,
-    totalDispatchLatencyMs: 101.89,
-    elementsAnnotated: 6,
-    status: 'Padrão Ouro 60 FPS (Sub-12ms SoM Grounding)',
-  });
-}
-
-async function handleAuditKeys() {
-  const token = process.env['API_SECRET_TOKEN'] || '';
-  const res = await pingEndpoint(
-    buildNexusServerUrl('/api/v1/keys/observatory'),
-    4000,
-    token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  return NextResponse.json(
+    {
+      success: true,
+      action: 'inspect_cdp',
+      port: inspectedPort,
+      pagesCount: pages.length,
+      pages: pages.slice(0, 5).map((p: unknown) => {
+        const page = p as { title?: string; url?: string; type?: string };
+        return { title: page.title || 'Sem Titulo', url: page.url || '', type: page.type || 'page' };
+      }),
+    },
+    { headers: responseHeaders },
   );
+}
+
+function handleBenchmarkPerception(responseHeaders: Record<string, string> = DEFAULT_NO_STORE_HEADERS) {
+  return NextResponse.json(
+    {
+      success: true,
+      action: 'benchmark_perception',
+      resolution: [3440, 1440],
+      captureLatencyMs: 30.42,
+      somOverlayLatencyMs: 11.63,
+      totalDispatchLatencyMs: 101.89,
+      elementsAnnotated: 6,
+      status: 'Padrão Ouro 60 FPS (Sub-12ms SoM Grounding)',
+    },
+    { headers: responseHeaders },
+  );
+}
+
+async function handleAuditKeys(
+  requestId: string,
+  sessao: unknown,
+  responseHeaders: Record<string, string> = DEFAULT_NO_STORE_HEADERS,
+) {
+  const res = await pingEndpoint(buildNexusServerUrl('/api/v1/keys/observatory'), 4000, {
+    headers: buildOperatorBackendHeaders(requestId, undefined, sessao),
+  });
   if (res.ok && res.data && typeof res.data === 'object') {
     const d = res.data as { total_synced?: number; total_vars?: number; fails_count?: number; warns_count?: number };
-    return NextResponse.json({
+    return NextResponse.json(
+      {
+        success: true,
+        action: 'audit_keys',
+        latencyMs: res.latencyMs,
+        message: `Observatorio: ${d.total_synced ?? 0}/${d.total_vars ?? 0} chaves HKCU==HKLM (${d.fails_count ?? 0} FAIL, ${d.warns_count ?? 0} WARN) em ${res.latencyMs}ms.`,
+      },
+      { headers: responseHeaders },
+    );
+  }
+  return NextResponse.json(
+    {
       success: true,
       action: 'audit_keys',
       latencyMs: res.latencyMs,
-      message: `Observatorio: ${d.total_synced ?? 0}/${d.total_vars ?? 0} chaves HKCU==HKLM (${d.fails_count ?? 0} FAIL, ${d.warns_count ?? 0} WARN) em ${res.latencyMs}ms.`,
-    });
-  }
-  return NextResponse.json({
-    success: true,
-    action: 'audit_keys',
-    latencyMs: res.latencyMs,
-    message: 'Use o painel "Observatorio de Pools & Chaves" abaixo para sonda offline ou Live HTTP.',
-  });
+      message: 'Use o painel "Observatorio de Pools & Chaves" abaixo para sonda offline ou Live HTTP.',
+    },
+    { headers: responseHeaders },
+  );
 }
 
-async function handleTestAiMesh() {
+async function handleTestAiMesh(requestId: string, responseHeaders: Record<string, string> = DEFAULT_NO_STORE_HEADERS) {
   const [backendPing, ollamaPing] = await Promise.all([
-    pingEndpoint(buildNexusServerUrl('/ping'), 1500),
+    pingEndpoint(buildNexusServerUrl('/ping'), 1500, { headers: { 'X-Request-Id': requestId } }),
     pingEndpoint('http://127.0.0.1:11434/api/tags', 1200),
   ]);
   const routesOk = backendPing.ok || ollamaPing.ok;
   if (!routesOk) {
-    return NextResponse.json({
-      success: false,
-      action: 'test_ai_mesh',
-      message: 'Nenhuma rota de inferencia local respondeu ao probe.',
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        action: 'test_ai_mesh',
+        message: 'Nenhuma rota de inferencia local respondeu ao probe.',
+      },
+      { headers: responseHeaders },
+    );
   }
   const backendState = backendPing.ok ? `OK (${backendPing.latencyMs}ms)` : 'OFF';
   const ollamaState = ollamaPing.ok ? `OK (${ollamaPing.latencyMs}ms)` : 'OFF';
-  return NextResponse.json({
-    success: true,
-    action: 'test_ai_mesh',
-    message: `Roteamento verificado: Backend ${backendState} · Ollama ${ollamaState}.`,
-  });
+  return NextResponse.json(
+    {
+      success: true,
+      action: 'test_ai_mesh',
+      message: `Roteamento verificado: Backend ${backendState} · Ollama ${ollamaState}.`,
+    },
+    { headers: responseHeaders },
+  );
 }
 
 export async function POST(request: Request) {
+  const guard = await requireOperatorSession(undefined, request);
+  if (!guard.ok) return guard.response;
+  const responseHeaders = { 'Cache-Control': 'no-store', 'X-Request-Id': guard.requestId };
+
   try {
     const body = (await request.json().catch(() => ({}))) as {
       action?: string;
@@ -552,28 +602,28 @@ export async function POST(request: Request) {
     const action = body.action || '';
 
     if (action === 'warmup_ollama') {
-      return await handleWarmupOllama(body.model, body.keepAlive);
+      return await handleWarmupOllama(body.model, body.keepAlive, responseHeaders);
     }
 
     if (action === 'inspect_cdp') {
-      return await handleInspectCdp();
+      return await handleInspectCdp(responseHeaders);
     }
 
     if (action === 'benchmark_perception') {
-      return handleBenchmarkPerception();
+      return handleBenchmarkPerception(responseHeaders);
     }
 
     if (action === 'audit_keys') {
-      return await handleAuditKeys();
+      return await handleAuditKeys(guard.requestId, guard.session, responseHeaders);
     }
 
     if (action === 'test_ai_mesh') {
-      return await handleTestAiMesh();
+      return await handleTestAiMesh(guard.requestId, responseHeaders);
     }
 
-    return NextResponse.json({ error: 'Acao desconhecida' }, { status: 400 });
+    return NextResponse.json({ error: 'Acao desconhecida' }, { status: 400, headers: responseHeaders });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Erro interno';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: msg }, { status: 500, headers: responseHeaders });
   }
 }

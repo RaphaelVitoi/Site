@@ -166,7 +166,7 @@ export function GravitationalScannerPanel({
     }));
 
     // O Sol é o jogador com o maior stack da mesa (Chipleader)
-    const sorted = [...indexedStacks].sort((a, b) => b.stack - a.stack);
+    const sorted = indexedStacks.toSorted((a, b) => b.stack - a.stack);
     const center = sorted[0];
     const planets = sorted.slice(1);
 

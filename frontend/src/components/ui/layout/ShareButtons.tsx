@@ -1,6 +1,5 @@
 'use client';
 
-import { FaLinkedinIn, FaTwitter, FaWhatsapp } from 'react-icons/fa';
 import styles from './ShareButtons.module.css';
 
 interface ShareButtonsProps {
@@ -28,19 +27,19 @@ export default function ShareButtons({
 		{
 			name: 'Twitter',
 			href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
-			icon: <FaTwitter />,
+			icon: <i className="fa-brands fa-twitter" aria-hidden="true" />,
 			className: styles['twitter'],
 		},
 		{
 			name: 'LinkedIn',
 			href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
-			icon: <FaLinkedinIn />,
+			icon: <i className="fa-brands fa-linkedin-in" aria-hidden="true" />,
 			className: styles['linkedin'],
 		},
 		{
 			name: 'WhatsApp',
 			href: `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`,
-			icon: <FaWhatsapp />,
+			icon: <i className="fa-brands fa-whatsapp" aria-hidden="true" />,
 			className: styles['whatsapp'],
 		},
 	];

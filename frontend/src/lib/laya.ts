@@ -14,6 +14,8 @@
  * @format
  */
 
+import { fetchJson } from '@/lib/client-fetch';
+
 export const CANONICAL_LAYA_MODEL = 'multilingual';
 export const CANONICAL_LAYA_REPO = 'convaiinnovations/laya-multilingual';
 
@@ -381,7 +383,7 @@ export function speculativeSolve(
   const settledPromise = (async (): Promise<LayaSolverBridgePayload> => {
     try {
       if (typeof fetch !== 'undefined') {
-        const res = await fetch('/api/sota/laya/solve', {
+        const data = await fetchJson<LayaSolverBridgePayload>('/api/sota/laya/solve', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -389,12 +391,9 @@ export function speculativeSolve(
             state: stateTextOrDict,
             parameters: baseParameters || {},
           }),
-          signal: AbortSignal.timeout(4000),
+          timeoutMs: 4_000,
         });
-        if (res.ok) {
-          const data = (await res.json()) as LayaSolverBridgePayload;
-          return data;
-        }
+        if (data) return data;
       }
     } catch {
       // Fail-open: em caso de timeout ou rede indisponivel, mantem o resultado especulativo

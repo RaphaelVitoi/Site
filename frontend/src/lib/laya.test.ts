@@ -10,6 +10,7 @@
 import {
   CANONICAL_LAYA_MODEL,
   CANONICAL_LAYA_REPO,
+  LAYA_TEST_REFERENCE,
   adaptForSolverClient,
   ruinPriorityFromIntencao,
   ruinPriorityFromLayaPrediction,
@@ -259,5 +260,7 @@ describe('Laya S1 Frontend Parity Tests', () => {
     const settled = await out.settledPromise;
     expect(settled).toBeDefined();
     expect(settled.target_solver).toBe('pmev-perspective');
+    expect(LAYA_TEST_REFERENCE.testMapping.latim).toBe(1.0);
+    expect(LAYA_TEST_REFERENCE.testMapping.naoLatim).toBe(1.3);
   });
 });

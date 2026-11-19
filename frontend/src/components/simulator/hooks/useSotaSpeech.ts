@@ -3,22 +3,12 @@
 /**
  * IDENTITY: Hook de Síntese de Voz Neural SOTA (useSotaSpeech)
  * PATH: src/components/simulator/hooks/useSotaSpeech.ts
- * ROLE: Controlador de fala híbrido SOTA (Voice Nexus Google Neural Studio :9333 + SAPI Local),
+ * ROLE: Controlador de fala híbrido SOTA (Voice Nexus BFF /api/v1/voice/tts + Web Speech / SAPI Local),
  *       com normalização fonética para Poker/PMev/ICM/GTO, aceleração in-flight e divisão de sentenças.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-export interface SotaSpeechState {
-	isPlaying: boolean;
-	isPaused: boolean;
-	rate: number;
-	activeMessageId: string | null;
-	selectedVoiceName: string;
-	availableVoices: SpeechSynthesisVoice[];
-	audioSource: 'nexus' | 'sapi';
-	isNexusActive: boolean;
-}
+import { fetchJson } from '@/lib/client-fetch';
 
 export function cleanTextForSpeech(raw: string): string {
 	if (!raw) return '';
@@ -126,6 +116,7 @@ export function useSotaSpeech() {
 	const rateRef = useRef<number>(1.25);
 	const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
 	const speakSentenceRef = useRef<(index: number) => void>(() => {});
+	const ttsControllerRef = useRef<AbortController | null>(null);
 
 	rateRef.current = rate;
 	voiceRef.current = selectedVoice;
@@ -164,6 +155,8 @@ export function useSotaSpeech() {
 		window.speechSynthesis.onvoiceschanged = updateVoices;
 
 		return () => {
+			ttsControllerRef.current?.abort();
+			ttsControllerRef.current = null;
 			if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 				window.speechSynthesis.onvoiceschanged = null;
 				window.speechSynthesis.cancel();
@@ -176,6 +169,8 @@ export function useSotaSpeech() {
 	}, [updateVoices]);
 
 	const stop = useCallback(() => {
+		ttsControllerRef.current?.abort();
+		ttsControllerRef.current = null;
 		if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 			window.speechSynthesis.cancel();
 		}
@@ -264,26 +259,32 @@ export function useSotaSpeech() {
 		const sentence = sentencesRef.current[index];
 		if (!sentence) return;
 
-		try {
-			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), 3500);
+		ttsControllerRef.current?.abort();
+		const controller = new AbortController();
+		ttsControllerRef.current = controller;
 
-			const res = await fetch('http://127.0.0.1:9333/api/voice/tts', {
+		try {
+			const data = await fetchJson<{
+				ok?: boolean;
+				audioBase64?: string;
+				format?: string;
+				error?: string;
+			}>('/api/v1/voice/tts', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					text: sentence,
 					voice: 'Kore',
 					rate: rateRef.current,
-					style_prompt: 'Explicação técnica e didática de teoria dos jogos, poker de alta performance e cálculo de equidade com fluência natural.',
+					style_prompt:
+						'Explicação técnica e didática de teoria dos jogos, poker de alta performance e cálculo de equidade com fluência natural.',
 				}),
 				signal: controller.signal,
+				timeoutMs: 4_000,
 			});
-			clearTimeout(timeoutId);
 
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const data = await res.json();
-			if (!data.ok || !data.audioBase64) throw new Error(data.error || 'Audio vazio');
+			if (controller.signal.aborted) return;
+			if (!data?.ok || !data?.audioBase64) throw new Error(data?.error || 'Audio vazio');
 
 			if (typeof window !== 'undefined' && window.Audio !== undefined) {
 				audioRef.current ??= new Audio();
@@ -313,6 +314,7 @@ export function useSotaSpeech() {
 				return;
 			}
 		} catch {
+			if (controller.signal.aborted) return;
 			// Fallback Voice Nexus: se falhar ou estiver indisponível, chaveia para SAPI nativo
 			setIsNexusActive(false);
 			speakSentenceWithSapi(index);

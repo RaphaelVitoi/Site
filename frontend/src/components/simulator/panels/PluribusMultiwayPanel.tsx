@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getEngineCapability } from '@/lib/engineCapabilities';
 import {
+	createPluribusBffExecutor,
 	executePluribusEngine,
 	executePluribusLocally,
 	type EngineExecutionEnvelope,
@@ -23,6 +24,7 @@ import { createPluribusBrowserWasmExecutor } from '@/lib/pluribusWasmRuntime.bro
 
 const PLURIBUS_CAPABILITY = getEngineCapability('pluribus-multiway-adapter');
 const PLURIBUS_WASM_EXECUTOR = createPluribusBrowserWasmExecutor();
+const PLURIBUS_BFF_EXECUTOR = createPluribusBffExecutor();
 
 export default function PluribusMultiwayPanel() {
 	const [numPlayers, setNumPlayers] = useState<number>(4);
@@ -53,6 +55,8 @@ export default function PluribusMultiwayPanel() {
 		inputKey: string;
 		execution: EngineExecutionEnvelope<PluribusSolveOutput>;
 	} | null>(null);
+	const [backendBusy, setBackendBusy] = useState(false);
+	const [backendNotice, setBackendNotice] = useState<string | null>(null);
 
 	useEffect(() => {
 		let active = true;
@@ -66,6 +70,28 @@ export default function PluribusMultiwayPanel() {
 			active = false;
 		};
 	}, [input, inputKey]);
+
+	const handleValidateBackend = async () => {
+		if (backendBusy) return;
+		setBackendBusy(true);
+		setBackendNotice(null);
+		try {
+			const exec = await executePluribusEngine(
+				{ input, preferredRuntimes: ['api', 'wasm', 'typescript'] },
+				{ api: PLURIBUS_BFF_EXECUTOR, wasm: PLURIBUS_WASM_EXECUTOR },
+			);
+			setWasmExecution({ inputKey, execution: exec });
+			setBackendNotice(
+				exec.runtimeUsed === 'api'
+					? 'Validado via backend Python (/api/sota/pluribus).'
+					: `Backend indisponivel ou sem sessao; executado em runtime ${exec.runtimeUsed}.`,
+			);
+		} catch {
+			setBackendNotice('Falha ao validar no backend.');
+		} finally {
+			setBackendBusy(false);
+		}
+	};
 
 	const execution = wasmExecution?.inputKey === inputKey ? wasmExecution.execution : localExecution;
 	const solveResult = execution.result;
@@ -375,14 +401,25 @@ export default function PluribusMultiwayPanel() {
 			</div>
 
 			{/* NOTA TEÓRICA / DOUTRINÁRIA */}
-			<div className="p-4 bg-accent-emerald/5 border border-accent-emerald/10 rounded-2xl flex items-start gap-3">
-				<i className="fa-solid fa-microchip text-accent-emerald text-xs mt-1" />
-				<div className="text-[0.6rem] text-text-muted leading-relaxed font-medium">
-					<span className="text-white font-bold">{PLURIBUS_CAPABILITY.safe_label}:</span>{' '}
-					Este molde não executa o sistema Pluribus nem uma árvore futura explícita. O menor stack ativo
-					limita o capital exposto; streets adicionais aplicam uma heurística determinística de exposição
-					residual e passivo PMev multiway (Λ ∝ k²). Inputs, unidade e horizonte permanecem visíveis.
+			<div className="p-4 bg-accent-emerald/5 border border-accent-emerald/10 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+				<div className="flex items-start gap-3">
+					<i className="fa-solid fa-microchip text-accent-emerald text-xs mt-1" />
+					<div className="text-[0.6rem] text-text-muted leading-relaxed font-medium">
+						<span className="text-white font-bold">{PLURIBUS_CAPABILITY.safe_label} ({execution.runtimeUsed}):</span>{' '}
+						Este molde não executa o sistema Pluribus nem uma árvore futura explícita. O menor stack ativo
+						limita o capital exposto; streets adicionais aplicam uma heurística determinística de exposição
+						residual e passivo PMev multiway (Λ ∝ k²). Inputs, unidade e horizonte permanecem visíveis.
+						{backendNotice ? <span className="block text-accent-emerald-light mt-1">{backendNotice}</span> : null}
+					</div>
 				</div>
+				<button
+					type="button"
+					onClick={() => void handleValidateBackend()}
+					disabled={backendBusy}
+					className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-[0.62rem] font-bold uppercase tracking-wider text-text-bright hover:border-accent-emerald/40 hover:bg-accent-emerald/10 disabled:opacity-50 transition-colors"
+				>
+					{backendBusy ? 'Validando...' : 'Validar via Backend'}
+				</button>
 			</div>
 		</div>
 	);

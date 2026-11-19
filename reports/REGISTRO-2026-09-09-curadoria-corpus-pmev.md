@@ -35,6 +35,7 @@ nao_verificado:
   - Execucao HTTP dos endpoints, UI do produto ou alteracao dos motores nesta
     etapa.
 referencias_nao_resolviveis:
+  - frontend/src/schemas/perspective.ts
   - Exports dos solves, CSVs e videos citados dentro dos documentos, mas nao
     fornecidos neste lote.
 ---

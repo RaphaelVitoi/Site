@@ -8,7 +8,6 @@
  */
 
 import { logTelemetryEvent } from '@/lib/telemetry-client';
-import { AnimatePresence, motion } from 'framer-motion';
 import React, { useMemo, useState } from 'react';
 import { QuizProgress } from './QuizProgress';
 import { QuizQuestion } from './QuizQuestion';
@@ -79,65 +78,54 @@ export const QuizEngine: React.FC<QuizEngineProps> = ({ questions, onQuizRestart
 
 	return (
 		<div className="max-w-4xl mx-auto flex flex-col gap-12">
-			<AnimatePresence mode="wait">
-				{isFinished ? (
-					<motion.div
-						key="results"
-						initial={{ opacity: 0, scale: 0.95 }}
-						animate={{ opacity: 1, scale: 1 }}
-						exit={{ opacity: 0, scale: 1.05 }}
-						className="glass-panel rounded-5xl bg-bg-panel/60 border border-white/10 shadow-2xl overflow-hidden relative"
-					>
-						<div className="absolute inset-0 bg-radial-[at_top_right] from-accent-indigo/10 to-transparent pointer-events-none" />
-						<QuizResults
-							score={score}
-							total={safeQuestions.length}
-							onRestart={handleRestart}
-						/>
-					</motion.div>
-				) : (
-					<motion.div
-						key="quiz"
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						className="flex flex-col gap-10"
-					>
-						<QuizProgress
-							current={currentIndex}
-							total={safeQuestions.length}
-							score={score}
-						/>
+			{isFinished ? (
+				<div
+					key="results"
+					className="sota-enter-scale glass-panel rounded-5xl bg-bg-panel/60 border border-white/10 shadow-2xl overflow-hidden relative"
+				>
+					<div className="absolute inset-0 bg-radial-[at_top_right] from-accent-indigo/10 to-transparent pointer-events-none" />
+					<QuizResults
+						score={score}
+						total={safeQuestions.length}
+						onRestart={handleRestart}
+					/>
+				</div>
+			) : (
+				<div key="quiz" className="sota-enter-fade flex flex-col gap-10">
+					<QuizProgress
+						current={currentIndex}
+						total={safeQuestions.length}
+						score={score}
+					/>
 
-						<div className="glass-panel rounded-4xl bg-bg-panel/60 border border-white/5 shadow-2xl overflow-hidden relative group/engine">
-							<div className="absolute inset-0 bg-radial-[at_top_left] from-accent-indigo/5 to-transparent pointer-events-none" />
+					<div className="glass-panel rounded-4xl bg-bg-panel/60 border border-white/5 shadow-2xl overflow-hidden relative group/engine">
+						<div className="absolute inset-0 bg-radial-[at_top_left] from-accent-indigo/5 to-transparent pointer-events-none" />
 
-							{currentQuestion && (
-								<QuizQuestion
-									question={currentQuestion}
-									selectedOptionId={answers[currentQuestion.id] || ''}
-									onSelectOption={handleSelectOption}
-								/>
+						{currentQuestion && (
+							<QuizQuestion
+								question={currentQuestion}
+								selectedOptionId={answers[currentQuestion.id] || ''}
+								onSelectOption={handleSelectOption}
+							/>
+						)}
+
+						<div className="px-10 pb-10 pt-0 flex justify-end min-h-24">
+							{currentQuestion && answers[currentQuestion.id] && (
+								<button
+									type="button"
+									onClick={handleNext}
+									className="sota-enter-slide-left px-8 py-4 bg-accent-indigo-surface text-white border border-accent-indigo-light/20 rounded-2xl cursor-pointer font-black transition-all uppercase tracking-widest text-[0.7rem] flex items-center gap-4 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] active:scale-95"
+								>
+									{currentIndex === safeQuestions.length - 1
+										? 'Analisar Perfil'
+										: 'Sincronizar'}
+									<i className="fa-solid fa-arrow-right-long" />
+								</button>
 							)}
-
-							<div className="px-10 pb-10 pt-0 flex justify-end min-h-24">
-								{currentQuestion && answers[currentQuestion.id] && (
-									<motion.button
-										initial={{ opacity: 0, x: 20 }}
-										animate={{ opacity: 1, x: 0 }}
-										onClick={handleNext}
-										className="px-8 py-4 bg-accent-indigo-surface text-white border border-accent-indigo-light/20 rounded-2xl cursor-pointer font-black transition-all uppercase tracking-widest text-[0.7rem] flex items-center gap-4 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] active:scale-95"
-									>
-										{currentIndex === safeQuestions.length - 1
-											? 'Analisar Perfil'
-											: 'Sincronizar'}
-										<i className="fa-solid fa-arrow-right-long" />
-									</motion.button>
-								)}
-							</div>
 						</div>
-					</motion.div>
-				)}
-			</AnimatePresence>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

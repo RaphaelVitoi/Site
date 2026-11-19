@@ -17,6 +17,12 @@ export default function SotaBackground() {
 
 	useEffect(() => {
 		if (light) return;
+		if (
+			typeof globalThis.matchMedia === 'function' &&
+			globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches
+		) {
+			return;
+		}
 
 		const handleMouseMove = (e: MouseEvent) => {
 			if (rafRef.current) cancelAnimationFrame(rafRef.current);

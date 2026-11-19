@@ -6,8 +6,6 @@
 
 export const LIGHT_EDITORIAL_ROUTES = ['/', '/quem-sou'] as const;
 
-export type LightEditorialRoute = (typeof LIGHT_EDITORIAL_ROUTES)[number];
-
 /**
  * Retorna true se o pathname atual corresponder a uma superfície editorial clara.
  */

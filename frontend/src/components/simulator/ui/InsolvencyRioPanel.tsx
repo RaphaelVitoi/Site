@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
 import type { InsolvencyMetrics } from '../hooks/useQuantumEngine';
 
 interface InsolvencyRioPanelProps {
@@ -48,20 +47,13 @@ export const InsolvencyRioPanel = ({
 
 	return (
 		<div className="relative grid grid-cols-2 gap-4 p-4 mt-6 bg-bg-deep rounded-xl border border-white/5 shadow-xl min-h-30 overflow-hidden">
-			<AnimatePresence>
-				{isCalculating && (
-					<motion.div
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-bg-deep/80 backdrop-blur-sm"
-					>
-						<span className="text-[0.65rem] font-black text-accent-indigo uppercase tracking-widest animate-pulse">
-							Tracionando WASM...
-						</span>
-					</motion.div>
-				)}
-			</AnimatePresence>
+			{isCalculating && (
+				<div className="sota-enter-fade absolute inset-0 z-10 flex flex-col items-center justify-center bg-bg-deep/80 backdrop-blur-sm">
+					<span className="text-[0.65rem] font-black text-accent-indigo uppercase tracking-widest animate-pulse">
+						Tracionando WASM...
+					</span>
+				</div>
+			)}
 
 			<div
 				className={`flex flex-col transition-opacity duration-300 ${isCalculating && !insolvency ? 'opacity-0' : 'opacity-100'}`}

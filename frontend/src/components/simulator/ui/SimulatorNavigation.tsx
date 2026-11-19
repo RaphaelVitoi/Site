@@ -4,7 +4,6 @@
  * ROLE: Orquestrador de visualização para as ferramentas do laboratório.
  */
 
-import { motion } from 'framer-motion';
 import { useRef } from 'react';
 import type { ActiveTool } from '../MasterSimulator';
 
@@ -95,10 +94,9 @@ export default function SimulatorNavigation({
 						}`}
 					>
 						{isActive && (
-							<motion.div
-								layoutId="active-tool-bg"
-								className="absolute inset-0 bg-accent-indigo/20 border border-accent-indigo/40 rounded-xl shadow-lg shadow-indigo-500/10"
-								transition={{ type: 'spring', bounce: 0.1, duration: 0.5 }}
+							<div
+								aria-hidden="true"
+								className="sota-enter-fade absolute inset-0 bg-accent-indigo/20 border border-accent-indigo/40 rounded-xl shadow-lg shadow-indigo-500/10"
 							/>
 						)}
 

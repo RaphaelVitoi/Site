@@ -157,8 +157,3 @@ export function parseHandHistoryDetails(raw: string): ParsedHandHistory {
     heroId: resolveHero(raw, players),
   };
 }
-
-export function parseHandHistory(rawText: string): ICMPlayer[] {
-  if (!rawText) return [];
-  return parseHandHistoryDetails(rawText).players;
-}

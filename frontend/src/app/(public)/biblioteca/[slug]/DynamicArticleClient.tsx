@@ -18,168 +18,155 @@ import TableOfContents from '@/components/ui/layout/TableOfContents';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SITE_CONFIG } from '@/constants/site';
 import { ROUTES } from '@/constants/routes';
+import { fetchJson } from '@/lib/client-fetch';
 
 export interface DynamicArticlePayload {
-	id?: string | undefined;
-	slug?: string | undefined;
-	title: string;
-	description?: string | undefined;
-	category?: string | undefined;
-	body: string;
-	createdAt?: string | undefined;
-	updatedAt?: string | undefined;
-	error?: string | undefined;
+  id?: string;
+  slug?: string;
+  title: string;
+  description?: string;
+  category?: string;
+  body: string;
+  createdAt?: string;
+  updatedAt?: string;
+  error?: string;
 }
 
 type ContentFetchError = Error & { status?: number };
 
 function getCatalogState(status: number | undefined, slug: string | string[] | undefined) {
-	if (status === 401 || status === 403) {
-		return {
-			title: 'Catálogo Protegido',
-			message:
-				'O catálogo dinâmico exige uma sessão autorizada. A publicação pública deste conteúdo ainda não está habilitada.',
-		};
-	}
+  if (status === 401 || status === 403) {
+    return {
+      title: 'Catálogo Protegido',
+      message:
+        'O catálogo dinâmico exige uma sessão autorizada. A publicação pública deste conteúdo ainda não está habilitada.',
+    };
+  }
 
-	if (status === 404) {
-		return {
-			title: 'Artefato Não Publicado',
-			message: `O slug "${slug}" ainda não foi publicado no catálogo dinâmico.`,
-		};
-	}
+  if (status === 404) {
+    return {
+      title: 'Artefato Não Publicado',
+      message: `O slug "${slug}" ainda não foi publicado no catálogo dinâmico.`,
+    };
+  }
 
-	return {
-		title: 'Catálogo Indisponível',
-		message: 'Não foi possível consultar o catálogo dinâmico neste momento. Tente novamente mais tarde.',
-	};
+  return {
+    title: 'Catálogo Indisponível',
+    message: 'Não foi possível consultar o catálogo dinâmico neste momento. Tente novamente mais tarde.',
+  };
 }
 
-const fetcher = async (url: string) => {
-	const response = await fetch(url);
-	if (!response.ok) {
-		const error = new Error(
-			`Falha ao consultar o catálogo dinâmico (${response.status}).`,
-		) as ContentFetchError;
-		error.status = response.status;
-		throw error;
-	}
-
-	return response.json();
-};
+const fetcher = async (url: string): Promise<DynamicArticlePayload> =>
+  fetchJson<DynamicArticlePayload>(url, {
+    timeoutMs: 12_000,
+    fallbackError: 'Falha ao consultar o catálogo dinâmico.',
+  });
 
 export interface DynamicArticleClientProps {
-	readonly initialSlug?: string;
-	readonly initialContent?: DynamicArticlePayload | null;
+  readonly initialSlug?: string;
+  readonly initialContent?: DynamicArticlePayload | null;
 }
 
-export function DynamicArticleClient({ initialSlug, initialContent }: DynamicArticleClientProps) {
-	const params = useParams();
-	const slug = initialSlug || (Array.isArray(params['slug']) ? params['slug'].join('/') : String(params['slug'] ?? ''));
-	// O slug chega DECODIFICADO: `%2F` vira `/` e `..` atravessaria para outra rota de mesma origem.
-	// Encode antes de interpolar no caminho da API (FE-11).
-	const { data: content, error, isLoading } = useSWR(
-		`/api/v1/content/${encodeURIComponent(slug)}`,
-		fetcher,
-		initialContent ? { fallbackData: initialContent } : undefined,
-	);
+function DynamicArticleClient({ initialSlug, initialContent }: DynamicArticleClientProps) {
+  const params = useParams();
+  const slug = initialSlug || (Array.isArray(params['slug']) ? params['slug'].join('/') : String(params['slug'] ?? ''));
+  // O slug chega DECODIFICADO: `%2F` vira `/` e `..` atravessaria para outra rota de mesma origem.
+  // Encode antes de interpolar no caminho da API (FE-11).
+  const {
+    data: content,
+    error,
+    isLoading,
+  } = useSWR(
+    `/api/v1/content/${encodeURIComponent(slug)}`,
+    fetcher,
+    initialContent ? { fallbackData: initialContent } : undefined,
+  );
 
-	if (isLoading && !initialContent)
-		return (
-			<div className="min-h-screen flex items-center justify-center bg-bg-base text-text-darker uppercase tracking-[0.3em] font-black animate-pulse">
-				Sincronizando Mente Coletiva...
-			</div>
-		);
+  if (isLoading && !initialContent)
+    return (
+      <div className="bg-bg-base text-text-darker flex min-h-screen animate-pulse items-center justify-center font-black tracking-[0.3em] uppercase">
+        Sincronizando Mente Coletiva...
+      </div>
+    );
 
-	if (error || !content || content.error) {
-		const status = (error as ContentFetchError | undefined)?.status;
-		const catalogState = getCatalogState(status, slug);
+  if (error || !content || content.error) {
+    const status = (error as ContentFetchError | undefined)?.status;
+    const catalogState = getCatalogState(status, slug);
 
-		return (
-			<div className="min-h-screen flex flex-col items-center justify-center bg-bg-base text-accent-danger gap-6">
-				<i className="fa-solid fa-triangle-exclamation text-5xl" />
-				<h1 className="text-2xl font-black uppercase tracking-widest">
-					{catalogState.title}
-				</h1>
-				<p className="text-text-dim font-medium uppercase tracking-tighter">
-					{catalogState.message}
-				</p>
-				<Link
-					href="/biblioteca"
-					className="btn-secondary px-8 py-3 rounded-xl uppercase font-black text-xs tracking-widest mt-4"
-				>
-					Voltar à Biblioteca
-				</Link>
-			</div>
-		);
-	}
+    return (
+      <div className="bg-bg-base text-accent-danger flex min-h-screen flex-col items-center justify-center gap-6">
+        <i className="fa-solid fa-triangle-exclamation text-5xl" />
+        <h1 className="text-2xl font-black tracking-widest uppercase">{catalogState.title}</h1>
+        <p className="text-text-dim font-medium tracking-tighter uppercase">{catalogState.message}</p>
+        <Link
+          href="/biblioteca"
+          className="btn-secondary mt-4 rounded-xl px-8 py-3 text-xs font-black tracking-widest uppercase"
+        >
+          Voltar à Biblioteca
+        </Link>
+      </div>
+    );
+  }
 
-	return (
-		<div className="min-h-screen bg-bg-base relative overflow-x-hidden font-body">
-			<ScrollToTop />
+  return (
+    <div className="bg-bg-base font-body relative min-h-screen overflow-x-hidden">
+      <ScrollToTop />
 
-			<ContentPageHeader
-				title={content.title}
-				subtitle={content.description || ''}
-				category={content.category || 'Ensaio'}
-				icon="fa-book-open"
-			/>
+      <ContentPageHeader
+        title={content.title}
+        subtitle={content.description || ''}
+        category={content.category || 'Ensaio'}
+        icon="fa-book-open"
+      />
 
-			<main className="sota-container py-12 md:py-24 relative z-10">
-				<div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-16 items-start max-w-6xl mx-auto">
-					<article className="animate-sota-in">
-						<GlassPanel className="p-10 lg:p-20 border-l-4 border-l-accent-indigo">
-							<ArticleVoiceNarration
-								title={content.title}
-								content={content.body || ''}
-							/>
-							<SotaMarkdown content={content.body || ''} />
-						</GlassPanel>
-					</article>
+      <main className="sota-container relative z-10 py-12 md:py-24">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-16 lg:grid-cols-[1fr_300px]">
+          <article className="animate-sota-in">
+            <GlassPanel className="border-l-accent-indigo border-l-4 p-10 lg:p-20">
+              <ArticleVoiceNarration title={content.title} content={content.body || ''} />
+              <SotaMarkdown content={content.body || ''} />
+            </GlassPanel>
+          </article>
 
-					<aside className="hidden lg:block sticky top-32 space-y-12 animate-sota-in animation-delay-300">
-						<div className="glass-panel p-8 rounded-3xl border-white/5 bg-black/40">
-							<h2 className="text-[0.6rem] font-black text-text-muted uppercase tracking-[0.2em] mb-6 border-b border-white/5 pb-4">
-								Neste Artefato
-							</h2>
-							<TableOfContents content={content.body || ''} />
-						</div>
+          <aside className="animate-sota-in animation-delay-300 sticky top-32 hidden space-y-12 lg:block">
+            <div className="glass-panel rounded-3xl border-white/5 bg-black/40 p-8">
+              <h2 className="text-text-muted mb-6 border-b border-white/5 pb-4 text-[0.6rem] font-black tracking-[0.2em] uppercase">
+                Neste Artefato
+              </h2>
+              <TableOfContents content={content.body || ''} />
+            </div>
 
-						<div className="p-8 bg-accent-indigo/5 border border-accent-indigo/10 rounded-3xl">
-							<h2 className="text-[0.6rem] font-black text-white uppercase tracking-widest mb-4 text-glow-indigo">
-								Metadados SOTA
-							</h2>
-							<div className="space-y-4">
-								<div className="flex justify-between items-center">
-									<span className="text-[0.55rem] text-text-dim uppercase font-bold">
-										Status
-									</span>
-									<span className="text-[0.55rem] text-accent-indigo-light uppercase font-black tracking-widest bg-accent-indigo/10 px-2 py-0.5 rounded border border-accent-indigo/20">
-										Conteúdo dinâmico
-									</span>
-								</div>
-								<div className="flex justify-between items-center">
-									<span className="text-[0.55rem] text-text-dim uppercase font-bold">
-										Canal
-									</span>
-									<span className="text-[0.55rem] text-text-bright uppercase font-mono font-black">
-										Contrato API v1
-									</span>
-								</div>
-							</div>
-						</div>
-					</aside>
-				</div>
-			</main>
+            <div className="bg-accent-indigo/5 border-accent-indigo/10 rounded-3xl border p-8">
+              <h2 className="text-glow-indigo mb-4 text-[0.6rem] font-black tracking-widest text-white uppercase">
+                Metadados SOTA
+              </h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-text-dim text-[0.55rem] font-bold uppercase">Status</span>
+                  <span className="text-accent-indigo-light bg-accent-indigo/10 border-accent-indigo/20 rounded border px-2 py-0.5 text-[0.55rem] font-black tracking-widest uppercase">
+                    Conteúdo dinâmico
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-text-dim text-[0.55rem] font-bold uppercase">Canal</span>
+                  <span className="text-text-bright font-mono text-[0.55rem] font-black uppercase">
+                    Contrato API v1
+                  </span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
 
-			<ContentFooter
-				shareTitle={`${content.title} | ${SITE_CONFIG.author}`}
-				shareUrl={`${SITE_CONFIG.baseUrl}/biblioteca/${slug}`}
-				backLinkHref={ROUTES.BIBLIOTECA}
-				backLinkText="Voltar à Biblioteca"
-			/>
-		</div>
-	);
+      <ContentFooter
+        shareTitle={`${content.title} | ${SITE_CONFIG.author}`}
+        shareUrl={`${SITE_CONFIG.baseUrl}/biblioteca/${slug}`}
+        backLinkHref={ROUTES.BIBLIOTECA}
+        backLinkText="Voltar à Biblioteca"
+      />
+    </div>
+  );
 }
 
 export default DynamicArticleClient;

@@ -17,6 +17,7 @@ import { useSotaSpeech } from '@/components/simulator/hooks/useSotaSpeech';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { SotaButton } from '@/components/ui/layout/SotaButton';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
+import { fetchJson } from '@/lib/client-fetch';
 import type { PhysicsSnapshot } from '@/lib/schemas';
 
 export interface VideoKeyframe {
@@ -248,14 +249,14 @@ async function translateSpeechTranscript(
 
 async function fetchWebSearchRag(query: string): Promise<{ sources: WebSearchSource[]; formattedText: string }> {
   try {
-    const searchRes = await fetch(`/api/v1/search?q=${encodeURIComponent(query)}`);
-    if (searchRes.ok) {
-      const data = await searchRes.json();
-      return {
-        sources: data?.results || [],
-        formattedText: data?.formatted || '',
-      };
-    }
+    const data = await fetchJson<{ results?: WebSearchSource[]; formatted?: string }>(
+      `/api/v1/search?q=${encodeURIComponent(query)}`,
+      { timeoutMs: 12_000 },
+    );
+    return {
+      sources: data?.results || [],
+      formattedText: data?.formatted || '',
+    };
   } catch (e) {
     console.warn('[WebSearch] Falha:', e);
   }
@@ -309,10 +310,24 @@ export default function GemmaPortal() {
       setServerOnline(false);
       return;
     }
-    fetch('/api/v1/gemma')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { online?: boolean } | null) => setServerOnline(Boolean(data?.online)))
-      .catch(() => setServerOnline(false));
+    const controller = new AbortController();
+    void fetchJson<{ online?: boolean }>('/api/v1/gemma', {
+      signal: controller.signal,
+      timeoutMs: 5_000,
+    })
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setServerOnline(Boolean(data?.online));
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setServerOnline(false);
+        }
+      });
+    return () => {
+      controller.abort();
+    };
   }, [sessionStatus]);
 
   // Auto-scroll durante streaming e novas mensagens
@@ -510,7 +525,8 @@ export default function GemmaPortal() {
           for (const frac of fractions) {
             const targetTime = duration * frac;
             video.currentTime = targetTime;
-            await new Promise((r) => { // NOSONAR
+            await new Promise((r) => {
+              // NOSONAR typescript:S9382 -- seeks de keyframe sao sequenciais por natureza
               video.onseeked = r;
             });
             const canvas = document.createElement('canvas');
@@ -993,7 +1009,9 @@ export default function GemmaPortal() {
                   >
                     <TrayAttachmentIcon att={att} />
                     <div className="flex flex-col">
-                      <span className="max-w-35 truncate font-mono text-[0.7rem] font-medium text-white">{att.name}</span>
+                      <span className="max-w-35 truncate font-mono text-[0.7rem] font-medium text-white">
+                        {att.name}
+                      </span>
                       <span className="text-text-dim font-mono text-[0.55rem] uppercase">
                         {att.type.toUpperCase()} • {att.size}
                       </span>
@@ -1171,7 +1189,7 @@ export default function GemmaPortal() {
           onKeyDown={(e) => {
             if (e.key === 'Escape') setActiveModalAttachment(null);
           }}
-          className="animate-in fade-in fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-black/85 p-4 backdrop-blur-md"
+          className="animate-in fade-in fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-black/85 p-4 backdrop-blur-md"
         >
           <button
             type="button"
@@ -1180,9 +1198,7 @@ export default function GemmaPortal() {
             onClick={() => setActiveModalAttachment(null)}
             tabIndex={-1}
           />
-          <div
-            className="border-accent-indigo/40 relative flex max-h-[90vh] w-full max-w-3xl flex-col gap-4 overflow-y-auto rounded-2xl border bg-slate-900 p-6 shadow-2xl"
-          >
+          <div className="border-accent-indigo/40 relative flex max-h-[90vh] w-full max-w-3xl flex-col gap-4 overflow-y-auto rounded-2xl border bg-slate-900 p-6 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <span className="text-accent-indigo-light font-mono text-sm font-bold">
@@ -1220,7 +1236,10 @@ export default function GemmaPortal() {
                   </p>
                   <div className="grid grid-cols-3 gap-3">
                     {activeModalAttachment.keyframes?.map((kf) => (
-                      <div key={kf.timeLabel || kf.previewUrl} className="group relative overflow-hidden rounded-lg border border-white/15">
+                      <div
+                        key={kf.timeLabel || kf.previewUrl}
+                        className="group relative overflow-hidden rounded-lg border border-white/15"
+                      >
                         <img
                           src={kf.previewUrl}
                           alt={`Keyframe ${kf.timeLabel}`}
@@ -1245,7 +1264,7 @@ export default function GemmaPortal() {
               )}
 
               {activeModalAttachment.type === 'doc' && (
-                <pre className="max-h-[65vh] w-full overflow-auto rounded-xl border border-white/10 bg-black/90 p-4 font-mono text-xs whitespace-pre-wrap text-text-main">
+                <pre className="text-text-main max-h-[65vh] w-full overflow-auto rounded-xl border border-white/10 bg-black/90 p-4 font-mono text-xs whitespace-pre-wrap">
                   {activeModalAttachment.textContent || '(Documento vazio ou binário)'}
                 </pre>
               )}

@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
+import { fetchJson, isAbortError } from '@/lib/client-fetch';
 
 interface ChrysalisHealth {
 	status: 'ONLINE' | 'OFFLINE';
@@ -14,27 +15,42 @@ interface ChrysalisHealth {
 export function ChrysalisLiveEnginePanel() {
 	const [health, setHealth] = useState<ChrysalisHealth | null>(null);
 	const [loading, setLoading] = useState(true);
+	const mountedRef = useRef(true);
+	const controllerRef = useRef<AbortController | null>(null);
 
 	const fetchHealth = useCallback(async () => {
+		controllerRef.current?.abort();
+		const controller = new AbortController();
+		controllerRef.current = controller;
+
 		try {
-			const res = await fetch('/api/sota/chrysalis', { cache: 'no-store' });
-			if (res.ok) {
-				const json = (await res.json()) as ChrysalisHealth;
-				setHealth(json);
-			}
-		} catch {
+			const json = await fetchJson<ChrysalisHealth>('/api/sota/chrysalis', {
+				signal: controller.signal,
+				timeoutMs: 8_000,
+			});
+			if (!mountedRef.current || controller.signal.aborted) return;
+			setHealth(json);
+		} catch (cause) {
+			if (isAbortError(cause)) return;
 			// Fallback gracioso
 		} finally {
-			setLoading(false);
+			if (mountedRef.current && controllerRef.current === controller) {
+				setLoading(false);
+			}
 		}
 	}, []);
 
 	useEffect(() => {
+		mountedRef.current = true;
 		void fetchHealth();
 		const interval = setInterval(() => {
 			if (document.visibilityState === 'visible') void fetchHealth();
 		}, 30000);
-		return () => clearInterval(interval);
+		return () => {
+			mountedRef.current = false;
+			clearInterval(interval);
+			controllerRef.current?.abort();
+		};
 	}, [fetchHealth]);
 
 	const online = health?.status === 'ONLINE';

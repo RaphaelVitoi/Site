@@ -1,5 +1,6 @@
 'use client';
 
+import { fetchJson } from '@/lib/client-fetch';
 import { computeQuantumMetrics, type PerspectivaResult } from '@/lib/perspectiva';
 import { useEffect, useMemo, useState } from 'react';
 import type { Scenario } from '../solver/types';
@@ -82,7 +83,7 @@ export function useMasterCalculations({
 		const controle = new AbortController();
 		const temporizador = setTimeout(async () => {
 			try {
-				const response = await fetch('/api/sota/bayesian-range', {
+				const data = await fetchJson<{ posterior_win_prob?: number }>('/api/sota/bayesian-range', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
@@ -92,11 +93,10 @@ export function useMasterCalculations({
 						pot_odd_pressure: pOdd,
 					}),
 					signal: controle.signal,
+					timeoutMs: 6_000,
 				});
-				if (!response.ok) return;
-				const data = await response.json();
 				if (!controle.signal.aborted && Number.isFinite(data?.posterior_win_prob)) {
-					setBayesianWinProb(Number((data.posterior_win_prob * 100).toFixed(1)));
+					setBayesianWinProb(Number(((data.posterior_win_prob as number) * 100).toFixed(1)));
 				}
 			} catch {
 				// Cancelado ou backend inalcançável: o valor local já está na tela.

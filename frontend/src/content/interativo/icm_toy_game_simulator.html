@@ -59,21 +59,36 @@
             transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        ::-webkit-scrollbar {
-            width: 4px;
+        html,
+        body {
+            --scrollbar-thumb: #64748b;
+            --scrollbar-track: #0f172a;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+            scrollbar-width: thin;
         }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
+        @supports not (scrollbar-color: auto) {
+            html,
+            body {
+                scrollbar-width: auto;
+            }
 
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 10px;
-        }
+            ::-webkit-scrollbar {
+                width: 4px;
+            }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: var(--scrollbar-thumb);
+                border-radius: 10px;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
         }
 
         @keyframes fadeUp {
@@ -1094,7 +1109,7 @@
         function init() {
             const list = document.getElementById('scenario-list');
             if (list) {
-                list.innerHTML = "";
+                list.replaceChildren();
                 DATABASE.forEach(sc => {
                     const btn = document.createElement('button');
                     btn.className = `scenario-btn ${sc.id === currentId ? 'active' : ''}`;

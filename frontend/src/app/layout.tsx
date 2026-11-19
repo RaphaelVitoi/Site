@@ -14,7 +14,7 @@ import SotaBackground from '@/components/ui/layout/SotaBackground';
 // Subconjunto gerado por scripts/fontawesome-subset.py: so os icones citados em src (19 KB de fonte contra 247 KB).
 import '@/styles/fontawesome/fontawesome-subset.css';
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Montserrat, Playfair_Display, EB_Garamond } from 'next/font/google';
+import { Inter, JetBrains_Mono, Montserrat } from 'next/font/google';
 import './globals.css';
 
 const inter = Inter({
@@ -32,18 +32,6 @@ const jetbrainsMono = JetBrains_Mono({
 const montserrat = Montserrat({
   subsets: ['latin'],
   variable: '--font-heading',
-  display: 'swap',
-});
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
-  display: 'swap',
-});
-
-const ebGaramond = EB_Garamond({
-  subsets: ['latin'],
-  variable: '--font-garamond',
   display: 'swap',
 });
 
@@ -116,7 +104,7 @@ export default function RootLayout({
     >
       <body
         data-surface="laboratory"
-        className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} ${playfair.variable} ${ebGaramond.variable} font-body bg-bg-base text-text-main selection:bg-accent-indigo-surface/30 selection:text-text-bright flex min-h-screen w-full max-w-full flex-col overflow-x-hidden antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} ${montserrat.variable} font-body bg-bg-base text-text-main selection:bg-accent-indigo-surface/30 selection:text-text-bright flex min-h-screen w-full max-w-full flex-col overflow-x-hidden antialiased`}
         suppressHydrationWarning
       >
         <AuthProvider>

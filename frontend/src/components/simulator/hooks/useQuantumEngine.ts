@@ -37,8 +37,6 @@ export interface QuantumEngineParams {
   predictiveProfile?: Record<string, number> | null;
 }
 
-export type QuantumMetricsResult = InsolvencyMetrics;
-
 /**
  * Leitura exploratória do PKO, em desenvolvimento. Os autos do projeto (biblioteca/estruturas-de-torneio) põem PKO fora
  * do escopo do template Vanilla: bounties exigem modelo próprio. O peso do bounty não entra em nenhuma saída
@@ -51,7 +49,6 @@ export interface PkoPreview {
   /** RP base com o peso do bounty, exploratório. */
   comPko: { ipRp: number; oopRp: number };
 }
-export type QuantumMetricsPayload = InsolvencyPayload;
 
 function toInsolvencyMetrics(matrix: number[]): InsolvencyMetrics | null {
   if (matrix.length < 5) return null;
