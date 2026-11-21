@@ -745,7 +745,7 @@ def _laya_predict_com_servico(
         ou falhou, o microservico dedicado e sondado -- neste host (RX 570 sem
         CUDA) e o unico caminho que executa o checkpoint 322M de verdade.
     O microservico nunca e consultado quando o caminho in-process ja entregou
-    predição treinada -- o fast path local permanece intocado.
+    predicao treinada -- o fast path local permanece intocado.
     """
     remote_tried = False
     if os.environ.get("CHICO_LAYA_PREFER_SERVICE", "0") == "1":

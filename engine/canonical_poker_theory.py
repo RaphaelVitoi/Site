@@ -589,7 +589,7 @@ class ScipyNashMatrixSolver:
 
         try:
             import numpy as np  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-            from scipy.optimize import linprog  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+            from scipy.optimize import linprog  # type: ignore[import-untyped]  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
         except ImportError as exc:
             raise ImportError("scipy/numpy nao estao instalados. Instale com 'uv sync --extra pmev'.") from exc
 

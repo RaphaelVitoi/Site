@@ -128,16 +128,16 @@ _PT_MARKERS_RE = re.compile(
     r"qual|quais|quando|quanto|onde|quem|faz|fazer|deve|devo|posso|tenho|esta|esse|essa|isso|"
     r"mesa|mao|maos|torneio|bolha|vilao|viloes|pote|fichas|apostar|aumentar|pagar|foldar|"
     r"meu|minha|seus|suas|nosso|nossa|tambem|sem)\b"
-    r"|[ãõçáéíóúâêôà]",
+    r"|[\u00e3\u00f5\u00e7\u00e1\u00e9\u00ed\u00f3\u00fa\u00e2\u00ea\u00f4\u00e0]",
     re.IGNORECASE,
 )
 _ES_MARKERS_RE = re.compile(
     r"\b(?:para|con|pero|como|porque|entonces|siempre|ahora|sobre|puede|tengo|tiene|"
-    r"cual|cuando|cuanto|donde|quien|hacer|debe|puedo|villano|ficha|fichas|apostar|subir|pagar|mesa|torneo)\b|[ñ¡¿]",
+    r"cual|cuando|cuanto|donde|quien|hacer|debe|puedo|villano|ficha|fichas|apostar|subir|pagar|mesa|torneo)\b|[\u00f1\u00a1\u00bf]",
     re.IGNORECASE,
 )
 _FR_MARKERS_RE = re.compile(
-    r"\b(?:avec|pour|dans|mais|comme|toujours|maintenant|entre|nous|vous)\b|[àèéêëîïôùûüç]",
+    r"\b(?:avec|pour|dans|mais|comme|toujours|maintenant|entre|nous|vous)\b|[\u00e0\u00e8\u00e9\u00ea\u00eb\u00ee\u00ef\u00f4\u00f9\u00fb\u00fc\u00e7]",
     re.IGNORECASE,
 )
 _CJK_RE = re.compile(r"[\u4e00-\u9fff]")

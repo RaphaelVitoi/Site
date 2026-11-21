@@ -464,11 +464,11 @@ def _parse_s1_min_confidence(data: dict[str, Any]) -> tuple[float | None, bool, 
 
 
 async def handle_s1_decide(request: web.Request) -> web.Response:
-    """POST /api/v1/s1/decide — cascata System-1 (Laya -> microservico -> Gemini Decision 1).
+    """POST /api/v1/s1/decide -- cascata System-1 (Laya -> microservico -> Gemini Decision 1).
 
     Body: ``{"state": str|dict, "questions": {qid: {type,instructions,criteria}},
     "prefer_cloud": bool?}``. Resposta: ``DecisionResult.to_dict()`` com
-    proveniencia §4 (engine ``laya-s1-trained`` | ``laya-s1-fallback`` |
+    proveniencia secao 4 (engine ``laya-s1-trained`` | ``laya-s1-fallback`` |
     ``gemini-decision-1``). Erros de formato -> 400; nenhum motor -> 503.
     """
     data, err_resp = await read_json_object(request, error_envelope=True)

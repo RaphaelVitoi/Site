@@ -21,7 +21,7 @@ import certifi
 
 # Sessoes HTTP sao POR EVENT LOOP: um ClientSession criado num loop nao pode ser
 # usado em outro ("attached to a different loop"). O fallback System-2 roda em
-# thread dedicada com loop proprio, entao mantemos uma sessao por loop — mesmo
+# thread dedicada com loop proprio, entao mantemos uma sessao por loop -- mesmo
 # padrao de _API_SEMAPHORES. O loop vai junto no valor para que seu id() nao
 # seja reciclado por um loop futuro enquanto a sessao estiver viva; entradas
 # de loops encerrados sao podadas no proximo acesso.
@@ -40,7 +40,7 @@ _API_SEMAPHORES_GUARD = threading.Lock()
 def _purge_dead_loop_entries(
     registry: dict[int, tuple[asyncio.AbstractEventLoop, Any]], active_loop: asyncio.AbstractEventLoop
 ) -> None:
-    """Remove entradas de loops encerrados — nada mais pode usa-las e, com a
+    """Remove entradas de loops encerrados -- nada mais pode usa-las e, com a
     referencia ao loop no valor, seu id() nao e reciclado por um loop futuro."""
     for lid, (loop_obj, _) in list(registry.items()):
         if loop_obj.is_closed() and loop_obj is not active_loop:

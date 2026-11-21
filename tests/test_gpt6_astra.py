@@ -267,7 +267,7 @@ def test_toda_faixa_e_declarada_e_nenhuma_vem_do_default() -> None:
 
     sem_cota = {a for a, c in MODEL_REGISTRY.items() if not c.cota_por_assinatura}
     assert sem_cota == {
-        # Anthropic/OpenAI: faixa suspensa pelo Tier 0 em 2026-11-12 — as
+        # Anthropic/OpenAI: faixa suspensa pelo Tier 0 em 2026-11-12 -- as
         # assinaturas flat-fee estao temporariamente desativadas. Ativas:
         # Google AI Studio Pro (Gemini) e Devin Desktop SWE-2 Flash Medium.
         "claude-opus-5.5",

@@ -320,7 +320,7 @@ def rodar_suite(extra: list[str]) -> int:
     if _tem_xdist() and _xdist_com_workers(args) and not any(a == "--dist" or a.startswith("--dist=") for a in args):
         args += ["--dist", "loadfile"]
     # `--cov` mede a superficie declarada em pyproject [tool.coverage.run] e
-    # o fail_under=60 de [tool.coverage.report] reprova regressao — Fase 5 da
+    # o fail_under=60 de [tool.coverage.report] reprova regressao -- Fase 5 da
     # auditoria: antes o relatorio era gerado sem nunca reprovar nada, e o CI
     # media so engine com piso simbolico de 10%. O custo so e pago quando a
     # arvore de conteudo muda de verdade (o marcador `ensure` pula a suite

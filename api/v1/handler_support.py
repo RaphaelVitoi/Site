@@ -22,7 +22,7 @@ INVALID_JSON_BODY = "Invalid JSON body"
 async def read_json_object(
     request: web.Request, *, error_envelope: bool = False
 ) -> tuple[dict[str, Any] | None, web.Response | None]:
-    """Lê e valida que o corpo da requisicao e um objeto JSON (dict), retornando 400 caso contrario."""
+    """Le e valida que o corpo da requisicao e um objeto JSON (dict), retornando 400 caso contrario."""
     try:
         if isinstance(request, web.BaseRequest) and "json" not in getattr(request, "__dict__", {}):
             data = await request.json(loads=orjson.loads)

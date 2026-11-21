@@ -318,7 +318,7 @@ def avaliar_registro(
     Regra unica: o indice e o G2 do record_gate usam esta funcao. Duas copias da
     regra divergiriam em silencio.
 
-    `caminho` e o caminho do registro relativo a raiz: sem ele a âncora de
+    `caminho` e o caminho do registro relativo a raiz: sem ele a ancora de
     nascimento nao pode ser resolvida e o motivo de "sem ancora" continua valendo.
     """
     classes = fm.get("classes") or []

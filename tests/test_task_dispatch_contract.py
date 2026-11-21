@@ -3,13 +3,13 @@
 
 Medido na Fase 5 da auditoria SOTA (2026-11-17): `do.ps1` invocava
 `apply-god-mode`, comando que nao existia em nenhuma das 3 camadas
-(_LOCAL_HANDLERS, nexus typer, _COMMAND_HANDLERS) — o fluxo -Ingest caia
+(_LOCAL_HANDLERS, nexus typer, _COMMAND_HANDLERS) -- o fluxo -Ingest caia
 no exit 2 "Comando desconhecido". E `_nexus_cmds` acumulava 15 aliases
 planos da CLI anterior ao typer, todos rejeitados com "No such command".
 
 Estes testes tornam a costura executavel: todo comando que o do.ps1
 invoca precisa resolver de fato num handler, e todo nome roteado ao
-nexus precisa existir na arvore typer real — nao numa lista paralela.
+nexus precisa existir na arvore typer real -- nao numa lista paralela.
 """
 
 from pathlib import Path
@@ -42,11 +42,14 @@ def _comandos_top_level_nexus() -> set[str]:
 
 def _comandos_de_grupo_nexus(nome: str) -> set[str]:
     for grupo in nexus_app.registered_groups:
+        typer_inst = grupo.typer_instance
+        if typer_inst is None:
+            continue
         # Grupos adicionados sem `name=` expoe DefaultPlaceholder em `.name`;
         # o nome real resolve em typer_instance.info.name.
-        nome_grupo = grupo.name if isinstance(grupo.name, str) else grupo.typer_instance.info.name
+        nome_grupo = grupo.name if isinstance(grupo.name, str) else typer_inst.info.name
         if nome_grupo == nome:
-            return {c.name for c in grupo.typer_instance.registered_commands if c.name}
+            return {c.name for c in typer_inst.registered_commands if c.name}
     return set()
 
 
@@ -80,7 +83,7 @@ def test_todo_comando_do_do_ps1_resolve_na_cadeia() -> None:
 
 def test_nexus_cmds_existem_na_arvore_typer_real() -> None:
     """Todo nome em _NEXUS_CMDS precisa ser comando top-level registrado no
-    app typer — nao basta estar na lista hardcoded do task_executor."""
+    app typer -- nao basta estar na lista hardcoded do task_executor."""
     top_level = _comandos_top_level_nexus()
     faltando = task_executor._NEXUS_CMDS - top_level
     assert not faltando, f"_NEXUS_CMDS sem comando nexus correspondente: {faltando}"
@@ -88,7 +91,7 @@ def test_nexus_cmds_existem_na_arvore_typer_real() -> None:
 
 def test_nexus_legacy_map_resolve_grupo_e_comando() -> None:
     """Cada alias legado precisa mapear para (grupo registrado, comando
-    existente dentro do grupo) — ex.: sanitize -> (ops, sanitize)."""
+    existente dentro do grupo) -- ex.: sanitize -> (ops, sanitize)."""
     for alias, (grupo, comando) in task_executor._NEXUS_LEGACY_MAP.items():
         assert _comandos_de_grupo_nexus(grupo), f"alias '{alias}': grupo '{grupo}' nao existe no nexus"
         assert comando in _comandos_de_grupo_nexus(grupo), (

@@ -691,7 +691,7 @@ def _cli_db_vacuum() -> None:
 
 # Tabelas de dispatch no nivel do modulo: o contrato
 # tests/test_task_dispatch_contract.py verifica que todo comando invocado
-# por do.ps1 resolve numa destas camadas — antes eram literais locais do
+# por do.ps1 resolve numa destas camadas -- antes eram literais locais do
 # __main__, invisiveis para verificacao, e _nexus_cmds acumulou 15 aliases
 # zumbis da CLI plana anterior ao typer (Fase 5 da auditoria SOTA).
 _LOCAL_HANDLERS = {
@@ -712,7 +712,7 @@ _NEXUS_CMDS = {"dashboard", "status", "autonomy"}
 # Nomes sem equivalente no nexus v8 (optimize-ide, purge-ext, scan,
 # audit-routing, audit-api, monitor, test-breaker, visualize-map, purge-rag,
 # ingest-rag, refactor, stop-worker) foram removidos: o typer ja os
-# rejeitava com "No such command" — eram zumbis que so mascaravam o exit 2.
+# rejeitava com "No such command" -- eram zumbis que so mascaravam o exit 2.
 _NEXUS_LEGACY_MAP = {
     "sanitize": ("ops", "sanitize"),
     "watch": ("ops", "watch"),

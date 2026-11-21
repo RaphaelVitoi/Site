@@ -187,12 +187,12 @@ async def test_queue_manager_orjson_metadata_roundtrip() -> None:
             agent="@chico",
             status="pending",
             timestamp=now_iso,
-            metadata={"priority": "high", "context": "Ação multiway ΔRP"},
+            metadata={"priority": "high", "context": "A\u00e7\u00e3o multiway \u0394RP"},
         )
         await qm.add_task(task)
         loaded = await qm.get_task("task-orjson-roundtrip")
         assert loaded is not None
-        assert loaded.metadata["context"] == "Ação multiway ΔRP"
+        assert loaded.metadata["context"] == "A\u00e7\u00e3o multiway \u0394RP"
 
         await qm.update_task_metadata("task-orjson-roundtrip", {"stage": "validado"})
         updated = await qm.get_task("task-orjson-roundtrip")

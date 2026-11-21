@@ -189,7 +189,7 @@ def test_system2_generate_moe_cai_para_cloud_sem_locais() -> None:
 
 
 # ---------------------------------------------------------------------------
-# _ollama_model_fits_ram — implementacao real, fontes de telemetria mockadas
+# _ollama_model_fits_ram -- implementacao real, fontes de telemetria mockadas
 # ---------------------------------------------------------------------------
 
 _GIB = 1024**3

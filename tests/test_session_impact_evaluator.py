@@ -207,9 +207,9 @@ def test_parse_git_log_numstat_and_cwv_parser() -> None:
     cwv_md = "\n".join(
         [
             "**Timestamp:** 2026-11-14 05:44:00",
-            "**Status:** ✅ **APPROVED (SOTA GOLD)**",
-            "| **LCP_MS** | 274.015 ms | <= 2500 ms | ✅ PASS | - |",
-            "| **CLS** | 0.000215 | <= 0.1 | ✅ PASS | - |",
+            "**Status:** \u2705 **APPROVED (SOTA GOLD)**",
+            "| **LCP_MS** | 274.015 ms | <= 2500 ms | \u2705 PASS | - |",
+            "| **CLS** | 0.000215 | <= 0.1 | \u2705 PASS | - |",
             "| **AXE_VIOLATIONS** | 0 | <= 0 | OK | - |",
             "| **CRITICAL_CVE_COUNT** | 0 | <= 0 | OK | - |",
         ]

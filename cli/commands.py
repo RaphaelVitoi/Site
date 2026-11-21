@@ -1364,7 +1364,7 @@ def _cli_voice(argv: list, manager: QueueManager) -> None:  # noqa: ARG001 - con
 # Registro canonico de comandos do fallback CLI. Vive no nivel do modulo para
 # que testes de contrato (tests/test_task_dispatch_contract.py) possam
 # verificar que todo comando invocado por do.ps1/task_executor resolve de
-# fato num handler — antes era um dict local reconstruido a cada chamada,
+# fato num handler -- antes era um dict local reconstruido a cada chamada,
 # invisivel para verificacao.
 _COMMAND_HANDLERS = {
     "db-init": _cli_db_init,

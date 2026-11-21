@@ -242,6 +242,10 @@ GPT_6_0_SOL = "gpt-6.0-sol"
 GPT_5_6_SOL = "gpt-5.6-sol"
 
 
+_MOTIVO_DESCONTINUADO_GEMINI_31_PRO = (
+    "Descontinuado em 2026-11-21 (Gemini 3.1 Pro aposentado). Substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
+)
+
 MODEL_REGISTRY: dict[str, ModelCapability] = {
     # - ANTHROPIC - Geracao 5.5 (Atualizada 2026-10-20)
     "claude-opus-5.5": ModelCapability(
@@ -354,7 +358,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         autorizado=False,
         motivo_nao_autorizado=(
             "Descontinuado das rotas vigentes pelo Tier 0 em 2026-11-10: "
-            "politica de descontinuacao por geracao — todo Claude abaixo da "
+            "politica de descontinuacao por geracao -- todo Claude abaixo da "
             "geracao 5 esta retirado. Mantido no catalogo como referencia."
         ),
         notas=(
@@ -382,7 +386,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         autorizado=False,
         motivo_nao_autorizado=(
             "Descontinuado das rotas vigentes pelo Tier 0 em 2026-11-10: "
-            "politica de descontinuacao por geracao — todo Claude abaixo da "
+            "politica de descontinuacao por geracao -- todo Claude abaixo da "
             "geracao 5 esta retirado. Mantido no catalogo como referencia."
         ),
         notas=(
@@ -492,10 +496,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
         autorizado=False,
-        motivo_nao_autorizado=(
-            "Descontinuado em 2026-11-21 (Gemini 3.1 Pro aposentado). "
-            "Substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
-        ),
+        motivo_nao_autorizado=_MOTIVO_DESCONTINUADO_GEMINI_31_PRO,
         notas=(
             "Gemini 3.1 Pro (entrypoint primario anterior: gemini-pro-latest; "
             "DESCONTINUADO em 2026-11-21). Nao deve mais ser usado como rota "
@@ -514,10 +515,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
         autorizado=False,
-        motivo_nao_autorizado=(
-            "Descontinuado em 2026-11-21 (Gemini 3.1 Pro aposentado). "
-            "Substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
-        ),
+        motivo_nao_autorizado=_MOTIVO_DESCONTINUADO_GEMINI_31_PRO,
         notas=(
             "Gemini 3.1 Pro (1o failover anterior de gemini-pro-latest; "
             "DESCONTINUADO em 2026-11-21). Removido das rotas ativas e fallbacks; "
@@ -536,10 +534,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
         autorizado=False,
-        motivo_nao_autorizado=(
-            "Descontinuado em 2026-11-21 (Gemini 3.1 Pro aposentado). "
-            "Substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
-        ),
+        motivo_nao_autorizado=_MOTIVO_DESCONTINUADO_GEMINI_31_PRO,
         notas=(
             "Gemini 3.1 Pro (2o failover anterior de gemini-pro-latest; "
             "DESCONTINUADO em 2026-11-21). Removido das rotas ativas e fallbacks; "
@@ -561,7 +556,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         notas=(
             "Google Gemini 4 Carbon: integrante do trio de apice Tier 1 "
             "(ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+), mesma doutrina "
-            "de uso pontual — escalonamento cirurgico de altissimo reasoning, "
+            "de uso pontual -- escalonamento cirurgico de altissimo reasoning, "
             "verificacao formal e sessoes multi-dia, nunca primario rotineiro. "
             "Lancado e registrado pelo Tier 0 em 2026-11-10."
         ),
@@ -628,7 +623,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10: a descontinuacao atinge "
             "gemini-3.7-flash e abaixo na familia flash (nao flash-lite); o 3.8 "
             "permanece Tier 1. Papel confirmado pelo Tier 0 em 2026-11-10: "
-            "extraordinario orquestrador e agente — permanece em funcoes "
+            "extraordinario orquestrador e agente -- permanece em funcoes "
             "elevadas da malha sob logica de ROI (geracao avancada nao e "
             "sinonimo de funcao mais alta; o encaixe e por desempenho "
             "medido, nao por novidade). "
@@ -702,12 +697,12 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "Suporta thinking_level em 'minimal' (para extracao JSON ultrarrapida), "
             "'medium' e 'high' (para subagentes de codigo/shell). "
             "CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10: e o modelo fast operations "
-            "primario da malha; NAO e gratuito — e o modelo PAGO mais barato da "
+            "primario da malha; NAO e gratuito -- e o modelo PAGO mais barato da "
             "familia (standard $0.30/$2.50 por 1M; flex/batch $0.15/$1.25), "
             "customizado para tarefas de altissimo volume, baixa latencia, "
             "triagem, linting e rotinas frequentes. Benchmarks publicos "
-            "(card do fabricante, jul/2026): SWE-Bench Pro 54.2% — acima do "
-            "Gemini 3 Flash e perto do GPT-5.4 mini —, Terminal-Bench 2.1 "
+            "(card do fabricante, jul/2026): SWE-Bench Pro 54.2% -- acima do "
+            "Gemini 3 Flash e perto do GPT-5.4 mini --, Terminal-Bench 2.1 "
             "54.0%, OSWorld-Verified 74.0%, MLE-Bench 39.2%, GPQA Diamond "
             "83.8%, ~350 tok/s de saida. A descontinuacao atinge o "
             "gemini-3.5-flash (nao-lite) e os 3.6/3.7-flash, NAO este nem "
@@ -839,7 +834,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "FAIXA DE ACESSO -- o que de fato o separa do Fable: o Astra tem "
             "as DUAS (cota de assinatura e pay-as-you-go), e o Fable so a "
             "segunda. ATENCAO (Tier 0, 2026-11-12): a assinatura flat-fee "
-            "OpenAI esta temporariamente desativada — a cota de assinatura "
+            "OpenAI esta temporariamente desativada -- a cota de assinatura "
             "esta SUSPENSA e cota_por_assinatura=False ate reativacao; "
             "permanece o pay-as-you-go. Por token os dois empatam em $10/$50; "
             "dentro da cota o "

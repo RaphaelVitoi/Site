@@ -287,7 +287,7 @@ def test_lancedb_mrl_tabela_dedicada_e_guarda_dimensional(temp_lance_dir: Path):
 @pytest.mark.asyncio
 async def test_ingest_all_memories_sem_manifest_e_noop(monkeypatch: pytest.MonkeyPatch):
     """Caracterizacao F5.3d: manifesto vazio/ausente interrompe a ingestao
-    antes de qualquer coleta — o pipeline nao varre a arvore a toa."""
+    antes de qualquer coleta -- o pipeline nao varre a arvore a toa."""
     rag = MemoryRAG()
 
     async def fake_read(_path):
@@ -310,7 +310,7 @@ async def test_ingest_all_memories_sem_manifest_e_noop(monkeypatch: pytest.Monke
 @pytest.mark.asyncio
 async def test_ingest_all_memories_agrega_ids_e_purga_obsoletos(monkeypatch: pytest.MonkeyPatch):
     """Caracterizacao F5.3d: o orquestrador processa cada arquivo alvo e
-    entrega a UNIAO dos ids gerados ao purge — contrato do ciclo de vida
+    entrega a UNIAO dos ids gerados ao purge -- contrato do ciclo de vida
     das memorias (o que sumiu do manifesto precisa ser expurgado)."""
     rag = MemoryRAG()
     alvos = [Path("docs/a.md"), Path("docs/b.md")]

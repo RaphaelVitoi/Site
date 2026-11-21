@@ -39,7 +39,7 @@ def test_detect_source_language_and_normalize_lang_code() -> None:
     assert tg.detect_source_language("Qual o SPR e o MDF no turn quando o vilao faz overbet?") == "pt-BR"
     assert tg.detect_source_language("Cuando el villano hace 3-bet desde CO, cual es el rango?") == "es"
     assert tg.detect_source_language("Hero opens BTN 2.2bb and defends vs BB 3-bet on Kd Jc Ts.") == "en"
-    assert tg.detect_source_language("ICMとPMevの計算を確認する") == "ja"
+    assert tg.detect_source_language("ICM\u3068PMev\u306e\u8a08\u7b97\u3092\u78ba\u8a8d\u3059\u308b") == "ja"
 
     assert tg.normalize_lang_code("pt_br") == ("pt-BR", "Portuguese")
     assert tg.normalize_lang_code("en") == ("en", "English")

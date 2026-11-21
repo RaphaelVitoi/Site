@@ -62,7 +62,7 @@ pytestmark = pytest.mark.skipif(
 
 
 def _tree_sha() -> str:
-    """tree SHA do indice de RAIZ — o mesmo valor que `git write-tree` ve no hook."""
+    """tree SHA do indice de RAIZ -- o mesmo valor que `git write-tree` ve no hook."""
     r = subprocess.run(["git", "write-tree"], cwd=RAIZ, capture_output=True, text=True, check=False)
     return r.stdout.strip() if r.returncode == 0 else ""
 

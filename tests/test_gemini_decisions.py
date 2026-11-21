@@ -176,7 +176,7 @@ def test_client_create_usa_api_v1beta() -> None:
 
 
 # ---------------------------------------------------------------------------
-# decide_s1 — cascata Laya -> Gemini
+# decide_s1 -- cascata Laya -> Gemini
 # ---------------------------------------------------------------------------
 
 
@@ -402,7 +402,7 @@ def test_decide_s1_microservico_fallback_tambem_escalona() -> None:
 
 
 def test_decide_s1_in_process_treinado_nao_consulta_microservico() -> None:
-    """Fast path local preservado: predição treinada in-process nao paga HTTP."""
+    """Fast path local preservado: predicao treinada in-process nao paga HTTP."""
     cli = GeminiDecisionsClient(api_key="")
     with (
         patch("llm.gemini_decisions.laya_predict", return_value=_predicao_laya_treinada()),

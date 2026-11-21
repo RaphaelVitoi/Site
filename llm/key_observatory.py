@@ -529,7 +529,7 @@ def _resolve_entry_health(
     base_hint = _ROLE_HINTS.get(name, f"len={len(primary)}" if primary else "empty")
     if live_res is not None:
         health_label, health_ok, latency_ms, note = live_res
-        role_hint = f"{base_hint} · {note}" if note else base_hint
+        role_hint = f"{base_hint} \u00b7 {note}" if note else base_hint
         return health_label, health_ok, latency_ms, role_hint
     if db_stat is not None:
         att = int(db_stat.get("attempts", 0))

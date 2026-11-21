@@ -47,7 +47,7 @@ def _requirements_deps() -> dict[tuple[str, str], str]:
     deps: dict[tuple[str, str], str] = {}
     for raw in REQUIREMENTS.read_text(encoding="utf-8").splitlines():
         line = raw.split("#", 1)[0].strip()
-        if not line or set(line) <= {"─", "-", "="}:
+        if not line or set(line) <= {"\u2500", "-", "="}:
             continue
         deps[_canonical(line)] = line
     return deps

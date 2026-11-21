@@ -160,6 +160,30 @@ function FileExplorerTree({
         const isCollapsed = collapsedSources[src.source];
         if (files.length === 0 && searchTerm) return null;
 
+        let fileListContent: React.ReactNode;
+        if (files.length === 0) {
+          fileListContent = (
+            <span className="text-text-muted block py-1 pl-2 text-[10px]">Nenhum arquivo encontrado</span>
+          );
+        } else if (files.length > FILE_VIRTUALIZATION_THRESHOLD) {
+          fileListContent = (
+            <VirtualizedFileList
+              files={files}
+              selectedFile={selectedFile}
+              onSelectFile={onSelectFile}
+            />
+          );
+        } else {
+          fileListContent = files.map((file) => (
+            <FileTreeItemButton
+              key={file.path}
+              file={file}
+              isSelected={selectedFile?.path === file.path}
+              onSelectFile={onSelectFile}
+            />
+          ));
+        }
+
         return (
           <div key={src.source} className="space-y-1">
             <button
@@ -181,24 +205,7 @@ function FileExplorerTree({
 
             {!isCollapsed && (
               <div className="mt-1 ml-3 space-y-1 border-l border-white/5 pl-4">
-                {files.length === 0 ? (
-                  <span className="text-text-muted block py-1 pl-2 text-[10px]">Nenhum arquivo encontrado</span>
-                ) : files.length > FILE_VIRTUALIZATION_THRESHOLD ? (
-                  <VirtualizedFileList
-                    files={files}
-                    selectedFile={selectedFile}
-                    onSelectFile={onSelectFile}
-                  />
-                ) : (
-                  files.map((file) => (
-                    <FileTreeItemButton
-                      key={file.path}
-                      file={file}
-                      isSelected={selectedFile?.path === file.path}
-                      onSelectFile={onSelectFile}
-                    />
-                  ))
-                )}
+                {fileListContent}
               </div>
             )}
           </div>

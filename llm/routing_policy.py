@@ -213,11 +213,11 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         escalona_para=GEMINI_4_ARGON,
         justificativa=(
             "Revisao de primeira passagem e auditoria. Gemini 3.8 Flash assume a classe "
-            "— CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10, junto com 3.5 Flash-Lite "
+            "-- CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10, junto com 3.5 Flash-Lite "
             "e 3.1 Pro; descontinuados sao 3.7-flash e abaixo na familia flash. "
             "Extraordinario orquestrador e agente: permanece em funcoes elevadas "
-            "sob logica de ROI — nao e a geracao mais nova, mas e a mais capaz "
-            "da familia no trabalho agêntico. Fallback solido em GPT-6.0 Terra "
+            "sob logica de ROI -- nao e a geracao mais nova, mas e a mais capaz "
+            "da familia no trabalho agentico. Fallback solido em GPT-6.0 Terra "
             "e escalonamento para Gemini 4 Argon."
         ),
         ancorado_em="2026-11-11",
@@ -229,11 +229,11 @@ ROTAS: dict[ClasseTarefa, Rota] = {
         faixa=Faixa.GRATUITA,
         escalona_para=CLAUDE_HAIKU_55,
         justificativa=(
-            "Custo marginal minimo dentro da cota promocional — o modelo e PAGO "
+            "Custo marginal minimo dentro da cota promocional -- o modelo e PAGO "
             "e barato (standard $0.30/$2.50 por 1M), NAO gratuito. Gemini 3.5 "
             "Flash-Lite e o modelo customizado para tarefas de altissimo volume "
             "de baixa latencia: triagem deterministica (<300ms), linting, "
-            "parsing, extracao estruturada e rotinas de alta frequencia — "
+            "parsing, extracao estruturada e rotinas de alta frequencia -- "
             "benchmarks publicos: SWE-Bench Pro 54.2%, Terminal-Bench 54.0%, "
             "350 tok/s. Fallback em GPT-6.0 Luna e escalonamento para Claude "
             "Haiku 5.5, formando a triade Tier 1 de fast operations."
