@@ -75,11 +75,11 @@ LAYA_GATE_STATES: tuple[str, str, str] = ("passed", "abstained", "unevaluated")
 
 
 def get_laya_multilingual_revision() -> str:
-    """Retorna a revisao pinned da laya-multilingual (laya 0.4.32) sem importar torch."""
+    """Retorna a revisao pinned da laya-multilingual (laya>=0.5.2) sem importar torch."""
     try:
-        from laya import router as laya_router_mod  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+        from laya import revisions as laya_revisions_mod  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
-        pinned = getattr(laya_router_mod, "PINNED_REVISIONS", None)
+        pinned = getattr(laya_revisions_mod, "PINNED_REVISIONS", None)
         if not isinstance(pinned, dict):
             import laya  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 

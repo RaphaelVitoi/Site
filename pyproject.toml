@@ -82,7 +82,7 @@ dependencies = [
     "orjson>=3.13.0",
     "defusedxml>=0.7.1",
     # ── FILESYSTEM & CLOUD ────────────────────────────────────────────
-    "watchdog>=7.1.0,<8.0.0",
+    "watchdog>=7.1.1,<8.0.0",
     "watchfiles>=1.3.0,<2.0.0",
     "cloudpathlib>=0.26.0,<1.0.0",
     # ── INFRA & MONITORAMENTO ─────────────────────────────────────────
@@ -99,7 +99,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.5.1",
+    "laya>=0.5.2",
     "accelerate>=1.16.0",
     "timesfm[torch]==3.0.2",
     # Computer-use, OLAP e embeddings alternativos foram movidos para
@@ -356,7 +356,6 @@ pythonpath = [
     "utils",
     "agents",
     "database",
-    "monitoring",
     "governance",
     "conductor",
     "tools"
@@ -596,7 +595,6 @@ extraPaths = [
     "utils",
     "agents",
     "database",
-    "monitoring",
     "governance",
     "conductor",
     "tools"

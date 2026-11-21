@@ -20,6 +20,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 import pytest
 import schemathesis
+from watchdog.events import DirModifiedEvent, FileModifiedEvent
 
 from core.schemas import Task
 from database.queue_manager import QueueManager
@@ -28,7 +29,12 @@ from engine.canonical_poker_theory import (
     JandaMDFCalculator,
     ScipyNashMatrixSolver,
 )
-from llm.laya_bridge import LayaRouter
+from llm.laya_bridge import (
+    CANONICAL_LAYA_REPO,
+    LayaRouter,
+    get_laya_multilingual_revision,
+)
+from scripts.routines.vitoi_watcher import VitoiContextHandler
 from utils.event_loop import _should_use_winloop, run_asyncio
 
 
@@ -201,3 +207,38 @@ async def test_queue_manager_orjson_metadata_roundtrip() -> None:
         assert updated.metadata["priority"] == "high"
     finally:
         await qm.close()
+
+
+@pytest.mark.unit
+def test_vitoi_watcher_watchdog_711_glob_filtering() -> None:
+    """Garante filtragem glob compatível com PurePath.full_match() do watchdog>=7.1.1."""
+    handler = VitoiContextHandler()
+    seen: list[str] = []
+    handler.on_modified = lambda event: seen.append(str(event.src_path))  # type: ignore[method-assign]
+
+    handler.dispatch(FileModifiedEvent("app.py"))
+    handler.dispatch(FileModifiedEvent("core/app.py"))
+    handler.dispatch(FileModifiedEvent(r"C:\Users\rapha\.gemini\Site\core\app.py"))
+    handler.dispatch(FileModifiedEvent(".venv/lib/site.py"))
+    handler.dispatch(FileModifiedEvent(r"C:\Users\rapha\.gemini\Site\.venv\lib\site.py"))
+    handler.dispatch(FileModifiedEvent("notes.txt"))
+    handler.dispatch(DirModifiedEvent("core"))
+
+    assert seen == [
+        "app.py",
+        "core/app.py",
+        r"C:\Users\rapha\.gemini\Site\core\app.py",
+    ]
+
+
+@pytest.mark.unit
+def test_laya_bridge_revision_from_laya_revisions_without_torch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Valida leitura direta de laya.revisions.PINNED_REVISIONS sem importar torch."""
+    from laya import revisions as laya_revisions_mod  # noqa: PLC0415
+
+    assert CANONICAL_LAYA_REPO in laya_revisions_mod.PINNED_REVISIONS
+    if "torch" not in sys.modules:
+        monkeypatch.setitem(sys.modules, "torch", None)  # type: ignore[arg-type]
+    assert get_laya_multilingual_revision() == laya_revisions_mod.PINNED_REVISIONS[CANONICAL_LAYA_REPO]
