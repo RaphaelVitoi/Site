@@ -5,7 +5,7 @@ escopo: Site — auditoria completa frontend/design, backend/codigo, refinamento
 ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-09-23T22:54:00-03:00'
-commit: 256f696c
+commit: 84e21058a9dd73033aba8bc845ec6d923b654d72
 classes: [interno, medido, governanca, handoff, auditoria, frontend, backend, laya]
 caminhos:
   - frontend/src/components/ui/layout/Footer.tsx

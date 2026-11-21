@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Codex GPT-6 Astra [Tier 1]
 criado_em: 2026-09-19
-commit: 9d830e7c
+commit: 871813935d0783a96c80c622092a0d1a1dbdf5c1
 classes: [interno, refatoracao, verificacao]
 caminhos:
   - agents/autonomy.py

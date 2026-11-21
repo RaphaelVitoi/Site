@@ -8,7 +8,7 @@ ecossistema: nexus-sota
 autor: Codex
 criado_em: 2026-09-12T08:56:08-03:00
 atualizado_em: 2026-09-12T08:56:08-03:00
-commit: 65e0863bc3b73c30f2b198109a69fedf6bced220
+commit: d3e2e13b6cccde3660830d02f862759769939317
 classes: [interno, handoff, calibracao, proveniencia]
 caminhos:
   - CLAUDE.md

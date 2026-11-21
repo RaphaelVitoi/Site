@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-10-28T07:10:00-03:00'
 atualizado_em: '2026-10-28T07:10:00-03:00'
-commit: f596ccfc
+commit: abc49963408d11d1ee9a87aa1d41314bce51bdca
 classes: [interno, medido, governanca, registro, performance, jules, montecarlo, sota]
 caminhos:
   - .claude/agent-memory/bolt/MEMORY.md

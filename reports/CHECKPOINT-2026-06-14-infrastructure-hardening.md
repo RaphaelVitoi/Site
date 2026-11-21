@@ -8,7 +8,7 @@ ecossistema: gemini-antigravity
 autor: chico
 criado_em: 2026-06-14T18:00-03:00
 atualizado_em: 2026-08-31T08:25-03:00
-commit: 5a9f8c86
+commit: 004b98008b1c0e834bd8a874e36a7c01af7218e8
 classes: [interno, historico]
 caminhos:
   - CLAUDE.md

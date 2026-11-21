@@ -6,7 +6,7 @@ ecossistema: gemini-antigravity
 autor: claude@opus-5
 criado_em: 2026-08-29T11:00-03:00
 atualizado_em: 2026-08-30T13:10-03:00
-commit: 243df2c7
+commit: 2dac2ae3d0edeb37201d820e4124660fd3268098
 classes: [interno]
 decide: veredito dos tres orfaos da pendencia 5 -- um ligado, dois removidos
 caminhos:

@@ -6,7 +6,7 @@ ecossistema: nexus-sota
 autor: Gemini 3.8 Flash <noreply@google.com>
 criado_em: '2026-11-08T15:13:00-03:00'
 atualizado_em: '2026-11-08T15:13:00-03:00'
-commit: f746c65b
+commit: 563a4e1e2e8c405283e19689f6d220508067fb73
 classes: [interno, handoff, governanca, qualidade, devops]
 caminhos:
   - reports/REGISTRO-2026-11-08-otimizacao-backend-sonarlint-pyright-e-headings.md
