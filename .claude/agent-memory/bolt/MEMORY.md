@@ -9,7 +9,7 @@ updated_at: 2026-10-30
 # MEMORIA SIMBIOTICA - @bolt
 
 > **Status:** Ativo | **Aura:** `gold` | **Origem:** Google Jules, cron noturno ~03:20 UTC
-> **Modelo Ativo:** `Gemini 3.1 Pro` (preferência oficial em jules.google.com/settings/general)
+> **Modelo Ativo:** `Gemini 3.8 Flash` (preferência oficial em jules.google.com/settings/general; `Gemini 3.1 Pro` descontinuado em 2026-11-21)
 > **Padrões:** ``#reflexao`` - Otimização sem medição é aposta. Um número medido
 > precede qualquer diff, e refutar uma hipótese é entrega tão válida quanto
 > aplicar um patch.
@@ -100,24 +100,30 @@ Origem: sessão Jules `11400860485353364937` (PR #103 homologada localmente). Ex
   4. **Entrega por Refutação (§10.1):** O Gemini 3.1 Pro deve medir baseline antes de gerar qualquer diff. Se a melhoria projetada for inferior a 5% ou degradar legibilidade/manutenibilidade, a hipótese deve ser **refutada e arquivada** no resumo da sessão, encerrando com sucesso sem criar Pull Request.
 
 ## 2026-11-08 - [SOTA FIX: Quantum Engine reference stability]
+
 **Learning:** `useQuantumEngine` was returning a new object on every render because the return object was not memoized, causing child components wrapped in `React.memo` to unnecessarily re-render on every tick.
 **Action:** Wrapped the returned object in `useMemo` with all exported variables in the dependency array. Benchmarked that child re-renders correctly dropped from 1001 down to 1.
 
 ## 2026-11-08 - [SOTA FIX: CI quality gate failure due to orphaned submodule]
+
 **Learning:** The GitHub CI check `.github/workflows/sota-ci.yml` contains a rigid requirement that `declared_paths` in `.gitmodules` must strictly match the `gitlink_paths` (the submodules actually checked into git tree). If a submodule folder is deleted without removing it from `.gitmodules`, the check `test "$declared_paths" = "$gitlink_paths"` will fail, breaking the CI pipeline.
 **Action:** Removed the leftover `skills/superpowers` entry from `.gitmodules` so that the declared paths match the actual `160000` gitlink tree objects, successfully fixing the CI pipeline.
 
 ## 2026-11-09 - [SOTA FIX: 13x13 Range Matrix Cell Precomputation]
+
 **Learning:** In `RangeMatrix.tsx`, rendering 169 cells inside nested loops without memoization recalculated `evaluateHandDetail`, `getCellColorAndBorder`, and `calculateReverseRequiredFoldEquity` on every mouse hover or selection update, causing high main-thread latency during user interaction.
 **Action:** Precomputed the 169 grid cell objects into a single `useMemo` array (`memoizedGridCells`) keyed by `[shoveProfile, activeRp, displayMode, getCellColorAndBorder]`. Benchmarking confirmed a ~97.0% reduction in CPU execution time across repeated hover/selection renders (from 189.57ms to 5.75ms per 1000 renders).
 
 ## 2026-11-12 - [SOTA FIX: Precomputing 169-Hand Table for computeRangeMatrixSummary]
+
 **Learning:** `computeRangeMatrixSummary` was executing 169 iterations of dynamic hand string concatenation, string suffix checks (`endsWith`), and redundant calls to `calculateRequiredEquity` inside `evaluateHandDetail` on every invocation (such as when the user adjusts the Risk Premium slider).
 **Action:** Precomputed a static array `PRECOMPUTED_169_HANDS` at module load containing all 169 distinct hands with their combo counts and equities mapped per `ShoveProfile`. Refactored `computeRangeMatrixSummary` to iterate directly over this precomputed array (Jules session `851230776058455615`, PR #129). PR #129 VM benchmark reported ~74.7% reduction (`0.2112ms -> 0.0533ms`, ~3.96x) while JSDoc noted ~68.8% (~3.2x).
 
 ## 2026-11-14 - [SOTA EVOLUTION: TypedArrays 169-Hand + Rescue/Hardening da Sessão Jules 13241553649172672587]
+
 **Learning:** (1) Mesmo após o PR #129, o loop de `computeRangeMatrixSummary` ainda fazia 169× `(equity - requiredEquity).toFixed(1)` + `Number()`, além de `RangeMatrix.tsx` chamar `evaluateHandDetail` 169× e `calculateReverseRequiredFoldEquity` 338× por mudança de `activeRp`. (2) Na sessão `13241553649172672587` (travada em `AWAITING_USER_FEEDBACK` desde 2026-11-10 antes do modo read-only do Jules em 2026-11-11), remover `multiwayTensorRef` das deps de `useQuantumEngine` sem estabilizar callbacks do pai (`MasterSimulator.tsx` inline `onAggressionChange`) e 6 closures inline em `NashPanel.tsx` anularia o bailout de `React.memo`.
 **Action:**
+
 - **Evolução `holdemEquities.ts` + `RangeMatrix.tsx`:** Introduzidos `HAND_COMBOS_169` (`Uint8Array`), `PROFILE_EQUITY_TENTHS` (`Record<ShoveProfile, Int16Array>`), `PRECOMPUTED_HAND_INDEX` (`Map`) e `evaluateRangeMatrixCells` (uma única chamada de `calculateRequiredEquity` por grade 169); em `RangeMatrix.tsx`, `feReqByCell` passou a ser memoizado apenas por `[shoveProfile]`. Benchmark medido neste host (20.000 iterações de `computeRangeMatrixSummary`): `master=3252.41ms`, `PR #129=651.41ms`, `TypedArray=19.02ms` (**170.99x** vs `master`, **34.25x** vs PR #129), com `0` divergências em 1.820 combinações `(perfil, RP, spot)`. Em `evaluateRangeMatrixCells` (2.000 grades completas = 338.000 mãos): `232.92ms -> 38.09ms` (**6.12x**).
 - **Resgate & Hardening `useQuantumEngine.ts` + `NashPanel.tsx` + `MasterSimulator.tsx`:** Removido `multiwayTensorRef` apenas do array de dependências do `useMemo` final de `useQuantumEngine.ts` (preservado no objeto retornado e mantido `JSON.stringify(streetFreqs)` conforme Target Lock §10.3); envolto `NashPanel` em `React.memo` com `handleActionFreqChange` em `useCallback`; criado `handleAggressionChange` em `MasterSimulator.tsx` em `useCallback` sem `setAggressionFactor` redundante.
 - **Bridge `engine/jules_bridge.py`:** Corrigido `get_activities` para paginar integralmente via `nextPageToken` (a sessão `13241553649172672587` possui 111 atividades e era truncada em 50).

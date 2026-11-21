@@ -166,7 +166,7 @@ def test_extrair_texto_ignora_thought_block() -> None:
 
 @pytest.mark.parametrize(
     "modelo",
-    ["gemini-4-argon", "gemini-4-carbon", "gemini-4-hydrogen", "gemini-3.1-pro-preview", "gemini-pro-latest"],
+    ["gemini-4-argon", "gemini-4-carbon", "gemini-4-neon", "gemini-4-hydrogen"],
 )
 def test_build_gemini_payload_modernos_omitem_temperature_e_ativam_thinking(modelo: str) -> None:
     payload = _build_gemini_payload(

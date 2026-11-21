@@ -477,8 +477,10 @@ orchestrator = HybridOrchestrator(local_llama_client, gemini_cloud_client, analy
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     local_llama_client.start()
-    yield
-    await local_llama_client.close()
+    try:
+        yield
+    finally:
+        await local_llama_client.close()
 
 
 logger = logging.getLogger("hybrid_router")

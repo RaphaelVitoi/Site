@@ -19,6 +19,7 @@ Protocolo Chico SOTA v8.0 GOLD -- Tipagem Estrita PEP 585/604 & Zero-Any.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 import math
 from typing import Final
@@ -557,4 +558,66 @@ class JandaStreetBluffValueRatio:
             turn_bluff_percentage=round(pct_turn * 100.0, 2),
             flop_bluff_to_value_ratio=round(r_flop, 4),
             flop_bluff_percentage=round(pct_flop * 100.0, 2),
+        )
+
+
+# ==============================================================================
+# 3. SCIPY HIGHS LP: EQUILIBRIO DE NASH EXATO EM JOGOS DE SOMA ZERO
+# ==============================================================================
+
+
+@dataclass(frozen=True, slots=True)
+class ZeroSumNashResult:
+    """Resultado do equilibrio minimax de Nash para o jogador-linha em matriz soma zero."""
+
+    game_value: float
+    row_strategy: tuple[float, ...]
+    solver_status: int
+
+
+class ScipyNashMatrixSolver:
+    """Resolve estrategias mistas de equilibrio de Nash em jogos matriciais via SciPy HiGHS LP."""
+
+    @staticmethod
+    def solve_zero_sum(payoff_matrix: Sequence[Sequence[float]]) -> ZeroSumNashResult:
+        """Calcula a estrategia otima minimax do jogador-linha e o valor exato do jogo."""
+        if not payoff_matrix or not payoff_matrix[0]:
+            raise ValueError("payoff_matrix must be a non-empty 2D matrix")
+        num_cols = len(payoff_matrix[0])
+        if any(len(row) != num_cols for row in payoff_matrix):
+            raise ValueError("payoff_matrix rows must have uniform length")
+
+        try:
+            import numpy as np  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+            from scipy.optimize import linprog  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+        except ImportError as exc:
+            raise ImportError("scipy/numpy nao estao instalados. Instale com 'uv sync --extra pmev'.") from exc
+
+        matrix = np.asarray(payoff_matrix, dtype=np.float64)
+        if not np.all(np.isfinite(matrix)):
+            raise ValueError("payoff_matrix entries must be finite")
+
+        num_rows, num_cols = matrix.shape
+        shift = max(0.0, float(-np.min(matrix))) + 1.0
+        shifted = matrix + shift
+
+        # min sum(y_i) s.t. -M^T y <= -1, y >= 0  =>  V' = 1 / sum(y_i), x = y * V'
+        c_vec = np.ones(num_rows, dtype=np.float64)
+        a_ub = -shifted.T
+        b_ub = -np.ones(num_cols, dtype=np.float64)
+        result = linprog(c_vec, A_ub=a_ub, b_ub=b_ub, bounds=(0.0, None), method="highs")
+        if not result.success or result.x is None:
+            raise RuntimeError(f"SciPy HiGHS LP failed to converge: {result.message}")
+
+        y_sum = float(np.sum(result.x))
+        if y_sum <= 0.0 or not math.isfinite(y_sum):
+            raise RuntimeError("Invalid LP dual normalization in zero-sum Nash solver")
+
+        shifted_value = 1.0 / y_sum
+        strategy = np.clip(result.x * shifted_value, 0.0, 1.0)
+        strategy /= float(np.sum(strategy))
+        return ZeroSumNashResult(
+            game_value=float(shifted_value - shift),
+            row_strategy=tuple(float(p) for p in strategy),
+            solver_status=int(result.status),
         )

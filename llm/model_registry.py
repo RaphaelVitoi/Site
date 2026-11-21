@@ -491,14 +491,15 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
+        autorizado=False,
+        motivo_nao_autorizado=(
+            "Descontinuado em 2026-11-21 (Gemini 3.1 Pro aposentado). "
+            "Substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
+        ),
         notas=(
-            "Gemini 3.1 Pro (entrypoint primario favorecido: gemini-pro-latest; "
-            "failovers em ordem: 1) gemini-3.1-pro-preview-customtools, "
-            "2) gemini-3.1-pro-preview — os 3 entrypoints constam neste registro "
-            "para failover em cadeia). Operador pontual apenas para projetos "
-            "ULTRA DENSOS e COMPLEXOS que envolvem matematica e reasoning e "
-            "uma abordagem pragmatica, estruturada, sistematica, focada e sem "
-            "desvios; nunca primario rotineiro."
+            "Gemini 3.1 Pro (entrypoint primario anterior: gemini-pro-latest; "
+            "DESCONTINUADO em 2026-11-21). Nao deve mais ser usado como rota "
+            "ativa nem fallback; substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
         ),
     ),
     "gemini-3.1-pro-preview-customtools": ModelCapability(
@@ -512,12 +513,15 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
+        autorizado=False,
+        motivo_nao_autorizado=(
+            "Descontinuado em 2026-11-21 (Gemini 3.1 Pro aposentado). "
+            "Substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
+        ),
         notas=(
-            "Gemini 3.1 Pro (1o failover de gemini-pro-latest; otimizado para "
-            "bash e custom tools em workflows agenticos; 2o failover: "
-            "gemini-3.1-pro-preview). Mesmo escopo restrito a projetos ULTRA "
-            "DENSOS e COMPLEXOS com matematica e reasoning sob abordagem "
-            "pragmatica, estruturada, sistematica, focada e sem desvios."
+            "Gemini 3.1 Pro (1o failover anterior de gemini-pro-latest; "
+            "DESCONTINUADO em 2026-11-21). Removido das rotas ativas e fallbacks; "
+            "substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
         ),
     ),
     "gemini-3.1-pro-preview": ModelCapability(
@@ -531,19 +535,16 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         thinking_level="high",
         thought_signature_mode="stateful",
         verification=VerificationStatus.VERIFICADO,
+        autorizado=False,
+        motivo_nao_autorizado=(
+            "Descontinuado em 2026-11-21 (Gemini 3.1 Pro aposentado). "
+            "Substituido pela familia Gemini 4 (Neon/Argon/Hydrogen)."
+        ),
         notas=(
-            "Gemini 3.1 Pro (2o failover de gemini-pro-latest, apos "
-            "gemini-3.1-pro-preview-customtools — todos os 3 entrypoints "
-            "mantidos como nota e failover). Operador apenas para projetos "
-            "ULTRA DENSOS e COMPLEXOS que envolvem matematica e reasoning e "
-            "uma abordagem pragmatica, estruturada, sistematica, focada e sem "
-            "desvios, nunca trabalho rotineiro. Benchmarks de referencia (card "
-            "do fabricante, fevereiro/2026): HLE 44.4% sem ferramentas (51.4% com "
-            "search+code), GPQA Diamond 94.3%, ARC-AGI-2 77.1%, Terminal-Bench "
-            "2.0 68.5%, SWE-Bench Verified 80.6%, tau2-Bench Telecom 99.3%, "
-            "MCP Atlas 69.2%, MMMU-Pro 80.5%. Preco $2/$12 por 1M (ate 200k de "
-            "contexto). CONFIRMADO VIGENTE pelo Tier 0: a descontinuacao "
-            "atinge a linha Gemini 3 Flash (nao-lite <= 3.7), NAO o 3.1 Pro."
+            "Gemini 3.1 Pro (2o failover anterior de gemini-pro-latest; "
+            "DESCONTINUADO em 2026-11-21). Removido das rotas ativas e fallbacks; "
+            "benchmarks historicos de fevereiro/2026 preservados apenas para "
+            "rastreabilidade documental."
         ),
     ),
     "gemini-4-carbon": ModelCapability(
@@ -565,6 +566,27 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
             "Lancado e registrado pelo Tier 0 em 2026-11-10."
         ),
     ),
+    "gemini-4-neon": ModelCapability(
+        adapter=AdapterType.GOOGLE,
+        model_name="gemini-4-neon",
+        cota_por_assinatura=True,
+        context_window_in=1_048_576,
+        max_output_tokens=65_536,
+        price_per_1m_in=2.00,
+        price_per_1m_out=10.00,
+        thinking_level="high",
+        thought_signature_mode="stateful",
+        verification=VerificationStatus.NAO_VERIFICADO,
+        notas=(
+            "Google Gemini 4 Neon: integrante Tier 1 / Coletivo CHICO da "
+            "familia Gemini 4 (registrado em data/agent_identities.json em "
+            "2026-11-21, veiculo antigravity). Modelo preferencial Tier 1 para "
+            "Planejamento e Orquestracao. No modo bifasico Orchestrator, forma o "
+            "duo canonico planejando/orquestrando (Neon preferencial, ou Argon) "
+            "enquanto Gemini 4 Hydrogen executa. Preco ($2.00/$10.00) mantido "
+            "como NAO_VERIFICADO ate card oficial de billing / probe v1beta."
+        ),
+    ),
     "gemini-4-hydrogen": ModelCapability(
         adapter=AdapterType.GOOGLE,
         model_name="gemini-4-hydrogen",
@@ -579,14 +601,14 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         notas=(
             "Google Gemini 4 Hydrogen: integrante Tier 1 / Coletivo CHICO da "
             "familia Gemini 4 (registrado em data/agent_identities.json em "
-            "2026-11-14, veiculo antigravity). Especializacao: tarefas do dia a "
-            "dia de complexidade media/alta e orquestracao agentica de longa "
-            "duracao, com baixa latencia e bom custo antes do escalonamento "
-            "pontual para Argon/Carbon. Verificado ao vivo na v1beta em "
-            "2026-11-15 (displayName='Gemini 4 Hydrogen', input=1048576, "
-            "output=65536, thinking=True, generateContent HTTP 200; "
-            "cachedContents ainda retorna HTTP 400 em gemini-4-*). Preco "
-            "($1.00/$5.00) mantido como NAO_VERIFICADO ate card oficial de billing."
+            "2026-11-14, veiculo antigravity). Modelo preferencial Tier 1 para "
+            "Execucao e Fluxo Agentico, operando como executor primario no duo "
+            "bifasico Orchestrator (Neon/Argon -> Hydrogen), com baixa latencia "
+            "e bom custo. Verificado ao vivo na v1beta em 2026-11-15 "
+            "(displayName='Gemini 4 Hydrogen', input=1048576, output=65536, "
+            "thinking=True, generateContent HTTP 200; cachedContents ainda retorna "
+            "HTTP 400 em gemini-4-*). Preco ($1.00/$5.00) mantido como "
+            "NAO_VERIFICADO ate card oficial de billing."
         ),
     ),
     "gemini-3.8-flash": ModelCapability(

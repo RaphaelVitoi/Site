@@ -8,6 +8,7 @@ from typing import Any
 from uuid import uuid4
 
 from aiohttp import web
+import orjson
 
 from engine.capability_registry import load_engine_capability_manifest
 
@@ -23,7 +24,10 @@ async def read_json_object(
 ) -> tuple[dict[str, Any] | None, web.Response | None]:
     """Lê e valida que o corpo da requisicao e um objeto JSON (dict), retornando 400 caso contrario."""
     try:
-        data = await request.json()
+        if isinstance(request, web.BaseRequest) and "json" not in getattr(request, "__dict__", {}):
+            data = await request.json(loads=orjson.loads)
+        else:
+            data = await request.json()
     except Exception:
         body: dict[str, Any] = (
             {"status": "ERROR", "error": INVALID_JSON_BODY} if error_envelope else {"error": INVALID_JSON_BODY}

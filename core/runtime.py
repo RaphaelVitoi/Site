@@ -93,6 +93,8 @@ if __name__ == "__main__":
     import logging
     import sys
 
+    from utils.event_loop import run_asyncio
+
     logging.basicConfig(
         level=logging.INFO,
         stream=sys.stdout,
@@ -101,6 +103,6 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.info("[NEXUS SOTA] Inicializando Master Core Runtime (AioHTTP / Worker)...")
     try:
-        asyncio.run(start_worker_and_api())
+        run_asyncio(start_worker_and_api())
     except KeyboardInterrupt:
         logger.info("[NEXUS SOTA] Desligamento Gracioso (SIGINT).")

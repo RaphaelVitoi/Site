@@ -8,7 +8,6 @@ from collections.abc import Sequence
 import contextlib
 from datetime import UTC, date, datetime
 import http.client
-import json
 import logging
 import math
 import os
@@ -22,6 +21,7 @@ import unicodedata
 import urllib.parse
 
 import aiofiles
+import orjson
 
 from llm.budget import GEMINI_KEYS, OPENROUTER_KEYS
 from llm.gemini import call_gemini
@@ -69,13 +69,13 @@ def _post_ollama_embed(base_url: str, model: str, inputs: list[str], timeout_s: 
     port = parsed.port or (443 if parsed.scheme == "https" else 11434)
     conn = conn_cls(parsed.hostname or "127.0.0.1", port, timeout=timeout_s)
     try:
-        payload = json.dumps({"model": model, "input": inputs}).encode("utf-8")
+        payload = orjson.dumps({"model": model, "input": inputs})
         conn.request("POST", "/api/embed", body=payload, headers={"Content-Type": "application/json"})
         resp = conn.getresponse()
         raw = resp.read().decode("utf-8")
         if resp.status != 200:
             raise RuntimeError(f"Ollama /api/embed HTTP {resp.status}: {raw}")
-        data = json.loads(raw)
+        data = orjson.loads(raw)
         embeddings = data.get("embeddings")
         if not isinstance(embeddings, list):
             raise RuntimeError("Ollama /api/embed retornou payload sem lista 'embeddings'.")
@@ -519,7 +519,7 @@ class MemoryRAG:
                     lambda m: m.group(1) if m.group(1) else "",
                     manifest_content,
                 )
-                return json.loads(manifest_content)
+                return orjson.loads(manifest_content)
         except Exception:  # noqa: BLE001
             logger.exception("[RAG] Falha ao ler ou parsear o manifesto de ingestao.")
             return {}
@@ -955,10 +955,10 @@ class MemoryRAG:
                 match = re.search(r"\[.*\]", response, re.DOTALL)
                 if match:
                     try:
-                        expanded_queries = json.loads(match.group(0))
+                        expanded_queries = orjson.loads(match.group(0))
                         if expanded_queries:
                             return [question] + expanded_queries
-                    except json.JSONDecodeError as e:
+                    except orjson.JSONDecodeError as e:
                         logger.debug(f"[RAG] Falha ao decodificar JSON na expansao de query: {e}")
         except Exception:  # noqa: BLE001
             logger.exception("[RAG] Erro inesperado na expansao de query.")
@@ -1466,7 +1466,7 @@ if __name__ == "__main__":
             print(asyncio.run(rag.sync_lance_to_chroma()))
         elif cmd == "health":
             assert rag is not None
-            print(json.dumps(asyncio.run(rag.storage_health()), ensure_ascii=False, indent=2))
+            print(orjson.dumps(asyncio.run(rag.storage_health()), option=orjson.OPT_INDENT_2).decode("utf-8"))
         elif cmd == "query" and len(sys.argv) > 2:
             assert rag is not None
             question = sys.argv[2]

@@ -175,9 +175,11 @@ class HTTPSessionManager:
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     # Inicializacao
-    yield
-    # Finalizacao
-    await HTTPSessionManager.close()
+    try:
+        yield
+    finally:
+        # Finalizacao
+        await HTTPSessionManager.close()
 
 
 app = FastAPI(

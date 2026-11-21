@@ -5,7 +5,6 @@ from collections.abc import Iterable
 import contextlib
 from datetime import UTC, datetime, timedelta
 import gc
-import json
 import logging
 import os
 from pathlib import Path
@@ -17,6 +16,7 @@ import uuid
 import weakref
 
 import aiosqlite
+import orjson
 
 import core.config as _core_config
 from core.schemas import Task
@@ -400,7 +400,7 @@ class QueueManager:
                     task.agent,
                     task.model,
                     task.metadata.get("priority", "normal") if task.metadata else "normal",
-                    json.dumps(task.metadata, ensure_ascii=True) if task.metadata else "{}",
+                    orjson.dumps(task.metadata).decode("utf-8") if task.metadata else "{}",
                     task.completedAt,
                 ),
             )
@@ -579,8 +579,8 @@ class QueueManager:
             current = {}
             if row["metadata"]:
                 try:
-                    current = json.loads(row["metadata"])
-                except json.JSONDecodeError:
+                    current = orjson.loads(row["metadata"])
+                except orjson.JSONDecodeError:
                     logger.exception(
                         "[DAL] Entropia semantica detectada: Corrupcao JSON na tarefa %s",
                         task_id,
@@ -593,7 +593,7 @@ class QueueManager:
             await db.execute(
                 "UPDATE tasks SET metadata = ?, priority = ? WHERE id = ?",
                 (
-                    json.dumps(updated, ensure_ascii=True),
+                    orjson.dumps(updated).decode("utf-8"),
                     updated.get("priority", current.get("priority", "normal")),
                     task_id,
                 ),
@@ -991,7 +991,6 @@ class QueueManager:
         """Consulta em lote estatisticas recentes de todas as chaves de um provider (1 query SQL)."""
         if not key_hashes:
             return {}
-        import json  # noqa: PLC0415
 
         cutoff = (datetime.now(UTC) - timedelta(minutes=window_minutes)).isoformat()
         query = (
@@ -1005,7 +1004,7 @@ class QueueManager:
         )
         async with self._get_async_db() as db:
             db.row_factory = sqlite3.Row
-            async with db.execute(query, (provider, cutoff, json.dumps(key_hashes))) as cursor:
+            async with db.execute(query, (provider, cutoff, orjson.dumps(key_hashes).decode("utf-8"))) as cursor:
                 rows = await cursor.fetchall()
 
         empty = {"attempts": 0, "successes": 0, "failures": 0, "avg_latency_ms": None, "avg_tokens": None}
@@ -1285,17 +1284,18 @@ class QueueManager:
 
     def _row_to_task(self, row: sqlite3.Row) -> Task:
         """Deserializa uma linha do banco em um objeto Task."""
+        row_data: dict[str, Any] = dict(zip(row.keys(), row, strict=True))
         metadata = {}
-        if row["metadata"]:
+        if row_data["metadata"]:
             try:
-                metadata = json.loads(row["metadata"])
-            except json.JSONDecodeError:
+                metadata = orjson.loads(row_data["metadata"])
+            except orjson.JSONDecodeError:
                 logger.exception(
                     "[DAL] Entropia semantica extrema: Impossivel decodificar a carga JSON para a tarefa %s",
-                    row["id"],
+                    row_data["id"],
                 )
 
-        agent_name = row["agent"]
+        agent_name = row_data["agent"]
         # SOTA: Resolucao Retroativa. @seo anexado por @curator.
         legacy_agents = {"@seo": "@curator"}  # pylint: disable=line-too-long
         if agent_name in legacy_agents:
@@ -1311,16 +1311,15 @@ class QueueManager:
             )
             agent_name = "@chico"
 
-        row_keys = row.keys()
-        task_model = row["model"] if "model" in row_keys else None
+        task_model = row_data.get("model")
 
         return Task(
-            id=row["id"],
-            description=row["description"],
-            status=row["status"],
-            timestamp=row["timestamp"],
+            id=row_data["id"],
+            description=row_data["description"],
+            status=row_data["status"],
+            timestamp=row_data["timestamp"],
             agent=agent_name,
             model=task_model,
-            completedAt=row["completedAt"],
+            completedAt=row_data["completedAt"],
             metadata=metadata,
         )

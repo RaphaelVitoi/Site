@@ -5,14 +5,12 @@
     "gemini-3.8-flash",
     "gemini-3.5-flash-lite",
     "gemini-4-hydrogen",
+    "gemini-4-neon",
     "nvidia/nemotron-3-ultra-550b-a55b:free",
     "google/gemma-4-31b-it:free",
     "inclusionai/ling-3.2-flash:free",
     "qwen2.5-coder:7b-instruct-q5_K_M",
-    "gemma4:e4b",
-    "gemini-pro-latest",
-    "gemini-3.1-pro-preview-customtools",
-    "gemini-3.1-pro-preview"
+    "gemma4:e4b"
   ],
   "fast_operations": [
     "gemini-3.5-flash-lite",
@@ -24,7 +22,7 @@
     "gemini-3.8-flash"
   ],
   "routing_config": {
-    "last_updated": "2026-10-20",
+    "last_updated": "2026-11-21",
     "version": "2.0-SOTA-GOLD",
     "environment": "production",
     "routing_logic": "weighted_round_robin",

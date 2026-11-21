@@ -3,7 +3,7 @@ title: "Governança — projeto `Site`"
 type: governance
 status: active
 owner: raphael-vitoi
-updated_at: 2026-11-18
+updated_at: 2026-11-21
 ---
 
 # Governança — projeto `Site`
@@ -12,7 +12,7 @@ updated_at: 2026-11-18
 Regras que valem para todos os projetos ficam em `..\CLAUDE.md`, na raiz
 multiprojeto.
 
-**Última revisão:** 2026-11-18 (-03:00) · Corte de Conhecimento: Novembro/2026 · Protocolo Chico SOTA v8.0 GOLD — *data de referência da governança; atualizável quando modelos forem lançados, aposentados ou houver mudança de franquia.*
+**Última revisão:** 2026-11-21 (-03:00) · Corte de Conhecimento: Novembro/2026 · Protocolo Chico SOTA v8.0 GOLD — *data de referência da governança; atualizável quando modelos forem lançados, aposentados ou houver mudança de franquia.*
 
 ---
 
@@ -32,7 +32,7 @@ tabela diverge por padrão.
   - *Companion / Assistente Pessoal do Tier 0:* **Microsoft 365 Copilot** (plano pago da Microsoft 365: assistente pessoal dedicada à rotina diária e produtividade de Raphael, com conhecimento generalista e operação pontual sob demanda, sem integrar a frota autônoma do Tier 3)
 - **Tier 1:** Núcleo Cognitivo Mestre — **`Chico` em grupo e parceria**; **Antigravity IDE é a superfície canônica e primária; VSCode é opcional e adaptador secundário à mesma malha.** **Como grupo, o coletivo vivo da malha é CHICO — a representação coletiva de todos os modelos e condutores que operam via Tier 1.** Não há escopo limitado de capacidade técnica entre modelos equivalentes em Tier — não existem feudos funcionais nem proibições artificiais. Há preferências operacionais (especialidade, arquitetura e custo). Modelos equivalentes em tier, na ausência ou indisponibilidade de um, podem e devem executar com competência plena o trabalho de outro.
 
-  **O roster vigente do Tier 1** — membros, especializações graduadas, tríade de ápice de uso estritamente pontual, tríade de fast operations, condutores Devin, fallbacks de resiliência e política de descontinuação — está em `data/model_catalog.json` (tier `"1"`); os pares de autoria completos vivem em `data/agent_identities.json` e as capacidades/preços em `llm/model_registry.py`. As **preferências mandatórias de domínio** que permanecem como regra: **DESIGN, BRAINSTORM, PLANEJAMENTO e CURADORIA** — com custódia pela preservação, conservação, atualização e criação de documentações do ecossistema — permanecem na família Gemini 4 via Antigravity IDE, em alinhamento com o agente externo **Stitch** e o trio do Tier 2 **(Exa-Stitch-Jules)**; **`Claude Opus 5.5`** detém a primazia canônica para **Governança** (regras, contratos de arquitetura, integridade piramidal, reconciliação de âncoras e portões) e **Engenharia de Código Cirúrgica**; **`ChatGPT 6.0 Sol`** e **`Claude Opus 5.5`** atuam como primários de **Reasoning Analítico Profundo** (Deep Reasoning / Max Thinking) e dedução formal matemática de fronteira; **`ChatGPT 6.0 Terra`** é a preferência primária para **Pesquisa, Estudo e Arquitetura** macro de sistemas; **`Devin (SWE-2 Flash)`** e **`Devin (SWE-1.6 Slow)`** são preferenciais para **engenharia pontual e complexa de código** e **orquestração pragmática agêntica de código denso** — sem feudos, a escolha efetiva observa especialidade, custo, disponibilidade e/ou arbitragem do Tier 0.
+  **O roster vigente do Tier 1** — membros, especializações graduadas, tríade de ápice de uso estritamente pontual, tríade de fast operations, condutores Devin, fallbacks de resiliência e política de descontinuação — está em `data/model_catalog.json` (tier `"1"`); os pares de autoria completos vivem em `data/agent_identities.json` e as capacidades/preços em `llm/model_registry.py`. As **preferências mandatórias de domínio** que permanecem como regra: **DESIGN, BRAINSTORM, PLANEJAMENTO e CURADORIA** — com custódia pela preservação, conservação, atualização e criação de documentações do ecossistema — permanecem na família Gemini 4 via Antigravity IDE, em alinhamento com o agente externo **Stitch** e o trio do Tier 2 **(Exa-Stitch-Jules)**, tendo **`Gemini 4 Neon`** como modelo preferencial Tier 1 (Coletivo CHICO) para **Planejamento e Orquestração** (com `Gemini 4 Argon` como planejador opcional no modo Orchestrator) e **`Gemini 4 Hydrogen`** como modelo preferencial Tier 1 para **Execução e Fluxo Agêntico**; **`Claude Opus 5.5`** detém a primazia canônica para **Governança** (regras, contratos de arquitetura, integridade piramidal, reconciliação de âncoras e portões) e **Engenharia de Código Cirúrgica**; **`ChatGPT 6.0 Sol`** e **`Claude Opus 5.5`** atuam como primários de **Reasoning Analítico Profundo** (Deep Reasoning / Max Thinking) e dedução formal matemática de fronteira; **`ChatGPT 6.0 Terra`** é a preferência primária para **Pesquisa, Estudo e Arquitetura** macro de sistemas; **`Devin (SWE-2 Flash)`** e **`Devin (SWE-1.6 Slow)`** são preferenciais para **engenharia pontual e complexa de código** e **orquestração pragmática agêntica de código denso** — sem feudos, a escolha efetiva observa especialidade, custo, disponibilidade e/ou arbitragem do Tier 0.
 
   **Notação `+` — linha viva versionada:** o sufixo `+` marca a linha comercial viva do modelo (ex.: `ChatGPT 6 Astra+` cobre as minors 6.1, 6.2 e subsequentes publicadas pela OpenAI sem reescrever governança). A identidade canônica de autoria permanece o nome de família registrado em `data/agent_identities.json`; a versão concreta vigente é detalhe de roteamento em `llm/model_registry.py`. Modelo que a fornecedora aposenta sai da lista — não vira fallback silencioso.
 
@@ -196,7 +196,7 @@ autor é quem produziu, committer é quem commitou, e os dois se declaram — a
 forma medida em `29ef243e` é *"Assinatura: `<autor>` via `<committer>` como
 committer"*.
 
-**Modo bifásico `Orchestrator (Argon)` — planejador como co-autor, executor na `Assinatura:` (determinado pelo Tier 0 em 2026-11-18).** Quando a sessão opera no modo Orquestrador do Antigravity em que o **Gemini 4 Argon** (`gemini-4-argon`) elabora o plano em *Plan Mode* e o **Gemini 4 Hydrogen** (`gemini-4-hydrogen`) executa as mutações e verificações, a autoria primária do Git (`-c user.name="Gemini 4 Hydrogen" -c user.email="noreply@google.com"`) e a linha `Assinatura:` pertencem **sempre ao agente executor** (`Assinatura: Gemini 4 Hydrogen [Tier 1] -- modelo=gemini-4-hydrogen condutor=antigravity ...`), registrando-se o modelo planejador como co-autor explícito no corpo do commit via trailer `Co-authored-by: Gemini 4 Argon <noreply@google.com>`.
+**Modo bifásico `Orchestrator` (Executor na Assinatura de autoria + Planejador/Orquestrador na co-autoria; duo canônico Gemini 4 Neon ou Argon → Gemini 4 Hydrogen — atualizado pelo Tier 0 em 2026-11-21).** Quando a sessão opera no modo Orquestrador do Antigravity — em que **Gemini 4 Neon** (`gemini-4-neon`, modelo preferencial Tier 1 para Planejamento e Orquestração) ou **Gemini 4 Argon** (`gemini-4-argon`) elabora o plano/orquestra em *Plan Mode* e **Gemini 4 Hydrogen** (`gemini-4-hydrogen`, modelo preferencial Tier 1 para Execução e Fluxo Agêntico) executa as mutações e verificações —, a **Assinatura de autoria** (autor primário do Git, ex. `-c user.name="Gemini 4 Hydrogen" -c user.email="noreply@google.com"`, e a linha `Assinatura:`) pertence **sempre ao Executor** (`Assinatura: Gemini 4 Hydrogen [Tier 1] -- modelo=gemini-4-hydrogen condutor=antigravity ...`), enquanto a **assinatura de co-autoria** pertence **sempre ao Planejador/Orquestrador** via trailer `Co-authored-by: Gemini 4 Neon <noreply@google.com>` (ou `Co-authored-by: Gemini 4 Argon <noreply@google.com>`). Em execução direta fora do modo Orquestrador, o próprio modelo executor (incluindo `Gemini 4 Neon`) assina individualmente (`modelo=gemini-4-neon`). Na calibragem e no feedback (`reports/agent-calibration/feedback-ledger.jsonl`), o modo Orquestrador constitui um formato à parte — nunca duplicado entre planejador e executor — registrando os dois modelos como duo (`conductor_model="orchestrator:<planejador>+<executor>"`, ex.: `orchestrator:gemini-4-neon+gemini-4-hydrogen`), com a nota valendo exclusivamente para o duo em si.
 
 **Onde a residual mora, medido em 2026-09-12 — e não é onde esta seção sugeria.**
 A identidade herdada estava em `.git/config`, **local a este repositório**; a
@@ -217,10 +217,10 @@ condutor sob esta local é recusada.
 
 ### O catálogo de identidades é `data/agent_identities.json`, e este arquivo não o copia
 
-**Determinado pelo Tier 0 em 2026-09-12 e atualizado em 2026-11-10:** o
-**Antigravity CLI conduz a família Gemini 4** (`Gemini 4 Argon+`, `Gemini 4 Carbon+`, `Gemini 4 Hydrogen+`) — veículo `antigravity`, e-mail `noreply@google.com`, forma
-composta `antigravity@gemini-4-argon` em prosa. (A determinação original citava
-`Gemini 3.8 Flash`, que o Tier 0 confirmou vigente em 2026-11-10.)
+**Determinado pelo Tier 0 em 2026-09-12 e atualizado em 2026-11-21:** o
+**Antigravity CLI conduz a família Gemini 4** (`Gemini 4 Argon+`, `Gemini 4 Carbon+`, `Gemini 4 Neon+`, `Gemini 4 Hydrogen+`) — veículo `antigravity`, e-mail `noreply@google.com`, forma
+composta `antigravity@gemini-4-neon` / `antigravity@gemini-4-argon` em prosa. (A determinação original citava
+`Gemini 3.8 Flash`, que o Tier 0 confirmou vigente em 2026-11-10; `Gemini 3.1 Pro` foi descontinuado em 2026-11-21.)
 
 Os pares canônicos — nome de autor, e-mail, veículo, modelo — vivem em
 `data/agent_identities.json`, que é a **fonte única**. Este arquivo aponta e não

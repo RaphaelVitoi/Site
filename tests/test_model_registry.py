@@ -203,9 +203,8 @@ def test_gemini_36_flash_limite_de_saida_e_preco():
 
 
 def test_gemini_37_nao_autorizado_e_38_flash_verificado():
-    """3.7 permanece catalogado como retirado; 3.8 e a rota vigente —
-    o Tier 0 confirmou em 2026-11-10 que a descontinuacao atinge 3.7-flash
-    e abaixo na familia flash, NAO o 3.8 nem o 3.5-flash-lite/3.1-pro."""
+    """3.7 e 3.1-pro permanecem catalogados como retirados; 3.8 e 3.5-flash-lite
+    seguem vigentes (Gemini 3.1 Pro descontinuado em 2026-11-21)."""
     g37 = get("gemini-3.7-flash")
     g38 = get("gemini-3.8-flash")
     assert g37.verification == VerificationStatus.VERIFICADO
@@ -214,9 +213,22 @@ def test_gemini_37_nao_autorizado_e_38_flash_verificado():
     assert g38.autorizado is True
     assert g38.max_output_tokens == 65_536
     assert get("gemini-3.5-flash-lite").autorizado is True
-    assert get("gemini-pro-latest").autorizado is True
-    assert get("gemini-3.1-pro-preview-customtools").autorizado is True
-    assert get("gemini-3.1-pro-preview").autorizado is True
+    assert get("gemini-pro-latest").autorizado is False
+    assert get("gemini-3.1-pro-preview-customtools").autorizado is False
+    assert get("gemini-3.1-pro-preview").autorizado is False
+
+
+def test_gemini_4_neon_registrado_e_rejeita_minimal():
+    """gemini-4-neon esta autorizado no Tier 1 e rejeita thinking_level 'minimal'."""
+    from llm.routing_policy import GEMINI_4_NEON
+
+    g4n = get(GEMINI_4_NEON)
+    assert g4n.autorizado is True
+    assert g4n.cota_por_assinatura is True
+    req = GoogleGenAIAdapter.build(GEMINI_4_NEON, USUARIO)
+    assert req["model"] == "gemini-4-neon"
+    with pytest.raises(ParametroRejeitadoError, match="minimal"):
+        GoogleGenAIAdapter.build_http(GEMINI_4_NEON, USUARIO, thinking_level="minimal")
 
 
 def test_gemini_38_flash_nao_aceita_minimal():

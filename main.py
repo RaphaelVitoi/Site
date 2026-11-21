@@ -13,6 +13,7 @@ import logging
 
 from api.v1.server import start_api_server
 from database.queue_manager import QueueManager
+from utils.event_loop import run_asyncio
 from worker.startup import _silence_proactor_reset
 
 
@@ -28,4 +29,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    run_asyncio(main())

@@ -238,3 +238,37 @@ def test_campo_ausente_nao_e_reportado_tambem_como_invalido():
     assert motivos == sorted(set(motivos), key=motivos.index), f"motivo duplicado: {motivos}"
     assert "missing:supervision_mode" in motivos
     assert "invalid:supervision_mode" not in motivos
+
+
+@pytest.mark.parametrize(
+    "duo",
+    [
+        "orchestrator:gemini-4-neon+gemini-4-hydrogen",
+        "orchestrator:gemini-4-argon+gemini-4-hydrogen",
+    ],
+)
+def test_orchestrator_duo_accepted_and_recorded_once(tmp_path: Path, duo: str) -> None:
+    """Modo Orquestrador registra feedback unico para o duo planejador+executor."""
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    result = write_feedback(ledger, ConductorModel=duo, ConductorVehicle="antigravity")
+    assert result.returncode == 0, result.stderr
+    rows = [json.loads(line) for line in ledger.read_text(encoding="utf-8").splitlines() if line.strip()]
+    assert len(rows) == 2  # genesis + 1 feedback do duo
+    assert rows[-1]["conductor_model"] == duo
+    assert rows[-1]["conductor_vehicle"] == "antigravity"
+
+
+@pytest.mark.parametrize(
+    ("duo", "vehicle"),
+    [
+        ("orchestrator:gemini-4-neon+unknown-1", "antigravity"),
+        ("orchestrator:gemini-4-neon+gemini-4-neon", "antigravity"),
+        ("orchestrator:gemini-4-neon+gemini-4-hydrogen", "codex"),
+    ],
+)
+def test_orchestrator_duo_invalido_rejeitado_sem_gravar(tmp_path: Path, duo: str, vehicle: str) -> None:
+    """Duos invalidos, duplicados ou com conector divergente devem falhar fechados."""
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    result = write_feedback(ledger, ConductorModel=duo, ConductorVehicle=vehicle)
+    assert result.returncode != 0
+    assert not ledger.exists()

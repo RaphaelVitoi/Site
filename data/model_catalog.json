@@ -132,7 +132,7 @@
           "modelo": "gemini-4-argon",
           "identidade": "Gemini 4 Argon",
           "status": "vigente",
-          "preferencia": "Apice Tier 1 — Codigo e Reasoning de Elite; uso pontual",
+          "preferencia": "Apice Tier 1 — Codigo e Reasoning de Elite; uso pontual (e planejador opcional no modo Orchestrator ao lado de Neon)",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -145,12 +145,21 @@
           "fonte": "llm/model_registry.py"
         },
         {
+          "nome": "Gemini 4 Neon+",
+          "tipo": "fronteira-api",
+          "modelo": "gemini-4-neon",
+          "identidade": "Gemini 4 Neon",
+          "status": "vigente",
+          "preferencia": "Modelo preferencial Tier 1 (Coletivo CHICO) para Planejamento e Orquestracao; planejador primario no modo bifasico Orchestrator (Neon/Argon -> Hydrogen)",
+          "fonte": "llm/model_registry.py"
+        },
+        {
           "nome": "Gemini 4 Hydrogen+",
           "tipo": "fronteira-api",
           "modelo": "gemini-4-hydrogen",
           "identidade": "Gemini 4 Hydrogen",
           "status": "vigente",
-          "preferencia": "Tarefas do dia a dia de complexidade media/alta e orquestracao agentica de longa duracao, baixa latencia e bom custo",
+          "preferencia": "Modelo preferencial Tier 1 (Coletivo CHICO) para Execucao e Fluxo Agentico; executor primario no modo bifasico Orchestrator (Neon/Argon -> Hydrogen), baixa latencia e bom custo",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -169,14 +178,6 @@
           "identidade": "Gemini 3.5 Flash-Lite",
           "status": "vigente",
           "preferencia": "Ultrarrapido, baixa latencia e economico — tria de fast operations (com Luna+ e Haiku 5.5+); CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10",
-          "fonte": "llm/model_registry.py"
-        },
-        {
-          "nome": "Gemini 3.1 Pro",
-          "tipo": "fronteira-api",
-          "modelo": "gemini-pro-latest",
-          "status": "vigente",
-          "preferencia": "PONTUAL via API, fora da identidade de autoria — projetos ULTRA DENSOS com matematica e reasoning; entrypoints em cadeia: gemini-pro-latest -> gemini-3.1-pro-preview-customtools -> gemini-3.1-pro-preview",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -216,6 +217,8 @@
       ],
       "preferencias_mandatorias": {
         "DESIGN|BRAINSTORM|PLANEJAMENTO|CURADORIA": "familia Gemini 4 via Antigravity IDE, alinhada ao trio Tier 2 (Exa-Stitch-Jules)",
+        "PLANEJAMENTO|ORQUESTRACAO": "Gemini 4 Neon (preferencial Tier 1) ou Gemini 4 Argon no modo bifasico Orchestrator",
+        "EXECUCAO|FLUXO_AGENTICO": "Gemini 4 Hydrogen (preferencial Tier 1) — executor primario no modo bifasico Orchestrator",
         "curadoria_documental": "familia Gemini 4 — preservacao, conservacao, atualizacao e criacao de documentacoes do ecossistema"
       }
     },
@@ -408,7 +411,7 @@
   "aposentados": {
     "_nota": "Politica de descontinuacao por geracao — regra vigente no CLAUDE.md §0; enumeracao verificavel em llm/model_registry.py (MODELOS_RETIRADOS) e data/ollama_models.json.",
     "familias": [
-      "Gemini 3 Flash ate geracao 3.7 (exceto gemini-3.8-flash, gemini-3.5-flash-lite e Gemini 3.1 Pro, vigentes por decisao do Tier 0)",
+      "Gemini 3 Flash ate geracao 3.7 e Gemini 3.1 Pro (descontinuado em 2026-11-21 — inclui gemini-pro-latest e gemini-3.1-pro-preview*; permanecem vigentes apenas gemini-3.8-flash e gemini-3.5-flash-lite por decisao do Tier 0)",
       "Todo Claude abaixo da geracao 5 (familia 4.x/3.x, Fable 5.1/5, claude-3-5-haiku)",
       "ChatGPT 5.6 e aliases (gpt-5.6-*, chatgpt-5.6-*)",
       "Todos os modelos Ollama :cloud (descontinuados em 2026-11-10)"

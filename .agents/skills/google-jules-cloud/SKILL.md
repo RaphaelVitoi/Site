@@ -35,7 +35,7 @@ triggers:
 > `prompt`, `title`, `sourceContext`, `requirePlanApproval` e `automationMode`. Nenhuma
 > expõe seleção de modelo.
 >
-> Para trocar o modelo do Jules, use as preferências da própria plataforma (Gemini 3.8 Flash ou Gemini 3.1 Pro).
+> Para trocar o modelo do Jules, use as preferências da própria plataforma (`Gemini 3.8 Flash`; nota: `Gemini 3.1 Pro` foi descontinuado em 2026-11-21).
 
 ### Configuração da Conta & Cotas
 

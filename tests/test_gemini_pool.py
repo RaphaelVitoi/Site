@@ -250,7 +250,7 @@ async def test_custom_agents_routing_hierarchy_in_runtime(monkeypatch):
             assert m_code.index("gemini-3.5-flash-lite") < m_code.index("gemini-3.8-flash")
 
         # Deep thinking / Reasoning (@chico, @maverick, @architect, @auditor): gemini-3.8-flash primeiro,
-        # com laguna/3.5-flash-lite antes de gemini-pro-latest
+        # com laguna/3.5-flash-lite antes de gemini-4-neon
         for agent in ("@chico", "@maverick", "@architect", "@auditor"):
             t_reason = Task(
                 id=f"T-{agent}",
@@ -261,4 +261,4 @@ async def test_custom_agents_routing_hierarchy_in_runtime(monkeypatch):
             )
             m_reason, _, _ = await _prepare_routing_pipeline(t_reason, MagicMock())
             assert m_reason[0] == "gemini-3.8-flash", f"{agent} selecionou {m_reason}"
-            assert m_reason.index("gemini-3.5-flash-lite") < m_reason.index("gemini-pro-latest")
+            assert m_reason.index("gemini-3.5-flash-lite") < m_reason.index("gemini-4-neon")

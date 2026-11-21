@@ -18,6 +18,7 @@ dependencies = [
     "fastapi>=0.165.0",
     "multidict>=7.2.1",
     "uvicorn[standard]>=0.54.0",
+    "winloop>=0.8.4; sys_platform == 'win32'",
     # ── PYDANTIC & SETTINGS ────────────────────────────────────────────
     "pydantic>=2.14.4",
     "pydantic-settings>=2.16.3",  # >=2.14.2 corrige GHSA-4xgf-cpjx-pc3j
@@ -60,11 +61,10 @@ dependencies = [
     # ── CLIENTES LLM ──────────────────────────────────────────────────
     "google-genai>=3.6.1",
     "google-antigravity>=0.1.24",
-    "openai>=3.56.0",
-    "anthropic>=2.11.0",
+    # openai/anthropic movidos para extra opcional `llm-sdks` (runtime usa aiohttp REST direto).
     "httpx>=0.28.1",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
-    "pypdf>=7.0.1,<8.0.0",  # 7.0.1: latest PyPI 2026-11-10; major release SOTA sem alertas abertos
+    "pypdf>=7.1.1,<8.0.0",  # 7.1.1: latest PyPI 2026-11-21; major release SOTA sem alertas abertos
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
     "Pillow>=13.0.0",
@@ -74,7 +74,7 @@ dependencies = [
     # ultima versao e nao levanta o teto. Zero imports no codigo.
     "regex>=2026.11.19",
     "requests>=2.34.2,<3.0.0",
-    "PyYAML>=6.0.3,<7.0.0",
+    "PyYAML>=6.0.4,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",
     "rich>=15.0.0,<16.0.0",
     "python-dateutil>=4.0.0,<5.0.0",
@@ -99,7 +99,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.5.0",
+    "laya>=0.5.1",
     "accelerate>=1.16.0",
     "timesfm[torch]==3.0.2",
     # Computer-use, OLAP e embeddings alternativos foram movidos para
@@ -139,20 +139,24 @@ dev = [
     "types-psutil>=7.2.2.20261111",
     "types-defusedxml>=0.7.0.20260504",
     "types-PyYAML>=6.0.12.20261113",
+    "hypothesis>=6.170.17",
+    "pytest-benchmark>=5.3.1",
+    "schemathesis>=4.33.4",
 ]
 
 # Dependencias extras para Teoria dos Jogos avancada, derivacao simbolica e analise de MTTs (PMev)
 pmev = [
-    "sympy>=1.13.3",
-    "numba>=0.61.0",
+    "sympy>=1.14.0",
+    "numba>=0.68.1",
     "polars>=2.1.0",
+    "scipy>=1.18.1",
 ]
 
 # Dependencias extras para observabilidade, exportacao OTLP e telemetria da malha Nexus
 monitoring = [
-    "opentelemetry-sdk>=1.30.0",
-    "opentelemetry-exporter-otlp>=1.30.0",
-    "prometheus-client>=0.21.0",
+    "opentelemetry-sdk>=1.45.2",
+    "opentelemetry-exporter-otlp>=1.45.2",
+    "prometheus-client>=0.26.0",
 ]
 
 # Dependencias extras para visao computacional multimodal e OCR lazy
@@ -165,7 +169,7 @@ vision = [
 # as skills de computer-use (.agents/skills/computer-use-local) que operam
 # sobre o venv do projeto. Instalar com: uv sync --extra computer-use
 computer-use = [
-    "opencv-python-headless>=5.0.0.93,<6.0.0",
+    "opencv-python-headless>=5.1.0.95,<6.0.0",
     "pyautogui>=0.9.54",
     "mss>=10.2.0",
     "playwright>=1.65.2",
@@ -176,7 +180,7 @@ computer-use = [
 # instalada via scikit-learn (dependencia transitiva); a declaracao direta
 # existia sem consumidor. Instalacao: uv sync --extra analytics
 analytics = [
-    "duckdb>=2.0.0",
+    "duckdb>=2.0.1",
     "pyspark>=4.3.0",
     "scipy>=1.18.1",
     "matplotlib>=3.11.2",
@@ -190,25 +194,33 @@ embeddings = [
     "sentence-transformers>=6.3.0",  # 6.3.0: latest PyPI 2026-11-11; 6.1.0 ja sanou GHSA-jhr6-gm9c-rqjv
 ]
 
+# SDKs oficiais opcionais (runtime usa aiohttp REST direto em engine/llm_api.py e llm/anthropic.py).
+llm-sdks = [
+    "openai>=3.57.0",
+    "anthropic>=2.12.0",
+]
+
 # Suite completa de extensoes opcionais
 all = [
-    "sympy>=1.13.3",
-    "numba>=0.61.0",
+    "sympy>=1.14.0",
+    "numba>=0.68.1",
     "polars>=2.1.0",
-    "opentelemetry-sdk>=1.30.0",
-    "opentelemetry-exporter-otlp>=1.30.0",
-    "prometheus-client>=0.21.0",
+    "opentelemetry-sdk>=1.45.2",
+    "opentelemetry-exporter-otlp>=1.45.2",
+    "prometheus-client>=0.26.0",
     "torchvision>=0.29.2",
-    "opencv-python-headless>=5.0.0.93,<6.0.0",
+    "opencv-python-headless>=5.1.0.95,<6.0.0",
     "pyautogui>=0.9.54",
     "mss>=10.2.0",
     "playwright>=1.65.2",
-    "duckdb>=2.0.0",
+    "duckdb>=2.0.1",
     "pyspark>=4.3.0",
     "scipy>=1.18.1",
     "matplotlib>=3.11.2",
     "seaborn>=0.13.2",
     "sentence-transformers>=6.3.0",
+    "openai>=3.57.0",
+    "anthropic>=2.12.0",
 ]
 
 [dependency-groups]
@@ -233,6 +245,9 @@ dev = [
     "types-psutil>=7.2.2.20261111",
     "types-defusedxml>=0.7.0.20260504",
     "types-PyYAML>=6.0.12.20261113",
+    "hypothesis>=6.170.17",
+    "pytest-benchmark>=5.3.1",
+    "schemathesis>=4.33.4",
 ]
 
 # ==============================================================================
@@ -371,6 +386,7 @@ filterwarnings = [
     # garante que nenhum escape invalido existe no codigo proprio.
     "ignore:.*invalid escape sequence.*:SyntaxWarning",
     "ignore:unclosed database.*:ResourceWarning",
+    "ignore:Benchmarks are automatically disabled because xdist plugin is active.*:UserWarning",
 ]
 
 

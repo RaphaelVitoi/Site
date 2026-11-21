@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { fetchJson, isAbortError } from '@/lib/client-fetch';
 import { GlassPanel } from '@/components/ui/layout/GlassPanel';
 import { ContentPageHeader } from '@/components/ui/layout/ContentPageHeader';
@@ -32,6 +33,81 @@ function getFileIcon(cat: string): string {
     default:
       return 'fa-file-code text-indigo-300';
   }
+}
+
+const FILE_VIRTUALIZATION_THRESHOLD = 40;
+
+function FileTreeItemButton({
+  file,
+  isSelected,
+  onSelectFile,
+}: {
+  readonly file: FileItem;
+  readonly isSelected: boolean;
+  readonly onSelectFile: (file: FileItem) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectFile(file)}
+      className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left transition-all ${
+        isSelected
+          ? 'bg-accent-indigo/20 border-accent-indigo/40 border text-white'
+          : 'text-text-muted border border-transparent hover:bg-white/5 hover:text-white'
+      }`}
+    >
+      <div className="mr-2 flex items-center space-x-2 overflow-hidden">
+        <i className={`fa-solid ${getFileIcon(file.category)} shrink-0 text-xs`}></i>
+        <span className="block truncate text-xs">{file.name}</span>
+      </div>
+      <span className="text-text-muted shrink-0 text-[9px]">{formatSize(file.size)}</span>
+    </button>
+  );
+}
+
+function VirtualizedFileList({
+  files,
+  selectedFile,
+  onSelectFile,
+}: {
+  readonly files: readonly FileItem[];
+  readonly selectedFile: FileItem | null;
+  readonly onSelectFile: (file: FileItem) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const virtualizer = useVirtualizer({
+    count: files.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 32,
+    overscan: 8,
+  });
+
+  return (
+    <div ref={scrollRef} className="max-h-96 overflow-y-auto pr-1">
+      <div className="relative w-full" style={{ height: `${virtualizer.getTotalSize()}px` }}>
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const file = files[virtualRow.index];
+          if (!file) return null;
+          return (
+            <div
+              key={file.path}
+              className="absolute top-0 left-0 w-full"
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              <FileTreeItemButton
+                file={file}
+                isSelected={selectedFile?.path === file.path}
+                onSelectFile={onSelectFile}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 interface FileExplorerTreeProps {
@@ -107,28 +183,21 @@ function FileExplorerTree({
               <div className="mt-1 ml-3 space-y-1 border-l border-white/5 pl-4">
                 {files.length === 0 ? (
                   <span className="text-text-muted block py-1 pl-2 text-[10px]">Nenhum arquivo encontrado</span>
+                ) : files.length > FILE_VIRTUALIZATION_THRESHOLD ? (
+                  <VirtualizedFileList
+                    files={files}
+                    selectedFile={selectedFile}
+                    onSelectFile={onSelectFile}
+                  />
                 ) : (
-                  files.map((file) => {
-                    const isSelected = selectedFile?.path === file.path;
-                    return (
-                      <button
-                        key={file.path}
-                        type="button"
-                        onClick={() => onSelectFile(file)}
-                        className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left transition-all ${
-                          isSelected
-                            ? 'bg-accent-indigo/20 border-accent-indigo/40 border text-white'
-                            : 'text-text-muted border border-transparent hover:bg-white/5 hover:text-white'
-                        }`}
-                      >
-                        <div className="mr-2 flex items-center space-x-2 overflow-hidden">
-                          <i className={`fa-solid ${getFileIcon(file.category)} shrink-0 text-xs`}></i>
-                          <span className="block truncate text-xs">{file.name}</span>
-                        </div>
-                        <span className="text-text-muted shrink-0 text-[9px]">{formatSize(file.size)}</span>
-                      </button>
-                    );
-                  })
+                  files.map((file) => (
+                    <FileTreeItemButton
+                      key={file.path}
+                      file={file}
+                      isSelected={selectedFile?.path === file.path}
+                      onSelectFile={onSelectFile}
+                    />
+                  ))
                 )}
               </div>
             )}

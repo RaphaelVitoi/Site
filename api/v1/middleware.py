@@ -7,7 +7,6 @@ import base64
 import hashlib
 import hmac
 import ipaddress
-import json
 import logging
 import math
 import os
@@ -17,6 +16,7 @@ import time
 from urllib.parse import urlsplit
 
 from aiohttp import web
+import orjson
 
 from api.v1.middleware_correlation import CORRELATION_HEADER, correlation_id_for
 from llm.budget import API_SECRET_TOKEN, cache_put_bounded
@@ -124,7 +124,7 @@ def _header_is_hs256(header_segment: str) -> bool:
     de tres segmentos entrava no verificador HS256, inclusive `alg: none`.
     """
     try:
-        header = json.loads(base64url_decode(header_segment).decode("utf-8"))
+        header = orjson.loads(base64url_decode(header_segment))
     except Exception:  # noqa: BLE001
         return False
     return isinstance(header, dict) and header.get("alg") == "HS256"
@@ -236,7 +236,7 @@ def verify_hs256_jwt(token: str, secret: str) -> dict | None:
 
         # 3. Decodificar o payload
         payload_data = base64url_decode(payload_segment)
-        payload = json.loads(payload_data.decode("utf-8"))
+        payload = orjson.loads(payload_data)
         if not isinstance(payload, dict):
             return None
 

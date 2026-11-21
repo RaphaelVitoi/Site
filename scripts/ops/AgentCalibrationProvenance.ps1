@@ -45,6 +45,43 @@ function Get-AgentCalibrationModelosCanonicos {
     return $script:AgentCalibrationModelosCanonicos
 }
 
+function Resolve-AgentCalibrationExpectedVehicle {
+    param(
+        [Parameter(Mandatory)][string]$ModelName,
+        [AllowEmptyString()][string]$ConductorVehicle = '',
+        $IdentityCatalog = $null
+    )
+
+    $resolved = switch -Regex -CaseSensitive ($ModelName) {
+        '^(?:gpt|chatgpt)-\d+(?:\.\d+)*(?:-[a-z0-9]+)*$' { 'codex'; break }
+        # `fable` entrou em 2026-09-12: os dois retirados sao claude-fable-5 e
+        # claude-fable-5-1, e sem a alternativa a camada de sintaxe recusava
+        # como inexistente um modelo que o conjunto canonico reconhece. As
+        # duas camadas tem de concordar sobre o que EXISTE e divergir apenas
+        # sobre o que esta autorizado -- guard em tests/test_agent_calibration_provenance.py.
+        '^claude-(?:opus|sonnet|haiku|fable)-\d+(?:[.-]\d+)*(?:-[a-z0-9]+)*$' { 'claude-code'; break }
+        '^gemini-(?:\d+(?:\.\d+)*-(?:flash|pro)|(?:pro|flash(?:-lite)?)-latest)(?:-[a-z0-9]+)*$' { 'antigravity'; break }
+        # Runtimes locais e condutores nao-API: Hermes Agent (solar-pro4),
+        # Ollama (modelos GGUF como qwen2.5-coder:7b, llama3.2, etc.),
+        # llama.cpp direto.
+        '^(?:ollama-|llama[-\w]*|qwen[\w-]*:\d+b[a-z_]*)$' { $ConductorVehicle; break }
+        default {
+            $condutor = $null
+            if ($IdentityCatalog) {
+                $condutor = $IdentityCatalog.canonicas |
+                Where-Object { $_.modelo -eq $ModelName } |
+                Select-Object -First 1
+            }
+            if ($condutor) {
+                if ($condutor.veiculo) { [string]$condutor.veiculo } else { $ConductorVehicle }
+                break
+            }
+            ''
+        }
+    }
+    return $resolved
+}
+
 function Get-AgentCalibrationProvenance {
     param([Parameter(Mandatory)]$Record)
     $reasons = [System.Collections.Generic.List[string]]::new()
@@ -90,56 +127,34 @@ function Get-AgentCalibrationProvenance {
         if ($values.conductor_vehicle -cin @('hermes-agent', 'llama-cpp')) {
             $reasons.Add('dynamic_conductor_blind_to_calibration')
         }
+        elseif ($values.conductor_model -cmatch '^orchestrator:([^+\s]+)\+([^+\s]+)$') {
+            $planner = $Matches[1]
+            $executor = $Matches[2]
+            if ($planner -ceq $executor) {
+                $reasons.Add('invalid:orchestrator_duo_same_model')
+            }
+            $expectedPlanner = Resolve-AgentCalibrationExpectedVehicle -ModelName $planner -ConductorVehicle $values.conductor_vehicle -IdentityCatalog $IdentityCatalog
+            $expectedExecutor = Resolve-AgentCalibrationExpectedVehicle -ModelName $executor -ConductorVehicle $values.conductor_vehicle -IdentityCatalog $IdentityCatalog
+            if (-not $expectedPlanner -or -not $expectedExecutor) {
+                $reasons.Add('unknown_or_nonexact:conductor_model')
+            }
+            elseif ($values.conductor_vehicle -and (
+                    $values.conductor_vehicle -cne $expectedPlanner -or
+                    $values.conductor_vehicle -cne $expectedExecutor
+                )) {
+                $reasons.Add('model_connector_mismatch')
+            }
+            $canonicos = Get-AgentCalibrationModelosCanonicos
+            if ($null -eq $canonicos) { $reasons.Add('canonical_model_source_unreachable') }
+            elseif ((-not $canonicos.Contains($planner)) -or (-not $canonicos.Contains($executor))) {
+                $reasons.Add('not_in_canonical_registry:conductor_model')
+            }
+        }
         else {
             # Duas camadas, e elas respondem perguntas diferentes. A sintaxe diz a
             # QUAL FAMILIA o nome pertence, e dai sai o conector esperado. O conjunto
             # canonico diz se o modelo EXISTE. Sintaxe sozinha nunca provou existencia.
-            $expected = switch -Regex -CaseSensitive ($values.conductor_model) {
-                '^(?:gpt|chatgpt)-\d+(?:\.\d+)*(?:-[a-z0-9]+)*$' { 'codex'; break }
-                # `fable` entrou em 2026-09-12: os dois retirados sao claude-fable-5 e
-                # claude-fable-5-1, e sem a alternativa a camada de sintaxe recusava
-                # como inexistente um modelo que o conjunto canonico reconhece. As
-                # duas camadas tem de concordar sobre o que EXISTE e divergir apenas
-                # sobre o que esta autorizado -- guard em tests/test_agent_calibration_provenance.py.
-                '^claude-(?:opus|sonnet|haiku|fable)-\d+(?:[.-]\d+)*(?:-[a-z0-9]+)*$' { 'claude-code'; break }
-                '^gemini-(?:\d+(?:\.\d+)*-(?:flash|pro)|(?:pro|flash(?:-lite)?)-latest)(?:-[a-z0-9]+)*$' { 'antigravity'; break }
-                # Runtimes locais e condutores nao-API: Hermes Agent (solar-pro4),
-                # Ollama (modelos GGUF como qwen2.5-coder:7b, llama3.2, etc.),
-                # llama.cpp direto. Esses modelos nao pertencem a uma familia de
-                # provedor API, e o veiculo esperado e o runtime local -- nao ha
-                # mismatch possivel pois o modelo e executado pelo proprio condutor.
-                # O check do conjunto canonico de modelos de API abaixo e defererido
-                # para esses casos: um modelo local nao precisa estar no registry de
-                # provedores cloud para ser valido como evidencia de sessao local.
-                # `solar-pro\d+` literal aqui so previa o Solar-Pro4. Um condutor novo
-                # no catalogo (Space-Bunny-Alpha, 2026-09-29) caia em `default` e
-                # voltava recusado como `unknown_or_nonexact` -- a sintaxe decideva
-                # que existe, e essa era a divergencia entre as duas camadas que este
-                # bloco existe para impedir. Agora o veiculo vem do catalogo:
-                # qualquer modelo cujo `veiculo` esteja na fonte unica e aceito, e
-                # `MODEL_REGISTRY` segue decidindo a existencia dos modelos de API.
-                # NOTA 2026-11-10: Solar-Pro4 e Space-Bunny-Alpha deixaram de ser
-                # identidades (eram rotulos de condutores); Hermes-Agent e
-                # llama.cpp sao harness/roteadores e caem no ramo cego acima.
-                '^(?:ollama-|llama[-\w]*|qwen[\w-]*:\d+b[a-z_]*)$' { $values.conductor_vehicle; break }
-                default {
-                    # Condutor fora de qualquer familia de provedor API. A
-                    # existencia e decidida pelo catalogo unico, nao por sintaxe:
-                    # `solar-pro\d+` literal so previa o Solar-Pro4, e um
-                    # condutor novo (Space-Bunny-Alpha, 2026-09-29) caia aqui
-                    # e voltava recusado como `unknown_or_nonexact` -- exatamente
-                    # a divergencia entre as duas camadas que este bloco existe
-                    # para impedir.
-                    $condutor = $null
-                    if ($IdentityCatalog) {
-                        $condutor = $IdentityCatalog.canonicas |
-                        Where-Object { $_.modelo -eq $values.conductor_model } |
-                        Select-Object -First 1
-                    }
-                    if ($condutor) { $values.conductor_vehicle; break }
-                    ''
-                }
-            }
+            $expected = Resolve-AgentCalibrationExpectedVehicle -ModelName $values.conductor_model -ConductorVehicle $values.conductor_vehicle -IdentityCatalog $IdentityCatalog
             if (-not $expected) { $reasons.Add('unknown_or_nonexact:conductor_model') }
             elseif ($values.conductor_vehicle -and $values.conductor_vehicle -cne $expected) {
                 $reasons.Add('model_connector_mismatch')

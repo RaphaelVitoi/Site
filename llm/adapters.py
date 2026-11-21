@@ -388,6 +388,7 @@ class GoogleGenAIAdapter:
                 "gemini-3.1-pro-preview",
                 "gemini-4-argon",
                 "gemini-4-carbon",
+                "gemini-4-neon",
                 "gemini-4-hydrogen",
             )
             and level_l == "minimal"
