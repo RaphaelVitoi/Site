@@ -44,7 +44,9 @@ $CredenciaisConhecidas = @(
     'NEO4J_AURA_AGENT_CLIENT_ID',
     'NEO4J_AURA_AGENT_CLIENT_SECRET',
     'NEO4J_AURA_INSTANCE_ID',
-    'DOCKER_PAT'
+    'DOCKER_PAT',
+    'HF_CREDENTIALS',
+    'HF_KEY'
 )
 
 function Show-Estado {

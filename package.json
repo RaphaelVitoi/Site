@@ -56,7 +56,7 @@
     "jest-environment-jsdom": "30.5.2",
     "knip": "^6.47.0",
     "lighthouse": "13.6.0",
-    "markdownlint-cli": "^0.50.0",
+    "markdownlint-cli": "^0.50.1",
     "prettier": "3.10.1",
     "prettier-plugin-tailwindcss": "0.8.1",
     "rimraf": "6.1.4",
@@ -91,7 +91,7 @@
     "@sigstore/core": "^4.0.1",
     "ip-address": "^10.5.0",
     "picomatch": "^4.0.7",
-    "markdownlint-cli": "^0.50.0",
+    "markdownlint-cli": "^0.50.1",
     "tar": "^7.5.21",
     "undici": "^6.27.1",
     "deepmerge-ts": "8.0.1",
@@ -127,5 +127,8 @@
       "ruff format"
     ]
   },
-  "dependencies": {}
+  "dependencies": {
+    "@higgsfield/client": "^0.2.6",
+    "dotenv": "^18.0.10"
+  }
 }
