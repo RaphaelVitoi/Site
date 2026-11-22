@@ -1,0 +1,69 @@
+id: data-timeseries-forecast
+name: SQL Data Extraction & TimesFM Zero-Shot Forecast Playbook
+version: 1.0.0
+domain: data-and-knowledge
+summary: Structured pipeline for querying SQLite/Postgres/BigQuery via MCP Toolbox or Exa/Workspace inputs and running TimesFM 2.5 zero-shot forecasting.
+token_budget: 1800
+skills:
+  - data-analyst-sota
+  - mcp-toolbox-database
+  - timesfm-forecasting
+triggers:
+  keywords:
+    - sql
+    - sqlite
+    - postgres
+    - bigquery
+    - toolbox
+    - analytics
+    - timesfm
+    - forecast
+    - time series
+    - exa
+    - workspace
+    - drive
+  agents:
+    - pesquisador
+    - bibliotecario
+    - historian
+    - maverick
+parameters:
+  - name: datasource
+    type: enum
+    required: false
+    default: sqlite
+    description: Target backend (sqlite | postgres | bigquery).
+  - name: horizon_steps
+    type: integer
+    required: false
+    default: 30
+    description: Forecast horizon length for TimesFM 2.5.
+pre_gates:
+  - id: db_integrity_check
+    check: uv run --no-sync python -c "import sqlite3; sqlite3.connect('queue/tasks.db').execute('PRAGMA quick_check').fetchone()"
+    on_fail: warn
+steps:
+  - stage_id: query_structured_data
+    role: explore
+    action: Execute parameterized read-only SQL queries via MCP Toolbox or local DB managers.
+    command_or_tool: mcp-toolbox-for-databases / engine/timesfm_engine.py
+    expected_output: Clean time-ordered series without null gaps or schema drift.
+    checkpoint: true
+    on_fail: abort
+  - stage_id: run_timesfm_forecast
+    role: execute
+    action: Invoke TimesFM 2.5 (200M PyTorch) zero-shot forecaster on normalized series.
+    command_or_tool: engine/dream_timesfm_forecaster.py & engine/timesfm_engine.py
+    expected_output: Quantile forecasts (p10/p50/p90) and history sufficiency flag.
+    checkpoint: true
+    on_fail: escalate
+  - stage_id: validate_output_contract
+    role: verify
+    action: Verify forecast outputs against schema invariants and minimum history checks.
+    command_or_tool: uv run --no-sync python -m pytest tests -k timesfm -q
+    expected_output: All TimesFM unit and contract tests pass.
+    checkpoint: false
+    on_fail: abort
+exit_criteria:
+  - Data extraction queries are read-only and parameterized.
+  - TimesFM outputs include explicit status when history is insufficient.

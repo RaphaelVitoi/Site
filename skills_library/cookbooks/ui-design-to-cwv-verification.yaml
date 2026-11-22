@@ -1,0 +1,68 @@
+id: ui-design-to-cwv-verification
+name: UI Design System to Chrome DevTools CWV Verification Playbook
+version: 1.0.0
+domain: browser-and-ui-design
+summary: End-to-end frontend workflow from Stitch design system tokens through live Chrome CDP (:9222) DOM, accessibility, and Core Web Vitals verification.
+token_budget: 1800
+skills:
+  - google-stitch-design
+  - chrome-devtools-agent-sota
+  - computer-use-local
+triggers:
+  keywords:
+    - chrome
+    - cdp
+    - devtools
+    - stitch
+    - ui
+    - frontend
+    - lcp
+    - cls
+    - a11y
+    - dom
+    - css
+    - screenshot
+  agents:
+    - curator
+    - implementor
+    - verifier
+parameters:
+  - name: target_url
+    type: string
+    required: false
+    default: http://127.0.0.1:3000
+    description: Local frontend URL to inspect via Chrome CDP.
+  - name: cdp_port
+    type: integer
+    required: false
+    default: 9222
+    description: Chrome Remote Debugging port.
+pre_gates:
+  - id: frontend_typecheck
+    check: npm run typecheck
+    on_fail: abort
+steps:
+  - stage_id: align_design_tokens
+    role: plan
+    action: Verify Obsidian Analytics tokens and component primitives match Stitch/design contracts.
+    command_or_tool: google-stitch-design MCP & frontend/src/
+    expected_output: Consistent palette, spacing, and typography tokens with zero ad-hoc overrides.
+    checkpoint: false
+    on_fail: escalate
+  - stage_id: inspect_live_cdp
+    role: explore
+    action: Attach Chrome DevTools MCP to :9222 and inspect console errors, failed network requests, and DOM layout.
+    command_or_tool: chrome-devtools MCP (list_pages, list_console_messages, list_network_requests)
+    expected_output: Zero uncaught runtime errors or 4xx/5xx asset failures.
+    checkpoint: true
+    on_fail: retry
+  - stage_id: verify_cwv_and_a11y
+    role: verify
+    action: Measure LCP, CLS, TBT, heap usage, and axe accessibility violations under warm runtime.
+    command_or_tool: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ops/cwv_gate.ps1
+    expected_output: LCP < 2500ms, CLS < 0.1, axe violations == 0.
+    checkpoint: true
+    on_fail: escalate
+exit_criteria:
+  - Zero console/network errors in live browser inspection.
+  - CWV and accessibility metrics within SOTA green thresholds.

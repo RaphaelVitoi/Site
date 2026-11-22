@@ -266,10 +266,6 @@
     {
       "caminho": "Site/frontend/AGENTS.md",
       "bytes_medidos": 678
-    },
-    {
-      "caminho": "Site/frontend/src/app/GEMINI.md",
-      "bytes_medidos": 2962
     }
   ],
   "nao_verificado": [

@@ -1477,3 +1477,92 @@ async def handle_timesfm_forecast(request: web.Request) -> web.Response:
         return web.json_response({"status": "ERROR", "error": str(ve)}, status=400)
     except Exception as e:
         return _internal_error(e, "handle_timesfm_forecast", status="ERROR")
+
+
+async def handle_get_skills_index(_request: web.Request) -> web.Response:
+    """Retorna taxonomia curada, dominios MECE, cookbooks e metricas da skills_library."""
+    from core.skill_router import get_skill_router  # noqa: PLC0415
+
+    try:
+        index = await asyncio.to_thread(get_skill_router().load_index)
+        return web.json_response(
+            {
+                "schema_version": index.get("schema_version"),
+                "methodology": index.get("methodology"),
+                "default_token_budget": index.get("default_token_budget"),
+                "stats": index.get("stats"),
+                "domains": index.get("domains"),
+                "skills": index.get("skills"),
+                "harness_skills": index.get("harness_skills"),
+                "cookbooks": index.get("cookbooks"),
+            }
+        )
+    except Exception as e:  # noqa: BLE001
+        return _internal_error(e, "handle_get_skills_index")
+
+
+async def handle_route_skills(request: web.Request) -> web.Response:
+    """Roteia uma tarefa para o dominio ICM especifico e devolve pacote dentro do orcamento."""
+    from core.skill_router import route_and_compile_skill_context  # noqa: PLC0415
+
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
+
+    task_text = str(data.get("task", "") or "").strip()
+    if not task_text:
+        return web.json_response({"error": "Campo 'task' obrigatorio."}, status=400)
+
+    agent = str(data.get("agent", "") or "").strip()
+    include_content = bool(data.get("include_content", False))
+    raw_budget = data.get("token_budget")
+    token_budget = (
+        raw_budget if isinstance(raw_budget, int) and not isinstance(raw_budget, bool) and raw_budget >= 200 else None
+    )
+    raw_meta = data.get("metadata")
+    metadata = raw_meta if isinstance(raw_meta, dict) else None
+
+    try:
+        packet = route_and_compile_skill_context(
+            task_text,
+            agent_name=agent,
+            metadata=metadata,
+            token_budget=token_budget,
+            include_content=include_content,
+        )
+        return web.json_response(packet.to_dict(include_content=include_content))
+    except Exception as e:  # noqa: BLE001
+        return _internal_error(e, "handle_route_skills")
+
+
+async def handle_evaluate_roi_decision(request: web.Request) -> web.Response:
+    """Avalia candidatos ou arbitra concorrencia sob o framework +ROI (Laya S1 / gemini-decision-1)."""
+    from core.decision_roi_engine import (  # noqa: PLC0415
+        RoiCandidate,
+        arbitrate_competition,
+        evaluate_roi_decision,
+    )
+
+    data, err_resp = await read_json_object(request)
+    if err_resp is not None or data is None:
+        return err_resp or web.json_response({"error": INVALID_JSON_BODY}, status=400)
+
+    use_s1 = bool(data.get("use_s1", False))
+    prefer_cloud = bool(data.get("prefer_cloud", False))
+
+    try:
+        if isinstance(data.get("candidates"), list):
+            cands = [RoiCandidate.model_validate(item) for item in data["candidates"]]
+            comp = arbitrate_competition(cands, use_s1=use_s1, prefer_cloud=prefer_cloud)
+            return web.json_response(comp.model_dump())
+
+        cand_raw = data.get("candidate", data)
+        if not isinstance(cand_raw, dict):
+            return web.json_response({"error": "Payload de candidato invalido."}, status=400)
+        cand = RoiCandidate.model_validate({k: v for k, v in cand_raw.items() if k not in {"use_s1", "prefer_cloud"}})
+        verdict = evaluate_roi_decision(cand, use_s1=use_s1, prefer_cloud=prefer_cloud)
+        return web.json_response(verdict.model_dump())
+    except ValidationError as ve:
+        return web.json_response({"error": str(ve)}, status=400)
+    except Exception as e:  # noqa: BLE001
+        return _internal_error(e, "handle_evaluate_roi_decision")

@@ -1,0 +1,64 @@
+id: session-closure-handoff
+name: Evidence-Based Session Closure, Impact & Handoff Playbook
+version: 1.0.0
+domain: governance-and-handoff
+summary: Standard closure sequence computing quantitative/qualitative impact metrics, validating pre-commit anchor gates, and writing formal HANDOFF/REGISTRO artifacts.
+token_budget: 1600
+skills:
+  - session-impact-evaluator
+  - site-session-handoff
+triggers:
+  keywords:
+    - handoff
+    - registro
+    - session impact
+    - encerramento
+    - closure
+    - record_gate
+    - anchor
+    - memoria
+  agents:
+    - chico
+    - organizador
+    - historian
+    - auditor
+parameters:
+  - name: session_slug
+    type: string
+    required: true
+    default: session-handoff
+    description: Pure ASCII kebab-case identifier for HANDOFF/REGISTRO filenames.
+  - name: run_precommit_gate
+    type: boolean
+    required: false
+    default: true
+    description: Execute record_gate.py before finalizing handoff.
+pre_gates:
+  - id: verify_working_tree
+    check: git status -s
+    on_fail: warn
+steps:
+  - stage_id: measure_session_impact
+    role: explore
+    action: Compute objective quantitative and qualitative session metrics.
+    command_or_tool: uv run --no-sync python scripts/ops/avaliar_impacto_sessao.py
+    expected_output: Measured impact panel (commits, ledger integrity, pools, mesh health).
+    checkpoint: true
+    on_fail: retry
+  - stage_id: validate_record_gate
+    role: verify
+    action: Run pre-flight record and anchor gate checks before commit or transfer.
+    command_or_tool: uv run --no-sync python scripts/ops/record_gate.py
+    expected_output: Zero blocking anchor or credential violations.
+    checkpoint: true
+    on_fail: abort
+  - stage_id: emit_handoff_and_memory
+    role: execute
+    action: Write Pure ASCII HANDOFF-*.md and REGISTRO-*.md reports and update canonical memory.
+    command_or_tool: reports/HANDOFF-*.md & reports/REGISTRO-*.md & .claude/agent-memory/chico/MEMORY.md
+    expected_output: Verifiable handoff separating verificado vs nao_verificado with exact command outputs.
+    checkpoint: false
+    on_fail: escalate
+exit_criteria:
+  - Zero fabricated metrics or unverified claims in HANDOFF/REGISTRO.
+  - Anchor gate and mesh health checks pass cleanly.

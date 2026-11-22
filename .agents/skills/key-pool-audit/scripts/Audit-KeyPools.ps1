@@ -25,50 +25,18 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$SystemIgnoreVars = @(
-    'PSPath', 'PSParentPath', 'PSChildName', 'PSDrive', 'PSProvider',
-    'Path', 'PATHEXT', 'ComSpec', 'OS', 'NUMBER_OF_PROCESSORS',
-    'PROCESSOR_ARCHITECTURE', 'PROCESSOR_IDENTIFIER', 'PROCESSOR_LEVEL',
-    'PROCESSOR_REVISION', 'TEMP', 'TMP', 'USERNAME', 'USERDOMAIN',
-    'DriverData', 'OneDrive', 'OneDriveConsumer', 'VBOX_MSI_INSTALL_PATH',
-    'windir', 'CUDA_PATH', 'CUDA_PATH_V12_8', 'NVCUDASAMPLES_ROOT',
-    'NVM_HOME', 'NVM_SYMLINK', 'PNPM_HOME', 'CARGO_HOME', 'RUSTUP_HOME',
-    'PYTHONIOENCODING', 'PYTHONUTF8', 'PSModulePath', 'GOPATH', 'HERMES_HOME',
-    'IDENTITY_ENDPOINT', 'IMDS_ENDPOINT', 'ZES_ENABLE_SYSMAN'
-)
+$RegistryPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..\..\data\credential_registry.json'))
+if (-not (Test-Path -LiteralPath $RegistryPath)) {
+    throw "Manifesto canonico ausente: $RegistryPath"
+}
+$RegistrySpec = Get-Content -LiteralPath $RegistryPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
-$NonSecretExact = @(
-    'GCP_PROJECT_ID', 'GCP_PROJECT_NUMBER', 'GCP_ACCOUNT_EMAIL',
-    'GOOGLE_CLOUD_PROJECT', 'GOOGLE_CLOUD_PROJECT_NUMBER', 'GOOGLE_OAUTH_CLIENT_ID',
-    'GITHUB_USER', 'GITHUB_PROFILE_URL', 'DOCKER_USER', 'VERCEL_USER_ID',
-    'VERCEL_USERNAME', 'DEVIN_ORG_ID', 'RAGFLOW_API_BASE', 'OLLAMA_EMAIL',
-    'OLLAMA_USER', 'OLLAMA_CONTEXT_LENGTH', 'OLLAMA_FLASH_ATTENTION',
-    'OLLAMA_KEEP_ALIVE', 'OLLAMA_KV_CACHE_TYPE', 'OLLAMA_MAX_LOADED_MODELS',
-    'OLLAMA_VULKAN', 'LLAMA_ARG_FIT', 'LLAMA_ARG_FIT_TARGET', 'SOTA_VRAM_GB',
-    'SOTA_OPENAI_AUTH_HEADER', 'SOTA_OPENAI_MODEL', 'SOTA_OPENAI_URL',
-    'CHICO_LAYA_PREDICT_ALLOW_CPU', 'NEO4J_AURA_DATABASE', 'NEO4J_AURA_INSTANCE_ID',
-    'NEO4J_AURA_MCP_URL', 'NEO4J_AURA_PROJECT_ID', 'NEO4J_AURA_PROJECT_NAME',
-    'NEO4J_AURA_QUERY_URL', 'NEO4J_AURA_URI', 'NEO4J_AURA_CLIENT_ID',
-    'NEO4J_AURA_AGENT_CLIENT_ID', 'MEDIA_POOL_PROVIDER'
-)
-
-$ExpectedAliasGroups = @(
-    @('OPENROUTER_API_KEY', 'OPENROUTER_TIER4_KEY_1'),
-    @('GEMINI_API_KEY', 'GEMINI_API_KEY_1', 'GEMINI_FLASH_KEY_1'),
-    @('GEMINI_API_KEY_2', 'GEMINI_FLASH_KEY_2'),
-    @('GEMINI_API_KEY_3', 'GEMINI_FLASH_KEY_3'),
-    @('GEMINI_API_KEY_4', 'GEMINI_FLASH_KEY_4'),
-    @('GEMINI_API_KEY_5', 'GEMINI_FLASH_KEY_5'),
-    @('JULES_API_KEY', 'GOOGLE_JULES_API_KEY'),
-    @('STITCH_API_KEY', 'GOOGLE_STITCH_API_KEY'),
-    @('GITHUB_TOKEN', 'GH_TOKEN', 'GITHUB_PAT_CLASSIC', 'GITHUB_PERSONAL_ACCESS_TOKEN'),
-    @('DEVIN_API_KEY', 'DEVIN_API_KEY_1', 'DEVIN_API_TOKEN_2'),
-    @('DEVIN_API_TOKEN', 'DEVIN_API_TOKEN_1', 'DEVIN_API_KEY_2'),
-    @('DOCKER_PAT', 'DOCKER_PAT_1'),
-    @('RAGFLOW_API_KEY', 'RAGFLOW_API_KEY_1'),
-    @('VERCEL_TOKEN', 'VERCEL_TOKEN_1'),
-    @('NEO4J_AURA_API_KEY', 'NEO4J_AURA_API_KEY_1')
-)
+$SystemIgnoreVars = @($RegistrySpec.system_ignore_vars | ForEach-Object { [string]$_ })
+$NonSecretExact = @($RegistrySpec.non_secret_exact | ForEach-Object { [string]$_ })
+$SecretValueRx = [string]$RegistrySpec.secret_value_regex
+$SecretNameRx = [string]$RegistrySpec.secret_name_regex
+$ExpectedAliasGroups = @($RegistrySpec.expected_alias_groups | ForEach-Object { ,@($_ | ForEach-Object { [string]$_ }) })
+$PoolDefs = @($RegistrySpec.pools)
 
 function Get-Sha8 {
     param([string]$Value)
@@ -87,11 +55,11 @@ function Test-IsSecretVar {
     param([string]$Name, [string]$Value)
     if ($NonSecretExact -contains $Name) { return $false }
     if (-not [string]::IsNullOrEmpty($Value)) {
-        if ($Value -match '^(sk-or-v1-|sk-|AQ\.|AIza|ghp_|github_pat_|sbp_|hf_|vcp_|rnd_|whsec_|GOCSPX-|dckr_pat_|ragflow-|cog_|api-key-)') {
+        if ($Value -match $SecretValueRx) {
             return $true
         }
     }
-    if ($Name -match '(KEY|TOKEN|SECRET|PAT|PASS|PWD|CRED|DECISION_API)') { return $true }
+    if ($Name -match $SecretNameRx) { return $true }
     return $false
 }
 
@@ -110,17 +78,11 @@ function Format-MaskedValue {
 
 function Get-PoolMeta {
     param([string]$Name)
-    if ($Name -match '^OPENROUTER_TIER1_KEY_\d+$') { return @{ Pool = 'OpenRouter Tier 1'; Rx = '^sk-or-v1-[0-9a-fA-F]{64}$' } }
-    if ($Name -match '^OPENROUTER_TIER2_KEY_\d+$') { return @{ Pool = 'OpenRouter Tier 2'; Rx = '^sk-or-v1-[0-9a-fA-F]{64}$' } }
-    if ($Name -match '^OPENROUTER_TIER3_KEY_\d+$') { return @{ Pool = 'OpenRouter Tier 3'; Rx = '^sk-or-v1-[0-9a-fA-F]{64}$' } }
-    if ($Name -match '^OPENROUTER_TIER4_KEY_\d+$') { return @{ Pool = 'OpenRouter Tier 4'; Rx = '^sk-or-v1-[0-9a-fA-F]{64}$' } }
-    if ($Name -match '^OPENROUTER_(ANTIGRAVITY|DEVIN|HERMES|API)_KEY$') { return @{ Pool = 'OpenRouter Dedicadas'; Rx = '^sk-or-v1-[0-9a-fA-F]{64}$' } }
-    if ($Name -match '^DECISION_API_\d+$') { return @{ Pool = 'Pool Decision'; Rx = '^(AQ\.|AIza)\S{20,}$' } }
-    if ($Name -match '^GEMINI_(API|FLASH)_KEY(_\d+)?$') { return @{ Pool = 'Gemini Texto'; Rx = '^(AQ\.|AIza)\S{20,}$' } }
-    if ($Name -match '^GEMINI_(TTS|VIDEO|IMAGE|TRANSLATE)_KEY(_\d+)?$') { return @{ Pool = 'Multimodal AI Studio'; Rx = '^(AQ\.|AIza)\S{20,}$' } }
-    if ($Name -match '^OPENROUTER_GEMINI_(TTS|VIDEO|IMAGE|TRANSLATE)_KEY(_\d+)?$') { return @{ Pool = 'Multimodal OpenRouter'; Rx = '^sk-or-v1-[0-9a-fA-F]{64}$' } }
-    if ($Name -match '^OLLAMA_(API|CLOUD)_KEY$') { return @{ Pool = 'Ollama Cloud'; Rx = '^[0-9a-fA-F]+\.\S+$' } }
-    if ($Name -match '^(ANTHROPIC|CLAUDE|OPENAI)_') { return @{ Pool = 'Providers Pendentes/Extras'; Rx = '' } }
+    foreach ($p in $PoolDefs) {
+        if (-not [string]::IsNullOrEmpty($p.match_regex) -and ($Name -match $p.match_regex)) {
+            return @{ Pool = [string]$p.name; Rx = [string]$p.format_regex }
+        }
+    }
     return @{ Pool = 'Ecossistema/Outros'; Rx = '' }
 }
 
@@ -269,11 +231,7 @@ foreach ($entry in $secretBySha.GetEnumerator()) {
 }
 
 # Build pool summary
-$poolOrder = @(
-    'OpenRouter Tier 1', 'OpenRouter Tier 2', 'OpenRouter Tier 3', 'OpenRouter Tier 4',
-    'OpenRouter Dedicadas', 'Pool Decision', 'Gemini Texto',
-    'Multimodal AI Studio', 'Multimodal OpenRouter', 'Ollama Cloud', 'Providers Pendentes/Extras', 'Ecossistema/Outros'
-)
+$poolOrder = @($PoolDefs | ForEach-Object { [string]$_.name })
 
 $poolSummaries = New-Object System.Collections.Generic.List[object]
 foreach ($pName in $poolOrder) {

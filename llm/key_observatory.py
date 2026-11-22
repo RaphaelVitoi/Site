@@ -9,10 +9,13 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime
+from functools import lru_cache
 import hashlib
 import hmac
+import json
 import logging
 import os
+from pathlib import Path
 import re
 import socket
 import ssl
@@ -29,151 +32,75 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _HMAC_BUDGET_SALT = b"sota_budget_pool_salt"
+_REGISTRY_PATH = Path(__file__).resolve().parents[1] / "data" / "credential_registry.json"
 
-_SYSTEM_IGNORE = frozenset(
-    {
-        "Path",
-        "PATHEXT",
-        "ComSpec",
-        "OS",
-        "NUMBER_OF_PROCESSORS",
-        "PROCESSOR_ARCHITECTURE",
-        "PROCESSOR_IDENTIFIER",
-        "PROCESSOR_LEVEL",
-        "PROCESSOR_REVISION",
-        "TEMP",
-        "TMP",
-        "USERNAME",
-        "USERDOMAIN",
-        "DriverData",
-        "OneDrive",
-        "OneDriveConsumer",
-        "VBOX_MSI_INSTALL_PATH",
-        "windir",
-        "CUDA_PATH",
-        "CUDA_PATH_V12_8",
-        "NVCUDASAMPLES_ROOT",
-        "NVM_HOME",
-        "NVM_SYMLINK",
-        "PNPM_HOME",
-        "CARGO_HOME",
-        "RUSTUP_HOME",
-        "PYTHONIOENCODING",
-        "PYTHONUTF8",
-        "PSModulePath",
-        "GOPATH",
-        "HERMES_HOME",
-        "IDENTITY_ENDPOINT",
-        "IMDS_ENDPOINT",
-        "ZES_ENABLE_SYSMAN",
-    }
-)
 
-_NON_SECRET_EXACT = frozenset(
-    {
-        "GCP_PROJECT_ID",
-        "GCP_PROJECT_NUMBER",
-        "GCP_ACCOUNT_EMAIL",
-        "GOOGLE_CLOUD_PROJECT",
-        "GOOGLE_CLOUD_PROJECT_NUMBER",
-        "GOOGLE_OAUTH_CLIENT_ID",
-        "GITHUB_USER",
-        "GITHUB_PROFILE_URL",
-        "DOCKER_USER",
-        "VERCEL_USER_ID",
-        "VERCEL_USERNAME",
-        "DEVIN_ORG_ID",
-        "RAGFLOW_API_BASE",
-        "OLLAMA_EMAIL",
-        "OLLAMA_USER",
-        "OLLAMA_CONTEXT_LENGTH",
-        "OLLAMA_FLASH_ATTENTION",
-        "OLLAMA_KEEP_ALIVE",
-        "OLLAMA_KV_CACHE_TYPE",
-        "OLLAMA_MAX_LOADED_MODELS",
-        "OLLAMA_VULKAN",
-        "LLAMA_ARG_FIT",
-        "LLAMA_ARG_FIT_TARGET",
-        "SOTA_VRAM_GB",
-        "SOTA_OPENAI_AUTH_HEADER",
-        "SOTA_OPENAI_MODEL",
-        "SOTA_OPENAI_URL",
-        "CHICO_LAYA_PREDICT_ALLOW_CPU",
-        "NEO4J_AURA_DATABASE",
-        "NEO4J_AURA_INSTANCE_ID",
-        "NEO4J_AURA_MCP_URL",
-        "NEO4J_AURA_PROJECT_ID",
-        "NEO4J_AURA_PROJECT_NAME",
-        "NEO4J_AURA_QUERY_URL",
-        "NEO4J_AURA_URI",
-        "NEO4J_AURA_CLIENT_ID",
-        "NEO4J_AURA_AGENT_CLIENT_ID",
-        "MEDIA_POOL_PROVIDER",
-    }
-)
+@lru_cache(maxsize=1)
+def _load_credential_registry() -> dict[str, Any]:
+    """Carrega o manifesto canonico de credenciais e pools (SSOT)."""
+    return json.loads(_REGISTRY_PATH.read_text(encoding="utf-8"))
 
-_SECRET_VALUE_RE = re.compile(
-    r"^(sk-or-v1-|sk-|AQ\.|AIza|ghp_|github_pat_|sbp_|hf_|vcp_|rnd_|whsec_|GOCSPX-|dckr_pat_|ragflow-|cog_|api-key-)"
-)
-_SECRET_NAME_RE = re.compile(r"(KEY|TOKEN|SECRET|PAT|PASS|PWD|CRED|DECISION_API)")
-_OPENROUTER_RX = re.compile(r"^sk-or-v1-[0-9a-fA-F]{64}$")
-_AISTUDIO_RX = re.compile(r"^(AQ\.|AIza)\S{20,}$")
-_OLLAMA_RX = re.compile(r"^[0-9a-fA-F]+\.\S+$")
 
-_EXPECTED_ALIAS_GROUPS: tuple[frozenset[str], ...] = (
-    frozenset({"OPENROUTER_API_KEY", "OPENROUTER_TIER4_KEY_1"}),
-    frozenset({"GEMINI_API_KEY", "GEMINI_API_KEY_1", "GEMINI_FLASH_KEY_1"}),
-    frozenset({"GEMINI_API_KEY_2", "GEMINI_FLASH_KEY_2"}),
-    frozenset({"GEMINI_API_KEY_3", "GEMINI_FLASH_KEY_3"}),
-    frozenset({"GEMINI_API_KEY_4", "GEMINI_FLASH_KEY_4"}),
-    frozenset({"GEMINI_API_KEY_5", "GEMINI_FLASH_KEY_5"}),
-    frozenset({"JULES_API_KEY", "GOOGLE_JULES_API_KEY"}),
-    frozenset({"STITCH_API_KEY", "GOOGLE_STITCH_API_KEY"}),
-    frozenset({"GITHUB_TOKEN", "GH_TOKEN", "GITHUB_PAT_CLASSIC", "GITHUB_PERSONAL_ACCESS_TOKEN"}),
-    frozenset({"DEVIN_API_KEY", "DEVIN_API_KEY_1", "DEVIN_API_TOKEN_2"}),
-    frozenset({"DEVIN_API_TOKEN", "DEVIN_API_TOKEN_1", "DEVIN_API_KEY_2"}),
-    frozenset({"DOCKER_PAT", "DOCKER_PAT_1"}),
-    frozenset({"RAGFLOW_API_KEY", "RAGFLOW_API_KEY_1"}),
-    frozenset({"VERCEL_TOKEN", "VERCEL_TOKEN_1"}),
-    frozenset({"NEO4J_AURA_API_KEY", "NEO4J_AURA_API_KEY_1"}),
-)
+def _build_registry_state() -> tuple[
+    frozenset[str],
+    frozenset[str],
+    re.Pattern[str],
+    re.Pattern[str],
+    tuple[frozenset[str], ...],
+    dict[str, tuple[str, str]],
+    tuple[str, ...],
+    tuple[tuple[str, re.Pattern[str], re.Pattern[str] | None], ...],
+    dict[str, str],
+]:
+    reg = _load_credential_registry()
+    system_ignore = frozenset(str(v) for v in reg.get("system_ignore_vars", ()))
+    non_secret = frozenset(str(v) for v in reg.get("non_secret_exact", ()))
+    secret_val_re = re.compile(str(reg["secret_value_regex"]))
+    secret_name_re = re.compile(str(reg["secret_name_regex"]))
+    alias_groups = tuple(frozenset(str(x) for x in grp) for grp in reg.get("expected_alias_groups", ()))
+
+    pool_policies: dict[str, tuple[str, str]] = {}
+    pool_order: list[str] = []
+    pool_matchers: list[tuple[str, re.Pattern[str], re.Pattern[str] | None]] = []
+    for p in reg.get("pools", ()):
+        name = str(p["name"])
+        pool_order.append(name)
+        pool_policies[name] = (str(p["role"]), str(p["policy"]))
+        m_rx = str(p.get("match_regex", "") or "")
+        f_rx = str(p.get("format_regex", "") or "")
+        if m_rx:
+            pool_matchers.append((name, re.compile(m_rx), re.compile(f_rx) if f_rx else None))
+
+    role_hints = {str(k): str(v) for k, v in reg.get("role_hints", {}).items()}
+    return (
+        system_ignore,
+        non_secret,
+        secret_val_re,
+        secret_name_re,
+        alias_groups,
+        pool_policies,
+        tuple(pool_order),
+        tuple(pool_matchers),
+        role_hints,
+    )
+
+
+(
+    _SYSTEM_IGNORE,
+    _NON_SECRET_EXACT,
+    _SECRET_VALUE_RE,
+    _SECRET_NAME_RE,
+    _EXPECTED_ALIAS_GROUPS,
+    _POOL_POLICIES,
+    _POOL_ORDER,
+    _POOL_MATCHERS,
+    _ROLE_HINTS,
+) = _build_registry_state()
 
 _POOL_DECISION = "Pool Decision"
 _POOL_GEMINI_TEXT = "Gemini Texto"
 _POOL_MEDIA_AI = "Multimodal AI Studio"
 _STATUS_200_OK = "200 OK"
-
-_POOL_POLICIES: dict[str, tuple[str, str]] = {
-    "OpenRouter Tier 1": ("Core Cognitivo (Opus/ChatGPT6/Gemini4)", "0-tolerancia; nunca degrada"),
-    "OpenRouter Tier 2": ("Superagentes & Pesquisa", "Degrada -> Tier 4 / Tier 1"),
-    "OpenRouter Tier 3": ("Frota Especialista & Batch", "Alto throughput; degrada -> Ollama Local"),
-    "OpenRouter Tier 4": ("Subagentes Dedicados + Ponte Legada", "Degrada -> Tier 3"),
-    "OpenRouter Dedicadas": ("Credenciais por condutor + ponte legada", "OPENROUTER_API_KEY = TIER4_KEY_1"),
-    _POOL_DECISION: ("System-1 Gemini Decisions API", "Laya -> gemini-decision-1; proj 913870412920"),
-    _POOL_GEMINI_TEXT: ("Pool Flash-Lite (5 unicas + aliases)", "Cota compartilhada no proj 913870412920"),
-    _POOL_MEDIA_AI: ("TTS / Video / Image / Translate (direto)", "1o na ordem MEDIA_POOL_PROVIDER"),
-    "Multimodal OpenRouter": ("TTS / Video / Image / Translate (fallback)", "2o na ordem MEDIA_POOL_PROVIDER"),
-    "Ollama Cloud": ("OLLAMA_API_KEY + OLLAMA_CLOUD_KEY (backup)", "ollama.com/api (Bearer); local :11434"),
-    "Providers Pendentes/Extras": ("Anthropic / OpenAI", "Nao provisionadas"),
-    "Ecossistema/Outros": ("GitHub, Devin, Stitch, Jules, Exa, DBs, Local", "Bridges MCP, deploy e auth local"),
-}
-
-_POOL_ORDER: tuple[str, ...] = tuple(_POOL_POLICIES.keys())
-
-_ROLE_HINTS: dict[str, str] = {
-    "OPENROUTER_API_KEY": "Ponte legada (= TIER4_KEY_1; isola Tier 1)",
-    "OPENROUTER_ANTIGRAVITY_KEY": "Dedicada condutor Antigravity",
-    "OPENROUTER_DEVIN_KEY": "Dedicada condutor Devin",
-    "OPENROUTER_HERMES_KEY": "Dedicada condutor Hermes Agent",
-    "OLLAMA_API_KEY": "Primaria Ollama Cloud",
-    "OLLAMA_CLOUD_KEY": "Backup legada OLLAMA_KEYS",
-    "GEMINI_API_KEY": "Fallback geral (= GEMINI_API_KEY_1)",
-    "SOTA_SITE_TOKEN": "Token loopback local (:17043/.env)",
-    "SOTA_OPENAI_API_KEY": "Auth proxy local Hermes/SOTA (:18434)",
-    "WEBHOOK_OPENROUTER_SECRET": "Assinatura webhook (whsec_*)",
-    "GOOGLE_OAUTH_CLIENT_SECRET": "OAuth Desktop client 'Gemini'",
-    "HF_TOKEN": "HuggingFace Hub (MCP + TimesFM/ST)",
-}
 
 
 class ObservatoryAnomaly(TypedDict):
@@ -238,28 +165,9 @@ def _mask_value(name: str, value: str | None) -> str:
 
 
 def _classify_pool(name: str) -> tuple[str, re.Pattern[str] | None]:
-    if re.match(r"^OPENROUTER_TIER1_KEY_\d+$", name):
-        return "OpenRouter Tier 1", _OPENROUTER_RX
-    if re.match(r"^OPENROUTER_TIER2_KEY_\d+$", name):
-        return "OpenRouter Tier 2", _OPENROUTER_RX
-    if re.match(r"^OPENROUTER_TIER3_KEY_\d+$", name):
-        return "OpenRouter Tier 3", _OPENROUTER_RX
-    if re.match(r"^OPENROUTER_TIER4_KEY_\d+$", name):
-        return "OpenRouter Tier 4", _OPENROUTER_RX
-    if re.match(r"^OPENROUTER_(ANTIGRAVITY|DEVIN|HERMES|API)_KEY$", name):
-        return "OpenRouter Dedicadas", _OPENROUTER_RX
-    if re.match(r"^DECISION_API_\d+$", name):
-        return _POOL_DECISION, _AISTUDIO_RX
-    if re.match(r"^GEMINI_(API|FLASH)_KEY(_\d+)?$", name):
-        return _POOL_GEMINI_TEXT, _AISTUDIO_RX
-    if re.match(r"^GEMINI_(TTS|VIDEO|IMAGE|TRANSLATE)_KEY(_\d+)?$", name):
-        return _POOL_MEDIA_AI, _AISTUDIO_RX
-    if re.match(r"^OPENROUTER_GEMINI_(TTS|VIDEO|IMAGE|TRANSLATE)_KEY(_\d+)?$", name):
-        return "Multimodal OpenRouter", _OPENROUTER_RX
-    if re.match(r"^OLLAMA_(API|CLOUD)_KEY$", name):
-        return "Ollama Cloud", _OLLAMA_RX
-    if re.match(r"^(ANTHROPIC|CLAUDE|OPENAI)_", name):
-        return "Providers Pendentes/Extras", None
+    for pool_name, match_rx, fmt_rx in _POOL_MATCHERS:
+        if match_rx.match(name):
+            return pool_name, fmt_rx
     return "Ecossistema/Outros", None
 
 

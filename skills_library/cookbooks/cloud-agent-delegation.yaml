@@ -1,0 +1,65 @@
+id: cloud-agent-delegation
+name: Cloud Agent Delegation & Supervision Playbook (Jules / Devin)
+version: 1.0.0
+domain: cloud-and-devin-ops
+summary: Safe workflow to decide local vs cloud delegation, dispatch async Jules or Devin sessions, supervise progress, and ingest Session Insights v3.
+token_budget: 1800
+skills:
+  - google-jules-cloud
+  - devin-managed-ops
+  - devin-session-supervision
+  - devin-session-insights
+triggers:
+  keywords:
+    - jules
+    - devin
+    - cloud vm
+    - session insights
+    - acp
+    - local hands
+    - .devin
+    - delegate
+  agents:
+    - chico
+    - dispatcher
+    - sequenciador
+parameters:
+  - name: provider
+    type: enum
+    required: false
+    default: jules
+    description: Cloud coding agent target (jules | devin).
+  - name: session_id
+    type: string
+    required: false
+    default: ""
+    description: Existing cloud session identifier if supervising or fetching insights.
+pre_gates:
+  - id: bridge_credential_check
+    check: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ops/Set-EcosystemCredential.ps1 -Verificar
+    on_fail: warn
+steps:
+  - stage_id: verify_bridge_runtime
+    role: explore
+    action: Confirm live bridge connectivity and repo source before dispatching async work.
+    command_or_tool: google-jules MCP (jules_list_sources) / devin MCP (devin_list_integrations)
+    expected_output: Confirmed repo source and authenticated bridge response.
+    checkpoint: true
+    on_fail: abort
+  - stage_id: dispatch_and_supervise
+    role: execute
+    action: Create or monitor async session, approve plan explicitly, and steer if blocked.
+    command_or_tool: jules_create_session / devin_session_create & devin_session_events
+    expected_output: Clean diff or PR artifact ready for local verification.
+    checkpoint: true
+    on_fail: escalate
+  - stage_id: ingest_insights_and_diff
+    role: verify
+    action: Pull diff and Session Insights v3 telemetry for local tests and calibration ledger.
+    command_or_tool: uv run --no-sync python scripts/ops/devin_session_insights.py
+    expected_output: Diff verified locally and session insights archived without secrets.
+    checkpoint: false
+    on_fail: escalate
+exit_criteria:
+  - Cloud diffs are never merged blindly; local test & lint checks pass after pull.
+  - Bridge availability was verified empirically before delegation.

@@ -1291,6 +1291,79 @@ async def _cli_audit_keys(argv: list, manager: QueueManager) -> None:
         sys.exit(rc)
 
 
+def _parse_skills_route_args(args: list[str]) -> tuple[str, str, int | None, bool]:
+    agent = ""
+    budget: int | None = None
+    include_full = False
+    task_parts: list[str] = []
+    idx = 0
+    while idx < len(args):
+        tok = args[idx]
+        if tok == "--agent" and idx + 1 < len(args):
+            agent = args[idx + 1]
+            idx += 2
+        elif tok == "--budget" and idx + 1 < len(args) and args[idx + 1].isdigit():
+            budget = int(args[idx + 1])
+            idx += 2
+        elif tok == "--full":
+            include_full = True
+            idx += 1
+        else:
+            task_parts.append(tok)
+            idx += 1
+    return " ".join(task_parts).strip(), agent, budget, include_full
+
+
+def _cli_skills(argv: list, _manager: QueueManager) -> None:
+    """Inspeciona, valida e roteia skills ICM por dominio para economia de contexto."""
+    from core.skill_router import get_skill_router, route_and_compile_skill_context  # noqa: PLC0415
+
+    subcmd = str(argv[2]).strip().lower() if len(argv) > 2 else "index"
+    if subcmd == "index":
+        index = get_skill_router().load_index()
+        raw_domains = index.get("domains")
+        domains_out = (
+            {k: v.get("title") for k, v in raw_domains.items() if isinstance(v, dict)}
+            if isinstance(raw_domains, dict)
+            else {}
+        )
+        out = {
+            "methodology": index.get("methodology"),
+            "stats": index.get("stats"),
+            "domains": domains_out,
+        }
+        print(json.dumps(out, indent=2, ensure_ascii=True))
+        return
+
+    if subcmd == "validate":
+        from scripts.ops.sync_skills_library import validate_library  # noqa: PLC0415
+
+        errors = validate_library()
+        if errors:
+            for err in errors:
+                print(f"[ERROR] {err}", file=sys.stderr)
+            sys.exit(1)
+        print(json.dumps({"status": "ok", "errors": []}, ensure_ascii=True))
+        return
+
+    if subcmd == "route":
+        task_text, agent, budget, include_full = _parse_skills_route_args([str(a) for a in argv[3:]])
+        if not task_text:
+            print('Uso: nexus-cli skills route "<tarefa>" [--agent @nome] [--budget N] [--full]', file=sys.stderr)
+            sys.exit(2)
+        packet = route_and_compile_skill_context(
+            task_text,
+            agent_name=agent,
+            token_budget=budget,
+            include_content=include_full,
+        )
+        print(json.dumps(packet.to_dict(include_content=include_full), indent=2, ensure_ascii=True))
+        return
+
+    print(f"Subcomando skills desconhecido: {subcmd} (use index|route|validate)", file=sys.stderr)
+    sys.exit(2)
+
+
 async def _cli_health(_argv: list, manager: QueueManager) -> None:
     print(json.dumps(await _cmd_run_health_parallel(manager), indent=2))
 
@@ -1413,6 +1486,7 @@ _COMMAND_HANDLERS = {
     "nexus-keys": _cli_check_keys,
     "audit-keys": _cli_audit_keys,
     "nexus-audit-keys": _cli_audit_keys,
+    "skills": _cli_skills,
     "health": _cli_health,
     "worker": _cli_worker,
     "worker-api": _cli_worker,

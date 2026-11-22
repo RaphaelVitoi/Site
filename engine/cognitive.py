@@ -155,7 +155,25 @@ async def get_agent_system_prompt(agent_name: str, task: Task | None = None, tas
         async with aiofiles.open(agent_file, encoding="utf-8") as f:
             agent_prompt = f"=== SUA IDENTIDADE ESPECIFICA ({agent_name}) ===\n" + await f.read()
 
-    return global_ctx + infra_ctx + agent_prompt
+    skill_block = ""
+    if task is not None and task.description.strip():
+        try:
+            from core.skill_router import route_and_compile_skill_context  # noqa: PLC0415
+
+            packet = route_and_compile_skill_context(
+                task.description,
+                agent_name=agent_name,
+                metadata=task.metadata,
+            )
+            if isinstance(task.metadata, dict):
+                for meta_k, meta_v in packet.to_metadata().items():
+                    task.metadata.setdefault(meta_k, meta_v)
+            if packet.selected_skills and packet.context_markdown:
+                skill_block = f"\n\n=== TASK-SPECIFIC SKILL CONTEXT (ICM) ===\n{packet.context_markdown}"
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Skill router ICM indisponivel para %s: %s", agent_name, exc)
+
+    return global_ctx + infra_ctx + agent_prompt + skill_block
 
 
 async def _read_memory_and_context(agent_clean: str) -> tuple[str, str]:

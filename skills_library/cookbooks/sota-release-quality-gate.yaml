@@ -1,0 +1,74 @@
+id: sota-release-quality-gate
+name: SOTA 5-Phase Release & Quality Gate Playbook
+version: 1.0.0
+domain: engineering-and-quality
+summary: Five-phase verification pipeline combining static analysis, unit/integration suites, code scans, and optional E2E proof before commit or release.
+token_budget: 1800
+skills:
+  - sota-quality-gate
+  - code-scan-sota
+  - e2e-video-proof
+triggers:
+  keywords:
+    - quality gate
+    - release
+    - pre-commit
+    - code scan
+    - dead code
+    - coverage
+    - ruff
+    - pyright
+    - cwv
+    - audit
+  agents:
+    - verifier
+    - auditor
+    - chico
+    - implementor
+parameters:
+  - name: scope
+    type: enum
+    required: false
+    default: full
+    description: Execution depth (quick | full | live-e2e).
+  - name: record_video
+    type: boolean
+    required: false
+    default: false
+    description: Record annotated E2E video proof when UI flows changed.
+pre_gates:
+  - id: git_clean_index
+    check: git status --porcelain
+    on_fail: warn
+steps:
+  - stage_id: static_hygiene
+    role: verify
+    action: Run Python and TypeScript strict static typechecks and linters.
+    command_or_tool: uv run --no-sync pyright --project pyproject.toml ; uv run --no-sync ruff check . ; npm run typecheck
+    expected_output: Zero errors across pyright, ruff, and tsc.
+    checkpoint: true
+    on_fail: abort
+  - stage_id: code_scan_audit
+    role: explore
+    action: Check dead code, complexity hotspots, and dependency CVE posture.
+    command_or_tool: uv run --no-sync pip_audit ; npm audit --audit-level=moderate
+    expected_output: Zero unaccepted critical/high vulnerabilities.
+    checkpoint: false
+    on_fail: escalate
+  - stage_id: test_suites
+    role: verify
+    action: Execute backend pytest and frontend Jest suites without skipped assertions.
+    command_or_tool: uv run --no-sync python -m pytest -q ; npm run test
+    expected_output: 100% pass rate across backend and frontend suites.
+    checkpoint: true
+    on_fail: abort
+  - stage_id: five_phase_gate
+    role: verify
+    action: Run the 5-phase SOTA audit gate separating measured live metrics from static baselines.
+    command_or_tool: npm run sota:audit
+    expected_output: "[SUCESSO (VERDE)] with CWV, A11y, and SRI verified."
+    checkpoint: true
+    on_fail: escalate
+exit_criteria:
+  - Static checks, test suites, and 5-phase SOTA gate pass with 0 errors.
+  - All reported metrics distinguish live-measured values from static baselines.

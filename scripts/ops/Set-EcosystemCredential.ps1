@@ -16,38 +16,41 @@ param(
 
     [int] $Slot = 0,
 
-    [switch] $Verificar
+    [switch] $Verificar,
+
+    [switch] $Remover,
+
+    [switch] $Sincronizar
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# Credenciais que este ecossistema usa (incluindo bridges e slots rotacionais).
-$CredenciaisConhecidas = @(
-    'JULES_API_KEY',
-    'STITCH_API_KEY',
-    'EXA_API_KEY',
-    'GITHUB_TOKEN',
-    'RENDER_API_KEY',
-    'GOOGLE_CLOUD_PROJECT',
-    'DEVIN_API_TOKEN',
-    'DEVIN_API_KEY',
-    'DEVIN_ORG_ID',
-    'VERCEL_TOKEN',
-    'VERCEL_USER_ID',
-    'RAGFLOW_API_KEY',
-    'RAGFLOW_API_BASE',
-    'N8N_API_KEY',
-    'NEO4J_AURA_API_KEY',
-    'NEO4J_AURA_CLIENT_ID',
-    'NEO4J_AURA_CLIENT_SECRET',
-    'NEO4J_AURA_AGENT_CLIENT_ID',
-    'NEO4J_AURA_AGENT_CLIENT_SECRET',
-    'NEO4J_AURA_INSTANCE_ID',
-    'DOCKER_PAT',
-    'HF_CREDENTIALS',
-    'HF_KEY'
-)
+# Credenciais que este ecossistema usa (fonte unica: data/credential_registry.json).
+$RegistryPath = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\data\credential_registry.json'))
+if (-not (Test-Path -LiteralPath $RegistryPath)) {
+    throw "Manifesto canonico ausente: $RegistryPath"
+}
+$RegistrySpec = Get-Content -LiteralPath $RegistryPath -Raw -Encoding UTF8 | ConvertFrom-Json
+$CredenciaisConhecidas = @($RegistrySpec.ecosystem_managed_vars | ForEach-Object { [string]$_ })
+
+function Send-EnvironmentBroadcast {
+    try {
+        if (-not ('Win32.SotaEnvNotify' -as [type])) {
+            Add-Type -Namespace Win32 -Name SotaEnvNotify -MemberDefinition @'
+[System.Runtime.InteropServices.DllImport("user32.dll", SetLastError = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+public static extern System.IntPtr SendMessageTimeout(
+    System.IntPtr hWnd, uint Msg, System.UIntPtr wParam, string lParam,
+    uint fuFlags, uint uTimeout, out System.UIntPtr lpdwResult);
+'@
+        }
+        $res = [UIntPtr]::Zero
+        [void][Win32.SotaEnvNotify]::SendMessageTimeout([IntPtr]0xFFFF, 0x001A, [UIntPtr]::Zero, 'Environment', 2, 5000, [ref]$res)
+    }
+    catch {
+        Write-Verbose "Broadcast WM_SETTINGCHANGE ignorado: $_"
+    }
+}
 
 function Show-Estado {
     param([string[]] $Nomes)
@@ -76,12 +79,70 @@ if ($Verificar) {
     return
 }
 
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if ($Sincronizar) {
+    $changed = $false
+    foreach ($n in $CredenciaisConhecidas) {
+        $u = [Environment]::GetEnvironmentVariable($n, 'User')
+        $m = [Environment]::GetEnvironmentVariable($n, 'Machine')
+        $hasU = -not [string]::IsNullOrWhiteSpace($u)
+        $hasM = -not [string]::IsNullOrWhiteSpace($m)
+        if ($hasU -and $hasM -and ($u -eq $m)) {
+            Write-Host ("{0,-30}  SYNCED" -f $n) -ForegroundColor Green
+            continue
+        }
+        if ($hasU -and (-not $hasM -or $u -ne $m)) {
+            if ($isAdmin) {
+                [Environment]::SetEnvironmentVariable($n, $u.Trim(), 'Machine')
+                [Environment]::SetEnvironmentVariable($n, $u.Trim(), 'Process')
+                $changed = $true
+                Write-Host ("{0,-30}  MIRRORED_TO_HKLM" -f $n) -ForegroundColor Cyan
+            }
+            else {
+                Write-Warning ("{0}: HKLM divergente/ausente (requer Admin para gravar)" -f $n)
+            }
+        }
+        elseif (-not $hasU -and $hasM) {
+            [Environment]::SetEnvironmentVariable($n, $m.Trim(), 'User')
+            [Environment]::SetEnvironmentVariable($n, $m.Trim(), 'Process')
+            $changed = $true
+            Write-Host ("{0,-30}  MIRRORED_TO_HKCU" -f $n) -ForegroundColor Cyan
+        }
+    }
+    if ($changed) {
+        Send-EnvironmentBroadcast
+    }
+    return
+}
+
+if ($Remover) {
+    if ([string]::IsNullOrWhiteSpace($Nome)) {
+        Write-Host 'Informe -Nome para remover de HKCU/HKLM/Process.' -ForegroundColor Red
+        exit 1
+    }
+    $removeTargets = @($Nome)
+    if ($Slot -gt 0) {
+        $removeTargets = @("${Nome}_${Slot}")
+    }
+    foreach ($t in $removeTargets) {
+        [Environment]::SetEnvironmentVariable($t, $null, 'User')
+        [Environment]::SetEnvironmentVariable($t, $null, 'Process')
+        if ($isAdmin) {
+            [Environment]::SetEnvironmentVariable($t, $null, 'Machine')
+        }
+        Write-Host ("REMOVIDO: {0} (HKCU + Process{1})" -f $t, $(if ($isAdmin) { ' + HKLM' } else { ' ; HKLM ignorado sem Admin' })) -ForegroundColor Yellow
+    }
+    Send-EnvironmentBroadcast
+    return
+}
+
 if ([string]::IsNullOrWhiteSpace($Nome)) {
     Write-Host 'Informe o nome da credencial. Conhecidas neste ecossistema:' -ForegroundColor Yellow
     foreach ($c in $CredenciaisConhecidas) { Write-Host "  - $c" }
     Write-Host ''
     Write-Host 'Uso: .\scripts\ops\Set-EcosystemCredential.ps1 -Nome VERCEL_TOKEN [-Slot 1]' -ForegroundColor DarkGray
-    Write-Host 'Ou:  .\scripts\ops\Set-EcosystemCredential.ps1 -Verificar' -ForegroundColor DarkGray
+    Write-Host 'Ou:  .\scripts\ops\Set-EcosystemCredential.ps1 -Verificar | -Sincronizar | -Nome VAR -Remover' -ForegroundColor DarkGray
     exit 1
 }
 
@@ -111,7 +172,6 @@ Write-Host ''
 Write-Host 'Cole o valor. Ele nao aparece na tela e nao entra no historico.' -ForegroundColor Cyan
 $segura = Read-Host -Prompt "  $primaryTarget" -AsSecureString
 
-$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 $hklmGravado = $false
 $ptr = [IntPtr]::Zero
 try {
@@ -138,6 +198,7 @@ try {
         }
     }
     $comprimento = $claro.Length
+    Send-EnvironmentBroadcast
 }
 finally {
     if ($ptr -ne [IntPtr]::Zero) {

@@ -30,6 +30,9 @@ vence.
 - Exploração ampla read-only → delegar a `subagent_explore` (contexto isolado,
   custo menor). `subagent_general` herda este modelo — usar só para trabalho
   paralelo real, pois multiplica gasto como uma sessão extra.
+- **Skills sob demanda por domínio (ICM):** consultar `skills_library/CONTEXT.md` ou
+  MCP `icm-skills-router` (`icm_route_skills`) para carregar apenas a skill e o
+  cookbook do domínio da tarefa dentro do orçamento de tokens.
 
 ## 3. Verificação focada (econômica)
 

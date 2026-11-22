@@ -21,5 +21,17 @@
     ]
   },
   "enabledPlugins": {},
-  "claudeCode.allowDangerouslySkipPermissions": true
+  "claudeCode.allowDangerouslySkipPermissions": true,
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:/Users/rapha/.gemini/Site/.venv/Scripts/python.exe C:/Users/rapha/.gemini/Site/scripts/ops/hook_icm_skill_injector.py"
+          }
+        ]
+      }
+    ]
+  }
 }

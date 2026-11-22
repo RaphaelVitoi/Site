@@ -34,6 +34,7 @@ from rich.text import Text
 
 SITE_ROOT = Path(__file__).resolve().parents[4]
 TASKS_DB = SITE_ROOT / "queue" / "tasks.db"
+CREDENTIAL_REGISTRY_PATH = SITE_ROOT / "data" / "credential_registry.json"
 
 _HMAC_BUDGET_SALT = b"sota_budget_pool_salt"
 _HMAC_POOL_SALTS: dict[str, bytes] = {
@@ -50,50 +51,16 @@ _STATUS_200_OK = "200 OK"
 _STYLE_BOLD_GREEN = "bold green"
 _STYLE_BOLD_RED = "bold red"
 
-POOL_SHORT: dict[str, str] = {
-    "OpenRouter Tier 1": "OR\u00b7T1",
-    "OpenRouter Tier 2": "OR\u00b7T2",
-    "OpenRouter Tier 3": "OR\u00b7T3",
-    "OpenRouter Tier 4": "OR\u00b7T4",
-    "OpenRouter Dedicadas": "OR\u00b7Ded",
-    _POOL_DECISION: "Decision",
-    _POOL_GEMINI_TEXT: "Gemini",
-    _POOL_MEDIA_AI: "Med\u00b7AI",
-    "Multimodal OpenRouter": "Med\u00b7OR",
-    "Ollama Cloud": "Ollama",
-    "Providers Pendentes/Extras": "Extras",
-    "Ecossistema/Outros": "Eco",
-}
 
-POOL_DOCS: dict[str, tuple[str, str]] = {
-    "OpenRouter Tier 1": ("Core Cognitivo (Opus/ChatGPT6/Gemini4)", "0-tolerancia; nunca degrada"),
-    "OpenRouter Tier 2": ("Superagentes & Pesquisa (Jules/Stitch/Exa/Hermes)", "Degrada -> Tier 4 / Tier 1"),
-    "OpenRouter Tier 3": ("Frota Especialista & Batch", "Alto throughput; degrada -> Ollama Local"),
-    "OpenRouter Tier 4": ("Subagentes Dedicados + Ponte Legada", "Degrada -> Tier 3"),
-    "OpenRouter Dedicadas": ("Credenciais por condutor + OPENROUTER_API_KEY", "OPENROUTER_API_KEY = TIER4_KEY_1"),
-    _POOL_DECISION: ("System-1 Gemini Decisions API", "Laya -> gemini-decision-1; proj 913870412920"),
-    _POOL_GEMINI_TEXT: ("Pool Flash-Lite (5 chaves + aliases Flash)", "Cota compartilhada no proj 913870412920"),
-    _POOL_MEDIA_AI: ("TTS / Video / Image / Translate (direto)", "1o na ordem MEDIA_POOL_PROVIDER"),
-    "Multimodal OpenRouter": ("TTS / Video / Image / Translate (fallback)", "2o na ordem MEDIA_POOL_PROVIDER"),
-    "Ollama Cloud": ("OLLAMA_API_KEY + OLLAMA_CLOUD_KEY (backup)", "ollama.com/api (Bearer); local :11434"),
-    "Providers Pendentes/Extras": ("Anthropic / OpenAI", "Nao provisionadas (pend-2026-11-10)"),
-    "Ecossistema/Outros": ("GitHub, Devin, Stitch, Jules, Exa, DBs, Local", "Bridges MCP, deploy e auth local"),
-}
+def _load_registry_display_maps() -> tuple[dict[str, str], dict[str, tuple[str, str]], dict[str, str]]:
+    reg = json.loads(CREDENTIAL_REGISTRY_PATH.read_text(encoding="utf-8"))
+    pool_short = {str(p["name"]): str(p.get("short", p["name"])) for p in reg.get("pools", ())}
+    pool_docs = {str(p["name"]): (str(p["role"]), str(p["policy"])) for p in reg.get("pools", ())}
+    role_hints = {str(k): str(v) for k, v in reg.get("role_hints", {}).items()}
+    return pool_short, pool_docs, role_hints
 
-ROLE_HINTS: dict[str, str] = {
-    "OPENROUTER_API_KEY": "Ponte legada (= TIER4_KEY_1; isola Tier 1)",
-    "OPENROUTER_ANTIGRAVITY_KEY": "Dedicada condutor Antigravity",
-    "OPENROUTER_DEVIN_KEY": "Dedicada condutor Devin",
-    "OPENROUTER_HERMES_KEY": "Dedicada condutor Hermes Agent",
-    "OLLAMA_API_KEY": "Primaria Ollama Cloud",
-    "OLLAMA_CLOUD_KEY": "Backup legada Ollama_Keys",
-    "GEMINI_API_KEY": "Fallback geral (= GEMINI_API_KEY_1)",
-    "SOTA_SITE_TOKEN": "Token loopback local (:17043/.env)",
-    "SOTA_OPENAI_API_KEY": "Auth proxy local Hermes/SOTA (:18434)",
-    "WEBHOOK_OPENROUTER_SECRET": "Assinatura webhook (whsec_*)",
-    "GOOGLE_OAUTH_CLIENT_SECRET": "OAuth Desktop client 'Gemini'",
-    "HF_TOKEN": "HuggingFace Hub (MCP + TimesFM/ST)",
-}
+
+POOL_SHORT, POOL_DOCS, ROLE_HINTS = _load_registry_display_maps()
 
 
 class PoolSummaryRow(TypedDict):

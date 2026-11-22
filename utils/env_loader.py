@@ -159,6 +159,31 @@ def _load_hermes_harness_env() -> dict[str, str]:
     return hermes_keys
 
 
+def _apply_runtime_aliases(keys: dict[str, str], base_dir: Path) -> None:
+    """Projeta aliases em memoria (ex: HF_KEY <- HF_CREDENTIALS) sem duplicar segredos no Registro."""
+    registry_path = base_dir / "data" / "credential_registry.json"
+    if not registry_path.is_file():
+        return
+    try:
+        import json  # noqa: PLC0415
+
+        reg = json.loads(registry_path.read_text(encoding="utf-8"))
+        aliases = reg.get("runtime_aliases", {})
+        if not isinstance(aliases, dict):
+            return
+        for alias_name, canonical_name in aliases.items():
+            alias_key = str(alias_name).strip()
+            canonical_key = str(canonical_name).strip()
+            if not alias_key or not canonical_key:
+                continue
+            canonical_val = os.environ.get(canonical_key) or keys.get(canonical_key, "")
+            if canonical_val and not os.environ.get(alias_key) and not keys.get(alias_key):
+                os.environ[alias_key] = canonical_val
+                keys[alias_key] = canonical_val
+    except Exception as err:
+        logger.debug("Falha ao aplicar runtime_aliases de credential_registry.json: %s", err)
+
+
 def load_env() -> dict[str, str]:
     """
     Carrega as variaveis de ambiente a partir do Registro do Windows (HKCU/HKLM),
@@ -180,6 +205,7 @@ def load_env() -> dict[str, str]:
             keys[key] = value
             os.environ[key] = value
 
+    _apply_runtime_aliases(keys, base_dir)
     _apply_platform_guards(keys)
 
     return keys

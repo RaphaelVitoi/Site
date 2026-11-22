@@ -1,0 +1,71 @@
+id: pmev-model-verification
+name: PMev Model Verification & Parity Playbook
+version: 1.0.0
+domain: pmev-and-quant
+summary: Deterministic workflow to formulate, validate, and benchmark PMev mathematical equations and solver parity across Python, Rust/WASM, and TypeScript.
+token_budget: 1800
+skills:
+  - pmev-game-theory-engine
+  - poker-pmev-knowledge-engine
+triggers:
+  keywords:
+    - pmev
+    - icm
+    - nash
+    - gto
+    - mtt
+    - poker
+    - bayesian
+    - stack
+    - risk premium
+  agents:
+    - maverick
+    - validador
+    - pesquisador
+parameters:
+  - name: target_module
+    type: path
+    required: true
+    default: engine/vitoi_perspective_engine.py
+    description: PMev engine or mathematical hypothesis module under test.
+  - name: run_benchmarks
+    type: boolean
+    required: false
+    default: true
+    description: Whether to run empirical ICM vs PMev benchmark suites.
+pre_gates:
+  - id: venv_ready
+    check: uv run --no-sync python -c "import engine.vitoi_perspective_engine"
+    on_fail: abort
+steps:
+  - stage_id: retrieve_canon
+    role: explore
+    action: Query canonical PMev formulas and prior hypotheses before editing math invariants.
+    command_or_tool: data/pmev_canonical_structures.json & data/pmev_hypotheses.json
+    expected_output: Verified simplex, monotonicity, and risk-premium bounds for the target model.
+    checkpoint: false
+    on_fail: escalate
+  - stage_id: check_parity_contracts
+    role: plan
+    action: Confirm Python, Rust/WASM, and TypeScript contracts match on input/output signatures.
+    command_or_tool: engine/pmev_spec.py & data/engine_parity_scenarios.json
+    expected_output: Zero schema drift across cross-language contracts.
+    checkpoint: true
+    on_fail: abort
+  - stage_id: run_pmev_tests
+    role: verify
+    action: Execute PMev unit, falsification, and parity pytest suites.
+    command_or_tool: uv run --no-sync python -m pytest tests -k pmev -q
+    expected_output: All PMev assertions and numerical tolerances pass with zero warnings.
+    checkpoint: true
+    on_fail: retry
+  - stage_id: static_type_check
+    role: verify
+    action: Validate strict static typing and lint hygiene on modified PMev files.
+    command_or_tool: uv run --no-sync pyright --project pyproject.toml && uv run --no-sync ruff check engine/
+    expected_output: 0 pyright errors and 0 ruff warnings.
+    checkpoint: false
+    on_fail: abort
+exit_criteria:
+  - All mathematical invariants (simplex, monotonicity, boundary limits) verified by pytest.
+  - Zero type errors in pyright and zero lint issues in ruff.

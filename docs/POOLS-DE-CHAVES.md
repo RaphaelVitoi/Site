@@ -11,7 +11,7 @@ autor:
   Devin (SWE-2 Flash)
   <158243242+devin-ai-integration[bot]@users.noreply.github.com>
 criado_em: "2026-11-12T12:30:00-03:00"
-atualizado_em: "2026-11-18T11:46:00-03:00"
+atualizado_em: "2026-11-22T13:45:00-03:00"
 verificado:
   - "Pool Gemini: 5/5 chaves validadas HTTP 200 em /v1beta/models (2026-11-12)"
   - "Pool Decision: 3/3 validadas HTTP 200 + decide_s1 live via
@@ -161,6 +161,7 @@ Chaves OpenRouter dedicadas **fora** dos tier pools (mesmo padrão de
   `Set-GeminiKeyPool.ps1`) e emitir broadcast `WM_SETTINGCHANGE`.
 - Auditoria sem vazar chave: CLI `audit-keys` (skill `.agents/skills/key-pool-audit/SKILL.md`), `llm/budget.py::OPENROUTER_KEYS`, `cli/commands.py` (`nexus keys`), `gemini_pool_manager.format_markdown_table()`.
 - **Ollama Cloud & SOTA local (harmonizado em 2026-11-18):** `OLLAMA_API_KEY` (primária `HKCU`/`HKLM`) + `OLLAMA_CLOUD_KEY` (chave legada promovida de `HKLM` para backup em `OLLAMA_KEYS`, `llm/budget.py`), `OLLAMA_KV_CACHE_TYPE=q8_0`, `OLLAMA_MAX_LOADED_MODELS=2`, `OLLAMA_CONTEXT_LENGTH=32768`, `OLLAMA_FLASH_ATTENTION=1`, `HF_TOKEN`, `SOTA_OPENAI_API_KEY` e `SOTA_SITE_TOKEN` espelhados em `HKCU` e `HKLM`.
+- **Harmonização SSOT & Higgsfield / HuggingFace (2026-11-22):** `data/credential_registry.json` é a fonte canônica única consumida por `llm/key_observatory.py`, `Audit-KeyPools.ps1`, `render_key_audit.py`, `Set-EcosystemCredential.ps1` e `utils/env_loader.py`. `HF_CREDENTIALS` (`sha8=7916c7d3`, Higgsfield SDK/REST) permanece sincronizada em `HKCU`/`HKLM`; a duplicata `HF_KEY` foi removida do Registro e é projetada apenas em memória via `runtime_aliases` (`utils/env_loader.py`), preservando zero redundância. `HF_TOKEN` (`sha8=3445dade`) permanece exclusivo para HuggingFace Hub.
 
 ## Verificação executada (2026-11-12 live · 2026-11-18 offline)
 

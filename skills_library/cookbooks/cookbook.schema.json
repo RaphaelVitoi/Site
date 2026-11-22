@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://site.local/skills_library/cookbooks/cookbook.schema.json",
+  "title": "OpenMonoAgent SOTA Cookbook Schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "version",
+    "domain",
+    "summary",
+    "token_budget",
+    "skills",
+    "triggers",
+    "parameters",
+    "pre_gates",
+    "steps",
+    "exit_criteria"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+    "name": { "type": "string", "minLength": 3 },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "pmev-and-quant",
+        "engineering-and-quality",
+        "runtime-and-credentials",
+        "browser-and-ui-design",
+        "data-and-knowledge",
+        "cloud-and-devin-ops",
+        "governance-and-handoff"
+      ]
+    },
+    "summary": { "type": "string", "minLength": 10 },
+    "token_budget": { "type": "integer", "minimum": 200, "maximum": 4000 },
+    "skills": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" }
+    },
+    "triggers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["keywords", "agents"],
+      "properties": {
+        "keywords": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "agents": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type", "required", "default", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string", "enum": ["string", "integer", "boolean", "path", "enum"] },
+          "required": { "type": "boolean" },
+          "default": {},
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "pre_gates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "check", "on_fail"],
+        "properties": {
+          "id": { "type": "string" },
+          "check": { "type": "string" },
+          "on_fail": { "type": "string", "enum": ["abort", "escalate", "warn"] }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stage_id",
+          "role",
+          "action",
+          "command_or_tool",
+          "expected_output",
+          "checkpoint",
+          "on_fail"
+        ],
+        "properties": {
+          "stage_id": { "type": "string" },
+          "role": { "type": "string", "enum": ["explore", "plan", "execute", "verify"] },
+          "action": { "type": "string" },
+          "command_or_tool": { "type": "string" },
+          "expected_output": { "type": "string" },
+          "checkpoint": { "type": "boolean" },
+          "on_fail": { "type": "string", "enum": ["abort", "retry", "rollback", "escalate"] }
+        }
+      }
+    },
+    "exit_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    }
+  }
+}
