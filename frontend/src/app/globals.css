@@ -999,6 +999,10 @@ html
   contain-intrinsic-size: auto none auto 480px;
 }
 
+.light-page .sota-deferred-section {
+  background-color: var(--color-light-canvas);
+}
+
 .sota-submenu-panel {
   opacity: 1;
   transform: translateY(0) scale(1);

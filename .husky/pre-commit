@@ -1,40 +1,24 @@
 #!/bin/sh
-# Portao de pre-commit — Protocolo Chico SOTA v8.0 GOLD
+# Portao de pre-commit — Protocolo Chico SOTA v8.0 GOLD (Fail-Fast)
 #
 # `set -e` e obrigatorio aqui. Sem ele o codigo de saida do hook e o do ULTIMO
 # comando, entao acrescentar uma verificacao ao fim faria a anterior deixar de
-# bloquear silenciosamente. Foi por isso que este arquivo passou a ter mais de
-# uma linha.
+# bloquear silenciosamente.
+# Ordem Fail-Fast: ancora (~1s) -> registro (~2s) -> sota:audit (somente codigo/config) -> suite_verde (cacheada por arvore).
 set -e
 
 export PATH="$HOME/.local/bin:$PATH"
 export SOTA_SUITE_WORKERS="${SOTA_SUITE_WORKERS:-6}"
 export SOTA_SUITE_MIN_RAM_GIB="${SOTA_SUITE_MIN_RAM_GIB:-3}"
 
-# 1. Portao de qualidade existente (CWV, a11y, CVE, SRI).
-npm run sota:audit
-
-# 2. Suite Python integral — usa o mesmo padrao de 6 workers do pre-push.
-if command -v uv >/dev/null 2>&1; then
-    uv run --no-sync python scripts/ops/suite_verde.py
-elif [ -x ".venv/Scripts/python.exe" ]; then
-    .venv/Scripts/python.exe scripts/ops/suite_verde.py
-elif [ -x ".venv/bin/python" ]; then
-    .venv/bin/python scripts/ops/suite_verde.py
-else
-    python scripts/ops/suite_verde.py
-fi
-
-# 3. Portao de ancora de registro — M.O. secao 13.F, verificacao linha a linha.
+# 1. Portao de ancora de registro — M.O. secao 13.F, verificacao linha a linha (~1s).
 if command -v pwsh >/dev/null 2>&1; then
     pwsh -NoProfile -ExecutionPolicy Bypass -File "scripts/ops/record_anchor_gate.ps1"
 else
     powershell -NoProfile -ExecutionPolicy Bypass -File "scripts/ops/record_anchor_gate.ps1"
 fi
 
-# 4. Portao de registro — os criterios da 13.F que exigem ler o DOCUMENTO:
-#    YAML valido, TTL externo, config_medida, ancora interna, ampliacao de origem.
-#    A etapa 2 confere campo por regex; regex ve campo, nao ve documento.
+# 2. Portao de registro — documento inteiro, YAML, TTL, config_medida, revisoes_de_ancora (~2s).
 if command -v uv >/dev/null 2>&1; then
     uv run --no-sync python "scripts/ops/record_gate.py"
 elif [ -x ".venv/Scripts/python.exe" ]; then
@@ -43,4 +27,33 @@ elif [ -x ".venv/bin/python" ]; then
     .venv/bin/python "scripts/ops/record_gate.py"
 else
     python "scripts/ops/record_gate.py"
+fi
+
+# 3. Portao de qualidade existente (CWV, a11y, CVE, SRI) — pula em commits puramente documentais (.md/.txt/.rst).
+has_non_doc=0
+while IFS= read -r staged_path; do
+    [ -z "$staged_path" ] && continue
+    case "$staged_path" in
+        *.md|*.txt|*.rst) ;;
+        *) has_non_doc=1; break ;;
+    esac
+done <<EOF
+$(git diff --cached --name-only --diff-filter=ACMR)
+EOF
+
+if [ "$has_non_doc" -eq 1 ]; then
+    npm run sota:audit
+else
+    echo "[PRE-COMMIT] Apenas documentacao/registros em stage -- pulando sota:audit."
+fi
+
+# 4. Suite Python integral — pula automaticamente se a arvore ja foi medida verde ou so doc mudou.
+if command -v uv >/dev/null 2>&1; then
+    uv run --no-sync python scripts/ops/suite_verde.py
+elif [ -x ".venv/Scripts/python.exe" ]; then
+    .venv/Scripts/python.exe scripts/ops/suite_verde.py
+elif [ -x ".venv/bin/python" ]; then
+    .venv/bin/python scripts/ops/suite_verde.py
+else
+    python scripts/ops/suite_verde.py
 fi

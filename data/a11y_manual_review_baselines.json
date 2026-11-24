@@ -12,7 +12,7 @@
    "target_url": "http://localhost:3000/",
    "source": {
     "path": "frontend/src/app/(public)/page.tsx",
-    "sha256": "373fd2318d1bb947aeefaf96bcd46fa7c6188d473ed767ab5e4db81d362f5c44"
+    "sha256": "8b327e3a1ee866d19ff2338001a9034ef64ad71cdf22c9608d209cf1070f00a1"
    },
    "targets": [
     "text[x=\"15\"]",
@@ -45,7 +45,8 @@
      "overlay e decorativo (pointer-events-none, opacity 0.03), nao carrega texto",
      "revisao humana autorizada pelo Tier 0 (Raphael Vitoi) em sessao de 2026-11-17 apos evidencia medida apresentada",
      "re-aprovacao Tier 0 em 2026-11-17 apos refatoracao RSC da home (Fase 2 auditoria): os elementos revisados sao identicos — SVG do DownwardDriftWidget e markup das ilhas client copiados verbatim para src/components/home/*; hashes de page.tsx atualizados",
-     "re-vinculacao 2026-11-19 apos 3 edicoes nao-alvo em page.tsx (melhoria contraste GTO Wizard Data #B2B0AB->#625f5a, fix typo 'mais de', classe sota-deferred-section); 18 alvos e overlay bg-grain identicos; axe-core medido em 2026-11-19 com 0 violacoes"
+     "re-vinculacao 2026-11-19 apos 3 edicoes nao-alvo em page.tsx (melhoria contraste GTO Wizard Data #B2B0AB->#625f5a, fix typo 'mais de', classe sota-deferred-section); 18 alvos e overlay bg-grain identicos; axe-core medido em 2026-11-19 com 0 violacoes",
+     "re-vinculacao 2026-11-24 apos fix WCAG AA em page.tsx (bg-[#F5F3EE] no CTA TrueICM.com) e normalizacao canonica LF no SHA-256"
     ]
    },
    "invalidated_by": [
@@ -57,5 +58,5 @@
    ]
   }
  ],
- "atualizado_em": "2026-11-19T07:33:00-03:00"
+ "atualizado_em": "2026-11-24T10:55:00-03:00"
 }

@@ -526,7 +526,7 @@ export default function Home() {
                 href="https://trueicm.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-md border border-[#DED9D2] px-7 py-3.25 font-mono text-xs tracking-[0.14em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
+                className="flex items-center gap-2 rounded-md border border-[#DED9D2] bg-[#F5F3EE] px-7 py-3.25 font-mono text-xs tracking-[0.14em] text-[#262423] uppercase transition-all duration-300 hover:border-[#0D0C0A] hover:text-[#0D0C0A]"
               >
                 TrueICM.com <i className="fa-solid fa-arrow-up-right-from-square ml-1 text-[0.52rem]" />
               </Link>

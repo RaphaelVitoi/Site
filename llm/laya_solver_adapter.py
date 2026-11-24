@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import logging
 import math
 from typing import Any
 
@@ -34,6 +35,8 @@ from llm.laya_bridge import (
     predict_batch,
     ruin_priority_from_laya_prediction,
 )
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "LayaSolverAdapter",
@@ -333,8 +336,12 @@ class LayaSolverAdapter:
 
             qs = _select_cascade_questions(solver_key, questions)
             eff_conf = default_min_confidence() if min_confidence is None else min_confidence
-            decision = decide_s1(state_text_or_dict, qs, min_confidence=eff_conf)
-            pred = _decision_result_to_laya_prediction(decision)
+            try:
+                decision = decide_s1(state_text_or_dict, qs, min_confidence=eff_conf)
+                pred = _decision_result_to_laya_prediction(decision)
+            except RuntimeError as exc:
+                logger.debug("Cascata S1 indisponivel para %s (%s); usando laya_predict local.", solver_key, exc)
+                pred = laya_predict(state_text_or_dict, questions=questions)
             state_desc = state_text_or_dict
         else:
             pred = laya_predict(state_text_or_dict, questions=questions)

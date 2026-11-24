@@ -50,6 +50,19 @@ function Get-Sha256Hex {
     }
 }
 
+function Get-CanonicalTextSha256Hex {
+    param([Parameter(Mandatory = $true)][string]$LiteralPath)
+    $rawText = [System.IO.File]::ReadAllText($LiteralPath, [System.Text.Encoding]::UTF8)
+    $normalizedBytes = [System.Text.Encoding]::UTF8.GetBytes($rawText.Replace("`r`n", "`n"))
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return ([System.BitConverter]::ToString($sha.ComputeHash($normalizedBytes))).Replace('-', '').ToLowerInvariant()
+    }
+    finally {
+        $sha.Dispose()
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($ReportDir)) {
     $ReportDir = Join-Path $RepoRoot 'reports\cwv'
 }
@@ -282,7 +295,7 @@ function Test-AxeManualReviewApproval {
         return New-AxeManualReviewResult -Approved $false -Code 'SOURCE_PATH_INVALID' -Message "origem declarada nao existe dentro do repositorio: $sourceRelativePath" -Review $review
     }
 
-    $observedHash = (Get-Sha256Hex -LiteralPath $sourceFullPath).ToLowerInvariant()
+    $observedHash = (Get-CanonicalTextSha256Hex -LiteralPath $sourceFullPath).ToLowerInvariant()
     if ($observedHash -cne $expectedHash.ToLowerInvariant()) {
         # Tier-0: revalidacao a cada 30 dias ou sob demanda
         $reviewedAt = [datetime]::Parse($review.reviewed_at)

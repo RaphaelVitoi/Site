@@ -197,11 +197,47 @@ def test_quem_chama_pode_religar_o_log(monkeypatch, tmp_path):
     assert "log_cli=false" not in cmd, cmd
 
 
-@pytest.mark.parametrize("acao", ["check", "ensure", "run", "invalidate"])
+@pytest.mark.parametrize("acao", ["check", "ensure", "run", "targeted", "invalidate"])
 def test_as_quatro_acoes_estao_documentadas_no_cabecalho(acao):
     """Horizontalidade: outro condutor tem de achar o caminho lendo o arquivo."""
     fonte = ORIGEM.read_text(encoding="utf-8")
     assert acao in fonte
+
+
+def test_rodar_suite_omite_tabela_cov_por_padrao_e_aceita_override(monkeypatch, tmp_path):
+    cmd_padrao = _comando_da_suite(monkeypatch, tmp_path, [], tem_xdist=True)
+    assert "--cov-report=" in cmd_padrao
+    cmd_override = _comando_da_suite(monkeypatch, tmp_path, ["--cov-report=term"], tem_xdist=True)
+    assert "--cov-report=" not in cmd_override
+    assert "--cov-report=term" in cmd_override
+
+
+def test_artefato_cwv_nao_rastreado_nao_quebra_cache(monkeypatch):
+    monkeypatch.setattr(
+        sv, "_git", lambda *a: "reports/cwv/cwv_report_20261124_102114.md\n" if a[0] == "ls-files" else ""
+    )
+    pode, _ = sv.cacheavel()
+    assert pode is True
+
+
+def test_pre_commit_usa_ordem_fail_fast_com_record_gate_antes_da_suite():
+    pre_commit = (RAIZ / ".husky" / "pre-commit").read_text(encoding="utf-8")
+    idx_anchor = pre_commit.index("record_anchor_gate.ps1")
+    idx_record = pre_commit.index("record_gate.py")
+    idx_audit = pre_commit.index("npm run sota:audit")
+    idx_suite = pre_commit.index("scripts/ops/suite_verde.py")
+    assert idx_anchor < idx_record < idx_audit < idx_suite
+
+
+def test_targeted_roda_apenas_corpus_quando_so_doc_mudou(monkeypatch):
+    executado: list[list[str]] = []
+    monkeypatch.setattr(sv, "_arquivos_alterados_locais", lambda: ["reports/REGISTRO-teste.md"])
+    monkeypatch.setattr(
+        sv.subprocess, "run", lambda cmd, **k: executado.append(cmd) or subprocess.CompletedProcess(cmd, 0)
+    )
+    assert sv.main(["targeted"]) == 0
+    assert len(executado) == 1
+    assert "test_o_corpus_prescritivo_nao_tem_referencia_morta" in " ".join(executado[0])
 
 
 def test_o_hook_de_pre_push_usa_o_mesmo_comando():

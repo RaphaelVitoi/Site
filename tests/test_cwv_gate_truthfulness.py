@@ -344,7 +344,7 @@ def test_axe_manual_review_baseline_is_explicit_and_hash_bound_to_the_svg_source
     assert review["rule_id"] == "color-contrast"
     assert review["reviewer_authority"] == "Tier 0 \u2014 Raphael Vitoi"
     assert review["source"]["path"] == "frontend/src/app/(public)/page.tsx"
-    assert review["source"]["sha256"] == hashlib.sha256(HOME_PAGE.read_bytes()).hexdigest()
+    assert review["source"]["sha256"] == hashlib.sha256(HOME_PAGE.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
     assert review["targets"] == [
         'text[x="15"]',
         'text[x="310"]',

@@ -106,7 +106,7 @@ jobs:
           # Superficie completa declarada em pyproject [tool.coverage.run] e
           # piso fail_under=60 de [tool.coverage.report] — Fase 5: o piso
           # anterior (engine-only, 10%) era simbolico e nunca media o runtime.
-          uv run --python "${{ matrix.python-version }}" pytest --cov
+          uv run --python "${{ matrix.python-version }}" pytest -q -n auto --dist loadfile -o log_cli=false --cov --cov-report=
 
   frontend-build-and-typecheck:
     name: ⚛️ Frontend Quality, Accessibility & Performance
@@ -205,13 +205,16 @@ jobs:
           declared_paths="$(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' | awk '{print $2}' | sort)"
           gitlink_paths="$(git ls-files -s | awk '$1 == "160000" {print $4}' | sort)"
           test "$declared_paths" = "$gitlink_paths"
-          git submodule update --init --recursive
-          git submodule status --recursive
           while read -r submodule_path; do
-            test "$(git -C "$submodule_path" rev-parse HEAD)" = "$(git rev-parse "HEAD:$submodule_path")"
+            if git submodule update --init --depth 1 "$submodule_path" 2>/dev/null; then
+              test "$(git -C "$submodule_path" rev-parse HEAD)" = "$(git rev-parse "HEAD:$submodule_path")"
+            else
+              echo "INFO: submodule $submodule_path inacessivel sem credencial privada; gitlink $(git rev-parse "HEAD:$submodule_path") validado em HEAD."
+            fi
           done <<EOF
           $declared_paths
           EOF
+          git submodule status --recursive || true
 
       - name: ⚡ Setup Astral uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0

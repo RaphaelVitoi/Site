@@ -3,10 +3,11 @@
 
 PARA QUEM CHEGA AGORA, EM UMA LINHA:
 
-    python scripts/ops/suite_verde.py
+    python scripts/ops/suite_verde.py [ensure|check|run|targeted|invalidate]
 
 Roda a suite se precisar, e nao roda se nao precisar. E so isso. Nao existe
 segunda forma de fazer certo, e nao existe forma de fazer errado que passe.
+Use `targeted` para rodar apenas os testes afetados pelas mudancas locais.
 
 POR QUE ISTO EXISTE, medido em 2026-09-12. O `pre-push` passou a executar a
 suite integral, cerca de oito minutos. O condutor tipicamente rodava a suite a
@@ -103,8 +104,12 @@ def _git(*args: str) -> str:
 
 
 def nao_rastreados() -> list[str]:
-    """Nao rastreados e nao ignorados. `git stash create` nao os representa."""
-    return [n for n in _git("ls-files", "--others", "--exclude-standard").splitlines() if n.strip()]
+    """Nao rastreados e nao ignorados, exceto artefatos efemeros de reports/cwv/."""
+    return [
+        n
+        for n in _git("ls-files", "--others", "--exclude-standard").splitlines()
+        if n.strip() and not n.strip().replace("\\", "/").startswith("reports/cwv/")
+    ]
 
 
 def submodulo_sujo() -> list[str]:
@@ -325,7 +330,10 @@ def rodar_suite(extra: list[str]) -> int:
     # media so engine com piso simbolico de 10%. O custo so e pago quando a
     # arvore de conteudo muda de verdade (o marcador `ensure` pula a suite
     # inteira em arvore ja medida).
-    cmd = [sys.executable, "-m", "pytest", "-q", "--cov", *args]
+    cov_report_args = (
+        [] if any(a == "--cov-report" or a.startswith("--cov-report=") for a in args) else ["--cov-report="]
+    )
+    cmd = [sys.executable, "-m", "pytest", "-q", "--cov", *cov_report_args, *args]
     print(f"[SUITE] medindo -- {' '.join(cmd[2:])}", flush=True)
     r = subprocess.run(cmd, cwd=str(RAIZ), check=False)
     if r.returncode != 0:
@@ -384,6 +392,68 @@ def _executar_garantia_suite(acao: str, extra: list[str]) -> int:
         return 2
 
 
+def _arquivos_alterados_locais() -> list[str]:
+    """Coleta caminhos modificados (working tree, index e nao rastreados relevantes)."""
+    caminhos: set[str] = set()
+    for args in (
+        ("diff", "--name-only", "HEAD"),
+        ("diff", "--cached", "--name-only"),
+    ):
+        for linha in _git(*args).splitlines():
+            if linha.strip():
+                caminhos.add(linha.strip().replace("\\", "/"))
+    caminhos.update(nao_rastreados())
+    return sorted(caminhos)
+
+
+def _selecionar_alvos_afetados(caminhos: list[str]) -> list[str]:
+    """Mapeia arquivos Python alterados para alvos de teste isolados (sem rodar a suite inteira)."""
+    tests_dir = RAIZ / "tests"
+    alvos: list[str] = []
+    vistos: set[str] = set()
+
+    def _adicionar(alvo: str) -> None:
+        if alvo not in vistos:
+            vistos.add(alvo)
+            alvos.append(alvo)
+
+    for caminho in caminhos:
+        if caminho in {"tests/conftest.py", "pyproject.toml"}:
+            return []
+        if caminho.startswith("tests/test_") and caminho.endswith(".py") and (RAIZ / caminho).is_file():
+            _adicionar(caminho)
+            continue
+        if caminho.endswith(".py"):
+            stem = Path(caminho).stem
+            for cand in sorted(tests_dir.glob(f"*{stem}*.py")):
+                _adicionar(cand.relative_to(RAIZ).as_posix())
+    return alvos
+
+
+def rodar_testes_afetados(extra: list[str]) -> int:
+    """Executa apenas os testes isolados correspondentes aos arquivos modificados."""
+    caminhos = _arquivos_alterados_locais()
+    if not caminhos:
+        print("[SUITE] targeted: nenhuma mudanca local detectada")
+        return 0
+
+    extensoes_doc = (".md", ".txt", ".rst")
+    if all(Path(c).suffix.lower() in extensoes_doc for c in caminhos):
+        alvo_corpus = "tests/test_record_index.py::test_o_corpus_prescritivo_nao_tem_referencia_morta"
+        cmd = [sys.executable, "-m", "pytest", "-q", "-o", "log_cli=false", "--no-cov", alvo_corpus, *extra]
+        print(f"[SUITE] targeted (docs) -- {' '.join(cmd[2:])}", flush=True)
+        return subprocess.run(cmd, cwd=str(RAIZ), check=False).returncode
+
+    alvos = _selecionar_alvos_afetados(caminhos)
+    if not alvos:
+        print("[SUITE] targeted: sem mapeamento isolado -- delegando para ensure")
+        return _executar_garantia_suite("ensure", extra)
+
+    cmd = [sys.executable, "-m", "pytest", "-q", "-o", "log_cli=false", "--no-cov", *alvos, *extra]
+    print(f"[SUITE] targeted ({len(alvos)} alvo(s)) -- {' '.join(cmd[2:])}", flush=True)
+    return subprocess.run(cmd, cwd=str(RAIZ), check=False).returncode
+
+
 def main(argv: list[str]) -> int:
     os.environ.setdefault("SOTA_SUITE_WORKERS", "6")
     acao = argv[0] if argv and not argv[0].startswith("-") else "ensure"
@@ -399,10 +469,13 @@ def main(argv: list[str]) -> int:
         print(f"[SUITE] {'cache valido' if vale else 'cache invalido'}: {motivo}")
         return 0 if vale else 1
 
+    if acao == "targeted":
+        return rodar_testes_afetados(extra)
+
     if acao in ("ensure", "run"):
         return _executar_garantia_suite(acao, extra)
 
-    print(f"acao desconhecida: {acao}. Use ensure (padrao), check, run ou invalidate.", file=sys.stderr)
+    print(f"acao desconhecida: {acao}. Use ensure (padrao), check, run, targeted ou invalidate.", file=sys.stderr)
     return 2
 
 

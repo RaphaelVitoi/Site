@@ -1,20 +1,17 @@
 # pylint: disable=wrong-import-position
 """Auditoria Estrita do Servidor de Inferencia SOTA (gemma_server.py)."""
 
-import os
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
-# Setup inicial para evitar colapso de ambiente ausente durante o spawn do app
-os.environ["API_SECRET_TOKEN"] = "test-token-sota-gold"  # noqa: S105
+_TEST_API_SECRET_TOKEN = "test-token-sota-gold"  # noqa: S105  # Record-Id: registro-2026-11-24-ci-verde-e-otimizacao-suites
 
 try:
     from fastapi import HTTPException
     from fastapi.testclient import TestClient
 
     from engine.gemma_server import (
-        API_SECRET_TOKEN,
         RATE_LIMIT_STORE,
         InferenceRequest,
         PhysicsSnapshot,
@@ -30,6 +27,11 @@ except MemoryError:
         "MemoryError ao importar gemma_server (pydantic v1 compat em worker xdist)",
         allow_module_level=True,
     )
+
+
+@pytest.fixture(autouse=True)
+def _configure_gemma_test_token(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("engine.gemma_server.API_SECRET_TOKEN", _TEST_API_SECRET_TOKEN)
 
 
 @pytest.mark.unit
@@ -77,7 +79,7 @@ def test_generate_success_stream(mock_orchestrate, mock_rag):
 
     mock_orchestrate.side_effect = mock_stream
 
-    headers = {"X-Vitoi-Auth": API_SECRET_TOKEN or ""}
+    headers = {"X-Vitoi-Auth": _TEST_API_SECRET_TOKEN}
     payload = {"prompt": "Inicie o motor quantico.", "model": "31b", "max_tokens": 100}
     RATE_LIMIT_STORE.clear()
 
