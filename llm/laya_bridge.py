@@ -75,7 +75,7 @@ LAYA_GATE_STATES: tuple[str, str, str] = ("passed", "abstained", "unevaluated")
 
 
 def get_laya_multilingual_revision() -> str:
-    """Retorna a revisao pinned da laya-multilingual (laya>=0.5.2) sem importar torch."""
+    """Retorna a revisao pinned da laya-multilingual (laya>=0.5.3) sem importar torch."""
     try:
         from laya import revisions as laya_revisions_mod  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
@@ -128,7 +128,9 @@ class LayaIntent:
     Campos derivados diretamente da saida verificada de ``laya.Router().route()``:
       RouteDecision{model, repo, reason, detection:{script, script_profile,
       language, is_english, non_latin_fraction}, workflow}.
-    ``idioma`` vem de ``model`` (language em detection e Nulo).
+    ``idioma`` reflete a familia de modelo (``english``/``multilingual``), enquanto
+    ``idioma_detectado`` carrega o codigo ISO opcional de ``detection["language"]``
+    (ex.: ``"pt"``, ``"es"``, ``"en"``, ou ``None``).
     """
 
     idioma: str
@@ -138,12 +140,14 @@ class LayaIntent:
     nao_latin_fraction_pct: float
     reason: str
     provenia: Provenia
+    idioma_detectado: str | None = None
 
     def metadados_s1(self) -> dict[str, Any]:
         """Serializa para Task.metadata['intencao_s1'] (consumidor: arbitrator)."""
         p = self.provenia
         return {
             "idioma": self.idioma,
+            "idioma_detectado": self.idioma_detectado,
             "script": self.script,
             "is_english": self.is_english,
             "modelo_sugerido": self.modelo_sugerido,
@@ -338,6 +342,8 @@ class LayaRouter:
                 decision = router.route(text)  # RouteDecision: model/reason/detection/...
                 det = decision.get("detection", {}) if isinstance(decision, dict) else {}
                 idioma = decision.get("model", "multilingual")
+                raw_lang = det.get("language")
+                idioma_detectado = raw_lang if isinstance(raw_lang, str) and raw_lang else None
                 non_latin = float(det.get("non_latin_fraction", 0.0))
                 return LayaIntent(
                     idioma=idioma,
@@ -346,6 +352,7 @@ class LayaRouter:
                     modelo_sugerido=FAMILIA_MODELO_POR_LAYA.get(idioma, "multilingual"),
                     nao_latin_fraction_pct=round(non_latin * 100, 2),
                     reason=str(decision.get("reason", "")),
+                    idioma_detectado=idioma_detectado,
                     provenia=Provenia(
                         engine_id="laya-s1",
                         implementation_level="primitive",

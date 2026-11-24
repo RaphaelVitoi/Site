@@ -576,7 +576,7 @@ def test_nenhuma_rota_local_nova_estoura_a_vram_declarada():
         "registro no mesmo commit; se uma rota nova entrou quebrado, ela nao passa."
     )
 
-    # O primario e4b (9.6 GB) e maior que o fallback e2b (7.2 GB) -- design
+    # O primario e4b (6.6 GB) e maior que o fallback e2b (4.6 GB) -- design
     # invertido em relacao a gemma4:12b/e4b, onde primario era menor.
     local = ROTAS[ClasseTarefa.LOCAL]
     assert tamanho[local.primario] > tamanho[local.fallback], (

@@ -242,3 +242,88 @@ def test_laya_bridge_revision_from_laya_revisions_without_torch(
     if "torch" not in sys.modules:
         monkeypatch.setitem(sys.modules, "torch", None)  # type: ignore[arg-type]
     assert get_laya_multilingual_revision() == laya_revisions_mod.PINNED_REVISIONS[CANONICAL_LAYA_REPO]
+
+
+@pytest.mark.unit
+def test_laya_053_short_pt_es_stopwords_and_vega_choice_labels() -> None:
+    """Valida stopwords PT/ES sem acento e preservacao de labels Vega na laya 0.5.3."""
+    from laya.vega import _laya_choice_label  # noqa: PLC0415
+
+    pt_samples = ("faco isso hoje e amanha", "quem estao no pote?")
+    for sample in pt_samples:
+        intent = LayaRouter.classificar_intencao(sample)
+        assert intent.idioma == "multilingual"
+        assert intent.is_english is False
+        assert intent.idioma_detectado == "pt"
+        assert intent.metadados_s1()["idioma_detectado"] == "pt"
+
+    es_intent = LayaRouter.classificar_intencao("puedo hacer esto ahora?")
+    assert es_intent.idioma == "multilingual"
+    assert es_intent.is_english is False
+    assert es_intent.idioma_detectado == "es"
+    assert es_intent.metadados_s1()["idioma_detectado"] == "es"
+
+    q_int = {"type": "choice", "criteria": {1: "um", 2: "dois"}}
+    resolved_int = _laya_choice_label(q_int, "1")
+    assert resolved_int == 1
+    assert type(resolved_int) is int
+
+
+@pytest.mark.unit
+def test_schemathesis_434_laya_fastapi_asgi_contract(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Valida contrato ASGI OpenAPI, config TOML e scoped_extensions no Schemathesis 4.34.0."""
+    from pathlib import Path  # noqa: PLC0415
+
+    from schemathesis.config import SchemathesisConfig  # noqa: PLC0415
+    from schemathesis.core.result import Ok  # noqa: PLC0415
+
+    import scripts.ops.homologar_laya_gpu as laya_gpu_mod  # noqa: PLC0415
+
+    monkeypatch.setenv("CHICO_LAYA_PREDICT_ALLOW_CPU", "0")
+    monkeypatch.setattr(
+        laya_gpu_mod,
+        "obter_perfil_hardware",
+        lambda: laya_gpu_mod.HardwareProfile(
+            os_platform="test",
+            python_version="3.12",
+            torch_version="0.0",
+            cuda_available=False,
+            cuda_version=None,
+            cudnn_version=None,
+            device_count=0,
+            devices=[],
+        ),
+    )
+
+    schema = schemathesis.openapi.from_asgi("/openapi.json", laya_gpu_mod.criar_fastapi_app())
+    ops = {(res.ok().method.lower(), res.ok().path) for res in schema.get_all_operations() if isinstance(res, Ok)}
+    assert {("get", "/health"), ("post", "/predict"), ("post", "/solve")} <= ops
+
+    health_case = schema["/health"]["GET"].Case()
+    health_resp = health_case.call()
+    health_case.validate_response(health_resp)
+    assert health_resp.status_code == 200
+    assert health_resp.json()["status"] == "HEALTHY"
+
+    predict_case = schema["/predict"]["POST"].Case(body={"state": "Hero BTN AKo", "max_len": 1024})
+    predict_resp = predict_case.call()
+    predict_case.validate_response(predict_resp)
+    assert predict_resp.status_code == 200
+    assert predict_resp.json()["status"] == "SUCCESS"
+
+    with schemathesis.scoped_extensions():
+        pass
+
+    cfg = SchemathesisConfig.from_path(Path(__file__).resolve().parent.parent / "schemathesis.toml")
+    assert cfg.projects.default.generation.allow_whole_floats is False
+    assert cfg.output.sanitization.enabled is True
+
+
+@pytest.mark.unit
+def test_regex_2026_11_23_negated_set_alternation_and_casefold() -> None:
+    """Valida correcao da issue #642 no regex>=2026.11.23 em alternancias negadas e (?i:...)."""
+    import regex  # noqa: PLC0415
+
+    assert regex.fullmatch(r"[^a]|[^b]", "a") is not None
+    assert regex.fullmatch(r"[^a]|[^b]", "b") is not None
+    assert regex.search(r"(?i:foo)[^x]", "FOOa") is not None

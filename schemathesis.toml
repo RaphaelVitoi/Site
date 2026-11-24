@@ -1,0 +1,11 @@
+# ==============================================================================
+# Schemathesis >=4.34.1 — Configuracao Canonica de Contratos OpenAPI
+# ==============================================================================
+
+[generation]
+# Evita envio de inteiros como floats JSON (ex.: 2.0) contra schemas Pydantic v2 estritos.
+allow-whole-floats = false
+
+[output.sanitization]
+# Redacao automatica de credenciais, cookies e apiKey em logs e comandos de reproducao.
+enabled = true

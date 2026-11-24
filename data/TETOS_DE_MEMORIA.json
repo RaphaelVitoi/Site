@@ -10,11 +10,12 @@
     "escrito no codigo que o mecanismo nao honrava, ou nem teto tinham."
   ],
   "maquina_medida": {
-    "data": "2026-08-28",
-    "gpu": "Radeon RX 570",
-    "backend": "Vulkan (nao ROCm -- Polaris nao tem ROCm no Windows)",
-    "vram_total_gib": 8.0,
-    "vram_disponivel_ao_ollama_gib": 7.2,
+    "data": "2026-11-24",
+    "gpu": "NVIDIA GeForce GTX 1060 6GB",
+    "backend": "CUDA 13.0 driver / CUDA 12.4 runtime (sm_61 Pascal; Vulkan fallback)",
+    "vram_total_gib": 6.0,
+    "vram_disponivel_ao_ollama_gib": 5.1,
+    "nota_ollama_vram": "Medido em server.log e nvidia-smi (2026-11-24): total=6.0 GiB, free=5.1 GiB (5199 MiB) / available=4.6 GiB com driver 582.78 (CUDA 13.0) + desktop em 2 monitores (3440x1440@100Hz GTX 1060 + 1920x1080@59Hz Intel UHD 630).",
     "ram_total_gb": 31.9,
     "nota": [
       "Os tetos abaixo sao PERCENTUAIS de propósito. Numero absoluto amarra a",
@@ -77,10 +78,9 @@
       "gauge": "nexus._get_vram_usage -- soma de size_vram em /api/ps sobre o total do log do Ollama",
       "teto_pct": 85.0,
       "origem_do_numero": [
-        "Palpite declarado, nao medicao. 85% de 7,2 GiB deixa ~1,1 GiB de folga,",
-        "que e a ordem de grandeza do KV cache de um modelo pequeno com contexto",
-        "modesto. Se um dia houver medicao de quanto o KV cache de fato ocupa",
-        "por modelo, este numero deve ser refeito a partir dela."
+        "Palpite declarado, nao medicao. Em 5,1 GiB livres (GTX 1060 6GB), 85% deixa ~0,8 GiB de folga",
+        "para KV cache e compositor do desktop (era ~1,1 GiB na RX 570 8GB). Se um dia houver medicao",
+        "de quanto o KV cache de fato ocupa por modelo, este numero deve ser refeito a partir dela."
       ],
       "acao": "ram_optimizer.optimize_ollama_keepalive(0) -- descarrega modelo ocioso",
       "cuidado_declarado": [
