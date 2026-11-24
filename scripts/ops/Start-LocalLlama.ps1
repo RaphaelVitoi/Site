@@ -37,7 +37,8 @@ param(
 
     [int]$PortG9 = 8081,
     [int]$PortLing = 8082,
-    [int]$PortQwen = 8083
+    [int]$PortQwen = 8083,
+    [string]$Device = 'CUDA0'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -70,6 +71,10 @@ if (-not $LlamaServerBin) {
 if (-not $LlamaServerBin) {
     Write-Error "[FALHA CRITICA] llama-server.EXE nao foi localizado no sistema."
     exit 1
+}
+
+if ($Device -like 'CUDA*' -and -not (Test-Path (Join-Path (Split-Path -Parent $LlamaServerBin) 'ggml-cuda.dll'))) {
+    $Device = 'Vulkan0'
 }
 
 function Test-LlamaHealth([int]$Port) {
@@ -163,12 +168,12 @@ if ($Model -in @('G9v3', 'Duo', 'All')) {
     if (Test-LlamaHealth $PortG9) {
         Write-Host "[G9v3] Ja esta ONLINE e respondendo na porta $PortG9." -ForegroundColor Green
     } else {
-        Write-Host "[G9v3] Lancando llama-server na porta $PortG9 (Vulkan0, 8GB VRAM RX 570, Raciocinio Desligado)..." -ForegroundColor Yellow
+        Write-Host "[G9v3] Lancando llama-server na porta $PortG9 ($Device, 6GB VRAM GTX 1060, Raciocinio Desligado)..." -ForegroundColor Yellow
         $argsG9 = @(
             "-m", "`"$G9ModelPath`"",
             "--host", "127.0.0.1",
             "--port", "$PortG9",
-            "-dev", "Vulkan0",
+            "-dev", $Device,
             "-ngl", "99",
             "-c", "16384",
             "-fa", "on",
@@ -208,12 +213,12 @@ if ($Model -in @('Ling3', 'All')) {
     if (Test-LlamaHealth $PortLing) {
         Write-Host "[Ling3] Ja esta ONLINE e respondendo na porta $PortLing." -ForegroundColor Green
     } else {
-        Write-Host "[Ling3] Lancando llama-server na porta $PortLing (Vulkan0, 8GB VRAM RX 570, Raciocinio Desligado)..." -ForegroundColor Yellow
+        Write-Host "[Ling3] Lancando llama-server na porta $PortLing ($Device, 6GB VRAM GTX 1060, Raciocinio Desligado)..." -ForegroundColor Yellow
         $argsLing = @(
             "-m", "`"$LingModelPath`"",
             "--host", "127.0.0.1",
             "--port", "$PortLing",
-            "-dev", "Vulkan0",
+            "-dev", $Device,
             "-ngl", "32",
             "-c", "16384",
             "-fa", "on",
@@ -253,12 +258,12 @@ if ($Model -in @('QwenCoder', 'Duo', 'All')) {
     if (Test-LlamaHealth $PortQwen) {
         Write-Host "[QwenCoder] Ja esta ONLINE e respondendo na porta $PortQwen." -ForegroundColor Green
     } else {
-        Write-Host "[QwenCoder] Lancando llama-server na porta $PortQwen (Vulkan0, 8GB VRAM RX 570, Codigo Q8_0)..." -ForegroundColor Yellow
+        Write-Host "[QwenCoder] Lancando llama-server na porta $PortQwen ($Device, 6GB VRAM GTX 1060, Codigo Q8_0)..." -ForegroundColor Yellow
         $argsQwen = @(
             "-m", "`"$QwenModelPath`"",
             "--host", "127.0.0.1",
             "--port", "$PortQwen",
-            "-dev", "Vulkan0",
+            "-dev", $Device,
             "-ngl", "99",
             "-c", "16384",
             "-fa", "on",

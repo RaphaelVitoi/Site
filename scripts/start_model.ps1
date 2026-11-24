@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Script de Inicializacao Otimizada de Modelos SOTA (Windows).
 .DESCRIPTION
@@ -90,19 +90,28 @@ catch {
     Write-Output "[SOTA RAM] Aviso: Otimizacao detalhada de RAM indisponivel (privilegios ou .NET)."
 }
 
-# SOTA: Otimizacao AMD GPU Polaris (ROCm gfx803 Polaris Compatibility Bypass)
+# SOTA: Deteccao de GPU (NVIDIA CUDA nativo vs AMD Polaris ROCm bypass)
 $GpuController = Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue
 $HasAmdGpu = $false
+$HasNvidiaGpu = $false
+$NvidiaName = ''
 if ($GpuController) {
     $gpu_list = $GpuController -as [array]
     foreach ($gpu in $gpu_list) {
+        if ($gpu.Name -like "*NVIDIA*" -or $gpu.Name -like "*GeForce*" -or $gpu.Name -like "*RTX*" -or $gpu.Name -like "*GTX*") {
+            $HasNvidiaGpu = $true
+            $NvidiaName = $gpu.Name
+        }
         if ($gpu.Name -like "*Radeon*" -or $gpu.Name -like "*AMD*") {
             $HasAmdGpu = $true
-            break
         }
     }
 }
-if ($HasAmdGpu) {
+if ($HasNvidiaGpu) {
+    Remove-Item Env:HSA_OVERRIDE_GFX_VERSION -ErrorAction SilentlyContinue
+    Remove-Item Env:OLLAMA_VULKAN -ErrorAction SilentlyContinue
+    Write-Output "[SOTA PERF] Detectada GPU NVIDIA ($NvidiaName). Usando backend CUDA nativo (sem bypass AMD)."
+} elseif ($HasAmdGpu) {
     $env:HSA_OVERRIDE_GFX_VERSION = "8.0.3"
     Write-Output "[SOTA PERF] Detectada GPU AMD. Injetando bypass HSA_OVERRIDE_GFX_VERSION=8.0.3 para aceleracao ROCm Polaris."
 }
@@ -122,13 +131,12 @@ try {
 catch {}
 
 if (-not $OllamaPortOpen) {
-    Write-Output "[SOTA OLLAMA] Ollama offline. Iniciando processo Ollama App..."
-    # Procurar o executavel do Ollama nos caminhos padrao do Windows
+    Write-Output "[SOTA OLLAMA] Ollama offline. Iniciando servidor headless (ollama.exe serve)..."
+    # Priorizar ollama.exe serve (respeita HKCU/HKLM); evitar tray 'ollama app.exe' que injeta ctx=262144/Vulkan
     $OllamaPaths = @(
-        "$env:LOCALAPPDATA\Programs\Ollama\ollama app.exe",
         "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe",
         "C:\Program Files\Ollama\ollama.exe",
-        "ollama.exe"
+        "$env:LOCALAPPDATA\Programs\Ollama\ollama app.exe"
     )
     $OllamaExe = $null
     foreach ($path in $OllamaPaths) {
@@ -137,10 +145,19 @@ if (-not $OllamaPortOpen) {
             break
         }
     }
+    if (-not $OllamaExe) {
+        $cmdOllama = Get-Command 'ollama.exe' -ErrorAction SilentlyContinue
+        if ($cmdOllama) { $OllamaExe = $cmdOllama.Source }
+    }
 
     if ($OllamaExe) {
-        Start-Process $OllamaExe -WindowStyle Minimized
-        Write-Output "[SOTA OLLAMA] Processo Ollama App disparado. Aguardando inicializacao..."
+        if ([System.IO.Path]::GetFileName($OllamaExe) -ieq 'ollama.exe') {
+            Start-Process -FilePath $OllamaExe -ArgumentList 'serve' -WindowStyle Hidden
+            Write-Output "[SOTA OLLAMA] Processo 'ollama.exe serve' disparado. Aguardando inicializacao..."
+        } else {
+            Start-Process $OllamaExe -WindowStyle Minimized
+            Write-Output "[SOTA OLLAMA] Processo Ollama App disparado (fallback). Aguardando inicializacao..."
+        }
         for ($i = 0; $i -lt 10; $i++) {
             Start-Sleep -Seconds 1
             # Re-check port 11434

@@ -1,7 +1,7 @@
-# ==============================================================================
-# NEXUS CORE - LLAMA-SERVER 1.0 (b12387) HIGH-THROUGHPUT DAEMON
+﻿# ==============================================================================
+# NEXUS CORE - LLAMA-SERVER 1.0 CUDA 12.4 HIGH-THROUGHPUT DAEMON
 # Arquivo: engine/llama_cpp/start_vulkan_daemon.ps1
-# Target: Vulkan0 (RX 570) - Chico SOTA v8.0 GOLD
+# Target: CUDA0 (GTX 1060 6GB, fallback Vulkan0) - Chico SOTA v8.0 GOLD
 # ==============================================================================
 
 param (
@@ -9,11 +9,11 @@ param (
     [int]$Port = 9931,
     [string]$ListenHost = "127.0.0.1",
     [int]$CtxSize = 32768,
-    [int]$Slots = 2,              # Paralelismo de agentes (Continuous Batching)
+    [int]$Slots = 1,              # Paralelismo conservador para 6 GB VRAM
     [int]$PhysicalCores = 8,      # Threads dedicadas a P-Cores
     [string]$KVCacheType = "q8_0", # Quantizacao de KV Cache K (q8_0 ou q4_0)
     [string]$KVCacheTypeV = "q4_0", # Quantizacao de KV Cache V (q4_0)
-    [string]$Device = "Vulkan0",
+    [string]$Device = "CUDA0",
     [bool]$RouterMode = $true,
     [switch]$UseMlock
 )
@@ -27,6 +27,11 @@ if (-not (Test-Path $LlamaBin)) {
 }
 if (-not (Test-Path $LlamaBin)) {
     $LlamaBin = "llama-server.exe" # Fallback para PATH
+}
+
+$BinDir = Split-Path -Parent $LlamaBin
+if ($Device -like "CUDA*" -and $BinDir -and -not (Test-Path (Join-Path $BinDir "ggml-cuda.dll"))) {
+    $Device = "Vulkan0"
 }
 
 $IsRouter = ($RouterMode -and [string]::IsNullOrWhiteSpace($ModelPath))
@@ -120,13 +125,13 @@ if ($IsRouter) {
 }
 
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "  NEXUS CORE: LLAMA-SERVER 1.0 (b12387) VULKAN DAEMON" -ForegroundColor Green
+Write-Host "  NEXUS CORE: LLAMA-SERVER 1.0 ($Device) DAEMON" -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "Endpoint:       http://${ListenHost}:${Port}"
 Write-Host "Binario:        $LlamaBin"
 Write-Host "Modo:           $ModeSummary"
 Write-Host "Device / Fit:   $Device | --flash-attn on | --fit on"
-Write-Host "KV Cache Type:  $KVCacheType"
+Write-Host "KV Cache Type:  $KVCacheType / $KVCacheTypeV"
 Write-Host "============================================================" -ForegroundColor Cyan
 
 # 3. Inicializacao com Prioridade de Processo Alta

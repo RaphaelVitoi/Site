@@ -1,10 +1,10 @@
 ﻿<#
 .SYNOPSIS
-    Launcher SOTA do llama.cpp Vulkan para a RX 570 Polaris (gfx803, 8GB).
+    Launcher SOTA do llama.cpp (CUDA0 GTX 1060 6GB ou fallback Vulkan0).
 
 .DESCRIPTION
-    Sobe `llama-server` (build oficial win-vulkan-x64, tools/llama.cpp)
-    com as flags medidas para Polaris + MoE offload (runbook 2026-11-11):
+    Sobe `llama-server` (Site/engine/llama_cpp CUDA 12.4 sm_61 ou fallback win-vulkan-x64)
+    com flags medidas para 6GB VRAM + MoE offload:
 
       - GGML_VK_ALLOW_GRAPHICS_QUEUE=1  (workaround gfx803; inofensivo em
         builds novos, necessario em antigos)
@@ -48,6 +48,8 @@ param(
 
   [int]$Port = 9931,
 
+  [string]$Device = 'CUDA0',
+
   [string[]]$ExtraArgs = @()
 )
 
@@ -58,19 +60,25 @@ $ToolsLlamaExe = Join-Path $env:USERPROFILE '.gemini\tools\llama.cpp\llama-serve
 $ServerExe = if (Test-Path $SiteLlamaExe) { $SiteLlamaExe } else { $ToolsLlamaExe }
 
 if (-not (Test-Path $ServerExe)) {
-  throw "llama-server.exe nao encontrado em $SiteLlamaExe nem em $ToolsLlamaExe. Extraia llama-bNNNNN-bin-win-vulkan-x64.zip."
+  throw "llama-server.exe nao encontrado em $SiteLlamaExe nem em $ToolsLlamaExe. Extraia llama-bNNNNN-bin-win-cuda-12.4-x64.zip."
 }
 if (-not (Test-Path $ModelPath)) {
   throw "Modelo nao encontrado: $ModelPath"
 }
 
-$env:GGML_VK_ALLOW_GRAPHICS_QUEUE = '1'
+$exeDir = Split-Path -Parent $ServerExe
+if ($Device -like 'CUDA*' -and -not (Test-Path (Join-Path $exeDir 'ggml-cuda.dll'))) {
+  $Device = 'Vulkan0'
+}
+if ($Device -like 'Vulkan*') {
+  $env:GGML_VK_ALLOW_GRAPHICS_QUEUE = '1'
+}
 
 $serverArgs = @(
   '-m', $ModelPath,
   '--host', '127.0.0.1',
   '--port', "$Port",
-  '-dev', 'Vulkan0',
+  '-dev', $Device,
   '-ngl', '99',
   '-fa', 'on',
   '-ctk', 'q8_0',
@@ -85,8 +93,8 @@ $serverArgs = @(
   '--metrics'
 ) + $ExtraArgs
 
-Write-Host "[llama-vulkan] RX 570 8GB | modelo: $(Split-Path $ModelPath -Leaf)" -ForegroundColor Cyan
-Write-Host "[llama-vulkan] args: $($serverArgs -join ' ')" -ForegroundColor DarkGray
+Write-Host "[llama-server] GTX 1060 6GB ($Device) | modelo: $(Split-Path $ModelPath -Leaf)" -ForegroundColor Cyan
+Write-Host "[llama-server] args: $($serverArgs -join ' ')" -ForegroundColor DarkGray
 
 & $ServerExe @serverArgs
 exit $LASTEXITCODE

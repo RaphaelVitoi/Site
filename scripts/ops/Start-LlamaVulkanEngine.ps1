@@ -1,9 +1,9 @@
 ﻿<#
 .SYNOPSIS
-    Orquestrador Nativo SOTA do llama-server Vulkan (AMD RX 570 8GB + Intel i9-9900K).
+    Orquestrador Nativo SOTA do llama-server (CUDA0 GTX 1060 6GB + Intel i9-9900K, fallback Vulkan0).
 .DESCRIPTION
     Inicializa o binario pre-compilado em engine/llama_cpp/llama-server.exe com aceleracao
-    Vulkan opcional, KV Cache limitado e um unico slot de inferencia (-np 1),
+    CUDA 12.4 (ou fallback Vulkan0), KV Cache quantizado e um unico slot de inferencia (-np 1),
     renderizacao Jinja de Tool Schemas e amarracao direta aos blobs GGUF locais.
 #>
 [CmdletBinding()]
@@ -108,13 +108,24 @@ if ($Existing.Count -gt 0) {
     return
 }
 
-$env:OMP_NUM_THREADS                   = "$Threads"
-$env:GGML_VULKAN_DEVICE                = "0"
-$env:GGML_VK_FORCE_MAX_ALLOCATION_SIZE = "4294967296"
-$env:HSA_OVERRIDE_GFX_VERSION          = "8.0.3"
+$env:OMP_NUM_THREADS = "$Threads"
+$HasCudaDll = Test-Path (Join-Path $LlamaDir "ggml-cuda.dll")
+$ComputeDevice = if ($HasCudaDll) { "CUDA0" } else { "Vulkan0" }
+$CacheTypeV = if ($HasCudaDll) { "q4_0" } else { "f16" }
+$FlashAttn = if ($HasCudaDll) { "on" } else { "off" }
+
+if ($HasCudaDll) {
+    Remove-Item Env:HSA_OVERRIDE_GFX_VERSION -ErrorAction SilentlyContinue
+    Remove-Item Env:GGML_VK_FORCE_MAX_ALLOCATION_SIZE -ErrorAction SilentlyContinue
+    Remove-Item Env:GGML_VULKAN_DEVICE -ErrorAction SilentlyContinue
+} else {
+    $env:GGML_VULKAN_DEVICE                = "0"
+    $env:GGML_VK_FORCE_MAX_ALLOCATION_SIZE = "4294967296"
+}
 
 $ServerArgs = @(
     "-m",               "`"$ModelPath`"",
+    "--device",         $ComputeDevice,
     "-ngl",             "$GpuLayers",
     "-c",               "$ContextWindow",
     "-np",              "1",
@@ -123,7 +134,7 @@ $ServerArgs = @(
     "-b",               "256",
     "-ub",              "128",
     "--cache-type-k",   "q8_0",
-    "--cache-type-v",   "f16",
+    "--cache-type-v",   $CacheTypeV,
     "--cache-ram",      "0",
     "--sleep-idle-seconds", "$IdleSeconds",
     "--temp",           "0.0",
@@ -132,17 +143,17 @@ $ServerArgs = @(
     "--host",           "127.0.0.1",
     "--port",           "$Port",
     "--cont-batching",
-    "--flash-attn",     "off",
+    "--flash-attn",     $FlashAttn,
     "--jinja",
     "--metrics"
 )
 
 Write-Host "================================================================================" -ForegroundColor Cyan
-Write-Host " SOTA VULKAN ENGINE - LLAMA.CPP DAEMON NATIVO (PORTA $Port)" -ForegroundColor Cyan
+Write-Host " SOTA $ComputeDevice ENGINE - LLAMA.CPP DAEMON NATIVO (PORTA $Port)" -ForegroundColor Cyan
 Write-Host "================================================================================" -ForegroundColor Cyan
 Write-Host "  Modelo     : $ModelTag" -ForegroundColor DarkGray
 Write-Host "  Blob GGUF  : $ModelPath" -ForegroundColor DarkGray
-Write-Host "  Contexto   : $ContextWindow tokens | KV: q8_0/f16 | GPU layers: $GpuLayers | Threads: $Threads | Idle: ${IdleSeconds}s" -ForegroundColor DarkGray
+Write-Host "  Contexto   : $ContextWindow tokens | KV: q8_0/$CacheTypeV | Device: $ComputeDevice | GPU layers: $GpuLayers | Threads: $Threads | Idle: ${IdleSeconds}s" -ForegroundColor DarkGray
 Write-Host "  Endpoint   : http://127.0.0.1:$Port/v1" -ForegroundColor DarkGray
 Write-Host "================================================================================`n" -ForegroundColor Cyan
 

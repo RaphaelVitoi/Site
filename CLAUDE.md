@@ -35,6 +35,7 @@ Hierarquia canônica de 8 Tiers sob Soberania de **Raphael Vitoi**. **A composi�
 - **Tier 7 — Barramento de Base.**
 
 **Invariante de Commits e Mutações:** Todo commit/registro declara `SHA` (`git write-tree`), `Assinatura` individual e `Propósito`.
+
 - Anatomia obrigatória da `Assinatura:` — `<Nome> [Tier N] -- modelo=<id> condutor=<veiculo> ts=<ISO-8601> sha=<tree-sha> supervisao=assistida|automatizada sessao=<id>` (se `ts=` faltar, `.husky/commit-msg` injeta o relógio do ato).
 
 ### Chico é o grupo; a assinatura é individual
@@ -52,6 +53,7 @@ Commit de agente usa e-mail de fornecedor que nunca resolve para perfil humano (
 ### A identidade do git é residual — conferir antes de todo commit
 
 `.git/config` local preserva `user.name`/`user.email` entre sessões (nunca apagar para vazio, senão cai no e-mail pessoal global do Tier 0). Conferir sempre e usar `git -c user.name='<agente>' -c user.email='<noreply>' commit` ou reapontar a local em coerência estrita com a `Assinatura:`.
+
 - **Modo bifásico `Orchestrator` (2026-11-21):** Duo `Gemini 4 Neon` (ou `Argon`) planejador $\rightarrow$ `Gemini 4 Hydrogen` executor. A `Assinatura:` primária e `-c user.name` pertencem ao **Executor**; o Planejador vai em `Co-authored-by:`. Fora do modo Orchestrator, o executor assina individualmente. Na calibração registra-se `conductor_model="orchestrator:<planejador>+<executor>"`.
 
 ### O catálogo de identidades é `data/agent_identities.json`, e este arquivo não o copia
@@ -168,6 +170,7 @@ Incorporadas de `AGENTS.md` em 2026-08-28 (ver §7).
 ### Número de seção é endereço, não é sequencial
 
 Os `§N` deste documento são endereços estáveis referenciados por dezenas de relatórios (`tests/test_governanca_kernel_ponteiro.py`):
+
 1. Duplicata de seção resolve-se renumerando apenas a duplicata em número novo — **nunca** deslocar `§0..§10`.
 2. Subtítulo não numerado cita-se pelo nome — nunca inventar número como `` `§1.5` `` ou `` `§9.4` ``.
 
@@ -198,6 +201,7 @@ Incidentes em ferramentas locais seguem inferência causal proporcional (prior e
 ### 8.3 Calibração por feedback do administrador
 
 Handoffs formais carregam `.agents/skills/site-session-handoff/SKILL.md`.
+
 - **Nota literal e append-only:** escala `0..10` com decimais sem arredondamento (`7.5` é `7.5`). Erro histórico corrige-se via `Record-AgentCalibrationCorrection.ps1` e é aplicado antes da contagem por `New-AgentCalibrationDailyEvidence.ps1`. Ledger encadeado por SHA-256 (`Register-AgentCalibrationFeedback.ps1`). Ciclo combina **observação recursiva** e **auditoria precursiva** falsificável.
 
 #### O portão de suficiência — a unidade é a sessão
