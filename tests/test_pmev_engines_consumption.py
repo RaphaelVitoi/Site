@@ -2,7 +2,7 @@
 """Testes de consumo concreto e efetivo das dependencias e engines SOTA do ecossistema.
 
 Cobre a integracao harmoniosa e autopoietica de:
-- Polars: conversao colunar de alta performance da NormalizedGameTree para Apache Arrow (polars>=2.1.0).
+- Polars: conversao colunar de alta performance da NormalizedGameTree para Apache Arrow (polars>=2.2.0).
 - SymPy: derivacao analitica e simbolica exata de pot odds, MDF, sizing geometrico e sensibilidades de PMev.
 - Numba: aceleracao JIT de calculos vetorizados de perspectiva na CPU.
 - Prometheus / OpenTelemetry: instrumentacao de telemetria e snapshot de metricas da malha Nexus.

@@ -12,6 +12,8 @@ import json
 from pathlib import Path
 import re
 
+import yaml
+
 from utils.text import enforce_pure_ascii
 
 SITE_ROOT = Path(__file__).resolve().parents[2]
@@ -23,6 +25,7 @@ _CHARS_PER_TOKEN = 4
 
 _USER_SKILL_ROOTS: tuple[Path, ...] = (
     Path.home() / ".agents" / "skills",
+    _GEMINI_DIR / "config" / "skills",
     _GEMINI_DIR / "skills",
     _GEMINI_DIR / "antigravity" / "skills",
     Path.home() / ".claude" / "skills",
@@ -30,11 +33,14 @@ _USER_SKILL_ROOTS: tuple[Path, ...] = (
 )
 
 _EGM_DOMAIN_ID = "egm-document-engineering"
+_CHICO_DOMAIN_ID = "chico-masterpiece-sota"
 _GENERAL_DOMAIN_ID = "user-scope-general"
 
 _STATIC_DOMAIN_ASSIGNMENTS: dict[str, tuple[str, dict[str, int]]] = {
     "frontend-design": ("browser-and-ui-design", {"frontend": 4, "design": 4, "ui": 3, "css": 3}),
     "playwright": ("browser-and-ui-design", {"playwright": 5, "browser": 4, "e2e": 3}),
+    "playwriter": ("browser-and-ui-design", {"playwriter": 5, "chrome extension": 4, "browser": 3}),
+    "stitch-upload-to-stitch": ("browser-and-ui-design", {"stitch-upload-to-stitch": 5, "stitch": 4, "design": 3}),
     "debug-live": ("runtime-and-credentials", {"debug live": 5, "live debug": 5, "logs": 3, "server": 3}),
     "shared-mcp-gateway": ("runtime-and-credentials", {"mcp gateway": 5, "8933": 5, "gateway": 4}),
     "sota-tactical-orchestrator-nanostack": (
@@ -46,9 +52,38 @@ _STATIC_DOMAIN_ASSIGNMENTS: dict[str, tuple[str, dict[str, int]]] = {
         "governance-and-handoff",
         {"escada": 5, "outsiders": 5, "arquivar": 4, "excluir": 3},
     ),
+    "raphael-vitoi-gpt": (
+        "pmev-and-quant",
+        {
+            "raphael-vitoi-gpt": 6,
+            "educador raphael vitoi": 6,
+            "toy game": 5,
+            "aula icm": 5,
+            "bubble factor": 4,
+            "risk advantage": 4,
+            "hrc pro": 4,
+            "gto wizard": 4,
+            "late registration": 4,
+            "coaching poker": 4,
+        },
+    ),
+    "raphael-vitoi-sota": (
+        _CHICO_DOMAIN_ID,
+        {
+            "raphael-vitoi-sota": 6,
+            "masterpiece": 5,
+            "poker racional": 5,
+            "smart mda": 5,
+            "deepstack": 4,
+            "parceria formal": 5,
+            "palacio mental": 5,
+            "user_id_vip1": 6,
+        },
+    ),
 }
 
 _STOPWORDS = frozenset({"para", "with", "this", "that", "from", "when", "used", "onde", "como", "mais", "entre"})
+_YAML_BLOCK_MARKERS = frozenset({">-", ">", "|", "|-"})
 
 
 def _extract_frontmatter_lines(text: str) -> list[str]:
@@ -61,20 +96,43 @@ def _extract_frontmatter_lines(text: str) -> list[str]:
     return []
 
 
-def _parse_frontmatter(skill_md: Path) -> tuple[str, str]:
-    text = skill_md.read_text(encoding="utf-8", errors="replace")
-    name = ""
-    desc = ""
-    for line in _extract_frontmatter_lines(text):
+def _clean_scalar(raw: object) -> str:
+    return " ".join(str(raw).split()) if raw is not None else ""
+
+
+def _parse_frontmatter_yaml(fm_lines: list[str]) -> tuple[str, str]:
+    if not fm_lines:
+        return "", ""
+    try:
+        parsed = yaml.safe_load("\n".join(fm_lines))
+    except yaml.YAMLError:
+        return "", ""
+    if not isinstance(parsed, dict):
+        return "", ""
+    return _clean_scalar(parsed.get("name")), _clean_scalar(parsed.get("description"))
+
+
+def _parse_frontmatter_lines_fallback(fm_lines: list[str]) -> tuple[str, str]:
+    extracted: dict[str, str] = {}
+    for line in fm_lines:
         key, sep, value = line.partition(":")
         if not sep:
             continue
         norm_key = key.strip().lower()
         clean_val = value.strip().strip("'\"")
-        if norm_key == "name" and clean_val and not name:
-            name = clean_val
-        elif norm_key == "description" and clean_val and not desc:
-            desc = clean_val
+        if norm_key in ("name", "description") and clean_val and clean_val not in _YAML_BLOCK_MARKERS:
+            extracted.setdefault(norm_key, clean_val)
+    return extracted.get("name", ""), extracted.get("description", "")
+
+
+def _parse_frontmatter(skill_md: Path) -> tuple[str, str]:
+    text = skill_md.read_text(encoding="utf-8", errors="replace")
+    fm_lines = _extract_frontmatter_lines(text)
+    name, desc = _parse_frontmatter_yaml(fm_lines)
+    if not name or not desc:
+        fb_name, fb_desc = _parse_frontmatter_lines_fallback(fm_lines)
+        name = name or fb_name
+        desc = desc or fb_desc
     return (
         enforce_pure_ascii(name or skill_md.parent.name),
         enforce_pure_ascii(desc or f"User-scope skill {skill_md.parent.name}"),
@@ -127,6 +185,23 @@ def _build_overlay_domains(used_domains: set[str]) -> dict[str, object]:
             "default_cookbook": "",
             "keywords": {"egm": 6, "brainstorm": 4, "draft": 4, "drift": 4, "review-loop": 5, "egm-review": 5},
             "anti_keywords": {"hkcu": 3, "pmev": 3},
+        }
+    if _CHICO_DOMAIN_ID in used_domains:
+        overlay_domains[_CHICO_DOMAIN_ID] = {
+            "id": _CHICO_DOMAIN_ID,
+            "title": "Chico MasterPiece & Sistema Totalizante SOTA",
+            "context_path": "",
+            "default_cookbook": "",
+            "keywords": {
+                "raphael-vitoi-sota": 6,
+                "masterpiece": 5,
+                "poker racional": 5,
+                "smart mda": 5,
+                "parceria formal": 5,
+                "palacio mental": 5,
+                "user_id_vip1": 6,
+            },
+            "anti_keywords": {"hkcu": 3, "cdp": 3, "pmev": 2},
         }
     if _GENERAL_DOMAIN_ID in used_domains:
         overlay_domains[_GENERAL_DOMAIN_ID] = {

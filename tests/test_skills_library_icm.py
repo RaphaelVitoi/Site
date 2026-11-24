@@ -279,3 +279,76 @@ def test_skills_mcp_server_tools() -> None:
 
     err = json.loads(icm_get_cookbook("nonexistent-cookbook"))
     assert err["status"] == "ERROR"
+
+
+def test_overlay_parser_handles_yaml_folded_multiline_description(tmp_path: Path) -> None:
+    from scripts.ops.sync_local_skills_overlay import _parse_frontmatter  # noqa: PLC0415
+
+    skill_dir = tmp_path / "demo-folded-skill"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    skill_md = skill_dir / "SKILL.md"
+    skill_md.write_text(
+        "---\nname: demo-folded-skill\ndescription: >-\n  Linha um com acento é\n  e linha dois.\n---\n# Body\n",
+        encoding="utf-8",
+    )
+
+    name, desc = _parse_frontmatter(skill_md)
+    assert name == "demo-folded-skill"
+    assert desc == "Linha um com acento e e linha dois."
+
+    malformed_dir = tmp_path / "demo-malformed-yaml"
+    malformed_dir.mkdir(parents=True, exist_ok=True)
+    malformed_md = malformed_dir / "SKILL.md"
+    malformed_md.write_text(
+        "---\nname: demo-malformed-yaml\ndescription: Foo: bar: baz\n---\n# Body\n",
+        encoding="utf-8",
+    )
+    fb_name, fb_desc = _parse_frontmatter(malformed_md)
+    assert fb_name == "demo-malformed-yaml"
+    assert fb_desc == "Foo: bar: baz"
+
+
+def test_overlay_routes_vitoi_skills_cleanly(tmp_path: Path) -> None:
+    from scripts.ops.sync_local_skills_overlay import build_overlay  # noqa: PLC0415
+
+    config_root = tmp_path / "config_skills"
+    gpt_md = config_root / "raphael-vitoi-gpt" / "SKILL.md"
+    sota_md = config_root / "raphael-vitoi-sota" / "SKILL.md"
+    gpt_md.parent.mkdir(parents=True, exist_ok=True)
+    sota_md.parent.mkdir(parents=True, exist_ok=True)
+
+    gpt_md.write_text(
+        "---\nname: raphael-vitoi-gpt\ndescription: >-\n  Educador Raphael Vitoi toy game e aula icm.\n---\n# GPT\n",
+        encoding="utf-8",
+    )
+    sota_md.write_text(
+        "---\nname: raphael-vitoi-sota\ndescription: >-\n  Chico MasterPiece Poker Racional user_id_vip1.\n---\n# SOTA\n",
+        encoding="utf-8",
+    )
+
+    overlay = build_overlay(roots=(config_root,))
+    overlay_json = tmp_path / "icm_skills_overlay.json"
+    overlay_json.write_text(json.dumps(overlay, ensure_ascii=True), encoding="utf-8")
+
+    router = SkillContextRouter(SITE_ROOT, overlay_path=overlay_json)
+
+    gpt_pkt = router.route_and_compile(
+        "Aula ICM com Educador Raphael Vitoi sobre toy game e bubble factor",
+        include_overlay=True,
+    )
+    assert gpt_pkt.domain == "pmev-and-quant"
+    assert "raphael-vitoi-gpt" in gpt_pkt.selected_skills
+
+    sota_pkt = router.route_and_compile(
+        "Converter esboco em Metodologia MasterPiece Poker Racional SMART MDA user_id_vip1",
+        include_overlay=True,
+    )
+    assert sota_pkt.domain == "chico-masterpiece-sota"
+    assert "raphael-vitoi-sota" in sota_pkt.selected_skills
+
+    pmev_pkt = router.route_and_compile(
+        "Formulate PMev mathematical model and ICM risk premium for MTT final table",
+        include_overlay=True,
+    )
+    assert pmev_pkt.domain == "pmev-and-quant"
+    assert pmev_pkt.selected_skills[0] == "pmev-game-theory-engine"
