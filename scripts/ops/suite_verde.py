@@ -280,9 +280,12 @@ def paralelismo(extra: list[str]) -> list[str]:
     return ["-n", str(workers)]
 
 
+_PYTEST_LOG_CLI_OFF = "log_cli=false"
+
+
 def silencio(extra: list[str]) -> list[str]:
     """`-o log_cli=false`, salvo se quem chamou ja decidiu sobre log_cli."""
-    return [] if any("log_cli" in a for a in extra) else ["-o", "log_cli=false"]
+    return [] if any("log_cli" in a for a in extra) else ["-o", _PYTEST_LOG_CLI_OFF]
 
 
 def _xdist_com_workers(args: list[str]) -> bool:
@@ -440,7 +443,7 @@ def rodar_testes_afetados(extra: list[str]) -> int:
     extensoes_doc = (".md", ".txt", ".rst")
     if all(Path(c).suffix.lower() in extensoes_doc for c in caminhos):
         alvo_corpus = "tests/test_record_index.py::test_o_corpus_prescritivo_nao_tem_referencia_morta"
-        cmd = [sys.executable, "-m", "pytest", "-q", "-o", "log_cli=false", "--no-cov", alvo_corpus, *extra]
+        cmd = [sys.executable, "-m", "pytest", "-q", "-o", _PYTEST_LOG_CLI_OFF, "--no-cov", alvo_corpus, *extra]
         print(f"[SUITE] targeted (docs) -- {' '.join(cmd[2:])}", flush=True)
         return subprocess.run(cmd, cwd=str(RAIZ), check=False).returncode
 
@@ -449,7 +452,7 @@ def rodar_testes_afetados(extra: list[str]) -> int:
         print("[SUITE] targeted: sem mapeamento isolado -- delegando para ensure")
         return _executar_garantia_suite("ensure", extra)
 
-    cmd = [sys.executable, "-m", "pytest", "-q", "-o", "log_cli=false", "--no-cov", *alvos, *extra]
+    cmd = [sys.executable, "-m", "pytest", "-q", "-o", _PYTEST_LOG_CLI_OFF, "--no-cov", *alvos, *extra]
     print(f"[SUITE] targeted ({len(alvos)} alvo(s)) -- {' '.join(cmd[2:])}", flush=True)
     return subprocess.run(cmd, cwd=str(RAIZ), check=False).returncode
 

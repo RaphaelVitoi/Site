@@ -38,7 +38,7 @@ _DECISION_PREFIX: str = "DECISION_API_"
 _MAX_POOL_KEYS: int = 9
 _COOLDOWN_429_S: float = 45.0
 _COOLDOWN_5XX_S: float = 15.0
-_HMAC_SALT: bytes = b"sota_decision_pool_salt"
+_SCRYPT_SALT: bytes = os.urandom(16)
 
 _FALLBACK_ENV_KEYS: tuple[str, ...] = (
     "GEMINI_API_KEY",
@@ -50,7 +50,7 @@ _FALLBACK_ENV_KEYS: tuple[str, ...] = (
 @lru_cache(maxsize=256)
 def _sha8(key: str) -> str:
     """Fingerprint truncado via scrypt para telemetria sem vazar a chave."""
-    return hashlib.scrypt(key.encode("utf-8"), salt=_HMAC_SALT, n=1024, r=8, p=1, dklen=16).hex()[:8]
+    return hashlib.scrypt(key.encode("utf-8"), salt=_SCRYPT_SALT, n=16384, r=8, p=1, dklen=32).hex()[:8]
 
 
 def _read_registry_env(env_map: dict[str, str]) -> None:

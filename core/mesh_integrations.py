@@ -34,7 +34,7 @@ from utils.text import enforce_pure_ascii
 
 logger = logging.getLogger(__name__)
 
-_KEYRING_SALT: bytes = b"chico_sota_mesh_keyring_v1"
+_KEYRING_SALT: bytes = os.urandom(16)
 _SAFE_PATH_RE = re.compile(r"^[A-Za-z0-9_/-]+$")
 _SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 _JSON_CONTENT_TYPE = "application/json"
@@ -70,7 +70,7 @@ def _env_or_reg(name: str, default: str = "") -> str:
 @lru_cache(maxsize=256)
 def _key_sha8(secret: str) -> str:
     """Fingerprint scrypt truncado para auditoria e rotacao sem expor segredos."""
-    return hashlib.scrypt(secret.encode("utf-8"), salt=_KEYRING_SALT, n=1024, r=8, p=1, dklen=16).hex()[:8]
+    return hashlib.scrypt(secret.encode("utf-8"), salt=_KEYRING_SALT, n=16384, r=8, p=1, dklen=32).hex()[:8]
 
 
 class ServiceKeyRing:

@@ -141,7 +141,7 @@ dev = [
     "types-PyYAML>=6.0.12.20261122",
     "hypothesis>=6.170.17",
     "pytest-benchmark>=5.3.1",
-    "schemathesis>=4.34.1",
+    "schemathesis>=4.34.2",
 ]
 
 # Dependencias extras para Teoria dos Jogos avancada, derivacao simbolica e analise de MTTs (PMev)
@@ -247,7 +247,7 @@ dev = [
     "types-PyYAML>=6.0.12.20261122",
     "hypothesis>=6.170.17",
     "pytest-benchmark>=5.3.1",
-    "schemathesis>=4.34.1",
+    "schemathesis>=4.34.2",
 ]
 
 # ==============================================================================

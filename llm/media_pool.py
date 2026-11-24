@@ -50,7 +50,7 @@ MEDIA_PROVIDERS: tuple[str, ...] = ("aistudio", "openrouter")
 _MAX_POOL_KEYS_PER_NAME: int = 5
 _COOLDOWN_429_S: float = 45.0
 _COOLDOWN_5XX_S: float = 15.0
-_HMAC_SALT: bytes = b"sota_media_pool_salt"
+_SCRYPT_SALT: bytes = os.urandom(16)
 _MIN_KEY_LEN: int = 20
 
 _PROVIDER_BASE_NAMES: dict[str, str] = {
@@ -66,7 +66,7 @@ _PROVIDER_FALLBACKS: dict[str, tuple[str, ...]] = {
 @lru_cache(maxsize=256)
 def _sha8(key: str) -> str:
     """Fingerprint truncado via scrypt para telemetria sem vazar a chave."""
-    return hashlib.scrypt(key.encode("utf-8"), salt=_HMAC_SALT, n=1024, r=8, p=1, dklen=16).hex()[:8]
+    return hashlib.scrypt(key.encode("utf-8"), salt=_SCRYPT_SALT, n=16384, r=8, p=1, dklen=32).hex()[:8]
 
 
 def _validate_modality(modality: str) -> str:

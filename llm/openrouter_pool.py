@@ -38,13 +38,13 @@ DEFAULT_COOLDOWN_402 = timedelta(minutes=15)
 DEFAULT_COOLDOWN_SERVER_ERROR = timedelta(minutes=2)
 
 
-_HMAC_SALT: bytes = b"sota_openrouter_pool_salt"
+_SCRYPT_SALT: bytes = os.urandom(16)
 
 
 @lru_cache(maxsize=256)
 def _key_sha8(key: str) -> str:
     """Calcula fingerprint truncado de 8 caracteres do token via scrypt para telemetria sem vazamento."""
-    return hashlib.scrypt(key.encode("utf-8"), salt=_HMAC_SALT, n=1024, r=8, p=1, dklen=16).hex()[:8]
+    return hashlib.scrypt(key.encode("utf-8"), salt=_SCRYPT_SALT, n=16384, r=8, p=1, dklen=32).hex()[:8]
 
 
 def _is_real_key_value(value: str) -> bool:

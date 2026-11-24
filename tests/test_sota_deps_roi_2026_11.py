@@ -211,7 +211,7 @@ async def test_queue_manager_orjson_metadata_roundtrip() -> None:
 
 @pytest.mark.unit
 def test_vitoi_watcher_watchdog_711_glob_filtering() -> None:
-    """Garante filtragem glob compatível com PurePath.full_match() do watchdog>=7.1.1."""
+    """Garante filtragem glob compativel com PurePath.full_match() do watchdog>=7.1.1."""
     handler = VitoiContextHandler()
     seen: list[str] = []
     handler.on_modified = lambda event: seen.append(str(event.src_path))  # type: ignore[method-assign]
