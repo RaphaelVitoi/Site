@@ -36,47 +36,47 @@ logger = logging.getLogger(__name__)
 
 OLLAMA_CLOUD_BASE_URL = "https://ollama.com"
 DEFAULT_OLLAMA_CLOUD_MODEL = "glm-5.3-flash"
-_DEFAULT_BILLING_COOLDOWN_S = 300.0
-_BILLING_LOCK = threading.Lock()
-_BILLING_COOLDOWN_UNTIL = 0.0
+_DEFAULT_HTTP_402_COOLDOWN_S = 300.0
+_HTTP_402_LOCK = threading.Lock()
+_HTTP_402_COOLDOWN_UNTIL = 0.0
 
 
-def _billing_cooldown_seconds() -> float:
-    raw = os.environ.get("CHICO_OLLAMA_CLOUD_402_COOLDOWN_S", str(_DEFAULT_BILLING_COOLDOWN_S)).strip()
+def _http_402_cooldown_seconds() -> float:
+    raw = os.environ.get("CHICO_OLLAMA_CLOUD_402_COOLDOWN_S", str(_DEFAULT_HTTP_402_COOLDOWN_S)).strip()
     try:
         return max(0.0, float(raw))
     except ValueError:
-        return _DEFAULT_BILLING_COOLDOWN_S
+        return _DEFAULT_HTTP_402_COOLDOWN_S
 
 
 def billing_cooldown_remaining_s() -> float:
     """Segundos restantes de cooldown local apos HTTP 402 no endpoint cloud."""
-    if _billing_cooldown_seconds() <= 0.0:
+    if _http_402_cooldown_seconds() <= 0.0:
         return 0.0
-    with _BILLING_LOCK:
-        remaining = _BILLING_COOLDOWN_UNTIL - time.monotonic()
+    with _HTTP_402_LOCK:
+        remaining = _HTTP_402_COOLDOWN_UNTIL - time.monotonic()
     return max(0.0, remaining)
 
 
 def reset_ollama_cloud_circuit() -> None:
     """Reseta o cooldown local de faturamento HTTP 402 (util em testes ou apos recarga)."""
-    global _BILLING_COOLDOWN_UNTIL
-    with _BILLING_LOCK:
-        _BILLING_COOLDOWN_UNTIL = 0.0
+    global _HTTP_402_COOLDOWN_UNTIL
+    with _HTTP_402_LOCK:
+        _HTTP_402_COOLDOWN_UNTIL = 0.0
 
 
-def _trip_billing_cooldown() -> float:
-    global _BILLING_COOLDOWN_UNTIL
-    cooldown = _billing_cooldown_seconds()
-    if cooldown <= 0.0:
+def _trip_http_402_cooldown() -> float:
+    global _HTTP_402_COOLDOWN_UNTIL
+    cooldown_s = _http_402_cooldown_seconds()
+    if cooldown_s <= 0.0:
         return 0.0
-    with _BILLING_LOCK:
-        _BILLING_COOLDOWN_UNTIL = max(_BILLING_COOLDOWN_UNTIL, time.monotonic() + cooldown)
+    with _HTTP_402_LOCK:
+        _HTTP_402_COOLDOWN_UNTIL = max(_HTTP_402_COOLDOWN_UNTIL, time.monotonic() + cooldown_s)
     logger.warning(
-        "[ollama-cloud] HTTP 402 recebido; ativando cooldown local de %.0fs para evitar retentativas cegas.",
-        cooldown,
+        "[ollama-cloud] HTTP 402 recebido; ativando cooldown local de %ds para evitar retentativas cegas.",
+        int(round(cooldown_s)),
     )
-    return cooldown
+    return cooldown_s
 
 
 def ollama_api_key() -> str:
@@ -133,7 +133,7 @@ async def _dispatch_chat_request(
                 raise RuntimeError(f"HTTP 429: RATE_LIMITED retry_after={retry_delay_s:.0f}s")
             body = await response.text()
             if response.status == 402:
-                _trip_billing_cooldown()
+                _trip_http_402_cooldown()
             if response.status != 200:
                 raise RuntimeError(f"HTTP {response.status}: {body[:500]}")
             result = json.loads(body)
@@ -145,7 +145,7 @@ async def _dispatch_chat_request(
             return text, usage
     except aiohttp.ClientResponseError as e:
         if e.status == 402:
-            _trip_billing_cooldown()
+            _trip_http_402_cooldown()
         raise RuntimeError(f"HTTP {e.status}: {e.message}") from e
 
 

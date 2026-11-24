@@ -34,6 +34,8 @@ Convencoes:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
+import hashlib
 import logging
 import os
 import sys
@@ -61,12 +63,10 @@ _PROVIDER_FALLBACKS: dict[str, tuple[str, ...]] = {
 }
 
 
+@lru_cache(maxsize=256)
 def _sha8(key: str) -> str:
-    """Fingerprint truncado para telemetria sem vazar a chave."""
-    import hashlib  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-    import hmac  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
-
-    return hmac.new(_HMAC_SALT, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
+    """Fingerprint truncado via scrypt para telemetria sem vazar a chave."""
+    return hashlib.scrypt(key.encode("utf-8"), salt=_HMAC_SALT, n=1024, r=8, p=1, dklen=16).hex()[:8]
 
 
 def _validate_modality(modality: str) -> str:

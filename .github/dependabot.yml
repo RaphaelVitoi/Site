@@ -1,13 +1,15 @@
 # SOTA v8.0 GOLD: Dependabot Automated Security & Dependency Management
 version: 2
 updates:
-  # Python dependencies (pyproject.toml / uv)
-  - package-ecosystem: "pip"
+  # Python dependencies (pyproject.toml / uv.lock)
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 5
     commit-message:
       prefix: "chore(deps-python)"
       include: "scope"
@@ -18,11 +20,29 @@ updates:
         update-types: ["minor", "patch"]
     ignore:
       - dependency-name: "chromadb"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: ["version-update:semver-major"]
       - dependency-name: "opencv-python-headless"
         update-types: ["version-update:semver-major"]
       - dependency-name: "tenacity"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  # Hybrid router standalone requirements
+  - package-ecosystem: "pip"
+    directory: "/tools/hybrid_router"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 5
+    commit-message:
+      prefix: "chore(deps-router)"
+      include: "scope"
+    groups:
+      hybrid-router-dependencies:
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
 
   # Frontend & monorepo dependencies (npm / package.json workspaces)
   - package-ecosystem: "npm"
@@ -31,6 +51,8 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 5
     commit-message:
       prefix: "chore(deps-npm)"
       include: "scope"
@@ -47,6 +69,8 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 5
     commit-message:
       prefix: "chore(deps-rust)"
       include: "scope"
@@ -63,6 +87,8 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 5
     commit-message:
       prefix: "chore(deps-wasm)"
       include: "scope"
@@ -76,13 +102,15 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 5
     commit-message:
       prefix: "chore(ci)"
       include: "scope"
     groups:
       actions:
         patterns:
-          - "actions/*"
-          - "astral-sh/*"
+          - "*"

@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import asyncio
 from datetime import UTC, datetime, timedelta
+from functools import lru_cache
 import hashlib
-import hmac
 import logging
 import os
 import re
@@ -41,9 +41,10 @@ DEFAULT_COOLDOWN_SERVER_ERROR = timedelta(minutes=2)
 _HMAC_SALT: bytes = b"sota_openrouter_pool_salt"
 
 
+@lru_cache(maxsize=256)
 def _key_sha8(key: str) -> str:
-    """Calcula fingerprint truncado de 8 caracteres do token para telemetria sem vazamento."""
-    return hmac.new(_HMAC_SALT, key.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
+    """Calcula fingerprint truncado de 8 caracteres do token via scrypt para telemetria sem vazamento."""
+    return hashlib.scrypt(key.encode("utf-8"), salt=_HMAC_SALT, n=1024, r=8, p=1, dklen=16).hex()[:8]
 
 
 def _is_real_key_value(value: str) -> bool:

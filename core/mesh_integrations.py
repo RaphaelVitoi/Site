@@ -11,8 +11,8 @@ import base64
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import lru_cache
 import hashlib
-import hmac
 import ipaddress
 import logging
 import os
@@ -67,9 +67,10 @@ def _env_or_reg(name: str, default: str = "") -> str:
     return default
 
 
+@lru_cache(maxsize=256)
 def _key_sha8(secret: str) -> str:
-    """Fingerprint HMAC-SHA256 truncado para auditoria e rotacao sem expor segredos."""
-    return hmac.new(_KEYRING_SALT, secret.encode("utf-8"), hashlib.sha256).hexdigest()[:8]
+    """Fingerprint scrypt truncado para auditoria e rotacao sem expor segredos."""
+    return hashlib.scrypt(secret.encode("utf-8"), salt=_KEYRING_SALT, n=1024, r=8, p=1, dklen=16).hex()[:8]
 
 
 class ServiceKeyRing:

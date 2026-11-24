@@ -1,0 +1,4 @@
+name: "SOTA CodeQL Configuration"
+disable-default-queries: false
+paths-ignore:
+  - "core/vendor/**"

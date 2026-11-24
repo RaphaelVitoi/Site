@@ -54,7 +54,7 @@
     "concurrently": "10.0.7",
     "jest": "30.5.2",
     "jest-environment-jsdom": "30.5.2",
-    "knip": "^6.47.0",
+    "knip": "^6.48.0",
     "lighthouse": "13.6.0",
     "markdownlint-cli": "^0.50.1",
     "prettier": "3.10.1",
