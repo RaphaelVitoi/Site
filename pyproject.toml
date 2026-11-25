@@ -72,7 +72,7 @@ dependencies = [
     # NOTA historica: moviepy foi REMOVIDO em 2026-08-21 -- exigia pillow<12.0,
     # prendo o projeto em Pillow 11.x (10 CVEs corrigidas em 12.3.0). 2.2.1 e a
     # ultima versao e nao levanta o teto. Zero imports no codigo.
-    "regex>=2026.11.23",
+    "regex>=2026.11.24",
     "requests>=2.34.2,<3.0.0",
     "PyYAML>=6.0.4,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",
@@ -99,7 +99,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.5.3",
+    "laya>=0.5.4",
     "accelerate>=1.16.0",
     "timesfm[torch]==3.0.2",
     # Computer-use, OLAP e embeddings alternativos foram movidos para
@@ -197,7 +197,7 @@ embeddings = [
 # SDKs oficiais opcionais (runtime usa aiohttp REST direto em engine/llm_api.py e llm/anthropic.py).
 llm-sdks = [
     "openai>=3.59.0",
-    "anthropic>=2.13.0",
+    "anthropic>=2.14.0",
 ]
 
 # Suite completa de extensoes opcionais
@@ -220,7 +220,7 @@ all = [
     "seaborn>=0.13.2",
     "sentence-transformers>=6.3.0",
     "openai>=3.59.0",
-    "anthropic>=2.13.0",
+    "anthropic>=2.14.0",
 ]
 
 [dependency-groups]
