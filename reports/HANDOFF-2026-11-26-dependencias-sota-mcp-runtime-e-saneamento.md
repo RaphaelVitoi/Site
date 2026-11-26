@@ -78,6 +78,7 @@ referencias_nao_resolviveis:
 - config/mcp_gateway.json
 - config/config.json
 - tests/test_nucleo_compartilhado.py
+- frontend/src/components/simulator/panels/Cargo.toml
 revisoes_de_ancora:
 - registro: 2026-09-22-auditoria-frontend-4-itens
   caminhos:
