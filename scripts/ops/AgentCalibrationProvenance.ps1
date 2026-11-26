@@ -32,7 +32,7 @@ function Get-AgentCalibrationModelosCanonicos {
     'V={"codex","claude-code","antigravity","hermes-agent","ollama","llama-cpp","devin-desktop"}; ' +
     'A={x["modelo"] for x in I["canonicas"] if x.get("modelo") and x.get("veiculo") in V}; ' +
     'N={c.model_name for c in R.values() if getattr(c,"model_name",None)}; ' +
-    'print(json.dumps(sorted(set(R) | set(T) | set(N) | A)))'
+    'print(json.dumps(sorted(set(R) | set(T) | set(N) | A | {"gpt-6-luna"})))'
     try {
         $saida = & $py -c $code $raiz 2>$null
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($saida)) { return $null }
@@ -59,8 +59,13 @@ function Resolve-AgentCalibrationExpectedVehicle {
         # como inexistente um modelo que o conjunto canonico reconhece. As
         # duas camadas tem de concordar sobre o que EXISTE e divergir apenas
         # sobre o que esta autorizado -- guard em tests/test_agent_calibration_provenance.py.
+        '^claude-(?:opus|sonnet)-5\.5$' {
+            if ($ConductorVehicle -ceq 'antigravity') { 'antigravity' } else { 'claude-code' }
+            break
+        }
         '^claude-(?:opus|sonnet|haiku|fable)-\d+(?:[.-]\d+)*(?:-[a-z0-9]+)*$' { 'claude-code'; break }
         '^gemini-(?:\d+(?:\.\d+)*-(?:flash|pro)|(?:pro|flash(?:-lite)?)-latest)(?:-[a-z0-9]+)*$' { 'antigravity'; break }
+        '^swe-\d+(?:\.\d+)*-(?:flash|slow)$' { 'devin-desktop'; break }
         # Runtimes locais e condutores nao-API: Hermes Agent (solar-pro4),
         # Ollama (modelos GGUF como qwen2.5-coder:7b, llama3.2, etc.),
         # llama.cpp direto.
@@ -133,6 +138,16 @@ function Get-AgentCalibrationProvenance {
             if ($planner -ceq $executor) {
                 $reasons.Add('invalid:orchestrator_duo_same_model')
             }
+            if ($values.conductor_vehicle -ceq 'antigravity') {
+                $allowedAntigravityPlanners = @('gemini-4-argon', 'gemini-4-carbon', 'gemini-4-neon', 'claude-opus-5.5')
+                if ($planner -cnotin $allowedAntigravityPlanners) {
+                    $reasons.Add('invalid:orchestrator_planner_not_authorized')
+                }
+                $allowedAntigravityExecutors = @('gemini-4-hydrogen', 'claude-sonnet-5.5')
+                if ($executor -cnotin $allowedAntigravityExecutors) {
+                    $reasons.Add('invalid:orchestrator_executor_not_authorized')
+                }
+            }
             $expectedPlanner = Resolve-AgentCalibrationExpectedVehicle -ModelName $planner -ConductorVehicle $values.conductor_vehicle -IdentityCatalog $IdentityCatalog
             $expectedExecutor = Resolve-AgentCalibrationExpectedVehicle -ModelName $executor -ConductorVehicle $values.conductor_vehicle -IdentityCatalog $IdentityCatalog
             if (-not $expectedPlanner -or -not $expectedExecutor) {
@@ -166,6 +181,9 @@ function Get-AgentCalibrationProvenance {
             if ($null -eq $canonicos) { $reasons.Add('canonical_model_source_unreachable') }
             elseif (-not $canonicos.Contains($values.conductor_model)) {
                 $reasons.Add('not_in_canonical_registry:conductor_model')
+            }
+            if ($values.conductor_model -ceq 'claude-sonnet-5.5') {
+                $reasons.Add('invalid:executor_requires_orchestrator')
             }
         }
     }

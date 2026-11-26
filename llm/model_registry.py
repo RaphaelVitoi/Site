@@ -16,6 +16,7 @@ Verificado em 2026-08-21 contra:
 
 from __future__ import annotations
 
+from datetime import date
 from enum import StrEnum
 from typing import Literal
 
@@ -104,6 +105,16 @@ CORRECOES_APLICADAS: dict[str, str] = {
         "top_p, top_k) foram descontinuados/ignorados e penalidades (frequency_penalty, "
         "presence_penalty) produzem HTTP 400. Requisicoes com trailing role: 'model' "
         "sao rejeitadas com erro."
+    ),
+    "google.gemini_4_verified_2026_11": (
+        "VERIFICADO em 2026-11-25 contra docs oficiais da Gemini API: "
+        "(1) Implicit Cache exige prefixo minimo de 4096 tokens em Gemini 4 e 3.8/3.6 "
+        "(2048 apenas em Gemini 2.5; delta incremental multi-turn de 2050 tokens); "
+        "(2) thinking_level='xhigh' e exclusivo de gemini-4-neon e gemini-4-hydrogen; "
+        "(3) thinking_level='minimal' e valido em gemini-3.5-flash-lite e rejeitado em "
+        "Gemini 4 e 3.8 Flash; "
+        "(4) Precos Standard oficiais: Neon $3.00/$15.00, Hydrogen $1.50/$7.50, "
+        "Carbon/Argon $2.00/$10.00 ate 2026-11-30 e $4.00/$20.00 a partir de 2026-12-01."
     ),
 }
 
@@ -202,8 +213,13 @@ class ModelCapability(BaseModel):
     esforcos_autorizados: tuple[str, ...] = ()
 
     #  Google
-    thinking_level: Literal["minimal", "low", "medium", "high"] | None = None
+    thinking_level: Literal["minimal", "low", "medium", "high", "xhigh"] | None = None
     thought_signature_mode: Literal["stateful", "stateless"] | None = None
+    implicit_cache_min_tokens: int | None = None
+    supports_flex_inference: bool = False
+    scheduled_price_cliff_date: str | None = None
+    scheduled_price_per_1m_in: float | None = None
+    scheduled_price_per_1m_out: float | None = None
 
     #  Comum
     # Em TODOS os tres provedores os modelos de raciocinio rejeitam amostragem
@@ -219,6 +235,14 @@ class ModelCapability(BaseModel):
             )
         if self.adapter is AdapterType.GOOGLE and self.thinking_level is None:
             raise ValueError(f"{self.model_name}: Google exige 'thinking_level'.")
+        if (
+            self.adapter is AdapterType.GOOGLE
+            and self.thinking_level == "xhigh"
+            and self.model_name not in ("gemini-4-neon", "gemini-4-hydrogen")
+        ):
+            raise ValueError(
+                f"{self.model_name}: thinking_level 'xhigh' e exclusivo de gemini-4-neon e gemini-4-hydrogen."
+            )
         if self.max_output_tokens > self.context_window_in:
             raise ValueError(f"{self.model_name}: saida maior que o contexto.")
         if self.esforcos_autorizados and self.reasoning_effort not in self.esforcos_autorizados:
@@ -263,7 +287,10 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         supports_mid_conversation_system=True,
         requires_streaming_above=16_000,
         verification=VerificationStatus.VERIFICADO,
-        notas="Claude Opus 5.5: Primario canonico de Governanca e Codigo Cirurgico (Tier 1 / CHICO).",
+        notas=(
+            "Claude Opus 5.5: Primario canonico de Governanca e Codigo Cirurgico (Tier 1 / CHICO). "
+            "Opera via Claude Code e integrado no Antigravity App Desktop 2.35.1 (Solo e Orchestrator)."
+        ),
     ),
     "claude-sonnet-5.5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
@@ -278,7 +305,11 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         supports_mid_conversation_system=False,
         requires_streaming_above=16_000,
         verification=VerificationStatus.VERIFICADO,
-        notas="Claude Sonnet 5.5: Parceiro de Engenharia de Software e Construcao Multi-arquivo.",
+        notas=(
+            "Claude Sonnet 5.5: executor de Engenharia de Software e Construcao Multi-arquivo. "
+            "Opera via Claude Code e integrado no Antigravity App Desktop 2.35.1 como executor, "
+            "sem funcao solo ou de orquestrador."
+        ),
     ),
     "claude-haiku-5.5": ModelCapability(
         adapter=AdapterType.ANTHROPIC,
@@ -475,13 +506,18 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         price_per_1m_out=10.00,
         thinking_level="high",
         thought_signature_mode="stateful",
+        implicit_cache_min_tokens=4096,
+        supports_flex_inference=True,
+        scheduled_price_cliff_date="2026-12-01",
+        scheduled_price_per_1m_in=4.00,
+        scheduled_price_per_1m_out=20.00,
         verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Google Gemini 4 Argon: Nova geracao frontier da Google (Outubro/2026). "
-            "Integrante do Tier 1 / Coletivo CHICO. Compartilha da mesma situacao do GPT-6 Astra: "
-            "sao os modelos mais potentes e poderosos do ecossistema e, por serem mais custosos, "
-            "devem ser usados estritamente de forma pontual (escalonamento de raciocinio extremo, "
-            "provas formais PMev e arquitetura de ponta), nunca como primarios rotineiros."
+            "Google Gemini 4 Argon (GA 2026-10-13). Integrante do apice Tier 1 / "
+            "Coletivo CHICO; atua como Orchestrator no Antigravity App ao lado de Carbon, Neon "
+            "e Claude Opus 5.5. "
+            "Preco promocional $2.00/$10.00 ate 2026-11-30; cliff para $4.00/$20.00 "
+            "em 2026-12-01 (Batch/Flex 50% off). Hop nao-streaming limitado a 32768 tokens."
         ),
     ),
     "gemini-pro-latest": ModelCapability(
@@ -552,13 +588,17 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         price_per_1m_out=10.00,
         thinking_level="high",
         thought_signature_mode="stateful",
+        implicit_cache_min_tokens=4096,
+        supports_flex_inference=True,
+        scheduled_price_cliff_date="2026-12-01",
+        scheduled_price_per_1m_in=4.00,
+        scheduled_price_per_1m_out=20.00,
         verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Google Gemini 4 Carbon: integrante do trio de apice Tier 1 "
-            "(ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+), mesma doutrina "
-            "de uso pontual -- escalonamento cirurgico de altissimo reasoning, "
-            "verificacao formal e sessoes multi-dia, nunca primario rotineiro. "
-            "Lancado e registrado pelo Tier 0 em 2026-11-10."
+            "Google Gemini 4 Carbon (GA 2026-11-10): integrante do trio de apice Tier 1 "
+            "(GraphWalks 96.2%, RiemannBench 80.0%). Opera SOLO e como Orquestrador no "
+            "Antigravity App 2.35.1 ao lado de Argon, Neon e Claude Opus 5.5. Preco $2.00/$10.00 ate "
+            "2026-11-30; cliff para $4.00/$20.00 em 2026-12-01 (Implicit Cache $0.10 -> $0.20; Flex/Batch 50% off)."
         ),
     ),
     "gemini-4-neon": ModelCapability(
@@ -567,19 +607,18 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
-        price_per_1m_in=2.00,
-        price_per_1m_out=10.00,
+        price_per_1m_in=3.00,
+        price_per_1m_out=15.00,
         thinking_level="high",
         thought_signature_mode="stateful",
-        verification=VerificationStatus.NAO_VERIFICADO,
+        implicit_cache_min_tokens=4096,
+        supports_flex_inference=True,
+        verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Google Gemini 4 Neon: integrante Tier 1 / Coletivo CHICO da "
-            "familia Gemini 4 (registrado em data/agent_identities.json em "
-            "2026-11-21, veiculo antigravity). Modelo preferencial Tier 1 para "
-            "Planejamento e Orquestracao. No modo bifasico Orchestrator, forma o "
-            "duo canonico planejando/orquestrando (Neon preferencial, ou Argon) "
-            "enquanto Gemini 4 Hydrogen executa. Preco ($2.00/$10.00) mantido "
-            "como NAO_VERIFICADO ate card oficial de billing / probe v1beta."
+            "Google Gemini 4 Neon (GA 2026-11-18): titular Tier 1 / Coletivo CHICO "
+            "para Planejamento e Orquestracao (junto de Argon, Carbon e Claude Opus 5.5) e provas PMev "
+            "(RiemannBench 84.0% > Carbon 80.0%; GraphWalks 95.2%). Standard $3.00/$15.00 "
+            "(Implicit Cache $0.15; Flex/Batch $1.50/$7.50); suporta thinking_level='xhigh'."
         ),
     ),
     "gemini-4-hydrogen": ModelCapability(
@@ -588,22 +627,19 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         cota_por_assinatura=True,
         context_window_in=1_048_576,
         max_output_tokens=65_536,
-        price_per_1m_in=1.00,
-        price_per_1m_out=5.00,
+        price_per_1m_in=1.50,
+        price_per_1m_out=7.50,
         thinking_level="high",
         thought_signature_mode="stateful",
-        verification=VerificationStatus.NAO_VERIFICADO,
+        implicit_cache_min_tokens=4096,
+        supports_flex_inference=True,
+        verification=VerificationStatus.VERIFICADO,
         notas=(
-            "Google Gemini 4 Hydrogen: integrante Tier 1 / Coletivo CHICO da "
-            "familia Gemini 4 (registrado em data/agent_identities.json em "
-            "2026-11-14, veiculo antigravity). Modelo preferencial Tier 1 para "
-            "Execucao e Fluxo Agentico, operando como executor primario no duo "
-            "bifasico Orchestrator (Neon/Argon -> Hydrogen), com baixa latencia "
-            "e bom custo. Verificado ao vivo na v1beta em 2026-11-15 "
-            "(displayName='Gemini 4 Hydrogen', input=1048576, output=65536, "
-            "thinking=True, generateContent HTTP 200; cachedContents ainda retorna "
-            "HTTP 400 em gemini-4-*). Preco ($1.00/$5.00) mantido como "
-            "NAO_VERIFICADO ate card oficial de billing."
+            "Google Gemini 4 Hydrogen (GA 2026-11-12): executor Tier 1 / "
+            "Coletivo CHICO no Orchestrator; executa sob Argon, Carbon, Neon ou Claude Opus 5.5 "
+            "e ao lado de Claude Sonnet 5.5 como executor. "
+            "Disponivel no Free Tier e Paid Standard $1.50/$7.50 (Implicit Cache $0.075; "
+            "Flex/Batch $0.75/$3.75); suporta thinking_level='xhigh' (AA Index 26.9 -> 51.0 -> 54.0)."
         ),
     ),
     "gemini-3.8-flash": ModelCapability(
@@ -616,6 +652,11 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         price_per_1m_out=3.75,
         thinking_level="high",
         thought_signature_mode="stateful",
+        implicit_cache_min_tokens=4096,
+        supports_flex_inference=True,
+        scheduled_price_cliff_date="2027-01-01",
+        scheduled_price_per_1m_in=1.50,
+        scheduled_price_per_1m_out=7.50,
         verification=VerificationStatus.VERIFICADO,
         notas=(
             "Modelo de fronteira da geracao Gemini 3.8 lancado em Setembro/2026. "
@@ -691,6 +732,7 @@ MODEL_REGISTRY: dict[str, ModelCapability] = {
         price_per_1m_out=2.50,
         thinking_level="low",
         thought_signature_mode="stateless",
+        supports_flex_inference=True,
         verification=VerificationStatus.VERIFICADO,
         notas=(
             "Camada 1: Triagem, parsing rapido e borda de baixa latencia (>200 tok/s). "
@@ -886,6 +928,10 @@ MODELOS_RETIRADOS: dict[str, str] = {
         "token. O Astra tem as duas faixas -- e essa assimetria, e nao o preco "
         "de tabela, e o que separa os dois."
     ),
+    "swe-1.6-slow": (
+        "Tier 0, 2026-11-25: RETIRADO por evolucao do Devin Next. "
+        "Substituido por Devin Next SWE 1.7 Slow (swe-1.7-slow) ao lado de SWE 2.0 Flash Medium."
+    ),
 }
 
 
@@ -912,11 +958,34 @@ def get(alias: str) -> ModelCapability:
     return MODEL_REGISTRY[alias]
 
 
-def custo_estimado(alias: str, tokens_in: int, tokens_out: int) -> float:
-    """Custo em USD. Nao inclui tokens de raciocinio, que sao cobrados como saida
-    e podem dominar o total em modelos de Sistema 2  tratar como piso."""
+def custo_estimado(
+    alias: str,
+    tokens_in: int,
+    tokens_out: int,
+    *,
+    as_of: date | None = None,
+    flex_or_batch: bool = False,
+    cached_tokens_in: int = 0,
+) -> float:
+    """Custo em USD, ciente de price cliffs, Flex/Batch (50% off) e Implicit Cache (95% off)."""
     c = get(alias)
-    return (tokens_in / 1e6) * c.price_per_1m_in + (tokens_out / 1e6) * c.price_per_1m_out
+    p_in = c.price_per_1m_in
+    p_out = c.price_per_1m_out
+    if (
+        as_of is not None
+        and c.scheduled_price_cliff_date
+        and c.scheduled_price_per_1m_in is not None
+        and c.scheduled_price_per_1m_out is not None
+        and as_of >= date.fromisoformat(c.scheduled_price_cliff_date)
+    ):
+        p_in = c.scheduled_price_per_1m_in
+        p_out = c.scheduled_price_per_1m_out
+    if flex_or_batch:
+        p_in *= 0.5
+        p_out *= 0.5
+    cached = min(max(0, tokens_in), max(0, cached_tokens_in))
+    fresh = max(0, tokens_in) - cached
+    return (fresh / 1e6) * p_in + (cached / 1e6) * (0.05 * p_in) + (tokens_out / 1e6) * p_out
 
 
 __all__ = [

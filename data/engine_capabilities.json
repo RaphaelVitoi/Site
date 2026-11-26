@@ -1319,7 +1319,7 @@
         "AMD Vulkan driver",
         "Chico SOTA"
       ],
-      "safe_label": "Runtime llama.cpp win-vulkan-x64 oficial atualizado para b12387 (Site/engine/llama_cpp e ~/.gemini/tools/llama.cpp) + Llama App 0.14.1.0 (llama.exe 1.0.0-dev b12375) como Router Nativo em 127.0.0.1:9931. Medicao empirica no host i9-9900K (8C/16T) + RX 570 8GB Vulkan0 em 2026-11-14: llama-bench qwen2.5-coder-1.5b-q8_0 pp512=556.03 t/s e tg128=25.91 t/s com -t 8 -b 2048 -ub 512 -fa on -ctk q8_0 -ctv q8_0; no router :9931 (-ctk q8_0 -ctv q4_0 -c 32768 --parallel 2 --cache-reuse 256 --cache-ram 4096 --metrics --props), prompt eval subiu de 77.23 t/s para 188.82 t/s (+2.44x) com KV prefix reuse ativo. Qwen3.6-35B-A3B-MTP UD-Q4_K_XL medido em 13.45 t/s com -ncmoe 41 + draft-mtp n-max4 p-min0.75 (np=1 via Start-LlamaVulkan.ps1).",
+      "safe_label": "Runtime llama.cpp 1.0 (build 12651 CUDA 12.4 sm_61 em Site/engine/llama_cpp com ggml-cuda.dll + Llama App 0.14.1.0 Router Nativo Vulkan em 127.0.0.1:9931) calibrado para NVIDIA GeForce GTX 1060 6GB (5.1 GiB livres): ctx-size 8192 (16384 no qwen2.5-coder-1.5b), parallel=1, K=q8_0, V=q4_0, flash-attn=on, fit-target=512; suporta Gemma 4 destilado e2b/e4b com draft-mtp, Qwen Coder 1.5B/Instruct, G9v3-3B, Ling-3.0-tiny, MiniCPM5-1B, LFM3-Omni-2B, Nomic-Embed-Text-V2 e Qwen3.6-35B-A3B-MTP.",
       "claims_allowed": [
         "gpu-offload-vulkan",
         "openai-compatible-server",

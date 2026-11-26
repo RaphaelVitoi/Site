@@ -468,3 +468,6 @@ def test_fetch_llama_cpp_runtime_status_mock(monkeypatch: pytest.MonkeyPatch) ->
     audit = AntigravityAgentBridge.audit_ecosystem()
     assert "llama_cpp" in audit["local_models"]
     assert audit["local_models"]["llama_cpp"]["online"] is True
+    assert audit["suite"]["app_desktop"] == "2.35.1"
+    assert audit["suite"]["cli"] == "1.5.17"
+    assert audit["suite"]["zed"] == "1.5.0"

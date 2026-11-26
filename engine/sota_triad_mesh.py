@@ -259,6 +259,22 @@ class StitchDesignBridge:
         )
 
     @staticmethod
+    def build_a2ui_preview(objective: str, screen_id: str = "triad-preview") -> dict[str, object]:
+        from engine.stitch_bridge import build_a2ui_agent_envelope  # noqa: PLC0415
+
+        return build_a2ui_agent_envelope(
+            surface_id=screen_id,
+            components=[
+                {
+                    "id": f"{screen_id}-root",
+                    "component": "MetricCard",
+                    "props": {"title": objective, "theme": "Obsidian Analytics"},
+                }
+            ],
+            data_model={"objective": objective},
+        )
+
+    @staticmethod
     def extract_tailwind_classes(markup: str) -> list[str]:
         raw_classes = re.findall(r'class(?:Name)?=["\']([^"\']+)["\']', markup)
         all_tokens: set[str] = set()
@@ -365,9 +381,11 @@ class SotaTriadOrchestrator:
                 },
                 {
                     "phase": 2,
-                    "agent": "Stitch (Generative UI)",
-                    "action": "Produce WCAG AAA glassmorphic screens using DESIGN_SYSTEM_SOTA.md",
+                    "agent": "Stitch (Generative UI + A2UI 1.0)",
+                    "action": "Produce WCAG AAA glassmorphic screens using DESIGN_SYSTEM_SOTA.md and Google A2UI 1.0",
                     "request": stitch_req.to_dict(),
+                    "a2ui_v1_ready": True,
+                    "a2ui_preview": self.stitch.build_a2ui_preview(objective),
                 },
                 {
                     "phase": 3,

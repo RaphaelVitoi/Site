@@ -27,6 +27,86 @@ STITCH_ERROR_NOT_CONFIGURED: Final[str] = "StitchClient nao configurado: STITCH_
 STITCH_PROJECTS_PREFIX: Final[str] = "projects/"
 DEFAULT_STITCH_PROJECT_ID: Final[str] = "18242753218562483944"
 DEFAULT_OBSIDIAN_DESIGN_SYSTEM: Final[str] = "assets/6f9c8c6e7114422393d45b0c4ca02808"
+A2UI_SPEC_VERSION: Final[str] = "1.0"
+OBSIDIAN_A2UI_CATALOG_ID: Final[str] = "obsidian-analytics-v1"
+OBSIDIAN_A2UI_CATALOG: Final[dict[str, Any]] = {
+    "catalogId": OBSIDIAN_A2UI_CATALOG_ID,
+    "specVersion": A2UI_SPEC_VERSION,
+    "tokens": {
+        "canvasDeep": "#030610",
+        "spaceBase": "#0F1729",
+        "gold": "#f2b72b",
+        "emerald": "#54dea2",
+        "rose": "#EE445E",
+        "mathIndigo": "#6467F2",
+    },
+    "components": ("MetricCard", "NashRadarPanel", "RangeMatrix", "ActionBanner", "DataTable"),
+}
+
+
+def _validate_a2ui_safe_value(value: Any) -> None:
+    """Bloqueia injecao de script/HTML perigoso em payloads e bindings @path/@call A2UI 1.0."""
+    if isinstance(value, str):
+        lower = value.lower()
+        if "<script" in lower or "javascript:" in lower:
+            raise ValueError("Payload A2UI rejeitado: conteudo potencialmente inseguro (<script/javascript:).")
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            _validate_a2ui_safe_value(k)
+            _validate_a2ui_safe_value(v)
+    elif isinstance(value, list):
+        for item in value:
+            _validate_a2ui_safe_value(item)
+
+
+def build_a2ui_agent_envelope(
+    surface_id: str,
+    components: list[dict[str, Any]],
+    *,
+    data_model: dict[str, Any] | None = None,
+    rpc_call: dict[str, Any] | None = None,
+    catalog_id: str = OBSIDIAN_A2UI_CATALOG_ID,
+) -> dict[str, Any]:
+    """Constroi envelope declarativo Google A2UI 1.0 (`agent_to_renderer`)."""
+    if not surface_id or not isinstance(surface_id, str):
+        raise ValueError("surface_id A2UI deve ser string nao vazia.")
+    _validate_a2ui_safe_value(components)
+    _validate_a2ui_safe_value(data_model or {})
+    _validate_a2ui_safe_value(rpc_call or {})
+
+    envelope: dict[str, Any] = {
+        "version": A2UI_SPEC_VERSION,
+        "direction": "agent_to_renderer",
+        "catalogId": catalog_id,
+        "surfaceUpdate": {"surfaceId": surface_id, "components": components},
+        "dataModelUpdate": {"surfaceId": surface_id, "contents": data_model or {}},
+        "beginRendering": {"surfaceId": surface_id, "root": components[0]["id"] if components else "root"},
+    }
+    if rpc_call:
+        envelope["callRendererFunction"] = rpc_call
+    return envelope
+
+
+def parse_a2ui_renderer_envelope(payload: dict[str, Any]) -> dict[str, Any]:
+    """Valida e normaliza envelope Google A2UI 1.0 (`renderer_to_agent`)."""
+    if not isinstance(payload, dict):
+        raise ValueError("Envelope A2UI renderer_to_agent deve ser um dicionario.")
+    version = str(payload.get("version", ""))
+    if version != A2UI_SPEC_VERSION:
+        raise ValueError(f"Versao A2UI nao suportada: {version!r} (esperada {A2UI_SPEC_VERSION!r}).")
+    direction = str(payload.get("direction", "renderer_to_agent"))
+    if direction != "renderer_to_agent":
+        raise ValueError(f"Direcao invalida para parser renderer_to_agent: {direction!r}.")
+    _validate_a2ui_safe_value(payload)
+    kind = "unknown"
+    body: Any = None
+    for candidate in ("userAction", "callAgentFunction", "rendererFunctionResponse"):
+        if candidate in payload:
+            kind = candidate
+            body = payload[candidate]
+            break
+    return {"version": version, "direction": direction, "kind": kind, "payload": body}
+
 
 # Enum oficial medido via tools/list do Stitch MCP em 2026-11-11:
 #   MODEL_ID_UNSPECIFIED | GEMINI_3_8_FLASH | GEMINI_3_5_FLASH_LITE
@@ -128,6 +208,23 @@ class StitchScreen(dict[str, Any]):
         for k, v in data.items():
             inst[k] = v
         return inst
+
+    def to_a2ui_envelope(self, *, data_model: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Converte a tela Stitch em envelope declarativo Google A2UI 1.0."""
+        surface_id = self.id or (self.name.split("/")[-1] if "/" in self.name else "stitch-surface")
+        components = [
+            {
+                "id": f"{surface_id}-root",
+                "component": "ActionBanner",
+                "props": {
+                    "title": self.title or f"Stitch Screen {surface_id}",
+                    "deviceType": self.device_type,
+                    "screenshotUrl": self.screenshot_url or "",
+                    "htmlUrl": self.html_url or "",
+                },
+            }
+        ]
+        return build_a2ui_agent_envelope(surface_id=surface_id, components=components, data_model=data_model)
 
 
 def _env_or_reg(name: str, default: str = "") -> str:

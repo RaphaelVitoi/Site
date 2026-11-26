@@ -313,3 +313,22 @@ class TestLayaMultilingualSOTA:
         body = json.loads(req_sent.data.decode("utf-8"))
         assert body["max_len"] == 8192
         reset_laya_service_circuit()
+
+    def test_laya_054_version_jev_confidence_and_shortlist(self):
+        from llm.laya_bridge import compute_jev_confidence, get_laya_version, laya_shortlist_choice
+
+        ver = get_laya_version()
+        assert ver.startswith("0.5.")
+        assert compute_jev_confidence([1.0, 0.0, 0.0]) >= 0.99
+        assert compute_jev_confidence([0.33, 0.33, 0.34]) < 0.2
+
+        res = laya_shortlist_choice(
+            "check nash icm bubble equity",
+            {
+                "icm_solver": "Compute nash icm bubble equity pressure",
+                "css_fix": "Adjust padding in footer component",
+            },
+            top_k=1,
+        )
+        assert res["selected"] == "icm_solver"
+        assert res["provenia"] is not None

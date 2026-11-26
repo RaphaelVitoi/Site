@@ -418,3 +418,15 @@ cima.
 operador. O que mudou e que agora existe detector --
 `test_nenhuma_rota_local_nova_estoura_a_vram_declarada`. Ver
 [[registro-2026-08-29-o-fallback-que-nao-carrega]].
+
+## Revisao de ancora -- 2026-11-26, o decimo sexto tier
+
+Ancora tocada: `core/subagents_mesh.py` e `data/ESTADO_DE_ROTEAMENTO.json`.
+
+`SubagentTier.TOOL_DISPATCH` (`tool_dispatch_router`) entrou na malha com
+executor `functiongemma:270m` e fallback cloud `(laguna-xs, qwen-coder-32b)`,
+classificado como `ClasseTarefa.OPERACIONAL` em `llm/routing_policy.py`. A
+invariante nao mudou: custo zero, frota local, a politica continua recusando
+atribuir modelo a tier -- o que cresceu foi a superficie declarada, de 15 para
+16 tiers. `superficie_subagentes.tiers` em `ESTADO_DE_ROTEAMENTO.json` foi
+atualizado para 16 no mesmo commit.

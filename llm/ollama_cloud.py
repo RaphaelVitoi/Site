@@ -74,7 +74,7 @@ def _trip_http_402_cooldown() -> float:
         _HTTP_402_COOLDOWN_UNTIL = max(_HTTP_402_COOLDOWN_UNTIL, time.monotonic() + cooldown_s)
     logger.warning(
         "[ollama-cloud] HTTP 402 recebido; ativando cooldown local de %ds para evitar retentativas cegas.",
-        int(round(cooldown_s)),
+        round(cooldown_s),
     )
     return cooldown_s
 

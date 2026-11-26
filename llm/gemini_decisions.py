@@ -41,6 +41,7 @@ from llm.laya_bridge import (
 )
 
 __all__ = [
+    "CONTROL_PLANE_S1_QUESTIONS",
     "DECISIONS_API_VERSION",
     "DEFAULT_S1_MIN_CONFIDENCE",
     "GEMINI_DECISION_MODEL",
@@ -51,6 +52,7 @@ __all__ = [
     "DecisionResult",
     "GeminiDecisionsClient",
     "decide",
+    "decide_control_plane",
     "decide_s1",
     "default_min_confidence",
     "is_multimodal_input",
@@ -742,8 +744,9 @@ def _laya_predict_com_servico(
       - ``CHICO_LAYA_PREFER_SERVICE=1`` -> microservico primeiro (pesos quentes);
       - ``laya_predict`` in-process (GPU/custo zero);
       - se o resultado esta em ``fallback_used`` (CPU-gated/checkpoint ausente)
-        ou falhou, o microservico dedicado e sondado -- neste host (RX 570 sem
-        CUDA) e o unico caminho que executa o checkpoint 322M de verdade.
+        ou falhou, o microservico dedicado e sondado -- neste host (GTX 1060 6GB
+        sm_61 com PyTorch CPU para Laya), o servico :8192 executa o checkpoint
+        322M com 0 MiB de VRAM consumida da placa.
     O microservico nunca e consultado quando o caminho in-process ja entregou
     predicao treinada -- o fast path local permanece intocado.
     """
@@ -908,6 +911,84 @@ def decide_s1(
     if pred is not None:
         return _laya_decision_result(pred, normalized, engine="laya-s1-fallback")
     raise RuntimeError("Nenhum motor de decisao disponivel: Laya falhou e GeminiDecisionsClient sem chave.")
+
+
+CONTROL_PLANE_S1_QUESTIONS: dict[str, dict[str, Any]] = {
+    "route_tier": {
+        "type": "choice",
+        "instructions": "Select the optimal execution tier for this task balancing capability and cost.",
+        "criteria": {
+            "apex_carbon": "Critical multi-repo architecture, security defense, or extreme formal proof escalation.",
+            "edge_local": "Short triage, local parsing, translation, or privacy-sensitive local 6GB GPU task.",
+            "fast_worker": "Everyday multi-file coding, builds, tests, or structured extraction.",
+            "frontier_neon": "Complex engineering, PMev math proofs, or 256K-1M graph traversal.",
+        },
+    },
+    "thinking_effort": {
+        "type": "choice",
+        "instructions": "Select the minimum thinking_level required to satisfy quality.",
+        "criteria": {
+            "high": "Default multi-step engineering, tool calling, and debugging.",
+            "low": "Fast chat, simple lookup, or latency-sensitive triage.",
+            "medium": "Interactive coding or UI prototyping.",
+            "xhigh": "Hard multi-step math/PMev proofs or race-condition audits where high saturates.",
+        },
+    },
+    "needs_long_decode": {
+        "type": "noul",
+        "instructions": "Does a single response likely require more than 65,536 output+thinking tokens?",
+        "criteria": {
+            "true": "Monolithic formal proof, exhaustive multi-file generation, or deep synthesis exceeding 64K tokens.",
+            "false": "Normal interactive turn or agentic step finishing under 64K tokens.",
+        },
+    },
+    "complexity_score": {
+        "type": "score",
+        "instructions": "Rate task structural complexity from 0 (trivial) to 3 (frontier).",
+        "criteria": [
+            "0: trivial lookup or formatting",
+            "1: standard bounded edit or query",
+            "2: multi-file engineering or coupled debugging",
+            "3: frontier mathematical proof or cross-layer architecture",
+        ],
+    },
+}
+
+
+def decide_control_plane(
+    state: Any,
+    *,
+    confidence_threshold: float = 0.85,
+    prefer_cloud: bool = False,
+    client: GeminiDecisionsClient | None = None,
+) -> dict[str, Any]:
+    """Executa plano de controle System-1 em passe unico empacotando 4 perguntas tipadas."""
+    res = decide_s1(
+        state,
+        CONTROL_PLANE_S1_QUESTIONS,
+        client=client,
+        prefer_cloud=prefer_cloud,
+        min_confidence=confidence_threshold,
+    )
+    route_ans = res.answer("route_tier") or {}
+    effort_ans = res.answer("thinking_effort") or {}
+    long_ans = res.answer("needs_long_decode") or {}
+    comp_ans = res.answer("complexity_score") or {}
+
+    conf = float(route_ans.get("confidence") or 0.0)
+    circuit_action = "execute_direct" if conf >= confidence_threshold else "escalate_planner"
+
+    return {
+        "route_tier": route_ans.get("choice", "fast_worker"),
+        "thinking_effort": effort_ans.get("choice", "high"),
+        "needs_long_decode": bool((long_ans.get("noul") or 0.0) >= 0.55),
+        "complexity_score": comp_ans.get("score"),
+        "confidence": conf,
+        "circuit_action": circuit_action,
+        "engine": res.engine,
+        "latency_ms": res.latency_ms,
+        "n_tokens": res.n_tokens,
+    }
 
 
 def decisions_available() -> bool:

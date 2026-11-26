@@ -311,3 +311,55 @@ def test_laya_service_e_remote_encaminham_min_confidence(monkeypatch: pytest.Mon
     resp = client.post("/predict", json={"state": "Hero BTN AKo", "min_confidence": 0.85})
     assert resp.status_code == 200
     assert captured["min_confidence"] == pytest.approx(0.85)
+
+
+def test_dispatch_local_tool_call_functiongemma_and_llama_fallback() -> None:
+    """Valida despacho de tool-calling via FunctionGemma 270M e fallback llama.cpp (:9931)."""
+    tools = [{"type": "function", "function": {"name": "get_ev", "parameters": {"type": "object"}}}]
+
+    fake_ollama = MagicMock()
+    fake_ollama.read.return_value = json.dumps(
+        {"message": {"content": "", "tool_calls": [{"function": {"name": "get_ev", "arguments": {}}}]}}
+    ).encode()
+    fake_ollama.__enter__.return_value = fake_ollama
+
+    with (
+        patch.object(system2_local, "ollama_online", return_value=True),
+        patch("urllib.request.urlopen", return_value=fake_ollama),
+    ):
+        res = system2_local.dispatch_local_tool_call("Calculate EV", tools)
+    assert res["meta"]["engine"] == "ollama-functiongemma"
+    assert res["meta"]["model"] == "functiongemma:270m"
+    assert res["meta"]["fallback_used"] is False
+    assert len(res["tool_calls"]) == 1
+
+    fake_llama = MagicMock()
+    fake_llama.read.return_value = json.dumps(
+        {"choices": [{"message": {"content": "", "tool_calls": [{"id": "c1"}]}}]}
+    ).encode()
+    fake_llama.__enter__.return_value = fake_llama
+
+    with (
+        patch.object(system2_local, "ollama_online", return_value=False),
+        patch.object(system2_local, "llama_server_online", return_value=True),
+        patch("urllib.request.urlopen", return_value=fake_llama),
+    ):
+        res_fb = system2_local.dispatch_local_tool_call("Calculate EV", tools)
+    assert res_fb["meta"]["engine"] == "llama-cpp-tool-fallback"
+    assert res_fb["meta"]["fallback_used"] is True
+    assert len(res_fb["tool_calls"]) == 1
+
+
+def test_tool_request_rejects_non_http_schemes() -> None:
+    with pytest.raises(ValueError, match=r"absolute HTTP\(S\) URL"):
+        system2_local._request_tool_engine("file:///tmp", "/api/chat", {}, {}, timeout_s=1.0)
+
+
+def test_local_llama_client_catalog_and_version() -> None:
+    """Valida catalogo llama.cpp 1.0 (b12651) e resolucao de aliases em LocalLlamaClient."""
+    from llm.local_llama_client import LLAMA_ROUTER_CATALOG, LocalLlamaClient, resolve_router_model
+
+    assert LocalLlamaClient.get_engine_version() == "llama.cpp-b12651-1.0-cuda124-vulkan-router"
+    assert resolve_router_model("gemma4-e4b-distilled-q4") == LLAMA_ROUTER_CATALOG["gemma4-e4b-distilled-q4"]
+    client = LocalLlamaClient(model="coder-1.5b-instruct")
+    assert client.router_model_id == "ggml-org/Qwen2.5-Coder-1.5B-Instruct-Q8_0-GGUF:Q8_0"

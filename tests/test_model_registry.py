@@ -7,6 +7,8 @@ se reintroduzido, quebraria producao em silencio ou com HTTP 400.
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
 from llm.adapters import (
@@ -219,14 +221,19 @@ def test_gemini_37_nao_autorizado_e_38_flash_verificado():
 
 
 def test_gemini_4_neon_registrado_e_rejeita_minimal():
-    """gemini-4-neon esta autorizado no Tier 1 e rejeita thinking_level 'minimal'."""
+    """gemini-4-neon esta verificado ($3/$15), aceita xhigh e rejeita 'minimal'."""
     from llm.routing_policy import GEMINI_4_NEON
 
     g4n = get(GEMINI_4_NEON)
     assert g4n.autorizado is True
+    assert g4n.verification == VerificationStatus.VERIFICADO
     assert g4n.cota_por_assinatura is True
-    req = GoogleGenAIAdapter.build(GEMINI_4_NEON, USUARIO)
+    assert g4n.price_per_1m_in == 3.00
+    assert g4n.price_per_1m_out == 15.00
+    assert g4n.implicit_cache_min_tokens == 4096
+    req = GoogleGenAIAdapter.build(GEMINI_4_NEON, USUARIO, thinking_level="xhigh")
     assert req["model"] == "gemini-4-neon"
+    assert req["generation_config"]["thinking_level"] == "xhigh"
     with pytest.raises(ParametroRejeitadoError, match="minimal"):
         GoogleGenAIAdapter.build_http(GEMINI_4_NEON, USUARIO, thinking_level="minimal")
 
@@ -238,11 +245,13 @@ def test_gemini_38_flash_nao_aceita_minimal():
         GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO, thinking_level="minimal")
 
 
-def test_gemini_35_flash_lite_nao_aceita_minimal():
-    """gemini-3.5-flash-lite rejeita 'minimal' como todos os modelos Gemini."""
-    assert get("gemini-3.5-flash-lite").thinking_level in {"low", "medium", "high"}
+def test_gemini_35_flash_lite_aceita_minimal_e_38_rejeita():
+    """gemini-3.5-flash-lite aceita 'minimal'; gemini-3.8-flash e Gemini 4 rejeitam."""
+    assert get("gemini-3.5-flash-lite").thinking_level in {"minimal", "low", "medium", "high"}
+    req = GoogleGenAIAdapter.build("gemini-3.5-flash-lite", USUARIO, thinking_level="minimal")
+    assert req["generation_config"]["thinking_level"] == "minimal"
     with pytest.raises(ParametroRejeitadoError, match="minimal"):
-        GoogleGenAIAdapter.build("gemini-3.5-flash-lite", USUARIO, thinking_level="minimal")
+        GoogleGenAIAdapter.build("gemini-3.8-flash", USUARIO, thinking_level="minimal")
 
 
 #  Cruzados
@@ -287,20 +296,88 @@ def test_gemini_4_argon_tier_1_status_verificado():
 
 
 def test_gemini_4_hydrogen_tier_1_registrado_e_adaptador():
-    """Hydrogen e Tier 1 Google para orquestracao media/alta, com thinking validado."""
+    """Hydrogen e Tier 1 Google verificado ($1.50/$7.50), aceita xhigh e rejeita minimal."""
     from llm.routing_policy import GEMINI_4_HYDROGEN
 
     h4 = get(GEMINI_4_HYDROGEN)
-    assert h4.verification == VerificationStatus.NAO_VERIFICADO
+    assert h4.verification == VerificationStatus.VERIFICADO
     assert h4.cota_por_assinatura is True
+    assert h4.price_per_1m_in == 1.50
+    assert h4.price_per_1m_out == 7.50
     assert h4.context_window_in == 1_048_576
     assert h4.max_output_tokens == 65_536
     assert h4.autorizado is True
-    req = GoogleGenAIAdapter.build("gemini-4-hydrogen", USUARIO)
+    req = GoogleGenAIAdapter.build("gemini-4-hydrogen", USUARIO, thinking_level="xhigh")
     assert req["model"] == "gemini-4-hydrogen"
-    assert req["generation_config"]["thinking_level"] == "high"
+    assert req["generation_config"]["thinking_level"] == "xhigh"
     with pytest.raises(ParametroRejeitadoError, match="minimal"):
         GoogleGenAIAdapter.build_http("gemini-4-hydrogen", USUARIO, thinking_level="minimal")
+    with pytest.raises(ParametroRejeitadoError, match="xhigh"):
+        GoogleGenAIAdapter.build("gemini-4-carbon", USUARIO, thinking_level="xhigh")
+    with pytest.raises(ParametroRejeitadoError, match="xhigh"):
+        GoogleGenAIAdapter.build("gemini-4-argon", USUARIO, thinking_level="xhigh")
+
+
+def test_interactions_api_implicit_cache_tool_retrieval_e_long_decode():
+    """Valida build_interactions: bloqueia explicit cache, habilita tool_search e long decode."""
+    with pytest.raises(ParametroRejeitadoError, match="Implicit Caching"):
+        GoogleGenAIAdapter.build_interactions(
+            "gemini-4-neon",
+            "ping",
+            cached_content="cachedContents/invalido",
+        )
+    with pytest.raises(ParametroRejeitadoError, match="store=False"):
+        GoogleGenAIAdapter.build_interactions("gemini-4-neon", "ping", store=False, background=True)
+
+    tools = [{"name": f"tool_{i}", "type": "function"} for i in range(10)]
+    payload = GoogleGenAIAdapter.build_interactions(
+        "gemini-4-neon",
+        "Provar equilibrio PMev",
+        tools=tools,
+        relevant_tools={"tool_0"},
+        enable_tool_retrieval=True,
+        max_output_tokens=262_144,
+        background=True,
+        thinking_level="xhigh",
+        service_tier="flex",
+    )
+    assert payload["background"] is True
+    assert payload["service_tier"] == "flex"
+    assert payload["generation_config"]["max_output_tokens"] == 262_144
+    assert payload["generation_config"]["thinking_level"] == "xhigh"
+    assert any(t.get("defer_loading") is True for t in payload["tools"])
+    assert any(t.get("type") == "tool_search" for t in payload["tools"])
+
+
+def test_preservar_assinaturas_stateless_preserva_thought_e_tool_signatures():
+    """Stateless deve reenviar thought blocks e tool calls/results com signature intacta."""
+    steps = [
+        {"type": "thought", "signature": "sig-thought"},
+        {"type": "tool_call", "name": "google_search", "signature": "sig-tool"},
+        {"type": "text", "text": "ignorar"},
+    ]
+    preservados = GoogleGenAIAdapter.preservar_assinaturas("gemini-3.5-flash-lite", steps)
+    assert len(preservados) == 2
+    assert preservados[0]["signature"] == "sig-thought"
+    assert preservados[1]["signature"] == "sig-tool"
+
+
+def test_custo_estimado_cliff_flex_e_implicit_cache():
+    """Valida cliff de 2026-12-01 no Carbon, Flex 50% off e Implicit Cache 95% off."""
+    antes = custo_estimado("gemini-4-carbon", 1_000_000, 1_000_000, as_of=date(2026, 11, 30))
+    depois = custo_estimado("gemini-4-carbon", 1_000_000, 1_000_000, as_of=date(2026, 12, 1))
+    assert antes == pytest.approx(12.00)
+    assert depois == pytest.approx(24.00)
+
+    flex_cached = custo_estimado(
+        "gemini-4-neon",
+        2_400_000,
+        80_000,
+        flex_or_batch=True,
+        cached_tokens_in=2_040_000,
+    )
+    # Neon Flex: $1.50/1M in (cache $0.075), $7.50/1M out -> 0.36*1.5 + 2.04*0.075 + 0.08*7.5 = 1.293
+    assert flex_cached == pytest.approx(1.293)
 
 
 def test_claude_55_opus_e_sonnet_tier_1():

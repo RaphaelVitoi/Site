@@ -60,6 +60,9 @@ __all__ = [
     "LAYA_MULTILINGUAL_DEFAULT_REVISION",
     "LAYA_GATE_STATES",
     "get_laya_multilingual_revision",
+    "get_laya_version",
+    "compute_jev_confidence",
+    "laya_shortlist_choice",
     "has_abstained_or_low_confidence",
     "laya_multilingual_failover",
     "normalize_state_with_translategemma",
@@ -74,8 +77,18 @@ LAYA_MULTILINGUAL_DEFAULT_REVISION: str = "e4e9ddf21a7b1903b7acffd8814ad4307bf63
 LAYA_GATE_STATES: tuple[str, str, str] = ("passed", "abstained", "unevaluated")
 
 
+def get_laya_version() -> str:
+    """Retorna a versao instalada de `laya` (>=0.5.4) sem importar torch."""
+    try:
+        from importlib.metadata import version as pkg_version  # noqa: PLC0415
+
+        return pkg_version("laya")
+    except Exception:  # pylint: disable=broad-except
+        return "0.5.4"
+
+
 def get_laya_multilingual_revision() -> str:
-    """Retorna a revisao pinned da laya-multilingual (laya>=0.5.3) sem importar torch."""
+    """Retorna a revisao pinned da laya-multilingual (laya>=0.5.4) sem importar torch."""
     try:
         from laya import revisions as laya_revisions_mod  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
@@ -1245,3 +1258,106 @@ def normalize_state_with_translategemma(
         allow_cloud_fallback=allow_cloud_fallback,
     )
     return normalized, telemetry
+
+
+def compute_jev_confidence(probs: list[float] | tuple[float, ...]) -> float:
+    """Calcula confianca JEV normalizada [0, 1] via laya 0.5.4 ou entropia de Shannon."""
+    clean = [max(0.0, float(p)) for p in probs]
+    total = sum(clean)
+    if total <= 0.0 or len(clean) <= 1:
+        return 1.0 if clean and total > 0.0 else 0.0
+    norm = [p / total for p in clean]
+    try:
+        from laya import jev_confidence  # noqa: PLC0415
+
+        return float(jev_confidence(norm))
+    except Exception:  # pylint: disable=broad-except
+        import math  # noqa: PLC0415
+
+        entropy = -sum(p * math.log(p) for p in norm if p > 0.0)
+        max_entropy = math.log(len(norm))
+        return round(max(0.0, min(1.0, 1.0 - (entropy / max_entropy if max_entropy > 0.0 else 0.0))), 6)
+
+
+def laya_shortlist_choice(
+    state: str,
+    options: dict[str, str] | list[str],
+    *,
+    top_k: int = 3,
+    allow_cpu_failover: bool = False,
+) -> dict[str, Any]:
+    """Seleciona e ordena opcoes candidatas via laya 0.5.4 `shortlist_choice` ou overlap deterministico."""
+    if not options:
+        return {
+            "shortlist": [],
+            "selected": None,
+            "confidence": 0.0,
+            "provenia": Provenia(
+                engine_id="laya-shortlist-empty",
+                implementation_level="primitive",
+                runtime_used="python",
+                model_used="",
+                intended_model=CANONICAL_LAYA_MODEL,
+                weights_loaded=False,
+                fallback_used=True,
+                assumptions=["empty-options"],
+                limitations=["no-candidates"],
+                units=["score", "probability"],
+            ),
+        }
+
+    option_map = dict(options) if isinstance(options, dict) else {item: item for item in options}
+    device_str = _detect_device()
+    cpu_allowed = device_str != "cpu" or _allow_cpu_predict(allow_cpu_failover)
+    if cpu_allowed and _has_cached_laya_snapshot():
+        try:
+            from laya import shortlist_choice  # noqa: PLC0415
+
+            raw = shortlist_choice(state, option_map, top_k=top_k, model=CANONICAL_LAYA_MODEL)
+            if isinstance(raw, dict):
+                return {
+                    **raw,
+                    "provenia": Provenia(
+                        engine_id="laya-s1-shortlist",
+                        implementation_level="trained-model",
+                        runtime_used=f"laya {get_laya_version()} ({device_str})",
+                        model_used=CANONICAL_LAYA_MODEL,
+                        intended_model=CANONICAL_LAYA_MODEL,
+                        weights_loaded=True,
+                        fallback_used=False,
+                        assumptions=["laya-0.5.4-shortlist-choice"],
+                        limitations=["requires-cached-laya-weights"],
+                        units=["score", "probability"],
+                    ),
+                }
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.debug("[laya-s1] shortlist_choice fallback (%s)", exc)
+
+    state_tokens = set(re.findall(r"[a-z0-9_]+", (state or "").lower()))
+    scored: list[tuple[float, str, str]] = []
+    for key, desc in option_map.items():
+        opt_tokens = set(re.findall(r"[a-z0-9_]+", f"{key} {desc}".lower()))
+        overlap = len(state_tokens & opt_tokens)
+        score = overlap / max(1, len(opt_tokens))
+        scored.append((round(score, 6), key, desc))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    shortlist = [{"key": k, "description": d, "score": s} for s, k, d in scored[: max(1, top_k)]]
+    top_scores = [item["score"] + 0.05 for item in shortlist]
+    conf = compute_jev_confidence(top_scores) if len(shortlist) > 1 else 1.0
+    return {
+        "shortlist": shortlist,
+        "selected": shortlist[0]["key"] if shortlist else None,
+        "confidence": conf,
+        "provenia": Provenia(
+            engine_id="laya-shortlist-lexical-fallback",
+            implementation_level="primitive",
+            runtime_used=f"python (laya {get_laya_version()}, device={device_str})",
+            model_used="",
+            intended_model=CANONICAL_LAYA_MODEL,
+            weights_loaded=False,
+            fallback_used=True,
+            assumptions=["lexical-overlap-shortlist", "jev-confidence-calibration"],
+            limitations=["no-neural-rerank-in-fallback"],
+            units=["score", "probability"],
+        ),
+    }

@@ -33,7 +33,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-argon",
       "tier": "1",
-      "nota": "Nova geração frontier da Google (Outubro/2026). Integrante pleno do Tier 1 / Coletivo CHICO. Especialização (Tier 0, 2026-11-14): Código e Reasoning de Elite. Compartilha da mesma situação do GPT-6 Astra e Gemini 4 Carbon: modelos mais potentes e custosos, acionados pontualmente. No modo bifásico Orchestrator (Gemini 4 Neon ou Argon + Gemini 4 Hydrogen) do Antigravity (onde Neon — preferencial — ou Argon planeja em Plan Mode e o Hydrogen executa), a autoria primária do commit e a linha Assinatura: pertencem sempre ao agente executor (Gemini 4 Hydrogen), registrando-se o planejador como co-autor via trailer Co-authored-by: Gemini 4 Argon <noreply@google.com> (ou Gemini 4 Neon <noreply@google.com>)."
+      "nota": "Nova geração frontier da Google (Outubro/2026). Integrante pleno do Tier 1 / Coletivo CHICO. Especialização (atualizada pelo Tier 0 em 2026-11-25): Código e Reasoning de Elite; atua como Orquestrador no Antigravity App Desktop 2.35.1 ao lado de Gemini 4 Carbon, Gemini 4 Neon e Claude Opus 5.5."
     },
     {
       "nome": "Gemini 4 Carbon",
@@ -41,7 +41,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-carbon",
       "tier": "1",
-      "nota": "Integrante do trio de apice Tier 1 (ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+), mesma doutrina de uso pontual. Especialização (Tier 0, 2026-11-14): Projetos DENSOS e ULTRA COMPLEXOS. Adicionado pelo Tier 0 em 2026-11-10."
+      "nota": "Integrante do trio de ápice Tier 1 (ChatGPT 6 Astra+, Gemini 4 Argon+, Gemini 4 Carbon+). Atualizado em 2026-11-25/2026-11-26: opera SOLO e como Orquestrador no modo bifásico Orchestrator do Antigravity 2.35.1 (ao lado de Gemini 4 Argon, Gemini 4 Neon e Claude Opus 5.5). Assinatura SOLO: git -c user.name=\"Gemini 4 Carbon\" -c user.email=\"noreply@google.com\" + Assinatura: Gemini 4 Carbon [Tier 1] -- modelo=gemini-4-carbon condutor=antigravity ts=<ISO-8601> sha=<tree-sha> supervisao=assistida|automatizada sessao=<id> (calibração: conductor_model=\"gemini-4-carbon\"). Assinatura em DUO como Orquestrador: o Executor (Gemini 4 Hydrogen ou Claude Sonnet 5.5) detém -c user.name e a Assinatura: primária, enquanto Gemini 4 Carbon recebe Co-authored-by: Gemini 4 Carbon <noreply@google.com> (calibração: conductor_model=\"orchestrator:gemini-4-carbon+<executor>\"). Especialização: Projetos DENSOS, arquitetura crítica e verificações formais."
     },
     {
       "nome": "Gemini 4 Neon",
@@ -49,7 +49,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-neon",
       "tier": "1",
-      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity (registrado pelo Tier 0 em 2026-11-21). Modelo preferencial Tier 1 para Planejamento e Orquestração. No modo bifásico Orchestrator do Antigravity — duo Gemini 4 Neon (ou Argon) planejando/orquestrando em Plan Mode + Gemini 4 Hydrogen executando — a autoria primária do commit e a linha Assinatura: pertencem sempre ao agente executor (Gemini 4 Hydrogen), registrando-se o planejador como co-autor via trailer Co-authored-by: Gemini 4 Neon <noreply@google.com>. Em execução direta fora do modo bifásico, assina individualmente como Gemini 4 Neon [Tier 1] -- modelo=gemini-4-neon condutor=antigravity."
+      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity (registrado pelo Tier 0 em 2026-11-21). Modelo preferencial Tier 1 para Planejamento e Orquestração. No modo bifásico Orchestrator, Argon, Carbon, Neon e Claude Opus 5.5 podem orquestrar; Gemini 4 Hydrogen ou Claude Sonnet 5.5 executam. A autoria primária e Assinatura: pertencem ao Executor e o Orquestrador recebe trailer Co-authored-by:. Em execução solo permitida, assina individualmente."
     },
     {
       "nome": "Gemini 4 Hydrogen",
@@ -57,7 +57,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-4-hydrogen",
       "tier": "1",
-      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity. Especialização (atualizada pelo Tier 0 em 2026-11-21): modelo preferencial Tier 1 para Execução e Fluxo Agêntico (baixa latência e bom custo). No modo bifásico Orchestrator do Antigravity (duo Gemini 4 Neon ou Argon planejando/orquestrando em Plan Mode + Gemini 4 Hydrogen executando), o Hydrogen detém sempre a autoria primária do commit (user.name='Gemini 4 Hydrogen', Assinatura: Gemini 4 Hydrogen [Tier 1] -- modelo=gemini-4-hydrogen), cabendo ao planejador o trailer Co-authored-by: Gemini 4 Neon <noreply@google.com> (ou Co-authored-by: Gemini 4 Argon <noreply@google.com>)."
+      "nota": "Integrante Tier 1 / Coletivo CHICO da família Gemini 4 (Google), veículo antigravity. Especialização (atualizada pelo Tier 0 em 2026-11-25): modelo preferencial Tier 1 para Execução e Fluxo Agêntico. No modo bifásico Orchestrator, Argon, Carbon, Neon e Claude Opus 5.5 podem orquestrar; Gemini 4 Hydrogen ou Claude Sonnet 5.5 executam. O Executor detém a autoria primária do commit e o Orquestrador recebe o trailer Co-authored-by."
     },
     {
       "nome": "Gemini 3.8 Flash",
@@ -65,7 +65,7 @@
       "veiculo": "antigravity",
       "modelo": "gemini-3.8-flash",
       "tier": "1",
-      "nota": "Determinado pelo Tier 0 em 2026-09-12: o Antigravity CLI conduz o Gemini 3.8 Flash, e e esta a identidade que ele passa no commit. Forma composta equivalente em prosa: antigravity@gemini-3.8-flash. Permanece ativo por decisao do Tier 0 (2026-11-10): a descontinuacao vale para a familia flash nao-lite ATE 3.7; o 3.8 Flash continua Tier 1. Especialização (Tier 0, 2026-11-14): tarefas do dia a dia de média e baixa complexidade, orquestração agêntica de média e baixa duração e curadoria."
+      "nota": "Determinado pelo Tier 0 em 2026-09-12 e confirmado em 2026-11-25: selecionável diretamente no Antigravity App Desktop 2.35.1 nos modos Low, Medium e High, além de CLI/SDK. Permanece Tier 1 ativo (a descontinuação atinge apenas 3.7 e abaixo). Especialização: tarefas cotidianas de média e baixa complexidade, orquestração agêntica de média duração e curadoria."
     },
     {
       "nome": "Gemini 3.5 Flash-Lite",
@@ -81,7 +81,7 @@
       "veiculo": "claude-code",
       "modelo": "claude-opus-5.5",
       "tier": "1",
-      "nota": "Atualizado em 2026-10-20 pelo Tier 0. Primário canônico de Governança e Código Cirúrgico."
+      "nota": "Atualizado em 2026-10-20 e 2026-11-25 pelo Tier 0. Primário canônico de Governança e Código Cirúrgico; opera em claude-code e integrado nativamente ao Antigravity App Desktop 2.35.1 (funções Solo e Orquestrador)."
     },
     {
       "nome": "Claude Sonnet 5.5",
@@ -89,7 +89,7 @@
       "veiculo": "claude-code",
       "modelo": "claude-sonnet-5.5",
       "tier": "1",
-      "nota": "Atualizado em 2026-10-20 pelo Tier 0. Parceiro de Engenharia de Software e Construção Multi-arquivo."
+      "nota": "Atualizado em 2026-10-20 e 2026-11-25 pelo Tier 0. Executor de Engenharia de Software e Construção Multi-arquivo; opera em claude-code e integrado nativamente ao Antigravity App Desktop 2.35.1 como executor, sem função solo ou de orquestrador."
     },
     {
       "nome": "Claude Haiku 5.5",
@@ -159,15 +159,15 @@
       "veiculo": "devin-desktop",
       "modelo": "swe-2-flash",
       "tier": "1",
-      "nota": "Condutor Devin CLI/Desktop (Cognition), membro do coletivo CHICO no Tier 1. Registrado em 2026-11-10 apos aviso do commit-msg hook; PROMOVIDO de Tier 2 para Tier 1 pelo Tier 0 em 2026-11-10, com identidade propria dentro do CHICO. Junto de Devin (SWE-1.6 Slow), e preferencial para engenharia pontual e complexa de codigo e orquestracao PRAGMATICA agentica de codigo denso. Veiculo: Devin Desktop Harness. Medido 2026-11-17 no registry do CLI/Desktop: IDs de API vigentes sao swe-2-medium(-lightning), swe-2-high(-lightning), swe-2-max(-lightning) e swe-1-7(-medium); 'swe-2-flash' e ID canonico de assinatura, nao de API."
+      "nota": "Condutor Devin Next CLI/Desktop (Cognition — SWE 2.0 Flash Medium), membro do coletivo CHICO no Tier 1. Registrado em 2026-11-10 e atualizado em 2026-11-25 junto de Devin (SWE-1.7 Slow) para engenharia pontual e complexa de código e orquestração pragmática agêntica de código denso. Veículo: Devin Desktop Harness. IDs de API vigentes: swe-2-medium(-lightning), swe-2-high(-lightning), swe-2-max(-lightning); 'swe-2-flash' é o ID canônico de assinatura."
     },
     {
-      "nome": "Devin (SWE-1.6 Slow)",
+      "nome": "Devin (SWE-1.7 Slow)",
       "email": "158243242+devin-ai-integration[bot]@users.noreply.github.com",
       "veiculo": "devin-desktop",
-      "modelo": "swe-1.6-slow",
+      "modelo": "swe-1.7-slow",
       "tier": "1",
-      "nota": "Variante SWE-1.6 Slow do condutor Devin (Cognition), Tier 1, identidade individual propria dentro do CHICO. Determinada pelo Tier 0 em 2026-11-12 (corrigida em 2026-11-14) para engenharia pontual e complexa de codigo e orquestracao PRAGMATICA agentica de codigo denso, junto de Devin (SWE-2 Flash) - sem feudos; a escolha efetiva observa especialidade, custo, disponibilidade e arbitragem. Medido 2026-11-17: nenhum ID swe-1-6 existe no registry vigente do Devin CLI/Desktop (familia atual swe-1-7(-medium) e swe-2-*); 'swe-1.6-slow' permanece como ID canonico de assinatura do condutor."
+      "nota": "Variante SWE 1.7 Slow do condutor Devin Next (Cognition), Tier 1, sucessor canônico de SWE-1.6 Slow em 2026-11-25 para engenharia pontual e complexa de código e orquestração pragmática agêntica de código denso, junto de Devin (SWE-2 Flash / SWE 2.0 Flash Medium). API vigente: swe-1-7(-medium); 'swe-1.7-slow' é o ID canônico de assinatura do condutor."
     }
   ],
   "nunca": [

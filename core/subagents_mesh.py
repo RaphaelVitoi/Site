@@ -113,6 +113,7 @@ class SubagentTier(StrEnum):
     GENERALIST = "generalist"
     SELF = "self"
     FLUTTER_A11Y = "flutter_a11y_agent"
+    TOOL_DISPATCH = "tool_dispatch_router"
 
 
 def resolve_subagent_tier(value: Any) -> SubagentTier | None:
@@ -142,8 +143,11 @@ MODEL_QWEN_1_5B = "qwen2.5-coder:1.5b"
 MODEL_QWEN_0_5B = "qwen2.5-coder:0.5b"
 MODEL_FUNCTIONGEMMA_270M = "functiongemma:270m"
 LLAMA_CPP_CODER_1_5B = "qwen2.5-coder-1.5b-q8_0"
+LLAMA_CPP_CODER_INSTRUCT = "ggml-org/Qwen2.5-Coder-1.5B-Instruct-Q8_0-GGUF:Q8_0"
 LLAMA_CPP_TINY_FALLBACK = "Ling-3.0-tiny-Q4_K_M"
 LLAMA_CPP_FAST_3B = "ai9stars_G9v3-3B-Q4_K_M"
+LLAMA_CPP_GEMMA4_E2B = "ggml-org/gemma-4-E2B-it-GGUF:Q8_0"
+LLAMA_CPP_GEMMA4_E4B_DISTILLED = "ggml-org/gemma-4-E4B-it-GGUF:Q4_0"
 
 LLAMA_CPP_FALLBACK_MAP: dict[str, str] = {
     MODEL_QWEN_CODE_SURGICAL: LLAMA_CPP_CODER_1_5B,
@@ -151,12 +155,14 @@ LLAMA_CPP_FALLBACK_MAP: dict[str, str] = {
     MODEL_QWEN3_5_4B: LLAMA_CPP_FAST_3B,
     "qwen2.5-coder:7b": LLAMA_CPP_CODER_1_5B,
     MODEL_QWEN_1_5B: LLAMA_CPP_CODER_1_5B,
+    "qwen2.5-coder:1.5b-instruct": LLAMA_CPP_CODER_INSTRUCT,
     MODEL_QWEN_0_5B: LLAMA_CPP_TINY_FALLBACK,
-    MODEL_FUNCTIONGEMMA_270M: LLAMA_CPP_TINY_FALLBACK,
+    MODEL_FUNCTIONGEMMA_270M: LLAMA_CPP_FAST_3B,
     MODEL_QWEN_PMEV_MATH: LLAMA_CPP_FAST_3B,
     "qwen-poetics:latest": LLAMA_CPP_FAST_3B,
-    MODEL_GEMMA4_E2B: LLAMA_CPP_FAST_3B,
+    MODEL_GEMMA4_E2B: LLAMA_CPP_GEMMA4_E2B,
     MODEL_GEMMA4_E4B: LLAMA_CPP_FAST_3B,
+    "gemma4:e4b-distilled": LLAMA_CPP_GEMMA4_E4B_DISTILLED,
 }
 
 # Prioridade de subagentes: modelos locais rapidos/pequenos especialistas (custo $0.00)
@@ -176,6 +182,7 @@ SUBAGENT_MODEL_MAP: dict[SubagentTier, str] = {
     SubagentTier.GENERALIST: MODEL_GEMMA4_E2B,
     SubagentTier.SELF: MODEL_QWEN_1_5B,
     SubagentTier.FLUTTER_A11Y: MODEL_QWEN_1_5B,
+    SubagentTier.TOOL_DISPATCH: MODEL_FUNCTIONGEMMA_270M,
 }
 
 # Contingencia cloud zero-custo (:free) quando daemons locais estiverem indisponiveis
@@ -200,6 +207,7 @@ FREE_CLOUD_FALLBACK_MAP: dict[SubagentTier, tuple[str, ...]] = {
     SubagentTier.GENERALIST: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
     SubagentTier.SELF: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
     SubagentTier.FLUTTER_A11Y: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_LAGUNA_S),
+    SubagentTier.TOOL_DISPATCH: (FREE_MODEL_LAGUNA_XS, FREE_MODEL_QWEN_CODER_32B),
 }
 
 
@@ -307,7 +315,11 @@ class SubagentMeshController:
         ):
             return SubagentTier.FLUTTER_A11Y
 
-        # 9. Heuristica de Orquestracao / Webhooks n8n
+        # 9. Heuristica de Despacho de Ferramentas (FunctionGemma 270M)
+        if any(term in desc_lower for term in ("functiongemma", "tool_call", "function_call", "tool_dispatch")):
+            return SubagentTier.TOOL_DISPATCH
+
+        # 10. Heuristica de Orquestracao / Webhooks n8n
         if any(term in desc_lower for term in ("n8n", "webhook", "automacao")):
             return SubagentTier.NANO_ROUTER
 

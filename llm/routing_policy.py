@@ -25,8 +25,8 @@ valor versionado (SS3): aponte para o enum, que e a fonte.
    Todos os modelos de fronteira podem cumprir todas as funcoes (Axioma de Capacidade
    Universal sem feudos). A distribuicao reflete preferencia estrategica por arquitetura,
    especialidade nativa e preco:
-   - Gemini (4 Hydrogen para orquestracao agentica media/alta; 3.8 Flash & 3.5 Flash-Lite para fluxo/fast operations; 3.1 Pro vigente; 4 Argon/Carbon no apice): Orquestracao do fluxo agentico e Fast Operations;
-   - Claude 5 (Sonnet 5 / Opus 5): Engenharia de codigo cirurgica e modelagem matematica / PMev;
+   - Gemini (4 Argon, Carbon e Neon para orquestracao; 4 Hydrogen para execucao agentica; 3.8 Flash & 3.5 Flash-Lite para fluxo/fast operations): orquestracao do fluxo agentico e Fast Operations;
+   - Claude Opus 5.5: orquestracao e governanca; Claude Sonnet 5.5: execucao de engenharia de codigo e construcao multi-arquivo;
    - ChatGPT 6.0 (Terra / Sol / Luna) e 6 Astra: Raciocinio profundo, seguranca / AppSec, arquitetura macro e alta complexidade.
 
 ## Conflito conhecido entre a tabela e o manifesto
@@ -335,6 +335,7 @@ SUBAGENTES: dict[str, ClasseTarefa] = {
     "generalist": ClasseTarefa.OPERACIONAL,
     "self": ClasseTarefa.OPERACIONAL,  # copia do pai para fan-out barato
     "flutter_a11y_agent": ClasseTarefa.VERIFICACAO,
+    "tool_dispatch_router": ClasseTarefa.OPERACIONAL,
 }
 
 # Divergencias entre a tabela do operador e o manifesto, preservadas para
@@ -736,7 +737,7 @@ def timeout_recomendado(alias: str, *, max_tokens: int = 16_000) -> int:
     """
     cap = get(alias)
     base = 600
-    if cap.effort in ("xhigh", "max") or cap.reasoning_effort == "max":
+    if cap.effort in ("xhigh", "max") or cap.reasoning_effort == "max" or cap.thinking_level == "xhigh":
         base = 1800
     if cap.requires_streaming_above and max_tokens > cap.requires_streaming_above:
         base = max(base, 2400)
@@ -767,7 +768,7 @@ def plano_de_ferramentas(
     carregadas = 0
     for f in ferramentas:
         nome = f.get("name", "")
-        eh_busca = str(f.get("type", "")).startswith("tool_search_tool_")
+        eh_busca = str(f.get("type", "")) == "tool_search" or str(f.get("type", "")).startswith("tool_search_tool_")
         if eh_busca or nome in relevantes:
             saida.append(f)
             carregadas += 1

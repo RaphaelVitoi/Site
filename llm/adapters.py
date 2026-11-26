@@ -373,15 +373,19 @@ class GoogleGenAIAdapter:
         if not thinking_level:
             return
         level_l = thinking_level.lower()
-        if level_l not in ("minimal", "low", "medium", "high"):
+        if level_l not in ("minimal", "low", "medium", "high", "xhigh"):
             raise ParametroRejeitadoError(
                 f"{alias}: thinking_level '{thinking_level}' nao existe na API Google. "
-                "Use 'minimal', 'low', 'medium' ou 'high'."
+                "Use 'minimal', 'low', 'medium', 'high' ou 'xhigh'."
+            )
+        if level_l == "xhigh" and alias not in ("gemini-4-neon", "gemini-4-hydrogen"):
+            raise ParametroRejeitadoError(
+                f"{alias}: thinking_level 'xhigh' nao existe para este modelo "
+                "(exclusivo de gemini-4-neon e gemini-4-hydrogen)."
             )
         if (
             alias
             in (
-                "gemini-3.5-flash-lite",
                 "gemini-3.8-flash",
                 "gemini-pro-latest",
                 "gemini-3.1-pro-preview-customtools",
@@ -540,8 +544,121 @@ class GoogleGenAIAdapter:
         return "".join(textos)
 
     @staticmethod
+    def _validar_interactions(
+        alias: str,
+        cap: ModelCapability,
+        kwargs: dict[str, Any],
+        previous_interaction_id: str | None,
+        background: bool,
+        store: bool,
+    ) -> None:
+        if cap.adapter is not AdapterType.GOOGLE:
+            raise ParametroRejeitadoError(f"{alias} nao e um modelo Google.")
+        if not cap.autorizado:
+            raise ParametroRejeitadoError(f"{alias} esta catalogado como nao autorizado.")
+        if "cached_content" in kwargs or "cachedContent" in kwargs:
+            raise ParametroRejeitadoError(
+                f"{alias}: Interactions API e Gemini 4 suportam apenas Implicit Caching "
+                "(>=4096 tokens); explicit caching (cached_content) nao e suportado."
+            )
+        if not store and (previous_interaction_id or background):
+            raise ParametroRejeitadoError(
+                "Interactions API: store=False e incompativel com previous_interaction_id e background=True."
+            )
+
+    @classmethod
+    def _build_interactions_tools(
+        cls,
+        tools: list[dict[str, Any]] | None,
+        relevant_tools: set[str] | None,
+        enable_tool_retrieval: bool,
+    ) -> list[dict[str, Any]] | None:
+        if not tools:
+            return None
+        resolved_tools = list(tools)
+        if not enable_tool_retrieval:
+            return resolved_tools
+
+        from llm.routing_policy import plano_de_ferramentas  # noqa: PLC0415
+
+        resolved_tools = plano_de_ferramentas(resolved_tools, relevant_tools or set())
+        has_deferred = any(bool(tool.get("defer_loading")) for tool in resolved_tools)
+        has_search = any(
+            str(tool.get("type", "")) == "tool_search" or str(tool.get("type", "")).startswith("tool_search_tool_")
+            for tool in resolved_tools
+        )
+        if has_deferred and not has_search:
+            resolved_tools.append({"type": "tool_search"})
+        return resolved_tools
+
+    @classmethod
+    def build_interactions(
+        cls,
+        alias: str,
+        input_payload: str | list[dict[str, Any]],
+        *,
+        previous_interaction_id: str | None = None,
+        system_instruction: str | None = None,
+        tools: list[dict[str, Any]] | None = None,
+        relevant_tools: set[str] | None = None,
+        enable_tool_retrieval: bool = False,
+        max_output_tokens: int | None = None,
+        background: bool = False,
+        thinking_level: str | None = None,
+        service_tier: str | None = None,
+        store: bool = True,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        """Monta payload oficial para a Interactions API (Gemini 4 / 3.x).
+
+        Regras aplicadas:
+          - Implicit Caching only: rejeita `cached_content` / `cachedContent`;
+          - `store=False` e incompativel com `previous_interaction_id` e `background=True`;
+          - Long Decode (>65536 ate 1M) exige `background=True` ou `automatic_continuation=True`;
+          - Tool Retrieval opcional (`defer_loading: true` + `{"type": "tool_search"}`).
+        """
+        cap = get(alias)
+        cls._validar_interactions(alias, cap, kwargs, previous_interaction_id, background, store)
+
+        automatic_continuation = bool(kwargs.pop("automatic_continuation", True))
+        req = _sanear(kwargs, cap.model_name)
+        gen: dict[str, Any] = dict(req.pop("generation_config", {}) or {})
+
+        level = thinking_level or gen.get("thinking_level") or cap.thinking_level
+        if level:
+            cls.validar_thinking_level(alias, level)
+            gen["thinking_level"] = level
+
+        ceiling = cap.context_window_in if (background or automatic_continuation) else cap.max_output_tokens
+        gen["max_output_tokens"] = min(max_output_tokens or 16_000, ceiling)
+
+        req["model"] = cap.model_name
+        req["input"] = input_payload
+        req["store"] = store
+        req["generation_config"] = gen
+
+        if previous_interaction_id:
+            req["previous_interaction_id"] = previous_interaction_id
+        if system_instruction:
+            req["system_instruction"] = system_instruction
+        if background:
+            req["background"] = True
+        if service_tier is not None:
+            if service_tier not in ("standard", "flex", "priority"):
+                raise ParametroRejeitadoError(
+                    f"service_tier '{service_tier}' invalido. Use 'standard', 'flex' ou 'priority'."
+                )
+            req["service_tier"] = service_tier
+
+        resolved_tools = cls._build_interactions_tools(tools, relevant_tools, enable_tool_retrieval)
+        if resolved_tools is not None:
+            req["tools"] = resolved_tools
+
+        return req
+
+    @staticmethod
     def preservar_assinaturas(alias: str, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """No modo stateless, devolve os blocos `thought` intactos para reenvio.
+        """No modo stateless, devolve blocos `thought` e steps de ferramentas com assinatura intactos.
 
         Nao normaliza, nao reordena e nao reserializa: qualquer alteracao
         invalida a assinatura criptografica.
@@ -549,7 +666,12 @@ class GoogleGenAIAdapter:
         cap = get(alias)
         if cap.thought_signature_mode != "stateless":
             return []
-        return [s for s in steps if s.get("type") == "thought"]
+        return [
+            s
+            for s in steps
+            if s.get("type") == "thought"
+            or ("signature" in s and s.get("type") in ("tool_call", "tool_result", "function_call", "function_result"))
+        ]
 
 
 ADAPTERS: dict[AdapterType, type] = {

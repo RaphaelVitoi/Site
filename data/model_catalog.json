@@ -69,7 +69,7 @@
           "modelo": "claude-opus-5.5",
           "identidade": "Claude Opus 5.5",
           "status": "vigente",
-          "preferencia": "Governanca (regras, contratos, portoes) e Engenharia de Codigo Cirurgica; primario de Reasoning Analitico Profundo",
+          "preferencia": "Governanca (regras, contratos, portoes) e Engenharia de Codigo Cirurgica; primario de Reasoning Analitico Profundo; opera no Claude Code e integrado no Antigravity App Desktop 2.35.1 (Solo e Orchestrator)",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -78,7 +78,7 @@
           "modelo": "claude-sonnet-5.5",
           "identidade": "Claude Sonnet 5.5",
           "status": "vigente",
-          "preferencia": "Engenharia de Software e construcao multi-arquivo",
+          "preferencia": "Engenharia de Software e construcao multi-arquivo; opera via orquestrador e integrado no Antigravity App Desktop 2.35.1 como executor no modo Orchestrator (sem funcao solo nem de orquestrador)",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -132,7 +132,7 @@
           "modelo": "gemini-4-argon",
           "identidade": "Gemini 4 Argon",
           "status": "vigente",
-          "preferencia": "Apice Tier 1 — Codigo e Reasoning de Elite; uso pontual (e planejador opcional no modo Orchestrator ao lado de Neon)",
+          "preferencia": "Apice Tier 1 — Codigo e Reasoning de Elite; atua como Orquestrador no Antigravity App 2.35.1, ao lado de Carbon, Neon e Claude Opus 5.5",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -141,7 +141,7 @@
           "modelo": "gemini-4-carbon",
           "identidade": "Gemini 4 Carbon",
           "status": "vigente",
-          "preferencia": "Apice Tier 1 — Projetos DENSOS e ULTRA COMPLEXOS; uso pontual",
+          "preferencia": "Apice Tier 1 — Projetos DENSOS e ULTRA COMPLEXOS; opera SOLO e como Orquestrador no Antigravity App 2.35.1, ao lado de Argon, Neon e Claude Opus 5.5",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -150,7 +150,7 @@
           "modelo": "gemini-4-neon",
           "identidade": "Gemini 4 Neon",
           "status": "vigente",
-          "preferencia": "Modelo preferencial Tier 1 (Coletivo CHICO) para Planejamento e Orquestracao; planejador primario no modo bifasico Orchestrator (Neon/Argon -> Hydrogen)",
+          "preferencia": "Modelo preferencial Tier 1 (Coletivo CHICO) para Planejamento e Orquestracao; orquestrador autorizado ao lado de Argon, Carbon e Claude Opus 5.5",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -159,7 +159,7 @@
           "modelo": "gemini-4-hydrogen",
           "identidade": "Gemini 4 Hydrogen",
           "status": "vigente",
-          "preferencia": "Modelo preferencial Tier 1 (Coletivo CHICO) para Execucao e Fluxo Agentico; executor primario no modo bifasico Orchestrator (Neon/Argon -> Hydrogen), baixa latencia e bom custo",
+          "preferencia": "Modelo preferencial Tier 1 (Coletivo CHICO) para Execucao e Fluxo Agentico; executor no modo bifasico Orchestrator, baixa latencia e bom custo",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -168,7 +168,7 @@
           "modelo": "gemini-3.8-flash",
           "identidade": "Gemini 3.8 Flash",
           "status": "vigente",
-          "preferencia": "Tarefas do dia a dia de media e baixa complexidade, orquestracao de media duracao, curadoria e context caching; CONFIRMADO VIGENTE pelo Tier 0 em 2026-11-10",
+          "preferencia": "Tarefas do dia a dia de media e baixa complexidade, orquestracao de media duracao, curadoria e context caching; selecionavel direto no Antigravity App em Low, Medium e High",
           "fonte": "llm/model_registry.py"
         },
         {
@@ -185,15 +185,15 @@
           "tipo": "condutor",
           "modelo": "swe-2-flash",
           "status": "vigente",
-          "preferencia": "Engenharia pontual e complexa de codigo e orquestracao pragmatica agentica de codigo denso; IDs de API vigentes: swe-2-medium/high/max(-lightning), swe-1-7(-medium)",
+          "preferencia": "Devin Next SWE 2.0 Flash Medium — engenharia pontual e complexa de codigo denso; IDs de API vigentes: swe-2-medium/high/max(-lightning), swe-1-7(-medium)",
           "fonte": "data/agent_identities.json"
         },
         {
-          "nome": "Devin (SWE-1.6 Slow)",
+          "nome": "Devin (SWE-1.7 Slow)",
           "tipo": "condutor",
-          "modelo": "swe-1.6-slow",
+          "modelo": "swe-1.7-slow",
           "status": "vigente",
-          "preferencia": "Mesma preferencia do SWE-2 Flash; ID canonico de assinatura — nenhum swe-1-6 existe no registry de API vigente",
+          "preferencia": "Devin Next SWE 1.7 Slow — engenharia pontual e complexa de codigo denso (sucessor do SWE-1.6 Slow); API swe-1-7(-medium)",
           "fonte": "data/agent_identities.json"
         },
         {
@@ -217,8 +217,8 @@
       ],
       "preferencias_mandatorias": {
         "DESIGN|BRAINSTORM|PLANEJAMENTO|CURADORIA": "familia Gemini 4 via Antigravity IDE, alinhada ao trio Tier 2 (Exa-Stitch-Jules)",
-        "PLANEJAMENTO|ORQUESTRACAO": "Gemini 4 Neon (preferencial Tier 1) ou Gemini 4 Argon no modo bifasico Orchestrator",
-        "EXECUCAO|FLUXO_AGENTICO": "Gemini 4 Hydrogen (preferencial Tier 1) — executor primario no modo bifasico Orchestrator",
+        "PLANEJAMENTO|ORQUESTRACAO": "Gemini 4 Argon, Gemini 4 Carbon, Gemini 4 Neon ou Claude Opus 5.5 no modo bifasico Orchestrator",
+        "EXECUCAO|FLUXO_AGENTICO": "Gemini 4 Hydrogen ou Claude Sonnet 5.5 — executores no modo bifasico Orchestrator; Sonnet nao atua solo nem como orquestrador",
         "curadoria_documental": "familia Gemini 4 — preservacao, conservacao, atualizacao e criacao de documentacoes do ecossistema"
       }
     },
@@ -414,6 +414,7 @@
       "Gemini 3 Flash ate geracao 3.7 e Gemini 3.1 Pro (descontinuado em 2026-11-21 — inclui gemini-pro-latest e gemini-3.1-pro-preview*; permanecem vigentes apenas gemini-3.8-flash e gemini-3.5-flash-lite por decisao do Tier 0)",
       "Todo Claude abaixo da geracao 5 (familia 4.x/3.x, Fable 5.1/5, claude-3-5-haiku)",
       "ChatGPT 5.6 e aliases (gpt-5.6-*, chatgpt-5.6-*)",
+      "Devin SWE-1.6 Slow (substituido por Devin Next SWE 1.7 Slow em 2026-11-25)",
       "Todos os modelos Ollama :cloud (descontinuados em 2026-11-10)"
     ],
     "fallbacks_de_resiliencia": [

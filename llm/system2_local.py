@@ -6,22 +6,21 @@ texto/JSON estruturado, este modulo escolhe o melhor motor disponivel:
 
   1. **Local-first**: Ollama (``data/ollama_models.json`` e a fonte unica de
      aliases) com tiers calibrados para o hardware medido
-     (i9-9900K / 32GB RAM / RX 570 8GB VRAM -- Polaris/gfx803, sem ROCm;
-     offload GPU real exige llama.cpp+Vulkan, ver docs).
+     (i9-9900K / 32GB RAM / NVIDIA GeForce GTX 1060 6GB CUDA 12.4 sm_61 /
+     Vulkan0, 5.1 GiB livres + Intel UHD 630 Split-VRAM) e llama.cpp 1.0 (b12651).
   2. **Fallback cloud**: ``gemini-3.5-flash-lite`` via ``llm/gemini.py``
      (pool ``gemini_pool_manager``) quando o Ollama esta offline, o modelo
      nao cabe na RAM ou a chamada local falha.
 
 Tiers System-2 (defaults, sobrescreviveis por env ``CHICO_S2_*_MODEL``):
-  - ``fast``     -> ``qwen3.5:4b``      (~3.3GB, resposta imediata)
-  - ``balanced`` -> ``qwen2.5-coder:7b-instruct-q5_K_M`` (~5.4GB)
-  - ``deep``     -> ``qwen3.8:27b``     (~17GB, reasoning pesado offline)
-  - ``code``     -> ``qwen-code-surgical:latest`` (finetune do projeto)
-  - ``moe``      -> ``qwen3.6-35b-a3b-mtp`` via llama-swap :8080 ->
-                    llama-server Vulkan sob demanda (medido 2026-11-12:
-                    ~13 t/s geracao com draft-mtp; endpoint direto :9931
-                    via ``CHICO_LLAMA_API_BASE``; fallback Ollama ``deep``
-                    -> Flash-Lite)
+  - ``fast``      -> ``qwen3.5:4b``      (~3.3GB, resposta imediata)
+  - ``balanced``  -> ``qwen2.5-coder:7b-instruct-q5_K_M`` (~5.4GB)
+  - ``deep``      -> ``qwen3.8:27b``     (~17GB, reasoning pesado offline)
+  - ``code``      -> ``qwen-code-surgical:latest`` (finetune do projeto)
+  - ``tool``      -> ``functiongemma:270m`` (~0.3GB, tool calling local)
+  - ``distilled`` -> ``gemma4:e4b`` (~4.6-6.6GB / router draft-mtp Q4_0)
+  - ``moe``       -> ``qwen3.6-35b-a3b-mtp`` via router llama.cpp :9931 /
+                     llama-swap :8080 (fallback Ollama ``deep`` -> Flash-Lite)
 
 Invariantes:
   - zero dependencias novas (urllib + psutil + json stdlib);
@@ -48,17 +47,23 @@ logger = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OLLAMA_MANIFEST = PROJECT_ROOT / "data" / "ollama_models.json"
 DEFAULT_OLLAMA_BASE = "http://127.0.0.1:11434"
-DEFAULT_LLAMA_BASE = "http://127.0.0.1:9931"  # llama.cpp (b12387) Router Nativo Vulkan (llama-swap legado em :8080)
+DEFAULT_LLAMA_BASE = "http://127.0.0.1:9931"  # llama.cpp 1.0 (b12651) Router Nativo (llama-swap legado em :8080)
 DEFAULT_GEMMA_PROXY_BASE = "http://127.0.0.1:17043"
 
 _LLAMA_ROUTER_ALIASES: dict[str, str] = {
     "qwen3.6-35b-a3b-mtp": "Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL",
     "qwen3.6-35b-a3b-eagle3": "Qwen3.6-35B-A3B-Eagle3Draft-Q5_K_M",
     "gemma4:e4b": "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P",
+    "gemma4:e4b-distilled": "ggml-org/gemma-4-E4B-it-GGUF:Q4_0",
+    "gemma4:e2b": "ggml-org/gemma-4-E2B-it-GGUF:Q8_0",
+    "gemma4:v2": "gemma4-v2-Q3_K_M",
     "gemma4:12b": "gemma-4-12b-it-Q5_K_S",
     "gemma4:12b-qat": "gemma-4-12b-it-Q5_K_S",
     "qwen2.5-coder:1.5b": "qwen2.5-coder-1.5b-q8_0",
+    "qwen2.5-coder:1.5b-instruct": "ggml-org/Qwen2.5-Coder-1.5B-Instruct-Q8_0-GGUF:Q8_0",
     "gpt-oss:20b": "ggml-org/gpt-oss-20b-GGUF:MXFP4",
+    "lfm3-omni:2b": "ggml-org/LFM3-Omni-2B-GGUF:Q4_K_M",
+    "ai9stars:3b": "ai9stars_G9v3-3B-Q4_K_M",
     "minicpm5:1b": "MiniCPM5-1B-Q4_K_M",
     "ling:3b": "Ling-3.0-tiny-Q4_K_M",
 }
@@ -71,6 +76,8 @@ SYSTEM2_TIERS: dict[str, str] = {
     "balanced": "qwen_coder_7b_q5",
     "deep": "qwen3_8_27b",
     "code": "qwen_code_surgical",
+    "tool": "functiongemma_270m",
+    "distilled": "e4b",
     "moe": "qwen3.6-35b-a3b-mtp",
     "edge": "12b",
     "translate": "translategemma_4b",
@@ -81,6 +88,8 @@ _TIER_ENV: dict[str, str] = {
     "balanced": "CHICO_S2_BALANCED_MODEL",
     "deep": "CHICO_S2_DEEP_MODEL",
     "code": "CHICO_S2_CODE_MODEL",
+    "tool": "CHICO_S2_TOOL_MODEL",
+    "distilled": "CHICO_S2_DISTILLED_MODEL",
     "moe": "CHICO_S2_MOE_MODEL",
     "edge": "CHICO_S2_EDGE_MODEL",
     "translate": "CHICO_S2_TRANSLATE_MODEL",
@@ -718,3 +727,135 @@ def system2_generate(
     except Exception as e:  # pylint: disable=broad-except
         logger.warning("[system2] fallback cloud tambem falhou: %s", e)
         return "", {**meta_base, "engine": "none", "error": str(e)[:200], "fallback_used": True}
+
+
+def _open_http_request(request: urllib.request.Request, timeout_s: float) -> Any:
+    """Abre somente destinos HTTP(S), rejeitando esquemas como file: e customizados."""
+    parsed = urllib.parse.urlsplit(request.full_url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("Local tool endpoint must use an absolute HTTP(S) URL")
+    # O esquema e a autoridade sao validados acima; o endpoint e configurado pelo operador.
+    return urllib.request.urlopen(request, timeout=timeout_s)  # noqa: S310  # Record-Id: handoff-2026-11-26-arquitetura-gemini4-llamacpp-a2ui-antigravity-2351
+
+
+def _tool_call_messages(prompt: str, system: str) -> list[dict[str, Any]]:
+    messages: list[dict[str, Any]] = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    messages.append({"role": "user", "content": prompt})
+    return messages
+
+
+def _request_tool_engine(
+    base_url: str,
+    path: str,
+    payload: dict[str, Any],
+    headers: dict[str, str],
+    timeout_s: float,
+) -> dict[str, Any]:
+    url = f"{base_url}{path}"
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError("Local tool endpoint must use an absolute HTTP(S) URL")
+    request = urllib.request.Request(  # noqa: S310 - validated HTTP(S)  # Record-Id: handoff-2026-11-26-arquitetura-gemini4-llamacpp-a2ui-antigravity-2351
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    with _open_http_request(request, timeout_s) as response:
+        data = json.loads(response.read().decode("utf-8"))
+    return data if isinstance(data, dict) else {}
+
+
+def _dispatch_ollama_tool_call(
+    messages: list[dict[str, Any]], tools: list[dict[str, Any]], model: str, timeout_s: float
+) -> tuple[list[dict[str, Any]], str]:
+    payload = {
+        "model": model,
+        "messages": messages,
+        "tools": tools,
+        "stream": False,
+        "keep_alive": "15m",
+        "options": {"num_ctx": 4096, "temperature": 0.1},
+    }
+    data = _request_tool_engine(_ollama_base(), "/api/chat", payload, {"Content-Type": _CONTENT_TYPE_JSON}, timeout_s)
+    message = data.get("message")
+    message = message if isinstance(message, dict) else {}
+    calls = message.get("tool_calls")
+    return (calls if isinstance(calls, list) else [], str(message.get("content", "")))
+
+
+def _dispatch_llama_tool_call(
+    messages: list[dict[str, Any]], tools: list[dict[str, Any]], timeout_s: float
+) -> tuple[list[dict[str, Any]], str]:
+    model = "ai9stars_G9v3-3B-Q4_K_M"
+    payload = {
+        "model": model,
+        "messages": messages,
+        "tools": tools,
+        "tool_choice": "auto",
+        "stream": False,
+        "temperature": 0.1,
+        "max_tokens": 512,
+    }
+    data = _request_tool_engine(
+        _llama_base(),
+        "/v1/chat/completions",
+        payload,
+        {"Content-Type": _CONTENT_TYPE_JSON, "Authorization": "Bearer local"},
+        timeout_s,
+    )
+    choices = data.get("choices")
+    first_choice = choices[0] if isinstance(choices, list) and choices else {}
+    message = first_choice.get("message") if isinstance(first_choice, dict) else {}
+    message = message if isinstance(message, dict) else {}
+    calls = message.get("tool_calls")
+    return (calls if isinstance(calls, list) else [], str(message.get("content") or ""))
+
+
+def _tool_call_result(
+    calls: list[dict[str, Any]], content: str, engine: str, model: str, fallback: bool, started: float
+) -> dict[str, Any]:
+    return {
+        "tool_calls": calls,
+        "content": content,
+        "meta": {
+            "engine": engine,
+            "model": model,
+            "fallback_used": fallback,
+            "latency_ms": round((time.perf_counter() - started) * 1000.0, 1),
+        },
+    }
+
+
+def dispatch_local_tool_call(
+    prompt: str,
+    tools: list[dict[str, Any]],
+    *,
+    system: str = "",
+    timeout_s: float = 15.0,
+) -> dict[str, Any]:
+    """Despacha chamadas de ferramenta por Ollama, com fallback em llama.cpp."""
+    started = time.perf_counter()
+    model = tier_model("tool")
+    messages = _tool_call_messages(prompt, system)
+
+    if ollama_online():
+        try:
+            calls, content = _dispatch_ollama_tool_call(messages, tools, model, timeout_s)
+            return _tool_call_result(calls, content, "ollama-functiongemma", model, False, started)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.debug("[system2] FunctionGemma falhou (%s); tentando router llama.cpp.", exc)
+
+    if llama_server_online():
+        llama_model = "ai9stars_G9v3-3B-Q4_K_M"
+        try:
+            calls, content = _dispatch_llama_tool_call(messages, tools, timeout_s)
+            return _tool_call_result(calls, content, "llama-cpp-tool-fallback", llama_model, True, started)
+        except Exception as exc:  # pylint: disable=broad-except
+            logger.debug("[system2] fallback tool llama.cpp falhou (%s).", exc)
+
+    result = _tool_call_result([], "", "none", model, True, started)
+    result["meta"]["error"] = "local-tool-engines-offline"
+    return result

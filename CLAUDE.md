@@ -3,7 +3,7 @@ title: "Governança — projeto `Site`"
 type: governance
 status: active
 owner: raphael-vitoi
-updated_at: 2026-11-22
+updated_at: 2026-11-25
 ---
 
 # Governança — projeto `Site`
@@ -11,7 +11,7 @@ updated_at: 2026-11-22
 **Escopo:** este arquivo vale para **`C:\Users\rapha\.gemini\Site`** e nada além.
 Regras globais vivem em `..\CLAUDE.md`; histórico medido, tabelas extensas e notas de calibração detalhadas residem no anexo modular [`docs/governanca/CLAUDE_ANEXO_PLUGINS_E_HISTORICO.md`](docs/governanca/CLAUDE_ANEXO_PLUGINS_E_HISTORICO.md) (para manter este núcleo `< 46.000 B` no harness Hermes sem perda de endereços `§0..§10`).
 
-**Última revisão:** 2026-11-22 (-03:00) · Protocolo Chico SOTA v8.0 GOLD.
+**Última revisão:** 2026-11-25 (-03:00) · Protocolo Chico SOTA v8.0 GOLD.
 
 ---
 
@@ -20,9 +20,9 @@ Regras globais vivem em `..\CLAUDE.md`; histórico medido, tabelas extensas e no
 Hierarquia canônica de 8 Tiers sob Soberania de **Raphael Vitoi**. **A composição vigente de membros vive em `data/model_catalog.json`** (`tests/test_model_catalog.py`), validado contra `data/agent_identities.json`, `llm/model_registry.py`, `data/ollama_models.json`, `data/agents_manifest.json` e `data/system_config.json`. Este documento define os papéis e regras; listas de membros não se duplicam em prosa.
 
 - **Tier 0 — Raphael Vitoi:** Soberania, Liderança e Veto Máximo. Dev/Arquiteto Responsável, conceituação PMev e validação final. (*Companion:* Microsoft 365 Copilot — assistente pessoal fora da frota autônoma.)
-- **Tier 1 — Coletivo `CHICO` (Núcleo Cognitivo Mestre):** **Antigravity IDE** é a superfície primária; VSCode é adaptador secundário. **Não existem feudos funcionais** nem proibições artificiais: modelos equivalentes cobrem uns aos outros sem exclusividade. Preferências operacionais:
-  - Design, Brainstorm, Planejamento e Curadoria/Documentação: família **Gemini 4** via Antigravity IDE (`Gemini 4 Neon` para Planejamento/Orquestração, `Gemini 4 Hydrogen` para Execução/Fluxo Agêntico, `Gemini 4 Argon` opcional no Orchestrator), em alinhamento com **Stitch** e o trio Tier 2 **(Exa-Stitch-Jules)**.
-  - Governança, Contratos, Âncoras e Código Cirúrgico: `Claude Opus 5.5+`. Deep Reasoning: `ChatGPT 6.0 Sol+` e `Claude Opus 5.5+`. Pesquisa/Arquitetura Macro: `ChatGPT 6.0 Terra+`. Engenharia pontual densa: `Devin (SWE-2 Flash)` e `Devin (SWE-1.6 Slow)`.
+- **Tier 1 — Coletivo `CHICO` (Núcleo Cognitivo Mestre):** **Antigravity Desktop `2.35.1` / IDE `2.9.0` / CLI `1.5.17` / SDK `v0.1.24`** é a superfície primária (`Visual Studio v1.0.261116.0`, `Zed v1.5.0 ACP`, `VSCode / VSCode Insiders + Copilot` secundários). **Não existem feudos funcionais** nem proibições artificiais: modelos equivalentes cobrem uns aos outros sem exclusividade. Preferências operacionais:
+  - Design, Brainstorm, Planejamento e Curadoria/Documentação: família **Gemini 4** via Antigravity (`Gemini 4 Argon`, `Carbon` e `Neon` para Planejamento/Orquestração; `Gemini 4 Hydrogen` para Execução/Fluxo Agêntico; `Gemini 3.8 Flash` selecionável direto no App em Low/Medium/High), em alinhamento com **Google A2UI 1.0 + Stitch + AI Studio** e o trio Tier 2 **(Exa-Stitch-Jules)**.
+  - Governança, Contratos, Âncoras e Código Cirúrgico: `Claude Opus 5.5+` e `Claude Sonnet 5.5+` (`Opus` pode atuar solo ou como orquestrador; `Sonnet` atua como executor, sem função solo nem de orquestrador). Deep Reasoning: `ChatGPT 6.0 Sol+` e `Claude Opus 5.5+`. Pesquisa/Arquitetura Macro: `ChatGPT 6.0 Terra+` e Fast (`Codex GPT-6 Luna`). Engenharia pontual densa: `Devin Next (SWE 2.0 Flash Medium)` (`swe-2-flash`) e `Devin Next (SWE 1.7 Slow)` (`swe-1.7-slow`).
   - *Tríade de Ápice (`ChatGPT 6 Astra+`, `Gemini 4 Argon+`, `Gemini 4 Carbon+`):* uso estritamente pontual para reasoning/verificação crítica; `Astra` limitado a `low`/`medium` por preservação de cota flat-fee.
   - *Notação `+` e Retirados:* `+` indica linha viva em `llm/model_registry.py`; modelo aposentado em `data/model_catalog.json` (`aposentados`) / `MODELOS_RETIRADOS` sai da rota e não vira fallback silencioso. Alias interno (ex.: `gpt-6.0-luna`) não vai ao provedor — usa-se o ID resolvido no registry.
   - *Assinaturas Pro (`Faixa.FLAT_FEE`):* cotas flat-fee ativas têm precedência sobre pay-as-you-go (ver §3.2).
@@ -54,7 +54,7 @@ Commit de agente usa e-mail de fornecedor que nunca resolve para perfil humano (
 
 `.git/config` local preserva `user.name`/`user.email` entre sessões (nunca apagar para vazio, senão cai no e-mail pessoal global do Tier 0). Conferir sempre e usar `git -c user.name='<agente>' -c user.email='<noreply>' commit` ou reapontar a local em coerência estrita com a `Assinatura:`.
 
-- **Modo bifásico `Orchestrator` (2026-11-21):** Duo `Gemini 4 Neon` (ou `Argon`) planejador $\rightarrow$ `Gemini 4 Hydrogen` executor. A `Assinatura:` primária e `-c user.name` pertencem ao **Executor**; o Planejador vai em `Co-authored-by:`. Fora do modo Orchestrator, o executor assina individualmente. Na calibração registra-se `conductor_model="orchestrator:<planejador>+<executor>"`.
+- **Modo bifásico `Orchestrator` (2026-11-25):** Orquestradores autorizados: `Gemini 4 Argon`, `Gemini 4 Carbon`, `Gemini 4 Neon` e `Claude Opus 5.5`. Executores: `Gemini 4 Hydrogen` e `Claude Sonnet 5.5`; Sonnet atua como executor, nunca solo ou como orquestrador. A `Assinatura:` primária e `-c user.name` pertencem ao **Executor**; o Orquestrador vai em `Co-authored-by:` (`Co-authored-by: Gemini 4 Carbon <noreply@google.com>` no duo `Carbon -> Hydrogen`). Em execução solo permitida (ex.: `Gemini 4 Carbon` solo), o condutor assina individualmente (`git -c user.name="Gemini 4 Carbon" -c user.email="noreply@google.com"` + `Assinatura: Gemini 4 Carbon [Tier 1] -- modelo=gemini-4-carbon condutor=antigravity ...`). Na calibração registra-se `conductor_model="gemini-4-carbon"` (solo) ou `"orchestrator:<orquestrador>+<executor>"` (duo).
 
 ### O catálogo de identidades é `data/agent_identities.json`, e este arquivo não o copia
 
@@ -222,7 +222,7 @@ Paridade estrita: em prosa `veiculo@modelo` (`antigravity@gemini-4-argon`), em d
 
 #### Quando avaliar — aviso proativo, com lastro diário
 
-- **Proveniência:** `AgentCalibrationProvenance.ps1` valida `GPT/ChatGPT` $\rightarrow$ `codex`, `Claude` $\rightarrow$ `claude-code`, `Gemini` $\rightarrow$ `antigravity`, além de runtimes locais livres (`hermes-agent`, `ollama`, `llama-cpp`).
+- **Proveniência:** `AgentCalibrationProvenance.ps1` valida `GPT/ChatGPT` $\rightarrow$ `codex`, `Claude` $\rightarrow$ `claude-code` (ou `antigravity` para `claude-opus-5.5` e `claude-sonnet-5.5`), `Gemini` $\rightarrow$ `antigravity`, `SWE` $\rightarrow$ `devin-desktop` (`swe-2-flash`, `swe-1.7-slow`), além de runtimes locais livres (`hermes-agent`, `ollama`, `llama-cpp`).
 - **Separação estrita (2026-11-15):** (1) **Coleta** (`Register-AgentCalibrationFeedback.ps1`); (2) **Auto-calibragem mínima** (`Record-AgentCalibration.ps1 -AutoMinima` após $\ge 3$ sessões e $\ge 2$ corroborações; grava `auto_calibration` sem zerar ciclo); (3) **Calibração formal** (`Record-AgentCalibration.ps1 -Tier0Present` — única operação que grava `calibration` e reinicia o portão). Retratações usam `-RetractCalibrationId ... -Tier0Present`.
 - **Lastro & Guardas:** corrida diária das 23:59 (`Register-AgentCalibrationDailyTask.ps1`), `New-AgentCalibrationDailyEvidence.ps1`, apoio TimesFM 2.0 / Monte Carlo / CFR (`Invoke-AgentCalibrationQuantitativeSupport.ps1`) e retenção de outliers (`Record-AgentCalibrationOutlier.ps1`), em **PowerShell 7+** (`pwsh`, compatível 5.1 nos gates). Ver `tests/test_calibracao_portao_por_sessao.py`.
 

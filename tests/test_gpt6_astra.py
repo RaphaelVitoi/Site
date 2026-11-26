@@ -292,7 +292,7 @@ def test_toda_faixa_e_declarada_e_nenhuma_vem_do_default() -> None:
     }, "A faixa de assinatura deve refletir as rotas com cota realmente verificada."
     # A familia Fable teve a faixa declarada e saiu por causa dela; o motivo
     # sobrevive em MODELOS_RETIRADOS, nao no campo.
-    assert set(MODELOS_RETIRADOS) == {"claude-fable-5", "claude-fable-5-1"}
+    assert set(MODELOS_RETIRADOS) == {"claude-fable-5", "claude-fable-5-1", "swe-1.6-slow"}
 
 
 #  Roteamento: existe degrau acima do raciocinio profundo

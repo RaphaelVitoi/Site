@@ -169,6 +169,7 @@ _VEICULO_POR_FAMILIA = {
     "claude": "claude-code",
     "gemini": "antigravity",
     "solar": "hermes-agent",
+    "swe": "devin-desktop",
 }
 
 
@@ -198,6 +199,11 @@ def test_todo_modelo_canonico_resolve_para_um_veiculo(tmp_path, model):
     ledger = tmp_path / "feedback-ledger.jsonl"
     vehicle = _veiculo_de(model)
     result = write_feedback(ledger, ConductorModel=model, ConductorVehicle=vehicle)
+    if model == "claude-sonnet-5.5":
+        assert result.returncode != 0
+        assert "invalid:executor_requires_orchestrator" in result.stderr
+        assert not ledger.exists()
+        return
     assert result.returncode == 0, f"{model} -> {vehicle}: {result.stderr}"
 
 
@@ -243,8 +249,12 @@ def test_campo_ausente_nao_e_reportado_tambem_como_invalido():
 @pytest.mark.parametrize(
     "duo",
     [
-        "orchestrator:gemini-4-neon+gemini-4-hydrogen",
         "orchestrator:gemini-4-argon+gemini-4-hydrogen",
+        "orchestrator:gemini-4-carbon+gemini-4-hydrogen",
+        "orchestrator:gemini-4-carbon+claude-sonnet-5.5",
+        "orchestrator:gemini-4-neon+gemini-4-hydrogen",
+        "orchestrator:claude-opus-5.5+gemini-4-hydrogen",
+        "orchestrator:gemini-4-argon+claude-sonnet-5.5",
     ],
 )
 def test_orchestrator_duo_accepted_and_recorded_once(tmp_path: Path, duo: str) -> None:
@@ -259,11 +269,41 @@ def test_orchestrator_duo_accepted_and_recorded_once(tmp_path: Path, duo: str) -
 
 
 @pytest.mark.parametrize(
+    ("model", "vehicle"),
+    [
+        ("claude-opus-5.5", "antigravity"),
+        ("claude-opus-5.5", "claude-code"),
+        ("gemini-4-argon", "antigravity"),
+        ("gemini-4-carbon", "antigravity"),
+        ("swe-2-flash", "devin-desktop"),
+        ("swe-1.7-slow", "devin-desktop"),
+        ("gpt-6.0-luna", "codex"),
+    ],
+)
+def test_antigravity_claude_devin_next_e_codex_solo_elegiveis(tmp_path: Path, model: str, vehicle: str) -> None:
+    """Valida Carbon, Opus, Argon e outros condutores que podem operar em modo solo."""
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    result = write_feedback(ledger, ConductorModel=model, ConductorVehicle=vehicle)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("vehicle", ["antigravity", "claude-code"])
+def test_sonnet_solo_rejected_because_it_is_executor_only(tmp_path: Path, vehicle: str) -> None:
+    ledger = tmp_path / "feedback-ledger.jsonl"
+    result = write_feedback(ledger, ConductorModel="claude-sonnet-5.5", ConductorVehicle=vehicle)
+    assert result.returncode != 0
+    assert "invalid:executor_requires_orchestrator" in result.stderr
+    assert not ledger.exists()
+
+
+@pytest.mark.parametrize(
     ("duo", "vehicle"),
     [
         ("orchestrator:gemini-4-neon+unknown-1", "antigravity"),
         ("orchestrator:gemini-4-neon+gemini-4-neon", "antigravity"),
         ("orchestrator:gemini-4-neon+gemini-4-hydrogen", "codex"),
+        ("orchestrator:claude-sonnet-5.5+gemini-4-hydrogen", "antigravity"),
+        ("orchestrator:gemini-3.8-flash+gemini-4-hydrogen", "antigravity"),
     ],
 )
 def test_orchestrator_duo_invalido_rejeitado_sem_gravar(tmp_path: Path, duo: str, vehicle: str) -> None:

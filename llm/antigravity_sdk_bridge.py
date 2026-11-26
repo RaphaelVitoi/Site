@@ -3,15 +3,15 @@
 Google Antigravity SDK SOTA Bridge - Ecosystem Orchestration Layer
 Versao: v8.0 GOLD (Strict Typing, Autonomous & Interactive Modes, Multi-Backend)
 
-Harmoniza o SDK oficial (google-antigravity 0.1.23+) com:
-1. Google AI Studio (Hosted Gemini 3.8 Flash via GEMINI_API_KEY)
+Harmoniza o SDK oficial (google-antigravity 0.1.24+) com:
+1. Google AI Studio (Hosted Gemini 3.8 Flash / Gemini 4 via GEMINI_API_KEY)
 2. Gemini Enterprise Platform / Vertex AI (ADC & Express Mode)
 3. On-Device Local Models (LiteRTAgentConfig - Gemma 4 / LocalOpenAIAgentConfig)
-4. Modelos Locais Otimizados Ollama (:11434 - Qwen Code Surgical, PMev Math, Poetics, Gemma 4)
+4. Modelos Locais Otimizados Ollama (:11434) e llama.cpp 1.0 (:9931, b12651)
 5. Gateway MCP Compartilhado (:8933 / :8931 e nucleo_compartilhado.json)
 6. Suite de Skills (.agents/skills, antigravity/builtin/skills, plugins)
 7. Subagentes Customizados Declarativos (~/.gemini/agents/*.md)
-8. Antigravity IDE & Antigravity CLI (agy 1.5.2+)
+8. Antigravity App Desktop 2.35.1, IDE 2.9.0, CLI 1.5.17, VS v1.0.261116.0, ACP, Zed v1.5.0
 """
 
 from __future__ import annotations
@@ -84,13 +84,36 @@ ALLOWED_HTTP_SCHEMES: Final[frozenset[str]] = frozenset({"http", "https"})
 LLAMA_CPP_MODEL_ALIASES: Final[dict[str, str]] = {
     "coder-fast": "qwen2.5-coder-1.5b-q8_0.gguf",
     "coder-1.5b": "qwen2.5-coder-1.5b-q8_0.gguf",
+    "coder-instruct": "ggml-org/Qwen2.5-Coder-1.5B-Instruct-Q8_0-GGUF:Q8_0",
+    "g9-3b": "ai9stars_G9v3-3B-Q4_K_M",
+    "ling-3b": "Ling-3.0-tiny-Q4_K_M",
     "gemma4-e4b": "gemma-4-E4B-it-UD-Q4_K_XL.gguf",
+    "gemma4-e4b-distilled": "ggml-org/gemma-4-E4B-it-GGUF:Q4_0",
     "gemma4-12b": "gemma-4-12b-it-Q5_K_S.gguf",
     "gemma4-e2b": "gemma-4-E2B-it-Q4_K_M.gguf",
+    "gemma4-v2": "gemma4-v2-Q3_K_M",
+    "lfm3-omni": "ggml-org/LFM3-Omni-2B-GGUF:Q4_K_M",
     "qwen3.5-4b": "Qwen3.5-4B.Q4_K_M.gguf",
     "qwen3.5-2b": "Qwen3.5-2B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf",
     "qwen3.6-moe": "Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
 }
+
+
+def get_antigravity_suite_versions() -> dict[str, str]:
+    """Retorna as versoes canonicas e medidas da suite Antigravity."""
+    try:
+        sdk_ver = pkg_version("google-antigravity")
+    except Exception:
+        sdk_ver = "0.1.24"
+    return {
+        "app_desktop": "2.35.1",
+        "ide": "2.9.0",
+        "cli": "1.5.17",
+        "sdk": sdk_ver,
+        "visual_studio": "1.0.261116.0",
+        "zed": "1.5.0",
+        "acp_docs": "https://antigravity.google/docs/ide/extensions/acp/",
+    }
 
 
 def resolve_llama_cpp_model(alias_or_id: str) -> str:
@@ -113,6 +136,7 @@ LOCAL_OPTIMIZED_MODELS: Final[dict[str, str]] = {
     "gemma4-e2b": "gemma4:e2b",
     "gemma4": "gemma4:latest",
     "translategemma": "translategemma:4b",
+    "functiongemma": "functiongemma:270m",
     "qwen-coder-7b": "qwen2.5-coder:7b-instruct-q5_K_M",
     "qwen-coder-1.5b": "qwen2.5-coder:1.5b",
     "qwen-coder-0.5b": "qwen2.5-coder:0.5b",
@@ -375,7 +399,10 @@ def _expand_refs(text: str) -> str:
 
 
 def find_agy_cli() -> Path | None:
-    """Localiza o executavel `agy` (Antigravity CLI)."""
+    """Localiza o executavel `agy` (Antigravity CLI, preferindo v1.5.17)."""
+    preferred_bin = RAIZ_DIR / "bin" / "agy.exe"
+    if preferred_bin.is_file():
+        return preferred_bin
     which_hit = shutil.which("agy")
     if which_hit:
         return Path(which_hit)
@@ -871,6 +898,7 @@ class AntigravityAgentBridge:
         }
 
         return {
+            "suite": get_antigravity_suite_versions(),
             "sdk": {
                 "package": "google-antigravity",
                 "version": sdk_version,

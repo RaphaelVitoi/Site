@@ -21,25 +21,49 @@ GEMINI_API_KEY_HEADER = "x-goog-api-key"
 logger = logging.getLogger(__name__)
 
 APP_JSON = "application/json"
+GEMINI_35_FLASH_LITE = "gemini-3.5-flash-lite"
 
 
 def _normalize_gemini_model(model: str) -> str:
-    """Helper SOTA: Normaliza modelos legados e experimentais Gemini para a linha estavel."""
+    """Helper SOTA: Normaliza modelos legados e com price/deprecation cliff para a linha vigente."""
     model_l = model.lower()
+
+    # Cliffs de 2026-11/12: redireciona modelos legados antes do auto-route remoto
+    if model_l == "gemini-2.5-pro":
+        return "gemini-3.8-flash"
+    if model_l in ("gemini-2.5-flash", "gemini-2.5-flash-lite"):
+        return GEMINI_35_FLASH_LITE
+    if model_l == "gemini-omni-1.1-flash":
+        return "gemini-omni-1.2-flash"
+    if model_l == "gemini-embedding-2-preview":
+        return "gemini-embedding-2"
 
     # Suporte nativo para Gemini 4 e serie 3.x (3.8 Flash / 3.5 Flash-Lite / 3.1 Pro / pro-latest)
     if any(
         v in model_l
-        for v in ("gemini-4", "argon", "carbon", "hydrogen", "3.8", "3.7", "3.6", "3.5", "3.1", "3.0", "pro-latest")
+        for v in (
+            "gemini-4",
+            "argon",
+            "carbon",
+            "neon",
+            "hydrogen",
+            "3.8",
+            "3.7",
+            "3.6",
+            "3.5",
+            "3.1",
+            "3.0",
+            "pro-latest",
+        )
     ):
         return model
 
-    # Suporte nativo para a serie 2.x
+    # Suporte nativo para variantes especializadas 2.x (tts/native-audio/image)
     if "2.0" in model_l or "2.5" in model_l:
         return model
 
     if "1.0" in model_l:
-        return "gemini-3.5-flash-lite"
+        return GEMINI_35_FLASH_LITE
 
     return model
 
@@ -49,7 +73,20 @@ def _is_gemini_3x(model_str: str) -> bool:
     model_l = model_str.lower()
     return any(
         v in model_l
-        for v in ("gemini-4", "argon", "carbon", "hydrogen", "3.8", "3.7", "3.6", "3.5", "3.1", "3.0", "pro-latest")
+        for v in (
+            "gemini-4",
+            "argon",
+            "carbon",
+            "neon",
+            "hydrogen",
+            "3.8",
+            "3.7",
+            "3.6",
+            "3.5",
+            "3.1",
+            "3.0",
+            "pro-latest",
+        )
     )
 
 
@@ -57,7 +94,7 @@ def _is_thinking_capable(model_str: str, thinking_kwarg: bool) -> bool:
     """Verifica se o modelo suporta Dynamic / Extended Thinking."""
     model_l = model_str.lower()
     return thinking_kwarg or any(
-        v in model_l for v in ("3.8", "3.7", "3.1", "pro-latest", "gemini-4", "argon", "carbon", "hydrogen")
+        v in model_l for v in ("3.8", "3.7", "3.1", "pro-latest", "gemini-4", "argon", "carbon", "neon", "hydrogen")
     )
 
 
@@ -72,7 +109,12 @@ def _build_thinking_config(kwargs: dict[str, Any], model_str: str) -> dict[str, 
         thinking_config["thinkingBudget"] = budget
     if thinking_level:
         level_u = str(thinking_level).strip().upper()
-        if level_u not in ("MINIMAL", "LOW", "MEDIUM", "HIGH"):
+        model_l = model_str.lower()
+        supports_xhigh = "neon" in model_l or "hydrogen" in model_l
+        valid_levels = (
+            ("MINIMAL", "LOW", "MEDIUM", "HIGH", "XHIGH") if supports_xhigh else ("MINIMAL", "LOW", "MEDIUM", "HIGH")
+        )
+        if level_u not in valid_levels:
             raise ValueError(
                 f"Gemini thinking_level invalido: '{thinking_level}'. Use 'minimal', 'low', 'medium' ou 'high'."
             )
@@ -290,7 +332,7 @@ async def call_gemini_flash_lite(
         try:
             return await call_gemini(
                 session=session,
-                model="gemini-3.5-flash-lite",
+                model=GEMINI_35_FLASH_LITE,
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
                 api_key="",  # forca rotacao inteligente via pool

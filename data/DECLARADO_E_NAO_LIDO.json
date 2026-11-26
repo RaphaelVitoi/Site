@@ -150,6 +150,18 @@
         "Registrar a constante agora mantem o par Argon/Carbon simetrico no",
         "catalogo; a ligacao efetiva fica pendente de decisao do Tier 0."
       ]
+    },
+    {
+      "nome": "OBSIDIAN_A2UI_CATALOG",
+      "onde": "engine/stitch_bridge.py",
+      "veredito": "catalogo de design tokens A2UI 1.0 declarado sem consumidor; o envelope envia apenas catalogId -- promocao do payload completo e decisao do Tier 0",
+      "medido": [
+        "Adicionado em 2026-11-26 junto com build_a2ui_agent_envelope. O envelope",
+        "agent_to_renderer carrega catalogId (OBSIDIAN_A2UI_CATALOG_ID), nao o",
+        "catalogo inteiro: tokens e componentes hoje sao metadado de apresentacao",
+        "sem leitor. Se o renderer passar a resolve-los por catalogId, a constante",
+        "vira fonte do payload; ate la, fica declarada aqui em vez de fingir uso."
+      ]
     }
   ],
   "fora_de_escopo": {

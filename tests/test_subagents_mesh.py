@@ -120,9 +120,9 @@ async def test_subagents_mesh_singleton_import():
 
 
 def test_subagents_mesh_tier_integrity():
-    """Valida que todos os 15 niveis de SubagentTier possuem modelo local mapeado
+    """Valida que todos os 16 niveis de SubagentTier possuem modelo local mapeado
     e estao devidamente configurados no SUBAGENT_MODEL_MAP."""
-    assert len(SubagentTier) == 15
+    assert len(SubagentTier) == 16
     for tier in SubagentTier:
         assert tier in SUBAGENT_MODEL_MAP
         assert isinstance(SUBAGENT_MODEL_MAP[tier], str)

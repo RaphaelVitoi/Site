@@ -4,7 +4,7 @@ Verifica a conformidade dos modelos da familia Gemini 3.x com as diretrizes
 tecnicas atualizadas em 2026-09-08:
   - Eliminacao de amostragem tradicional (temperature, top_p, top_k) e rejeicao de penalidades;
   - Rejeicao de historico de conversa com trailing role 'model';
-  - Validacao estrita de thinking_level por variante (minimal rejeitado em todos os modelos Gemini);
+  - Validacao estrita de thinking_level por variante (minimal aceito apenas em 3.5-flash-lite; xhigh exclusivo de neon/hydrogen);
   - Montagem cirurgica de payloads REST v1beta sem parametros obsoletos;
   - Extracao de texto resiliente contra blocos de pensamento (thought blocks).
 """
@@ -201,3 +201,16 @@ def test_google_adapter_carbon_rejeita_thinking_especulativo_e_suporta_cache() -
     )
     assert payload["cachedContent"] == "cachedContents/pmev-axioms"
     assert payload["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "HIGH"
+
+
+def test_normalize_gemini_model_aplica_cliffs_nov_dez_2026() -> None:
+    assert _normalize_gemini_model("gemini-2.5-pro") == "gemini-3.8-flash"
+    assert _normalize_gemini_model("gemini-2.5-flash") == "gemini-3.5-flash-lite"
+    assert _normalize_gemini_model("gemini-omni-1.1-flash") == "gemini-omni-1.2-flash"
+    assert _normalize_gemini_model("gemini-embedding-2-preview") == "gemini-embedding-2"
+
+
+@pytest.mark.parametrize("modelo", ["gemini-4-neon", "gemini-4-hydrogen"])
+def test_build_gemini_payload_aceita_xhigh_em_neon_e_hydrogen(modelo: str) -> None:
+    payload = _build_gemini_payload("sys", "prompt", False, _model=modelo, thinking_level="xhigh")
+    assert payload["generationConfig"]["thinkingConfig"]["thinkingLevel"] == "XHIGH"

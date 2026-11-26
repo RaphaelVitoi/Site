@@ -614,3 +614,37 @@ def test_stitch_agent_cli_offline_enhance(capsys: pytest.CaptureFixture[str]) ->
     assert data["original"] == "Criar tela de Nash"
     assert "Mobile" in data["enhanced"]
     assert "Obsidian Analytics" in data["enhanced"]
+
+
+def test_a2ui_v1_envelope_roundtrip_and_xss_guard() -> None:
+    """Valida contrato Google A2UI 1.0 (agent_to_renderer / renderer_to_agent / anti-XSS)."""
+    from engine.stitch_bridge import (
+        A2UI_SPEC_VERSION,
+        OBSIDIAN_A2UI_CATALOG_ID,
+        build_a2ui_agent_envelope,
+        parse_a2ui_renderer_envelope,
+    )
+
+    screen = StitchScreen(
+        name="projects/18242753218562483944/screens/sc1",
+        id="sc1",
+        title="Scanner PMev",
+        device_type="DESKTOP",
+    )
+    env = screen.to_a2ui_envelope(data_model={"ev": 1.42})
+    assert env["version"] == A2UI_SPEC_VERSION
+    assert env["direction"] == "agent_to_renderer"
+    assert env["catalogId"] == OBSIDIAN_A2UI_CATALOG_ID
+    assert env["beginRendering"]["surfaceId"] == "sc1"
+
+    parsed = parse_a2ui_renderer_envelope(
+        {"version": "1.0", "direction": "renderer_to_agent", "userAction": {"action": "run_sim"}}
+    )
+    assert parsed["kind"] == "userAction"
+    assert parsed["payload"]["action"] == "run_sim"
+
+    with pytest.raises(ValueError, match="inseguro"):
+        build_a2ui_agent_envelope(
+            "bad-surface",
+            [{"id": "x", "component": "ActionBanner", "props": {"title": "<script>alert(1)</script>"}}],
+        )

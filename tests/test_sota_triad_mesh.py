@@ -101,7 +101,7 @@ class TestSotaTriadMesh(unittest.TestCase):
         assert isinstance(dag_phases, list)
         assert len(dag_phases) == 4
         assert dag_phases[0]["agent"] == "Exa (Neural Research)"
-        assert dag_phases[1]["agent"] == "Stitch (Generative UI)"
+        assert dag_phases[1]["agent"] == "Stitch (Generative UI + A2UI 1.0)"
         assert dag_phases[2]["agent"] == "Google Jules (Cloud VM)"
         assert dag_phases[3]["agent"] == "Antigravity 2.0 (Local Gate)"
 

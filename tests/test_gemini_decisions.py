@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -535,3 +536,66 @@ def test_laya_answer_preserva_probabilities_e_answer_confidence() -> None:
     assert ans["choice"] == "wet"
     assert ans["answer_confidence"] == pytest.approx(0.68)
     assert ans["probabilities"] == {"dry": 0.22, "wet": 0.68, "monotone": 0.10}
+
+
+def test_decide_control_plane_single_pass_e_circuit_breaker() -> None:
+    """Control plane empacota 4 perguntas tipadas e aplica circuit breaker por confianca."""
+    from llm.gemini_decisions import CONTROL_PLANE_S1_QUESTIONS, decide_control_plane  # noqa: PLC0415
+
+    assert set(CONTROL_PLANE_S1_QUESTIONS) == {
+        "route_tier",
+        "thinking_effort",
+        "needs_long_decode",
+        "complexity_score",
+    }
+    cli = GeminiDecisionsClient(api_key="fake")
+    resp_high = SimpleNamespace(
+        prompt_feedback=None,
+        usage=SimpleNamespace(total_tokens=200),
+        answers={
+            "route_tier": {
+                "type": "choice",
+                "choice": "frontier_neon",
+                "confidence": 0.91,
+                "probabilities": {"frontier_neon": 0.91},
+            },
+            "thinking_effort": {
+                "type": "choice",
+                "choice": "xhigh",
+                "confidence": 0.88,
+                "probabilities": {"xhigh": 0.88},
+            },
+            "needs_long_decode": {"type": "noul", "noul": 0.82, "confidence": 0.82},
+            "complexity_score": {"type": "score", "score": 2.8, "confidence": 0.90, "legend": {}, "probabilities": {}},
+        },
+    )
+    with patch.object(cli, "create", return_value=resp_high):
+        out_high = decide_control_plane("Provar teorema PMev", prefer_cloud=True, client=cli)
+    assert out_high["route_tier"] == "frontier_neon"
+    assert out_high["thinking_effort"] == "xhigh"
+    assert out_high["needs_long_decode"] is True
+    assert out_high["circuit_action"] == "execute_direct"
+
+    resp_low = SimpleNamespace(
+        prompt_feedback=None,
+        usage=SimpleNamespace(total_tokens=200),
+        answers={
+            "route_tier": {
+                "type": "choice",
+                "choice": "fast_worker",
+                "confidence": 0.62,
+                "probabilities": {"fast_worker": 0.62},
+            },
+            "thinking_effort": {
+                "type": "choice",
+                "choice": "high",
+                "confidence": 0.65,
+                "probabilities": {"high": 0.65},
+            },
+            "needs_long_decode": {"type": "noul", "noul": 0.12, "confidence": 0.88},
+            "complexity_score": {"type": "score", "score": 1.1, "confidence": 0.70, "legend": {}, "probabilities": {}},
+        },
+    )
+    with patch.object(cli, "create", return_value=resp_low):
+        out_low = decide_control_plane("Tarefa ambigua", prefer_cloud=True, client=cli)
+    assert out_low["circuit_action"] == "escalate_planner"

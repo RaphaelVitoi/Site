@@ -41,7 +41,7 @@ TRANSLATEGEMMA_ALIAS = "translategemma_4b"
 TRANSLATEGEMMA_DEFAULT_MODEL = "translategemma:4b"
 DEFAULT_TRANSLATE_KEEP_ALIVE = os.environ.get("CHICO_TRANSLATE_KEEP_ALIVE", "30m")
 DEFAULT_CLOUD_GEMINI_MODEL = "gemini-3.5-flash-lite"
-DEFAULT_CLOUD_OPENROUTER_MODEL = "google/gemini-2.5-flash-lite"
+DEFAULT_CLOUD_OPENROUTER_MODEL = "google/gemini-3.5-flash-lite"
 _CONTENT_TYPE_JSON = "application/json"
 
 DomainMode = Literal["general", "poker", "tech"]

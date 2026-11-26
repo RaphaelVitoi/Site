@@ -23,6 +23,16 @@
     // ── NUCLEO DE INTELIGENCIA (ANTIGRAVITY CLI & CLAUDE CODE) ──
     "antigravity.approvalMode": "auto_edit",
     "antigravity.model": "gemini-3.8-flash",
+    "antigravity.binary.path": "C:\\Users\\rapha\\.gemini\\bin\\agy.exe",
+    "acp.agents": {
+      "Antigravity": {
+        "command": "C:\\Users\\rapha\\.gemini\\bin\\agy.exe",
+        "args": [
+          "acp",
+          "--disable-telemetry"
+        ]
+      }
+    },
     "claudeCode.preferredLocation": "panel",
     "claudeCode.focusView": true,
     "claudeCode.disableLoginPrompt": true,

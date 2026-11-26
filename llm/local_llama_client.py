@@ -42,12 +42,45 @@ DEFAULT_ROUTER_PORT = 9931
 DEFAULT_LLAMA_SWAP_PORT = 8080
 DEFAULT_LLAMA_SWAP_MODEL = "qwen-moe"
 
+LLAMA_ROUTER_CATALOG: dict[str, str] = {
+    "coder-1.5b": "qwen2.5-coder-1.5b-q8_0",
+    "coder-1.5b-instruct": "ggml-org/Qwen2.5-Coder-1.5B-Instruct-Q8_0-GGUF:Q8_0",
+    "g9-3b-tools": "ai9stars_G9v3-3B-Q4_K_M",
+    "ling-3b-moe": "Ling-3.0-tiny-Q4_K_M",
+    "minicpm5-1b": "MiniCPM5-1B-Q4_K_M",
+    "gemma4-e2b-q8": "ggml-org/gemma-4-E2B-it-GGUF:Q8_0",
+    "gemma4-e4b-distilled-q4": "ggml-org/gemma-4-E4B-it-GGUF:Q4_0",
+    "gemma4-e4b-q8": "ggml-org/gemma-4-E4B-it-GGUF:Q8_0",
+    "gemma4-e4b-uncensored": "Gemma-4-E4B-Uncensored-HauhauCS-Aggressive-Q8_K_P",
+    "gemma4-v2-q3": "gemma4-v2-Q3_K_M",
+    "gemma4-12b-q4": "ggml-org/gemma-4-12B-it-GGUF:Q4_0",
+    "gemma4-12b-q5": "gemma-4-12b-it-Q5_K_S",
+    "lfm3-omni-2b": "ggml-org/LFM3-Omni-2B-GGUF:Q4_K_M",
+    "qwen3.6-35b-a3b-mtp": "Qwen3.6-35B-A3B-MTP-UD-Q4_K_XL",
+    "qwen3.6-35b-eagle3-draft": "Qwen3.6-35B-A3B-Eagle3Draft-Q5_K_M",
+    "gpt-oss-20b": "ggml-org/gpt-oss-20b-GGUF:MXFP4",
+    "nomic-embed-v2": "ggml-org/Nomic-Embed-Text-V2-GGUF:Q8_0",
+}
+
 PORT_TO_ROUTER_MODEL: dict[int, str] = {
     DEFAULT_G9_PORT: "ai9stars_G9v3-3B-Q4_K_M",
     DEFAULT_LING_PORT: "Ling-3.0-tiny-Q4_K_M",
     DEFAULT_QWEN_PORT: "qwen2.5-coder-1.5b-q8_0",
     DEFAULT_ROUTER_PORT: "ai9stars_G9v3-3B-Q4_K_M",
 }
+
+
+def resolve_router_model(alias_or_id: str | None) -> str:
+    """Resolve alias amigavel ou ID direto do catalogo do router llama.cpp 1.0 (:9931)."""
+    cleaned = (alias_or_id or "").strip()
+    if not cleaned:
+        return PORT_TO_ROUTER_MODEL[DEFAULT_ROUTER_PORT]
+    if cleaned in LLAMA_ROUTER_CATALOG:
+        return LLAMA_ROUTER_CATALOG[cleaned]
+    normalized = cleaned.replace("_", "-").lower()
+    if normalized in LLAMA_ROUTER_CATALOG:
+        return LLAMA_ROUTER_CATALOG[normalized]
+    return cleaned
 
 
 def sanitize_think_tags(text: str) -> str:
@@ -109,14 +142,30 @@ class LocalLlamaClient:
         self.port = port
         self.base_url = f"http://{host}:{port}/v1"  # NOSONAR
         self.timeout = timeout
-        self.model = model
-        self.router_model_id = model or PORT_TO_ROUTER_MODEL.get(port, PORT_TO_ROUTER_MODEL[DEFAULT_ROUTER_PORT])
+        self.model = resolve_router_model(model) if model else None
+        self.router_model_id = (
+            self.model if self.model else PORT_TO_ROUTER_MODEL.get(port, PORT_TO_ROUTER_MODEL[DEFAULT_ROUTER_PORT])
+        )
         self._effective_port: int | None = None
 
     @staticmethod
     def get_engine_version() -> str:
         """Retorna a versao/identificador do runtime llama.cpp integrado."""
-        return "llama.cpp-b12387-1.0-vulkan-router"
+        return "llama.cpp-b12651-1.0-cuda124-vulkan-router"
+
+    def list_router_models(self, timeout_s: float = 2.0) -> list[dict[str, Any]]:
+        """Consulta GET /v1/models no router llama.cpp 1.0 (:9931) e retorna modelos expostos."""
+        try:
+            url = f"http://{self.host}:{self.port}/v1/models"  # NOSONAR
+            req = urllib.request.Request(url, method="GET")  # noqa: S310  # Record-Id: registro-2026-11-25-integracao-llamacpp-b12651
+            with urllib.request.urlopen(req, timeout=timeout_s) as resp:  # noqa: S310  # Record-Id: registro-2026-11-25-integracao-llamacpp-b12651
+                if resp.status != 200:
+                    return []
+                payload = json.loads(resp.read().decode("utf-8"))
+                data = payload.get("data", []) if isinstance(payload, dict) else []
+                return [item for item in data if isinstance(item, dict) and item.get("id")]
+        except Exception:
+            return []
 
     def _probe_port_health(self, target_port: int, timeout_s: float = 1.0) -> bool:
         try:

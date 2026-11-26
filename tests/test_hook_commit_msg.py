@@ -528,3 +528,79 @@ def test_sha_da_assinatura_contra_write_tree_em_repo_descartavel(tmp_path):
     assert "tree SHA do indice" in errado.stdout + errado.stderr
     sujo = _rodar_repo(f"{tree[:8]}ZZZ")
     assert sujo.returncode != 0, "prefixo hex seguido de caracteres invalidos passou"
+
+
+def test_gemini_4_carbon_solo_e_duo_orquestrador_passam_sem_avisos(tmp_path):
+    """Garante assinatura canonica de Gemini 4 Carbon solo e em duo como orquestrador."""
+    git = shutil.which("git")
+    if git is None:
+        pytest.skip("git indisponivel para o repo descartavel")
+    repo = tmp_path / "repo_carbon"
+    repo.mkdir()
+
+    def _git(*args: str) -> str:
+        return subprocess.run(
+            [git, *args],
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+        ).stdout.strip()
+
+    _git("init", "-q")
+    _git("config", "user.email", "noreply@google.com")
+    _git("config", "user.name", "Gemini 4 Carbon")
+    data_dir = repo / "data"
+    data_dir.mkdir()
+    (data_dir / "agent_identities.json").write_text(CATALOGO.read_text(encoding="utf-8"), encoding="utf-8")
+    _git("add", ".")
+    tree = _git("write-tree")
+
+    assert SH is not None
+    # 1) Modo Solo: Gemini 4 Carbon assina diretamente com seu proprio autor e Assinatura:
+    msg_solo = repo / "COMMIT_SOLO"
+    msg_solo.write_text(
+        "feat(llm): operacao solo critica\n\n"
+        "Assinatura: Gemini 4 Carbon [Tier 1] -- modelo=gemini-4-carbon condutor=antigravity "
+        f"ts=2026-11-26T05:30:00-03:00 sha={tree} supervisao=assistida sessao=sess-solo-1\n",
+        encoding="utf-8",
+    )
+    res_solo = subprocess.run(
+        [SH, HOOK.as_posix(), msg_solo.as_posix()],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        env={**os.environ, "GIT_AUTHOR_NAME": "Gemini 4 Carbon", "GIT_AUTHOR_EMAIL": "noreply@google.com"},
+    )
+    saida_solo = res_solo.stdout + res_solo.stderr
+    assert res_solo.returncode == 0, saida_solo
+    assert "AVISO" not in saida_solo, saida_solo
+
+    # 2) Modo Duo como Orquestrador: Executor Hydrogen assina e Carbon recebe Co-authored-by:
+    msg_duo = repo / "COMMIT_DUO"
+    msg_duo.write_text(
+        "feat(llm): duo orchestrator carbon + hydrogen\n\n"
+        "Assinatura: Gemini 4 Hydrogen [Tier 1] -- modelo=gemini-4-hydrogen condutor=antigravity "
+        f"ts=2026-11-26T05:30:00-03:00 sha={tree} supervisao=assistida sessao=sess-duo-1\n\n"
+        "Co-authored-by: Gemini 4 Carbon <noreply@google.com>\n",
+        encoding="utf-8",
+    )
+    res_duo = subprocess.run(
+        [SH, HOOK.as_posix(), msg_duo.as_posix()],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        env={**os.environ, "GIT_AUTHOR_NAME": "Gemini 4 Hydrogen", "GIT_AUTHOR_EMAIL": "noreply@google.com"},
+    )
+    saida_duo = res_duo.stdout + res_duo.stderr
+    assert res_duo.returncode == 0, saida_duo
+    assert "AVISO" not in saida_duo, saida_duo
+    assert "Co-authored-by: Gemini 4 Carbon <noreply@google.com>" in msg_duo.read_text(encoding="utf-8")
