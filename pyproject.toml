@@ -72,13 +72,13 @@ dependencies = [
     # NOTA historica: moviepy foi REMOVIDO em 2026-08-21 -- exigia pillow<12.0,
     # prendo o projeto em Pillow 11.x (10 CVEs corrigidas em 12.3.0). 2.2.1 e a
     # ultima versao e nao levanta o teto. Zero imports no codigo.
-    "regex>=2026.11.24",
+    "regex>=2026.11.25",
     "requests>=2.34.2,<3.0.0",
     "PyYAML>=6.0.4,<7.0.0",
     "tqdm>=4.70.1,<5.0.0",
     "rich>=15.0.0,<16.0.0",
     "python-dateutil>=4.0.0,<5.0.0",
-    "tenacity>=9.1.4,<9.2.0",  # limitado em <9.2.0 por compatibilidade estrita upstream do google-genai 3.3.0 (Requires-Dist: tenacity<9.2.0,>=8.2.3); tenacity 9.2.1 existe mas e barrada por essa constraint
+    "tenacity>=9.1.4,<9.2.0",  # limitado em <9.2.0 por compatibilidade estrita upstream do google-genai 3.6.1 (Requires-Dist: tenacity<9.2.0,>=8.2.3); tenacity 9.2.1 existe mas e barrada por essa constraint
     "orjson>=3.13.0",
     "defusedxml>=0.7.1",
     # ── FILESYSTEM & CLOUD ────────────────────────────────────────────
@@ -88,7 +88,7 @@ dependencies = [
     # ── INFRA & MONITORAMENTO ─────────────────────────────────────────
     "psutil>=7.2.2,<8.0.0",
     "loguru>=0.8.0",
-    "typer>=0.29.2",
+    "typer>=0.29.3",
     "edge-tts>=7.3.1",
     "mcp>=2.3.0",
     "nanobind>=3.1.0",
@@ -99,7 +99,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.5.4",
+    "laya>=0.5.5",
     "accelerate>=1.16.0",
     "timesfm[torch]==3.0.2",
     # Computer-use, OLAP e embeddings alternativos foram movidos para
@@ -196,7 +196,7 @@ embeddings = [
 
 # SDKs oficiais opcionais (runtime usa aiohttp REST direto em engine/llm_api.py e llm/anthropic.py).
 llm-sdks = [
-    "openai>=3.59.0",
+    "openai>=3.60.0",
     "anthropic>=2.14.0",
 ]
 
@@ -219,7 +219,7 @@ all = [
     "matplotlib>=3.11.2",
     "seaborn>=0.13.2",
     "sentence-transformers>=6.3.0",
-    "openai>=3.59.0",
+    "openai>=3.60.0",
     "anthropic>=2.14.0",
 ]
 
@@ -288,9 +288,9 @@ constraint-dependencies = [
     "cryptography>=50.0.2",
     "pyasn1>=0.6.5",
     "setuptools>=84.2.1",
-    "torch>=2.14.1",
-    "transformers>=5.20.2",
-    "httpx2>=2.16.0",
+    "torch>=2.15.0",
+    "transformers>=5.24.1",
+    "httpx2>=2.16.2",
     # MEDIDO em 2026-09-30 (auditoria de backend, SEC-13). O `pip-audit` deste
     # projeto roda por `python -m pip_audit` e DEVIA estar barrando isso no
     # pre-commit -- mas `npm run python:audit` falhava com `uv trampoline failed
@@ -323,9 +323,9 @@ constraint-dependencies = [
     "pyjwt>=2.14.0",
     "oauthlib>=4.0.1",
     # ── PISOS ADICIONAIS DE SEGURANCA (REMEDIACAO DEPENDABOT 2026-10-24) ───
-    "filelock>=4.2.1",
+    "filelock>=4.3.1",
     "brotli>=1.2.1",
-    "certifi>=2026.10.19",
+    "certifi>=2026.11.20",
     "opentelemetry-api>=1.45.1",
 ]
 

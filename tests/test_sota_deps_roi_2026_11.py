@@ -327,3 +327,53 @@ def test_regex_2026_11_23_negated_set_alternation_and_casefold() -> None:
     assert regex.fullmatch(r"[^a]|[^b]", "a") is not None
     assert regex.fullmatch(r"[^a]|[^b]", "b") is not None
     assert regex.search(r"(?i:foo)[^x]", "FOOa") is not None
+
+
+@pytest.mark.unit
+def test_npm_cve_acceptances_unique_ids_and_schema() -> None:
+    """Garante unicidade de IDs e schema minimo em data/npm_cve_acceptances.json."""
+    import json  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    path = Path(__file__).resolve().parent.parent / "data" / "npm_cve_acceptances.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    acceptances = data.get("acceptances")
+    assert isinstance(acceptances, list)
+    assert len(acceptances) > 0
+
+    ids: list[str] = []
+    for entry in acceptances:
+        assert isinstance(entry, dict)
+        for key in ("id", "package", "version", "vulnerability_ids"):
+            assert key in entry
+        assert isinstance(entry["id"], str)
+        assert entry["id"].strip()
+        assert isinstance(entry["vulnerability_ids"], list)
+        ids.append(entry["id"])
+
+    assert len(ids) == len(set(ids)), "IDs duplicados encontrados em npm_cve_acceptances.json"
+
+
+@pytest.mark.unit
+def test_sota_deps_2026_11_26_runtime_contracts() -> None:
+    """Valida versoes e contratos minimos pos-elevacao (laya, regex, typer, openai)."""
+    import importlib  # noqa: PLC0415
+    import importlib.metadata as metadata  # noqa: PLC0415
+
+    from packaging.version import Version  # noqa: PLC0415
+
+    floors = {
+        "laya": "0.5.5",
+        "regex": "2026.11.25",
+        "typer": "0.29.3",
+        "openai": "3.60.0",
+    }
+    for pkg, min_ver in floors.items():
+        installed = Version(metadata.version(pkg))
+        assert installed >= Version(min_ver), f"{pkg}=={installed} abaixo do piso {min_ver}"
+
+    typer_mod = importlib.import_module("typer")
+    app = typer_mod.Typer()
+    assert app is not None
+    importlib.import_module("laya")
+    importlib.import_module("openai")
