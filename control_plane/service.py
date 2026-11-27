@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 import time
 from typing import Any
 
 import numpy as np
 
-from control_plane.cascade import EvaluationCascade, MutatorOracleFn, TestOracleFn
+from control_plane.cascade import CascadeAssessment, EvaluationCascade, MutatorOracleFn, TestOracleFn
 from control_plane.config import (
     ActionRole,
     ArtifactKind,
@@ -23,11 +24,39 @@ from control_plane.spectral import Embedder, SpaceProjector, build_default_embed
 from control_plane.storage import (
     ControlPlaneError,
     ControlPlaneStore,
+    ReplayEpisodeInput,
     compute_sha256,
 )
 from control_plane.thermostat import Thermostat, ThermostatInput
 from control_plane.z3_gate import Z3ConstraintGate
 from core.skill_router import route_and_compile_skill_context
+
+_ARTIFACT_POLARITY: dict[ArtifactKind, str] = {
+    ArtifactKind.ANCHOR_POS: "positive",
+    ArtifactKind.ANCHOR_NEG: "negative",
+}
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointEvalOptions:
+    """Optional scope, oracle, and underdetermination knobs for checkpoint evaluation."""
+
+    target_files: list[str] | None = None
+    allowed_files: list[str] | None = None
+    has_formal_anchor_revision: bool = False
+    unit_oracle: TestOracleFn | None = None
+    blind_mutator: MutatorOracleFn | None = None
+    missing_delta_crit: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class CheckpointTelemetry:
+    """FinOps and prefix-cache token counters for a checkpoint invocation."""
+
+    cost_usd: float = 0.0
+    tokens_in: int = 0
+    cached_tokens_in: int = 0
+    tokens_out: int = 0
 
 
 class ControlPlaneService:
@@ -90,13 +119,7 @@ class ControlPlaneService:
 
         chunk_id: int | None = None
         if artifact_kind in {ArtifactKind.ANCHOR_POS, ArtifactKind.ANCHOR_NEG, ArtifactKind.ESS_STRATEGY}:
-            polarity = (
-                "positive"
-                if artifact_kind == ArtifactKind.ANCHOR_POS
-                else "negative"
-                if artifact_kind == ArtifactKind.ANCHOR_NEG
-                else "none"
-            )
+            polarity = _ARTIFACT_POLARITY.get(artifact_kind, "none")
             vec = self.embedder.embed(content)
             chunk_id = self.store.insert_semantic_chunk(
                 bucket_id=bucket_id,
@@ -269,6 +292,98 @@ class ControlPlaneService:
             ],
         }
 
+    @staticmethod
+    def _replay_response(existing: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "status": "IDEMPOTENT_REPLAY",
+            "decision": existing["decision"],
+            "checkpoint_id": existing["checkpoint_id"],
+            "cascade_stage": existing["cascade_stage"],
+            "v_det_passed": bool(existing["v_det_passed"]),
+            "s_id": existing["s_id"],
+            "s_viol": existing["s_viol"],
+            "drift_score": existing["drift_score"],
+            "error_delta": existing["error_delta"],
+            "artifact_blob": existing["artifact_blob"],
+        }
+
+    def _evaluate_candidates(
+        self,
+        *,
+        cascade_impl: EvaluationCascade,
+        candidates: list[str],
+        modality_enum: Modality,
+        role_enum: ActionRole,
+        contract_content: str,
+        z3_constraints_json: str | None,
+        opts: CheckpointEvalOptions,
+    ) -> tuple[str, CascadeAssessment, list[CandidateInput]]:
+        assessments: list[tuple[str, CascadeAssessment]] = []
+        cand_inputs: list[CandidateInput] = []
+        for cand_text in candidates or [""]:
+            res = cascade_impl.evaluate(
+                payload=cand_text,
+                modality=modality_enum,
+                action_role=role_enum,
+                contract_content=contract_content,
+                target_files=opts.target_files,
+                allowed_files=opts.allowed_files,
+                has_formal_anchor_revision=opts.has_formal_anchor_revision,
+                z3_constraints_json=z3_constraints_json,
+                unit_oracle=opts.unit_oracle,
+            )
+            assessments.append((cand_text, res))
+            cand_inputs.append(CandidateInput(payload=cand_text, test_vector=res.test_vector))
+
+        winning_idx = 0
+        for idx, (_txt, assess) in enumerate(assessments):
+            if assess.v_det_passed:
+                winning_idx = idx
+                break
+            if assess.stage_dense_reward > assessments[winning_idx][1].stage_dense_reward:
+                winning_idx = idx
+        chosen_payload, chosen_assess = assessments[winning_idx]
+        return chosen_payload, chosen_assess, cand_inputs
+
+    @staticmethod
+    def _next_run_status(decision: str) -> str:
+        if decision == "COMMIT":
+            return "COMMITTED"
+        if decision == "CIRCUIT_BREAK":
+            return "CIRCUIT_BROKEN"
+        return "RUNNING"
+
+    def _build_retry_envelope(
+        self,
+        *,
+        bucket_id: str,
+        pareto_profile: str,
+        policy: dict[str, Any],
+        contract_uri: str,
+        contract_content: str,
+        node_id: str,
+        attempt: int,
+        error_delta: str,
+        inject_vs_schema: bool,
+    ) -> dict[str, str]:
+        elite = self.store.get_active_elite(bucket_id, pareto_profile)
+        elite_content = str(elite["content"]) if elite else "default-balanced-strategy"
+        full_map = self.store.list_active_serial_map(bucket_id)
+        prefix_map = {
+            uri: meta
+            for uri, meta in full_map.items()
+            if uri == contract_uri or meta.get("artifact_kind") == ArtifactKind.ESS_STRATEGY.value
+        }
+        return self.thermostat.build_clean_regen_envelope(
+            kernel_rules="Serial-First O(1); Target Lock; Clean Regen.",
+            policy_json=json.dumps(policy, sort_keys=True),
+            serial_map_json=json.dumps(prefix_map, sort_keys=True),
+            active_elite_content=f"{contract_content}\n\n{elite_content}",
+            node_slice=f"Retry node {node_id} (attempt {attempt + 1})",
+            error_delta=error_delta,
+            inject_vs_schema=inject_vs_schema,
+        )
+
     def evaluate_node_checkpoint(
         self,
         *,
@@ -279,34 +394,17 @@ class ControlPlaneService:
         compute_lane: str,
         idempotency_key: str,
         candidates: list[str],
-        target_files: list[str] | None = None,
-        allowed_files: list[str] | None = None,
-        has_formal_anchor_revision: bool = False,
-        unit_oracle: TestOracleFn | None = None,
-        blind_mutator: MutatorOracleFn | None = None,
-        cost_usd: float = 0.0,
-        tokens_in: int = 0,
-        cached_tokens_in: int = 0,
-        tokens_out: int = 0,
-        missing_delta_crit: bool = False,
+        options: CheckpointEvalOptions | None = None,
+        telemetry: CheckpointTelemetry | None = None,
     ) -> dict[str, Any]:
         """Endpoint 5: Double-idempotent Cascade + SPACE + Equivalence + CRC + Thermostat."""
         t_start = time.perf_counter()
+        opts = options or CheckpointEvalOptions()
+        tele = telemetry or CheckpointTelemetry()
 
         existing = self.store.get_checkpoint_by_idempotency_key(idempotency_key)
         if existing is not None:
-            return {
-                "status": "IDEMPOTENT_REPLAY",
-                "decision": existing["decision"],
-                "checkpoint_id": existing["checkpoint_id"],
-                "cascade_stage": existing["cascade_stage"],
-                "v_det_passed": bool(existing["v_det_passed"]),
-                "s_id": existing["s_id"],
-                "s_viol": existing["s_viol"],
-                "drift_score": existing["drift_score"],
-                "error_delta": existing["error_delta"],
-                "artifact_blob": existing["artifact_blob"],
-            }
+            return self._replay_response(existing)
 
         run = self.store.get_workflow_run(run_id)
         bucket_id = str(run["bucket_id"])
@@ -324,43 +422,21 @@ class ControlPlaneService:
         prev_error_hash = str(prev_ckpt["error_hash"]) if prev_ckpt and prev_ckpt.get("error_hash") else None
 
         cascade_impl = (
-            EvaluationCascade(z3_gate=self.z3_gate, blind_mutator=blind_mutator)
-            if blind_mutator is not None
+            EvaluationCascade(z3_gate=self.z3_gate, blind_mutator=opts.blind_mutator)
+            if opts.blind_mutator is not None
             else self.cascade
         )
+        chosen_payload, chosen_assess, cand_inputs = self._evaluate_candidates(
+            cascade_impl=cascade_impl,
+            candidates=candidates,
+            modality_enum=modality_enum,
+            role_enum=role_enum,
+            contract_content=contract.content,
+            z3_constraints_json=contract.z3_constraints_json,
+            opts=opts,
+        )
 
-        # Evaluate each candidate through the deterministic cascade
-        assessments = []
-        cand_inputs: list[CandidateInput] = []
-        for cand_text in candidates or [""]:
-            res = cascade_impl.evaluate(
-                payload=cand_text,
-                modality=modality_enum,
-                action_role=role_enum,
-                contract_content=contract.content,
-                target_files=target_files,
-                allowed_files=allowed_files,
-                has_formal_anchor_revision=has_formal_anchor_revision,
-                z3_constraints_json=contract.z3_constraints_json,
-                unit_oracle=unit_oracle,
-            )
-            assessments.append((cand_text, res))
-            cand_inputs.append(CandidateInput(payload=cand_text, test_vector=res.test_vector))
-
-        # Select winning candidate (first passing, else highest stage reward)
-        winning_idx = 0
-        for idx, (_txt, assess) in enumerate(assessments):
-            if assess.v_det_passed:
-                winning_idx = idx
-                break
-            if assess.stage_dense_reward > assessments[winning_idx][1].stage_dense_reward:
-                winning_idx = idx
-        chosen_payload, chosen_assess = assessments[winning_idx]
-
-        # Hybrid modality-gated equivalence
         equiv = self.equivalence.evaluate(cand_inputs, modality_enum)
-
-        # Orthogonalized SPACE projection
         pos_mat, neg_mat = self.store.get_anchor_embeddings(
             bucket_id,
             dim=self.embedder.dim,
@@ -372,15 +448,13 @@ class ControlPlaneService:
             max_rank=self.config.space_max_rank,
             min_pos_anchors=self.config.space_min_pos_anchors,
         )
-        cand_vec = self.embedder.embed(chosen_payload)
-        space = projector.score(cand_vec)
+        space = projector.score(self.embedder.embed(chosen_payload))
 
-        cumulative_cost = float(run["total_cost_usd"]) + float(cost_usd)
         thermo = self.thermostat.decide(
             ThermostatInput(
                 attempt=attempt,
                 max_retries=bucket.max_retries,
-                cumulative_cost_usd=cumulative_cost,
+                cumulative_cost_usd=float(run["total_cost_usd"]) + float(tele.cost_usd),
                 max_cost_usd=bucket.max_cost_usd,
                 current_lane=lane_enum,
                 v_det_passed=chosen_assess.v_det_passed,
@@ -394,7 +468,7 @@ class ControlPlaneService:
                 drift_score=space.drift_score,
                 cold_start_pos_guard=space.cold_start_pos_guard,
                 calibration=calibration,
-                missing_delta_crit=missing_delta_crit,
+                missing_delta_crit=opts.missing_delta_crit,
             )
         )
 
@@ -419,63 +493,53 @@ class ControlPlaneService:
                 "s_viol": space.s_viol,
                 "drift_score": space.drift_score,
                 "stage_dense_reward": chosen_assess.stage_dense_reward,
-                "cost_usd": cost_usd,
+                "cost_usd": tele.cost_usd,
                 "latency_ms": elapsed_ms,
                 "artifact_blob": chosen_payload,
                 "decision": thermo.decision.value,
             }
         )
 
-        next_status = "RUNNING"
-        if thermo.decision.value == "COMMIT":
-            next_status = "COMMITTED"
-        elif thermo.decision.value == "CIRCUIT_BREAK":
-            next_status = "CIRCUIT_BROKEN"
-
         self.store.update_workflow_run_stats(
             run_id,
-            status=next_status,
-            add_tokens_in=tokens_in,
-            add_cached_tokens_in=cached_tokens_in,
-            add_tokens_out=tokens_out,
-            add_cost_usd=cost_usd,
+            status=self._next_run_status(thermo.decision.value),
+            add_tokens_in=tele.tokens_in,
+            add_cached_tokens_in=tele.cached_tokens_in,
+            add_tokens_out=tele.tokens_out,
+            add_cost_usd=tele.cost_usd,
         )
 
-        local_reward = round(chosen_assess.stage_dense_reward - 0.15 * float(cost_usd), 6)
+        local_reward = round(chosen_assess.stage_dense_reward - 0.15 * float(tele.cost_usd), 6)
         trace_summary = (
             f"node={node_id} attempt={attempt} stage={chosen_assess.cascade_stage.value} "
             f"v_det={chosen_assess.v_det_passed} decision={thermo.decision.value} "
             f"err={chosen_assess.error_delta or 'none'}"
         )
         self.store.append_replay_episode(
-            run_id=run_id,
-            bucket_id=bucket_id,
-            node_id=node_id,
-            action_role=role_enum.value,
-            strategy_record_id=None,
-            step_index=attempt,
-            v_det_passed=chosen_assess.v_det_passed,
-            drift_score=space.drift_score,
-            dense_reward=local_reward,
-            trace_summary=trace_summary,
+            ReplayEpisodeInput(
+                run_id=run_id,
+                bucket_id=bucket_id,
+                node_id=node_id,
+                action_role=role_enum.value,
+                strategy_record_id=None,
+                step_index=attempt,
+                v_det_passed=chosen_assess.v_det_passed,
+                drift_score=space.drift_score,
+                dense_reward=local_reward,
+                trace_summary=trace_summary,
+            )
         )
 
         envelope = None
         if thermo.decision.value in {"REGENERATE_CLEAN", "INJECT_ASYMMETRY", "REJECT_DRIFT"}:
-            elite = self.store.get_active_elite(bucket_id, bucket.pareto_profile)
-            elite_content = str(elite["content"]) if elite else "default-balanced-strategy"
-            full_map = self.store.list_active_serial_map(bucket_id)
-            prefix_map = {
-                uri: meta
-                for uri, meta in full_map.items()
-                if uri == contract.serial_uri or meta.get("artifact_kind") == ArtifactKind.ESS_STRATEGY.value
-            }
-            envelope = self.thermostat.build_clean_regen_envelope(
-                kernel_rules="Serial-First O(1); Target Lock; Clean Regen.",
-                policy_json=json.dumps(bucket.policy, sort_keys=True),
-                serial_map_json=json.dumps(prefix_map, sort_keys=True),
-                active_elite_content=f"{contract.content}\n\n{elite_content}",
-                node_slice=f"Retry node {node_id} (attempt {attempt + 1})",
+            envelope = self._build_retry_envelope(
+                bucket_id=bucket_id,
+                pareto_profile=bucket.pareto_profile,
+                policy=bucket.policy,
+                contract_uri=contract.serial_uri,
+                contract_content=contract.content,
+                node_id=node_id,
+                attempt=attempt,
                 error_delta=chosen_assess.error_delta or thermo.reason,
                 inject_vs_schema=thermo.verbalized_sampling_schema is not None,
             )

@@ -115,50 +115,37 @@ class Thermostat:
 
         return PromptStructureOptimizer.build_bifasic_envelope(prefix_parts, suffix_parts)
 
-    def decide(self, state: ThermostatInput) -> ThermostatOutput:
-        # 1. Explicit underdetermination or Step-0 UNSAT
-        if state.missing_delta_crit or (
-            state.z3_status == Z3Status.UNSAT and state.attempt == 1 and not state.v_det_passed
-        ):
+    @staticmethod
+    def _decide_after_pass(state: ThermostatInput, cal: CrcCalibrationRecord) -> ThermostatOutput:
+        drift_ok = state.drift_score <= (1.0 - cal.lambda_unified + 1e-12)
+        viol_ok = state.s_viol <= (cal.lambda_viol_max + 1e-12)
+        id_ok = True if state.cold_start_pos_guard else (state.s_id >= cal.lambda_id_min - 1e-12)
+        if drift_ok and viol_ok and id_ok:
+            return ThermostatOutput(
+                decision=ThermostatDecision.COMMIT,
+                next_lane=state.current_lane,
+                enable_mutator=False,
+                reason="Deterministic cascade and CRC/SPACE conformal bounds satisfied.",
+            )
+        if state.attempt >= state.max_retries:
             return ThermostatOutput(
                 decision=ThermostatDecision.CIRCUIT_BREAK,
                 next_lane=state.current_lane,
                 enable_mutator=False,
-                reason="Explicit underdetermination (missing_delta_crit) or UNSAT contract invariant.",
+                reason="SPACE/CRC drift persisted at max_retries; circuit broken.",
             )
+        return ThermostatOutput(
+            decision=ThermostatDecision.REJECT_DRIFT,
+            next_lane=state.current_lane,
+            enable_mutator=False,
+            reason=(
+                f"Drift rejected (s_id={state.s_id:.3f}, s_viol={state.s_viol:.3f}, "
+                f"drift={state.drift_score:.3f}, lambda={cal.lambda_unified:.3f})."
+            ),
+        )
 
-        cal = state.calibration
-        drift_ok = state.drift_score <= (1.0 - cal.lambda_unified + 1e-12)
-        viol_ok = state.s_viol <= (cal.lambda_viol_max + 1e-12)
-        id_ok = True if state.cold_start_pos_guard else (state.s_id >= cal.lambda_id_min - 1e-12)
-
-        # 2. Passed deterministic cascade
-        if state.v_det_passed:
-            if drift_ok and viol_ok and id_ok:
-                return ThermostatOutput(
-                    decision=ThermostatDecision.COMMIT,
-                    next_lane=state.current_lane,
-                    enable_mutator=False,
-                    reason="Deterministic cascade and CRC/SPACE conformal bounds satisfied.",
-                )
-            if state.attempt >= state.max_retries:
-                return ThermostatOutput(
-                    decision=ThermostatDecision.CIRCUIT_BREAK,
-                    next_lane=state.current_lane,
-                    enable_mutator=False,
-                    reason="SPACE/CRC drift persisted at max_retries; circuit broken.",
-                )
-            return ThermostatOutput(
-                decision=ThermostatDecision.REJECT_DRIFT,
-                next_lane=state.current_lane,
-                enable_mutator=False,
-                reason=(
-                    f"Drift rejected (s_id={state.s_id:.3f}, s_viol={state.s_viol:.3f}, "
-                    f"drift={state.drift_score:.3f}, lambda={cal.lambda_unified:.3f})."
-                ),
-            )
-
-        # 3. Failed deterministic cascade: check budget / retry / semantic divergence breakers
+    @staticmethod
+    def _decide_after_fail(state: ThermostatInput, cal: CrcCalibrationRecord) -> ThermostatOutput:
         if state.attempt >= state.max_retries:
             return ThermostatOutput(
                 decision=ThermostatDecision.CIRCUIT_BREAK,
@@ -181,7 +168,6 @@ class Thermostat:
                 reason=f"High candidate entropy (convergence={state.convergence_score:.3f} < {cal.conv_low_threshold:.3f}).",
             )
 
-        # 4. Stagnation / mode collapse detection -> Inject Asymmetry via Verbalized Sampling
         repeated_error = (
             state.error_hash is not None
             and state.prev_error_hash is not None
@@ -189,19 +175,30 @@ class Thermostat:
         )
         converged_wrong = state.candidate_count >= 2 and state.convergence_score >= cal.conv_high_threshold
         if repeated_error or converged_wrong:
-            next_lane = escalate_compute_lane(state.current_lane)
             return ThermostatOutput(
                 decision=ThermostatDecision.INJECT_ASYMMETRY,
-                next_lane=next_lane,
+                next_lane=escalate_compute_lane(state.current_lane),
                 enable_mutator=True,
                 reason="Mode collapse or repeated identical error detected; escalating lane and injecting Verbalized Sampling.",
                 verbalized_sampling_schema=get_verbalized_sampling_schema(),
             )
-
-        # 5. Novel actionable deterministic error -> Clean Regeneration O(1)
         return ThermostatOutput(
             decision=ThermostatDecision.REGENERATE_CLEAN,
             next_lane=state.current_lane,
             enable_mutator=False,
             reason="Novel deterministic failure delta; regenerating with clean O(1) envelope.",
         )
+
+    def decide(self, state: ThermostatInput) -> ThermostatOutput:
+        if state.missing_delta_crit or (
+            state.z3_status == Z3Status.UNSAT and state.attempt == 1 and not state.v_det_passed
+        ):
+            return ThermostatOutput(
+                decision=ThermostatDecision.CIRCUIT_BREAK,
+                next_lane=state.current_lane,
+                enable_mutator=False,
+                reason="Explicit underdetermination (missing_delta_crit) or UNSAT contract invariant.",
+            )
+        if state.v_det_passed:
+            return self._decide_after_pass(state, state.calibration)
+        return self._decide_after_fail(state, state.calibration)

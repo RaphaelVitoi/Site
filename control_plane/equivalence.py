@@ -78,6 +78,21 @@ def _normalize_tokens(text: str) -> list[str]:
     return re.findall(r"[a-z0-9_]+", text.lower())
 
 
+def _has_comparator_conflict(a_norm: str, b_norm: str) -> bool:
+    comps_a = _extract_comparators(a_norm)
+    comps_b = _extract_comparators(b_norm)
+    if not (comps_a and comps_b):
+        return False
+    for op1, op2 in _COMP_OPPOSITES:
+        if (op1 in comps_a and op2 in comps_b) or (op2 in comps_a and op1 in comps_b):
+            return True
+    return comps_a != comps_b
+
+
+def _has_antonym_conflict(toks_a: set[str], toks_b: set[str]) -> bool:
+    return any((w1 in toks_a and w2 in toks_b) or (w2 in toks_a and w1 in toks_b) for w1, w2 in _OPPOSITE_PAIRS)
+
+
 class DeterministicPolarityEntailmentScorer:
     """Fast polarity-aware entailment checker detecting inverted operators and negations."""
 
@@ -90,41 +105,24 @@ class DeterministicPolarityEntailmentScorer:
         b_norm = text_b.strip().lower()
         if a_norm == b_norm:
             return True
-
-        # 1. Comparator polarity inversion (>= vs <, == vs !=, etc.)
-        comps_a = _extract_comparators(a_norm)
-        comps_b = _extract_comparators(b_norm)
-        if comps_a and comps_b:
-            for op1, op2 in _COMP_OPPOSITES:
-                if (op1 in comps_a and op2 in comps_b) or (op2 in comps_a and op1 in comps_b):
-                    return False
-            if comps_a != comps_b:
-                return False
+        if _has_comparator_conflict(a_norm, b_norm):
+            return False
 
         toks_a = set(_normalize_tokens(a_norm))
         toks_b = set(_normalize_tokens(b_norm))
         if not toks_a or not toks_b:
             return False
-
-        # 2. Negation parity mismatch
-        neg_a = len(toks_a & _NEGATION_WORDS) % 2
-        neg_b = len(toks_b & _NEGATION_WORDS) % 2
-        if neg_a != neg_b:
+        if (len(toks_a & _NEGATION_WORDS) % 2) != (len(toks_b & _NEGATION_WORDS) % 2):
+            return False
+        if _has_antonym_conflict(toks_a, toks_b):
             return False
 
-        # 3. Direct antonym polarity flip
-        for w1, w2 in _OPPOSITE_PAIRS:
-            if (w1 in toks_a and w2 in toks_b) or (w2 in toks_a and w1 in toks_b):
-                return False
-
-        # 4. Content overlap after removing negation tokens
         core_a = toks_a - _NEGATION_WORDS
         core_b = toks_b - _NEGATION_WORDS
         union = core_a | core_b
         if not union:
             return True
-        jaccard = len(core_a & core_b) / len(union)
-        return jaccard >= 0.60
+        return (len(core_a & core_b) / len(union)) >= 0.60
 
 
 class LayaS1EntailmentScorer:
@@ -178,7 +176,7 @@ def _canonical_code_or_json_hash(payload: str, modality: Modality) -> str:
             parsed = json.loads(stripped)
             canonical = json.dumps(parsed, sort_keys=True, separators=(",", ":"))
             return hashlib.sha256(canonical.encode()).hexdigest()
-        except (json.JSONDecodeError, TypeError, ValueError) as exc:
+        except (TypeError, ValueError) as exc:
             logger.debug("Structured JSON parse fallback to raw hash: %s", exc)
     if modality == Modality.CODE:
         try:
@@ -212,6 +210,46 @@ class EquivalenceEngine:
     def __init__(self, entailment_scorer: EntailmentScorer | None = None) -> None:
         self.entailment_scorer = entailment_scorer or DeterministicPolarityEntailmentScorer()
 
+    @staticmethod
+    def _evaluate_structured(candidates: list[CandidateInput], modality: Modality) -> EquivalenceResult:
+        sig_to_cluster: dict[tuple[str, tuple[int, ...]], int] = {}
+        assignments: list[int] = []
+        for cand in candidates:
+            sig = (_canonical_code_or_json_hash(cand.payload, modality), cand.test_vector)
+            if sig not in sig_to_cluster:
+                sig_to_cluster[sig] = len(sig_to_cluster)
+            assignments.append(sig_to_cluster[sig])
+        return EquivalenceResult(
+            metric_kind=EquivMetricKind.AST_TEST,
+            convergence_score=_normalized_entropy_convergence(assignments),
+            cluster_count=len(sig_to_cluster),
+            cluster_assignments=tuple(assignments),
+        )
+
+    def _fits_cluster(self, cand: CandidateInput, members: list[int], candidates: list[CandidateInput]) -> bool:
+        return all(self.entailment_scorer.mutually_entails(cand.payload, candidates[m].payload) for m in members)
+
+    def _evaluate_prose_clusters(self, candidates: list[CandidateInput]) -> EquivalenceResult:
+        clusters: list[list[int]] = []
+        assignments: list[int] = []
+        for idx, cand in enumerate(candidates):
+            matched = next(
+                (c_id for c_id, members in enumerate(clusters) if self._fits_cluster(cand, members, candidates)),
+                None,
+            )
+            if matched is None:
+                matched = len(clusters)
+                clusters.append([idx])
+            else:
+                clusters[matched].append(idx)
+            assignments.append(matched)
+        return EquivalenceResult(
+            metric_kind=self.entailment_scorer.metric_kind,
+            convergence_score=_normalized_entropy_convergence(assignments),
+            cluster_count=len(clusters),
+            cluster_assignments=tuple(assignments),
+        )
+
     def evaluate(self, candidates: list[CandidateInput], modality: Modality) -> EquivalenceResult:
         k = len(candidates)
         if k < 2:
@@ -221,40 +259,6 @@ class EquivalenceEngine:
                 cluster_count=1 if k == 1 else 0,
                 cluster_assignments=(0,) if k == 1 else (),
             )
-
         if modality in {Modality.CODE, Modality.STRUCTURED}:
-            sig_to_cluster: dict[tuple[str, tuple[int, ...]], int] = {}
-            assignments: list[int] = []
-            for cand in candidates:
-                sig = (_canonical_code_or_json_hash(cand.payload, modality), cand.test_vector)
-                if sig not in sig_to_cluster:
-                    sig_to_cluster[sig] = len(sig_to_cluster)
-                assignments.append(sig_to_cluster[sig])
-            return EquivalenceResult(
-                metric_kind=EquivMetricKind.AST_TEST,
-                convergence_score=_normalized_entropy_convergence(assignments),
-                cluster_count=len(sig_to_cluster),
-                cluster_assignments=tuple(assignments),
-            )
-
-        # Complete-linkage clustering over bidirectional entailment for prose/hybrid
-        clusters: list[list[int]] = []
-        assignments = [-1] * k
-        for idx, cand in enumerate(candidates):
-            placed = False
-            for c_id, members in enumerate(clusters):
-                if all(self.entailment_scorer.mutually_entails(cand.payload, candidates[m].payload) for m in members):
-                    members.append(idx)
-                    assignments[idx] = c_id
-                    placed = True
-                    break
-            if not placed:
-                clusters.append([idx])
-                assignments[idx] = len(clusters) - 1
-
-        return EquivalenceResult(
-            metric_kind=self.entailment_scorer.metric_kind,
-            convergence_score=_normalized_entropy_convergence(assignments),
-            cluster_count=len(clusters),
-            cluster_assignments=tuple(assignments),
-        )
+            return self._evaluate_structured(candidates, modality)
+        return self._evaluate_prose_clusters(candidates)

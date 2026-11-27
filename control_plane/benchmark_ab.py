@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 import json
 import logging
+import math
 from pathlib import Path
 import sys
 import time
@@ -31,12 +32,16 @@ from control_plane.config import (
     Modality,
     ThermostatDecision,
 )
-from control_plane.service import ControlPlaneService
+from control_plane.service import CheckpointEvalOptions, CheckpointTelemetry, ControlPlaneService
 from control_plane.thermostat import VerbalizedSamplingResponse
 from llm.gemini_pool import GeminiWorkload, gemini_pool_manager
 from llm.model_registry import custo_estimado
 
 logger = logging.getLogger(__name__)
+
+MODEL_GEMINI_FLASH = "gemini-3.8-flash"
+MODEL_GEMINI_FLASH_LITE = "gemini-3.5-flash-lite"
+MODEL_GEMINI_HYDROGEN = "gemini-4-hydrogen"
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,10 +127,7 @@ def _make_prose_oracle(required_tokens: tuple[str, ...], forbidden_tokens: tuple
     return _oracle
 
 
-def build_30_task_suite() -> list[BenchmarkTaskSpec]:
-    """Build deterministic 30-task benchmark (15 code + 10 structured + 5 prose/spec)."""
-    tasks: list[BenchmarkTaskSpec] = []
-
+def _build_code_tasks() -> list[BenchmarkTaskSpec]:
     code_defs: list[tuple[str, str, str, list[CodeCheck], str, str]] = [
         (
             "code-01",
@@ -306,24 +308,24 @@ def build_30_task_suite() -> list[BenchmarkTaskSpec]:
             "def bounded_retry(attempt: int, max_r: int) -> bool:\n    return attempt <= max_r\n",
         ),
     ]
-
-    for tid, prompt, contract, checks, good_code, bad_code in code_defs:
-        bucket = "pmev-and-quant" if tid in {"code-02", "code-03", "code-04", "code-11"} else "engineering-and-quality"
-        tasks.append(
-            BenchmarkTaskSpec(
-                task_id=tid,
-                bucket_id=bucket,
-                modality=Modality.CODE,
-                action_role=ActionRole.LOCAL_PATCH,
-                prompt=prompt,
-                contract_content=contract,
-                oracle=_make_code_oracle(checks),
-                mock_baseline_outputs=(bad_code, good_code),
-                mock_omnikernel_outputs=(good_code,),
-            )
+    pmev_ids = {"code-02", "code-03", "code-04", "code-11"}
+    return [
+        BenchmarkTaskSpec(
+            task_id=tid,
+            bucket_id="pmev-and-quant" if tid in pmev_ids else "engineering-and-quality",
+            modality=Modality.CODE,
+            action_role=ActionRole.LOCAL_PATCH,
+            prompt=prompt,
+            contract_content=contract,
+            oracle=_make_code_oracle(checks),
+            mock_baseline_outputs=(bad_code, good_code),
+            mock_omnikernel_outputs=(good_code,),
         )
+        for tid, prompt, contract, checks, good_code, bad_code in code_defs
+    ]
 
-    # 10 structured JSON tasks
+
+def _build_structured_tasks() -> list[BenchmarkTaskSpec]:
     struct_defs: list[
         tuple[str, str, dict[str, type], Callable[[dict[str, Any]], str | None], str | None, tuple[str, ...], str, str]
     ] = [
@@ -347,7 +349,9 @@ def build_30_task_suite() -> list[BenchmarkTaskSpec]:
             {"lane": str, "cost_usd": float, "deterministic": bool},
             lambda d: (
                 None
-                if d["lane"] == "L0_DET" and d["cost_usd"] == 0.0 and d["deterministic"] is True
+                if d["lane"] == "L0_DET"
+                and math.isclose(float(d["cost_usd"]), 0.0, abs_tol=1e-9)
+                and d["deterministic"] is True
                 else "Invalid L0_DET spec"
             ),
             None,
@@ -373,7 +377,12 @@ def build_30_task_suite() -> list[BenchmarkTaskSpec]:
             "struct-04",
             'Return pure JSON object {"bucket": "pmev-and-quant", "icm_equity_min": 0.0, "icm_equity_max": 1.0}.',
             {"bucket": str, "icm_equity_min": float, "icm_equity_max": float},
-            lambda d: None if d["icm_equity_min"] == 0.0 and d["icm_equity_max"] == 1.0 else "Equity bounds wrong",
+            lambda d: (
+                None
+                if math.isclose(float(d["icm_equity_min"]), 0.0, abs_tol=1e-9)
+                and math.isclose(float(d["icm_equity_max"]), 1.0, abs_tol=1e-9)
+                else "Equity bounds wrong"
+            ),
             None,
             (),
             '{"bucket": "pmev-and-quant", "icm_equity_min": 0.0, "icm_equity_max": 1.0}',
@@ -470,25 +479,25 @@ def build_30_task_suite() -> list[BenchmarkTaskSpec]:
             '{"ok": false}',
         ),
     ]
-
-    for tid, prompt, req_keys, pred, z3_json, missing, good_j, bad_j in struct_defs:
-        tasks.append(
-            BenchmarkTaskSpec(
-                task_id=tid,
-                bucket_id="data-and-knowledge",
-                modality=Modality.STRUCTURED,
-                action_role=ActionRole.LOCAL_PATCH,
-                prompt=prompt,
-                contract_content=prompt,
-                oracle=_make_json_oracle(req_keys, pred),
-                z3_constraints_json=z3_json,
-                missing_delta_crit=missing,
-                mock_baseline_outputs=(bad_j, bad_j),
-                mock_omnikernel_outputs=(good_j,),
-            )
+    return [
+        BenchmarkTaskSpec(
+            task_id=tid,
+            bucket_id="data-and-knowledge",
+            modality=Modality.STRUCTURED,
+            action_role=ActionRole.LOCAL_PATCH,
+            prompt=prompt,
+            contract_content=prompt,
+            oracle=_make_json_oracle(req_keys, pred),
+            z3_constraints_json=z3_json,
+            missing_delta_crit=missing,
+            mock_baseline_outputs=(bad_j, bad_j),
+            mock_omnikernel_outputs=(good_j,),
         )
+        for tid, prompt, req_keys, pred, z3_json, missing, good_j, bad_j in struct_defs
+    ]
 
-    # 5 technical prose / spec tasks
+
+def _build_prose_tasks() -> list[BenchmarkTaskSpec]:
     prose_defs: list[tuple[str, str, tuple[str, ...], tuple[str, ...], str, str]] = [
         (
             "spec-01",
@@ -531,23 +540,25 @@ def build_30_task_suite() -> list[BenchmarkTaskSpec]:
             "Ignore domain terms without projection.",
         ),
     ]
-
-    for tid, prompt, req_toks, forbid_toks, good_p, bad_p in prose_defs:
-        tasks.append(
-            BenchmarkTaskSpec(
-                task_id=tid,
-                bucket_id="governance-and-handoff",
-                modality=Modality.PROSE,
-                action_role=ActionRole.READ_ONLY,
-                prompt=prompt,
-                contract_content=prompt,
-                oracle=_make_prose_oracle(req_toks, forbid_toks),
-                mock_baseline_outputs=(bad_p, good_p),
-                mock_omnikernel_outputs=(good_p,),
-            )
+    return [
+        BenchmarkTaskSpec(
+            task_id=tid,
+            bucket_id="governance-and-handoff",
+            modality=Modality.PROSE,
+            action_role=ActionRole.READ_ONLY,
+            prompt=prompt,
+            contract_content=prompt,
+            oracle=_make_prose_oracle(req_toks, forbid_toks),
+            mock_baseline_outputs=(bad_p, good_p),
+            mock_omnikernel_outputs=(good_p,),
         )
+        for tid, prompt, req_toks, forbid_toks, good_p, bad_p in prose_defs
+    ]
 
-    return tasks
+
+def build_30_task_suite() -> list[BenchmarkTaskSpec]:
+    """Build deterministic 30-task benchmark (15 code + 10 structured + 5 prose/spec)."""
+    return [*_build_code_tasks(), *_build_structured_tasks(), *_build_prose_tasks()]
 
 
 def _build_constitutional_prefix_pad() -> str:
@@ -576,27 +587,80 @@ def _get_client(api_key: str, sha8: str) -> genai.Client:
     return client
 
 
+def _extract_http_status(msg: str) -> int:
+    if "429" in msg:
+        return 429
+    if "503" in msg:
+        return 503
+    return 500
+
+
+def _probe_single_model(model: str) -> bool:
+    tried: set[str] = set()
+    for _ in range(3):
+        key, sha8 = gemini_pool_manager.get_key_for_workload(GeminiWorkload.GENERAL, model=model)
+        if not key or sha8 in tried:
+            continue
+        tried.add(sha8)
+        t0 = time.perf_counter()
+        try:
+            resp = _get_client(key, sha8).models.generate_content(model=model, contents="Reply OK")
+            gemini_pool_manager.mark_success(sha8, (time.perf_counter() - t0) * 1000.0)
+            if getattr(resp, "text", None) is not None:
+                return True
+        except Exception as exc:  # noqa: BLE001
+            gemini_pool_manager.mark_failure(sha8, status_code=_extract_http_status(str(exc)), model=model)
+    return False
+
+
 def _probe_healthy_models(candidates: tuple[str, ...]) -> tuple[str, ...]:
-    healthy: list[str] = []
-    for model in candidates:
-        tried: set[str] = set()
-        for _ in range(3):
-            key, sha8 = gemini_pool_manager.get_key_for_workload(GeminiWorkload.GENERAL, model=model)
-            if not key or sha8 in tried:
-                continue
-            tried.add(sha8)
-            t0 = time.perf_counter()
-            try:
-                resp = _get_client(key, sha8).models.generate_content(model=model, contents="Reply OK")
-                gemini_pool_manager.mark_success(sha8, (time.perf_counter() - t0) * 1000.0)
-                if getattr(resp, "text", None) is not None:
-                    healthy.append(model)
-                    break
-            except Exception as exc:  # noqa: BLE001
-                msg = str(exc)
-                code = 429 if "429" in msg else 503 if "503" in msg else 500
-                gemini_pool_manager.mark_failure(sha8, status_code=code, model=model)
+    healthy = [model for model in candidates if _probe_single_model(model)]
     return tuple(healthy) if healthy else candidates
+
+
+def _invoke_single_key(prompt: str, model: str, key: str, sha8: str) -> dict[str, Any]:
+    t0 = time.perf_counter()
+    resp = _get_client(key, sha8).models.generate_content(model=model, contents=prompt)
+    elapsed_ms = (time.perf_counter() - t0) * 1000.0
+    gemini_pool_manager.mark_success(sha8, elapsed_ms)
+    usage = getattr(resp, "usage_metadata", None)
+    tok_in = int(getattr(usage, "prompt_token_count", 0) or 0)
+    tok_out = int(getattr(usage, "candidates_token_count", 0) or 0)
+    tok_cached = int(getattr(usage, "cached_content_token_count", 0) or 0)
+    return {
+        "ok": True,
+        "text": str(getattr(resp, "text", "") or ""),
+        "model": model,
+        "tokens_in": tok_in,
+        "tokens_out": tok_out,
+        "cached_tokens_in": tok_cached,
+        "cost_usd": custo_estimado(model, tok_in, tok_out, cached_tokens_in=tok_cached),
+        "latency_ms": elapsed_ms,
+    }
+
+
+def _try_model_with_pool(
+    prompt: str, model: str, sticky_key: tuple[str, str] | None
+) -> tuple[dict[str, Any] | None, str]:
+    last_err = "no_keys_available"
+    tried_shas: set[str] = set()
+    for idx in range(9):
+        if idx == 0 and sticky_key is not None and sticky_key[0]:
+            key, sha8 = sticky_key
+        else:
+            key, sha8 = gemini_pool_manager.get_key_for_workload(GeminiWorkload.GENERAL, model=model)
+        if not key or sha8 in tried_shas:
+            continue
+        tried_shas.add(sha8)
+        try:
+            return _invoke_single_key(prompt, model, key, sha8), ""
+        except Exception as exc:  # noqa: BLE001
+            last_err = str(exc)
+            code = _extract_http_status(last_err)
+            gemini_pool_manager.mark_failure(sha8, status_code=code, model=model)
+            if code in {429, 503}:
+                time.sleep(0.8)
+    return None, last_err
 
 
 def _call_gemini_live(
@@ -605,43 +669,11 @@ def _call_gemini_live(
     *,
     sticky_key: tuple[str, str] | None = None,
 ) -> dict[str, Any]:
-    last_err: str = "no_models_tried"
+    last_err = "no_models_tried"
     for model in model_candidates:
-        tried_shas: set[str] = set()
-        for idx in range(9):
-            if idx == 0 and sticky_key is not None and sticky_key[0]:
-                key, sha8 = sticky_key
-            else:
-                key, sha8 = gemini_pool_manager.get_key_for_workload(GeminiWorkload.GENERAL, model=model)
-            if not key or sha8 in tried_shas:
-                continue
-            tried_shas.add(sha8)
-            t0 = time.perf_counter()
-            try:
-                resp = _get_client(key, sha8).models.generate_content(model=model, contents=prompt)
-                elapsed_ms = (time.perf_counter() - t0) * 1000.0
-                gemini_pool_manager.mark_success(sha8, elapsed_ms)
-                usage = getattr(resp, "usage_metadata", None)
-                tok_in = int(getattr(usage, "prompt_token_count", 0) or 0)
-                tok_out = int(getattr(usage, "candidates_token_count", 0) or 0)
-                tok_cached = int(getattr(usage, "cached_content_token_count", 0) or 0)
-                cost = custo_estimado(model, tok_in, tok_out, cached_tokens_in=tok_cached)
-                return {
-                    "ok": True,
-                    "text": str(getattr(resp, "text", "") or ""),
-                    "model": model,
-                    "tokens_in": tok_in,
-                    "tokens_out": tok_out,
-                    "cached_tokens_in": tok_cached,
-                    "cost_usd": cost,
-                    "latency_ms": elapsed_ms,
-                }
-            except Exception as exc:  # noqa: BLE001
-                last_err = str(exc)
-                code = 429 if "429" in last_err else 503 if "503" in last_err else 500
-                gemini_pool_manager.mark_failure(sha8, status_code=code, model=model)
-                if code in {429, 503}:
-                    time.sleep(0.8)
+        result, last_err = _try_model_with_pool(prompt, model, sticky_key)
+        if result is not None:
+            return result
     return {
         "ok": False,
         "text": "",
@@ -655,6 +687,18 @@ def _call_gemini_live(
     }
 
 
+def _extract_payload_list(obj: Any) -> list[str]:
+    hyps = obj.get("hypotheses") if isinstance(obj, dict) else None
+    if not isinstance(hyps, list):
+        return []
+    out: list[str] = []
+    for item in hyps:
+        if isinstance(item, dict) and "payload" in item:
+            p = item["payload"]
+            out.append(json.dumps(p) if isinstance(p, dict | list) else str(p))
+    return out
+
+
 def _extract_vs_candidates(raw_text: str) -> list[str]:
     cleaned = _strip_markdown_fences(raw_text)
     try:
@@ -662,19 +706,214 @@ def _extract_vs_candidates(raw_text: str) -> list[str]:
         return [h.payload for h in parsed.hypotheses]
     except Exception:  # noqa: BLE001
         try:
-            obj = json.loads(cleaned)
-            hyps = obj.get("hypotheses") if isinstance(obj, dict) else None
-            if isinstance(hyps, list) and hyps:
-                out: list[str] = []
-                for item in hyps:
-                    if isinstance(item, dict) and "payload" in item:
-                        p = item["payload"]
-                        out.append(json.dumps(p) if isinstance(p, dict | list) else str(p))
-                if out:
-                    return out
+            out = _extract_payload_list(json.loads(cleaned))
+            if out:
+                return out
         except Exception as exc:  # noqa: BLE001
             logger.debug("Fallback VS JSON parse skipped: %s", exc)
         return [raw_text]
+
+
+def _select_benchmark_models(live: bool) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    arm_a_default = (MODEL_GEMINI_HYDROGEN, MODEL_GEMINI_FLASH, MODEL_GEMINI_FLASH_LITE)
+    arm_b_l1_default = (MODEL_GEMINI_FLASH_LITE, MODEL_GEMINI_FLASH)
+    if not live:
+        return (MODEL_GEMINI_FLASH, MODEL_GEMINI_HYDROGEN, MODEL_GEMINI_FLASH_LITE), arm_b_l1_default, arm_a_default
+
+    arm_a_models = _probe_healthy_models(arm_a_default)
+    arm_b_l1_models = _probe_healthy_models(arm_b_l1_default)
+    arm_b_l2_models = _probe_healthy_models(arm_a_default)
+    print(
+        f"[AB-LIVE] Healthy models: A={arm_a_models} B_L1={arm_b_l1_models} B_L2={arm_b_l2_models}",
+        file=sys.stderr,
+        flush=True,
+    )
+    return arm_a_models, arm_b_l1_models, arm_b_l2_models
+
+
+def _invoke_arm_a_call(
+    prompt: str, attempt: int, task: BenchmarkTaskSpec, models: tuple[str, ...], live: bool
+) -> dict[str, Any]:
+    if live:
+        return _call_gemini_live(prompt, models)
+    tok_in = 900 * attempt
+    return {
+        "tokens_in": tok_in,
+        "cached_tokens_in": 0,
+        "cost_usd": custo_estimado(MODEL_GEMINI_FLASH, tok_in, 140),
+        "text": task.mock_baseline_outputs[min(attempt - 1, len(task.mock_baseline_outputs) - 1)],
+    }
+
+
+def _run_arm_a_task(task: BenchmarkTaskSpec, models: tuple[str, ...], live: bool) -> tuple[bool, int, float, int, int]:
+    if task.z3_constraints_json is not None or task.missing_delta_crit:
+        if live:
+            call = _call_gemini_live(task.prompt, models)
+            return False, 1, float(call["cost_usd"]), int(call["tokens_in"]), int(call["cached_tokens_in"])
+        return False, 1, custo_estimado(MODEL_GEMINI_FLASH, 900, 120), 900, 0
+
+    conv_history = task.prompt
+    calls, cost, tok_in_sum, cached_sum = 0, 0.0, 0, 0
+    for attempt in range(1, 3):
+        call = _invoke_arm_a_call(conv_history, attempt, task, models, live)
+        calls += 1
+        tok_in_sum += int(call["tokens_in"])
+        cached_sum += int(call["cached_tokens_in"])
+        cost += float(call["cost_usd"])
+        candidate = str(call["text"])
+        ok, _vec, err = task.oracle(_strip_markdown_fences(candidate))
+        if ok:
+            return True, calls, cost, tok_in_sum, cached_sum
+        conv_history = f"{conv_history}\n\nPrevious attempt failed with: {err}\nPrevious output:\n{candidate}\nFix it."
+    return False, calls, cost, tok_in_sum, cached_sum
+
+
+def _build_arm_b_suffix(task: BenchmarkTaskSpec, error_delta: str, inject_vs: bool) -> str:
+    suffix = f"[TASK]\n{task.prompt}"
+    if error_delta:
+        suffix += f"\n[ERROR_DELTA]\n{error_delta}"
+    if inject_vs:
+        suffix += (
+            "\n[VERBALIZED_SAMPLING_REQUIRED]\n"
+            'Return ONLY JSON matching {"hypotheses": [{"strategy_id": "tail_1", "estimated_p": 0.12, '
+            '"structural_divergence": "str", "payload": "str"}, {"strategy_id": "tail_2", '
+            '"estimated_p": 0.08, "structural_divergence": "str", "payload": "str"}]}.'
+        )
+    return suffix
+
+
+def _invoke_arm_b_call(
+    full_prompt: str,
+    *,
+    task: BenchmarkTaskSpec,
+    lane: ComputeLane,
+    attempt: int,
+    is_first_task: bool,
+    live: bool,
+    arm_b_l1_models: tuple[str, ...],
+    arm_b_l2_models: tuple[str, ...],
+) -> tuple[str, CheckpointTelemetry]:
+    if live:
+        models = arm_b_l2_models if lane == ComputeLane.L2_FRONTIER else arm_b_l1_models
+        call = _call_gemini_live(full_prompt, models)
+        return str(call["text"]), CheckpointTelemetry(
+            cost_usd=float(call["cost_usd"]),
+            tokens_in=int(call["tokens_in"]),
+            cached_tokens_in=int(call["cached_tokens_in"]),
+            tokens_out=int(call["tokens_out"]),
+        )
+    tok_in = 4500 if attempt == 1 else 4550
+    tok_cached = 4200 if (attempt > 1 or not is_first_task) else 0
+    model_used = MODEL_GEMINI_HYDROGEN if lane == ComputeLane.L2_FRONTIER else MODEL_GEMINI_FLASH_LITE
+    return task.mock_omnikernel_outputs[min(attempt - 1, len(task.mock_omnikernel_outputs) - 1)], CheckpointTelemetry(
+        cost_usd=custo_estimado(model_used, tok_in, 120, cached_tokens_in=tok_cached),
+        tokens_in=tok_in,
+        cached_tokens_in=tok_cached,
+        tokens_out=120,
+    )
+
+
+def _run_arm_b_task(
+    svc: ControlPlaneService,
+    task: BenchmarkTaskSpec,
+    *,
+    is_first_task: bool,
+    prefix_pad: str,
+    live: bool,
+    arm_b_l1_models: tuple[str, ...],
+    arm_b_l2_models: tuple[str, ...],
+) -> tuple[dict[str, Any], int, int, list[float]]:
+    contract_uri = f"core://bench/{task.task_id}"
+    reg = svc.register_canonical_artifact(
+        bucket_id=task.bucket_id,
+        serial_uri=contract_uri,
+        kind=ArtifactKind.CONTRACT.value,
+        content=task.contract_content,
+        z3_constraints_json=task.z3_constraints_json,
+    )
+    if reg.get("status") == "BLOCKED":
+        return {"task_id": task.task_id, "status": "STEP0_UNSAT_ABORT", "passed": True}, 0, 1, []
+
+    rid = f"ab-{task.task_id}"
+    boot = svc.bootstrap_run_context(
+        bucket_id=task.bucket_id,
+        contract_uri=contract_uri,
+        run_id=rid,
+        missing_delta_crit=list(task.missing_delta_crit),
+        task_description=task.prompt,
+        kernel_rules=prefix_pad,
+    )
+    if boot.get("status") == "BLOCKED":
+        return {"task_id": task.task_id, "status": "STEP0_DELTA_ABORT", "passed": True}, 0, 1, []
+
+    immutable_prefix = str(boot["immutable_prefix"])
+    lane = ComputeLane.L1_EDGE_ECON
+    error_delta = ""
+    inject_vs = False
+    llm_calls = 0
+    latencies: list[float] = []
+
+    for attempt in range(1, 4):
+        suffix = _build_arm_b_suffix(task, error_delta, inject_vs)
+        full_prompt = f"{immutable_prefix}\n\n=== EPHEMERAL NODE SUFFIX ===\n\n{suffix}"
+        raw_text, tele = _invoke_arm_b_call(
+            full_prompt,
+            task=task,
+            lane=lane,
+            attempt=attempt,
+            is_first_task=is_first_task,
+            live=live,
+            arm_b_l1_models=arm_b_l1_models,
+            arm_b_l2_models=arm_b_l2_models,
+        )
+        llm_calls += 1
+        t_cp = time.perf_counter()
+        ev = svc.evaluate_node_checkpoint(
+            run_id=rid,
+            node_id="n1",
+            action_role=task.action_role.value,
+            attempt=attempt,
+            compute_lane=lane.value,
+            idempotency_key=f"{rid}:n1:{attempt}",
+            candidates=_extract_vs_candidates(raw_text) if inject_vs else [raw_text],
+            options=CheckpointEvalOptions(unit_oracle=task.oracle),
+            telemetry=tele,
+        )
+        latencies.append((time.perf_counter() - t_cp) * 1000.0)
+
+        decision = ev["decision"]
+        if decision == ThermostatDecision.COMMIT.value:
+            svc.record_human_feedback(run_id=rid, human_edit_ratio=0.0, reverted=False)
+            return {"task_id": task.task_id, "status": "COMMIT", "passed": True}, llm_calls, 0, latencies
+        if decision == ThermostatDecision.CIRCUIT_BREAK.value:
+            break
+        error_delta = str(ev.get("error_delta") or ev.get("reason") or "")
+        inject_vs = decision == ThermostatDecision.INJECT_ASYMMETRY.value
+        lane = ComputeLane(str(ev["next_lane"]))
+
+    return {"task_id": task.task_id, "status": "FAIL", "passed": False}, llm_calls, 0, latencies
+
+
+def _verify_slow_loop_zero_regression(svc: ControlPlaneService) -> bool:
+    for bucket_id in ("engineering-and-quality", "pmev-and-quant", "data-and-knowledge", "governance-and-handoff"):
+
+        def _eval_challenger(_bid: str, dcrit: list[str]) -> dict[str, Any]:
+            return {
+                "strategy_uri": f"ess://{_bid}/evolved-v1",
+                "strategy_content": "evolved verified strategy",
+                "niche_id": "balanced_roi",
+                "mean_quality": 0.98,
+                "mean_cost_usd": 0.002,
+                "mean_latency_ms": 20.0,
+                "dcrit_passed_count": len(dcrit),
+                "dcrit_total_count": len(dcrit),
+            }
+
+        sl = svc.run_slow_loop_cycle(bucket_id=bucket_id, tier0_present=True, challenger_evaluator=_eval_challenger)
+        reason = sl.get("challenger_rejected_reason")
+        if reason and "ZERO_REGRESSION_FAILED" in str(reason):
+            return False
+    return True
 
 
 def run_ab_benchmark(
@@ -686,206 +925,43 @@ def run_ab_benchmark(
     """Run paired A/B benchmark (Baseline vs NEXUS-OMNIKERNEL) across up to 30 tasks."""
     tasks = build_30_task_suite()[: max(1, min(30, task_limit))]
     prefix_pad = _build_constitutional_prefix_pad() if live else "CONSTITUTIONAL_PREFIX_COMPACT"
+    arm_a_models, arm_b_l1_models, arm_b_l2_models = _select_benchmark_models(live)
 
-    # Arm A: Baseline (no L0_DET abort, cumulative retry history, frontier/mid model)
-    if live:
-        arm_a_models = _probe_healthy_models(("gemini-4-hydrogen", "gemini-3.8-flash", "gemini-3.5-flash-lite"))
-        arm_b_l1_models = _probe_healthy_models(("gemini-3.5-flash-lite", "gemini-3.8-flash"))
-        arm_b_l2_models = _probe_healthy_models(("gemini-4-hydrogen", "gemini-3.8-flash", "gemini-3.5-flash-lite"))
-        sticky_key = None
-        print(
-            f"[AB-LIVE] Healthy models: A={arm_a_models} B_L1={arm_b_l1_models} B_L2={arm_b_l2_models}",
-            file=sys.stderr,
-            flush=True,
-        )
-    else:
-        arm_a_models = ("gemini-3.8-flash", "gemini-4-hydrogen", "gemini-3.5-flash-lite")
-        arm_b_l1_models = ("gemini-3.5-flash-lite", "gemini-3.8-flash")
-        arm_b_l2_models = ("gemini-4-hydrogen", "gemini-3.8-flash", "gemini-3.5-flash-lite")
-        sticky_key = None
-
-    a_passed = 0
-    a_cost = 0.0
-    a_tokens_in = 0
-    a_cached_in = 0
-    a_llm_calls = 0
-
+    a_passed, a_cost, a_tokens_in, a_cached_in, a_llm_calls = 0, 0.0, 0, 0, 0
     for idx_t, task in enumerate(tasks, start=1):
         if live and idx_t % 5 == 0:
             print(f"[AB-LIVE] Arm A progress: {idx_t}/{len(tasks)}", file=sys.stderr, flush=True)
-        if task.z3_constraints_json is not None or task.missing_delta_crit:
-            # Conventional baseline without Step-0 gate still pays an LLM call and fails contract/underdetermination
-            if live:
-                call = _call_gemini_live(task.prompt, arm_a_models)
-                a_llm_calls += 1
-                a_tokens_in += int(call["tokens_in"])
-                a_cached_in += int(call["cached_tokens_in"])
-                a_cost += float(call["cost_usd"])
-            else:
-                a_llm_calls += 1
-                a_tokens_in += 900
-                a_cost += custo_estimado("gemini-3.8-flash", 900, 120)
-            continue
+        ok, calls, cost, t_in, c_in = _run_arm_a_task(task, arm_a_models, live)
+        a_passed += int(ok)
+        a_llm_calls += calls
+        a_cost += cost
+        a_tokens_in += t_in
+        a_cached_in += c_in
 
-        conv_history = task.prompt
-        solved = False
-        for attempt in range(1, 3):
-            if live:
-                call = _call_gemini_live(conv_history, arm_a_models)
-                a_llm_calls += 1
-                a_tokens_in += int(call["tokens_in"])
-                a_cached_in += int(call["cached_tokens_in"])
-                a_cost += float(call["cost_usd"])
-                candidate = str(call["text"])
-            else:
-                a_llm_calls += 1
-                tok_in = 900 * attempt
-                tok_out = 140
-                a_tokens_in += tok_in
-                a_cost += custo_estimado("gemini-3.8-flash", tok_in, tok_out)
-                candidate = task.mock_baseline_outputs[min(attempt - 1, len(task.mock_baseline_outputs) - 1)]
-
-            ok, _vec, err = task.oracle(_strip_markdown_fences(candidate))
-            if ok:
-                solved = True
-                break
-            conv_history = (
-                f"{conv_history}\n\nPrevious attempt failed with: {err}\nPrevious output:\n{candidate}\nFix it."
-            )
-        if solved:
-            a_passed += 1
-
-    # Arm B: NEXUS-OMNIKERNEL v1.1-EVOLVED
     svc = ControlPlaneService(config=ControlPlaneConfig(db_path=":memory:"))
     b_llm_calls = 0
     b_l0_deflected = 0
     cp_latencies: list[float] = []
     b_per_task_results: list[dict[str, Any]] = []
-
     try:
         for idx_b, task in enumerate(tasks, start=1):
             if live and idx_b % 5 == 0:
                 print(f"[AB-LIVE] Arm B progress: {idx_b}/{len(tasks)}", file=sys.stderr, flush=True)
-            contract_uri = f"core://bench/{task.task_id}"
-            reg = svc.register_canonical_artifact(
-                bucket_id=task.bucket_id,
-                serial_uri=contract_uri,
-                kind=ArtifactKind.CONTRACT.value,
-                content=task.contract_content,
-                z3_constraints_json=task.z3_constraints_json,
+            row, calls, l0_def, lats = _run_arm_b_task(
+                svc,
+                task,
+                is_first_task=(idx_b == 1),
+                prefix_pad=prefix_pad,
+                live=live,
+                arm_b_l1_models=arm_b_l1_models,
+                arm_b_l2_models=arm_b_l2_models,
             )
-            if reg.get("status") == "BLOCKED":
-                # Step-0 L0_DET UNSAT defense: $0 LLM cost, verified safe abort
-                b_l0_deflected += 1
-                b_per_task_results.append({"task_id": task.task_id, "status": "STEP0_UNSAT_ABORT", "passed": True})
-                continue
+            b_per_task_results.append(row)
+            b_llm_calls += calls
+            b_l0_deflected += l0_def
+            cp_latencies.extend(lats)
 
-            rid = f"ab-{task.task_id}"
-            boot = svc.bootstrap_run_context(
-                bucket_id=task.bucket_id,
-                contract_uri=contract_uri,
-                run_id=rid,
-                missing_delta_crit=list(task.missing_delta_crit),
-                task_description=task.prompt,
-                kernel_rules=prefix_pad,
-            )
-            if boot.get("status") == "BLOCKED":
-                b_l0_deflected += 1
-                b_per_task_results.append({"task_id": task.task_id, "status": "STEP0_DELTA_ABORT", "passed": True})
-                continue
-
-            immutable_prefix = str(boot["immutable_prefix"])
-            lane = ComputeLane.L1_EDGE_ECON
-            error_delta = ""
-            inject_vs = False
-            task_solved = False
-
-            for attempt in range(1, 4):
-                suffix = f"[TASK]\n{task.prompt}"
-                if error_delta:
-                    suffix += f"\n[ERROR_DELTA]\n{error_delta}"
-                if inject_vs:
-                    suffix += (
-                        "\n[VERBALIZED_SAMPLING_REQUIRED]\n"
-                        'Return ONLY JSON matching {"hypotheses": [{"strategy_id": "tail_1", "estimated_p": 0.12, '
-                        '"structural_divergence": "str", "payload": "str"}, {"strategy_id": "tail_2", '
-                        '"estimated_p": 0.08, "structural_divergence": "str", "payload": "str"}]}.'
-                    )
-                full_prompt = f"{immutable_prefix}\n\n=== EPHEMERAL NODE SUFFIX ===\n\n{suffix}"
-
-                if live:
-                    models = arm_b_l2_models if lane == ComputeLane.L2_FRONTIER else arm_b_l1_models
-                    call = _call_gemini_live(full_prompt, models, sticky_key=sticky_key)
-                    b_llm_calls += 1
-                    tok_in = int(call["tokens_in"])
-                    tok_cached = int(call["cached_tokens_in"])
-                    tok_out = int(call["tokens_out"])
-                    cost = float(call["cost_usd"])
-                    raw_text = str(call["text"])
-                else:
-                    b_llm_calls += 1
-                    tok_in = 4500 if attempt == 1 else 4550
-                    tok_cached = 4200 if (attempt > 1 or task.task_id != tasks[0].task_id) else 0
-                    tok_out = 120
-                    model_used = "gemini-4-hydrogen" if lane == ComputeLane.L2_FRONTIER else "gemini-3.5-flash-lite"
-                    cost = custo_estimado(model_used, tok_in, tok_out, cached_tokens_in=tok_cached)
-                    raw_text = task.mock_omnikernel_outputs[min(attempt - 1, len(task.mock_omnikernel_outputs) - 1)]
-
-                candidates = _extract_vs_candidates(raw_text) if inject_vs else [raw_text]
-                t_cp = time.perf_counter()
-                ev = svc.evaluate_node_checkpoint(
-                    run_id=rid,
-                    node_id="n1",
-                    action_role=task.action_role.value,
-                    attempt=attempt,
-                    compute_lane=lane.value,
-                    idempotency_key=f"{rid}:n1:{attempt}",
-                    candidates=candidates,
-                    unit_oracle=task.oracle,
-                    cost_usd=cost,
-                    tokens_in=tok_in,
-                    cached_tokens_in=tok_cached,
-                    tokens_out=tok_out,
-                )
-                cp_latencies.append((time.perf_counter() - t_cp) * 1000.0)
-
-                decision = ev["decision"]
-                if decision == ThermostatDecision.COMMIT.value:
-                    svc.record_human_feedback(run_id=rid, human_edit_ratio=0.0, reverted=False)
-                    task_solved = True
-                    break
-                if decision == ThermostatDecision.CIRCUIT_BREAK.value:
-                    break
-                error_delta = str(ev.get("error_delta") or ev.get("reason") or "")
-                inject_vs = decision == ThermostatDecision.INJECT_ASYMMETRY.value
-                lane = ComputeLane(str(ev["next_lane"]))
-
-            b_per_task_results.append(
-                {"task_id": task.task_id, "status": "COMMIT" if task_solved else "FAIL", "passed": task_solved}
-            )
-
-        # Slow loop & Zero-Regression tournament check across touched buckets
-        zero_reg_all = True
-        for bucket_id in ("engineering-and-quality", "pmev-and-quant", "data-and-knowledge", "governance-and-handoff"):
-
-            def _eval_challenger(_bid: str, dcrit: list[str]) -> dict[str, Any]:
-                return {
-                    "strategy_uri": f"ess://{_bid}/evolved-v1",
-                    "strategy_content": "evolved verified strategy",
-                    "niche_id": "balanced_roi",
-                    "mean_quality": 0.98,
-                    "mean_cost_usd": 0.002,
-                    "mean_latency_ms": 20.0,
-                    "dcrit_passed_count": len(dcrit),
-                    "dcrit_total_count": len(dcrit),
-                }
-
-            sl = svc.run_slow_loop_cycle(bucket_id=bucket_id, tier0_present=True, challenger_evaluator=_eval_challenger)
-            if sl.get("challenger_rejected_reason") and "ZERO_REGRESSION_FAILED" in str(
-                sl["challenger_rejected_reason"]
-            ):
-                zero_reg_all = False
-
+        zero_reg_all = _verify_slow_loop_zero_regression(svc)
         kpis_b = svc.store.compute_kpis()
     finally:
         svc.close()

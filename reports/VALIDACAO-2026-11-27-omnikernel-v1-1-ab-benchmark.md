@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 4 Hydrogen
 criado_em: '2026-11-27T11:18:28-03:00'
-atualizado_em: '2026-11-27T12:06:00-03:00'
+atualizado_em: '2026-11-27T15:04:10-03:00'
 classes:
 - interno
 - medido
@@ -33,6 +33,7 @@ caminhos:
 - engine/skills_mcp_server.py
 - pyproject.toml
 - reports/VALIDACAO-2026-11-27-omnikernel-v1-1-ab-benchmark.md
+- requirements.txt
 - scripts/cli/nexus.py
 - scripts/ops/autopoietic_daily_cycle.py
 - scripts/setup/Setup-NexusProfile.ps1
@@ -46,6 +47,7 @@ caminhos:
 - tests/control_plane/test_thermostat_cascade.py
 - tests/control_plane/test_z3_gate.py
 - tests/fixtures/nexus_profile_template.ps1
+- uv.lock
 config_medida:
   congelada_em: '2026-11-27'
   raiz: C:/Users/rapha/.gemini/Site
@@ -59,8 +61,16 @@ verificado:
 - Braço B (OmniKernel) entrega 30/30 (100.00%) a $0.000211/entrega
 - razao de custo B/A = 1.3321x (economia -33.21%)
 - latencia p95 do plano de controle = 3.691 ms e zero_regression_verified = True
-- binding C z3-solver==5.4.1.0 (pip_audit 0 CVEs) verificado sobre contratos acoplados QF_LIA (engine=z3, p50=1.354 ms, p95=2.164 ms < 50 ms)
-- concorrencia multi-worker SQLite WAL (BEGIN IMMEDIATE + backoff exponencial) -- 8 threads (80 escritas, 353.4 tx/s, p95=44.94 ms) e 4 processos spawn Windows (240 tx, 173.6 tx/s, journal=wal, PRAGMA integrity_check=ok, 0 erros de lock)
+- binding C z3-solver==5.4.1.0 (pip_audit 0 CVEs) verificado sobre contratos acoplados
+  QF_LIA (engine=z3, p50=1.354 ms, p95=2.164 ms < 50 ms)
+- concorrencia multi-worker SQLite WAL (BEGIN IMMEDIATE + backoff exponencial) --
+  8 threads (80 escritas, 353.4 tx/s, p95=44.94 ms) e 4 processos spawn Windows (240
+  tx, 173.6 tx/s, journal=wal, PRAGMA integrity_check=ok, 0 erros de lock)
+- Dependencias elevadas e sincronizadas em uv.lock/.venv -- laya==0.5.6, hypothesis==6.170.22,
+  schemathesis==4.34.4 e z3-solver==5.4.1.0 (pip_audit sem novos CVEs)
+- Saneamento integral de 49 apontamentos SonarLint em control_plane/ (S3776, S1244,
+  S3358, S8786, S5713, S107, S1192, S9152, S6663) com ruff check, ruff format e pyright
+  0 erros/0 warnings
 nao_verificado:
 - execucao remota de CI GitHub Actions apos git push em origin/master
 - replicacao distribuida multi-host sobre rede (fora do escopo local-first)
@@ -68,17 +78,28 @@ revisoes_de_ancora:
 - registro: auditoria-2026-09-02-integridade-do-projeto-e-piso-de-transformers
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
+- registro: auditoria-2026-09-08-o-que-esta-em-aberto-na-malha
+  caminhos:
+  - requirements.txt
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevado laya>=0.5.6 em paridade com pyproject.toml.
+    Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: auditoria-2026-10-08-integralidade-backend
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml. Pytest
+    direcionado, ruff check/format e pyright 0 erros.
 - registro: auditoria-2026-11-18-pools-chaves-observatorio-e-roteamento
   caminhos:
   - scripts/setup/Setup-NexusProfile.ps1
@@ -89,17 +110,20 @@ revisoes_de_ancora:
 - registro: handoff-2026-09-10-lint-lighthouse-e-aceite-cve
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0. Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: handoff-2026-09-13-integracao-de-engines-wasm-e-economia-de-gate
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: handoff-2026-09-30-expurgo-de-modelos-obsoletos-harmonizacao-qwen-e-calibracao
   caminhos:
   - scripts/cli/nexus.py
@@ -110,31 +134,40 @@ revisoes_de_ancora:
 - registro: handoff-2026-10-08-auditoria-e-remediacao-backend
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: handoff-2026-10-24-remediacao-dependabot-e-integridade-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: handoff-2026-11-15-translategemma-timesfm-laya-roi
   caminhos:
   - pyproject.toml
   - scripts/cli/nexus.py
   - scripts/setup/Setup-NexusProfile.ps1
   - tests/fixtures/nexus_profile_template.ps1
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes; registrado subcomando Typer control-plane preservando
-    todos os comandos existentes; incluido control-plane em Global:NexusTyperCommands
-    preservando UTF-8 BOM unico (test_roteamento_perfil verde); sincronizado control-plane
-    em Global:NexusTyperCommands preservando UTF-8 BOM unico (test_roteamento_perfil
-    verde). Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: handoff-2026-11-18-observatorio-chaves-roteamento-e-calibracao
   caminhos:
   - scripts/setup/Setup-NexusProfile.ps1
@@ -145,54 +178,90 @@ revisoes_de_ancora:
 - registro: handoff-2026-11-21-deps-sota-roi-neon-orchestrator-e-calibracao
   caminhos:
   - pyproject.toml
+  - requirements.txt
   - scripts/ops/autopoietic_daily_cycle.py
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes; adicionada Fase 4 control_plane (dry-run audit e
-    KPIs) preservando fases 1-3. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: handoff-2026-11-21-laya-052-watchdog-711-e-calibracao-seq101
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: handoff-2026-11-22-higgsfield-mcp-deps-e-saneamento-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: handoff-2026-11-24-laya-053-regex-20261123-schemathesis-4341
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: handoff-2026-11-26-dependencias-sota-mcp-runtime-e-saneamento
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: plan-dependency-boundary-reconciliation-2026-09-01
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
+- registro: plano-frentes-abertas-2026-09-08
+  caminhos:
+  - requirements.txt
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevado laya>=0.5.6 em paridade com pyproject.toml.
+    Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: plano-laya-integracao-s1s2-pmev-2026-09-20
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-09-04-refinamento-sota-radar-telemetria-scanner-e-mcps
   caminhos:
   - scripts/ops/autopoietic_daily_cycle.py
@@ -226,24 +295,41 @@ revisoes_de_ancora:
 - registro: registro-2026-09-09-remediacao-dependabot-httpx2
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-09-13-ci-typecheck-e-fronteira-de-capacidades
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-09-13-otimizacoes-helpers-antientropia-e-feedback
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
+- registro: registro-2026-09-14-auditoria-e-refinamento-settings-e-configuracoes
+  caminhos:
+  - requirements.txt
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevado laya>=0.5.6 em paridade com pyproject.toml.
+    Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-09-14-correcoes-pos-auditoria-handoff-tier-e-dependencias
   caminhos:
   - scripts/cli/nexus.py
@@ -324,10 +410,20 @@ revisoes_de_ancora:
 - registro: registro-2026-10-04-remediacao-dependabot-pypdf
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
+- registro: registro-2026-10-04-remediacao-dependabot-sentence-transformers-e-urllib3
+  caminhos:
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). regerado e validado via uv lock/sync --check
+    (laya 0.5.6, hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest
+    direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-10-06-strata-moe-125b-e-dashboard-nexus
   caminhos:
   - scripts/cli/nexus.py
@@ -340,24 +436,44 @@ revisoes_de_ancora:
 - registro: registro-2026-10-08-auditoria-e-remediacao-backend
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
+- registro: registro-2026-10-13-remediacao-dependabot-e-offload-strata
+  caminhos:
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). regerado e validado via uv lock/sync --check
+    (laya 0.5.6, hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest
+    direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-10-14-saneamento-tipagem-config-ide-e-dependencias
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-10-18-remediacao-dependabot-e-renovacao-axe
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-10-19-saneamento-sonarqube-timesfm-e-a11y
   caminhos:
   - scripts/cli/nexus.py
@@ -395,145 +511,224 @@ revisoes_de_ancora:
 - registro: registro-2026-10-24-remediacao-integral-74-vulnerabilidades-dependabot
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-10-26-unificacao-ssot-dependencias-e-pwsh-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-10-27-elevacao-dependencias-python-openai-pyspark-pytest
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-10-27-evolucao-project-context-e-reconciliacao-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
+- registro: registro-2026-10-27-remediacao-dependabot-submodulo-e-integracao-sota
+  caminhos:
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). regerado e validado via uv lock/sync --check
+    (laya 0.5.6, hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest
+    direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-10-28-atualizacao-laya-e-estabilizacao-playwright-smoke
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-10-28-saneamento-reconciliacao-e-elevacao-dependencias-triade-montecarlo
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-10-31-estabilizacao-lifecycle-warmup-turbopack
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-01-integracao-ai-mesh-sdk-e-otimizacao-jules
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-03-elevacao-dependencias-pyarrow-openai-anthropic-laya
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-03-otimizacao-agentes-watchdog-e-calibracao
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-03-remediacao-dependabot-pypdf-pyasn1-minimatch
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-04-otimizacao-layout-header-e-elevacao-dependencias
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-05-saneamento-customizations-e-elevacao-dependencias
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0. Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-06-reparo-manifestos-e-declaracao-chrysalis
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-07-auditoria-integral-dependabot-github-e-code-scanning
   caminhos:
   - pyproject.toml
   - scripts/cli/nexus.py
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes; registrado subcomando Typer control-plane preservando
-    todos os comandos existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-07-auditoria-jules-cloud-saneamento-linters-e-pyproject
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-07-elevacao-dependencias-fastapi-regex-types-aiofiles
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-08-elevacao-dependencias-regex-e-laya
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-08-elevacao-polars-2-1-e-consumo-integral-engines-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-08-elevacao-pypdf-7-0-torchvision-e-ecossistema-npm
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-08-integracao-sota-suite-antigravity-sdk-cli-acp
   caminhos:
   - scripts/cli/nexus.py
@@ -548,17 +743,25 @@ revisoes_de_ancora:
 - registro: registro-2026-11-08-integracao-sota-triade-stitch-exa-jules
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-08-otimizacao-pyproject-dependencias-extras-e-reconciliacao
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-09-automacao-modelos-locais-ollama-e-subagentes
   caminhos:
   - scripts/cli/nexus.py
@@ -569,73 +772,105 @@ revisoes_de_ancora:
 - registro: registro-2026-11-09-elevacao-dependencias-e-fork-eigen
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-10-bump-deps-e-extra-paths-pylance
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-10-google-genai-3-1-0
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-11-elevacao-fastapi-playwright-e-bump-deep-research
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-11-elevacao-pypdf-turbo-ai-sdk-google
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-11-elevacao-sentence-transformers-genai-prettier-exa-mcp
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-11-elevacao-typer-types-knip-harmonizacao
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-11-nota-pareamento-dev-dependency-groups
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0. Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-13-elevacao-deps-e-saneamento-configs-ide
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-13-revisao-ancora-pyproject-extra-path-cockpit
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0. Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-14-correcao-devin-e-entrypoints-gemini-3-1-pro
   caminhos:
   - scripts/ops/autopoietic_daily_cycle.py
@@ -646,17 +881,23 @@ revisoes_de_ancora:
 - registro: registro-2026-11-14-deps-refatoracoes-sonar-e-submodulos
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-14-laya-pylint-e-refactors-sonar
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-14-llama-cpp-b12387-router-9931
   caminhos:
   - scripts/cli/nexus.py
@@ -667,112 +908,171 @@ revisoes_de_ancora:
 - registro: registro-2026-11-14-roteamento-pools-transporte-e-validacao-hrc
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-14-sync-uvlock-ollama-cloud-circuit-e-ci
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-16-elevacao-deps-anthropic-laya-accelerate-e-deps-sync
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-17-elevacao-deps-google-genai-openai
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-17-fase-3-backend-estrutural-sota
   caminhos:
   - pyproject.toml
+  - requirements.txt
   - scripts/cli/nexus.py
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes; registrado subcomando Typer control-plane preservando
-    todos os comandos existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-17-fase-5-evolucao-das-forcas-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0. Pytest direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-17-fases-0-1-portoes-verificacao-e-higiene-doc-real
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml. Pytest
+    direcionado, ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-17-saneamento-deps-lint-typecheck-build
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-18-elevacao-deps-google-genai-regex-turbo
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-18-elevacao-deps-vitest-typescript-eslint-openai
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-18-saneamento-sonarlint-pyright-e-deps
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-19-auditoria-evolucao-frontend-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-21-deps-sota-roi-neon-orchestrator-e-calibracao
   caminhos:
   - pyproject.toml
+  - requirements.txt
   - scripts/ops/autopoietic_daily_cycle.py
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes; adicionada Fase 4 control_plane (dry-run audit e
-    KPIs) preservando fases 1-3. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-21-laya-052-watchdog-711-e-calibracao-seq101
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-22-higgsfield-mcp-deps-e-saneamento-sota
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-22-icm-rules-ssot-e-roi-s1
   caminhos:
   - engine/skills_mcp_server.py
@@ -783,38 +1083,71 @@ revisoes_de_ancora:
 - registro: registro-2026-11-24-laya-053-regex-20261123-schemathesis-4341
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-24-overlay-s3776-e-deps-polars-openai-anthropic
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-24-scrypt-sonarlint-codeql-schemathesis-exa
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; regerado e validado via uv lock/sync --check (laya 0.5.6,
+    hypothesis 6.170.22, schemathesis 4.34.4, z3-solver 5.4.1.0). Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 - registro: registro-2026-11-25-elevacao-deps-vitest-512-e-calibracao-20261124
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
 - registro: registro-2026-11-27-harmonizacao-ide-rust-deps-submodulos
   caminhos:
   - pyproject.toml
-  parecer: Revisado em 2026-11-27 (NEXUS-OMNIKERNEL v1.1-EVOLVED). adicionado control_plane
-    aos pacotes, cobertura, isort, pyright e grupo opcional z3-solver sem alterar
-    pins runtime/dev existentes. Suite control_plane 21/21, testes de contrato (roteamento/memoria/dockerfile
-    19/19), ruff e pyright 0 erros.
+  - requirements.txt
+  - uv.lock
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). elevados laya>=0.5.6, hypothesis>=6.170.22,
+    schemathesis>=4.34.4 (em paridade optional-dependencies.dev e dependency-groups.dev)
+    e z3-solver>=5.4.1.0; elevado laya>=0.5.6 em paridade com pyproject.toml; regerado
+    e validado via uv lock/sync --check (laya 0.5.6, hypothesis 6.170.22, schemathesis
+    4.34.4, z3-solver 5.4.1.0). Pytest direcionado, ruff check/format e pyright 0
+    erros.
+- registro: spec-2026-11-27-omnikernel-control-plane
+  caminhos:
+  - control_plane/mcp_tools.py
+  - control_plane/service.py
+  - control_plane/storage.py
+  - control_plane/z3_gate.py
+  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
+    + zero SonarLint em control_plane). refatoracao SonarLint SOTA e verificacao em
+    control_plane/mcp_tools.py; refatoracao SonarLint SOTA e verificacao em control_plane/service.py;
+    refatoracao SonarLint SOTA e verificacao em control_plane/storage.py; refatoracao
+    SonarLint SOTA e verificacao em control_plane/z3_gate.py. Pytest direcionado,
+    ruff check/format e pyright 0 erros.
 ---
 
 # Validacao A/B `NEXUS-OMNIKERNEL v1.1-EVOLVED` (30 Tarefas)

@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import math
+import operator
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -59,6 +60,26 @@ _BOOL_OPS = {"var", "const", "and", "or", "not", "implies"}
 _ALLOWED_OPS = _NUMERIC_OPS | _CMP_OPS | _BOOL_OPS
 
 
+def _validate_args_op(op: str, args: Any, var_types: dict[str, str], depth: int) -> None:
+    if not isinstance(args, list) or not args:
+        raise ValueError(f"Operator '{op}' requires non-empty 'args' list.")
+    for child in args:
+        if not isinstance(child, dict):
+            raise ValueError("AST child must be a mapping.")
+        _validate_ast_node(child, var_types, depth + 1)
+
+
+def _validate_pair_op(
+    node: dict[str, Any], k1: str, k2: str, label: str, var_types: dict[str, str], depth: int
+) -> None:
+    first = node.get(k1)
+    second = node.get(k2)
+    if not isinstance(first, dict) or not isinstance(second, dict):
+        raise ValueError(f"{label} requires dict '{k1}' and '{k2}'.")
+    _validate_ast_node(first, var_types, depth + 1)
+    _validate_ast_node(second, var_types, depth + 1)
+
+
 def _validate_ast_node(node: dict[str, Any], var_types: dict[str, str], depth: int = 0) -> None:
     if depth > 32:
         raise ValueError("AST depth limit exceeded.")
@@ -70,49 +91,25 @@ def _validate_ast_node(node: dict[str, Any], var_types: dict[str, str], depth: i
         name = node.get("name")
         if not isinstance(name, str) or name not in var_types:
             raise ValueError(f"Undeclared variable in AST: {name!r}")
-        return
-    if op == "const":
-        val = node.get("value")
-        if not isinstance(val, int | float | bool):
-            raise ValueError(f"Invalid constant value: {val!r}")
-        return
-    if op in {"add", "sub", "and", "or"}:
-        args = node.get("args")
-        if not isinstance(args, list) or len(args) < 1:
-            raise ValueError(f"Operator '{op}' requires non-empty 'args' list.")
-        for child in args:
-            if not isinstance(child, dict):
-                raise ValueError("AST child must be a mapping.")
-            _validate_ast_node(child, var_types, depth + 1)
-        return
-    if op == "mul_const":
-        coef = node.get("coef")
-        arg = node.get("arg")
+    elif op == "const":
+        if not isinstance(node.get("value"), int | float | bool):
+            raise ValueError(f"Invalid constant value: {node.get('value')!r}")
+    elif op in {"add", "sub", "and", "or"}:
+        _validate_args_op(op, node.get("args"), var_types, depth)
+    elif op == "mul_const":
+        coef, arg = node.get("coef"), node.get("arg")
         if isinstance(coef, bool) or not isinstance(coef, int | float) or not isinstance(arg, dict):
             raise ValueError("Operator 'mul_const' requires numeric 'coef' and dict 'arg'.")
         _validate_ast_node(arg, var_types, depth + 1)
-        return
-    if op == "not":
+    elif op == "not":
         arg = node.get("arg")
         if not isinstance(arg, dict):
             raise ValueError("Operator 'not' requires dict 'arg'.")
         _validate_ast_node(arg, var_types, depth + 1)
-        return
-    if op == "implies":
-        ant = node.get("antecedent")
-        con = node.get("consequent")
-        if not isinstance(ant, dict) or not isinstance(con, dict):
-            raise ValueError("Operator 'implies' requires dict 'antecedent' and 'consequent'.")
-        _validate_ast_node(ant, var_types, depth + 1)
-        _validate_ast_node(con, var_types, depth + 1)
-        return
-    if op in _CMP_OPS:
-        left = node.get("left")
-        right = node.get("right")
-        if not isinstance(left, dict) or not isinstance(right, dict):
-            raise ValueError(f"Comparison '{op}' requires dict 'left' and 'right'.")
-        _validate_ast_node(left, var_types, depth + 1)
-        _validate_ast_node(right, var_types, depth + 1)
+    elif op == "implies":
+        _validate_pair_op(node, "antecedent", "consequent", "Operator 'implies'", var_types, depth)
+    elif op in _CMP_OPS:
+        _validate_pair_op(node, "left", "right", f"Comparison '{op}'", var_types, depth)
 
 
 @dataclass
@@ -121,9 +118,10 @@ class _AffineForm:
     const: float = 0.0
 
     def scale(self, factor: float) -> _AffineForm:
-        if factor == 0.0:
+        if math.isclose(factor, 0.0, abs_tol=1e-15):
             return _AffineForm()
-        return _AffineForm({k: v * factor for k, v in self.coeffs.items() if v * factor != 0.0}, self.const * factor)
+        scaled = {k: v * factor for k, v in self.coeffs.items() if not math.isclose(v * factor, 0.0, abs_tol=1e-15)}
+        return _AffineForm(scaled, self.const * factor)
 
     def add(self, other: _AffineForm) -> _AffineForm:
         merged = dict(self.coeffs)
@@ -198,42 +196,62 @@ def _eval_affine(node: dict[str, Any]) -> _AffineForm:
     raise ValueError(f"Non-numeric operator in affine context: {op}")
 
 
-def _to_cnf_atoms(node: dict[str, Any], negated: bool = False) -> list[list[tuple[dict[str, Any], bool]]]:
+_CnfClause = list[tuple[dict[str, Any], bool]]
+
+
+def _expand_disjunction_args(args: list[dict[str, Any]], negated: bool) -> list[_CnfClause]:
+    disjunctions: list[_CnfClause] = [[]]
+    for child in args:
+        child_cnf = _to_cnf_atoms(child, negated=negated)
+        expanded: list[_CnfClause] = []
+        for c_clause in child_cnf:
+            for existing in disjunctions:
+                expanded.append(existing + c_clause)
+        disjunctions = expanded[:64]
+    return disjunctions
+
+
+def _to_cnf_atoms(node: dict[str, Any], negated: bool = False) -> list[_CnfClause]:
     """Convert a boolean AST into a list of disjunctive clauses (DNF-split into conjunction of disjunctions)."""
     op = node["op"]
     if op == "not":
         return _to_cnf_atoms(node["arg"], negated=not negated)
     if op == "implies":
-        # A -> B  ===  (~A) OR B
         or_node = {"op": "or", "args": [{"op": "not", "arg": node["antecedent"]}, node["consequent"]]}
         return _to_cnf_atoms(or_node, negated=negated)
     if (op == "and" and not negated) or (op == "or" and negated):
-        clauses: list[list[tuple[dict[str, Any], bool]]] = []
+        clauses: list[_CnfClause] = []
         for child in node["args"]:
             clauses.extend(_to_cnf_atoms(child, negated=negated))
         return clauses
     if (op == "or" and not negated) or (op == "and" and negated):
-        # Cross-product of child clauses; keep compact for small boolean formulas
-        disjunctions: list[list[tuple[dict[str, Any], bool]]] = [[]]
-        for child in node["args"]:
-            child_cnf = _to_cnf_atoms(child, negated=negated)
-            if len(child_cnf) == 1:
-                next_disj: list[list[tuple[dict[str, Any], bool]]] = []
-                for existing in disjunctions:
-                    next_disj.append(existing + child_cnf[0])
-                disjunctions = next_disj
-            else:
-                expanded: list[list[tuple[dict[str, Any], bool]]] = []
-                for c_clause in child_cnf:
-                    for existing in disjunctions:
-                        expanded.append(existing + c_clause)
-                disjunctions = expanded[:64]
-        return disjunctions
+        return _expand_disjunction_args(node["args"], negated)
     return [[(node, negated)]]
 
 
 def _flip_cmp(op: str) -> str:
     return {"eq": "ne", "ne": "eq", "lt": "ge", "ge": "lt", "le": "gt", "gt": "le"}[op]
+
+
+_NEG_COEF_CMP = {"eq": "eq", "ne": "ne", "lt": "gt", "le": "ge", "gt": "lt", "ge": "le"}
+
+
+def _apply_bound_op(b: _NumBound, op: str, rhs: float) -> None:
+    if op == "eq":
+        if rhs > b.lo or (math.isclose(rhs, b.lo, abs_tol=1e-12) and b.lo_inc):
+            b.lo, b.lo_inc = rhs, True
+        if rhs < b.hi or (math.isclose(rhs, b.hi, abs_tol=1e-12) and b.hi_inc):
+            b.hi, b.hi_inc = rhs, True
+    elif op == "ne":
+        b.neq.add(rhs)
+    elif op in {"gt", "ge"}:
+        inc = op == "ge"
+        if rhs > b.lo or (math.isclose(rhs, b.lo, abs_tol=1e-12) and b.lo_inc and not inc):
+            b.lo, b.lo_inc = rhs, inc
+    elif op in {"lt", "le"}:
+        inc = op == "le"
+        if rhs < b.hi or (math.isclose(rhs, b.hi, abs_tol=1e-12) and b.hi_inc and not inc):
+            b.hi, b.hi_inc = rhs, inc
 
 
 class _BuiltinLinearGate:
@@ -242,7 +260,7 @@ class _BuiltinLinearGate:
     @classmethod
     def check(cls, spec: Z3ConstraintSpec) -> Z3GateResult:
         var_types = {v.name: v.var_type for v in spec.variables}
-        tagged_disjunctions: list[tuple[str, list[tuple[dict[str, Any], bool]]]] = []
+        tagged_disjunctions: list[tuple[str, _CnfClause]] = []
         for clause in spec.clauses:
             for disj in _to_cnf_atoms(clause.expr):
                 tagged_disjunctions.append((clause.clause_id, disj))
@@ -251,48 +269,121 @@ class _BuiltinLinearGate:
         return Z3GateResult(status=status, engine="builtin-qf-lia", unsat_core=tuple(dict.fromkeys(core)))
 
     @classmethod
+    def _search_branching(
+        cls,
+        unit_atoms: list[tuple[str, dict[str, Any], bool]],
+        branching: list[tuple[str, _CnfClause]],
+        var_types: dict[str, str],
+        idx: int = 0,
+        chosen: list[tuple[str, dict[str, Any], bool]] | None = None,
+    ) -> tuple[Z3Status, list[str]]:
+        current = chosen or []
+        if idx == len(branching):
+            return cls._check_conjunction(unit_atoms + current, var_types)
+        cid, disj = branching[idx]
+        saw_unknown = False
+        collected_core: list[str] = [cid]
+        for atom, neg in disj:
+            res, sub_core = cls._search_branching(
+                unit_atoms, branching, var_types, idx + 1, [*current, (cid, atom, neg)]
+            )
+            if res == Z3Status.SAT:
+                return Z3Status.SAT, []
+            if res == Z3Status.UNKNOWN:
+                saw_unknown = True
+            else:
+                collected_core.extend(sub_core)
+        return (Z3Status.UNKNOWN, []) if saw_unknown else (Z3Status.UNSAT, collected_core)
+
+    @classmethod
     def _solve_disjunctions(
         cls,
-        disjunctions: list[tuple[str, list[tuple[dict[str, Any], bool]]]],
+        disjunctions: list[tuple[str, _CnfClause]],
         var_types: dict[str, str],
     ) -> tuple[Z3Status, list[str]]:
-        unit_atoms: list[tuple[str, dict[str, Any], bool]] = []
-        branching: list[tuple[str, list[tuple[dict[str, Any], bool]]]] = []
-        for cid, disj in disjunctions:
-            if len(disj) == 1:
-                unit_atoms.append((cid, disj[0][0], disj[0][1]))
-            else:
-                branching.append((cid, disj))
+        unit_atoms = [(cid, disj[0][0], disj[0][1]) for cid, disj in disjunctions if len(disj) == 1]
+        branching = [(cid, disj) for cid, disj in disjunctions if len(disj) > 1]
 
         ok, core = cls._check_conjunction(unit_atoms, var_types)
         if ok != Z3Status.SAT:
             return ok, core
         if not branching:
             return Z3Status.SAT, []
-
-        # Backtrack over disjunctive branches (bounded search)
         if len(branching) > 12:
             return Z3Status.UNKNOWN, []
+        return cls._search_branching(unit_atoms, branching, var_types)
 
-        def _search(idx: int, chosen: list[tuple[str, dict[str, Any], bool]]) -> tuple[Z3Status, list[str]]:
-            if idx == len(branching):
-                return cls._check_conjunction(unit_atoms + chosen, var_types)
-            cid, disj = branching[idx]
-            saw_unknown = False
-            collected_core: list[str] = [cid]
-            for atom, neg in disj:
-                res, sub_core = _search(idx + 1, [*chosen, (cid, atom, neg)])
-                if res == Z3Status.SAT:
-                    return Z3Status.SAT, []
-                if res == Z3Status.UNKNOWN:
-                    saw_unknown = True
-                else:
-                    collected_core.extend(sub_core)
-            if saw_unknown:
-                return Z3Status.UNKNOWN, []
-            return Z3Status.UNSAT, collected_core
+    @staticmethod
+    def _assign_bool(bool_assign: dict[str, tuple[bool, str]], vname: str, desired: bool, cid: str) -> list[str] | None:
+        if vname in bool_assign and bool_assign[vname][0] != desired:
+            return [bool_assign[vname][1], cid]
+        bool_assign[vname] = (desired, cid)
+        return None
 
-        return _search(0, [])
+    @classmethod
+    def _handle_bool_cmp(
+        cls,
+        atom: dict[str, Any],
+        eff_op: str,
+        cid: str,
+        var_types: dict[str, str],
+        bool_assign: dict[str, tuple[bool, str]],
+    ) -> tuple[bool, Z3Status | None, list[str]]:
+        left, right = atom["left"], atom["right"]
+        is_bool_cmp = (left["op"] == "var" and var_types.get(str(left["name"])) == "bool") or (
+            right["op"] == "var" and var_types.get(str(right["name"])) == "bool"
+        )
+        if not is_bool_cmp:
+            return False, None, []
+        if eff_op not in {"eq", "ne"}:
+            return True, Z3Status.UNKNOWN, []
+        if left["op"] == "var" and right["op"] == "const":
+            desired = bool(right["value"]) if eff_op == "eq" else not bool(right["value"])
+            conflict = cls._assign_bool(bool_assign, str(left["name"]), desired, cid)
+            if conflict is not None:
+                return True, Z3Status.UNSAT, conflict
+        return True, None, []
+
+    @staticmethod
+    def _const_cmp_sat(c: float, eff_op: str) -> bool:
+        return {
+            "eq": abs(c) <= 1e-12,
+            "ne": abs(c) > 1e-12,
+            "lt": c < -1e-12,
+            "le": c <= 1e-12,
+            "gt": c > 1e-12,
+            "ge": c >= -1e-12,
+        }[eff_op]
+
+    @staticmethod
+    def _record_hyperplane(
+        diff: _AffineForm,
+        eff_op: str,
+        cid: str,
+        hyperplanes: dict[tuple[tuple[str, float], ...], list[tuple[str, float, str, float]]],
+    ) -> None:
+        key = diff.normalized_direction_key()
+        scale = diff.direction_scale()
+        first_var = min(diff.coeffs)
+        sign = 1.0 if diff.coeffs[first_var] > 0 else -1.0
+        canon_key = tuple((k, round(v * sign, 9)) for k, v in key)
+        op_s = _NEG_COEF_CMP[eff_op] if sign < 0 else eff_op
+        rhs_val = -diff.const / (sign * scale)
+        hyperplanes.setdefault(canon_key, []).append((cid, scale, op_s, rhs_val))
+
+    @staticmethod
+    def _check_hyperplanes(
+        hyperplanes: dict[tuple[tuple[str, float], ...], list[tuple[str, float, str, float]]],
+    ) -> list[str] | None:
+        for entries in hyperplanes.values():
+            hb = _NumBound()
+            srcs: list[str] = []
+            for cid, _scale, op_s, rhs_val in entries:
+                srcs.append(cid)
+                _apply_bound_op(hb, op_s, rhs_val)
+            if not hb.is_feasible(is_int=False):
+                return srcs
+        return None
 
     @classmethod
     def _check_conjunction(
@@ -303,126 +394,58 @@ class _BuiltinLinearGate:
         bool_assign: dict[str, tuple[bool, str]] = {}
         bounds: dict[str, _NumBound] = {k: _NumBound() for k, vt in var_types.items() if vt in {"int", "real"}}
         bound_sources: dict[str, list[str]] = {k: [] for k in bounds}
-        # Track normalized multi-var linear half-spaces: dir_key -> list[(cid, scale, op_norm, rhs)]
         hyperplanes: dict[tuple[tuple[str, float], ...], list[tuple[str, float, str, float]]] = {}
-        has_coupled = False
 
         for cid, atom, neg in atoms:
             op = atom["op"]
             if op == "const":
-                val = bool(atom["value"]) ^ neg
-                if not val:
+                if not (bool(atom["value"]) ^ neg):
                     return Z3Status.UNSAT, [cid]
                 continue
             if op == "var":
-                vname = str(atom["name"])
-                desired = not neg
-                if vname in bool_assign and bool_assign[vname][0] != desired:
-                    return Z3Status.UNSAT, [bool_assign[vname][1], cid]
-                bool_assign[vname] = (desired, cid)
+                conflict = cls._assign_bool(bool_assign, str(atom["name"]), not neg, cid)
+                if conflict is not None:
+                    return Z3Status.UNSAT, conflict
                 continue
-            if op in _CMP_OPS:
-                eff_op = _flip_cmp(op) if neg else op
-                left_op = atom["left"]["op"]
-                right_op = atom["right"]["op"]
-                if (left_op == "var" and var_types.get(str(atom["left"]["name"])) == "bool") or (
-                    right_op == "var" and var_types.get(str(atom["right"]["name"])) == "bool"
-                ):
-                    if eff_op not in {"eq", "ne"}:
-                        return Z3Status.UNKNOWN, []
-                    # Handle bool == const / bool != const
-                    if left_op == "var" and right_op == "const":
-                        bname = str(atom["left"]["name"])
-                        bval = bool(atom["right"]["value"])
-                        desired = bval if eff_op == "eq" else not bval
-                        if bname in bool_assign and bool_assign[bname][0] != desired:
-                            return Z3Status.UNSAT, [bool_assign[bname][1], cid]
-                        bool_assign[bname] = (desired, cid)
-                    continue
+            if op not in _CMP_OPS:
+                continue
 
-                diff = _eval_affine(atom["left"]).sub(_eval_affine(atom["right"]))
-                # diff <op> 0
-                if not diff.coeffs:
-                    c = diff.const
-                    sat = {
-                        "eq": abs(c) <= 1e-12,
-                        "ne": abs(c) > 1e-12,
-                        "lt": c < -1e-12,
-                        "le": c <= 1e-12,
-                        "gt": c > 1e-12,
-                        "ge": c >= -1e-12,
-                    }[eff_op]
-                    if not sat:
-                        return Z3Status.UNSAT, [cid]
-                    continue
+            eff_op = _flip_cmp(op) if neg else op
+            handled, b_status, b_core = cls._handle_bool_cmp(atom, eff_op, cid, var_types, bool_assign)
+            if handled:
+                if b_status is not None:
+                    return b_status, b_core
+                continue
 
-                if len(diff.coeffs) == 1:
-                    vname, coef = next(iter(diff.coeffs.items()))
-                    rhs = -diff.const / coef
-                    flipped = eff_op
-                    if coef < 0:
-                        flipped = {"eq": "eq", "ne": "ne", "lt": "gt", "le": "ge", "gt": "lt", "ge": "le"}[eff_op]
-                    b = bounds[vname]
-                    bound_sources[vname].append(cid)
-                    if flipped == "eq":
-                        if rhs > b.lo or (rhs == b.lo and b.lo_inc):
-                            b.lo, b.lo_inc = rhs, True
-                        if rhs < b.hi or (rhs == b.hi and b.hi_inc):
-                            b.hi, b.hi_inc = rhs, True
-                    elif flipped == "ne":
-                        b.neq.add(rhs)
-                    elif flipped in {"gt", "ge"}:
-                        inc = flipped == "ge"
-                        if rhs > b.lo or (rhs == b.lo and b.lo_inc and not inc):
-                            b.lo, b.lo_inc = rhs, inc
-                    elif flipped in {"lt", "le"}:
-                        inc = flipped == "le"
-                        if rhs < b.hi or (rhs == b.hi and b.hi_inc and not inc):
-                            b.hi, b.hi_inc = rhs, inc
+            diff = _eval_affine(atom["left"]).sub(_eval_affine(atom["right"]))
+            if not diff.coeffs:
+                if not cls._const_cmp_sat(diff.const, eff_op):
+                    return Z3Status.UNSAT, [cid]
+                continue
+            if len(diff.coeffs) == 1:
+                vname, coef = next(iter(diff.coeffs.items()))
+                flipped = _NEG_COEF_CMP[eff_op] if coef < 0 else eff_op
+                bound_sources[vname].append(cid)
+                _apply_bound_op(bounds[vname], flipped, -diff.const / coef)
+                if not bounds[vname].is_feasible(var_types[vname] == "int"):
+                    return Z3Status.UNSAT, bound_sources[vname]
+            else:
+                cls._record_hyperplane(diff, eff_op, cid, hyperplanes)
 
-                    if not b.is_feasible(var_types[vname] == "int"):
-                        return Z3Status.UNSAT, bound_sources[vname]
-                else:
-                    has_coupled = True
-                    key = diff.normalized_direction_key()
-                    scale = diff.direction_scale()
-                    # Choose canonical sign by first variable coefficient
-                    first_var = min(diff.coeffs)
-                    sign = 1.0 if diff.coeffs[first_var] > 0 else -1.0
-                    canon_key = tuple((k, round(v * sign, 9)) for k, v in key)
-                    # diff = sign * scale * (canon_dir . x) + diff.const <eff_op> 0
-                    # => (canon_dir . x) <op_s> -diff.const / (sign * scale)
-                    op_s = eff_op
-                    if sign < 0:
-                        op_s = {"eq": "eq", "ne": "ne", "lt": "gt", "le": "ge", "gt": "lt", "ge": "le"}[eff_op]
-                    rhs_val = -diff.const / (sign * scale)
-                    hyperplanes.setdefault(canon_key, []).append((cid, scale, op_s, rhs_val))
+        hp_conflict = cls._check_hyperplanes(hyperplanes)
+        if hp_conflict is not None:
+            return Z3Status.UNSAT, hp_conflict
+        return (Z3Status.UNKNOWN, []) if hyperplanes else (Z3Status.SAT, [])
 
-        # Check parallel coupled hyperplanes for direct contradiction
-        for entries in hyperplanes.values():
-            hb = _NumBound()
-            srcs: list[str] = []
-            for cid, _scale, op_s, rhs_val in entries:
-                srcs.append(cid)
-                if op_s == "eq":
-                    hb.lo, hb.lo_inc = max(hb.lo, rhs_val), True
-                    hb.hi, hb.hi_inc = min(hb.hi, rhs_val), True
-                elif op_s == "ne":
-                    hb.neq.add(rhs_val)
-                elif op_s in {"gt", "ge"}:
-                    inc = op_s == "ge"
-                    if rhs_val > hb.lo or (rhs_val == hb.lo and hb.lo_inc and not inc):
-                        hb.lo, hb.lo_inc = rhs_val, inc
-                elif op_s in {"lt", "le"}:
-                    inc = op_s == "le"
-                    if rhs_val < hb.hi or (rhs_val == hb.hi and hb.hi_inc and not inc):
-                        hb.hi, hb.hi_inc = rhs_val, inc
-            if not hb.is_feasible(is_int=False):
-                return Z3Status.UNSAT, srcs
 
-        if has_coupled:
-            return Z3Status.UNKNOWN, []
-        return Z3Status.SAT, []
+_Z3_CMP_FNS: dict[str, Any] = {
+    "eq": operator.eq,
+    "ne": operator.ne,
+    "lt": operator.lt,
+    "le": operator.le,
+    "gt": operator.gt,
+    "ge": operator.ge,
+}
 
 
 def _compile_z3_expr(node: dict[str, Any], z3_vars: dict[str, Any]) -> Any:
@@ -432,39 +455,9 @@ def _compile_z3_expr(node: dict[str, Any], z3_vars: dict[str, Any]) -> Any:
         return z3_vars[str(node["name"])]
     if op == "const":
         val = node["value"]
-        if isinstance(val, bool):
-            return z3.BoolVal(val)
-        return val
-    if op == "add":
-        args = [_compile_z3_expr(c, z3_vars) for c in node["args"]]
-        acc = args[0]
-        for a in args[1:]:
-            acc = acc + a
-        return acc
-    if op == "sub":
-        args = [_compile_z3_expr(c, z3_vars) for c in node["args"]]
-        acc = args[0]
-        for a in args[1:]:
-            acc = acc - a
-        return acc
+        return z3.BoolVal(val) if isinstance(val, bool) else val
     if op == "mul_const":
         return node["coef"] * _compile_z3_expr(node["arg"], z3_vars)
-    if op == "eq":
-        return _compile_z3_expr(node["left"], z3_vars) == _compile_z3_expr(node["right"], z3_vars)
-    if op == "ne":
-        return _compile_z3_expr(node["left"], z3_vars) != _compile_z3_expr(node["right"], z3_vars)
-    if op == "lt":
-        return _compile_z3_expr(node["left"], z3_vars) < _compile_z3_expr(node["right"], z3_vars)
-    if op == "le":
-        return _compile_z3_expr(node["left"], z3_vars) <= _compile_z3_expr(node["right"], z3_vars)
-    if op == "gt":
-        return _compile_z3_expr(node["left"], z3_vars) > _compile_z3_expr(node["right"], z3_vars)
-    if op == "ge":
-        return _compile_z3_expr(node["left"], z3_vars) >= _compile_z3_expr(node["right"], z3_vars)
-    if op == "and":
-        return z3.And(*[_compile_z3_expr(c, z3_vars) for c in node["args"]])
-    if op == "or":
-        return z3.Or(*[_compile_z3_expr(c, z3_vars) for c in node["args"]])
     if op == "not":
         return z3.Not(_compile_z3_expr(node["arg"], z3_vars))
     if op == "implies":
@@ -472,6 +465,19 @@ def _compile_z3_expr(node: dict[str, Any], z3_vars: dict[str, Any]) -> Any:
             _compile_z3_expr(node["antecedent"], z3_vars),
             _compile_z3_expr(node["consequent"], z3_vars),
         )
+    if op in _Z3_CMP_FNS:
+        return _Z3_CMP_FNS[op](_compile_z3_expr(node["left"], z3_vars), _compile_z3_expr(node["right"], z3_vars))
+    if op in {"add", "sub", "and", "or"}:
+        args = [_compile_z3_expr(c, z3_vars) for c in node["args"]]
+        if op == "and":
+            return z3.And(*args)
+        if op == "or":
+            return z3.Or(*args)
+        fn = operator.add if op == "add" else operator.sub
+        acc = args[0]
+        for child in args[1:]:
+            acc = fn(acc, child)
+        return acc
     raise ValueError(f"Unsupported Z3 operator: {op}")
 
 

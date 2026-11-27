@@ -99,7 +99,7 @@ dependencies = [
     # (choice/score/noul). transformers 5.x compat verified via zero-download
     # route() smoke test (en->english, hi/de->multilingual), 2026-09-20.
     # accelerate enables the cuda/multi-gpu device path via transformers.
-    "laya>=0.5.5",
+    "laya>=0.5.6",
     "accelerate>=1.16.0",
     "timesfm[torch]==3.0.2",
     # Computer-use, OLAP e embeddings alternativos foram movidos para
@@ -139,9 +139,9 @@ dev = [
     "types-psutil>=7.2.2.20261122",
     "types-defusedxml>=0.7.0.20260504",
     "types-PyYAML>=6.0.12.20261122",
-    "hypothesis>=6.170.17",
+    "hypothesis>=6.170.22",
     "pytest-benchmark>=5.3.1",
-    "schemathesis>=4.34.3",
+    "schemathesis>=4.34.4",
 ]
 
 # Dependencias extras para Teoria dos Jogos avancada, derivacao simbolica e analise de MTTs (PMev)
@@ -166,7 +166,7 @@ vision = [
 
 # Dependencias opcionais para SMT/Z3 formal no control plane deterministico
 control-plane = [
-    "z3-solver>=4.13.0",
+    "z3-solver>=5.4.1.0",
 ]
 
 # Dependencias extras para automacao de UI / computer-use. Medido em 2026-11-17
@@ -250,9 +250,9 @@ dev = [
     "types-psutil>=7.2.2.20261122",
     "types-defusedxml>=0.7.0.20260504",
     "types-PyYAML>=6.0.12.20261122",
-    "hypothesis>=6.170.17",
+    "hypothesis>=6.170.22",
     "pytest-benchmark>=5.3.1",
-    "schemathesis>=4.34.3",
+    "schemathesis>=4.34.4",
 ]
 
 # ==============================================================================

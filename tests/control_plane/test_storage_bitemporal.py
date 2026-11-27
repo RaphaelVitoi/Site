@@ -25,6 +25,7 @@ from control_plane.storage import (
     AttemptConflictError,
     ControlPlaneStore,
     HashMismatchError,
+    ReplayEpisodeInput,
     SerialNotFoundError,
 )
 
@@ -188,16 +189,18 @@ def _multiprocess_wal_worker(db_path: str, worker_id: int, iterations: int) -> d
                 }
             )
             store.append_replay_episode(
-                run_id=run_id,
-                bucket_id="engineering-and-quality",
-                node_id="n0",
-                action_role=ActionRole.LOCAL_PATCH.value,
-                strategy_record_id=rec.record_id,
-                step_index=0,
-                v_det_passed=True,
-                drift_score=0.1,
-                dense_reward=0.8,
-                trace_summary=f"mp-{worker_id}-{i}",
+                ReplayEpisodeInput(
+                    run_id=run_id,
+                    bucket_id="engineering-and-quality",
+                    node_id="n0",
+                    action_role=ActionRole.LOCAL_PATCH.value,
+                    strategy_record_id=rec.record_id,
+                    step_index=0,
+                    v_det_passed=True,
+                    drift_score=0.1,
+                    dense_reward=0.8,
+                    trace_summary=f"mp-{worker_id}-{i}",
+                )
             )
         return {"worker_id": worker_id, "written": iterations}
     finally:
@@ -260,16 +263,18 @@ def test_sqlite_wal_multithread_concurrent_writes_and_reads(tmp_path: Path) -> N
                         }
                     )
                     local.append_replay_episode(
-                        run_id=rid,
-                        bucket_id="engineering-and-quality",
-                        node_id="n0",
-                        action_role=ActionRole.LOCAL_PATCH.value,
-                        strategy_record_id=rec.record_id,
-                        step_index=0,
-                        v_det_passed=True,
-                        drift_score=0.1,
-                        dense_reward=0.8,
-                        trace_summary=f"mt-{tid}-{step}",
+                        ReplayEpisodeInput(
+                            run_id=rid,
+                            bucket_id="engineering-and-quality",
+                            node_id="n0",
+                            action_role=ActionRole.LOCAL_PATCH.value,
+                            strategy_record_id=rec.record_id,
+                            step_index=0,
+                            v_det_passed=True,
+                            drift_score=0.1,
+                            dense_reward=0.8,
+                            trace_summary=f"mt-{tid}-{step}",
+                        )
                     )
                     resolved = local.resolve_serial("engineering-and-quality", "core://wal/shared-contract")
                     assert resolved.version >= 1

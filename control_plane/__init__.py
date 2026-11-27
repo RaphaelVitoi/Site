@@ -15,14 +15,16 @@ from control_plane.config import (
     ThermostatDecision,
     Z3Status,
 )
-from control_plane.service import ControlPlaneService
-from control_plane.storage import ControlPlaneError, ControlPlaneStore
+from control_plane.service import CheckpointEvalOptions, CheckpointTelemetry, ControlPlaneService
+from control_plane.storage import ControlPlaneError, ControlPlaneStore, ReplayEpisodeInput
 
 __all__ = [
     "ActionRole",
     "ArtifactKind",
     "CalibrationMode",
     "CascadeStage",
+    "CheckpointEvalOptions",
+    "CheckpointTelemetry",
     "ComputeLane",
     "ControlPlaneConfig",
     "ControlPlaneError",
@@ -31,6 +33,7 @@ __all__ = [
     "EquivMetricKind",
     "Modality",
     "ParetoProfile",
+    "ReplayEpisodeInput",
     "ThermostatDecision",
     "Z3Status",
 ]

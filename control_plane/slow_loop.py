@@ -113,29 +113,8 @@ class SlowLoopEngine:
             "trace_delta": trace_delta,
         }
 
-    def run_cycle(
-        self,
-        *,
-        bucket_id: str,
-        top_k_per: int = 5,
-        dry_run: bool = False,
-        tier0_present: bool = False,
-        challenger_evaluator: ChallengerEvalFn | None = None,
-    ) -> dict[str, Any]:
-        bucket = self.store.get_bucket(bucket_id)
-
-        # 1. Role-stratified Conformal Risk Control recalibration
-        crc_outcomes: dict[str, CrcCalibrationOutcome] = {}
-        for role in ActionRole:
-            crc_outcomes[role.value] = self.crc.calibrate_role(
-                bucket_id,
-                role,
-                tier0_present=tier0_present,
-                dry_run=dry_run,
-            )
-
-        # 2. Hydrate SumTree PER from persisted replay buffer and select top-K episodes
-        top_episodes = self.store.list_top_per_episodes(bucket_id, limit=max(1, top_k_per), only_uncrystallized=True)
+    @staticmethod
+    def _hydrate_per_memory(top_episodes: list[dict[str, Any]]) -> PrioritizedReplayMemory:
         per_memory = PrioritizedReplayMemory(capacity=max(64, len(top_episodes) * 2), seed=42)
         for ep in top_episodes:
             per_memory.push(
@@ -146,50 +125,135 @@ class SlowLoopEngine:
                 True,
                 {"episode_id": ep["episode_id"]},
             )
+        return per_memory
 
-        # 3. Crystallize D_crit test cases and negative anchors from silent failures / high TD-error
+    def _crystallize_episodes(
+        self,
+        bucket_id: str,
+        top_episodes: list[dict[str, Any]],
+        *,
+        dry_run: bool,
+    ) -> tuple[list[str], list[str]]:
         crystallized_uris: list[str] = []
         crystallized_ids: list[int] = []
         trace_lines: list[str] = []
         for ep in top_episodes:
             ep_id = int(ep["episode_id"])
-            trace_lines.append(f"[ep={ep_id} node={ep['node_id']} ret={ep['n_step_return']}] {ep['trace_summary']}")
+            summary = str(ep["trace_summary"])
+            trace_lines.append(f"[ep={ep_id} node={ep['node_id']} ret={ep['n_step_return']}] {summary}")
             edit_ratio_raw = ep.get("human_edit_ratio")
             edit_ratio = float(edit_ratio_raw) if isinstance(edit_ratio_raw, int | float) else 0.0
             silent_hack = int(ep["v_det_passed"]) == 1 and (int(ep["reverted"]) == 1 or edit_ratio > 0.35)
             severe_fail = int(ep["v_det_passed"]) == 0 or float(ep["n_step_return"]) < 0.4
-            if not dry_run and (silent_hack or severe_fail):
-                uri = f"dcrit://{bucket_id}/ep-{ep_id}"
-                rec = self.store.register_artifact(
+            if dry_run or not (silent_hack or severe_fail):
+                continue
+
+            rec = self.store.register_artifact(
+                bucket_id, f"dcrit://{bucket_id}/ep-{ep_id}", ArtifactKind.TEST_CASE.value, summary
+            )
+            crystallized_uris.append(rec.serial_uri)
+            crystallized_ids.append(ep_id)
+            if silent_hack:
+                neg_rec = self.store.register_artifact(
                     bucket_id,
-                    uri,
-                    ArtifactKind.TEST_CASE.value,
-                    str(ep["trace_summary"]),
+                    f"anchor://neg/{bucket_id}/ep-{ep_id}",
+                    ArtifactKind.ANCHOR_NEG.value,
+                    summary,
                 )
-                crystallized_uris.append(rec.serial_uri)
-                crystallized_ids.append(ep_id)
-                if silent_hack:
-                    neg_uri = f"anchor://neg/{bucket_id}/ep-{ep_id}"
-                    neg_rec = self.store.register_artifact(
-                        bucket_id,
-                        neg_uri,
-                        ArtifactKind.ANCHOR_NEG.value,
-                        str(ep["trace_summary"]),
-                    )
-                    vec = self.embedder.embed(str(ep["trace_summary"]))
-                    self.store.insert_semantic_chunk(
-                        bucket_id=bucket_id,
-                        record_id=neg_rec.record_id,
-                        anchor_polarity="negative",
-                        content_summary=str(ep["trace_summary"])[:300],
-                        embedding=vec,
-                        model_id=self.embedder.model_id,
-                    )
+                self.store.insert_semantic_chunk(
+                    bucket_id=bucket_id,
+                    record_id=neg_rec.record_id,
+                    anchor_polarity="negative",
+                    content_summary=summary[:300],
+                    embedding=self.embedder.embed(summary),
+                    model_id=self.embedder.model_id,
+                )
 
         if crystallized_ids and not dry_run:
             self.store.mark_episodes_crystallized(crystallized_ids)
+        return crystallized_uris, trace_lines
 
-        # 4. Recompute orthogonalized SPACE basis stats
+    def _evaluate_gepa_challenger(
+        self,
+        *,
+        bucket_id: str,
+        default_niche: str,
+        top_episodes: list[dict[str, Any]],
+        dcrit_contents: list[str],
+        trace_lines: list[str],
+        challenger_evaluator: ChallengerEvalFn,
+        tier0_present: bool,
+        dry_run: bool,
+    ) -> tuple[str | None, str | None, int | None]:
+        raw_eval = challenger_evaluator(bucket_id, dcrit_contents)
+        cand = ParetoCandidateMetrics(
+            strategy_uri=str(raw_eval["strategy_uri"]),
+            strategy_content=str(raw_eval["strategy_content"]),
+            niche_id=str(raw_eval.get("niche_id", default_niche)),
+            mean_quality=float(raw_eval["mean_quality"]),
+            mean_cost_usd=float(raw_eval["mean_cost_usd"]),
+            mean_latency_ms=float(raw_eval["mean_latency_ms"]),
+            dcrit_passed_count=int(raw_eval["dcrit_passed_count"]),
+            dcrit_total_count=int(raw_eval.get("dcrit_total_count", len(dcrit_contents))),
+        )
+        zero_reg = cand.dcrit_passed_count == cand.dcrit_total_count
+        dominated = is_pareto_dominated(cand, self.store.get_active_elite(bucket_id, cand.niche_id))
+        if dry_run:
+            dry_reason = "ZERO_REGRESSION_FAILED" if not zero_reg else ("PARETO_DOMINATED" if dominated else None)
+            return None, dry_reason, None
+
+        strat_rec = self.store.register_artifact(
+            bucket_id,
+            cand.strategy_uri,
+            ArtifactKind.ESS_STRATEGY.value,
+            cand.strategy_content,
+        )
+        rule_text = f"GEPA root cause distilled from {len(top_episodes)} PER traces: " + " | ".join(trace_lines[:3])
+        reflection_id = self.store.record_gepa_reflection(
+            bucket_id=bucket_id,
+            source_episode_ids=[int(ep["episode_id"]) for ep in top_episodes],
+            root_cause_rule=rule_text,
+            challenger_record_id=strat_rec.record_id,
+            pareto_dominated=dominated or (not zero_reg),
+        )
+        if not zero_reg:
+            reason = f"ZERO_REGRESSION_FAILED ({cand.dcrit_passed_count}/{cand.dcrit_total_count} on D_crit)"
+            return None, reason, reflection_id
+        if dominated:
+            return None, "PARETO_DOMINATED", reflection_id
+
+        approval_mode = CalibrationMode.TIER0_FORMAL.value if tier0_present else CalibrationMode.AUTO_CALIBRATION.value
+        self.store.upsert_map_elite(
+            bucket_id=bucket_id,
+            niche_id=cand.niche_id,
+            strategy_record_id=strat_rec.record_id,
+            mean_quality=cand.mean_quality,
+            mean_cost_usd=cand.mean_cost_usd,
+            mean_latency_ms=cand.mean_latency_ms,
+            zero_reg_verified=True,
+            approval_mode=approval_mode,
+        )
+        return cand.strategy_uri, None, reflection_id
+
+    def run_cycle(
+        self,
+        *,
+        bucket_id: str,
+        top_k_per: int = 5,
+        dry_run: bool = False,
+        tier0_present: bool = False,
+        challenger_evaluator: ChallengerEvalFn | None = None,
+    ) -> dict[str, Any]:
+        bucket = self.store.get_bucket(bucket_id)
+        crc_outcomes: dict[str, CrcCalibrationOutcome] = {
+            role.value: self.crc.calibrate_role(bucket_id, role, tier0_present=tier0_present, dry_run=dry_run)
+            for role in ActionRole
+        }
+
+        top_episodes = self.store.list_top_per_episodes(bucket_id, limit=max(1, top_k_per), only_uncrystallized=True)
+        per_memory = self._hydrate_per_memory(top_episodes)
+        crystallized_uris, trace_lines = self._crystallize_episodes(bucket_id, top_episodes, dry_run=dry_run)
+
         pos_mat, neg_mat = self.store.get_anchor_embeddings(
             bucket_id,
             dim=self.embedder.dim,
@@ -202,71 +266,21 @@ class SlowLoopEngine:
             min_pos_anchors=self.config.space_min_pos_anchors,
         )
 
-        # 5. GEPA reflection & MAP-Elites 3D tournament with mandatory Zero-Regression
-        dcrit_records = self.store.list_active_artifacts(bucket_id, ArtifactKind.TEST_CASE.value)
-        dcrit_contents = [r.content for r in dcrit_records]
+        dcrit_contents = [r.content for r in self.store.list_active_artifacts(bucket_id, ArtifactKind.TEST_CASE.value)]
         promoted_elite: str | None = None
         rejected_reason: str | None = None
         reflection_id: int | None = None
-
         if top_episodes and challenger_evaluator is not None:
-            raw_eval = challenger_evaluator(bucket_id, dcrit_contents)
-            cand = ParetoCandidateMetrics(
-                strategy_uri=str(raw_eval["strategy_uri"]),
-                strategy_content=str(raw_eval["strategy_content"]),
-                niche_id=str(raw_eval.get("niche_id", bucket.pareto_profile)),
-                mean_quality=float(raw_eval["mean_quality"]),
-                mean_cost_usd=float(raw_eval["mean_cost_usd"]),
-                mean_latency_ms=float(raw_eval["mean_latency_ms"]),
-                dcrit_passed_count=int(raw_eval["dcrit_passed_count"]),
-                dcrit_total_count=int(raw_eval.get("dcrit_total_count", len(dcrit_contents))),
+            promoted_elite, rejected_reason, reflection_id = self._evaluate_gepa_challenger(
+                bucket_id=bucket_id,
+                default_niche=bucket.pareto_profile,
+                top_episodes=top_episodes,
+                dcrit_contents=dcrit_contents,
+                trace_lines=trace_lines,
+                challenger_evaluator=challenger_evaluator,
+                tier0_present=tier0_present,
+                dry_run=dry_run,
             )
-
-            zero_reg = cand.dcrit_passed_count == cand.dcrit_total_count
-            incumbent = self.store.get_active_elite(bucket_id, cand.niche_id)
-            dominated = is_pareto_dominated(cand, incumbent)
-
-            rule_text = f"GEPA root cause distilled from {len(top_episodes)} PER traces: " + " | ".join(trace_lines[:3])
-            if not dry_run:
-                strat_rec = self.store.register_artifact(
-                    bucket_id,
-                    cand.strategy_uri,
-                    ArtifactKind.ESS_STRATEGY.value,
-                    cand.strategy_content,
-                )
-                reflection_id = self.store.record_gepa_reflection(
-                    bucket_id=bucket_id,
-                    source_episode_ids=[int(ep["episode_id"]) for ep in top_episodes],
-                    root_cause_rule=rule_text,
-                    challenger_record_id=strat_rec.record_id,
-                    pareto_dominated=dominated or (not zero_reg),
-                )
-                if not zero_reg:
-                    rejected_reason = (
-                        f"ZERO_REGRESSION_FAILED ({cand.dcrit_passed_count}/{cand.dcrit_total_count} on D_crit)"
-                    )
-                elif dominated:
-                    rejected_reason = "PARETO_DOMINATED"
-                else:
-                    approval_mode = (
-                        CalibrationMode.TIER0_FORMAL.value if tier0_present else CalibrationMode.AUTO_CALIBRATION.value
-                    )
-                    self.store.upsert_map_elite(
-                        bucket_id=bucket_id,
-                        niche_id=cand.niche_id,
-                        strategy_record_id=strat_rec.record_id,
-                        mean_quality=cand.mean_quality,
-                        mean_cost_usd=cand.mean_cost_usd,
-                        mean_latency_ms=cand.mean_latency_ms,
-                        zero_reg_verified=True,
-                        approval_mode=approval_mode,
-                    )
-                    promoted_elite = cand.strategy_uri
-            else:
-                if not zero_reg:
-                    rejected_reason = "ZERO_REGRESSION_FAILED"
-                elif dominated:
-                    rejected_reason = "PARETO_DOMINATED"
 
         return {
             "bucket_id": bucket_id,

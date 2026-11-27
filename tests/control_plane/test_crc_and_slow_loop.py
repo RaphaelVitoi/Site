@@ -6,6 +6,7 @@ import pytest
 
 from control_plane.config import ActionRole, ArtifactKind, CalibrationMode, ControlPlaneConfig
 from control_plane.service import ControlPlaneService
+from control_plane.storage import ReplayEpisodeInput
 
 
 def _make_service() -> ControlPlaneService:
@@ -24,7 +25,30 @@ def test_crc_cold_start_to_empirical_and_tier0_sovereignty_gate() -> None:
             rid = f"r-cold-{i}"
             svc.store.create_workflow_run(rid, bucket, contract.record_id, "ph")
             svc.store.append_replay_episode(
-                run_id=rid,
+                ReplayEpisodeInput(
+                    run_id=rid,
+                    bucket_id=bucket,
+                    node_id="n1",
+                    action_role=ActionRole.COMMIT_PROD.value,
+                    strategy_record_id=None,
+                    step_index=1,
+                    v_det_passed=True,
+                    drift_score=0.10,
+                    dense_reward=1.0,
+                    trace_summary="ok",
+                    human_edit_ratio=0.0,
+                )
+            )
+
+        out_24 = svc.run_slow_loop_cycle(bucket_id=bucket, tier0_present=False)
+        assert out_24["crc_calibration"]["COMMIT_PROD"]["is_cold_start"] is True
+
+        # Add 25th clean episode (>= 25) -> transitions out of cold_start
+        # Without tier0_present=True, relaxing COMMIT_PROD below prior floor is blocked!
+        svc.store.create_workflow_run("r-cold-24", bucket, contract.record_id, "ph")
+        svc.store.append_replay_episode(
+            ReplayEpisodeInput(
+                run_id="r-cold-24",
                 bucket_id=bucket,
                 node_id="n1",
                 action_role=ActionRole.COMMIT_PROD.value,
@@ -36,25 +60,6 @@ def test_crc_cold_start_to_empirical_and_tier0_sovereignty_gate() -> None:
                 trace_summary="ok",
                 human_edit_ratio=0.0,
             )
-
-        out_24 = svc.run_slow_loop_cycle(bucket_id=bucket, tier0_present=False)
-        assert out_24["crc_calibration"]["COMMIT_PROD"]["is_cold_start"] is True
-
-        # Add 25th clean episode (>= 25) -> transitions out of cold_start
-        # Without tier0_present=True, relaxing COMMIT_PROD below prior floor is blocked!
-        svc.store.create_workflow_run("r-cold-24", bucket, contract.record_id, "ph")
-        svc.store.append_replay_episode(
-            run_id="r-cold-24",
-            bucket_id=bucket,
-            node_id="n1",
-            action_role=ActionRole.COMMIT_PROD.value,
-            strategy_record_id=None,
-            step_index=1,
-            v_det_passed=True,
-            drift_score=0.10,
-            dense_reward=1.0,
-            trace_summary="ok",
-            human_edit_ratio=0.0,
         )
 
         # With 25 clean episodes and alpha=0.02: 1/26 = 0.03846 > 0.02, so conformal chooses lambda=1.0 (strictest)
@@ -63,17 +68,19 @@ def test_crc_cold_start_to_empirical_and_tier0_sovereignty_gate() -> None:
             rid = f"r-lp-{i}"
             svc.store.create_workflow_run(rid, bucket, contract.record_id, "ph")
             svc.store.append_replay_episode(
-                run_id=rid,
-                bucket_id=bucket,
-                node_id="n1",
-                action_role=ActionRole.LOCAL_PATCH.value,
-                strategy_record_id=None,
-                step_index=1,
-                v_det_passed=True,
-                drift_score=0.10,
-                dense_reward=0.7,
-                trace_summary="ok",
-                human_edit_ratio=0.0,
+                ReplayEpisodeInput(
+                    run_id=rid,
+                    bucket_id=bucket,
+                    node_id="n1",
+                    action_role=ActionRole.LOCAL_PATCH.value,
+                    strategy_record_id=None,
+                    step_index=1,
+                    v_det_passed=True,
+                    drift_score=0.10,
+                    dense_reward=0.7,
+                    trace_summary="ok",
+                    human_edit_ratio=0.0,
+                )
             )
 
         out_auto = svc.run_slow_loop_cycle(bucket_id=bucket, tier0_present=False)
@@ -93,28 +100,32 @@ def test_slow_loop_nstep_per_crystallization_and_zero_regression_gate() -> None:
         contract = svc.store.register_artifact(bucket, "core://pmev/c1", ArtifactKind.CONTRACT.value, "icm model")
         svc.store.create_workflow_run("run-multi", bucket, contract.record_id, "ph")
         svc.store.append_replay_episode(
-            run_id="run-multi",
-            bucket_id=bucket,
-            node_id="n1",
-            action_role=ActionRole.LOCAL_PATCH.value,
-            strategy_record_id=None,
-            step_index=1,
-            v_det_passed=True,
-            drift_score=0.1,
-            dense_reward=0.7,
-            trace_summary="step 1 passed",
+            ReplayEpisodeInput(
+                run_id="run-multi",
+                bucket_id=bucket,
+                node_id="n1",
+                action_role=ActionRole.LOCAL_PATCH.value,
+                strategy_record_id=None,
+                step_index=1,
+                v_det_passed=True,
+                drift_score=0.1,
+                dense_reward=0.7,
+                trace_summary="step 1 passed",
+            )
         )
         svc.store.append_replay_episode(
-            run_id="run-multi",
-            bucket_id=bucket,
-            node_id="n2",
-            action_role=ActionRole.LOCAL_PATCH.value,
-            strategy_record_id=None,
-            step_index=2,
-            v_det_passed=True,
-            drift_score=0.1,
-            dense_reward=0.7,
-            trace_summary="step 2 silent reward hack",
+            ReplayEpisodeInput(
+                run_id="run-multi",
+                bucket_id=bucket,
+                node_id="n2",
+                action_role=ActionRole.LOCAL_PATCH.value,
+                strategy_record_id=None,
+                step_index=2,
+                v_det_passed=True,
+                drift_score=0.1,
+                dense_reward=0.7,
+                trace_summary="step 2 silent reward hack",
+            )
         )
 
         fb = svc.record_human_feedback(run_id="run-multi", human_edit_ratio=0.80, reverted=True)
@@ -145,16 +156,18 @@ def test_slow_loop_nstep_per_crystallization_and_zero_regression_gate() -> None:
         # Now add a new episode and pass 100% of D_crit -> promoted
         svc.store.create_workflow_run("run-good", bucket, contract.record_id, "ph")
         svc.store.append_replay_episode(
-            run_id="run-good",
-            bucket_id=bucket,
-            node_id="n1",
-            action_role=ActionRole.LOCAL_PATCH.value,
-            strategy_record_id=None,
-            step_index=1,
-            v_det_passed=True,
-            drift_score=0.05,
-            dense_reward=0.8,
-            trace_summary="good run",
+            ReplayEpisodeInput(
+                run_id="run-good",
+                bucket_id=bucket,
+                node_id="n1",
+                action_role=ActionRole.LOCAL_PATCH.value,
+                strategy_record_id=None,
+                step_index=1,
+                v_det_passed=True,
+                drift_score=0.05,
+                dense_reward=0.8,
+                trace_summary="good run",
+            )
         )
 
         def passing_challenger(_bid: str, dcrit: list[str]) -> dict[str, object]:

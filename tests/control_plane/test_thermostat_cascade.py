@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from control_plane.config import ActionRole, ArtifactKind, ComputeLane, ControlPlaneConfig, ThermostatDecision
-from control_plane.service import ControlPlaneService
+from control_plane.service import CheckpointTelemetry, ControlPlaneService
 from control_plane.storage import AttemptConflictError
 
 
@@ -40,7 +40,7 @@ def test_thermostat_state_transitions_and_idempotency() -> None:
             compute_lane=ComputeLane.L1_EDGE_ECON.value,
             idempotency_key="run-1:node-a:1:bad1",
             candidates=["def parse(x:\n"],
-            cost_usd=0.01,
+            telemetry=CheckpointTelemetry(cost_usd=0.01),
         )
         assert r1["decision"] == ThermostatDecision.REGENERATE_CLEAN.value
         assert r1["clean_regen_envelope"]["prefix_hash"] == boot1["prefix_hash"]
@@ -79,7 +79,7 @@ def test_thermostat_state_transitions_and_idempotency() -> None:
             compute_lane=ComputeLane.L1_EDGE_ECON.value,
             idempotency_key="run-1:node-a:2:bad1",
             candidates=["def parse(x:\n"],
-            cost_usd=0.01,
+            telemetry=CheckpointTelemetry(cost_usd=0.01),
         )
         assert r2["decision"] == ThermostatDecision.INJECT_ASYMMETRY.value
         assert r2["next_lane"] == ComputeLane.L2_FRONTIER.value
@@ -96,9 +96,7 @@ def test_thermostat_state_transitions_and_idempotency() -> None:
             compute_lane=ComputeLane.L2_FRONTIER.value,
             idempotency_key="run-1:node-a:3:good",
             candidates=["def parse(x: str) -> int:\n    return int(x)\n"],
-            cost_usd=0.02,
-            tokens_in=1000,
-            cached_tokens_in=850,
+            telemetry=CheckpointTelemetry(cost_usd=0.02, tokens_in=1000, cached_tokens_in=850),
         )
         assert r3["decision"] == ThermostatDecision.COMMIT.value
         assert r3["v_det_passed"] is True
@@ -139,7 +137,7 @@ def test_thermostat_circuit_break_on_missing_delta_and_budget_and_blind_mutator(
             compute_lane=ComputeLane.L2_FRONTIER.value,
             idempotency_key="run-prod:n1:1",
             candidates=["def handle():\n    raise NotImplementedError\n"],
-            cost_usd=0.55,
+            telemetry=CheckpointTelemetry(cost_usd=0.55),
         )
         assert res["decision"] == ThermostatDecision.CIRCUIT_BREAK.value
         assert res["v_det_passed"] is False

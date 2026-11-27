@@ -10,7 +10,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 import hashlib
 import json
-import re
 from typing import Any
 
 from conductor.dream_gate import DreamGate
@@ -37,20 +36,19 @@ def _hash_error(stage: CascadeStage, detail: str) -> str:
     return hashlib.sha256(f"{stage.value}:{detail}".encode()).hexdigest()[:16]
 
 
-_FENCED_BLOCK_RE = re.compile(r"```(?:[a-zA-Z0-9_-]+)?\s*\n(.*?)```", re.DOTALL)
-
-
 def _strip_markdown_fences(payload: str) -> str:
-    """Extract inner code/JSON from fenced markdown blocks without mutating raw input."""
+    """Extract inner code/JSON from fenced markdown blocks in O(n) time."""
     stripped = payload.strip()
-    if stripped.startswith("```"):
-        lines = stripped.splitlines()
-        if len(lines) >= 2 and lines[0].startswith("```") and lines[-1].strip() == "```":
-            return "\n".join(lines[1:-1]).strip()
-    match = _FENCED_BLOCK_RE.search(stripped)
-    if match:
-        return match.group(1).strip()
-    return stripped
+    start = stripped.find("```")
+    if start == -1:
+        return stripped
+    newline = stripped.find("\n", start + 3)
+    if newline == -1:
+        return stripped
+    end = stripped.find("```", newline + 1)
+    if end == -1:
+        return stripped
+    return stripped[newline + 1 : end].strip()
 
 
 def _default_blind_mutator(contract_content: str, candidate_payload: str) -> tuple[bool, str | None]:
@@ -79,6 +77,99 @@ class EvaluationCascade:
         self.z3_gate = z3_gate or Z3ConstraintGate()
         self.blind_mutator = blind_mutator or _default_blind_mutator
 
+    @staticmethod
+    def _failure(
+        stage: CascadeStage,
+        msg: str,
+        *,
+        z3_status: Z3Status = Z3Status.SKIPPED,
+        reward: float = 0.0,
+        test_vector: tuple[int, ...] = (),
+        details: dict[str, Any] | None = None,
+    ) -> CascadeAssessment:
+        return CascadeAssessment(
+            v_det_passed=False,
+            cascade_stage=stage,
+            z3_status=z3_status,
+            stage_dense_reward=reward,
+            error_hash=_hash_error(stage, msg),
+            error_delta=msg,
+            test_vector=test_vector,
+            details=details or {},
+        )
+
+    def _check_stage0_scope(
+        self,
+        *,
+        payload: str,
+        target_files: list[str],
+        allowed_files: list[str] | None,
+        has_formal_anchor_revision: bool,
+    ) -> CascadeAssessment | None:
+        gate_res = self.dream_gate.assess_proposal(target_files, has_formal_anchor_revision=has_formal_anchor_revision)
+        if not gate_res.should_proceed:
+            return self._failure(
+                CascadeStage.S0_SYNTAX,
+                gate_res.prune_reason or "DreamGate blocked proposal.",
+                details={"dream_gate_action": gate_res.suggested_action},
+            )
+        if allowed_files is not None and target_files:
+            allowed_norm = {f.replace("\\", "/") for f in allowed_files}
+            disallowed = [f for f in target_files if f.replace("\\", "/") not in allowed_norm]
+            if disallowed:
+                return self._failure(
+                    CascadeStage.S0_SYNTAX,
+                    f"Target Lock violation: files outside contract scope: {disallowed}",
+                )
+        if not payload.strip():
+            return self._failure(CascadeStage.S0_SYNTAX, "Empty candidate payload.")
+        return None
+
+    def _check_stage0_syntax(self, normalized: str, modality: Modality) -> CascadeAssessment | None:
+        if modality == Modality.CODE:
+            try:
+                ast.parse(normalized)
+            except SyntaxError as exc:
+                return self._failure(CascadeStage.S0_SYNTAX, f"Python AST SyntaxError at line {exc.lineno}: {exc.msg}")
+        elif modality == Modality.STRUCTURED:
+            try:
+                json.loads(normalized)
+            except json.JSONDecodeError as exc:
+                return self._failure(CascadeStage.S0_SYNTAX, f"Invalid JSON payload: {exc.msg} (pos {exc.pos})")
+        return None
+
+    def _check_stage1_oracles(
+        self,
+        normalized: str,
+        z3_status: Z3Status,
+        unit_oracle: TestOracleFn | None,
+        crystallized_tests: list[TestOracleFn] | None,
+    ) -> tuple[list[int], CascadeAssessment | None]:
+        test_vec: list[int] = []
+        if unit_oracle is not None:
+            passed, vec, err_msg = unit_oracle(normalized)
+            test_vec.extend(vec)
+            if not passed:
+                return test_vec, self._failure(
+                    CascadeStage.S1_UNIT,
+                    err_msg or "Unit test suite failed in Stage 1.",
+                    z3_status=z3_status,
+                    reward=0.30,
+                    test_vector=tuple(test_vec),
+                )
+        for idx, dcrit_fn in enumerate(crystallized_tests or ()):
+            passed, vec, err_msg = dcrit_fn(normalized)
+            test_vec.extend(vec)
+            if not passed:
+                return test_vec, self._failure(
+                    CascadeStage.S1_UNIT,
+                    err_msg or f"Crystallized D_crit regression test #{idx} failed.",
+                    z3_status=z3_status,
+                    reward=0.35,
+                    test_vector=tuple(test_vec),
+                )
+        return test_vec, None
+
     def evaluate(
         self,
         *,
@@ -94,149 +185,58 @@ class EvaluationCascade:
         crystallized_tests: list[TestOracleFn] | None = None,
         require_adversarial: bool = False,
     ) -> CascadeAssessment:
-        # Stage 0: Target Lock, DreamGate anchor protection, and syntax check
-        files = target_files or []
-        gate_res = self.dream_gate.assess_proposal(files, has_formal_anchor_revision=has_formal_anchor_revision)
-        if not gate_res.should_proceed:
-            msg = gate_res.prune_reason or "DreamGate blocked proposal."
-            return CascadeAssessment(
-                v_det_passed=False,
-                cascade_stage=CascadeStage.S0_SYNTAX,
-                z3_status=Z3Status.SKIPPED,
-                stage_dense_reward=0.0,
-                error_hash=_hash_error(CascadeStage.S0_SYNTAX, msg),
-                error_delta=msg,
-                details={"dream_gate_action": gate_res.suggested_action},
-            )
+        scope_fail = self._check_stage0_scope(
+            payload=payload,
+            target_files=target_files or [],
+            allowed_files=allowed_files,
+            has_formal_anchor_revision=has_formal_anchor_revision,
+        )
+        if scope_fail is not None:
+            return scope_fail
 
-        if allowed_files is not None and files:
-            allowed_norm = {f.replace("\\", "/") for f in allowed_files}
-            disallowed = [f for f in files if f.replace("\\", "/") not in allowed_norm]
-            if disallowed:
-                msg = f"Target Lock violation: files outside contract scope: {disallowed}"
-                return CascadeAssessment(
-                    v_det_passed=False,
-                    cascade_stage=CascadeStage.S0_SYNTAX,
-                    z3_status=Z3Status.SKIPPED,
-                    stage_dense_reward=0.0,
-                    error_hash=_hash_error(CascadeStage.S0_SYNTAX, msg),
-                    error_delta=msg,
-                )
+        normalized = _strip_markdown_fences(payload)
+        syntax_fail = self._check_stage0_syntax(normalized, modality)
+        if syntax_fail is not None:
+            return syntax_fail
 
-        if not payload.strip():
-            msg = "Empty candidate payload."
-            return CascadeAssessment(
-                v_det_passed=False,
-                cascade_stage=CascadeStage.S0_SYNTAX,
-                z3_status=Z3Status.SKIPPED,
-                stage_dense_reward=0.0,
-                error_hash=_hash_error(CascadeStage.S0_SYNTAX, msg),
-                error_delta=msg,
-            )
-
-        normalized_payload = _strip_markdown_fences(payload)
-        if modality == Modality.CODE:
-            try:
-                ast.parse(normalized_payload)
-            except SyntaxError as exc:
-                msg = f"Python AST SyntaxError at line {exc.lineno}: {exc.msg}"
-                return CascadeAssessment(
-                    v_det_passed=False,
-                    cascade_stage=CascadeStage.S0_SYNTAX,
-                    z3_status=Z3Status.SKIPPED,
-                    stage_dense_reward=0.0,
-                    error_hash=_hash_error(CascadeStage.S0_SYNTAX, msg),
-                    error_delta=msg,
-                )
-        elif modality == Modality.STRUCTURED:
-            try:
-                json.loads(normalized_payload)
-            except json.JSONDecodeError as exc:
-                msg = f"Invalid JSON payload: {exc.msg} (pos {exc.pos})"
-                return CascadeAssessment(
-                    v_det_passed=False,
-                    cascade_stage=CascadeStage.S0_SYNTAX,
-                    z3_status=Z3Status.SKIPPED,
-                    stage_dense_reward=0.0,
-                    error_hash=_hash_error(CascadeStage.S0_SYNTAX, msg),
-                    error_delta=msg,
-                )
-
-        # Stage 0.5: Declarative SMT/Z3 consistency gate
         z3_res = self.z3_gate.verify_json(z3_constraints_json)
-        if z3_res.status == Z3Status.UNSAT or (
-            z3_res.status == Z3Status.UNKNOWN and action_role in {ActionRole.COMMIT_PROD, ActionRole.EXTERNAL_TOOL}
-        ):
+        strict_role = action_role in {ActionRole.COMMIT_PROD, ActionRole.EXTERNAL_TOOL}
+        if z3_res.status == Z3Status.UNSAT or (z3_res.status == Z3Status.UNKNOWN and strict_role):
             msg = f"Z3 Gate {z3_res.status.value}: core={list(z3_res.unsat_core)} detail={z3_res.error_detail}"
-            return CascadeAssessment(
-                v_det_passed=False,
-                cascade_stage=CascadeStage.S05_Z3,
+            return self._failure(
+                CascadeStage.S05_Z3,
+                msg,
                 z3_status=z3_res.status,
-                stage_dense_reward=0.15,
-                error_hash=_hash_error(CascadeStage.S05_Z3, msg),
-                error_delta=msg,
+                reward=0.15,
                 details={"z3_engine": z3_res.engine, "unsat_core": list(z3_res.unsat_core)},
             )
 
-        # Stage 1: Unit tests + crystallized D_crit regressions
-        test_vec: list[int] = []
-        if unit_oracle is not None:
-            passed, vec, err_msg = unit_oracle(normalized_payload)
-            test_vec.extend(vec)
-            if not passed:
-                msg = err_msg or "Unit test suite failed in Stage 1."
-                return CascadeAssessment(
-                    v_det_passed=False,
-                    cascade_stage=CascadeStage.S1_UNIT,
-                    z3_status=z3_res.status,
-                    stage_dense_reward=0.30,
-                    error_hash=_hash_error(CascadeStage.S1_UNIT, msg),
-                    error_delta=msg,
-                    test_vector=tuple(test_vec),
-                )
+        test_vec, s1_fail = self._check_stage1_oracles(normalized, z3_res.status, unit_oracle, crystallized_tests)
+        if s1_fail is not None:
+            return s1_fail
 
-        for idx, dcrit_fn in enumerate(crystallized_tests or ()):
-            passed, vec, err_msg = dcrit_fn(normalized_payload)
-            test_vec.extend(vec)
-            if not passed:
-                msg = err_msg or f"Crystallized D_crit regression test #{idx} failed."
-                return CascadeAssessment(
-                    v_det_passed=False,
-                    cascade_stage=CascadeStage.S1_UNIT,
-                    z3_status=z3_res.status,
-                    stage_dense_reward=0.35,
-                    error_hash=_hash_error(CascadeStage.S1_UNIT, msg),
-                    error_delta=msg,
-                    test_vector=tuple(test_vec),
-                )
-
-        # Stage 2: Blind adversarial mutator for high-risk roles or asymmetry escalation
-        run_s2 = require_adversarial or action_role in {ActionRole.COMMIT_PROD, ActionRole.EXTERNAL_TOOL}
-        if run_s2:
-            mut_ok, counterexample = self.blind_mutator(contract_content, normalized_payload)
-            if not mut_ok:
-                msg = counterexample or "Blind adversarial mutator produced counterexample."
-                return CascadeAssessment(
-                    v_det_passed=False,
-                    cascade_stage=CascadeStage.S2_ADVERSARIAL,
-                    z3_status=z3_res.status,
-                    stage_dense_reward=0.70,
-                    error_hash=_hash_error(CascadeStage.S2_ADVERSARIAL, msg),
-                    error_delta=msg,
-                    test_vector=tuple(test_vec),
-                )
+        if not (require_adversarial or strict_role):
             return CascadeAssessment(
                 v_det_passed=True,
-                cascade_stage=CascadeStage.S2_ADVERSARIAL,
+                cascade_stage=CascadeStage.S1_UNIT,
                 z3_status=z3_res.status,
-                stage_dense_reward=1.0,
+                stage_dense_reward=0.70,
                 test_vector=tuple(test_vec),
             )
 
+        mut_ok, counterexample = self.blind_mutator(contract_content, normalized)
+        if not mut_ok:
+            return self._failure(
+                CascadeStage.S2_ADVERSARIAL,
+                counterexample or "Blind adversarial mutator produced counterexample.",
+                z3_status=z3_res.status,
+                reward=0.70,
+                test_vector=tuple(test_vec),
+            )
         return CascadeAssessment(
             v_det_passed=True,
-            cascade_stage=CascadeStage.S1_UNIT,
+            cascade_stage=CascadeStage.S2_ADVERSARIAL,
             z3_status=z3_res.status,
-            stage_dense_reward=0.70,
+            stage_dense_reward=1.0,
             test_vector=tuple(test_vec),
         )

@@ -27,6 +27,28 @@ from control_plane.config import (
 
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
 MEMORY_DB_TARGET = ":memory:"
+_PRAGMA_FOREIGN_KEYS = "PRAGMA foreign_keys = ON;"
+
+
+@dataclass(frozen=True, slots=True)
+class ReplayEpisodeInput:
+    """Typed parameter bundle for replay_buffer persistence (avoids >13-arg bloat)."""
+
+    run_id: str
+    bucket_id: str
+    node_id: str
+    action_role: str
+    strategy_record_id: int | None
+    step_index: int
+    v_det_passed: bool
+    drift_score: float
+    dense_reward: float
+    trace_summary: str
+    predicted_value: float = 0.5
+    human_edit_ratio: float | None = None
+    reverted: bool = False
+    n_step_return: float | None = None
+    per_priority: float | None = None
 
 
 class ControlPlaneError(Exception):
@@ -183,20 +205,23 @@ class ControlPlaneStore:
                 backoff = min(0.05, 0.002 * (1.25**attempt)) + jitter
                 time.sleep(backoff)
 
+    def _ensure_memory_conn(self) -> sqlite3.Connection:
+        if self._memory_conn is None:
+            self._memory_conn = sqlite3.connect(MEMORY_DB_TARGET, check_same_thread=False)
+            self._memory_conn.row_factory = sqlite3.Row
+            self._memory_conn.execute(_PRAGMA_FOREIGN_KEYS)
+        return self._memory_conn
+
     @contextlib.contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
         if self._is_memory:
             with self._memory_lock:
-                if self._memory_conn is None:
-                    self._memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
-                    self._memory_conn.row_factory = sqlite3.Row
-                    self._memory_conn.execute("PRAGMA foreign_keys = ON;")
-                yield self._memory_conn
+                yield self._ensure_memory_conn()
             return
 
         with contextlib.closing(sqlite3.connect(str(self.db_path), timeout=15.0)) as conn:
             conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA foreign_keys = ON;")
+            conn.execute(_PRAGMA_FOREIGN_KEYS)
             conn.execute("PRAGMA busy_timeout = 15000;")
             yield conn
 
@@ -204,36 +229,37 @@ class ControlPlaneStore:
     def _write_tx(self) -> Iterator[sqlite3.Connection]:
         if self._is_memory:
             with self._memory_lock:
-                if self._memory_conn is None:
-                    self._memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
-                    self._memory_conn.row_factory = sqlite3.Row
-                    self._memory_conn.execute("PRAGMA foreign_keys = ON;")
+                conn = self._ensure_memory_conn()
+                committed = False
                 try:
-                    yield self._memory_conn
-                    self._memory_conn.commit()
-                except Exception:
-                    with contextlib.suppress(sqlite3.Error):
-                        self._memory_conn.rollback()
-                    raise
+                    yield conn
+                    conn.commit()
+                    committed = True
+                finally:
+                    if not committed:
+                        with contextlib.suppress(sqlite3.Error):
+                            conn.rollback()
             return
 
         with contextlib.closing(sqlite3.connect(str(self.db_path), timeout=30.0, isolation_level=None)) as conn:
             conn.row_factory = sqlite3.Row
             self._exec_busy_retry(
                 lambda: (
-                    conn.execute("PRAGMA foreign_keys = ON;"),
+                    conn.execute(_PRAGMA_FOREIGN_KEYS),
                     conn.execute("PRAGMA busy_timeout = 30000;"),
                     conn.execute("PRAGMA synchronous = NORMAL;"),
                     conn.execute("BEGIN IMMEDIATE"),
                 )
             )
+            committed = False
             try:
                 yield conn
                 self._exec_busy_retry(lambda: conn.execute("COMMIT"))
-            except Exception:
-                with contextlib.suppress(sqlite3.Error):
-                    conn.execute("ROLLBACK")
-                raise
+                committed = True
+            finally:
+                if not committed:
+                    with contextlib.suppress(sqlite3.Error):
+                        conn.execute("ROLLBACK")
 
     def close(self) -> None:
         """Close any persistent in-memory connection cleanly."""
@@ -498,19 +524,20 @@ class ControlPlaneStore:
 
     @staticmethod
     def _row_to_canonical(row: sqlite3.Row) -> CanonicalRecord:
+        data: dict[str, Any] = dict(row)
         return CanonicalRecord(
-            record_id=int(row["record_id"]),
-            serial_uri=str(row["serial_uri"]),
-            bucket_id=str(row["bucket_id"]),
-            artifact_kind=str(row["artifact_kind"]),
-            version=int(row["version"]),
-            sha256=str(row["sha256"]),
-            content=str(row["content"]),
-            z3_constraints_json=str(row["z3_constraints_json"]) if row["z3_constraints_json"] is not None else None,
-            z3_status=str(row["z3_status"]),
-            valid_from=str(row["valid_from"]),
-            valid_to=str(row["valid_to"]) if row["valid_to"] is not None else None,
-            ingested_at=str(row["ingested_at"]),
+            record_id=int(data["record_id"]),
+            serial_uri=str(data["serial_uri"]),
+            bucket_id=str(data["bucket_id"]),
+            artifact_kind=str(data["artifact_kind"]),
+            version=int(data["version"]),
+            sha256=str(data["sha256"]),
+            content=str(data["content"]),
+            z3_constraints_json=str(data["z3_constraints_json"]) if data["z3_constraints_json"] is not None else None,
+            z3_status=str(data["z3_status"]),
+            valid_from=str(data["valid_from"]),
+            valid_to=str(data["valid_to"]) if data["valid_to"] is not None else None,
+            ingested_at=str(data["ingested_at"]),
         )
 
     def insert_semantic_chunk(
@@ -564,7 +591,7 @@ class ControlPlaneStore:
         """Pre-filtered cosine similarity search strictly inside bucket_id and active TTL."""
         q = np.asarray(query_vector, dtype=np.float32).reshape(-1)
         q_norm = float(np.linalg.norm(q))
-        if q_norm == 0.0:
+        if q_norm <= 1e-12:
             return []
         q = q / q_norm
         now = now_iso or utc_now_iso()
@@ -806,28 +833,10 @@ class ControlPlaneStore:
             )
             return int(cur.lastrowid or 0)
 
-    def append_replay_episode(
-        self,
-        *,
-        run_id: str,
-        bucket_id: str,
-        node_id: str,
-        action_role: str,
-        strategy_record_id: int | None,
-        step_index: int,
-        v_det_passed: bool,
-        drift_score: float,
-        dense_reward: float,
-        trace_summary: str,
-        predicted_value: float = 0.5,
-        human_edit_ratio: float | None = None,
-        reverted: bool = False,
-        n_step_return: float | None = None,
-        per_priority: float | None = None,
-    ) -> int:
+    def append_replay_episode(self, episode: ReplayEpisodeInput) -> int:
         now = utc_now_iso()
-        ret = dense_reward if n_step_return is None else n_step_return
-        prio = abs(ret - predicted_value) + 1e-4 if per_priority is None else per_priority
+        ret = episode.dense_reward if episode.n_step_return is None else episode.n_step_return
+        prio = abs(ret - episode.predicted_value) + 1e-4 if episode.per_priority is None else episode.per_priority
         with self._write_tx() as conn:
             cur = conn.execute(
                 """
@@ -840,21 +849,21 @@ class ControlPlaneStore:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
                 """,
                 (
-                    run_id,
-                    bucket_id,
-                    node_id,
-                    action_role,
-                    strategy_record_id,
-                    step_index,
-                    int(v_det_passed),
-                    drift_score,
-                    dense_reward,
-                    human_edit_ratio,
-                    int(reverted),
+                    episode.run_id,
+                    episode.bucket_id,
+                    episode.node_id,
+                    episode.action_role,
+                    episode.strategy_record_id,
+                    episode.step_index,
+                    int(episode.v_det_passed),
+                    episode.drift_score,
+                    episode.dense_reward,
+                    episode.human_edit_ratio,
+                    int(episode.reverted),
                     ret,
-                    predicted_value,
+                    episode.predicted_value,
                     prio,
-                    trace_summary,
+                    episode.trace_summary,
                     now,
                 ),
             )
@@ -1090,8 +1099,9 @@ class ControlPlaneStore:
             )
             return int(cur.lastrowid or 0)
 
-    def compute_kpis(self, bucket_id: str | None = None) -> dict[str, Any]:
-        """Compute objective production Go/No-Go metrics from persisted telemetry."""
+    def _fetch_kpi_aggregates(
+        self, bucket_id: str | None
+    ) -> tuple[sqlite3.Row | None, list[sqlite3.Row], sqlite3.Row | None]:
         with self._connect() as conn:
             if bucket_id is not None:
                 runs = conn.execute(
@@ -1125,35 +1135,46 @@ class ControlPlaneStore:
                     """,
                     (bucket_id,),
                 ).fetchone()
-            else:
-                runs = conn.execute(
-                    """
-                    SELECT COUNT(*) AS total_runs,
-                           SUM(CASE WHEN status = 'COMMITTED' THEN 1 ELSE 0 END) AS committed_runs,
-                           COALESCE(SUM(total_cost_usd), 0.0) AS sum_cost,
-                           COALESCE(SUM(total_tokens_in), 0) AS sum_tokens_in,
-                           COALESCE(SUM(cached_tokens_in), 0) AS sum_cached_in
-                    FROM workflow_runs
-                    """,
-                ).fetchone()
-                ckpts = conn.execute(
-                    "SELECT latency_ms FROM node_checkpoints ORDER BY latency_ms ASC",
-                ).fetchall()
-                valid_feedback = conn.execute(
-                    """
-                    SELECT COUNT(DISTINCT run_id) AS clean_commits
-                    FROM replay_buffer
-                    WHERE reverted = 0
-                      AND (human_edit_ratio IS NULL OR human_edit_ratio <= 0.15)
-                    """,
-                ).fetchone()
+                return runs, ckpts, valid_feedback
 
-        total_runs = int(runs["total_runs"]) if runs else 0
-        committed = int(runs["committed_runs"] or 0) if runs else 0
-        sum_cost = float(runs["sum_cost"] or 0.0) if runs else 0.0
-        sum_in = int(runs["sum_tokens_in"] or 0) if runs else 0
-        sum_cached = int(runs["sum_cached_in"] or 0) if runs else 0
-        clean_commits = int(valid_feedback["clean_commits"] or 0) if valid_feedback else 0
+            runs = conn.execute(
+                """
+                SELECT COUNT(*) AS total_runs,
+                       SUM(CASE WHEN status = 'COMMITTED' THEN 1 ELSE 0 END) AS committed_runs,
+                       COALESCE(SUM(total_cost_usd), 0.0) AS sum_cost,
+                       COALESCE(SUM(total_tokens_in), 0) AS sum_tokens_in,
+                       COALESCE(SUM(cached_tokens_in), 0) AS sum_cached_in
+                FROM workflow_runs
+                """,
+            ).fetchone()
+            ckpts = conn.execute("SELECT latency_ms FROM node_checkpoints ORDER BY latency_ms ASC").fetchall()
+            valid_feedback = conn.execute(
+                """
+                SELECT COUNT(DISTINCT run_id) AS clean_commits
+                FROM replay_buffer
+                WHERE reverted = 0
+                  AND (human_edit_ratio IS NULL OR human_edit_ratio <= 0.15)
+                """,
+            ).fetchone()
+            return runs, ckpts, valid_feedback
+
+    @staticmethod
+    def _row_int(row: sqlite3.Row | None, key: str) -> int:
+        return int(row[key] or 0) if row is not None else 0
+
+    @staticmethod
+    def _row_float(row: sqlite3.Row | None, key: str) -> float:
+        return float(row[key] or 0.0) if row is not None else 0.0
+
+    def compute_kpis(self, bucket_id: str | None = None) -> dict[str, Any]:
+        """Compute objective production Go/No-Go metrics from persisted telemetry."""
+        runs, ckpts, valid_feedback = self._fetch_kpi_aggregates(bucket_id)
+        total_runs = self._row_int(runs, "total_runs")
+        committed = self._row_int(runs, "committed_runs")
+        sum_cost = self._row_float(runs, "sum_cost")
+        sum_in = self._row_int(runs, "sum_tokens_in")
+        sum_cached = self._row_int(runs, "sum_cached_in")
+        clean_commits = self._row_int(valid_feedback, "clean_commits")
 
         latencies = [int(r["latency_ms"]) for r in ckpts]
         p95_ms = float(np.percentile(latencies, 95)) if latencies else 0.0
