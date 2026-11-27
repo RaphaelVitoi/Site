@@ -1038,14 +1038,10 @@ revisoes_de_ancora:
 
 # Registro — Elevacao de dependencias (Vitest 5.1.2 / Laya 0.5.4 / Anthropic 2.14.0) e diario de calibracao 2026-11-24
 
-Registro de auditoria e reconciliacao de ancoras para a publicacao das atualizacoes de dependencias em raiz e submodulos, bem como a restauracao do frontmatter M.O. 13.B em 
-eports/agent-calibration/daily/2026-11-24.md.
+Registro de auditoria e reconciliacao de ancoras para a publicacao das atualizacoes de dependencias em raiz e submodulos, bem como a restauracao do frontmatter M.O. 13.B em `reports/agent-calibration/daily/2026-11-24.md`.
 
 ## Alteracoes consolidadas
 
-- **Frontend / Node:** itest elevado para 5.1.2 (^5.1.2 na raiz e submodulos gemini-cli-jules e gemini-cli-security, 5.1.2 em exa-mcp-server), @vitest/mocker e @vitest/spy em 5.1.2, lockfiles atualizados e submodulos commitados e enviados ao ork.
-- **Python:** laya>=0.5.4, 
-egex>=2026.11.24 e nthropic>=2.14.0 atualizados em pyproject.toml, 
-equirements.txt e uv.lock.
-- **Calibracao:** frontmatter obrigatorio M.O. 13.B restaurado em 
-eports/agent-calibration/daily/2026-11-24.md preservando a auditoria de corte 23:59.
+- **Frontend / Node:** Vitest elevado para 5.1.2 (`^5.1.2` na raiz e submodulos `gemini-cli-jules` e `gemini-cli-security`, `5.1.2` em `exa-mcp-server`), `@vitest/mocker` e `@vitest/spy` em 5.1.2, lockfiles atualizados e submodulos commitados e enviados ao fork.
+- **Python:** `laya>=0.5.4`, `regex>=2026.11.24` e `anthropic>=2.14.0` atualizados em `pyproject.toml`, `requirements.txt` e `uv.lock`.
+- **Calibracao:** frontmatter obrigatorio M.O. 13.B restaurado em `reports/agent-calibration/daily/2026-11-24.md` preservando a auditoria de corte 23:59.
