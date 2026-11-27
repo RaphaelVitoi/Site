@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 4 Hydrogen
 criado_em: '2026-11-27T11:00:00-03:00'
-atualizado_em: '2026-11-27T12:06:00-03:00'
+atualizado_em: '2026-11-27T16:24:00-03:00'
 classes: [interno, spec, control-plane]
 caminhos:
   - docs/designs/SPEC_OMNIKERNEL_CONTROL_PLANE.md
@@ -20,6 +20,7 @@ verificado:
   - "Benchmark A/B live 30 tarefas com Gemini: 30/30 (Braco B) vs 28/30 (Braco A), p95 = 3.691 ms, zero_regression_verified = True"
   - "Binding C z3-solver==5.4.1.0 ativo em .venv (engine=z3, pip_audit 0 CVEs em z3-solver): acoplamento linear QF_LIA SAT/UNSAT com p50=1.354 ms e p95=2.164 ms (meta < 50 ms) e fallback parity BuiltinLinearGate verificado"
   - "Concorrencia multi-worker SQLite WAL (BEGIN IMMEDIATE + retry exponencial com jitter): 8 threads x 10 escritas (80 tx, 353.4 tx/s, p95=44.94 ms, corrida AttemptConflictError 1 vencedor/7 conflitos) e 4 processos spawn x 15 iteracoes (240 tx, 173.6 tx/s, journal=wal, PRAGMA integrity_check=ok, 0 erros de lock)"
+  - "Refatoracao SonarLint S3776 em control_plane/z3_gate.py: ruff check/format 0 erros, 25/25 control_plane e suite integral via scripts/ops/suite_verde.py ensure (0 erros, 0 warnings, cobertura 68.76%)"
 nao_verificado:
   - "Execucao remota de CI GitHub Actions apos git push de origin/master"
   - "Replicacao distribuida SQLite em rede entre multiplos hosts (fora do escopo local-first)"

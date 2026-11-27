@@ -199,8 +199,11 @@ class SlowLoopEngine:
         zero_reg = cand.dcrit_passed_count == cand.dcrit_total_count
         dominated = is_pareto_dominated(cand, self.store.get_active_elite(bucket_id, cand.niche_id))
         if dry_run:
-            dry_reason = "ZERO_REGRESSION_FAILED" if not zero_reg else ("PARETO_DOMINATED" if dominated else None)
-            return None, dry_reason, None
+            if not zero_reg:
+                return None, "ZERO_REGRESSION_FAILED", None
+            if dominated:
+                return None, "PARETO_DOMINATED", None
+            return None, None, None
 
         strat_rec = self.store.register_artifact(
             bucket_id,

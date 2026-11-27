@@ -916,57 +916,70 @@ def _verify_slow_loop_zero_regression(svc: ControlPlaneService) -> bool:
     return True
 
 
-def run_ab_benchmark(
-    *,
-    live: bool = False,
-    task_limit: int = 30,
-    write_report: bool = False,
-) -> dict[str, Any]:
-    """Run paired A/B benchmark (Baseline vs NEXUS-OMNIKERNEL) across up to 30 tasks."""
-    tasks = build_30_task_suite()[: max(1, min(30, task_limit))]
-    prefix_pad = _build_constitutional_prefix_pad() if live else "CONSTITUTIONAL_PREFIX_COMPACT"
-    arm_a_models, arm_b_l1_models, arm_b_l2_models = _select_benchmark_models(live)
+def _log_live_progress(arm_label: str, idx: int, total: int, live: bool) -> None:
+    if live and idx % 5 == 0:
+        print(f"[AB-LIVE] {arm_label} progress: {idx}/{total}", file=sys.stderr, flush=True)
 
-    a_passed, a_cost, a_tokens_in, a_cached_in, a_llm_calls = 0, 0.0, 0, 0, 0
+
+def _run_arm_a_suite(
+    tasks: list[BenchmarkTaskSpec],
+    arm_a_models: tuple[str, ...],
+    live: bool,
+) -> tuple[int, int, float, int, int]:
+    a_passed, a_llm_calls, a_cost, a_tokens_in, a_cached_in = 0, 0, 0.0, 0, 0
     for idx_t, task in enumerate(tasks, start=1):
-        if live and idx_t % 5 == 0:
-            print(f"[AB-LIVE] Arm A progress: {idx_t}/{len(tasks)}", file=sys.stderr, flush=True)
+        _log_live_progress("Arm A", idx_t, len(tasks), live)
         ok, calls, cost, t_in, c_in = _run_arm_a_task(task, arm_a_models, live)
         a_passed += int(ok)
         a_llm_calls += calls
         a_cost += cost
         a_tokens_in += t_in
         a_cached_in += c_in
+    return a_passed, a_llm_calls, a_cost, a_tokens_in, a_cached_in
 
-    svc = ControlPlaneService(config=ControlPlaneConfig(db_path=":memory:"))
+
+def _run_arm_b_suite(
+    svc: ControlPlaneService,
+    tasks: list[BenchmarkTaskSpec],
+    *,
+    prefix_pad: str,
+    live: bool,
+    arm_b_l1_models: tuple[str, ...],
+    arm_b_l2_models: tuple[str, ...],
+) -> tuple[list[dict[str, Any]], int, int, list[float]]:
     b_llm_calls = 0
     b_l0_deflected = 0
     cp_latencies: list[float] = []
     b_per_task_results: list[dict[str, Any]] = []
-    try:
-        for idx_b, task in enumerate(tasks, start=1):
-            if live and idx_b % 5 == 0:
-                print(f"[AB-LIVE] Arm B progress: {idx_b}/{len(tasks)}", file=sys.stderr, flush=True)
-            row, calls, l0_def, lats = _run_arm_b_task(
-                svc,
-                task,
-                is_first_task=(idx_b == 1),
-                prefix_pad=prefix_pad,
-                live=live,
-                arm_b_l1_models=arm_b_l1_models,
-                arm_b_l2_models=arm_b_l2_models,
-            )
-            b_per_task_results.append(row)
-            b_llm_calls += calls
-            b_l0_deflected += l0_def
-            cp_latencies.extend(lats)
+    for idx_b, task in enumerate(tasks, start=1):
+        _log_live_progress("Arm B", idx_b, len(tasks), live)
+        row, calls, l0_def, lats = _run_arm_b_task(
+            svc,
+            task,
+            is_first_task=(idx_b == 1),
+            prefix_pad=prefix_pad,
+            live=live,
+            arm_b_l1_models=arm_b_l1_models,
+            arm_b_l2_models=arm_b_l2_models,
+        )
+        b_per_task_results.append(row)
+        b_llm_calls += calls
+        b_l0_deflected += l0_def
+        cp_latencies.extend(lats)
+    return b_per_task_results, b_llm_calls, b_l0_deflected, cp_latencies
 
-        zero_reg_all = _verify_slow_loop_zero_regression(svc)
-        kpis_b = svc.store.compute_kpis()
-    finally:
-        svc.close()
 
-    total_n = len(tasks)
+def _build_ab_summary(
+    *,
+    live: bool,
+    total_n: int,
+    arm_a_metrics: tuple[int, int, float, int, int],
+    arm_b_metrics: tuple[list[dict[str, Any]], int, int, list[float]],
+    kpis_b: dict[str, Any],
+    zero_reg_all: bool,
+) -> dict[str, Any]:
+    a_passed, a_llm_calls, a_cost, a_tokens_in, a_cached_in = arm_a_metrics
+    b_per_task_results, b_llm_calls, b_l0_deflected, cp_latencies = arm_b_metrics
     b_passed = sum(1 for r in b_per_task_results if r["passed"])
     a_rate = a_passed / total_n
     b_rate = b_passed / total_n
@@ -976,7 +989,7 @@ def run_ab_benchmark(
     cost_ratio = (b_cost_per_commit / a_cost_per_commit) if a_cost_per_commit > 0 else 0.0
     p95_cp = float(np.percentile(cp_latencies, 95)) if cp_latencies else 0.0
 
-    summary: dict[str, Any] = {
+    return {
         "mode": "LIVE_GEMINI" if live else "HERMETIC_MOCK",
         "tasks_total": total_n,
         "arm_a_baseline": {
@@ -1006,6 +1019,44 @@ def run_ab_benchmark(
         },
         "task_results": b_per_task_results,
     }
+
+
+def run_ab_benchmark(
+    *,
+    live: bool = False,
+    task_limit: int = 30,
+    write_report: bool = False,
+) -> dict[str, Any]:
+    """Run paired A/B benchmark (Baseline vs NEXUS-OMNIKERNEL) across up to 30 tasks."""
+    tasks = build_30_task_suite()[: max(1, min(30, task_limit))]
+    prefix_pad = _build_constitutional_prefix_pad() if live else "CONSTITUTIONAL_PREFIX_COMPACT"
+    arm_a_models, arm_b_l1_models, arm_b_l2_models = _select_benchmark_models(live)
+
+    arm_a_metrics = _run_arm_a_suite(tasks, arm_a_models, live)
+
+    svc = ControlPlaneService(config=ControlPlaneConfig(db_path=":memory:"))
+    try:
+        arm_b_metrics = _run_arm_b_suite(
+            svc,
+            tasks,
+            prefix_pad=prefix_pad,
+            live=live,
+            arm_b_l1_models=arm_b_l1_models,
+            arm_b_l2_models=arm_b_l2_models,
+        )
+        zero_reg_all = _verify_slow_loop_zero_regression(svc)
+        kpis_b = svc.store.compute_kpis()
+    finally:
+        svc.close()
+
+    summary = _build_ab_summary(
+        live=live,
+        total_n=len(tasks),
+        arm_a_metrics=arm_a_metrics,
+        arm_b_metrics=arm_b_metrics,
+        kpis_b=kpis_b,
+        zero_reg_all=zero_reg_all,
+    )
 
     if write_report:
         _write_validation_report(summary)

@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 4 Hydrogen
 criado_em: '2026-11-27T11:18:28-03:00'
-atualizado_em: '2026-11-27T15:04:10-03:00'
+atualizado_em: '2026-11-27T16:24:00-03:00'
 classes:
 - interno
 - medido
@@ -71,6 +71,10 @@ verificado:
 - Saneamento integral de 49 apontamentos SonarLint em control_plane/ (S3776, S1244,
   S3358, S8786, S5713, S107, S1192, S9152, S6663) com ruff check, ruff format e pyright
   0 erros/0 warnings
+- Refatoracao adicional SonarLint em control_plane/benchmark_ab.py (S3776), control_plane/slow_loop.py
+  (S3358) e control_plane/z3_gate.py (4x S3776) validada com ruff check/format 0 erros,
+  25/25 tests/control_plane/ e suite_verde.py ensure verde (0 erros, 0 warnings, cobertura
+  68.76%)
 nao_verificado:
 - execucao remota de CI GitHub Actions apos git push em origin/master
 - replicacao distribuida multi-host sobre rede (fora do escopo local-first)
@@ -1142,12 +1146,11 @@ revisoes_de_ancora:
   - control_plane/service.py
   - control_plane/storage.py
   - control_plane/z3_gate.py
-  parecer: Revisado em 2026-11-27 (upgrades laya/hypothesis/schemathesis/z3-solver
-    + zero SonarLint em control_plane). refatoracao SonarLint SOTA e verificacao em
-    control_plane/mcp_tools.py; refatoracao SonarLint SOTA e verificacao em control_plane/service.py;
-    refatoracao SonarLint SOTA e verificacao em control_plane/storage.py; refatoracao
-    SonarLint SOTA e verificacao em control_plane/z3_gate.py. Pytest direcionado,
-    ruff check/format e pyright 0 erros.
+  parecer: Revisado em 2026-11-27 (refatoracao SonarLint S3776/S3358 em control_plane).
+    Preservada integralmente a semantica de control_plane/z3_gate.py apos reducao de
+    complexidade cognitiva em _validate_ast_node, _apply_bound_op, _check_conjunction
+    e _compile_z3_expr. Validado com ruff check/format 0 erros, 25/25 control_plane e
+    suite_verde.py ensure verde (0 erros, 0 warnings, 68.76%).
 ---
 
 # Validacao A/B `NEXUS-OMNIKERNEL v1.1-EVOLVED` (30 Tarefas)

@@ -80,6 +80,44 @@ def _validate_pair_op(
     _validate_ast_node(second, var_types, depth + 1)
 
 
+def _validate_var_node(node: dict[str, Any], var_types: dict[str, str], _depth: int) -> None:
+    name = node.get("name")
+    if not isinstance(name, str) or name not in var_types:
+        raise ValueError(f"Undeclared variable in AST: {name!r}")
+
+
+def _validate_const_node(node: dict[str, Any], _var_types: dict[str, str], _depth: int) -> None:
+    if not isinstance(node.get("value"), int | float | bool):
+        raise ValueError(f"Invalid constant value: {node.get('value')!r}")
+
+
+def _validate_mul_const_node(node: dict[str, Any], var_types: dict[str, str], depth: int) -> None:
+    coef, arg = node.get("coef"), node.get("arg")
+    if isinstance(coef, bool) or not isinstance(coef, int | float) or not isinstance(arg, dict):
+        raise ValueError("Operator 'mul_const' requires numeric 'coef' and dict 'arg'.")
+    _validate_ast_node(arg, var_types, depth + 1)
+
+
+def _validate_not_node(node: dict[str, Any], var_types: dict[str, str], depth: int) -> None:
+    arg = node.get("arg")
+    if not isinstance(arg, dict):
+        raise ValueError("Operator 'not' requires dict 'arg'.")
+    _validate_ast_node(arg, var_types, depth + 1)
+
+
+_AST_NODE_VALIDATORS: dict[str, Any] = {
+    "var": _validate_var_node,
+    "const": _validate_const_node,
+    "mul_const": _validate_mul_const_node,
+    "not": _validate_not_node,
+    "add": lambda n, vt, d: _validate_args_op("add", n.get("args"), vt, d),
+    "sub": lambda n, vt, d: _validate_args_op("sub", n.get("args"), vt, d),
+    "and": lambda n, vt, d: _validate_args_op("and", n.get("args"), vt, d),
+    "or": lambda n, vt, d: _validate_args_op("or", n.get("args"), vt, d),
+    "implies": lambda n, vt, d: _validate_pair_op(n, "antecedent", "consequent", "Operator 'implies'", vt, d),
+}
+
+
 def _validate_ast_node(node: dict[str, Any], var_types: dict[str, str], depth: int = 0) -> None:
     if depth > 32:
         raise ValueError("AST depth limit exceeded.")
@@ -87,27 +125,9 @@ def _validate_ast_node(node: dict[str, Any], var_types: dict[str, str], depth: i
     if not isinstance(op, str) or op not in _ALLOWED_OPS:
         raise ValueError(f"Unsupported AST operator: {op!r}")
 
-    if op == "var":
-        name = node.get("name")
-        if not isinstance(name, str) or name not in var_types:
-            raise ValueError(f"Undeclared variable in AST: {name!r}")
-    elif op == "const":
-        if not isinstance(node.get("value"), int | float | bool):
-            raise ValueError(f"Invalid constant value: {node.get('value')!r}")
-    elif op in {"add", "sub", "and", "or"}:
-        _validate_args_op(op, node.get("args"), var_types, depth)
-    elif op == "mul_const":
-        coef, arg = node.get("coef"), node.get("arg")
-        if isinstance(coef, bool) or not isinstance(coef, int | float) or not isinstance(arg, dict):
-            raise ValueError("Operator 'mul_const' requires numeric 'coef' and dict 'arg'.")
-        _validate_ast_node(arg, var_types, depth + 1)
-    elif op == "not":
-        arg = node.get("arg")
-        if not isinstance(arg, dict):
-            raise ValueError("Operator 'not' requires dict 'arg'.")
-        _validate_ast_node(arg, var_types, depth + 1)
-    elif op == "implies":
-        _validate_pair_op(node, "antecedent", "consequent", "Operator 'implies'", var_types, depth)
+    validator = _AST_NODE_VALIDATORS.get(op)
+    if validator is not None:
+        validator(node, var_types, depth)
     elif op in _CMP_OPS:
         _validate_pair_op(node, "left", "right", f"Comparison '{op}'", var_types, depth)
 
@@ -236,22 +256,28 @@ def _flip_cmp(op: str) -> str:
 _NEG_COEF_CMP = {"eq": "eq", "ne": "ne", "lt": "gt", "le": "ge", "gt": "lt", "ge": "le"}
 
 
+def _tighten_lower(b: _NumBound, rhs: float, inc: bool, *, allow_same_inc: bool = False) -> None:
+    tie = math.isclose(rhs, b.lo, abs_tol=1e-12) and b.lo_inc and (allow_same_inc or not inc)
+    if rhs > b.lo or tie:
+        b.lo, b.lo_inc = rhs, inc
+
+
+def _tighten_upper(b: _NumBound, rhs: float, inc: bool, *, allow_same_inc: bool = False) -> None:
+    tie = math.isclose(rhs, b.hi, abs_tol=1e-12) and b.hi_inc and (allow_same_inc or not inc)
+    if rhs < b.hi or tie:
+        b.hi, b.hi_inc = rhs, inc
+
+
 def _apply_bound_op(b: _NumBound, op: str, rhs: float) -> None:
     if op == "eq":
-        if rhs > b.lo or (math.isclose(rhs, b.lo, abs_tol=1e-12) and b.lo_inc):
-            b.lo, b.lo_inc = rhs, True
-        if rhs < b.hi or (math.isclose(rhs, b.hi, abs_tol=1e-12) and b.hi_inc):
-            b.hi, b.hi_inc = rhs, True
+        _tighten_lower(b, rhs, True, allow_same_inc=True)
+        _tighten_upper(b, rhs, True, allow_same_inc=True)
     elif op == "ne":
         b.neq.add(rhs)
     elif op in {"gt", "ge"}:
-        inc = op == "ge"
-        if rhs > b.lo or (math.isclose(rhs, b.lo, abs_tol=1e-12) and b.lo_inc and not inc):
-            b.lo, b.lo_inc = rhs, inc
+        _tighten_lower(b, rhs, op == "ge")
     elif op in {"lt", "le"}:
-        inc = op == "le"
-        if rhs < b.hi or (math.isclose(rhs, b.hi, abs_tol=1e-12) and b.hi_inc and not inc):
-            b.hi, b.hi_inc = rhs, inc
+        _tighten_upper(b, rhs, op == "le")
 
 
 class _BuiltinLinearGate:
@@ -386,6 +412,66 @@ class _BuiltinLinearGate:
         return None
 
     @classmethod
+    def _eval_numeric_cmp_atom(
+        cls,
+        cid: str,
+        atom: dict[str, Any],
+        eff_op: str,
+        var_types: dict[str, str],
+        bounds: dict[str, _NumBound],
+        bound_sources: dict[str, list[str]],
+        hyperplanes: dict[tuple[tuple[str, float], ...], list[tuple[str, float, str, float]]],
+    ) -> tuple[Z3Status, list[str]] | None:
+        diff = _eval_affine(atom["left"]).sub(_eval_affine(atom["right"]))
+        if not diff.coeffs:
+            if not cls._const_cmp_sat(diff.const, eff_op):
+                return Z3Status.UNSAT, [cid]
+            return None
+        if len(diff.coeffs) > 1:
+            cls._record_hyperplane(diff, eff_op, cid, hyperplanes)
+            return None
+        vname, coef = next(iter(diff.coeffs.items()))
+        flipped = _NEG_COEF_CMP[eff_op] if coef < 0 else eff_op
+        bound_sources[vname].append(cid)
+        _apply_bound_op(bounds[vname], flipped, -diff.const / coef)
+        if not bounds[vname].is_feasible(var_types[vname] == "int"):
+            return Z3Status.UNSAT, bound_sources[vname]
+        return None
+
+    @classmethod
+    def _eval_conjunction_atom(
+        cls,
+        cid: str,
+        atom: dict[str, Any],
+        neg: bool,
+        var_types: dict[str, str],
+        bool_assign: dict[str, tuple[bool, str]],
+        bounds: dict[str, _NumBound],
+        bound_sources: dict[str, list[str]],
+        hyperplanes: dict[tuple[tuple[str, float], ...], list[tuple[str, float, str, float]]],
+    ) -> tuple[Z3Status, list[str]] | None:
+        op = atom["op"]
+        if op == "const":
+            if not (bool(atom["value"]) ^ neg):
+                return Z3Status.UNSAT, [cid]
+            return None
+        if op == "var":
+            conflict = cls._assign_bool(bool_assign, str(atom["name"]), not neg, cid)
+            if conflict is not None:
+                return Z3Status.UNSAT, conflict
+            return None
+        if op not in _CMP_OPS:
+            return None
+
+        eff_op = _flip_cmp(op) if neg else op
+        handled, b_status, b_core = cls._handle_bool_cmp(atom, eff_op, cid, var_types, bool_assign)
+        if handled:
+            if b_status is not None:
+                return b_status, b_core
+            return None
+        return cls._eval_numeric_cmp_atom(cid, atom, eff_op, var_types, bounds, bound_sources, hyperplanes)
+
+    @classmethod
     def _check_conjunction(
         cls,
         atoms: list[tuple[str, dict[str, Any], bool]],
@@ -397,40 +483,11 @@ class _BuiltinLinearGate:
         hyperplanes: dict[tuple[tuple[str, float], ...], list[tuple[str, float, str, float]]] = {}
 
         for cid, atom, neg in atoms:
-            op = atom["op"]
-            if op == "const":
-                if not (bool(atom["value"]) ^ neg):
-                    return Z3Status.UNSAT, [cid]
-                continue
-            if op == "var":
-                conflict = cls._assign_bool(bool_assign, str(atom["name"]), not neg, cid)
-                if conflict is not None:
-                    return Z3Status.UNSAT, conflict
-                continue
-            if op not in _CMP_OPS:
-                continue
-
-            eff_op = _flip_cmp(op) if neg else op
-            handled, b_status, b_core = cls._handle_bool_cmp(atom, eff_op, cid, var_types, bool_assign)
-            if handled:
-                if b_status is not None:
-                    return b_status, b_core
-                continue
-
-            diff = _eval_affine(atom["left"]).sub(_eval_affine(atom["right"]))
-            if not diff.coeffs:
-                if not cls._const_cmp_sat(diff.const, eff_op):
-                    return Z3Status.UNSAT, [cid]
-                continue
-            if len(diff.coeffs) == 1:
-                vname, coef = next(iter(diff.coeffs.items()))
-                flipped = _NEG_COEF_CMP[eff_op] if coef < 0 else eff_op
-                bound_sources[vname].append(cid)
-                _apply_bound_op(bounds[vname], flipped, -diff.const / coef)
-                if not bounds[vname].is_feasible(var_types[vname] == "int"):
-                    return Z3Status.UNSAT, bound_sources[vname]
-            else:
-                cls._record_hyperplane(diff, eff_op, cid, hyperplanes)
+            early = cls._eval_conjunction_atom(
+                cid, atom, neg, var_types, bool_assign, bounds, bound_sources, hyperplanes
+            )
+            if early is not None:
+                return early
 
         hp_conflict = cls._check_hyperplanes(hyperplanes)
         if hp_conflict is not None:
@@ -446,6 +503,20 @@ _Z3_CMP_FNS: dict[str, Any] = {
     "gt": operator.gt,
     "ge": operator.ge,
 }
+
+
+def _compile_z3_nary(op: str, raw_args: list[dict[str, Any]], z3_vars: dict[str, Any]) -> Any:
+    assert z3 is not None
+    args = [_compile_z3_expr(c, z3_vars) for c in raw_args]
+    if op == "and":
+        return z3.And(*args)
+    if op == "or":
+        return z3.Or(*args)
+    fn = operator.add if op == "add" else operator.sub
+    acc = args[0]
+    for child in args[1:]:
+        acc = fn(acc, child)
+    return acc
 
 
 def _compile_z3_expr(node: dict[str, Any], z3_vars: dict[str, Any]) -> Any:
@@ -468,16 +539,7 @@ def _compile_z3_expr(node: dict[str, Any], z3_vars: dict[str, Any]) -> Any:
     if op in _Z3_CMP_FNS:
         return _Z3_CMP_FNS[op](_compile_z3_expr(node["left"], z3_vars), _compile_z3_expr(node["right"], z3_vars))
     if op in {"add", "sub", "and", "or"}:
-        args = [_compile_z3_expr(c, z3_vars) for c in node["args"]]
-        if op == "and":
-            return z3.And(*args)
-        if op == "or":
-            return z3.Or(*args)
-        fn = operator.add if op == "add" else operator.sub
-        acc = args[0]
-        for child in args[1:]:
-            acc = fn(acc, child)
-        return acc
+        return _compile_z3_nary(op, node["args"], z3_vars)
     raise ValueError(f"Unsupported Z3 operator: {op}")
 
 
