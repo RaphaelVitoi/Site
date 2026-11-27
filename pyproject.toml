@@ -62,9 +62,9 @@ dependencies = [
     "google-genai>=3.6.1",
     "google-antigravity>=0.1.24",
     # openai/anthropic movidos para extra opcional `llm-sdks` (runtime usa aiohttp REST direto).
-    "httpx>=0.28.1",
+    "httpx>=0.29.0",
     # ── INGESTAO DE DOCUMENTOS ─────────────────────────────────────────
-    "pypdf>=7.1.1,<8.0.0",  # 7.1.1: latest PyPI 2026-11-21; major release SOTA sem alertas abertos
+    "pypdf>=7.2.0,<8.0.0",  # 7.2.0: latest PyPI 2026-11-27; major release SOTA sem alertas abertos
     "python-docx>=1.2.0,<2.0.0",
     "openpyxl>=3.1.5,<4.0.0",
     "Pillow>=13.0.0",
@@ -141,7 +141,7 @@ dev = [
     "types-PyYAML>=6.0.12.20261122",
     "hypothesis>=6.170.17",
     "pytest-benchmark>=5.3.1",
-    "schemathesis>=4.34.2",
+    "schemathesis>=4.34.3",
 ]
 
 # Dependencias extras para Teoria dos Jogos avancada, derivacao simbolica e analise de MTTs (PMev)
@@ -247,7 +247,7 @@ dev = [
     "types-PyYAML>=6.0.12.20261122",
     "hypothesis>=6.170.17",
     "pytest-benchmark>=5.3.1",
-    "schemathesis>=4.34.2",
+    "schemathesis>=4.34.3",
 ]
 
 # ==============================================================================

@@ -45,6 +45,7 @@
     "**/dist-workers/**": true,
     "**/build/**": true,
     "**/wasm-equity/target/**": true,
+    "**/core/nexus-core-rust/target/**": true,
     "**/core/vendor/**": true,
     "**/worker/Java/**": true,
     "**/reports/**": true,
@@ -364,15 +365,16 @@
     "editor.defaultFormatter": "tamasfe.even-better-toml",
     "editor.formatOnSave": true
   },
+  "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
+  "rust-analyzer.cargo.allTargets": true,
   "rust-analyzer.check.command": "clippy",
   "rust-analyzer.cargo.buildScripts.enable": true,
   "rust-analyzer.procMacro.enable": true,
   "rust-analyzer.linkedProjects": [
     "${workspaceFolder}/wasm-equity/Cargo.toml",
-    "${workspaceFolder}/core/nexus-core-rust/Cargo.toml",
-    "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"
+    "${workspaceFolder}/core/nexus-core-rust/Cargo.toml"
   ],
-  "rust-analyzer.files.excludeDirs": [".next", ".venv", "node_modules", "target", ".git"],
+  "rust-analyzer.files.excludeDirs": [".next", ".venv", "node_modules", "target", ".git", "skills", "core/vendor"],
   "turboConsoleLog.addSemicolonInTheEnd": true,
   "turboConsoleLog.logMessagePrefix": "\u26a1 [SOTA-DEBUG]",
   "redhat.telemetry.enabled": false,
@@ -382,8 +384,8 @@
   "ruff.interpreter": ["${workspaceFolder}/.venv/Scripts/python.exe"],
   "ruff.configuration": "${workspaceFolder}/pyproject.toml",
   "ruff.importStrategy": "fromEnvironment",
-  "ruff.lint.preview": true,
-  "ruff.format.preview": true,
+  "ruff.lint.preview": false,
+  "ruff.format.preview": false,
   "workbench.editorAssociations": {
     "**/.claude/**/*.bin": "default",
     "**/CMakeFiles/**/*.bin": "default",
@@ -667,7 +669,6 @@
   "antigravity.binary.path": "C:\\Users\\rapha\\.gemini\\bin\\agy.exe",
   "python.terminal.useEnvFile": true,
   "chat.useClaudeHooks": true,
-  "python.analysis.diagnosticsSource": "Pylance",
   "nexrall.auditTrail": true,
   "terminal-in-status-bar.statusBarLabel": true,
   "workbench.colorCustomizations": {

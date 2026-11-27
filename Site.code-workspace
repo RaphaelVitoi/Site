@@ -6,7 +6,6 @@
     },
   ],
   "settings": {
-    // ── SOTA v8.0 GOLD PERFORMANCE ─────────────────────────────
     "editor.unicodeHighlight.nonBasicASCII": true,
     "editor.unicodeHighlight.invisibleCharacters": true,
     "editor.unicodeHighlight.ambiguousCharacters": true,
@@ -15,31 +14,7 @@
     "editor.minimap.enabled": false,
     "editor.hover.delay": 700,
     "editor.largeFileOptimizations": true,
-    "files.autoGuessEncoding": true,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true,
-    "files.autoSave": "onFocusChange",
-    // ── NUCLEO DE INTELIGENCIA (ANTIGRAVITY CLI & CLAUDE CODE) ──
     "antigravity.approvalMode": "auto_edit",
-    "antigravity.model": "gemini-3.8-flash",
-    "antigravity.binary.path": "C:\\Users\\rapha\\.gemini\\bin\\agy.exe",
-    "acp.agents": {
-      "Antigravity": {
-        "command": "C:\\Users\\rapha\\.gemini\\bin\\agy.exe",
-        "args": [
-          "acp",
-          "--disable-telemetry"
-        ]
-      }
-    },
-    "claudeCode.preferredLocation": "panel",
-    "claudeCode.focusView": true,
-    "claudeCode.disableLoginPrompt": true,
-    // ── PARIDADE BACKEND (RUFF & RUNTIME SOTA) ──────────────────
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "python.languageServer": "Default",
-    "pylint.enabled": false,
     "python-envs.defaultEnvManager": "ms-python.python:venv",
     "python-envs.defaultPackageManager": "ms-python.python:pip",
     "python-envs.pythonProjects": [
@@ -49,92 +24,9 @@
         "packageManager": "ms-python.python:pip",
       },
     ],
-    "python.terminal.activateEnvironment": true,
-    "python.analysis.diagnosticMode": "openFilesOnly",
-    "python.analysis.inlayHints.functionReturnTypes": true,
-    "python.analysis.inlayHints.variableTypes": true,
-    "python.analysis.inlayHints.parameterNames": true,
-    "python.analysis.autoImportCompletions": true,
-    "python.analysis.indexing": true,
-    "python.envFile": "${workspaceFolder}/.env",
-    "python.testing.pytestEnabled": true,
-    "python.testing.pytestArgs": [
-      "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.autoTestDiscoverOnSaveEnabled": true,
-    "[python]": {
-      "editor.defaultFormatter": "charliermarsh.ruff",
-      "editor.codeActionsOnSave": {
-        "source.fixAll.ruff": "explicit",
-        "source.organizeImports.ruff": "explicit",
-      },
-      "editor.formatOnSave": true,
-    },
-    "ruff.path": [
-      "${workspaceFolder}/.venv/Scripts/ruff.exe"
-    ],
-    "ruff.interpreter": [
-      "${workspaceFolder}/.venv/Scripts/python.exe"
-    ],
-    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
-    "ruff.importStrategy": "fromEnvironment",
-    "ruff.lint.preview": false,
-    "ruff.format.preview": false,
-    // ── PARIDADE FRONTEND (PRETTIER/ESLINT) ──────────────────────
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "[typescript]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode",
-    },
-    "[typescriptreact]": {
-      "editor.defaultFormatter": "esbenp.prettier-vscode",
-    },
     "eslint.useFlatConfig": true,
-    "eslint.workingDirectories": [
-      "frontend",
-    ],
-    "tailwindCSS.experimental.classRegex": [
-      [
-        "@theme\\s*{([^}]*)}",
-        "--color-([^\\s:]*)"
-      ]
-    ],
-    "rust-analyzer.server.path": "C:\\Users\\rapha\\.cargo\\bin\\rust-analyzer.exe",
-    "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.cargo.allTargets": true,
-    // ── BLINDAGEM DE WATCHER (SISTEMA INTEGRADO) ────────────────
-    "files.watcherExclude": {
-      "**/.git/objects/**": true,
-      "**/.husky/**": true,
-      "**/node_modules/**": true,
-      "**/.venv/**": true,
-      "**/.next/**": true,
-      "**/.turbo/**": true,
-      "**/__pycache__/**": true,
-      "**/.pytest_cache/**": true,
-      "**/.ruff_cache/**": true,
-      "**/dist/**": true,
-      "**/dist-workers/**": true,
-      "**/build/**": true,
-      "**/wasm-equity/target/**": true,
-      "**/core/vendor/**": true,
-      "**/worker/Java/**": true,
-      "**/reports/**": true,
-    },
-    "files.exclude": {
-      "**/.git": true,
-      "**/node_modules": true,
-      "**/__pycache__": true,
-      "**/.next": true,
-      "**/.turbo": true,
-      "**/dist": true,
-      "**/dist-workers": true,
-      "**/build": true,
-      "**/reports": true,
-      "**/core/vendor": true,
-      "**/worker/Java": true,
-    },
-    // ── TERMINAL SOTA ───────────────────────────────────────────
+    "tailwindCSS.experimental.classRegex": [["@theme\\s*{([^}]*)}", "--color-([^\\s:]*)"]],
     "terminal.integrated.defaultProfile.windows": "PowerShell",
     "terminal.integrated.profiles.windows": {
       "PowerShell": {
@@ -142,63 +34,15 @@
       },
       "Antigravity-SOTA": {
         "path": "pwsh.exe",
-        "args": [
-          "-NoProfile",
-          "-NoExit",
-          "-Command",
-          "antigravity --mode accept-edits"
-        ],
+        "args": ["-NoProfile", "-NoExit", "-Command", "antigravity --mode accept-edits"],
       },
     },
-    // ── ESTETICA & ORGANIZACAO ──────────────────────────────────
     "workbench.iconTheme": "vs-seti",
-    "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
       "package.json": "package-lock.json, turbo.json, tsconfig.base.json, .prettierrc, .eslintrc*",
       "pyproject.toml": "uv.lock, requirements.txt, .pylintrc, .ruff_cache",
       "next.config.js": "next-env.d.ts, postcss.config.js, tailwind.config.js",
       ".env": ".env.*, _env.ps1",
     },
-    "[jsonc]": {
-      "editor.defaultFormatter": "vscode.json-language-features",
-    },
-    "sonarlint.pathToNodeExecutable": "C:\\Program Files\\nodejs\\node.exe",
-    "sonarlint.analysisExcludesStandalone": "**/vendor/**,**/core/vendor/**,**/worker/Java/**,**/oracleJdk*/**,**/eigen/**,**/armadillo/**,**/drjit/**,**/nanobind/**,**/node_modules/**,**/.venv/**,**/dist/**,**/dist-workers/**,**/build/**,**/temp/**,**/generated/**,**/src/lib/engine/generated/**,**/wasm-equity/**,**/scripts/validation/**,**/.remember/**",
-    "securecoder.enableI18n": false,
-    "securecoder.rules.i18n": "off",
-    "securecoder.rules.internationalization": "off",
-    "securecoder.rules.jsx-not-internationalized": "off",
-    "securecoder.disabledRules": [
-      "jsx-not-internationalized",
-      "i18n",
-      "internationalization"
-    ],
-    "google.cloud.project": "original-498419",
-    "google.cloud.billingQuotaProject": "original-498419",
-    "cloudcode.enableTelemetry": false,
-    "cloudcode.autoDependencies": "on",
-    "cloudcode.cloudRun.showExplorer": true,
-    "cloudcode.gke.showExplorer": true,
-    "cloudcode.secretManager.showExplorer": true,
-    "cloudcode.yaml.schemaValidation": true,
-    "autoDocstring.docstringFormat": "google",
-    "autoDocstring.startOnNewLine": true,
-    "autoDocstring.includeExtendedSummary": true,
-    "evenBetterToml.schema.enabled": true,
-    "turboConsoleLog.addSemicolonInTheEnd": true,
-    "turboConsoleLog.logMessagePrefix": "⚡ [SOTA-DEBUG]",
-    "redhat.telemetry.enabled": false,
-    "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
-      "build/QuantumTensorEngine.sln",
-      "core/tensor_engine/build/QuantumTensorEngine.sln",
-    ],
-    "java.project.exclusionFilters": [
-      "**/scripts/validation/**"
-    ],
-    "java.project.resourceFilters": [
-      "node_modules",
-      ".git",
-      "scripts/validation"
-    ]
   },
 }

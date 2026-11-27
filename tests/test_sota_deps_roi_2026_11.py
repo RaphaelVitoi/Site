@@ -377,3 +377,24 @@ def test_sota_deps_2026_11_26_runtime_contracts() -> None:
     assert app is not None
     importlib.import_module("laya")
     importlib.import_module("openai")
+
+
+@pytest.mark.unit
+def test_sota_deps_2026_11_27_pypdf_schemathesis_httpx_floors() -> None:
+    """Valida pisos de 2026-11-27 para pypdf, schemathesis e httpx em runtime."""
+    import importlib  # noqa: PLC0415
+    import importlib.metadata as metadata  # noqa: PLC0415
+
+    from packaging.version import Version  # noqa: PLC0415
+
+    floors = {
+        "pypdf": "7.2.0",
+        "schemathesis": "4.34.3",
+        "httpx": "0.29.0",
+    }
+    for pkg, min_ver in floors.items():
+        installed = Version(metadata.version(pkg))
+        assert installed >= Version(min_ver), f"{pkg}=={installed} abaixo do piso {min_ver}"
+
+    pypdf_mod = importlib.import_module("pypdf")
+    assert hasattr(pypdf_mod, "PdfReader")

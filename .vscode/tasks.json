@@ -5,13 +5,7 @@
       "label": "Cargo Build (WASM-Equity)",
       "type": "shell",
       "command": "cargo",
-      "args": [
-        "build",
-        "--manifest-path",
-        "${workspaceFolder}/wasm-equity/Cargo.toml",
-        "--bin",
-        "vitoi_engine_cli"
-      ],
+      "args": ["build", "--manifest-path", "${workspaceFolder}/wasm-equity/Cargo.toml", "--bin", "vitoi_engine_cli"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -26,11 +20,7 @@
       "label": "UV: Pytest (All Tests)",
       "type": "shell",
       "command": "uv",
-      "args": [
-        "run",
-        "pytest",
-        "tests/"
-      ],
+      "args": ["run", "pytest", "tests/"],
       "group": {
         "kind": "test",
         "isDefault": true
@@ -44,12 +34,7 @@
       "label": "UV: Ruff Lint",
       "type": "shell",
       "command": "uv",
-      "args": [
-        "run",
-        "ruff",
-        "check",
-        "."
-      ],
+      "args": ["run", "ruff", "check", "."],
       "problemMatcher": [],
       "presentation": {
         "reveal": "silent",
@@ -60,12 +45,7 @@
       "label": "UV: Ruff Format",
       "type": "shell",
       "command": "uv",
-      "args": [
-        "run",
-        "ruff",
-        "format",
-        "."
-      ],
+      "args": ["run", "ruff", "format", "."],
       "problemMatcher": [],
       "presentation": {
         "reveal": "silent",
@@ -76,12 +56,7 @@
       "label": "Nexus: Ops Lint",
       "type": "shell",
       "command": "uv",
-      "args": [
-        "run",
-        "nexus",
-        "ops",
-        "lint"
-      ],
+      "args": ["run", "nexus", "ops", "lint"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -91,13 +66,7 @@
       "label": "UV: Ruff Watcher (Daemon)",
       "type": "shell",
       "command": "uv",
-      "args": [
-        "run",
-        "ruff",
-        "check",
-        "--watch",
-        "."
-      ],
+      "args": ["run", "ruff", "check", "--watch", "."],
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -110,12 +79,7 @@
       "label": "UV: Pytest Watcher (Daemon)",
       "type": "shell",
       "command": "uv",
-      "args": [
-        "run",
-        "pytest-watcher",
-        ".",
-        "tests/"
-      ],
+      "args": ["run", "pytest-watcher", ".", "tests/"],
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -128,10 +92,7 @@
       "label": "Dev: Frontend (Next.js)",
       "type": "shell",
       "command": "npm",
-      "args": [
-        "run",
-        "dev"
-      ],
+      "args": ["run", "dev"],
       "isBackground": true,
       "problemMatcher": [],
       "presentation": {
@@ -144,13 +105,7 @@
       "label": "Portão SOTA: CWV Gate (5 Fases)",
       "type": "shell",
       "command": "powershell",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "scripts/ops/cwv_gate.ps1"
-      ],
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/ops/cwv_gate.ps1"],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -165,13 +120,8 @@
       "label": "Frontend: Typecheck (tsc)",
       "type": "shell",
       "command": "npm",
-      "args": [
-        "run",
-        "typecheck"
-      ],
-      "problemMatcher": [
-        "$tsc"
-      ],
+      "args": ["run", "typecheck"],
+      "problemMatcher": ["$tsc"],
       "presentation": {
         "reveal": "always",
         "panel": "shared"
@@ -181,13 +131,7 @@
       "label": "Portão SOTA: 1-Click Healthcheck",
       "type": "shell",
       "command": "powershell",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "scripts/ops/sota_healthcheck.ps1"
-      ],
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/ops/sota_healthcheck.ps1"],
       "group": {
         "kind": "test",
         "isDefault": false
@@ -213,15 +157,8 @@
       "problemMatcher": []
     },
     {
-      "label": "Rustfmt: Simulator Panel",
-      "type": "shell",
-      "command": "cargo",
-      "args": ["fmt", "--all", "--manifest-path", "${workspaceFolder}/frontend/src/components/simulator/panels/Cargo.toml"],
-      "problemMatcher": []
-    },
-    {
       "label": "Rustfmt: All Crates (on demand)",
-      "dependsOn": ["Rustfmt: WASM Equity", "Rustfmt: Nexus Core", "Rustfmt: Simulator Panel"],
+      "dependsOn": ["Rustfmt: WASM Equity", "Rustfmt: Nexus Core"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     },
@@ -248,12 +185,30 @@
       }
     },
     {
+      "label": "Cargo Check: Nexus Core",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["check", "--manifest-path", "${workspaceFolder}/core/nexus-core-rust/Cargo.toml", "--all-targets"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Cargo Clippy: Nexus Core",
+      "type": "shell",
+      "command": "cargo",
+      "args": ["clippy", "--manifest-path", "${workspaceFolder}/core/nexus-core-rust/Cargo.toml", "--all-targets"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
       "label": "Watchers SOTA: All",
-      "dependsOn": [
-        "Dev: Frontend (Next.js)",
-        "UV: Ruff Watcher (Daemon)",
-        "UV: Pytest Watcher (Daemon)"
-      ],
+      "dependsOn": ["Dev: Frontend (Next.js)", "UV: Ruff Watcher (Daemon)", "UV: Pytest Watcher (Daemon)"],
       "dependsOrder": "parallel",
       "problemMatcher": [],
       "group": {
