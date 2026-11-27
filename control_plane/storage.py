@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 import contextlib
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import hashlib
 import json
+import os
 from pathlib import Path
 import sqlite3
+import threading
+import time
 from typing import Any
 
 import numpy as np
@@ -149,6 +152,7 @@ class ControlPlaneStore:
         self.config = config or ControlPlaneConfig()
         self._is_memory = self.config.db_path == MEMORY_DB_TARGET
         self._memory_conn: sqlite3.Connection | None = None
+        self._memory_lock = threading.RLock()
         if not self._is_memory:
             self.db_path = self._validate_path(Path(self.config.db_path))
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -165,41 +169,96 @@ class ControlPlaneStore:
                 raise PermissionError(f"Database path '{resolved}' escapes Site root '{site_resolved}'.") from exc
         return resolved
 
+    @staticmethod
+    def _exec_busy_retry(fn: Callable[[], Any], *, max_attempts: int = 40) -> None:
+        for attempt in range(max_attempts):
+            try:
+                fn()
+                return
+            except sqlite3.OperationalError as exc:
+                msg = str(exc).lower()
+                if ("locked" not in msg and "busy" not in msg) or attempt + 1 >= max_attempts:
+                    raise
+                jitter = ((hash((threading.get_ident(), os.getpid(), attempt)) & 0xFFF) / 4095.0) * 0.004
+                backoff = min(0.05, 0.002 * (1.25**attempt)) + jitter
+                time.sleep(backoff)
+
     @contextlib.contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
         if self._is_memory:
-            if self._memory_conn is None:
-                self._memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
-                self._memory_conn.row_factory = sqlite3.Row
-                self._memory_conn.execute("PRAGMA foreign_keys = ON;")
-            yield self._memory_conn
+            with self._memory_lock:
+                if self._memory_conn is None:
+                    self._memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
+                    self._memory_conn.row_factory = sqlite3.Row
+                    self._memory_conn.execute("PRAGMA foreign_keys = ON;")
+                yield self._memory_conn
             return
 
-        with contextlib.closing(sqlite3.connect(str(self.db_path), timeout=5.0)) as conn:
+        with contextlib.closing(sqlite3.connect(str(self.db_path), timeout=15.0)) as conn:
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA foreign_keys = ON;")
-            conn.execute("PRAGMA busy_timeout = 5000;")
+            conn.execute("PRAGMA busy_timeout = 15000;")
             yield conn
+
+    @contextlib.contextmanager
+    def _write_tx(self) -> Iterator[sqlite3.Connection]:
+        if self._is_memory:
+            with self._memory_lock:
+                if self._memory_conn is None:
+                    self._memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
+                    self._memory_conn.row_factory = sqlite3.Row
+                    self._memory_conn.execute("PRAGMA foreign_keys = ON;")
+                try:
+                    yield self._memory_conn
+                    self._memory_conn.commit()
+                except Exception:
+                    with contextlib.suppress(sqlite3.Error):
+                        self._memory_conn.rollback()
+                    raise
+            return
+
+        with contextlib.closing(sqlite3.connect(str(self.db_path), timeout=30.0, isolation_level=None)) as conn:
+            conn.row_factory = sqlite3.Row
+            self._exec_busy_retry(
+                lambda: (
+                    conn.execute("PRAGMA foreign_keys = ON;"),
+                    conn.execute("PRAGMA busy_timeout = 30000;"),
+                    conn.execute("PRAGMA synchronous = NORMAL;"),
+                    conn.execute("BEGIN IMMEDIATE"),
+                )
+            )
+            try:
+                yield conn
+                self._exec_busy_retry(lambda: conn.execute("COMMIT"))
+            except Exception:
+                with contextlib.suppress(sqlite3.Error):
+                    conn.execute("ROLLBACK")
+                raise
 
     def close(self) -> None:
         """Close any persistent in-memory connection cleanly."""
-        if self._memory_conn is not None:
-            self._memory_conn.close()
-            self._memory_conn = None
+        with self._memory_lock:
+            if self._memory_conn is not None:
+                self._memory_conn.close()
+                self._memory_conn = None
 
     def initialize(self, *, seed_defaults: bool = True) -> None:
         """Apply idempotent DDL and optionally seed the 7 ICM buckets + CRC priors."""
         schema_sql = SCHEMA_PATH.read_text(encoding="utf-8")
-        with self._connect() as conn:
-            conn.executescript(schema_sql)
-            conn.commit()
+
+        def _apply() -> None:
+            with self._connect() as conn:
+                conn.executescript(schema_sql)
+                conn.commit()
+
+        self._exec_busy_retry(_apply)
         if seed_defaults:
             self.seed_default_buckets()
 
     def seed_default_buckets(self) -> None:
         """Seed the 7 canonical ICM buckets and cold-start CRC rows if missing."""
         now = utc_now_iso()
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             for bucket_id, spec in DEFAULT_ICM_BUCKETS.items():
                 existing = conn.execute("SELECT 1 FROM buckets WHERE bucket_id = ?", (bucket_id,)).fetchone()
                 if existing is None:
@@ -224,7 +283,6 @@ class ControlPlaneStore:
                         ),
                     )
                 self._ensure_crc_priors(conn, bucket_id, now)
-            conn.commit()
 
     def _ensure_crc_priors(self, conn: sqlite3.Connection, bucket_id: str, now: str) -> None:
         for role, prior in COLD_START_PRIORS.items():
@@ -263,7 +321,7 @@ class ControlPlaneStore:
     ) -> BucketRecord:
         now = utc_now_iso()
         policy_json = json.dumps(policy, sort_keys=True)
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             conn.execute(
                 """
                 INSERT INTO buckets (bucket_id, modality, pareto_profile, policy_json, max_retries, max_cost_usd, updated_at)
@@ -279,7 +337,6 @@ class ControlPlaneStore:
                 (bucket_id, modality, pareto_profile, policy_json, max_retries, max_cost_usd, now),
             )
             self._ensure_crc_priors(conn, bucket_id, now)
-            conn.commit()
         return self.get_bucket(bucket_id)
 
     def get_bucket(self, bucket_id: str) -> BucketRecord:
@@ -314,11 +371,14 @@ class ControlPlaneStore:
         timestamp: str | None = None,
     ) -> CanonicalRecord:
         """Append a bi-temporal version for serial_uri and close the prior active version."""
-        self.get_bucket(bucket_id)
         now = timestamp or utc_now_iso()
         digest = compute_sha256(content)
 
-        with self._connect() as conn:
+        with self._write_tx() as conn:
+            bucket_exists = conn.execute("SELECT 1 FROM buckets WHERE bucket_id = ?", (bucket_id,)).fetchone()
+            if bucket_exists is None:
+                raise BucketNotFoundError(bucket_id)
+
             active = conn.execute(
                 "SELECT record_id, version FROM canonical_registry WHERE serial_uri = ? AND valid_to IS NULL",
                 (serial_uri,),
@@ -358,7 +418,6 @@ class ControlPlaneStore:
             )
             record_id = int(cur.lastrowid or 0)
             row = conn.execute("SELECT * FROM canonical_registry WHERE record_id = ?", (record_id,)).fetchone()
-            conn.commit()
         assert row is not None
         return self._row_to_canonical(row)
 
@@ -470,7 +529,7 @@ class ControlPlaneStore:
             vec = vec / norm
         blob = vec.tobytes()
         now = utc_now_iso()
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             cur = conn.execute(
                 """
                 INSERT INTO semantic_chunks (
@@ -491,7 +550,6 @@ class ControlPlaneStore:
                     now,
                 ),
             )
-            conn.commit()
             return int(cur.lastrowid or 0)
 
     def search_semantic_chunks(
@@ -604,7 +662,7 @@ class ControlPlaneStore:
         conductor_model: str | None = None,
     ) -> None:
         now = utc_now_iso()
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             conn.execute(
                 """
                 INSERT INTO workflow_runs (
@@ -624,7 +682,6 @@ class ControlPlaneStore:
                     now,
                 ),
             )
-            conn.commit()
 
     def get_workflow_run(self, run_id: str) -> dict[str, Any]:
         with self._connect() as conn:
@@ -644,7 +701,7 @@ class ControlPlaneStore:
         add_cost_usd: float = 0.0,
     ) -> None:
         now = utc_now_iso()
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             if status is not None and status != "RUNNING":
                 conn.execute(
                     """
@@ -671,7 +728,6 @@ class ControlPlaneStore:
                     """,
                     (add_tokens_in, add_cached_tokens_in, add_tokens_out, add_cost_usd, run_id),
                 )
-            conn.commit()
 
     def get_checkpoint_by_idempotency_key(self, idempotency_key: str) -> dict[str, Any] | None:
         with self._connect() as conn:
@@ -703,7 +759,7 @@ class ControlPlaneStore:
 
     def insert_checkpoint(self, payload: dict[str, Any]) -> int:
         now = utc_now_iso()
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             existing = conn.execute(
                 "SELECT idempotency_key FROM node_checkpoints WHERE run_id = ? AND node_id = ? AND attempt = ?",
                 (payload["run_id"], payload["node_id"], payload["attempt"]),
@@ -748,7 +804,6 @@ class ControlPlaneStore:
                     now,
                 ),
             )
-            conn.commit()
             return int(cur.lastrowid or 0)
 
     def append_replay_episode(
@@ -773,7 +828,7 @@ class ControlPlaneStore:
         now = utc_now_iso()
         ret = dense_reward if n_step_return is None else n_step_return
         prio = abs(ret - predicted_value) + 1e-4 if per_priority is None else per_priority
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             cur = conn.execute(
                 """
                 INSERT INTO replay_buffer (
@@ -803,7 +858,6 @@ class ControlPlaneStore:
                     now,
                 ),
             )
-            conn.commit()
             return int(cur.lastrowid or 0)
 
     def get_run_episodes(self, run_id: str) -> list[dict[str, Any]]:
@@ -816,7 +870,7 @@ class ControlPlaneStore:
 
     def update_episode_returns(self, updates: Sequence[tuple[int, float, float, float, int]]) -> None:
         """Update (episode_id, human_edit_ratio, reverted, n_step_return, per_priority) rows."""
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             for ep_id, n_ret, prio, edit_ratio, reverted_int in updates:
                 conn.execute(
                     """
@@ -829,7 +883,6 @@ class ControlPlaneStore:
                     """,
                     (edit_ratio, reverted_int, n_ret, prio, ep_id),
                 )
-            conn.commit()
 
     def list_replay_for_crc(self, bucket_id: str, action_role: str) -> list[dict[str, Any]]:
         with self._connect() as conn:
@@ -873,12 +926,11 @@ class ControlPlaneStore:
     def mark_episodes_crystallized(self, episode_ids: Sequence[int]) -> None:
         if not episode_ids:
             return
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             conn.executemany(
                 "UPDATE replay_buffer SET crystallized = 1 WHERE episode_id = ?",
                 [(int(ep_id),) for ep_id in episode_ids],
             )
-            conn.commit()
 
     def get_crc_calibration(self, bucket_id: str, action_role: str) -> CrcCalibrationRecord:
         self.get_bucket(bucket_id)
@@ -889,9 +941,8 @@ class ControlPlaneStore:
             ).fetchone()
         if row is None:
             now = utc_now_iso()
-            with self._connect() as conn:
+            with self._write_tx() as conn:
                 self._ensure_crc_priors(conn, bucket_id, now)
-                conn.commit()
                 row = conn.execute(
                     "SELECT * FROM crc_calibration WHERE bucket_id = ? AND action_role = ?",
                     (bucket_id, action_role),
@@ -913,7 +964,7 @@ class ControlPlaneStore:
         )
 
     def upsert_crc_calibration(self, record: CrcCalibrationRecord) -> None:
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             conn.execute(
                 """
                 INSERT INTO crc_calibration (
@@ -950,7 +1001,6 @@ class ControlPlaneStore:
                     record.calibrated_at,
                 ),
             )
-            conn.commit()
 
     def get_active_elite(self, bucket_id: str, niche_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
@@ -980,7 +1030,7 @@ class ControlPlaneStore:
         if not zero_reg_verified:
             raise ControlPlaneError("ZERO_REGRESSION_REQUIRED", "Cannot promote elite without zero_reg_verified=True.")
         now = utc_now_iso()
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             conn.execute(
                 """
                 INSERT INTO map_elites_archive (
@@ -1009,7 +1059,6 @@ class ControlPlaneStore:
                     now,
                 ),
             )
-            conn.commit()
 
     def record_gepa_reflection(
         self,
@@ -1021,7 +1070,7 @@ class ControlPlaneStore:
         pareto_dominated: bool,
     ) -> int:
         now = utc_now_iso()
-        with self._connect() as conn:
+        with self._write_tx() as conn:
             cur = conn.execute(
                 """
                 INSERT INTO gepa_reflections (
@@ -1039,7 +1088,6 @@ class ControlPlaneStore:
                     now,
                 ),
             )
-            conn.commit()
             return int(cur.lastrowid or 0)
 
     def compute_kpis(self, bucket_id: str | None = None) -> dict[str, Any]:

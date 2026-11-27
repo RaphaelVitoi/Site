@@ -431,7 +431,10 @@ def _compile_z3_expr(node: dict[str, Any], z3_vars: dict[str, Any]) -> Any:
     if op == "var":
         return z3_vars[str(node["name"])]
     if op == "const":
-        return node["value"]
+        val = node["value"]
+        if isinstance(val, bool):
+            return z3.BoolVal(val)
+        return val
     if op == "add":
         args = [_compile_z3_expr(c, z3_vars) for c in node["args"]]
         acc = args[0]
@@ -475,8 +478,9 @@ def _compile_z3_expr(node: dict[str, Any], z3_vars: dict[str, Any]) -> Any:
 class Z3ConstraintGate:
     """Safe SMT consistency gate with bounded 50ms timeout and unsat-core extraction."""
 
-    def __init__(self, timeout_ms: int = 50) -> None:
+    def __init__(self, timeout_ms: int = 50, *, prefer_z3: bool = True) -> None:
         self.timeout_ms = timeout_ms
+        self.prefer_z3 = prefer_z3
 
     def verify_json(self, constraints_json: str | None) -> Z3GateResult:
         if not constraints_json or not constraints_json.strip():
@@ -509,7 +513,7 @@ class Z3ConstraintGate:
                 error_detail=str(exc),
             )
 
-        if not Z3_AVAILABLE or z3 is None:
+        if not self.prefer_z3 or not Z3_AVAILABLE or z3 is None:
             return _BuiltinLinearGate.check(spec)
 
         solver = z3.Solver()
@@ -526,6 +530,8 @@ class Z3ConstraintGate:
         trackers: dict[str, Any] = {}
         for clause in spec.clauses:
             expr = _compile_z3_expr(clause.expr, z3_vars)
+            if isinstance(expr, bool):
+                expr = z3.BoolVal(expr)
             tracker = z3.Bool(f"__track_{clause.clause_id}")
             trackers[str(tracker)] = clause.clause_id
             solver.assert_and_track(expr, tracker)

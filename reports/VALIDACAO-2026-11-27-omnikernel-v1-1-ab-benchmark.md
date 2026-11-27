@@ -5,7 +5,7 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 4 Hydrogen
 criado_em: '2026-11-27T11:18:28-03:00'
-atualizado_em: '2026-11-27T11:18:28-03:00'
+atualizado_em: '2026-11-27T12:06:00-03:00'
 classes:
 - interno
 - medido
@@ -59,9 +59,11 @@ verificado:
 - Braço B (OmniKernel) entrega 30/30 (100.00%) a $0.000211/entrega
 - razao de custo B/A = 1.3321x (economia -33.21%)
 - latencia p95 do plano de controle = 3.691 ms e zero_regression_verified = True
+- binding C z3-solver==5.4.1.0 (pip_audit 0 CVEs) verificado sobre contratos acoplados QF_LIA (engine=z3, p50=1.354 ms, p95=2.164 ms < 50 ms)
+- concorrencia multi-worker SQLite WAL (BEGIN IMMEDIATE + backoff exponencial) -- 8 threads (80 escritas, 353.4 tx/s, p95=44.94 ms) e 4 processos spawn Windows (240 tx, 173.6 tx/s, journal=wal, PRAGMA integrity_check=ok, 0 erros de lock)
 nao_verificado:
-- comportamento sob carga concorrente multi-worker (execucao serial monocratica conforme
-  Site/CLAUDE.md)
+- execucao remota de CI GitHub Actions apos git push em origin/master
+- replicacao distribuida multi-host sobre rede (fora do escopo local-first)
 revisoes_de_ancora:
 - registro: auditoria-2026-09-02-integridade-do-projeto-e-piso-de-transformers
   caminhos:
@@ -825,3 +827,5 @@ revisoes_de_ancora:
 | Cache Hit no Prefixo | 0/1096 | 0.00% | medido via usage_metadata |
 | Latencia Control Plane (p95) | N/A | 3.691 ms | meta <= 120 ms |
 | Regressao Pos-Evolucao (Slow Loop) | N/A | 0.0% | `zero_regression_verified=True` |
+| Solver SMT Binding C (`z3-solver==5.4.1.0`) | N/A | `p50=1.354 ms` / `p95=2.164 ms` | meta `< 50 ms`, 0 CVEs |
+| Concorrencia SQLite WAL (8T / 4P spawn) | N/A | `353.4 tx/s` (8T) / `173.6 tx/s` (4P) | `journal=wal`, `integrity=ok`, 0 erros |

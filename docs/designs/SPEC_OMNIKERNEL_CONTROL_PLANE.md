@@ -5,20 +5,24 @@ escopo: Site
 ecossistema: nexus-sota
 autor: Gemini 4 Hydrogen
 criado_em: '2026-11-27T11:00:00-03:00'
-atualizado_em: '2026-11-27T11:30:00-03:00'
+atualizado_em: '2026-11-27T12:06:00-03:00'
 classes: [interno, spec, control-plane]
 caminhos:
   - docs/designs/SPEC_OMNIKERNEL_CONTROL_PLANE.md
   - control_plane/config.py
   - control_plane/service.py
   - control_plane/mcp_tools.py
+  - control_plane/z3_gate.py
+  - control_plane/storage.py
 verificado:
-  - "Suite unitaria control_plane: 21/21 testes aprovados com 0 erros e 0 warnings"
+  - "Suite unitaria control_plane: 25/25 testes aprovados com 0 erros e 0 warnings"
   - "Benchmark local de latencia deterministica: p95 = 0.704 ms (meta <= 120 ms)"
   - "Benchmark A/B live 30 tarefas com Gemini: 30/30 (Braco B) vs 28/30 (Braco A), p95 = 3.691 ms, zero_regression_verified = True"
+  - "Binding C z3-solver==5.4.1.0 ativo em .venv (engine=z3, pip_audit 0 CVEs em z3-solver): acoplamento linear QF_LIA SAT/UNSAT com p50=1.354 ms e p95=2.164 ms (meta < 50 ms) e fallback parity BuiltinLinearGate verificado"
+  - "Concorrencia multi-worker SQLite WAL (BEGIN IMMEDIATE + retry exponencial com jitter): 8 threads x 10 escritas (80 tx, 353.4 tx/s, p95=44.94 ms, corrida AttemptConflictError 1 vencedor/7 conflitos) e 4 processos spawn x 15 iteracoes (240 tx, 173.6 tx/s, journal=wal, PRAGMA integrity_check=ok, 0 erros de lock)"
 nao_verificado:
-  - "Carga concorrente multi-worker sobre SQLite WAL (execucao serial monocratica conforme Site/CLAUDE.md)"
-  - "Binding C opcional z3-solver ausente na .venv (executando via fallback deterministico BuiltinLinearGate)"
+  - "Execucao remota de CI GitHub Actions apos git push de origin/master"
+  - "Replicacao distribuida SQLite em rede entre multiplos hosts (fora do escopo local-first)"
 ---
 
 # `NEXUS-OMNIKERNEL v1.1-EVOLVED` — Especificacao Arquitetural
