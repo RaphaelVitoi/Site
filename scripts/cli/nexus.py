@@ -102,6 +102,11 @@ timesfm_app = typer.Typer(
     help="Google Research TimesFM (2.5 Comercial e 3.0 Pesquisa) Previs\u00e3o de S\u00e9ries Temporais",
     no_args_is_help=True,
 )
+control_plane_app = typer.Typer(
+    name="control-plane",
+    help="NEXUS-OMNIKERNEL v1.1-EVOLVED — Plano de Controle Deterministico Local",
+    no_args_is_help=True,
+)
 
 app.add_typer(ops_app)
 app.add_typer(agent_app)
@@ -111,6 +116,7 @@ app.add_typer(voice_app)
 app.add_typer(audit_app)
 app.add_typer(routine_app)
 app.add_typer(timesfm_app)
+app.add_typer(control_plane_app)
 
 MARKUP_BOLD_CYAN = "[bold cyan]"
 STYLE_BOLD_CYAN = "bold cyan"
@@ -4861,6 +4867,98 @@ def cli_translate(
             border_style="cyan",
         )
     )
+
+
+# ==========================================
+# CONTROL PLANE DETERMINISTICO (OMNIKERNEL v1.1)
+# ==========================================
+
+
+@control_plane_app.command("init")
+def control_plane_init() -> None:
+    """Inicializa banco SQLite WAL do control plane e semeia os 7 buckets ICM."""
+    from control_plane.service import ControlPlaneService
+
+    svc = ControlPlaneService()
+    buckets = svc.store.list_bucket_ids()
+    svc.close()
+    print(json.dumps({"status": "OK", "db_path": str(svc.store.db_path), "buckets": buckets}, indent=2))
+
+
+@control_plane_app.command("status")
+def control_plane_status() -> None:
+    """Exibe buckets ativos e KPIs Go/No-Go medidos do control plane."""
+    from control_plane.service import ControlPlaneService
+
+    svc = ControlPlaneService()
+    payload = {
+        "db_path": str(svc.store.db_path),
+        "buckets": svc.store.list_bucket_ids(),
+        "kpis": svc.store.compute_kpis(),
+    }
+    svc.close()
+    print(json.dumps(payload, indent=2))
+
+
+@control_plane_app.command("run-slow-loop")
+def control_plane_run_slow_loop(
+    bucket_id: str = typer.Option("engineering-and-quality", "--bucket", "-b"),
+    top_k: int = typer.Option(5, "--top-k", "-k"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+    tier0_present: bool = typer.Option(False, "--tier0-present"),
+) -> None:
+    """Executa ciclo offline de recalibracao CRC, SPACE SVD e PER/GEPA."""
+    from control_plane.service import ControlPlaneService
+
+    svc = ControlPlaneService()
+    res = svc.run_slow_loop_cycle(
+        bucket_id=bucket_id,
+        top_k_per=top_k,
+        dry_run=dry_run,
+        tier0_present=tier0_present,
+    )
+    svc.close()
+    print(json.dumps(res, indent=2))
+
+
+@control_plane_app.command("kpis")
+def control_plane_kpis(bucket_id: str | None = typer.Option(None, "--bucket", "-b")) -> None:
+    """Imprime KPIs Go/No-Go acumulados."""
+    from control_plane.service import ControlPlaneService
+
+    svc = ControlPlaneService()
+    res = svc.store.compute_kpis(bucket_id=bucket_id)
+    svc.close()
+    print(json.dumps(res, indent=2))
+
+
+@control_plane_app.command("benchmark-latency")
+def control_plane_benchmark_latency(
+    iterations: int = typer.Option(40, "--iterations", "-n"),
+) -> None:
+    """Executa benchmark local CPU-only do control plane em banco temporario em memoria."""
+    from control_plane.config import ControlPlaneConfig
+    from control_plane.service import ControlPlaneService
+
+    svc = ControlPlaneService(config=ControlPlaneConfig(db_path=":memory:"))
+    res = svc.benchmark_local_latency(iterations=iterations)
+    svc.close()
+    print(json.dumps(res, indent=2))
+
+
+@control_plane_app.command("benchmark-ab")
+def control_plane_benchmark_ab(
+    live: bool = typer.Option(False, "--live/--mock", help="Executa com Gemini API real (--live) ou mocks (--mock)"),
+    tasks: int = typer.Option(30, "--tasks", "-n", help="Quantidade de tarefas (max 30)"),
+    write_report: bool = typer.Option(
+        False, "--write-report", help="Grava reports/VALIDACAO-2026-11-27-omnikernel-v1-1-ab-benchmark.md"
+    ),
+) -> None:
+    """Executa benchmark pareado A/B (Baseline vs NEXUS-OMNIKERNEL v1.1-EVOLVED)."""
+    from control_plane.benchmark_ab import run_ab_benchmark
+
+    res = run_ab_benchmark(live=live, task_limit=tasks, write_report=write_report)
+    print(json.dumps(res, indent=2))
 
 
 # ==========================================

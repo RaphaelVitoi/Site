@@ -211,6 +211,23 @@ class PromptStructureOptimizer:
 
         return f"{static_block}\n\n=== DYNAMIC TASK CONTEXT ===\n\n{dynamic_block}".strip()
 
+    @staticmethod
+    def build_bifasic_envelope(
+        immutable_prefix_parts: list[str],
+        ephemeral_suffix_parts: list[str],
+    ) -> dict[str, str]:
+        """Build strict two-phase Prefix-Caching envelope with constant O(1) retry footprint."""
+        prefix = "\n\n".join(part.strip() for part in immutable_prefix_parts if part.strip())
+        suffix = "\n\n".join(part.strip() for part in ephemeral_suffix_parts if part.strip())
+        prefix_hash = hashlib.sha256(prefix.encode("utf-8")).hexdigest()
+        full_prompt = f"{prefix}\n\n=== EPHEMERAL NODE SUFFIX ===\n\n{suffix}".strip()
+        return {
+            "prefix": prefix,
+            "prefix_hash": prefix_hash,
+            "suffix": suffix,
+            "full_prompt": full_prompt,
+        }
+
 
 # ==============================================================================
 # 3. UNIFIED LIFECYCLE HOOKS (INSPECT, DECIDE, TRANSFORM)

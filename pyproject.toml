@@ -115,7 +115,7 @@ requires = ["setuptools>=84.2.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "scripts", "scripts.cli"]
+packages = ["core", "control_plane", "database", "engine", "utils", "api", "agents", "llm", "worker", "cli", "monitoring", "governance", "conductor", "scripts", "scripts.cli"]
 
 
 [project.optional-dependencies]
@@ -162,6 +162,11 @@ monitoring = [
 # Dependencias extras para visao computacional multimodal e OCR lazy
 vision = [
     "torchvision>=0.29.2",
+]
+
+# Dependencias opcionais para SMT/Z3 formal no control plane deterministico
+control-plane = [
+    "z3-solver>=4.13.0",
 ]
 
 # Dependencias extras para automacao de UI / computer-use. Medido em 2026-11-17
@@ -401,6 +406,7 @@ branch = true
 # fora: ferramenta autocontida de benchmark, nao caminho de runtime.
 source = [
     "core",
+    "control_plane",
     "database",
     "engine",
     "utils",
@@ -540,6 +546,7 @@ ignore = [
 [tool.ruff.lint.isort]
 known-first-party = [
     "core",
+    "control_plane",
     "database",
     "engine",
     "agents",
@@ -571,6 +578,7 @@ docstring-code-line-length = 88
 include = [
     "engine",
     "core",
+    "control_plane",
     "utils",
     "api",
     "agents",
@@ -592,6 +600,7 @@ extraPaths = [
     "scripts",
     "engine",
     "core",
+    "control_plane",
     "utils",
     "agents",
     "database",

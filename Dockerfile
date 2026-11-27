@@ -57,12 +57,14 @@ ENV PATH="/app/.venv/bin:$PATH"
 COPY agents ./agents
 COPY api ./api
 COPY conductor ./conductor
+COPY control_plane ./control_plane
 COPY core ./core
 COPY data ./data
 COPY database ./database
 COPY engine ./engine
 COPY llm ./llm
 COPY math ./math
+COPY memory ./memory
 COPY monitoring ./monitoring
 COPY utils ./utils
 COPY worker ./worker

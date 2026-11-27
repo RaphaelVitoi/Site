@@ -106,6 +106,26 @@ def execute_autopoietic_cycle() -> dict[str, Any]:
     if not tests_ok and out_tests:
         logger.warning("     %s", out_tests)
 
+    # 4. Fase Control Plane (Loop Lento em dry-run seguro sem mutacao critica)
+    cp_summary: dict[str, Any] = {"status": "SKIPPED"}
+    try:
+        from control_plane.service import ControlPlaneService
+
+        cp_svc = ControlPlaneService()
+        cp_cycles = {
+            b_id: cp_svc.run_slow_loop_cycle(bucket_id=b_id, top_k_per=5, dry_run=True, tier0_present=False)
+            for b_id in cp_svc.store.list_bucket_ids()
+        }
+        cp_kpis = cp_svc.store.compute_kpis()
+        cp_svc.close()
+        cp_summary = {
+            "status": "OK",
+            "buckets_audited": len(cp_cycles),
+            "kpis": cp_kpis,
+        }
+    except Exception as exc:  # noqa: BLE001
+        cp_summary = {"status": "ERROR", "error": str(exc)}
+
     elapsed = time.monotonic() - start_time
     success = jules_ok and stitch_ok and tests_ok
 
@@ -130,6 +150,7 @@ def execute_autopoietic_cycle() -> dict[str, Any]:
             "status": "APROVADO" if tests_ok else "FALHOU",
             "tested_suites": len(test_targets),
         },
+        "control_plane": cp_summary,
         "roi_metrics": {
             "local_compute_savings": "100% cloud offloaded (Jules VMs)",
             "design_velocity": "10x acelerada via Stitch MCP",

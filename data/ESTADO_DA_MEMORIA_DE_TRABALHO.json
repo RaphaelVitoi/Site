@@ -55,22 +55,18 @@
           "expurgando dados estaticos obsoletos e eliminando a divergencia 7.0 vs 8.0."
         ]
       }
-    },
+    }
+  ],
+
+  "modulos_ligados_por_evolucao": [
     {
       "caminho": "memory/replay_buffer.py",
       "o_que_e": "Prioritized Experience Replay sobre SumTree, com Transition e td_errors",
       "linhas": 179,
-      "importadores": 0,
-      "por_que_nao_foi_ligado": [
-        "Nao e memoria de recuperacao: e componente de treino por REFORCO.",
-        "`sample()` devolve pesos de importance-sampling e `update_priorities`",
-        "espera erros de TD. Nada disso existe sem um laco de aprendizado.",
-        "Medido: a unica ocorrencia de `reward` no projeto e",
-        "math/rio_extended.py, e la e valor esperado de poker (pot x equity),",
-        "nao recompensa de RL. Nao ha politica, nao ha TD, nao ha episodio.",
-        "Portanto nao e codigo orfao esperando fio -- e peca de um sistema que",
-        "nunca foi construido. Liga-lo exigiria INVENTAR o laco de RL."
-      ]
+      "ligado_em": "2026-11-27",
+      "importadores": ["control_plane/slow_loop.py"],
+      "motivo": "Loop Lento n-step PER (gamma=0.90) em control_plane/slow_loop.py com recompensa medida via human_edit_ratio/reverted e atualizacao de prioridades por erro TD",
+      "registro": "reports/VALIDACAO-2026-11-27-omnikernel-v1-1-ab-benchmark.md"
     }
   ],
 

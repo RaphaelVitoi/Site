@@ -29,6 +29,7 @@ try:
 except ImportError:
     from mcp.server.fastmcp import FastMCP as MCPServer  # type: ignore[no-redef]
 
+from control_plane.mcp_tools import register_control_plane_tools  # noqa: E402
 from core.decision_roi_engine import (  # noqa: E402
     RoiCandidate,
     arbitrate_competition,
@@ -170,6 +171,9 @@ def icm_evaluate_roi_decision(candidates_json: str, use_s1: bool = False) -> str
     except Exception as exc:  # noqa: BLE001
         logger.exception("Erro em icm_evaluate_roi_decision: %s", exc)
         return json.dumps({"status": "ERROR", "message": str(exc)}, indent=2, ensure_ascii=True)
+
+
+control_plane_tools = register_control_plane_tools(server)
 
 
 if __name__ == "__main__":
