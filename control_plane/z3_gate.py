@@ -6,6 +6,7 @@ and validates contract/output invariants before LLM inference.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 import json
 import math
@@ -105,7 +106,7 @@ def _validate_not_node(node: dict[str, Any], var_types: dict[str, str], depth: i
     _validate_ast_node(arg, var_types, depth + 1)
 
 
-_AST_NODE_VALIDATORS: dict[str, Any] = {
+_AST_NODE_VALIDATORS: dict[str, Callable[[dict[str, Any], dict[str, str], int], None]] = {
     "var": _validate_var_node,
     "const": _validate_const_node,
     "mul_const": _validate_mul_const_node,
@@ -257,13 +258,13 @@ _NEG_COEF_CMP = {"eq": "eq", "ne": "ne", "lt": "gt", "le": "ge", "gt": "lt", "ge
 
 
 def _tighten_lower(b: _NumBound, rhs: float, inc: bool, *, allow_same_inc: bool = False) -> None:
-    tie = math.isclose(rhs, b.lo, abs_tol=1e-12) and b.lo_inc and (allow_same_inc or not inc)
+    tie = rhs == b.lo and b.lo_inc and (allow_same_inc or not inc)
     if rhs > b.lo or tie:
         b.lo, b.lo_inc = rhs, inc
 
 
 def _tighten_upper(b: _NumBound, rhs: float, inc: bool, *, allow_same_inc: bool = False) -> None:
-    tie = math.isclose(rhs, b.hi, abs_tol=1e-12) and b.hi_inc and (allow_same_inc or not inc)
+    tie = rhs == b.hi and b.hi_inc and (allow_same_inc or not inc)
     if rhs < b.hi or tie:
         b.hi, b.hi_inc = rhs, inc
 

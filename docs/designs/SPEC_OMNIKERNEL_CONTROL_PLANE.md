@@ -64,6 +64,7 @@ Para preservar integralmente a piramide de **8 Tiers** de `Site/CLAUDE.md` §0 e
 ## 3. Topologia de Integracao e Endpoints MCP (`ok_*`)
 
 O pacote `control_plane/` acopla-se diretamente aos consumidores ativos de `Site/`:
+
 - **Buckets Iniciais:** Os 7 dominios ICM de `core/skill_router.py`.
 - **Cascata de Oraculos (`F_casc`):** `S0_SYNTAX` (`DreamGate` + AST/JSON/Target Lock) $\to$ `S05_Z3` (`z3_gate`) $\to$ `S1_UNIT` (`test_case` de $\mathcal{D}_{\text{crit}}$ + suite local) $\to$ `S2_ADVERSARIAL` ($\mathcal{E}_{\text{mut}}$ cego).
 - **Loop Lento:** Integrado ao `memory/replay_buffer.py` (`PrioritizedReplayMemory`) e acionado pela Fase 4 do `scripts/ops/autopoietic_daily_cycle.py` com coleta de `human_edit_ratio` / `reverted` e KPIs Go/No-Go.
