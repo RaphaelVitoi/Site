@@ -74,7 +74,8 @@ jobs:
 
       - name: 📦 Sync Dependencies via uv
         run: |
-          uv sync --frozen --extra dev --python "${{ matrix.python-version }}"
+          # MEDIDO EM 2026-11-28: test_z3_gate e test_sota_deps_2026_11_26_runtime_contracts exigem z3-solver e openai travados em uv.lock.
+          uv sync --frozen --extra dev --extra control-plane --extra llm-sdks --python "${{ matrix.python-version }}"
 
       - name: 🔍 Ruff Linter & Formatter Validation
         run: |
