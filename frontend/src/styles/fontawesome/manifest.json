@@ -15,6 +15,7 @@
     "arrows-split-up-and-left",
     "atom",
     "ban",
+    "bars",
     "bars-staggered",
     "biohazard",
     "bolt",
@@ -37,6 +38,7 @@
     "chess-king",
     "chess-knight",
     "chevron-down",
+    "chevron-left",
     "chevron-right",
     "circle",
     "circle-check",
@@ -57,6 +59,7 @@
     "crosshairs",
     "crown",
     "cube",
+    "diagram-project",
     "display",
     "dna",
     "download",
@@ -100,6 +103,7 @@
     "microchip",
     "microphone",
     "microscope",
+    "minus",
     "music",
     "network-wired",
     "paperclip",
@@ -122,6 +126,7 @@
     "shapes",
     "shield-halved",
     "shuttle-space",
+    "sitemap",
     "skull-crossbones",
     "sliders",
     "spinner",
@@ -160,9 +165,9 @@
   ],
   "fontes": {
     "fa-solid-900": {
-      "glifos": 145,
+      "glifos": 150,
       "bytes_origem": 119488,
-      "bytes_recorte": 14396
+      "bytes_recorte": 14652
     },
     "fa-regular-400": {
       "glifos": 29,

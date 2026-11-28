@@ -1605,6 +1605,9 @@
 
 
 
+.fa-chevron-left {
+  --fa: "\f053";
+}
 
 .fa-chevron-right {
   --fa: "\f054";
@@ -1664,6 +1667,9 @@
 
 
 
+.fa-minus {
+  --fa: "\f068";
+}
 
 
 .fa-circle-exclamation {
@@ -1815,6 +1821,9 @@
 
 
 
+.fa-bars {
+  --fa: "\f0c9";
+}
 
 
 .fa-list-ul {
@@ -1857,6 +1866,9 @@
 }
 
 
+.fa-sitemap {
+  --fa: "\f0e8";
+}
 
 
 
@@ -2764,6 +2776,9 @@
 
 
 
+.fa-diagram-project {
+  --fa: "\f542";
+}
 
 
 

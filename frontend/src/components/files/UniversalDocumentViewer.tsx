@@ -1,5 +1,6 @@
 'use client';
 
+import type { PDFDocumentProxy, RenderTask } from 'pdfjs-dist';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { SotaMarkdown } from '@/components/ui/layout/SotaMarkdown';
 
@@ -366,18 +367,191 @@ interface PdfVisualViewerProps {
   readonly setPdfTab: (t: PdfTabMode) => void;
 }
 
+const PDF_ZOOM_MIN = 0.6;
+const PDF_ZOOM_MAX = 2.5;
+const PDF_ZOOM_STEP = 0.2;
+
 function PdfVisualViewer({ rawUrl, fileName, setPdfTab }: Readonly<PdfVisualViewerProps>) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
+  const [numPages, setNumPages] = useState(0);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.1);
+  const [loadingPdf, setLoadingPdf] = useState(true);
+  const [renderingPage, setRenderingPage] = useState(false);
+  const [renderError, setRenderError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    let loadingTask: { promise: Promise<PDFDocumentProxy>; destroy: () => Promise<void> } | null = null;
+    let loadedDoc: PDFDocumentProxy | null = null;
+
+    setLoadingPdf(true);
+    setRenderError(null);
+    setPdfDoc(null);
+    setNumPages(0);
+    setPageNumber(1);
+
+    async function loadPdf() {
+      try {
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+        loadingTask = pdfjsLib.getDocument({ url: rawUrl, withCredentials: true });
+        const doc = await loadingTask.promise;
+        if (!active) {
+          await doc.cleanup();
+          return;
+        }
+        loadedDoc = doc;
+        setPdfDoc(doc);
+        setNumPages(doc.numPages);
+      } catch (err: unknown) {
+        if (!active) return;
+        const message = err instanceof Error ? err.message : 'Falha ao carregar PDF.';
+        if (!/abort|destroy|cancel/i.test(message)) {
+          setRenderError(message);
+        }
+      } finally {
+        if (active) {
+          setLoadingPdf(false);
+        }
+      }
+    }
+
+    void loadPdf();
+
+    return () => {
+      active = false;
+      if (loadedDoc) {
+        void loadedDoc.cleanup().catch(() => {});
+      }
+      if (loadingTask) {
+        void loadingTask.destroy().catch(() => {});
+      }
+    };
+  }, [rawUrl]);
+
+  useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
+    let active = true;
+    let renderTask: RenderTask | null = null;
+    const canvasEl = canvasRef.current;
+
+    async function renderActivePage() {
+      if (!pdfDoc) return;
+      setRenderingPage(true);
+      try {
+        const page = await pdfDoc.getPage(pageNumber);
+        if (!active) return;
+        const dpr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, 2) : 1;
+        const cssViewport = page.getViewport({ scale });
+        const renderViewport = page.getViewport({ scale: scale * dpr });
+
+        canvasEl.width = Math.max(1, Math.floor(renderViewport.width));
+        canvasEl.height = Math.max(1, Math.floor(renderViewport.height));
+        canvasEl.style.width = `${Math.max(1, Math.floor(cssViewport.width))}px`;
+        canvasEl.style.height = `${Math.max(1, Math.floor(cssViewport.height))}px`;
+
+        renderTask = page.render({ canvas: canvasEl, viewport: renderViewport });
+        await renderTask.promise;
+      } catch (err: unknown) {
+        if (!active) return;
+        const isCancelled =
+          err instanceof Error && (err.name === 'RenderingCancelledException' || /cancel/i.test(err.message));
+        if (!isCancelled) {
+          setRenderError(err instanceof Error ? err.message : 'Erro ao renderizar página do PDF.');
+        }
+      } finally {
+        if (active) {
+          setRenderingPage(false);
+        }
+      }
+    }
+
+    void renderActivePage();
+
+    return () => {
+      active = false;
+      if (renderTask) {
+        renderTask.cancel();
+      }
+    };
+  }, [pdfDoc, pageNumber, scale]);
+
+  const zoomOut = () => setScale((s) => Math.max(PDF_ZOOM_MIN, Number((s - PDF_ZOOM_STEP).toFixed(2))));
+  const zoomIn = () => setScale((s) => Math.min(PDF_ZOOM_MAX, Number((s + PDF_ZOOM_STEP).toFixed(2))));
+  const zoomReset = () => setScale(1.0);
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 bg-black/40 shadow-2xl">
-      <object data={rawUrl} type="application/pdf" className="h-full w-full" aria-label={fileName}>
-        <iframe src={rawUrl} className="h-full w-full border-0" title={fileName}>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-white/[0.03] px-3 py-2 text-xs">
+        <div className="flex items-center space-x-1.5">
+          <button
+            type="button"
+            disabled={pageNumber <= 1 || numPages === 0}
+            onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
+            aria-label="Página anterior"
+            className="text-text-muted flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-black/40 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <i className="fa-solid fa-chevron-left text-[11px]"></i>
+          </button>
+          <span className="min-w-24 text-center font-mono text-[11px] text-neutral-200">
+            Página {numPages > 0 ? pageNumber : 0} / {numPages}
+          </span>
+          <button
+            type="button"
+            disabled={pageNumber >= numPages || numPages === 0}
+            onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+            aria-label="Próxima página"
+            className="text-text-muted flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-black/40 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <i className="fa-solid fa-chevron-right text-[11px]"></i>
+          </button>
+        </div>
+
+        <div className="flex items-center space-x-1.5">
+          <button
+            type="button"
+            disabled={scale <= PDF_ZOOM_MIN}
+            onClick={zoomOut}
+            aria-label="Diminuir zoom"
+            className="text-text-muted flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-black/40 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <i className="fa-solid fa-minus text-[11px]"></i>
+          </button>
+          <button
+            type="button"
+            onClick={zoomReset}
+            title="Restaurar zoom para 100%"
+            className="rounded-md border border-white/10 bg-black/40 px-2.5 py-1 font-mono text-[11px] text-neutral-200 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            {Math.round(scale * 100)}%
+          </button>
+          <button
+            type="button"
+            disabled={scale >= PDF_ZOOM_MAX}
+            onClick={zoomIn}
+            aria-label="Aumentar zoom"
+            className="text-text-muted flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-black/40 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <i className="fa-solid fa-plus text-[11px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <div className="relative flex min-h-0 flex-1 items-start justify-center overflow-auto bg-slate-950/70 p-4">
+        {(loadingPdf || renderingPage) && !renderError && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center space-y-2 bg-black/45 backdrop-blur-xs">
+            <i className="fa-solid fa-circle-notch fa-spin text-accent-indigo text-2xl"></i>
+            <span className="text-text-muted text-[11px]">Renderizando PDF ({fileName})...</span>
+          </div>
+        )}
+
+        {renderError ? (
           <div className="text-text-muted flex h-full flex-col items-center justify-center p-8 text-center text-xs">
             <i className="fa-solid fa-file-pdf mb-3 text-4xl text-rose-400"></i>
-            <p className="font-semibold text-white">Visualização de PDF Integrada</p>
-            <p className="mt-1 max-w-sm">
-              Se o seu navegador não carregar o PDF embutido diretamente, você pode abri-lo em uma nova aba ou alternar
-              para o Modo Leitor RAG.
-            </p>
+            <p className="font-semibold text-white">Visualização de PDF Integrada Indisponível</p>
+            <p className="mt-1 max-w-sm text-rose-200/80">{renderError}</p>
             <div className="mt-4 flex space-x-3">
               <a
                 href={rawUrl}
@@ -396,8 +570,10 @@ function PdfVisualViewer({ rawUrl, fileName, setPdfTab }: Readonly<PdfVisualView
               </button>
             </div>
           </div>
-        </iframe>
-      </object>
+        ) : (
+          <canvas ref={canvasRef} aria-label={fileName} className="rounded-lg shadow-2xl ring-1 ring-white/10" />
+        )}
+      </div>
     </div>
   );
 }

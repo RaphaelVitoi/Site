@@ -7,6 +7,33 @@ import {
   type FileContent,
 } from './UniversalDocumentViewer';
 
+const mockRender = jest.fn(() => ({
+  promise: Promise.resolve(),
+  cancel: jest.fn(),
+}));
+const mockGetPage = jest.fn(() =>
+  Promise.resolve({
+    getViewport: ({ scale }: { scale: number }) => ({
+      width: 600 * scale,
+      height: 800 * scale,
+    }),
+    render: mockRender,
+  })
+);
+const mockGetDocument = jest.fn(() => ({
+  promise: Promise.resolve({
+    numPages: 3,
+    getPage: mockGetPage,
+    cleanup: jest.fn(() => Promise.resolve()),
+  }),
+  destroy: jest.fn(() => Promise.resolve()),
+}));
+
+jest.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: { workerSrc: '' },
+  getDocument: mockGetDocument,
+}));
+
 // Mock do SotaMarkdown para isolamento de teste e suporte a links relativos
 jest.mock('@/components/ui/layout/SotaMarkdown', () => ({
   SotaMarkdown: ({
@@ -87,7 +114,7 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
     expect(screen.getByText(/Carregando e decodificando documento/i)).toBeInTheDocument();
   });
 
-  it('renderiza visualizador PDF imediatamente mesmo enquanto Texto RAG carrega em background', () => {
+  it('renderiza visualizador PDF imediatamente mesmo enquanto Texto RAG carrega em background', async () => {
     render(
       <UniversalDocumentViewer
         selectedFile={basePdfFile}
@@ -97,6 +124,17 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
     );
     expect(screen.getByRole('button', { name: /Visualizador PDF/i })).toBeInTheDocument();
     expect(screen.getByLabelText('documento_tecnico.pdf')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Página 1 \/ 3/i)).toBeInTheDocument();
+    });
+    expect(mockGetDocument).toHaveBeenCalledWith({
+      url: '/api/vitoi/files/view?path=docs%2Fdocumento_tecnico.pdf&raw=true',
+      withCredentials: true,
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Próxima página/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/Página 2 \/ 3/i)).toBeInTheDocument();
+    });
   });
 
   it('exibe estado de erro formatado quando fileContent contiver erro', () => {
@@ -111,7 +149,7 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
     expect(screen.getByText(/Arquivo corrompido/i)).toBeInTheDocument();
   });
 
-  it('renderiza PDF com abas de visualização nativa e texto RAG', () => {
+  it('renderiza PDF com abas de visualização nativa e texto RAG', async () => {
     const pdfContent: FileContent = {
       type: 'document',
       content: 'Texto extraído do PDF via motor RAG com 200 palavras.',
@@ -129,6 +167,9 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
 
     // Botões de abas
     expect(screen.getByRole('button', { name: /Visualizador PDF/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Página 1 \/ 3/i)).toBeInTheDocument();
+    });
     const ragButtons = screen.getAllByRole('button', { name: /Texto RAG/i });
     expect(ragButtons.length).toBeGreaterThanOrEqual(1);
 
@@ -138,7 +179,7 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
     expect(screen.getByText(/Texto extraído do PDF via motor RAG/i)).toBeInTheDocument();
   });
 
-  it('usa o contrato global de attachment com o nome original no download', () => {
+  it('usa o contrato global de attachment com o nome original no download', async () => {
     render(
       <UniversalDocumentViewer
         selectedFile={basePdfFile}
@@ -147,6 +188,9 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
       />
     );
 
+    await waitFor(() => {
+      expect(screen.getByText(/Página 1 \/ 3/i)).toBeInTheDocument();
+    });
     const download = screen.getByRole('link', { name: /Baixar/i });
     expect(download).toHaveAttribute(
       'href',
