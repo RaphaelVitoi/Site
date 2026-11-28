@@ -7,10 +7,23 @@ import {
   type FileContent,
 } from './UniversalDocumentViewer';
 
-// Mock do SotaMarkdown para isolamento de teste
+// Mock do SotaMarkdown para isolamento de teste e suporte a links relativos
 jest.mock('@/components/ui/layout/SotaMarkdown', () => ({
-  SotaMarkdown: ({ content }: { content: string }) => (
-    <div data-testid="sota-markdown">{content}</div>
+  SotaMarkdown: ({
+    content,
+    onRelativeLinkClick,
+  }: {
+    content: string;
+    onRelativeLinkClick?: (href: string) => void;
+  }) => (
+    <div data-testid="sota-markdown">
+      {content}
+      {onRelativeLinkClick && (
+        <button type="button" onClick={() => onRelativeLinkClick('../CLAUDE.md')}>
+          Link Relativo Mock
+        </button>
+      )}
+    </div>
   ),
 }));
 
@@ -55,13 +68,26 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
     size: 3072,
   };
 
-  it('calcula formatação de tamanho de arquivo com precisão', () => {
+  it('calcula formatação de tamanho de arquivo com precisão e bordas seguras', () => {
+    expect(formatFileSize(-5)).toBe('0 B');
     expect(formatFileSize(0)).toBe('0 B');
     expect(formatFileSize(1024)).toBe('1 KB');
     expect(formatFileSize(1048576)).toBe('1 MB');
+    expect(formatFileSize(1024 ** 4)).toBe('1 TB');
   });
 
-  it('exibe indicador de loading quando loadingContent for true', () => {
+  it('exibe indicador de loading quando loadingContent for true em documentos não-PDF', () => {
+    render(
+      <UniversalDocumentViewer
+        selectedFile={baseDocxFile}
+        fileContent={null}
+        loadingContent={true}
+      />
+    );
+    expect(screen.getByText(/Carregando e decodificando documento/i)).toBeInTheDocument();
+  });
+
+  it('renderiza visualizador PDF imediatamente mesmo enquanto Texto RAG carrega em background', () => {
     render(
       <UniversalDocumentViewer
         selectedFile={basePdfFile}
@@ -69,7 +95,8 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
         loadingContent={true}
       />
     );
-    expect(screen.getByText(/Carregando e decodificando documento/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Visualizador PDF/i })).toBeInTheDocument();
+    expect(screen.getByLabelText('documento_tecnico.pdf')).toBeInTheDocument();
   });
 
   it('exibe estado de erro formatado quando fileContent contiver erro', () => {
@@ -251,5 +278,60 @@ describe('UniversalDocumentViewer (SOTA Core)', () => {
     await waitFor(() => {
       expect(screen.getByText(/Copiado!/i)).toBeInTheDocument();
     });
+  });
+
+  it('exibe índice (TOC) no Markdown e propaga clique em link relativo', () => {
+    const onNav = jest.fn();
+    const mdContent: FileContent = {
+      type: 'text',
+      content: '# Visão Geral\n\nTexto inicial.\n\n## Arquitetura\n\nDetalhes.',
+    };
+
+    render(
+      <UniversalDocumentViewer
+        selectedFile={baseMdFile}
+        fileContent={mdContent}
+        loadingContent={false}
+        onNavigateRelativeLink={onNav}
+      />
+    );
+
+    const tocBtn = screen.getByRole('button', { name: /Índice \(2\)/i });
+    fireEvent.click(tocBtn);
+    expect(screen.getByRole('navigation', { name: /Índice do documento/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Arquitetura' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Link Relativo Mock' }));
+    expect(onNav).toHaveBeenCalledWith('../CLAUDE.md');
+  });
+
+  it('renderiza imagem grande via rawUrl mesmo sem payload base64', () => {
+    const imgFile: FileItem = {
+      name: 'diagrama.png',
+      path: 'docs/diagrama.png',
+      relative_path: 'docs/diagrama.png',
+      category: 'image',
+      size: 2_500_000,
+    };
+
+    render(
+      <UniversalDocumentViewer
+        selectedFile={imgFile}
+        fileContent={{
+          type: 'image',
+          data: {
+            headers: [],
+            rows: [],
+            format: 'PNG',
+            size: '1920x1080',
+            base64: '',
+          },
+        }}
+        loadingContent={false}
+      />
+    );
+
+    const img = screen.getByRole('img', { name: 'diagrama.png' });
+    expect(img).toHaveAttribute('src', '/api/vitoi/files/view?path=docs%2Fdiagrama.png&raw=true');
   });
 });

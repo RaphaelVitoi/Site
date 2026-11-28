@@ -67,6 +67,8 @@ from api.v1.handlers_files import _nome_e_da_familia_ambiente as _nome_e_da_fami
 from api.v1.handlers_files import _parse_image as _parse_image
 from api.v1.handlers_files import _parse_image_response as _parse_image_response
 from api.v1.handlers_files import _parse_spreadsheet as _parse_spreadsheet
+from api.v1.handlers_files import _resolve_ecosystem_root as _resolve_ecosystem_root
+from api.v1.handlers_files import _resolve_onedrive_root as _resolve_onedrive_root
 from api.v1.handlers_files import _scan_root as _scan_root
 from api.v1.handlers_files import _serve_parsed_file as _serve_parsed_file
 from api.v1.handlers_files import handle_list_files as handle_list_files

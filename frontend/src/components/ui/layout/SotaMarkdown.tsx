@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import type { ElementType, ReactNode, ReactElement } from 'react';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import rehypeKatex from 'rehype-katex';
 import rehypeSlug from 'rehype-slug';
@@ -40,6 +40,7 @@ const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 interface SotaMarkdownProps {
   content: string;
+  onRelativeLinkClick?: ((href: string) => void) | undefined;
 }
 
 /**
@@ -72,15 +73,23 @@ const MermaidChart = ({ code }: { code: string }) => {
   }, [code, id]);
 
   const classe =
-    'mermaid my-8 flex justify-center overflow-hidden rounded-3xl border border-white/5 bg-black/40 p-6 shadow-inner';
+    'mermaid my-8 flex justify-center overflow-x-auto rounded-3xl border border-white/5 bg-black/40 p-6 shadow-inner [&_svg]:mx-auto [&_svg]:h-auto [&_svg]:max-w-full';
   if (svg) {
     // Saída de mermaid.render sob securityLevel 'strict' (sanitizada por DOMPurify).
     return <div className={classe} dangerouslySetInnerHTML={{ __html: svg }} />;
   }
   return (
-    <pre className={`${classe} font-mono text-xs whitespace-pre-wrap text-text-muted`} aria-busy={!falhou}>
-      {code}
-    </pre>
+    <div className="my-8 rounded-3xl border border-white/5 bg-black/40 p-6 shadow-inner">
+      {falhou && (
+        <div className="mb-3 inline-flex items-center space-x-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-300">
+          <i className="fa-solid fa-diagram-project"></i>
+          <span>Diagrama exibido em modo código</span>
+        </div>
+      )}
+      <pre className="text-text-muted overflow-x-auto font-mono text-xs whitespace-pre" aria-busy={!falhou}>
+        {code}
+      </pre>
+    </div>
   );
 };
 
@@ -214,14 +223,12 @@ const markdownComponents: Components = {
   hr: () => <hr className="my-16 border-t border-white/5 opacity-50" />,
   table: ({ children }) => (
     <div className="relative my-10 w-full overflow-x-auto rounded-3xl border border-white/10 bg-black/40 shadow-2xl backdrop-blur-md">
-      {/* Gradient overlay to indicate scrollability on mobile */}
-      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 bg-linear-to-r from-black/60 to-transparent opacity-60" />
       <table className="w-full border-collapse text-left text-[0.9rem]">{children}</table>
     </div>
   ),
   thead: ({ children }) => <thead className="border-b border-white/10 bg-white/5">{children}</thead>,
   th: ({ children, align }) => (
-    <th align={align} className="text-text-muted p-5 font-black tracking-[0.2em] whitespace-nowrap uppercase">
+    <th align={align} className="text-text-muted p-4 text-xs font-black tracking-[0.15em] whitespace-nowrap uppercase">
       {children}
     </th>
   ),
@@ -257,18 +264,75 @@ const markdownComponents: Components = {
     );
   },
   td: ({ children, align }) => (
-    <td align={align} className="text-text-main border-b border-white/5 p-5 font-mono whitespace-nowrap opacity-90">
+    <td
+      align={align}
+      className="text-text-main min-w-28 max-w-md border-b border-white/5 p-4 align-top text-sm wrap-break-word opacity-90"
+    >
       {children}
     </td>
   ),
 };
 
-export function SotaMarkdown({ content }: Readonly<SotaMarkdownProps>) {
+function isRelativeDocLink(href: string | undefined): href is string {
+  if (!href) return false;
+  if (href.startsWith('#')) return false;
+  if (isExternalHttpUrl(href)) return false;
+  return !/^[a-z][a-z0-9+.-]*:/.test(href.toLowerCase());
+}
+
+function createMarkdownComponents(onRelativeLinkClick?: (href: string) => void): Components {
+  if (!onRelativeLinkClick) return markdownComponents;
+  return {
+    ...markdownComponents,
+    a: ({ children, href, title }) => {
+      if (isEmbeddableMediaUrl(href)) {
+        return (
+          <div className="group my-14 aspect-video overflow-hidden rounded-4xl border border-white/10 bg-black/40 shadow-[0_40px_80px_rgba(0,0,0,0.7)]">
+            <ReactPlayer src={href} width="100%" height="100%" controls />
+          </div>
+        );
+      }
+      if (isRelativeDocLink(href)) {
+        return (
+          <a
+            href={href}
+            title={title || `Abrir no explorador: ${href}`}
+            onClick={(event) => {
+              event.preventDefault();
+              onRelativeLinkClick(href);
+            }}
+            className="text-accent-indigo-light decoration-accent-indigo/40 hover:decoration-accent-indigo cursor-pointer font-bold underline underline-offset-4 transition-all hover:text-white"
+          >
+            {children}
+          </a>
+        );
+      }
+      return (
+        <a
+          href={href}
+          title={title}
+          className="text-accent-indigo-light decoration-accent-indigo/40 hover:decoration-accent-indigo font-bold underline underline-offset-4 transition-all hover:text-white"
+          target={isExternalHttpUrl(href) ? '_blank' : undefined}
+          rel={isExternalHttpUrl(href) ? 'noopener noreferrer' : undefined}
+        >
+          {children}
+        </a>
+      );
+    },
+  };
+}
+
+export function SotaMarkdown({ content, onRelativeLinkClick }: Readonly<SotaMarkdownProps>) {
   useEffect(() => {
     // SOTA v8.0 GOLD: KaTeX CSS lazy-loaded via dynamic import para não inflar o bundle
     // de páginas que não renderizam matemática. A importação é idempotente e cacheada.
     void import('katex/dist/katex.min.css');
   }, []);
+
+  const resolvedComponents = useMemo(
+    () => createMarkdownComponents(onRelativeLinkClick),
+    [onRelativeLinkClick],
+  );
 
   if (!content) return null;
 
@@ -281,7 +345,7 @@ export function SotaMarkdown({ content }: Readonly<SotaMarkdownProps>) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeSlug, [rehypeKatex, { strict: false }]]}
-        components={markdownComponents}
+        components={resolvedComponents}
       >
         {normalizedContent}
       </ReactMarkdown>

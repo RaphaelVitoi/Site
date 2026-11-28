@@ -9,6 +9,10 @@ export async function GET(request: Request) {
 	if (!path) return NextResponse.json({ status: 'ERROR', error: "Parâmetro 'path' ausente." }, { status: 400 });
 
 	const parametros: Record<string, string> = { path };
+	const sheet = searchParams.get('sheet')?.trim();
+	if (sheet) {
+		parametros['sheet'] = sheet;
+	}
 	if (searchParams.get('download') === 'true') {
 		parametros['raw'] = 'true';
 		parametros['download'] = 'true';
