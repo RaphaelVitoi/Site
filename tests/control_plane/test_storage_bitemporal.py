@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
+import multiprocessing
 from pathlib import Path
 import sqlite3
 from typing import Any
@@ -344,7 +345,7 @@ def test_sqlite_wal_multiprocess_concurrent_writes(tmp_path: Path) -> None:
     store = _make_store(str(db_path))
     store.close()
 
-    with ProcessPoolExecutor(max_workers=4) as pool:
+    with ProcessPoolExecutor(max_workers=4, mp_context=multiprocessing.get_context("spawn")) as pool:
         futures = [pool.submit(_multiprocess_wal_worker, str(db_path), wid, 15) for wid in range(4)]
         worker_results = [f.result(timeout=60) for f in futures]
 

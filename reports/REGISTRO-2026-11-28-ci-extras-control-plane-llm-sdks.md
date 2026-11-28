@@ -15,6 +15,7 @@ classes:
 caminhos:
 - .github/workflows/sota-ci.yml
 - reports/REGISTRO-2026-11-28-ci-extras-control-plane-llm-sdks.md
+- tests/control_plane/test_storage_bitemporal.py
 config_medida:
   raiz: C:/Users/rapha/.gemini/Site
   branch: master
@@ -28,6 +29,9 @@ config_medida:
 verificado:
 - uv run --with actionlint-py actionlint .github/workflows/sota-ci.yml -- exit 0
 - uv run --no-sync python -m pytest tests/control_plane/test_z3_gate.py tests/test_sota_deps_roi_2026_11.py -k "test_z3_gate or test_sota_deps_2026_11_26_runtime_contracts" -q -- 6 passed in 3.02s, 0 warnings
+- uv run --no-sync ruff check tests/control_plane/test_storage_bitemporal.py -- All checks passed!
+- uv run --no-sync pyright --project pyproject.toml tests/control_plane/test_storage_bitemporal.py -- 0 errors, 0 warnings, 0 informations
+- uv run --no-sync python -m pytest tests/control_plane/test_storage_bitemporal.py -q -- 5 passed in 2.24s, 0 warnings
 - npm install --no-audit --no-fund -- node_modules/knip alinhado em 6.49.0 sem diff em package.json/package-lock.json
 - npm run audit:entropy -- knip 6.49.0 exit 0 (0 erros de codigo morto; apenas 2 hints informativos para .prisma e .css)
 nao_verificado:
@@ -89,6 +93,10 @@ revisoes_de_ancora:
   caminhos:
   - .github/workflows/sota-ci.yml
   parecer: 'Revisado em 2026-11-28 (Gemini 4 Neon): adicionados --extra control-plane e --extra llm-sdks ao uv sync do job python-test-and-lint para executar test_z3_gate e test_sota_deps_2026_11_26_runtime_contracts sem fallback nem quebra (actionlint OK, 6 passed local).'
+- registro: validacao-2026-11-27-omnikernel-v1-1-ab-benchmark
+  caminhos:
+  - tests/control_plane/test_storage_bitemporal.py
+  parecer: 'Revisado em 2026-11-28 (Gemini 4 Neon): ProcessPoolExecutor em test_sqlite_wal_multiprocess_concurrent_writes agora usa mp_context=multiprocessing.get_context("spawn") para eliminar os 4 DeprecationWarnings de fork() multi-threaded sob pytest-xdist em runners Linux (ruff/pyright 0 erros, 5 passed / 0 warnings).'
 ---
 
 # REGISTRO — Correção de Extras no CI (`sota-ci.yml`) e Alinhamento `knip 6.49.0` (2026-11-28)
